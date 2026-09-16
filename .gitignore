@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+data/*.db
+data/*.csv
+data/weights.json
+
+.streamlit/secrets.toml
