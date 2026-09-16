@@ -23,9 +23,11 @@ def test_compute_fundamental_metrics_basic():
     m = metrics.compute_fundamental_metrics(record)
     assert m["pe"] == 25.5
     assert m["roe"] == 0.28
-    assert m["sector"] == "Technology"
-    assert m["name"] == "Acme Corp"
     assert m["market_cap"] == 50_000_000_000
+    # El nombre y el sector se toman del universo (GICS), no de yfinance,
+    # para no mezclar dos taxonomías de sector distintas.
+    assert "sector" not in m
+    assert "name" not in m
 
 
 def test_negative_pe_becomes_none():
@@ -34,6 +36,15 @@ def test_negative_pe_becomes_none():
     assert m["pe"] is None
     assert m["peg"] is None
     assert m["ev_ebitda"] is None
+
+
+def test_negative_price_to_book_becomes_none():
+    # Patrimonio neto negativo (frecuente tras recompras agresivas de acciones,
+    # ej. AbbVie) produce un P/VC negativo que NO significa "barata": es una
+    # señal de alerta, no debe puntuar bien en Value.
+    record = {"info": {"priceToBook": -78.3}, "quarterly_income": {}}
+    m = metrics.compute_fundamental_metrics(record)
+    assert m["pb"] is None
 
 
 def test_empty_record_returns_empty_dict():

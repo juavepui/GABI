@@ -7,5 +7,6 @@ __pycache__/
 data/*.db
 data/*.csv
 data/weights.json
+data/fred_api_key.txt
 
 .streamlit/secrets.toml

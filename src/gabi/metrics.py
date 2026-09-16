@@ -56,7 +56,7 @@ def compute_fundamental_metrics(fundamentals_record: dict) -> dict:
         "market_cap": info.get("marketCap"),
         "pe": _positive_or_none(info.get("trailingPE")),
         "peg": _positive_or_none(info.get("pegRatio")),
-        "pb": info.get("priceToBook"),
+        "pb": _positive_or_none(info.get("priceToBook")),
         "ps": _positive_or_none(info.get("priceToSalesTrailing12Months")),
         "ev_ebitda": _positive_or_none(info.get("enterpriseToEbitda")),
         "roe": info.get("returnOnEquity"),
@@ -71,6 +71,4 @@ def compute_fundamental_metrics(fundamentals_record: dict) -> dict:
         "revenue_growth_ttm_yoy": _revenue_growth_from_quarterly(qi),
         "free_cashflow": info.get("freeCashflow"),
         "beta": info.get("beta"),
-        "sector": info.get("sector"),
-        "name": info.get("shortName"),
     }

@@ -5,9 +5,9 @@ import pandas as pd
 
 VALUE_METRICS_LOWER_BETTER = ["pe", "peg", "pb", "ps", "ev_ebitda"]
 QUALITY_METRICS_HIGHER_BETTER = [
-    "roe", "roa", "operating_margin", "gross_margin", "profit_margin",
+    "roe", "roa", "roic", "operating_margin", "gross_margin", "profit_margin",
     "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
-    "current_ratio",
+    "revenue_cagr_3y", "fcf_cagr_3y", "current_ratio",
 ]
 QUALITY_METRICS_LOWER_BETTER = ["debt_to_equity"]
 MOMENTUM_METRICS_HIGHER_BETTER = [
@@ -15,6 +15,12 @@ MOMENTUM_METRICS_HIGHER_BETTER = [
 ]
 
 DEFAULT_WEIGHTS = {"value": 0.35, "quality": 0.35, "momentum": 0.30}
+
+# Nº mínimo de empresas del mismo sector con dato para esa métrica antes de
+# fiarse del percentil sectorial. Por debajo de esto (típico en universos de
+# prueba pequeños) una sola empresa "gana" su sector por defecto, lo que
+# produce puntuaciones artificialmente perfectas o pésimas.
+DEFAULT_MIN_SECTOR_GROUP = 8
 
 
 def _percentile(series: pd.Series, higher_is_better: bool = True) -> pd.Series:
@@ -24,11 +30,32 @@ def _percentile(series: pd.Series, higher_is_better: bool = True) -> pd.Series:
     return ranked * 100
 
 
-def add_percentile_columns(df: pd.DataFrame, metric_cols, higher_is_better=True, suffix="_pct"):
+def _percentile_within_sector(
+    df: pd.DataFrame, col: str, higher_is_better: bool, min_group_size: int,
+) -> pd.Series:
+    """Percentil de cada empresa dentro de su propio sector GICS, en vez de
+    contra todo el universo: el EV/EBITDA de un fabricante de semiconductores
+    no es comparable al de una aseguradora. Si el sector tiene muy pocas
+    empresas con dato, cae de vuelta al percentil sobre todo el universo."""
+    global_pct = _percentile(df[col], higher_is_better)
+    if "sector" not in df.columns:
+        return global_pct
+    group_sizes = df.groupby("sector")[col].transform(lambda s: s.notna().sum())
+    within_pct = df.groupby("sector")[col].transform(lambda s: _percentile(s, higher_is_better))
+    return within_pct.where(group_sizes >= min_group_size, global_pct)
+
+
+def add_percentile_columns(
+    df: pd.DataFrame, metric_cols, higher_is_better=True, suffix="_pct",
+    by_sector=True, min_group_size=DEFAULT_MIN_SECTOR_GROUP,
+):
     df = df.copy()
     for col in metric_cols:
         if col in df.columns:
-            df[col + suffix] = _percentile(df[col], higher_is_better=higher_is_better)
+            if by_sector:
+                df[col + suffix] = _percentile_within_sector(df, col, higher_is_better, min_group_size)
+            else:
+                df[col + suffix] = _percentile(df[col], higher_is_better=higher_is_better)
     return df
 
 
@@ -51,7 +78,11 @@ def _weighted_row_mean(row_values, weights):
 
 def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
     """df: DataFrame indexado por símbolo con las columnas de métricas crudas
-    (las listadas arriba), más opcionalmente 'rsi14' y 'golden_cross_recent'.
+    (las listadas arriba), más opcionalmente 'sector', 'rsi14' y 'golden_cross_recent'.
+
+    Los percentiles se calculan dentro del sector de cada empresa cuando hay
+    suficientes empresas de ese sector con dato (ver DEFAULT_MIN_SECTOR_GROUP);
+    si no, caen de vuelta al percentil sobre todo el universo analizado.
     """
     weights = weights or DEFAULT_WEIGHTS
     df = df.copy()

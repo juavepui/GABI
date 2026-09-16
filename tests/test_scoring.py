@@ -85,3 +85,35 @@ def test_explain_row_returns_metric_table():
     breakdown = scoring.explain_row(df, "AAA")
     assert "pe" in breakdown["metric"].values
     assert "momentum_6m" in breakdown["metric"].values
+
+
+def test_sector_relative_percentile_compares_within_sector():
+    n = 10
+    tech_pe = list(range(20, 20 + n))  # sector caro: PER 20-29
+    util_pe = list(range(5, 5 + n))    # sector barato: PER 5-14
+    df = pd.DataFrame(
+        {"pe": tech_pe + util_pe, "sector": ["Tech"] * n + ["Utilities"] * n},
+        index=[f"T{i}" for i in range(n)] + [f"U{i}" for i in range(n)],
+    )
+    df = scoring.add_percentile_columns(df, ["pe"], higher_is_better=False)
+
+    # T0 (PER 20) es la más barata DENTRO de su sector -> percentil alto.
+    assert df.loc["T0", "pe_pct"] >= 90
+    # U9 (PER 14) es la más cara DENTRO de su sector -> percentil bajo.
+    assert df.loc["U9", "pe_pct"] < 20
+    # Aunque el PER absoluto de T0 (20) es peor que el de U9 (14), comparar
+    # dentro de cada sector la coloca mejor: exactamente lo que se pedía
+    # (no comparar el EV/EBITDA de un semiconductor con el de una aseguradora).
+    assert df.loc["T0", "pe_pct"] > df.loc["U9", "pe_pct"]
+
+
+def test_small_sector_group_falls_back_to_global_percentile():
+    df = pd.DataFrame(
+        {"pe": [10, 20, 30, 5, 15, 25], "sector": ["Tech"] * 5 + ["Utilities"] * 1},
+        index=["A", "B", "C", "D", "E", "F"],
+    )
+    within = scoring.add_percentile_columns(df, ["pe"], higher_is_better=False, min_group_size=8)
+    global_only = scoring._percentile(df["pe"], higher_is_better=False)
+    # F es la única empresa de su sector: por debajo de min_group_size debe
+    # caer al percentil global en vez de "ganar" su sector por defecto.
+    assert within.loc["F", "pe_pct"] == global_only.loc["F"]

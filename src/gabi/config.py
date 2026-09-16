@@ -13,6 +13,19 @@ BENCHMARK_SYMBOL = "SPY"
 # Cuánto tiempo se consideran "frescos" los fundamentales antes de re-descargarlos.
 CACHE_MAX_AGE_HOURS = 24
 
+# SEC EDGAR exige un User-Agent identificable (no valida el email, solo pide
+# que exista). Por defecto no usamos tu email real para no filtrarlo a un
+# servicio de terceros en una cabecera HTTP; si quieres, cámbialo aquí por
+# el tuyo (recomendado por la propia SEC para que puedan contactarte si hay
+# uso excesivo, pero no es obligatorio que sea real).
+SEC_USER_AGENT = "GABI-personal-investing-tool contact@example.com"
+
+# Los informes anuales/trimestrales de SEC EDGAR cambian mucho menos a menudo
+# que precios o el .info de yfinance, así que se cachean más tiempo.
+EDGAR_CACHE_MAX_AGE_HOURS = 24 * 7
+
+FRED_KEY_PATH = DATA_DIR / "fred_api_key.txt"
+
 # Parámetros técnicos.
 SMA_SHORT = 50
 SMA_LONG = 200
@@ -49,3 +62,15 @@ def load_weights():
 def save_weights(weights):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     WEIGHTS_PATH.write_text(json.dumps(weights))
+
+
+def load_fred_key():
+    if FRED_KEY_PATH.exists():
+        key = FRED_KEY_PATH.read_text().strip()
+        return key or None
+    return None
+
+
+def save_fred_key(key: str):
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    FRED_KEY_PATH.write_text(key.strip())
