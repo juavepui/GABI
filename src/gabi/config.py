@@ -26,6 +26,10 @@ EDGAR_CACHE_MAX_AGE_HOURS = 24 * 7
 
 FRED_KEY_PATH = DATA_DIR / "fred_api_key.txt"
 
+# Tipo libre de riesgo usado en Sharpe/Sortino/Alpha cuando no hay una API key
+# de FRED configurada (si la hay, screener.py usa el Treasury 10 años en vivo).
+RISK_FREE_RATE = 0.04
+
 # Parámetros técnicos.
 SMA_SHORT = 50
 SMA_LONG = 200
@@ -34,7 +38,7 @@ MOMENTUM_SHORT_DAYS = 126  # ~6 meses de sesiones
 MOMENTUM_LONG_DAYS = 252  # ~12 meses de sesiones
 
 # Pesos por defecto del score compuesto.
-DEFAULT_WEIGHTS = {"value": 0.35, "quality": 0.35, "momentum": 0.30}
+DEFAULT_WEIGHTS = {"value": 0.30, "quality": 0.35, "momentum": 0.25, "risk": 0.10}
 
 # Subconjunto de campos de yfinance Ticker.info que nos interesan (evita
 # guardar el dict completo, que trae mucho ruido y cambia entre versiones).
@@ -47,6 +51,7 @@ INFO_KEYS = [
     "revenueGrowth", "earningsGrowth", "freeCashflow", "operatingCashflow",
     "trailingEps", "forwardEps", "beta",
     "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "currentPrice", "regularMarketPrice",
+    "trailingAnnualDividendYield", "averageDailyVolume3Month",
 ]
 
 

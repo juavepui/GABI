@@ -8,7 +8,6 @@ import streamlit as st
 from gabi import config, screener
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
-st.set_page_config(page_title="Screener — GABI", page_icon="📊", layout="wide")
 st.title("📊 Screener")
 st.caption(
     "Los colores indican la posición de cada empresa **dentro de su sector** para esa métrica "
@@ -19,8 +18,8 @@ st.caption(
 # Columnas que se muestran en la tabla, en orden.
 DISPLAY_KEYS = [
     "name", "sector", "market_cap", "pe", "roe", "roic", "revenue_growth_yoy",
-    "price", "price_vs_sma50", "rsi14",
-    "value_score", "quality_score", "momentum_score", "composite_score",
+    "price", "price_vs_sma50", "rsi14", "volatility", "max_drawdown",
+    "value_score", "quality_score", "momentum_score", "risk_score", "composite_score",
 ]
 
 saved_weights = config.load_weights()
@@ -31,11 +30,15 @@ with st.sidebar:
         "💡 Si estás empezando, considera dar más peso a Value y Quality que a Momentum: "
         "los fundamentos importan más que los indicadores técnicos al principio."
     )
-    w_value = st.slider("Value", 0, 100, int(saved_weights.get("value", 0.35) * 100), help=METRIC_INFO["value_score"]["help"])
+    w_value = st.slider("Value", 0, 100, int(saved_weights.get("value", 0.30) * 100), help=METRIC_INFO["value_score"]["help"])
     w_quality = st.slider("Quality", 0, 100, int(saved_weights.get("quality", 0.35) * 100), help=METRIC_INFO["quality_score"]["help"])
-    w_momentum = st.slider("Momentum", 0, 100, int(saved_weights.get("momentum", 0.30) * 100), help=METRIC_INFO["momentum_score"]["help"])
-    total_w = max(w_value + w_quality + w_momentum, 1)
-    weights = {"value": w_value / total_w, "quality": w_quality / total_w, "momentum": w_momentum / total_w}
+    w_momentum = st.slider("Momentum", 0, 100, int(saved_weights.get("momentum", 0.25) * 100), help=METRIC_INFO["momentum_score"]["help"])
+    w_risk = st.slider("Risk", 0, 100, int(saved_weights.get("risk", 0.10) * 100), help=METRIC_INFO["risk_score"]["help"])
+    total_w = max(w_value + w_quality + w_momentum + w_risk, 1)
+    weights = {
+        "value": w_value / total_w, "quality": w_quality / total_w,
+        "momentum": w_momentum / total_w, "risk": w_risk / total_w,
+    }
 
     st.header("Filtros")
     search_query = st.text_input(

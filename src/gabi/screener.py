@@ -1,7 +1,7 @@
-"""Orquesta universo -> datos -> métricas -> técnicos -> scoring en una sola tabla."""
+"""Orquesta universo -> datos -> métricas -> técnicos -> riesgo -> scoring en una sola tabla."""
 import pandas as pd
 
-from . import config, storage, data_fetch, edgar, universe, metrics, technicals, scoring
+from . import config, storage, data_fetch, edgar, macro, universe, metrics, technicals, risk, scoring
 
 
 def get_universe(limit: int = None, force_refresh: bool = False) -> pd.DataFrame:
@@ -24,12 +24,25 @@ def refresh_data(symbols: list, force: bool = False, progress_cb=None, edgar_pro
     return result
 
 
+def _get_risk_free_rate() -> float:
+    """Treasury 10 años en vivo (vía FRED, si hay API key y datos cacheados);
+    si no, la constante fija de config.RISK_FREE_RATE."""
+    try:
+        history = macro.get_series_history("DGS10")
+        if not history.empty:
+            return float(history["value"].iloc[-1]) / 100
+    except Exception:
+        pass
+    return config.RISK_FREE_RATE
+
+
 def build_screener_table(universe_df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
     symbols = universe_df["symbol"].tolist()
     fundamentals = storage.get_fundamentals(symbols)
     prices = storage.get_prices_multi(symbols)
     bench_df = storage.get_prices(config.BENCHMARK_SYMBOL)
     edgar_metrics = edgar.get_edgar_metrics(symbols)
+    risk_free_rate = _get_risk_free_rate()
 
     rows = []
     for _, u in universe_df.iterrows():
@@ -38,11 +51,13 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None) -> pd.
         m = metrics.compute_fundamental_metrics(record) if record else {}
         p = prices.get(sym)
         t = technicals.compute_technicals(p, bench_df) if p is not None else {}
+        r = risk.compute_risk_metrics(p, bench_df, risk_free_rate=risk_free_rate) if p is not None else {}
         edg = edgar_metrics.get(sym, {})
 
         row = {"symbol": sym, "name": u.get("name"), "sector": u.get("sector")}
         row.update(m)
         row.update(t)
+        row.update(r)
         row["roic"] = edg.get("roic")
         row["revenue_cagr_3y"] = edg.get("revenue_cagr_3y")
         row["fcf_cagr_3y"] = edg.get("fcf_cagr_3y")

@@ -4,6 +4,41 @@ las tablas. Vive aquí (y no en app/) para que tanto el Screener como la
 Ficha de empresa compartan una única fuente de verdad."""
 import pandas as pd
 
+# El indicador nativo de "ejecutando" de Streamlit (data-testid="stStatusWidget")
+# aparece por defecto arriba a la derecha y es fácil no verlo. Streamlit no
+# tiene una opción de configuración para moverlo, así que se reposiciona por
+# CSS al centro de la pantalla y se agranda un poco para que se note.
+CUSTOM_CSS = """
+<style>
+div[data-testid="stStatusWidget"] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(2.5) !important;
+    z-index: 9999 !important;
+    background: rgba(120, 120, 120, 0.15);
+    border-radius: 16px;
+    padding: 16px 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Streamlit deja bastante margen de sobra en la barra lateral por defecto;
+   se estrecha para dejar más sitio a las tablas. El !important fija el
+   ancho, así que de paso impide arrastrarla a mano (el tirador de borde de
+   Streamlit deja de tener efecto) — si en algún momento se prefiere volver
+   a poder arrastrarla, basta con quitar esta regla entera. */
+section[data-testid="stSidebar"] {
+    width: 230px !important;
+}
+</style>
+"""
+
+
+def inject_custom_css():
+    import streamlit as st
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+
 METRIC_INFO = {
     "name": {"label": "Empresa", "help": "Nombre de la empresa."},
     "sector": {"label": "Sector", "help": "Sector GICS al que pertenece la empresa."},
@@ -32,6 +67,21 @@ METRIC_INFO = {
         "label": "EV/EBITDA",
         "help": "Valor de empresa entre EBITDA (beneficio operativo antes de intereses, impuestos y amortizaciones). "
                 "Permite comparar empresas con distinto nivel de deuda.",
+    },
+    "net_debt_to_ebitda": {
+        "label": "Deuda neta/EBITDA",
+        "help": "Deuda a largo plazo menos caja, dividido entre EBITDA. Mide en cuántos años de beneficio operativo "
+                "bruto podría la empresa pagar toda su deuda neta — cuanto más bajo, menos apalancada.",
+    },
+    "shares_outstanding": {
+        "label": "Nº de acciones",
+        "help": "Acciones en circulación conocidas en la fecha consultada — se usa junto al precio para calcular "
+                "la capitalización de mercado de esa fecha, sin usar el nº de acciones de hoy.",
+    },
+    "fundamentals_period_end": {
+        "label": "Cierre del ejercicio usado",
+        "help": "Fecha de cierre del último ejercicio fiscal anual (10-K) que ya se conocía en la fecha consultada "
+                "— el origen de ROIC, márgenes y crecimiento de esa fila.",
     },
     "roe": {
         "label": "ROE (%)",
@@ -96,8 +146,10 @@ METRIC_INFO = {
                 "CAPEX) en los últimos 3 años fiscales completos, según los 10-K oficiales en SEC EDGAR.",
     },
     "beta": {
-        "label": "Beta",
-        "help": "Volatilidad de la acción respecto al mercado en general. 1 = se mueve igual que el mercado; por encima de 1 = más volátil.",
+        "label": "Beta (Yahoo Finance)",
+        "help": "Volatilidad de la acción respecto al mercado en general, tal y como la calcula Yahoo Finance (metodología "
+                "no publicada). 1 = se mueve igual que el mercado; por encima de 1 = más volátil. Compárala con 'Beta "
+                "(vs S&P 500)', que es la que calcula GABI de forma transparente a partir del histórico cacheado.",
     },
     "price": {"label": "Precio", "help": "Último precio de cierre disponible."},
     "price_vs_sma50": {
@@ -124,25 +176,76 @@ METRIC_INFO = {
         "help": "La media móvil de 50 sesiones ha cruzado por encima de la de 200 en los últimos 20 días de mercado "
                 "— señal técnica alcista clásica.",
     },
+    "volatility": {
+        "label": "Volatilidad anualizada (%)",
+        "help": "Dispersión de los retornos diarios de la acción, anualizada. Más alta = movimientos de precio más "
+                "bruscos (más riesgo), en ambas direcciones.",
+    },
+    "max_drawdown": {
+        "label": "Máximo drawdown (%)",
+        "help": "Mayor caída desde un máximo hasta un mínimo posterior en el histórico de precios cacheado. Cuanto "
+                "más cerca de 0%, menor ha sido la peor caída.",
+    },
+    "sharpe_ratio": {
+        "label": "Sharpe Ratio",
+        "help": "Retorno anualizado por encima del tipo libre de riesgo, dividido entre la volatilidad total. Cuanto "
+                "más alto, mejor retorno por cada unidad de riesgo asumido.",
+    },
+    "sortino_ratio": {
+        "label": "Sortino Ratio",
+        "help": "Como el Sharpe Ratio, pero solo penaliza la volatilidad a la baja (las subidas fuertes no cuentan "
+                "como 'riesgo'). Más alto = mejor.",
+    },
+    "beta_calc": {
+        "label": "Beta (vs S&P 500)",
+        "help": "Sensibilidad del precio de la acción a los movimientos del S&P 500, calculada por GABI a partir del "
+                "histórico cacheado (no es el beta de Yahoo Finance). 1 = se mueve igual que el mercado; >1 = más "
+                "volátil que el mercado; <1 = más defensiva.",
+    },
+    "alpha": {
+        "label": "Alpha anualizado (%)",
+        "help": "Retorno de la acción por encima de lo que explicaría su beta frente al S&P 500 (modelo CAPM). "
+                "Positivo = ha batido a lo que le 'correspondía' dado su riesgo de mercado.",
+    },
+    "win_rate_monthly": {
+        "label": "Win rate mensual (%)",
+        "help": "Porcentaje de meses con retorno positivo en el histórico de precios cacheado.",
+    },
+    "dividend_yield": {
+        "label": "Rentabilidad por dividendo (%)",
+        "help": "Dividendo anual entre precio de la acción. 0% no es necesariamente malo: muchas empresas de "
+                "crecimiento reinvierten el beneficio en vez de repartir dividendo.",
+    },
+    "avg_volume": {
+        "label": "Volumen medio diario (3M)",
+        "help": "Número medio de acciones negociadas al día en los últimos 3 meses — indicador de liquidez: cuanto "
+                "más alto, más fácil entrar y salir de la posición sin mover el precio.",
+    },
     "value_score": {
         "label": "Value",
-        "help": "Score 0-100 de lo barata que está la empresa frente al resto del universo analizado (PER, PEG, P/VC, "
-                "P/Ventas, EV/EBITDA). 100 = la más barata del universo.",
+        "help": "Score 0-100 de lo barata que está la empresa frente a otras de su sector (PER, PEG, P/VC, "
+                "P/Ventas, EV/EBITDA). 100 = la más barata de su sector.",
     },
     "quality_score": {
         "label": "Quality",
-        "help": "Score 0-100 de la calidad de los fundamentales frente al resto del universo (rentabilidad, márgenes, "
-                "deuda, crecimiento). 100 = los mejores fundamentales del universo.",
+        "help": "Score 0-100 de la calidad de los fundamentales frente a otras de su sector (rentabilidad, ROIC, "
+                "márgenes, crecimiento). 100 = los mejores fundamentales de su sector.",
     },
     "momentum_score": {
         "label": "Momentum",
-        "help": "Score 0-100 de las señales técnicas de tendencia alcista frente al resto del universo (medias móviles, "
-                "RSI, fuerza relativa). 100 = el momentum más fuerte del universo.",
+        "help": "Score 0-100 de las señales técnicas de tendencia alcista frente a otras de su sector (medias móviles, "
+                "RSI, fuerza relativa). 100 = el momentum más fuerte de su sector.",
+    },
+    "risk_score": {
+        "label": "Risk",
+        "help": "Score 0-100 de lo poco arriesgada que es la empresa frente a otras de su sector (deuda, volatilidad, "
+                "máximo drawdown, Sharpe, Sortino). 100 = la más 'segura' de su sector — no confundir con mejor "
+                "retorno esperado, solo menor riesgo.",
     },
     "composite_score": {
         "label": "Composite",
-        "help": "Media ponderada de Value, Quality y Momentum según los pesos configurados. Es el score final usado para "
-                "ordenar el ranking.",
+        "help": "Media ponderada de Value, Quality, Momentum y Risk según los pesos configurados. Es el score final "
+                "usado para ordenar el ranking.",
     },
 }
 
@@ -153,6 +256,7 @@ FRACTION_COLUMNS = {
     "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
     "revenue_cagr_3y", "fcf_cagr_3y",
     "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
+    "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield",
 }
 
 # Las 11 categorías estándar GICS (fuente: universe.py).
@@ -170,7 +274,7 @@ SECTOR_ES = {
     "Materials": "Materiales",
 }
 
-SCORE_COLUMNS = {"value_score", "quality_score", "momentum_score", "composite_score"}
+SCORE_COLUMNS = {"value_score", "quality_score", "momentum_score", "risk_score", "composite_score"}
 
 
 def translate_sector(sector_en):
@@ -187,6 +291,10 @@ def format_metric_value(metric: str, value) -> str:
         return "Sí" if value else "No"
     if metric == "market_cap":
         return f"{value / 1e9:.1f} mil M$"
+    if metric in ("avg_volume", "shares_outstanding"):
+        return f"{value / 1e6:.1f}M acciones" + ("/día" if metric == "avg_volume" else "")
+    if metric == "fundamentals_period_end":
+        return str(value)
     if metric in FRACTION_COLUMNS:
         return f"{value * 100:.1f}%"
     return f"{value:.2f}"

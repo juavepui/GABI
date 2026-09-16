@@ -69,6 +69,70 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
     return failed
 
 
+def _fetch_splits_one(symbol: str) -> dict:
+    splits = yf.Ticker(normalize_symbol(symbol)).splits
+    if splits is None or splits.empty:
+        return {}
+    return {d.strftime("%Y-%m-%d"): float(r) for d, r in splits.items()}
+
+
+def fetch_splits_batch(symbols: list, max_workers: int = 6) -> dict:
+    """Descarga y cachea el historial de splits (desdoblamientos de acciones)
+    de cada símbolo. yfinance devuelve el precio siempre ajustado por splits
+    (haya o no auto_adjust) — sin este historial, calcular la capitalización
+    de una fecha anterior a un split posterior con el nº de acciones real de
+    esa fecha (SEC EDGAR, sin ajustar) sale sistemáticamente mal (comprobado:
+    salía ~4 veces por debajo en un caso real con Apple)."""
+    failed = {}
+    if not symbols:
+        return failed
+    with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futures = {ex.submit(_fetch_splits_one, s): s for s in symbols}
+        for fut in cf.as_completed(futures):
+            sym = futures[fut]
+            try:
+                storage.upsert_splits(sym, fut.result())
+            except Exception as exc:
+                _, reason = _classify_error(exc)
+                failed[sym] = reason
+    return failed
+
+
+def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) -> dict:
+    """Se asegura de que el histórico de precios llegue al menos hasta
+    as_of_date para los símbolos dados. El refresco normal (ensure_universe_data)
+    solo pide 2 años porque es lo que necesitan momentum/riesgo del screener en
+    vivo; para reconstruir una fecha antigua (screener_asof) hace falta mucho
+    más — aquí se pide 'max' (todo el histórico que dé yfinance), pero SOLO
+    para los símbolos que no lleguen ya tan atrás, no para todos: pedir 'max'
+    a las ~500 empresas en cada refresco normal sería mucho más lento y
+    pesado de almacenar para un caso de uso (consultar el pasado) que se usa
+    ocasionalmente, no en cada sesión."""
+    need_deep_fetch = [s for s in symbols if storage.get_price_as_of(s, as_of_date) is None]
+    if not need_deep_fetch:
+        return {"deep_fetched": 0, "already_covered": len(symbols), "failed": {}}
+
+    failed = {}
+    batch_size = 50  # yf.download con 'period=max' es más pesado; lotes moderados
+    for i in range(0, len(need_deep_fetch), batch_size):
+        batch = need_deep_fetch[i:i + batch_size]
+        failed.update(fetch_prices_batch(batch, period="max"))
+        if progress_cb:
+            progress_cb(min(i + batch_size, len(need_deep_fetch)), len(need_deep_fetch), batch[-1])
+
+    # Splits: necesarios para poder calcular capitalización/múltiplos de esta
+    # fecha correctamente (ver fetch_splits_batch). No se cuentan como fallo
+    # aparte porque son secundarios al precio en sí — si fallan, el precio
+    # sigue estando disponible, solo la capitalización quedará sin corregir.
+    fetch_splits_batch([s for s in need_deep_fetch if s not in failed])
+
+    return {
+        "deep_fetched": len(need_deep_fetch) - len(failed),
+        "already_covered": len(symbols) - len(need_deep_fetch),
+        "failed": failed,
+    }
+
+
 def _fetch_fundamentals_attempt(symbol: str):
     t = yf.Ticker(normalize_symbol(symbol))
     info = t.info or {}

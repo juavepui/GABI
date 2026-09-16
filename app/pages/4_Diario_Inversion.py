@@ -8,7 +8,6 @@ import streamlit as st
 
 from gabi import journal, storage
 
-st.set_page_config(page_title="Diario de inversión — GABI", page_icon="📓", layout="wide")
 st.title("📓 Diario de inversión")
 st.markdown(
     "Antes de invertir, escribe tu tesis: por qué compras, a qué precio, qué esperas que pase "

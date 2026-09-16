@@ -10,7 +10,6 @@ import streamlit as st
 from gabi import ai_prompt, config, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, format_metric_value, gradient_style, translate_sector
 
-st.set_page_config(page_title="Ficha de empresa — GABI", page_icon="🔍", layout="wide")
 st.title("🔍 Ficha de empresa")
 
 uni = screener.get_universe(limit=None)
@@ -22,19 +21,28 @@ if df.empty:
     st.stop()
 
 default_symbol = st.session_state.get("selected_symbol", df.index[0])
+
+
+def _label(sym):
+    return f"{sym} — {df.loc[sym, 'name']}" if pd.notna(df.loc[sym, "name"]) else sym
+
+
 symbol = st.selectbox(
     "Empresa", df.index.tolist(),
     index=df.index.get_loc(default_symbol) if default_symbol in df.index else 0,
+    format_func=_label,
+    help="Busca por ticker o por nombre de la empresa.",
 )
 st.session_state["selected_symbol"] = symbol
 
 row = df.loc[symbol]
 
-col_a, col_b, col_c, col_d = st.columns(4)
+col_a, col_b, col_c, col_d, col_e = st.columns(5)
 col_a.metric("Composite", f"{row['composite_score']:.1f}" if pd.notna(row["composite_score"]) else "—", help=METRIC_INFO["composite_score"]["help"])
 col_b.metric("Value", f"{row['value_score']:.1f}" if pd.notna(row["value_score"]) else "—", help=METRIC_INFO["value_score"]["help"])
 col_c.metric("Quality", f"{row['quality_score']:.1f}" if pd.notna(row["quality_score"]) else "—", help=METRIC_INFO["quality_score"]["help"])
 col_d.metric("Momentum", f"{row['momentum_score']:.1f}" if pd.notna(row["momentum_score"]) else "—", help=METRIC_INFO["momentum_score"]["help"])
+col_e.metric("Risk", f"{row['risk_score']:.1f}" if pd.notna(row["risk_score"]) else "—", help=METRIC_INFO["risk_score"]["help"])
 
 sector_es = translate_sector(row.get("sector")) or "Sector desconocido"
 title_col, action_col = st.columns([4, 1])
@@ -62,6 +70,21 @@ if not price_df.empty:
     )
 else:
     st.info("Sin histórico de precios cacheado para esta empresa todavía.")
+
+st.divider()
+st.subheader("📐 Otras métricas (informativas, no puntuadas)")
+st.caption(
+    "No entran en el Composite Score — contexto adicional inspirado en las métricas típicas de "
+    "análisis de carteras (Sharpe, Sortino, beta...) aplicadas a esta empresa concreta."
+)
+info_metrics = ["beta_calc", "alpha", "win_rate_monthly", "beta", "dividend_yield", "avg_volume"]
+info_cols = st.columns(3)
+for i, key in enumerate(info_metrics):
+    col = info_cols[i % 3]
+    col.metric(
+        METRIC_INFO[key]["label"], format_metric_value(key, row.get(key)),
+        help=METRIC_INFO[key]["help"],
+    )
 
 has_10k = pd.notna(row.get("latest_10k_url"))
 has_10q = pd.notna(row.get("latest_10q_url"))

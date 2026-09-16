@@ -7,7 +7,6 @@ import streamlit as st
 
 from gabi import config, macro
 
-st.set_page_config(page_title="Panel Macro — GABI", page_icon="🌐", layout="wide")
 st.title("🌐 Panel macro")
 st.caption(
     "Contexto para tus tesis del Diario de inversión — no se usa (todavía) en el score, porque saber "

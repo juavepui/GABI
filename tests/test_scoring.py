@@ -34,6 +34,10 @@ def _sample_df():
             "rel_strength_6m": [0.08, 0.0, -0.08],
             "rsi14": [60.0, 55.0, 30.0],
             "golden_cross_recent": [True, False, False],
+            "volatility": [0.15, 0.25, 0.40],
+            "max_drawdown": [-0.10, -0.25, -0.45],
+            "sharpe_ratio": [1.5, 0.8, -0.2],
+            "sortino_ratio": [2.0, 1.0, -0.3],
         },
         index=["AAA", "BBB", "CCC"],
     )
@@ -80,6 +84,20 @@ def test_missing_metrics_produce_nan_not_crash():
     assert df.loc["AAA", "composite_score"] == df.loc["AAA", "composite_score"]  # no es NaN
 
 
+def test_row_with_no_momentum_data_keeps_nan_composite_not_fake_zero():
+    # Una fila sin ningún dato de precio (technicals.compute_technicals no
+    # se llegó a ejecutar) no debe recibir momentum_score=0 solo porque
+    # golden_cross_recent también sale NaN -> False. Bug real: el bonus de
+    # golden cross usaba fillna(0) sin comprobar si había momentum_score.
+    df_raw = pd.DataFrame(
+        {"pe": [10, np.nan], "golden_cross_recent": [True, np.nan]},
+        index=["AAA", "SINDATOS"],
+    )
+    df = scoring.build_scores(df_raw)
+    assert pd.isna(df.loc["SINDATOS", "momentum_score"])
+    assert pd.isna(df.loc["SINDATOS", "composite_score"])
+
+
 def test_explain_row_returns_metric_table():
     df = scoring.build_scores(_sample_df())
     breakdown = scoring.explain_row(df, "AAA")
@@ -105,6 +123,34 @@ def test_sector_relative_percentile_compares_within_sector():
     # dentro de cada sector la coloca mejor: exactamente lo que se pedía
     # (no comparar el EV/EBITDA de un semiconductor con el de una aseguradora).
     assert df.loc["T0", "pe_pct"] > df.loc["U9", "pe_pct"]
+
+
+def test_lowest_risk_company_gets_highest_risk_score():
+    df = scoring.build_scores(_sample_df())
+    assert df.loc["AAA", "risk_score"] > df.loc["CCC", "risk_score"]
+
+
+def test_debt_to_equity_affects_risk_not_quality():
+    assert "debt_to_equity" in scoring.RISK_METRICS_LOWER_BETTER
+    assert "debt_to_equity" not in scoring.QUALITY_METRICS_HIGHER_BETTER
+
+    df_raw = _sample_df()
+    # AAA y BBB idénticas en todo salvo deuda: AAA con menos deuda.
+    df_raw.loc["BBB"] = df_raw.loc["AAA"]
+    df_raw.loc["BBB", "debt_to_equity"] = 500.0  # mucha más deuda que AAA (20.0)
+    df = scoring.build_scores(df_raw)
+
+    assert df.loc["AAA", "quality_score"] == df.loc["BBB", "quality_score"]
+    assert df.loc["AAA", "risk_score"] > df.loc["BBB", "risk_score"]
+
+
+def test_composite_uses_four_blocks_including_risk():
+    df_raw = _sample_df()
+    only_risk = scoring.build_scores(
+        df_raw, weights={"value": 0.0, "quality": 0.0, "momentum": 0.0, "risk": 1.0},
+    )
+    assert only_risk.index[0] == "AAA"  # AAA es la de menor riesgo
+    assert (only_risk["composite_score"] == only_risk["risk_score"]).all()
 
 
 def test_small_sector_group_falls_back_to_global_percentile():

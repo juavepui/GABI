@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from gabi import edgar
@@ -133,6 +135,229 @@ def test_extract_instant_values_handles_balance_sheet_facts_without_start():
     }
     series = edgar._extract_instant_values(facts, edgar.EQUITY_TAGS)
     assert series == [("2021-12-31", 500), ("2022-12-31", 600)]
+
+
+def test_extract_raw_facts_keeps_everything_unfiltered():
+    # A diferencia de _extract_annual_values, esto NO debe descartar
+    # trimestres, restataciones repetidas del mismo periodo, ni nada: es la
+    # capa de ingesta "solo datos limpios y auditables", sin interpretar.
+    facts = {
+        "facts": {
+            "us-gaap": {
+                "Revenues": {
+                    "units": {
+                        "USD": [
+                            {"start": "2016-10-01", "end": "2016-12-31", "val": 50_000,
+                             "form": "10-K", "fp": "FY", "fy": 2016, "filed": "2017-02-01", "accn": "0001-16-A"},
+                            {"start": "2016-01-01", "end": "2016-12-31", "val": 200_000,
+                             "form": "10-K", "fp": "FY", "fy": 2016, "filed": "2017-02-01", "accn": "0001-16-B"},
+                            # Misma partida re-presentada (restated) en el 10-K del año siguiente.
+                            {"start": "2016-01-01", "end": "2016-12-31", "val": 201_500,
+                             "form": "10-K", "fp": "FY", "fy": 2017, "filed": "2018-02-01", "accn": "0001-17-A"},
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    rows = edgar._extract_raw_facts(facts, edgar.REVENUE_TAGS)
+    assert len(rows) == 3  # nada descartado, ni el trimestre ni la restatación
+    accns = {r["accn"] for r in rows}
+    assert accns == {"0001-16-A", "0001-16-B", "0001-17-A"}
+    assert all(r["filed_date"] for r in rows)
+
+
+def test_extract_raw_facts_skips_entries_without_accession_number():
+    facts = {
+        "facts": {
+            "us-gaap": {
+                "NetIncomeLoss": {
+                    "units": {"USD": [{"start": "2016-01-01", "end": "2016-12-31", "val": 100, "form": "10-K", "fp": "FY"}]}
+                }
+            }
+        }
+    }
+    assert edgar._extract_raw_facts(facts, edgar.NET_INCOME_TAGS) == []
+
+
+def test_upsert_and_get_edgar_facts_roundtrip(tmp_path, monkeypatch):
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    rows = [
+        {"tag": "Revenues", "unit": "USD", "start_date": "2018-01-01", "end_date": "2018-12-31",
+         "val": 1000.0, "form": "10-K", "fp": "FY", "fy": 2018, "filed_date": "2019-02-01", "accn": "acc-1"},
+        {"tag": "NetIncomeLoss", "unit": "USD", "start_date": "2018-01-01", "end_date": "2018-12-31",
+         "val": 100.0, "form": "10-K", "fp": "FY", "fy": 2018, "filed_date": "2019-02-01", "accn": "acc-2"},
+    ]
+    edgar.upsert_edgar_facts("ACME", rows)
+
+    all_facts = edgar.get_edgar_facts("ACME")
+    assert len(all_facts) == 2
+
+    only_revenue = edgar.get_edgar_facts("ACME", tags=["Revenues"])
+    assert len(only_revenue) == 1
+    assert only_revenue.iloc[0]["val"] == 1000.0
+
+    # Re-insertar los mismos hechos (misma clave) no debe duplicar filas.
+    edgar.upsert_edgar_facts("ACME", rows)
+    assert len(edgar.get_edgar_facts("ACME")) == 2
+
+
+def test_get_value_as_of_avoids_look_ahead_bias(tmp_path, monkeypatch):
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    # El resultado FY2018 (100) se presenta el 2019-02-01; una restatación
+    # posterior (110) se presenta el 2020-02-01, dentro del 10-K de FY2019.
+    rows = [
+        {"tag": "NetIncomeLoss", "unit": "USD", "start_date": "2018-01-01", "end_date": "2018-12-31",
+         "val": 100.0, "form": "10-K", "fp": "FY", "fy": 2018, "filed_date": "2019-02-01", "accn": "acc-1"},
+        {"tag": "NetIncomeLoss", "unit": "USD", "start_date": "2018-01-01", "end_date": "2018-12-31",
+         "val": 110.0, "form": "10-K", "fp": "FY", "fy": 2019, "filed_date": "2020-02-01", "accn": "acc-2"},
+    ]
+    edgar.upsert_edgar_facts("ACME", rows)
+
+    # Antes de que se presentara nada: no había dato disponible todavía.
+    assert edgar.get_value_as_of("ACME", ["NetIncomeLoss"], "2019-01-01") is None
+    # Justo tras la primera presentación: el valor original, no la revisión futura.
+    assert edgar.get_value_as_of("ACME", ["NetIncomeLoss"], "2019-06-01") == 100.0
+    # Tras la restatación: ya se conoce el valor revisado.
+    assert edgar.get_value_as_of("ACME", ["NetIncomeLoss"], "2020-06-01") == 110.0
+
+
+def test_compute_edgar_metrics_includes_margins_ebitda_and_net_debt():
+    def series(values, start_year=2019):
+        return {
+            "units": {
+                "USD": [
+                    _annual_entry(f"{start_year + i}-01-01", f"{start_year + i}-12-31", v)
+                    for i, v in enumerate(values)
+                ]
+            }
+        }
+
+    def instant_series(values, start_year=2019):
+        return {
+            "units": {
+                "USD": [
+                    {"end": f"{start_year + i}-12-31", "val": v, "form": "10-K", "fp": "FY"}
+                    for i, v in enumerate(values)
+                ]
+            }
+        }
+
+    facts = {
+        "facts": {
+            "us-gaap": {
+                "Revenues": series([1000, 1100]),
+                "NetIncomeLoss": series([100, 130]),
+                "NetCashProvidedByUsedInOperatingActivities": series([150, 170]),
+                "PaymentsToAcquirePropertyPlantAndEquipment": series([30, 35]),
+                "StockholdersEquity": instant_series([500, 560]),
+                "LongTermDebtNoncurrent": instant_series([200, 190]),
+                "GrossProfit": series([600, 660]),
+                "OperatingIncomeLoss": series([180, 200]),
+                "DepreciationDepletionAndAmortization": series([40, 45]),
+                "CashAndCashEquivalentsAtCarryingValue": instant_series([80, 90]),
+            }
+        }
+    }
+    m = edgar.compute_edgar_metrics(facts)
+
+    assert round(m["gross_margin"], 4) == round(660 / 1100, 4)
+    assert round(m["operating_margin"], 4) == round(200 / 1100, 4)
+    assert round(m["profit_margin"], 4) == round(130 / 1100, 4)
+    assert m["latest_ebitda"] == 200 + 45  # operating income + D&A
+    # deuda neta = deuda - caja = 190 - 90 = 100; ebitda = 245 -> ratio ~0.408
+    assert round(m["net_debt_to_ebitda"], 3) == round(100 / 245, 3)
+    assert round(m["revenue_growth_yoy"], 3) == round(1100 / 1000 - 1, 3)
+    assert round(m["earnings_growth_yoy"], 3) == round(130 / 100 - 1, 3)
+    assert m["latest_revenue"] == 1100
+    assert m["latest_period_end"] == "2020-12-31"
+
+
+def test_compute_edgar_metrics_as_of_matches_live_when_no_restatements(tmp_path, monkeypatch):
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    rows = [
+        {"tag": "Revenues", "unit": "USD", "start_date": "2019-01-01", "end_date": "2019-12-31",
+         "val": 1000.0, "form": "10-K", "fp": "FY", "fy": 2019, "filed_date": "2020-02-01", "accn": "a1"},
+        {"tag": "Revenues", "unit": "USD", "start_date": "2020-01-01", "end_date": "2020-12-31",
+         "val": 1200.0, "form": "10-K", "fp": "FY", "fy": 2020, "filed_date": "2021-02-01", "accn": "a2"},
+    ]
+    edgar.upsert_edgar_facts("ACME", rows)
+
+    # A fecha 2020-06-01 solo se conocía el ejercicio 2019 (el de 2020 se
+    # presentó en 2021-02-01) -> el 'último ingreso conocido' debe ser 1000,
+    # no 1200 (eso sería look-ahead bias).
+    m_2020 = edgar.compute_edgar_metrics_as_of("ACME", "2020-06-01")
+    assert m_2020["latest_revenue"] == 1000.0
+
+    m_2021 = edgar.compute_edgar_metrics_as_of("ACME", "2021-06-01")
+    assert m_2021["latest_revenue"] == 1200.0
+
+
+def test_get_shares_outstanding_as_of(tmp_path, monkeypatch):
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    rows = [
+        {"tag": "CommonStockSharesOutstanding", "unit": "shares", "start_date": "",
+         "end_date": "2019-12-31", "val": 1_000_000.0, "form": "10-K", "fp": "FY",
+         "fy": 2019, "filed_date": "2020-02-01", "accn": "a1"},
+        {"tag": "CommonStockSharesOutstanding", "unit": "shares", "start_date": "",
+         "end_date": "2020-12-31", "val": 900_000.0, "form": "10-K", "fp": "FY",
+         "fy": 2020, "filed_date": "2021-02-01", "accn": "a2"},
+    ]
+    edgar.upsert_edgar_facts("ACME", rows)
+
+    assert edgar.get_shares_outstanding_as_of("ACME", "2020-06-01") == 1_000_000.0
+    assert edgar.get_shares_outstanding_as_of("ACME", "2021-06-01") == 900_000.0
+    assert edgar.get_shares_outstanding_as_of("ACME", "2019-01-01") is None
+
+
+def test_get_cik_for_symbol_prefers_live_map_and_remembers_it(tmp_path, monkeypatch):
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    cik_map = pd.DataFrame([{"symbol": "AAA", "cik": "0000000001", "title": "Acme Corp"}])
+    cik, title = edgar.get_cik_for_symbol("AAA", cik_map=cik_map)
+    assert (cik, title) == ("0000000001", "Acme Corp")
+
+    # Debe haber quedado recordado localmente aunque ya no esté en un mapeo en vivo futuro.
+    empty_live_map = pd.DataFrame(columns=["symbol", "cik", "title"])
+    cik2, title2 = edgar.get_cik_for_symbol("AAA", cik_map=empty_live_map)
+    assert (cik2, title2) == ("0000000001", "Acme Corp")
+
+
+def test_get_cik_for_symbol_returns_none_when_never_resolved(tmp_path, monkeypatch):
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    empty_live_map = pd.DataFrame(columns=["symbol", "cik", "title"])
+    assert edgar.get_cik_for_symbol("NUNCA", cik_map=empty_live_map) == (None, None)
+
+
+def test_get_resolved_title_surfaces_ticker_recycling_risk(tmp_path, monkeypatch):
+    # No "arregla" el reciclaje (ver comentario en RESOLUTIONS_SCHEMA): el
+    # objetivo es que el nombre resuelto quede disponible para que la UI lo
+    # muestre y el usuario pueda notar que "APC" ya no es la empresa que él
+    # recuerda de 2019.
+    from gabi import config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+
+    cik_map = pd.DataFrame([{"symbol": "APC", "cik": "0002080921", "title": "ARKO Petroleum Corp."}])
+    edgar.get_cik_for_symbol("APC", cik_map=cik_map)
+    assert edgar.get_resolved_title("APC") == "ARKO Petroleum Corp."
 
 
 def test_extract_latest_filings_builds_correct_url():

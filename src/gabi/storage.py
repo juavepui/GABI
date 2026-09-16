@@ -22,6 +22,12 @@ CREATE TABLE IF NOT EXISTS fundamentals (
     quarterly_income_json TEXT NOT NULL,
     quarterly_cashflow_json TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS splits (
+    symbol TEXT NOT NULL,
+    date TEXT NOT NULL,
+    ratio REAL NOT NULL,
+    PRIMARY KEY (symbol, date)
+);
 """
 
 
@@ -114,6 +120,54 @@ def get_prices_multi(symbols: list) -> dict:
     for sym, group in df.groupby("symbol"):
         result[sym] = group.drop(columns=["symbol"]).set_index("date")
     return result
+
+
+def get_price_as_of(symbol: str, as_of_date: str):
+    """Precio de cierre más reciente en/antes de as_of_date (YYYY-MM-DD) —
+    el de ese día si es sesión de mercado, si no el de la sesión anterior
+    más cercana. None si no hay precio cacheado tan atrás en el tiempo (el
+    histórico de precios solo cubre ~2 años desde la última actualización,
+    así que fechas más antiguas pueden no tener dato disponible)."""
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        row = conn.execute(
+            "SELECT close FROM prices WHERE symbol = ? AND date <= ? ORDER BY date DESC LIMIT 1",
+            (symbol, as_of_date),
+        ).fetchone()
+    return float(row[0]) if row and row[0] is not None else None
+
+
+def upsert_splits(symbol: str, splits: dict):
+    """splits: {fecha_iso: ratio} — ej. {'2020-08-31': 4.0} para un split 4:1."""
+    if not splits:
+        return
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        conn.executemany(
+            "INSERT OR REPLACE INTO splits (symbol, date, ratio) VALUES (?,?,?)",
+            [(symbol, d, r) for d, r in splits.items()],
+        )
+        conn.commit()
+
+
+def get_split_factor_since(symbol: str, as_of_date: str) -> float:
+    """Producto de todos los splits de `symbol` ocurridos DESPUÉS de
+    as_of_date. yfinance devuelve el precio siempre ajustado por splits
+    (con o sin auto_adjust) — para calcular la capitalización de una fecha
+    pasada con el nº de acciones REAL de esa fecha (sin ajustar, tal y como
+    lo reporta SEC EDGAR), hay que multiplicar el precio ajustado por este
+    factor para deshacer los splits posteriores a esa fecha. 1.0 si no hubo
+    ningún split después (o no hay splits registrados)."""
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        rows = conn.execute(
+            "SELECT ratio FROM splits WHERE symbol = ? AND date > ?", (symbol, as_of_date),
+        ).fetchall()
+    factor = 1.0
+    for (ratio,) in rows:
+        if ratio:
+            factor *= ratio
+    return factor
 
 
 def get_latest_price_date(symbols: list = None):

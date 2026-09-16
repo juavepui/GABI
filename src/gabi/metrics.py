@@ -71,4 +71,6 @@ def compute_fundamental_metrics(fundamentals_record: dict) -> dict:
         "revenue_growth_ttm_yoy": _revenue_growth_from_quarterly(qi),
         "free_cashflow": info.get("freeCashflow"),
         "beta": info.get("beta"),
+        "dividend_yield": info.get("trailingAnnualDividendYield"),
+        "avg_volume": info.get("averageDailyVolume3Month"),
     }

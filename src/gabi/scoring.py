@@ -9,12 +9,16 @@ QUALITY_METRICS_HIGHER_BETTER = [
     "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
     "revenue_cagr_3y", "fcf_cagr_3y", "current_ratio",
 ]
-QUALITY_METRICS_LOWER_BETTER = ["debt_to_equity"]
 MOMENTUM_METRICS_HIGHER_BETTER = [
     "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
 ]
+# Deuda, volatilidad y drawdown viven en Risk, no en Quality: cuánta deuda
+# lleva o cuánto se mueve una empresa es un rasgo de riesgo, no de calidad
+# del negocio en sí.
+RISK_METRICS_LOWER_BETTER = ["debt_to_equity", "volatility"]
+RISK_METRICS_HIGHER_BETTER = ["max_drawdown", "sharpe_ratio", "sortino_ratio"]
 
-DEFAULT_WEIGHTS = {"value": 0.35, "quality": 0.35, "momentum": 0.30}
+DEFAULT_WEIGHTS = {"value": 0.30, "quality": 0.35, "momentum": 0.25, "risk": 0.10}
 
 # Nº mínimo de empresas del mismo sector con dato para esa métrica antes de
 # fiarse del percentil sectorial. Por debajo de esto (típico en universos de
@@ -36,13 +40,21 @@ def _percentile_within_sector(
     """Percentil de cada empresa dentro de su propio sector GICS, en vez de
     contra todo el universo: el EV/EBITDA de un fabricante de semiconductores
     no es comparable al de una aseguradora. Si el sector tiene muy pocas
-    empresas con dato, cae de vuelta al percentil sobre todo el universo."""
+    empresas con dato, cae de vuelta al percentil sobre todo el universo —
+    igual que si el sector es directamente desconocido (NaN), típico de
+    empresas ya deslistadas en un ranking histórico (screener_asof.py), para
+    las que no hay fuente gratuita de sector histórico."""
     global_pct = _percentile(df[col], higher_is_better)
     if "sector" not in df.columns:
         return global_pct
-    group_sizes = df.groupby("sector")[col].transform(lambda s: s.notna().sum())
-    within_pct = df.groupby("sector")[col].transform(lambda s: _percentile(s, higher_is_better))
-    return within_pct.where(group_sizes >= min_group_size, global_pct)
+    # reindex explícito: si TODAS las filas de un grupo tienen sector NaN,
+    # pandas (dropna=True por defecto en groupby) devuelve una Series vacía
+    # en vez de una alineada con NaN — sin este reindex, el .where() de abajo
+    # compararía índices desalineados y el resultado saldría NaN para todo.
+    group_sizes = df.groupby("sector")[col].transform(lambda s: s.notna().sum()).reindex(df.index)
+    within_pct = df.groupby("sector")[col].transform(lambda s: _percentile(s, higher_is_better)).reindex(df.index)
+    use_global = group_sizes.isna() | (group_sizes < min_group_size)
+    return within_pct.where(~use_global, global_pct)
 
 
 def add_percentile_columns(
@@ -89,8 +101,9 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
 
     df = add_percentile_columns(df, VALUE_METRICS_LOWER_BETTER, higher_is_better=False)
     df = add_percentile_columns(df, QUALITY_METRICS_HIGHER_BETTER, higher_is_better=True)
-    df = add_percentile_columns(df, QUALITY_METRICS_LOWER_BETTER, higher_is_better=False)
     df = add_percentile_columns(df, MOMENTUM_METRICS_HIGHER_BETTER, higher_is_better=True)
+    df = add_percentile_columns(df, RISK_METRICS_LOWER_BETTER, higher_is_better=False)
+    df = add_percentile_columns(df, RISK_METRICS_HIGHER_BETTER, higher_is_better=True)
 
     momentum_pct_cols = [c + "_pct" for c in MOMENTUM_METRICS_HIGHER_BETTER]
     if "rsi14" in df.columns:
@@ -100,18 +113,29 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
         momentum_pct_cols.append("rsi14_pct")
 
     value_pct_cols = [c + "_pct" for c in VALUE_METRICS_LOWER_BETTER]
-    quality_pct_cols = [c + "_pct" for c in QUALITY_METRICS_HIGHER_BETTER + QUALITY_METRICS_LOWER_BETTER]
+    quality_pct_cols = [c + "_pct" for c in QUALITY_METRICS_HIGHER_BETTER]
+    risk_pct_cols = [c + "_pct" for c in RISK_METRICS_LOWER_BETTER + RISK_METRICS_HIGHER_BETTER]
 
     df["value_score"] = compute_block_score(df, value_pct_cols)
     df["quality_score"] = compute_block_score(df, quality_pct_cols)
     df["momentum_score"] = compute_block_score(df, momentum_pct_cols)
+    df["risk_score"] = compute_block_score(df, risk_pct_cols)
 
     if "golden_cross_recent" in df.columns:
+        # Solo se suma el bonus donde YA hay momentum_score real: un
+        # fillna(0) sin esta guarda convertiría "sin datos de precio" (NaN)
+        # en "peor momentum posible" (0) de forma silenciosa.
+        has_momentum = df["momentum_score"].notna()
         bonus = df["golden_cross_recent"].fillna(False).astype(bool).map({True: 5.0, False: 0.0})
-        df["momentum_score"] = (df["momentum_score"].fillna(0) + bonus).clip(upper=100)
+        df.loc[has_momentum, "momentum_score"] = (
+            df.loc[has_momentum, "momentum_score"] + bonus[has_momentum]
+        ).clip(upper=100)
 
-    w = np.array([weights.get("value", 0), weights.get("quality", 0), weights.get("momentum", 0)])
-    block_values = df[["value_score", "quality_score", "momentum_score"]].to_numpy(dtype=float)
+    w = np.array([
+        weights.get("value", 0), weights.get("quality", 0),
+        weights.get("momentum", 0), weights.get("risk", 0),
+    ])
+    block_values = df[["value_score", "quality_score", "momentum_score", "risk_score"]].to_numpy(dtype=float)
     df["composite_score"] = [
         _weighted_row_mean(row, w) for row in block_values
     ]
@@ -127,7 +151,7 @@ def explain_row(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
     row = df.loc[symbol]
     all_metric_cols = (
         VALUE_METRICS_LOWER_BETTER + QUALITY_METRICS_HIGHER_BETTER
-        + QUALITY_METRICS_LOWER_BETTER + MOMENTUM_METRICS_HIGHER_BETTER
+        + MOMENTUM_METRICS_HIGHER_BETTER + RISK_METRICS_LOWER_BETTER + RISK_METRICS_HIGHER_BETTER
     )
     records = []
     for col in all_metric_cols:
