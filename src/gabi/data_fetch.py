@@ -48,7 +48,7 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
     try:
         data = yf.download(
             tickers, period=period, interval="1d", group_by="ticker",
-            threads=True, auto_adjust=True, progress=False,
+            threads=True, auto_adjust=False, progress=False,
         )
     except Exception as exc:
         _, reason = _classify_error(exc)
@@ -56,10 +56,17 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
 
     for orig, norm in zip(symbols, tickers):
         try:
-            if len(tickers) == 1:
+            if isinstance(data.columns, pd.MultiIndex):
+                if norm in data.columns.get_level_values(0):
+                    df = data[norm]
+                elif norm in data.columns.get_level_values(1):
+                    df = data.xs(norm, level=1, axis=1)
+                else:
+                    df = None
+            elif len(tickers) == 1:
                 df = data
             else:
-                df = data[norm] if norm in data.columns.get_level_values(0) else None
+                df = None
         except Exception:
             df = None
         if df is not None and not df.empty:
@@ -108,7 +115,7 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
     a las ~500 empresas en cada refresco normal sería mucho más lento y
     pesado de almacenar para un caso de uso (consultar el pasado) que se usa
     ocasionalmente, no en cada sesión."""
-    need_deep_fetch = [s for s in symbols if storage.get_price_as_of(s, as_of_date) is None]
+    need_deep_fetch = [s for s in symbols if not storage.has_verified_price_as_of(s, as_of_date)]
     if not need_deep_fetch:
         return {"deep_fetched": 0, "already_covered": len(symbols), "failed": {}}
 
@@ -131,6 +138,36 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
         "already_covered": len(symbols) - len(need_deep_fetch),
         "failed": failed,
     }
+
+
+def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
+    """Migra el caché de precios antiguo y refresca los símbolos desactualizados, para las decisiones de cartera."""
+    symbols = list(dict.fromkeys(symbols))
+    coverage = storage.get_price_coverage(symbols)
+    today = datetime.now(timezone.utc).date()
+    need = []
+    for symbol in symbols:
+        item = coverage.get(symbol, {})
+        latest = item.get("latest_adjusted_date")
+        stale = latest is None or (today - datetime.fromisoformat(latest).date()).days > 7
+        if item.get("adjusted_count", 0) < 126 or stale:
+            need.append(symbol)
+    failed = {}
+    for i in range(0, len(need), 40):
+        batch = need[i:i + 40]
+        failed.update(fetch_prices_batch(batch, period="2y"))
+        if progress_cb:
+            progress_cb(min(i + 40, len(need)), len(need))
+    updated = storage.get_price_coverage(need)
+    for symbol in need:
+        if symbol in failed:
+            continue
+        item = updated.get(symbol, {})
+        latest = item.get("latest_adjusted_date")
+        if (item.get("adjusted_count", 0) < 126 or latest is None
+                or (today - datetime.fromisoformat(latest).date()).days > 7):
+            failed[symbol] = "La descarga no aportó 126 cierres ajustados recientes"
+    return {"requested": len(need), "already_ready": len(symbols) - len(need), "failed": failed}
 
 
 def _fetch_fundamentals_attempt(symbol: str):
@@ -202,7 +239,9 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     price_symbols = symbols if config.BENCHMARK_SYMBOL in symbols else symbols + [config.BENCHMARK_SYMBOL]
 
     latest_price_date = storage.get_latest_price_date()
-    needs_price_refresh = force or latest_price_date is None or _is_stale_trading_day(latest_price_date)
+    needs_price_refresh = (force or latest_price_date is None or _is_stale_trading_day(latest_price_date)
+                           or (latest_price_date is not None and
+                               not storage.has_verified_price_as_of(config.BENCHMARK_SYMBOL, latest_price_date.isoformat())))
     price_failed = fetch_prices_batch(price_symbols) if needs_price_refresh else {}
 
     fetched_at = storage.get_fundamentals_fetched_at(symbols)

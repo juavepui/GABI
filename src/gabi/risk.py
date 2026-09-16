@@ -21,7 +21,12 @@ EMPTY_RESULT = {
 def _daily_returns(price_df: pd.DataFrame) -> pd.Series:
     if price_df is None or price_df.empty or "close" not in price_df:
         return pd.Series(dtype=float)
-    return price_df["close"].pct_change().dropna()
+    return _return_price(price_df).pct_change().dropna()
+
+
+def _return_price(price_df: pd.DataFrame) -> pd.Series:
+    column = "adj_close" if "adj_close" in price_df and price_df["adj_close"].notna().all() else "close"
+    return price_df[column]
 
 
 def _annualized_return(returns: pd.Series):
@@ -46,7 +51,7 @@ def _annualized_volatility(returns: pd.Series):
 def _max_drawdown(price_df: pd.DataFrame):
     if price_df is None or price_df.empty or "close" not in price_df:
         return None
-    close = price_df["close"].dropna()
+    close = _return_price(price_df).dropna()
     if close.empty:
         return None
     running_max = close.cummax()
@@ -77,10 +82,9 @@ def _sortino_ratio(returns: pd.Series, risk_free_rate: float):
     ann_return = _annualized_return(returns)
     if ann_return is None or returns.empty:
         return None
-    downside = returns[returns < 0]
-    if downside.empty:
-        return None
-    downside_dev = float(downside.std() * np.sqrt(TRADING_DAYS_PER_YEAR))
+    daily_target = (1 + risk_free_rate) ** (1 / TRADING_DAYS_PER_YEAR) - 1
+    shortfall = np.minimum(returns - daily_target, 0)
+    downside_dev = float(np.sqrt(np.mean(np.square(shortfall))) * np.sqrt(TRADING_DAYS_PER_YEAR))
     if not downside_dev:
         return None
     return (ann_return - risk_free_rate) / downside_dev
@@ -89,7 +93,7 @@ def _sortino_ratio(returns: pd.Series, risk_free_rate: float):
 def _monthly_win_rate(price_df: pd.DataFrame):
     if price_df is None or price_df.empty or "close" not in price_df:
         return None
-    monthly = price_df["close"].resample("ME").last().dropna()
+    monthly = _return_price(price_df).resample("ME").last().dropna()
     monthly_returns = monthly.pct_change().dropna()
     if monthly_returns.empty:
         return None

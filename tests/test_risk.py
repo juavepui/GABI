@@ -3,10 +3,19 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from gabi import risk
+
+
+def test_sortino_uses_all_sessions_and_risk_free_target():
+    returns = pd.Series([0.02, -0.01, 0.01, -0.02])
+    target = (1.04 ** (1 / risk.TRADING_DAYS_PER_YEAR)) - 1
+    downside = np.minimum(returns - target, 0)
+    expected = ((1 + returns).prod() ** (risk.TRADING_DAYS_PER_YEAR / len(returns)) - 1 - .04) / (np.sqrt(np.mean(downside ** 2)) * np.sqrt(risk.TRADING_DAYS_PER_YEAR))
+    assert risk._sortino_ratio(returns, .04) == pytest.approx(expected)
 
 
 def _price_df(prices):

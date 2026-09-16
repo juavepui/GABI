@@ -20,6 +20,11 @@ def test_empty_df_returns_empty_result():
     assert result["rsi14"] is None
 
 
+def test_rsi_flat_prices_are_neutral_and_short_history_is_unknown():
+    assert technicals.compute_technicals(_price_df([100] * 30))["rsi14"] == 50
+    assert technicals.compute_technicals(_price_df([100] * 5))["rsi14"] is None
+
+
 def test_uptrend_gives_positive_momentum_and_high_rsi():
     n = 400
     prices = np.linspace(50, 150, n)  # tendencia alcista sostenida

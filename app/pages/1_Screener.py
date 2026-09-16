@@ -1,11 +1,12 @@
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 import streamlit as st
 
-from gabi import config, screener
+from gabi import config, evaluation, screener
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("📊 Screener")
@@ -19,6 +20,7 @@ st.caption(
 DISPLAY_KEYS = [
     "name", "sector", "market_cap", "pe", "roe", "roic", "revenue_growth_yoy",
     "price", "price_vs_sma50", "rsi14", "volatility", "max_drawdown",
+    "metrics_available", "metrics_possible", "score_coverage",
     "value_score", "quality_score", "momentum_score", "risk_score", "composite_score",
 ]
 
@@ -89,6 +91,7 @@ if "sector" in filtered.columns:
         filtered = filtered[filtered["sector"].isin(selected_sectors)]
 
 st.caption(f"{len(filtered)} empresas (de {len(df)} en el universo analizado)")
+st.caption("Cobertura = métricas puntuables disponibles / 13. El score compuesto requiere al menos el 50 % y datos en Value, Quality y Momentum.")
 
 # --- Construcción de la tabla a mostrar: valores formateados + color por percentil ---
 present_keys = [k for k in DISPLAY_KEYS if k in filtered.columns]
@@ -105,7 +108,7 @@ for col in present_keys:
     if col not in ("name", "sector"):
         table[col] = table[col].round(2)
 
-label_map = {k: METRIC_INFO[k]["label"] for k in present_keys}
+label_map = {k: METRIC_INFO.get(k, {}).get("label", k.replace("_", " ").capitalize()) for k in present_keys}
 table.rename(columns=label_map, inplace=True)
 color_basis.rename(columns=label_map, inplace=True)
 color_basis = color_basis.reindex(index=table.index, columns=table.columns)
@@ -119,14 +122,38 @@ styled = table.style.apply(_apply_colors, axis=None)
 
 column_config = {}
 for key in present_keys:
-    label = METRIC_INFO[key]["label"]
-    help_text = METRIC_INFO[key]["help"]
+    label = label_map[key]
+    help_text = METRIC_INFO.get(key, {}).get("help", "Cobertura de las métricas utilizadas en el score.")
     if key in ("name", "sector"):
         column_config[label] = st.column_config.TextColumn(label, help=help_text)
     else:
         column_config[label] = st.column_config.NumberColumn(label, help=help_text, format="%.2f")
 
 st.dataframe(styled, width="stretch", height=500, column_config=column_config)
+
+st.subheader("Seguimiento de rankings")
+top_n = st.number_input("Número de candidatas", min_value=1, max_value=50, value=10)
+if st.button("Guardar ranking de hoy"):
+    snapshot_id = evaluation.save_snapshot(df, date.today().isoformat(), top_n=int(top_n))
+    if snapshot_id:
+        st.success(f"Ranking #{snapshot_id} guardado. Sus resultados se podrán revisar a 6 y 12 meses.")
+    else:
+        st.warning("No hay candidatas con cobertura suficiente.")
+snapshots = evaluation.list_snapshots()
+if not snapshots.empty:
+    selected_id = st.selectbox("Ranking guardado", snapshots["id"].tolist())
+    selected_row = snapshots[snapshots["id"] == selected_id].iloc[0]
+    st.caption(f"Fecha: {selected_row['as_of_date']} · {selected_row['candidates']} candidatas")
+    for months in (6, 12):
+        outcome = evaluation.evaluate(evaluation.snapshot_symbols(selected_id), selected_row["as_of_date"], months)
+        if outcome["status"] == "pending":
+            st.write(f"{months} meses: pendiente hasta {outcome['end_date']}")
+        else:
+            pf = f"{outcome['portfolio_return']:+.1%}" if outcome["portfolio_return"] is not None else "—"
+            spy = f"{outcome['benchmark_return']:+.1%}" if outcome["benchmark_return"] is not None else "—"
+            st.write(f"{months} meses: candidatas {pf} · SPY {spy} · cobertura {outcome['available']}/{outcome['requested']}")
+            if outcome["status"] == "incomplete":
+                st.caption("Resultado parcial: faltan precios para " + ", ".join(outcome["missing"]))
 
 st.divider()
 st.subheader("Ver ficha de una empresa")

@@ -54,6 +54,16 @@ streamlit run app/streamlit_app.py
    key de FRED, ver arriba).
 7. En **📓 Diario de inversión**, escribe tu tesis antes de invertir y
    revísala pasados unos meses.
+8. En **🧭 Decisiones de cartera**, introduce tus posiciones actuales como
+   `TICKER,porcentaje` y genera un plan de compra, mantenimiento o venta.
+9. En **🧪 Carteras simuladas**, crea varias carteras, añade compras/ventas
+   fechadas, compara cada resultado con SPY y prueba una estrategia de medias.
+
+Las operaciones simuladas usan `exchange_calendars` para seleccionar la primera
+sesión del mercado elegido desde la fecha indicada. Si falta esa cotización en el caché, la
+operación se detiene en vez de ejecutarse a un precio de otra sesión. Los
+resultados se calculan con cierres públicos y costes supuestos, sin conexión
+operativa con el bróker.
 
 Los datos se cachean en `data/gabi.db` (SQLite). Los fundamentales de Yahoo se
 consideran frescos 24h; los de SEC EDGAR, 7 días (cambian con cada 10-K/10-Q,
@@ -75,13 +85,105 @@ muestra pequeña. Esto permite combinar magnitudes muy distintas:
 - **Momentum** (¿hay señal de entrada alcista?): precio vs SMA50/SMA200, golden cross reciente, RSI14
   (zona sana 45-65), momentum a 6/12 meses, fuerza relativa vs SPY.
 - **Risk** (¿cuánto riesgo hay que asumir?): deuda/equity, volatilidad anualizada, máximo drawdown,
-  Sharpe Ratio, Sortino Ratio — todo calculado a partir del histórico de precios ya cacheado, sin
+  Sharpe Ratio, Sortino Ratio — calculados a partir del histórico de precios ya cacheado, sin
   fuente de datos nueva. Es el equivalente a nivel de una sola empresa de las métricas típicas de
-  análisis de carteras (Sharpe, Sortino, beta...); también se muestran de forma informativa (sin
-  puntuar) beta, alpha, win rate mensual, rentabilidad por dividendo y volumen medio.
+  análisis de carteras (Sharpe, Sortino, beta...); beta, alpha, win rate mensual,
+  rentabilidad por dividendo y volumen medio también se muestran como contexto.
 
 El **Composite Score** es la media ponderada de los cuatro bloques (pesos
 ajustables en la UI, por defecto Value 30 / Quality 35 / Momentum 25 / Risk 10).
+Para evitar contar varias veces señales muy correlacionadas, el score utiliza
+solo 13 métricas representativas: Value (PER, P/B, EV/EBITDA), Quality (ROIC,
+margen operativo, CAGR de ingresos y FCF), Momentum (12 meses, fuerza relativa
+a 6 meses, precio frente a SMA200) y Risk (deuda/equity, volatilidad y máximo
+drawdown). Las demás métricas se muestran como contexto, sin puntuar. Se muestra
+la cobertura de cada empresa; con menos del 50 % o sin algún dato en Value,
+Quality o Momentum, no se publica un Composite Score.
+
+El screener permite guardar el top de cada día. Cuando transcurren 6 o 12 meses,
+compara su rentabilidad total equiponderada con SPY y muestra la cobertura de
+precios. El ranking histórico permite explorar esa comparación para una fecha
+pasada y contrastar los cuatro bloques por separado. Una sola fecha no valida
+los pesos; harían falta varias fechas y una muestra posterior fuera del ajuste.
+
+## Decisiones de cartera y proyectos integrados
+
+GABI usa [PyPortfolioOpt](https://github.com/PyPortfolio/PyPortfolioOpt) para
+asignar pesos mediante mínima volatilidad y covarianza Ledoit-Wolf sobre hasta
+252 sesiones comunes de precios ajustados por dividendos. Aplica después topes
+por empresa, sector y capital invertido; el resto queda en efectivo. Si falla el
+optimizador, utiliza pesos inversos a volatilidad y lo indica en el plan.
+Usa [QuantStats](https://github.com/ranaroussi/quantstats) para mostrar Sharpe y
+drawdown de la combinación propuesta sobre el histórico disponible. Son medidas
+retrospectivas, no una predicción.
+
+El motor solo considera empresas con score y cobertura suficientes, precio
+reciente por encima de SMA200, volatilidad <=60 %, drawdown >=-50 % y al menos
+126 sesiones de rentabilidad. Por defecto permite 10 empresas, 5 % por empresa,
+20 % por sector y 50 % de la cartera en esas acciones. Compara los pesos objetivo
+con las posiciones que introduzcas y devuelve COMPRAR, MANTENER, REDUCIR o VENDER.
+Una posición sin datos recientes queda en REVISAR. Cada plan se guarda en SQLite
+y se puede descargar en CSV, cambiar de nombre o borrar desde **Planes anteriores**.
+Al generar decisiones, la app completa los cierres ajustados que falten en la
+caché antigua y actualiza precios obsoletos; muestra los símbolos cuya descarga
+falle. La primera preparación puede tardar varios minutos si afecta a todo el
+S&P 500. No hay conexión a un bróker ni envío de órdenes.
+
+También se evaluaron [Qlib](https://github.com/microsoft/qlib),
+[FinRL](https://github.com/AI4Finance-Foundation/FinRL) y
+[VectorBT](https://github.com/polakowo/vectorbt). Son útiles para investigación
+y backtesting, pero no se incorporan al motor de decisión actual: entrenar o
+optimizar sobre el histórico incompleto de GABI podría dar decisiones engañosas.
+
+Las reglas de este motor aún no tienen una validación prospectiva suficiente.
+Los planes son decisiones mecánicas de una política explícita; no hay evidencia
+de que superen a un índice.
+
+## Carteras simuladas y backtesting
+
+La pestaña **Carteras simuladas** guarda en SQLite carteras independientes con
+capital inicial en USD o EUR. Cada operación utiliza el primer cierre del
+mercado elegido desde la fecha solicitada; si falta ese cierre en el caché,
+no se registra. La valoración posterior usa precios ajustados por dividendos.
+El motor comprueba
+que haya efectivo para comprar y posición suficiente para vender, mantiene un
+registro de comisiones y spread aplicado por operación, y permite deshacer la
+última operación introducida. Compara la curva de valor y el retorno de cada
+cartera con una compra inicial de SPY en el mismo periodo. Se pueden indicar
+comisión, spread, divisa de cotización, cambio y coste de conversión en cada
+operación. Para valorar una cartera en otra divisa se necesita el histórico
+de cambio de Yahoo Finance; el tipo introducido manualmente solo se aplica a
+la operación correspondiente. Las carteras antiguas se migran a USD sin
+alterar sus transacciones.
+
+La sección **Probar estrategia** integra
+[Backtesting.py](https://github.com/kernc/backtesting.py) para contrastar un
+cruce de medias móviles contra comprar y mantener, con comisión y spread
+configurables. La señal se calcula al cierre y la orden simulada se ejecuta en
+la sesión siguiente. Este test individual no incluye dividendos; las carteras
+manuales sí usan `Adj Close` para medir rentabilidad total.
+
+La [tabla oficial de eToro](https://www.etoro.com/es/trading/fees/) indica que
+algunas acciones tienen 1 o 2 USD de comisión por apertura y cierre según
+residencia y bolsa, mientras que los ETF no tienen comisión de operación. El
+diferencial de mercado varía y eToro no ofrece en esa tabla un histórico por
+instrumento. Por eso cada cartera tiene una **hipótesis editable** de comisión
+y spread (por defecto 1 USD por acción, 0 por ETF y 10 puntos básicos de spread
+total, cifra supuesta, no tarifa oficial). La conversión de divisa se simula
+con el cambio y coste indicado; no se modelan impuestos, CFD ni financiación.
+eToro expresa ciertas comisiones de acciones en USD aunque el activo cotice
+en otra divisa: GABI pide introducir el equivalente en la divisa del ticker.
+Todos los datos externos se consultan en modo
+lectura y ninguna función se conecta a una cuenta de eToro o envía órdenes.
+
+En **Ranking histórico**, el backtest multifactor reconstruye el ranking en
+cada rebalanceo, selecciona las primeras candidatas con cobertura suficiente
+y empieza a medir rentabilidad en la sesión posterior a la señal. Exige
+composición histórica exacta del S&P 500 y precios ajustados en entrada y
+salida para todas las candidatas y SPY. La fuente gratuita de composición
+termina en 2025 y puede contener símbolos reutilizados; el test se detiene
+fuera de su cobertura. La curva solo muestra resultados entre rebalanceos,
+por lo que su drawdown no representa las caídas intraperiodo.
 
 ## Comparar empresas
 
@@ -155,18 +257,77 @@ pytest tests/
   tipo libre de riesgo "correcto" para cada horizonte temporal.
 - Solo cubre S&P 500 / EE.UU. por ahora.
 
-## Por qué NO hay (todavía) backtesting ni Alpha Vantage
+## Límites del backtesting histórico y de Alpha Vantage
 
-Se evaluó explícitamente añadir Alpha Vantage (earnings surprises, insider
-buying, noticias) y un motor de backtesting histórico multi-factor, y se
-decidió no hacerlo por ahora:
+Se evaluó añadir Alpha Vantage (earnings surprises, insider buying, noticias)
+y un motor histórico multifactor. La app ya incluye una prueba técnica de
+cruce de medias y un backtest multifactor exploratorio. Todavía no hay un
+backtest institucional con identidad empresarial e historial completo verificados:
 
 - **Alpha Vantage**: su nivel gratuito es demasiado limitado para cientos de
-  empresas: requeriría un plan de pago.
-- **Backtesting**: para que un backtest no mienta hace falta usar
+  empresas: requeriría un plan de pago. El insider buying que ofrecía ya se
+  cubre gratis vía SEC Form 4 (ver más abajo), sin necesidad de pagarlo.
+- **Backtesting multifactor**: para que un backtest no mienta hace falta usar
   fundamentales *tal y como se conocían en cada fecha histórica*, no los
   actuales — de lo contrario se introduce look-ahead bias y el resultado da
   una falsa sensación de que "el modelo funciona".
+
+### Primer resultado real (2019, 50 empresas, rebalanceo trimestral)
+
+Ejecutado desde 🕰️ Ranking histórico con los parámetros por defecto del
+formulario (umbrales de cobertura relajados a 60% — con solo 13 métricas
+puntuables, el 70% por defecto excluía demasiadas empresas con datos
+parciales):
+
+| Periodo | Estrategia | SPY |
+|---|---|---|
+| Ene→Abr 2019 | +22.2% | +17.4% |
+| Abr→Jul 2019 | +0.3% | +3.8% |
+| Jul→Oct 2019 | −5.3% | −3.3% |
+| Oct 2019→Ene 2020 | +6.8% | +12.2% |
+| **Año completo** | **+24.1%** | **+32.1%** |
+
+**La estrategia perdió contra el SPY por ~8 puntos en este único año/subconjunto.**
+No es una conclusión — es un solo año con 50 de 500 empresas y varias
+limitaciones ya documentadas (universo histórico hasta 2025, reciclaje de
+tickers, umbrales relajados) — pero es el primer dato real, y de momento no
+hay evidencia de que el score bata al índice. Antes de fiarse del score como
+señal de compra, hace falta correrlo en más periodos/universos y mirar los
+resultados con ojo crítico.
+
+Al intentar obtener este resultado se encontraron y corrigieron dos bugs
+reales que habrían bloqueado el backtest para cualquiera que lo ejecutara:
+
+1. Cientos de símbolos tenían fundamentales SEC EDGAR "frescos" en caché
+   (`edgar_metrics`) pero **sin el histórico fechado** (`edgar_facts`) que
+   hace falta para reconstruir una fecha pasada — se cachearon antes de que
+   existiera esa tabla, y el chequeo de "¿hace falta actualizar?" solo
+   miraba la fecha de descarga, no si el dato requerido existía de verdad.
+   `ensure_edgar_data` ahora también comprueba `get_symbols_with_facts`.
+2. Muchas empresas (comprobado con Abbott) no etiquetan el nº de acciones en
+   circulación en la taxonomía `us-gaap` que se buscaba — lo hacen en la
+   portada del informe, taxonomía `dei` (`EntityCommonStockSharesOutstanding`).
+   Sin eso, no hay capitalización de mercado ni PER/P-VC posibles.
+   `_extract_raw_facts` ahora busca en ambas taxonomías.
+
+## Insiders (SEC Form 4)
+
+`src/gabi/insider.py` descarga y guarda las operaciones de directivos,
+consejeros y accionistas >10% desde los Form 4 de SEC EDGAR (Section 16) —
+gratis, sin API key. Es la señal de "qué sabe la dirección que el mercado no
+sabe todavía" que faltaba (ninguna otra fuente integrada la da). Se muestra
+en 🔍 Ficha de empresa: compras/ventas en mercado abierto de los últimos 6
+meses, cuántos insiders distintos compraron, valor neto comprado-vendido, y
+si las compras son de un plan 10b5-1 preprogramado (mucho menos informativas
+que una compra discrecional decidida ahora). Verificado con los Form 4 reales
+de Apple — parsea correctamente nombre, cargo, código de operación, acciones,
+precio y si hay un plan 10b5-1 detectado por las notas al pie del filing.
+
+Solo cuentan como señal las compras/ventas en mercado abierto (códigos P/S);
+concesiones, ejercicios de opciones y retenciones fiscales se guardan pero no
+se cuentan como "convicción". De momento es **informativo, no entra en el
+Composite Score** — mismo criterio que con el resto de bloques nuevos: antes
+de dejar que una señal puntúe, hay que ver si aporta algo con datos reales.
 
 ## Point-in-time: fase 1 y 2 completas, con UI (experimental)
 
@@ -206,9 +367,11 @@ que falte para esa fecha concreta (SEC EDGAR + histórico de precios
 profundo) y la misma tabla con semáforo de colores que el resto de la app.
 Marcada como experimental a propósito.
 
-**Split de acciones — bug real encontrado y corregido al verificar con
-datos reales:** yfinance devuelve el precio siempre ajustado por splits
-futuros (con o sin `auto_adjust`), pero el nº de acciones de SEC EDGAR es
+**Splits y dividendos:** yfinance devuelve el precio siempre ajustado por splits
+futuros. La descarga usa `auto_adjust=False` para guardar `Close` (ajustado por
+splits) y `Adj Close` (ajustado además por dividendos). Los múltiplos históricos
+usan `Close`; la evaluación de retornos usa `Adj Close`. La caché anterior debe
+actualizarse antes de reconstruir múltiplos. El nº de acciones de SEC EDGAR es
 el real de esa fecha, sin ajustar. Multiplicarlos directamente daba una
 capitalización sistemáticamente mal por el factor del split — comprobado
 con Apple (split 4:1 en 2020): la capitalización de junio de 2019 salía
@@ -261,6 +424,7 @@ adicional y deja a criterio del usuario qué asistente usar.
 - Automatizar la llamada al LLM (API de Claude) en vez de copiar/pegar el
   prompt manualmente, si en algún momento se decide asumir el coste de API.
 - Actualización programada (cron) en vez de botón manual.
-- Backtesting con datos point-in-time (ver arriba) y, solo después, modelos
+- Ampliar el backtest point-in-time con validación de identidad de empresas,
+  costes reales de ejecución e histórico completo. Solo después, modelos
   de Machine Learning interpretables (regresión, Random Forest, XGBoost) con
   walk-forward validation — nunca mezclando aleatoriamente pasado y futuro.

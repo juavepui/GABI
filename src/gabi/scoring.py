@@ -25,6 +25,17 @@ DEFAULT_WEIGHTS = {"value": 0.30, "quality": 0.35, "momentum": 0.25, "risk": 0.1
 # prueba pequeños) una sola empresa "gana" su sector por defecto, lo que
 # produce puntuaciones artificialmente perfectas o pésimas.
 DEFAULT_MIN_SECTOR_GROUP = 8
+MIN_SCORE_COVERAGE = 0.50
+
+# Una métrica representativa por cada familia de métricas muy correlacionadas
+# (ej. los 5 múltiplos de Value no deben votar 5 veces). El resto de métricas
+# siguen visibles en el detalle de cada empresa, pero no puntúan aparte.
+SCORE_METRICS = {
+    "value": ["pe", "pb", "ev_ebitda"],
+    "quality": ["roic", "operating_margin", "revenue_cagr_3y", "fcf_cagr_3y"],
+    "momentum": ["momentum_12m", "rel_strength_6m", "price_vs_sma200"],
+    "risk": ["debt_to_equity", "volatility", "max_drawdown"],
+}
 
 
 def _percentile(series: pd.Series, higher_is_better: bool = True) -> pd.Series:
@@ -105,31 +116,26 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
     df = add_percentile_columns(df, RISK_METRICS_LOWER_BETTER, higher_is_better=False)
     df = add_percentile_columns(df, RISK_METRICS_HIGHER_BETTER, higher_is_better=True)
 
-    momentum_pct_cols = [c + "_pct" for c in MOMENTUM_METRICS_HIGHER_BETTER]
+    momentum_pct_cols = [c + "_pct" for c in SCORE_METRICS["momentum"]]
     if "rsi14" in df.columns:
         # Zona sana ~45-65: penaliza tanto sobrecompra como debilidad, no es
         # un percentil cruzado sino una distancia a la "zona dulce".
         df["rsi14_pct"] = 100 - (df["rsi14"] - 55).abs().clip(upper=55) / 55 * 100
-        momentum_pct_cols.append("rsi14_pct")
+        # El RSI se queda como diagnóstico; su "zona sana" es una heurística propia sin respaldo académico validado.
 
-    value_pct_cols = [c + "_pct" for c in VALUE_METRICS_LOWER_BETTER]
-    quality_pct_cols = [c + "_pct" for c in QUALITY_METRICS_HIGHER_BETTER]
-    risk_pct_cols = [c + "_pct" for c in RISK_METRICS_LOWER_BETTER + RISK_METRICS_HIGHER_BETTER]
+    value_pct_cols = [c + "_pct" for c in SCORE_METRICS["value"]]
+    quality_pct_cols = [c + "_pct" for c in SCORE_METRICS["quality"]]
+    risk_pct_cols = [c + "_pct" for c in SCORE_METRICS["risk"]]
 
     df["value_score"] = compute_block_score(df, value_pct_cols)
     df["quality_score"] = compute_block_score(df, quality_pct_cols)
     df["momentum_score"] = compute_block_score(df, momentum_pct_cols)
     df["risk_score"] = compute_block_score(df, risk_pct_cols)
 
-    if "golden_cross_recent" in df.columns:
-        # Solo se suma el bonus donde YA hay momentum_score real: un
-        # fillna(0) sin esta guarda convertiría "sin datos de precio" (NaN)
-        # en "peor momentum posible" (0) de forma silenciosa.
-        has_momentum = df["momentum_score"].notna()
-        bonus = df["golden_cross_recent"].fillna(False).astype(bool).map({True: 5.0, False: 0.0})
-        df.loc[has_momentum, "momentum_score"] = (
-            df.loc[has_momentum, "momentum_score"] + bonus[has_momentum]
-        ).clip(upper=100)
+    selected = [c for cols in SCORE_METRICS.values() for c in cols]
+    df["metrics_available"] = df.reindex(columns=selected).notna().sum(axis=1)
+    df["metrics_possible"] = len(selected)
+    df["score_coverage"] = df["metrics_available"] / len(selected)
 
     w = np.array([
         weights.get("value", 0), weights.get("quality", 0),
@@ -139,6 +145,8 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
     df["composite_score"] = [
         _weighted_row_mean(row, w) for row in block_values
     ]
+    core_missing = df[["value_score", "quality_score", "momentum_score"]].isna().any(axis=1)
+    df.loc[(df["score_coverage"] < MIN_SCORE_COVERAGE) | core_missing, "composite_score"] = np.nan
 
     return df.sort_values("composite_score", ascending=False)
 

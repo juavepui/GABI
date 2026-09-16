@@ -167,6 +167,31 @@ def test_extract_raw_facts_keeps_everything_unfiltered():
     assert all(r["filed_date"] for r in rows)
 
 
+def test_extract_raw_facts_falls_back_to_dei_namespace_for_shares_outstanding():
+    # Bug real encontrado ejecutando el backtest multifactor: Abbott (y otras)
+    # no etiquetan CommonStockSharesOutstanding en us-gaap, solo
+    # EntityCommonStockSharesOutstanding en la taxonomía de portada "dei".
+    facts = {
+        "facts": {
+            "us-gaap": {},  # sin la etiqueta habitual, a propósito
+            "dei": {
+                "EntityCommonStockSharesOutstanding": {
+                    "units": {
+                        "shares": [
+                            {"end": "2018-12-31", "val": 1_500_000_000, "form": "10-K", "fp": "FY",
+                             "fy": 2018, "filed": "2019-02-15", "accn": "0001-19-A"},
+                        ]
+                    }
+                }
+            },
+        }
+    }
+    rows = edgar._extract_raw_facts(facts, edgar.SHARES_TAGS, unit="shares")
+    assert len(rows) == 1
+    assert rows[0]["tag"] == "EntityCommonStockSharesOutstanding"
+    assert rows[0]["val"] == 1_500_000_000
+
+
 def test_extract_raw_facts_skips_entries_without_accession_number():
     facts = {
         "facts": {

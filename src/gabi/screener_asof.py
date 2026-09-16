@@ -24,7 +24,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str) -> dict:
     de FCF, márgenes, PER/P-VC/P-Ventas/EV-EBITDA) reconstruidos con lo que se
     conocía en as_of_date."""
     m = edgar.compute_edgar_metrics_as_of(symbol, as_of_date)
-    price = storage.get_price_as_of(symbol, as_of_date)
+    price = storage.get_price_as_of(symbol, as_of_date) if storage.has_verified_price_as_of(symbol, as_of_date) else None
     shares = edgar.get_shares_outstanding_as_of(symbol, as_of_date)
 
     # yfinance devuelve el precio siempre ajustado por splits (con o sin
@@ -78,7 +78,12 @@ def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp) -> pd.DataFrame:
     df = storage.get_prices(symbol)
     if df.empty:
         return df
-    return df[df.index <= as_of_date]
+    df = df[df.index <= as_of_date]
+    # Las filas antiguas del caché se descargaron con auto_adjust=True y no
+    # sirven para múltiplos históricos ni para un histórico técnico coherente.
+    if "adj_close" not in df or df.empty or pd.isna(df["adj_close"].iloc[-1]):
+        return df.iloc[0:0]
+    return df[df["adj_close"].notna()]
 
 
 def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = None) -> dict:

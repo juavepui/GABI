@@ -39,11 +39,10 @@ def inicio():
 GABI puntúa cada empresa del S&P 500 combinando cuatro bloques de métricas,
 cada uno normalizado por percentil **dentro de su sector**:
 
-- **Value** — ¿está barata respecto a sus fundamentales? (PER, PEG, P/B, P/S, EV/EBITDA)
-- **Quality** — ¿son sólidos sus fundamentales? (rentabilidad, ROIC, márgenes,
-  crecimiento de ingresos/FCF a 3 años vía SEC EDGAR)
-- **Momentum** — ¿hay señales técnicas de entrada en fase alcista? (medias móviles, RSI, fuerza relativa vs SPY)
-- **Risk** — ¿cuánto riesgo hay que asumir? (deuda, volatilidad, máximo drawdown, Sharpe, Sortino)
+- **Value** — PER, P/B y EV/EBITDA.
+- **Quality** — ROIC, margen operativo y crecimiento de ingresos/FCF a 3 años.
+- **Momentum** — 12 meses, fuerza relativa a 6 meses y precio frente a SMA200.
+- **Risk** — deuda, volatilidad y máximo drawdown.
 
 El **Composite Score** es la media ponderada de los cuatro bloques, con pesos
 que puedes ajustar tú mismo. El objetivo no es solo darte un ranking, sino
@@ -64,6 +63,10 @@ que puedas ver **por qué** una empresa puntúa bien, empresa a empresa.
    entrada, escenarios de valoración, catalizadores y qué demostraría que te
    equivocaste. Revísala pasados unos meses — se aprende más así que acumulando
    indicadores.
+8. En **🧭 Decisiones de cartera**, introduce tus posiciones y genera un plan
+   de compra, mantenimiento o venta con pesos objetivo y límites de riesgo.
+9. En **🧪 Carteras simuladas**, crea varias carteras, registra operaciones
+   históricas con costes supuestos y compara sus resultados con SPY.
         """
     )
 
@@ -75,6 +78,8 @@ pages = [
     st.Page("pages/2_Ficha_Empresa.py", title="Ficha de empresa", icon="🔍"),
     st.Page("pages/6_Comparar_Empresas.py", title="Comparar empresas", icon="⚖️"),
     st.Page("pages/8_Ranking_Historico.py", title="Ranking histórico", icon="🕰️"),
+    st.Page("pages/9_Decisiones.py", title="Decisiones de cartera", icon="🧭"),
+    st.Page("pages/10_Carteras_Simuladas.py", title="Carteras simuladas", icon="🧪"),
     st.Page("pages/5_Panel_Macro.py", title="Panel Macro", icon="🌐"),
     st.Page("pages/4_Diario_Inversion.py", title="Diario de inversión", icon="📓"),
     st.Page("pages/3_Configuracion.py", title="Configuración", icon="⚙️"),

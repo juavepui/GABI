@@ -19,7 +19,8 @@ def _price_df(start, n, start_price=100.0, daily_return=0.0005):
     dates = pd.date_range(start, periods=n, freq="B")
     prices = start_price * np.cumprod(1 + np.full(n, daily_return))
     return pd.DataFrame(
-        {"Open": prices, "High": prices, "Low": prices, "Close": prices, "Volume": [1_000_000] * n},
+        {"Open": prices, "High": prices, "Low": prices, "Close": prices,
+         "Adj Close": prices, "Volume": [1_000_000] * n},
         index=dates,
     )
 
@@ -99,7 +100,8 @@ def test_build_ranking_as_of_handles_symbol_with_no_data_gracefully(tmp_path, mo
     assert len(df) == 2
     assert pd.isna(df.loc["SINDATOS", "pe"])
     assert pd.isna(df.loc["SINDATOS", "composite_score"])
-    assert not pd.isna(df.loc["AAA", "composite_score"])
+    assert pd.isna(df.loc["AAA", "composite_score"])  # solo 100 días de precio: cobertura insuficiente
+    assert df.loc["AAA", "score_coverage"] < 0.50
 
 
 def test_build_ranking_as_of_corrects_market_cap_for_later_stock_split(tmp_path, monkeypatch):
@@ -113,9 +115,9 @@ def test_build_ranking_as_of_corrects_market_cap_for_later_stock_split(tmp_path,
     _seed_edgar_facts("AAA", revenue=1000, net_income=150, equity=500, debt=100,
                        shares=400_000,  # nº de acciones REAL en 2018 (antes del split 4:1)
                        filed_date="2019-02-01")
-    storage.upsert_prices(
-        "AAA", _price_df("2018-06-01", 250, start_price=25.0, daily_return=0.0),
-    )  # precio plano y YA ajustado (post-split), para que el cálculo sea predecible
+    price_df = _price_df("2018-06-01", 250, start_price=25.0, daily_return=0.0)
+    price_df["Adj Close"] = 20.0  # dividendos posteriores; no deben entrar en la capitalización
+    storage.upsert_prices("AAA", price_df)
     storage.upsert_splits("AAA", {"2020-08-31": 4.0})  # split 4:1 ocurrido DESPUÉS de la fecha consultada
 
     result = screener_asof.build_ranking_as_of("2019-06-01", symbols=["AAA"])

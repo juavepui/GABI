@@ -52,7 +52,7 @@ def test_ensure_price_history_asof_only_fetches_symbols_without_coverage(tmp_pat
 
     import pandas as pd
     covered_df = pd.DataFrame(
-        {"Open": [10], "High": [10], "Low": [10], "Close": [10], "Volume": [100]},
+        {"Open": [10], "High": [10], "Low": [10], "Close": [10], "Adj Close": [10], "Volume": [100]},
         index=pd.to_datetime(["2015-01-02"]),
     )
     storage.upsert_prices("COVERED", covered_df)  # ya llega hasta 2015
@@ -82,7 +82,7 @@ def test_ensure_price_history_asof_skips_network_when_all_covered(tmp_path, monk
 
     import pandas as pd
     df = pd.DataFrame(
-        {"Open": [10], "High": [10], "Low": [10], "Close": [10], "Volume": [100]},
+        {"Open": [10], "High": [10], "Low": [10], "Close": [10], "Adj Close": [10], "Volume": [100]},
         index=pd.to_datetime(["2015-01-02"]),
     )
     storage.upsert_prices("COVERED", df)
@@ -94,3 +94,42 @@ def test_ensure_price_history_asof_skips_network_when_all_covered(tmp_path, monk
 
     result = data_fetch.ensure_price_history_asof(["COVERED"], "2019-01-01")
     assert result == {"deep_fetched": 0, "already_covered": 1, "failed": {}}
+
+
+def test_decision_prices_migrate_only_missing_adjusted_history(tmp_path, monkeypatch):
+    from datetime import date
+    import pandas as pd
+    from gabi import config, storage
+
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+    dates = pd.bdate_range(end=date.today(), periods=130)
+    base = {"Open": [10] * 130, "High": [10] * 130, "Low": [10] * 130,
+            "Close": [10] * 130, "Volume": [100] * 130}
+    storage.upsert_prices("OLD", pd.DataFrame(base, index=dates))
+    storage.upsert_prices("READY", pd.DataFrame({**base, "Adj Close": [10] * 130}, index=dates))
+    calls = []
+
+    def fake_fetch(symbols, period="2y"):
+        calls.append((symbols, period))
+        storage.upsert_prices("OLD", pd.DataFrame({**base, "Adj Close": [10] * 130}, index=dates))
+        return {}
+
+    monkeypatch.setattr(data_fetch, "fetch_prices_batch", fake_fetch)
+    result = data_fetch.ensure_decision_prices(["OLD", "READY"])
+    assert calls == [(["OLD"], "2y")]
+    assert result["requested"] == 1
+    assert storage.get_price_coverage(["OLD"])["OLD"]["adjusted_count"] == 130
+
+
+def test_single_ticker_multiindex_download_keeps_adjusted_close(tmp_path, monkeypatch):
+    import pandas as pd
+    from gabi import config, storage
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+    columns = pd.MultiIndex.from_product([["AAA"], ["Open", "High", "Low", "Close", "Adj Close", "Volume"]])
+    downloaded = pd.DataFrame([[10, 10, 10, 10, 9, 100]],
+                              index=pd.to_datetime(["2026-09-15"]), columns=columns)
+    monkeypatch.setattr(data_fetch.yf, "download", lambda *args, **kwargs: downloaded)
+    assert data_fetch.fetch_prices_batch(["AAA"]) == {}
+    assert storage.get_prices("AAA")["adj_close"].iloc[0] == 9

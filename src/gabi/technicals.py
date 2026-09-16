@@ -17,7 +17,8 @@ def _rsi(series: pd.Series, period: int = config.RSI_PERIOD) -> pd.Series:
     avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
     rs = avg_gain / avg_loss.replace(0, np.nan)
     rsi = 100 - (100 / (1 + rs))
-    return rsi.fillna(100)
+    rsi = rsi.mask((avg_loss == 0) & (avg_gain > 0), 100)
+    return rsi.mask((avg_loss == 0) & (avg_gain == 0), 50)
 
 
 def _pct_change_n(series: pd.Series, n: int):

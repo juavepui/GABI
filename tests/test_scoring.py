@@ -163,3 +163,11 @@ def test_small_sector_group_falls_back_to_global_percentile():
     # F es la única empresa de su sector: por debajo de min_group_size debe
     # caer al percentil global en vez de "ganar" su sector por defecto.
     assert within.loc["F", "pe_pct"] == global_only.loc["F"]
+
+
+def test_sparse_company_has_no_composite_score():
+    df = pd.DataFrame({"pe": [10, 20], "pb": [1, np.nan]}, index=["A", "B"])
+    result = scoring.build_scores(df)
+    assert result.loc["A", "metrics_available"] == 2
+    assert result.loc["A", "metrics_possible"] == 13
+    assert pd.isna(result.loc["A", "composite_score"])

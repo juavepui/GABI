@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from gabi import ai_prompt, config, scoring, screener, storage
+from gabi import ai_prompt, config, insider, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, format_metric_value, gradient_style, translate_sector
 
 st.title("🔍 Ficha de empresa")
@@ -100,6 +100,54 @@ if has_10k or has_10q:
         fcol1.link_button(f"📘 Último 10-K ({row.get('latest_10k_date')})", row["latest_10k_url"])
     if has_10q:
         fcol2.link_button(f"📗 Último 10-Q ({row.get('latest_10q_date')})", row["latest_10q_url"])
+
+st.divider()
+st.subheader("🕵️ Actividad de insiders (SEC Form 4)")
+st.caption(
+    "Compras y ventas de directivos/consejeros con sus propias acciones. Una compra en mercado "
+    "abierto (código P) fuera de un plan 10b5-1 preprogramado es la señal más informativa que hay "
+    "aquí — ventas y ejercicios de opciones son mucho más rutinarios (compensación, impuestos) y "
+    "dicen poco por sí solos. Informativo: no entra en el Composite Score."
+)
+if st.button("🔄 Actualizar insiders de esta empresa", help="Descarga los últimos Form 4 de SEC EDGAR para este símbolo."):
+    with st.spinner("Descargando Form 4 de SEC EDGAR..."):
+        insider_result = insider.ensure_insider_data([symbol], max_age_hours=0)
+    if insider_result["failed"]:
+        st.error(f"No se pudo actualizar: {insider_result['failed'].get(symbol)}")
+    else:
+        st.success("Actualizado.")
+        st.rerun()
+
+insider_summary = insider.summarize_insider_activity(symbol, months=6)
+ic1, ic2, ic3 = st.columns(3)
+ic1.metric(
+    "Compras (6 meses)", insider_summary["n_buys"],
+    help="Compras en mercado abierto (código P) de directivos/consejeros/accionistas >10%. No incluye ejercicios de opciones ni concesiones.",
+)
+ic2.metric("Ventas (6 meses)", insider_summary["n_sells"], help="Ventas en mercado abierto (código S).")
+net_value = insider_summary["net_value"]
+ic3.metric(
+    "Neto comprado − vendido", f"${net_value:,.0f}" if net_value is not None else "—",
+    help="Valor de las compras menos el de las ventas en mercado abierto, en los últimos 6 meses.",
+)
+if insider_summary["n_buys"] > 0 and insider_summary["has_10b5_1_only_buys"]:
+    st.caption("⚠️ Todas las compras recientes son de un plan 10b5-1 preprogramado — mucho menos informativas que una compra discrecional decidida ahora.")
+
+recent_tx = insider_summary["recent"]
+if not recent_tx.empty:
+    display_tx = recent_tx[[
+        "transaction_date", "owner_name", "owner_title", "transaction_code",
+        "shares", "price_per_share", "is_10b5_1_plan",
+    ]].copy()
+    display_tx["transaction_code"] = display_tx["transaction_code"].map(lambda c: insider.TRANSACTION_CODES.get(c, c))
+    display_tx["is_10b5_1_plan"] = display_tx["is_10b5_1_plan"].map({1: "Sí", 0: "No"})
+    display_tx.columns = ["Fecha", "Insider", "Cargo", "Operación", "Acciones", "Precio", "¿Plan 10b5-1?"]
+    st.dataframe(display_tx, hide_index=True, width="stretch")
+else:
+    st.info(
+        "Sin operaciones de insiders en los últimos 6 meses cacheadas para esta empresa — pulsa "
+        "'Actualizar insiders de esta empresa' arriba."
+    )
 
 st.divider()
 st.subheader("Desglose del score (por qué puntúa así)")

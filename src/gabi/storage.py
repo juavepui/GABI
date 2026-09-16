@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS prices (
     symbol TEXT NOT NULL,
     date TEXT NOT NULL,
     open REAL, high REAL, low REAL, close REAL, volume REAL,
+    adj_close REAL,
     PRIMARY KEY (symbol, date)
 );
 CREATE TABLE IF NOT EXISTS fundamentals (
@@ -44,7 +45,13 @@ def get_connection():
 def init_db():
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_price_columns(conn)
         conn.commit()
+
+
+def _ensure_price_columns(conn):
+    if "adj_close" not in {row[1] for row in conn.execute("PRAGMA table_info(prices)")}:
+        conn.execute("ALTER TABLE prices ADD COLUMN adj_close REAL")
 
 
 def _df_to_json(df):
@@ -65,6 +72,7 @@ def upsert_prices(symbol: str, price_df: pd.DataFrame):
         return
     df = price_df.copy().reset_index()
     df.rename(columns={df.columns[0]: "date"}, inplace=True)
+    df.rename(columns={"Adj Close": "Adj_Close"}, inplace=True)
     records = []
     for row in df.itertuples(index=False):
         d = row.date
@@ -76,12 +84,14 @@ def upsert_prices(symbol: str, price_df: pd.DataFrame):
             float(row.Low) if pd.notna(row.Low) else None,
             float(row.Close) if pd.notna(row.Close) else None,
             float(row.Volume) if pd.notna(row.Volume) else None,
+            float(row.Adj_Close) if hasattr(row, "Adj_Close") and pd.notna(row.Adj_Close) else None,
         ))
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_price_columns(conn)
         conn.executemany(
-            "INSERT OR REPLACE INTO prices (symbol, date, open, high, low, close, volume) "
-            "VALUES (?,?,?,?,?,?,?)", records,
+            "INSERT OR REPLACE INTO prices (symbol, date, open, high, low, close, volume, adj_close) "
+            "VALUES (?,?,?,?,?,?,?,?)", records,
         )
         conn.commit()
 
@@ -91,8 +101,9 @@ def get_prices(symbol: str) -> pd.DataFrame:
     open/high/low/close/volume para un símbolo."""
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_price_columns(conn)
         df = pd.read_sql_query(
-            "SELECT date, open, high, low, close, volume FROM prices "
+            "SELECT date, open, high, low, close, volume, adj_close FROM prices "
             "WHERE symbol = ? ORDER BY date ASC",
             conn, params=(symbol,),
         )
@@ -108,8 +119,9 @@ def get_prices_multi(symbols: list) -> dict:
     placeholders = ",".join("?" * len(symbols))
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_price_columns(conn)
         df = pd.read_sql_query(
-            f"SELECT symbol, date, open, high, low, close, volume FROM prices "
+            f"SELECT symbol, date, open, high, low, close, volume, adj_close FROM prices "
             f"WHERE symbol IN ({placeholders}) ORDER BY date ASC",
             conn, params=symbols,
         )
@@ -120,6 +132,22 @@ def get_prices_multi(symbols: list) -> dict:
     for sym, group in df.groupby("symbol"):
         result[sym] = group.drop(columns=["symbol"]).set_index("date")
     return result
+
+
+def get_price_coverage(symbols: list) -> dict:
+    """Nº de cierres ajustados verificados y su fecha más reciente, en una sola consulta a la base de datos."""
+    if not symbols:
+        return {}
+    placeholders = ",".join("?" * len(symbols))
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        _ensure_price_columns(conn)
+        rows = conn.execute(
+            f"SELECT symbol, COUNT(adj_close), MAX(CASE WHEN adj_close IS NOT NULL THEN date END) "
+            f"FROM prices WHERE symbol IN ({placeholders}) GROUP BY symbol", symbols,
+        ).fetchall()
+    return {symbol: {"adjusted_count": count, "latest_adjusted_date": latest}
+            for symbol, count, latest in rows}
 
 
 def get_price_as_of(symbol: str, as_of_date: str):
@@ -135,6 +163,18 @@ def get_price_as_of(symbol: str, as_of_date: str):
             (symbol, as_of_date),
         ).fetchone()
     return float(row[0]) if row and row[0] is not None else None
+
+
+def has_verified_price_as_of(symbol: str, as_of_date: str) -> bool:
+    """True si hay un cierre ajustado (adj_close) verificado para esa fecha; False si el precio en caché es de antes de este cambio y todavía no lo tiene."""
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        _ensure_price_columns(conn)
+        row = conn.execute(
+            "SELECT adj_close FROM prices WHERE symbol=? AND date<=? ORDER BY date DESC LIMIT 1",
+            (symbol, as_of_date),
+        ).fetchone()
+    return bool(row and row[0] is not None)
 
 
 def upsert_splits(symbol: str, splits: dict):

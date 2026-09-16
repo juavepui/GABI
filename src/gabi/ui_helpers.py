@@ -223,23 +223,23 @@ METRIC_INFO = {
     },
     "value_score": {
         "label": "Value",
-        "help": "Score 0-100 de lo barata que está la empresa frente a otras de su sector (PER, PEG, P/VC, "
-                "P/Ventas, EV/EBITDA). 100 = la más barata de su sector.",
+        "help": "Score 0-100 de PER, P/VC y EV/EBITDA frente a otras de su sector. "
+                "100 = la más barata de su sector.",
     },
     "quality_score": {
         "label": "Quality",
-        "help": "Score 0-100 de la calidad de los fundamentales frente a otras de su sector (rentabilidad, ROIC, "
-                "márgenes, crecimiento). 100 = los mejores fundamentales de su sector.",
+        "help": "Score 0-100 de ROIC, margen operativo y crecimiento a 3 años de ingresos y FCF. "
+                "100 = los mejores fundamentales de su sector.",
     },
     "momentum_score": {
         "label": "Momentum",
-        "help": "Score 0-100 de las señales técnicas de tendencia alcista frente a otras de su sector (medias móviles, "
-                "RSI, fuerza relativa). 100 = el momentum más fuerte de su sector.",
+        "help": "Score 0-100 de momentum a 12 meses, fuerza relativa a 6 meses y precio frente a SMA200. "
+                "100 = el momentum más fuerte de su sector.",
     },
     "risk_score": {
         "label": "Risk",
-        "help": "Score 0-100 de lo poco arriesgada que es la empresa frente a otras de su sector (deuda, volatilidad, "
-                "máximo drawdown, Sharpe, Sortino). 100 = la más 'segura' de su sector — no confundir con mejor "
+        "help": "Score 0-100 de deuda, volatilidad y máximo drawdown frente a otras de su sector. "
+                "100 = la más 'segura' de su sector — no confundir con mejor "
                 "retorno esperado, solo menor riesgo.",
     },
     "composite_score": {
@@ -247,6 +247,9 @@ METRIC_INFO = {
         "help": "Media ponderada de Value, Quality, Momentum y Risk según los pesos configurados. Es el score final "
                 "usado para ordenar el ranking.",
     },
+    "metrics_available": {"label": "Datos", "help": "Número de métricas disponibles de las 13 que puntúan."},
+    "metrics_possible": {"label": "Datos posibles", "help": "Número total de métricas que puntúan."},
+    "score_coverage": {"label": "Cobertura %", "help": "Porcentaje de las 13 métricas puntuables disponibles."},
 }
 
 # Columnas cuyo valor crudo es una fracción (0.09 = 9%) — se multiplican por
@@ -256,7 +259,7 @@ FRACTION_COLUMNS = {
     "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
     "revenue_cagr_3y", "fcf_cagr_3y",
     "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
-    "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield",
+    "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield", "score_coverage",
 }
 
 # Las 11 categorías estándar GICS (fuente: universe.py).

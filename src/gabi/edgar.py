@@ -49,7 +49,11 @@ CASH_TAGS = [
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "CashAndCashEquivalentsAtCarryingValue",
 ]
 # 'shares', no 'USD': se extraen y guardan por separado.
-SHARES_TAGS = ["CommonStockSharesOutstanding"]
+# "CommonStockSharesOutstanding" vive en la taxonomía us-gaap; muchas
+# empresas (comprobado con Abbott, entre otras) no la usan y solo etiquetan
+# el nº de acciones en la portada del informe bajo la taxonomía "dei"
+# (EntityCommonStockSharesOutstanding) — _extract_raw_facts mira en ambas.
+SHARES_TAGS = ["CommonStockSharesOutstanding", "EntityCommonStockSharesOutstanding"]
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS edgar_metrics (
@@ -270,11 +274,16 @@ def _extract_raw_facts(facts: dict, tags: list, unit: str = "USD") -> list:
     en `tags`, tal y como las devuelve la API de companyfacts. A diferencia
     de _extract_annual_values/_extract_instant_values, no descarta nada: ni
     trimestres, ni restataciones posteriores del mismo periodo — eso se
-    decide al consultar, no al guardar."""
+    decide al consultar, no al guardar.
+
+    Busca cada tag tanto en la taxonomía us-gaap como en dei (portada del
+    informe): el nº de acciones en circulación, por ejemplo, a veces solo
+    se etiqueta en dei, no en us-gaap (comprobado con datos reales)."""
     us_gaap = facts.get("facts", {}).get("us-gaap", {})
+    dei = facts.get("facts", {}).get("dei", {})
     rows = []
     for tag in tags:
-        node = us_gaap.get(tag)
+        node = us_gaap.get(tag) or dei.get(tag)
         if not node:
             continue
         entries = node.get("units", {}).get(unit, [])
@@ -568,6 +577,24 @@ def get_edgar_metrics(symbols: list) -> dict:
     return {r[0]: dict(zip(cols, r[1:])) for r in rows}
 
 
+def get_symbols_with_facts(symbols: list) -> set:
+    """Símbolos con al menos una fila en edgar_facts. Sirve para distinguir
+    'fetched_at reciente' de 'de verdad tiene el histórico fechado' — algunas
+    empresas se descargaron antes de que existiera esta tabla (o solo se
+    guardó edgar_metrics por algún fallo puntual al persistir), y sin este
+    chequeo quedarían marcadas como "frescas" para siempre sin tener nunca
+    los datos que hacen falta para reconstruir una fecha pasada."""
+    if not symbols:
+        return set()
+    placeholders = ",".join("?" * len(symbols))
+    with storage.get_connection() as conn:
+        conn.executescript(FACTS_SCHEMA)
+        rows = conn.execute(
+            f"SELECT DISTINCT symbol FROM edgar_facts WHERE symbol IN ({placeholders})", symbols,
+        ).fetchall()
+    return {r[0] for r in rows}
+
+
 def get_edgar_fetched_at(symbols: list) -> dict:
     if not symbols:
         return {}
@@ -635,11 +662,13 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
         live_map_error = None
 
     fetched_at = get_edgar_fetched_at(symbols)
+    with_facts = get_symbols_with_facts(symbols)
     now = datetime.now(timezone.utc)
     stale = [
         s for s in symbols
         if force or fetched_at.get(s) is None
         or (now - fetched_at[s]).total_seconds() > max_age_hours * 3600
+        or s not in with_facts  # "fresco" pero sin histórico fechado real: hay que rellenarlo igualmente
     ]
 
     # Se resuelve CIK símbolo a símbolo (mapeo en vivo, con fallback a la
