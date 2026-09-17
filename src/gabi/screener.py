@@ -36,7 +36,11 @@ def _get_risk_free_rate() -> float:
     return config.RISK_FREE_RATE
 
 
-def build_screener_table(universe_df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
+def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progress_cb=None) -> pd.DataFrame:
+    """progress_cb(done, total), si se pasa, se llama cada ~25 empresas —
+    todo el cálculo es sobre datos ya cacheados (sin red), pero con el
+    universo completo (~500 empresas) puede tardar unos segundos y una
+    barra de progreso evita que la pantalla parezca congelada."""
     symbols = universe_df["symbol"].tolist()
     fundamentals = storage.get_fundamentals(symbols)
     prices = storage.get_prices_multi(symbols)
@@ -45,7 +49,8 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None) -> pd.
     risk_free_rate = _get_risk_free_rate()
 
     rows = []
-    for _, u in universe_df.iterrows():
+    total = len(universe_df)
+    for i, (_, u) in enumerate(universe_df.iterrows()):
         sym = u["symbol"]
         record = fundamentals.get(sym)
         m = metrics.compute_fundamental_metrics(record) if record else {}
@@ -66,6 +71,8 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None) -> pd.
         row["latest_10q_url"] = edg.get("latest_10q_url")
         row["latest_10q_date"] = edg.get("latest_10q_date")
         rows.append(row)
+        if progress_cb and (i % 25 == 0 or i == total - 1):
+            progress_cb(i + 1, total)
 
     df = pd.DataFrame(rows).set_index("symbol")
     if df.empty:

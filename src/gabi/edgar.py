@@ -191,6 +191,12 @@ def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
     if cik_map is None:
         cik_map = get_cik_map()
     row = cik_map[cik_map["symbol"] == symbol]
+    if row.empty and "." in symbol:
+        # Notación de clases de acción: los datasets de composición de índice usan
+        # el punto (ej. "BRK.B"), pero el mapeo de la SEC usa guión ("BRK-B") —
+        # es la misma acción, no una empresa distinta, así que esta normalización
+        # es segura y no entra en conflicto con la política de no adivinar.
+        row = cik_map[cik_map["symbol"] == symbol.replace(".", "-")]
     if not row.empty:
         cik, title = row.iloc[0]["cik"], row.iloc[0]["title"]
         _remember_cik_resolution(symbol, cik, title)
@@ -338,6 +344,30 @@ def get_edgar_facts(symbol: str, tags: list = None) -> pd.DataFrame:
     with storage.get_connection() as conn:
         conn.executescript(FACTS_SCHEMA)
         return pd.read_sql_query(query, conn, params=params)
+
+
+def get_last_filed_dates(symbols: list) -> dict:
+    """{symbol: fecha del filing SEC más reciente que tenemos} para cada
+    símbolo (de cualquier tipo: 10-K, 10-Q...). Una empresa viva presenta un
+    10-Q como mínimo cada trimestre; si este dato es muy antiguo, casi seguro
+    dejó de ser un 'reporting company' (quiebra, exclusión, fusión) — se usa
+    como señal para detectar reciclaje de ticker en los precios (ver
+    multifactor_backtest._period_returns): si yfinance sigue devolviendo
+    cotización reciente bajo ese símbolo mucho después de su último filing,
+    lo más probable es que la bolsa haya reasignado el ticker a otra empresa
+    distinta, no que la original siga cotizando. En lote (no una consulta por
+    símbolo) porque el backtest la llama con el universo completo en cada
+    rebalanceo."""
+    if not symbols:
+        return {}
+    placeholders = ",".join("?" * len(symbols))
+    with storage.get_connection() as conn:
+        conn.executescript(FACTS_SCHEMA)
+        rows = conn.execute(
+            f"SELECT symbol, MAX(filed_date) FROM edgar_facts WHERE symbol IN ({placeholders}) "
+            "GROUP BY symbol", symbols,
+        ).fetchall()
+    return {symbol: last for symbol, last in rows if last}
 
 
 def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD"):

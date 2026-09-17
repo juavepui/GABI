@@ -61,7 +61,14 @@ with st.sidebar:
     )
 
 uni = screener.get_universe(limit=None)
-df = screener.build_screener_table(uni, weights=weights)
+with st.spinner(f"Cargando {len(uni)} empresas del universo..."):
+    load_bar = st.progress(0.0)
+
+    def _load_progress(done, total):
+        load_bar.progress(done / total if total else 1.0)
+
+    df = screener.build_screener_table(uni, weights=weights, progress_cb=_load_progress)
+    load_bar.empty()
 
 if df.empty:
     st.info("Todavía no hay datos. Ve a ⚙️ Configuración y pulsa 'Actualizar datos'.")

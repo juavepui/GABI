@@ -14,7 +14,14 @@ st.title("🔍 Ficha de empresa")
 
 uni = screener.get_universe(limit=None)
 weights = config.load_weights()
-df = screener.build_screener_table(uni, weights=weights)
+with st.spinner(f"Cargando {len(uni)} empresas del universo..."):
+    load_bar = st.progress(0.0)
+
+    def _load_progress(done, total):
+        load_bar.progress(done / total if total else 1.0)
+
+    df = screener.build_screener_table(uni, weights=weights, progress_cb=_load_progress)
+    load_bar.empty()
 
 if df.empty:
     st.info("Todavía no hay datos. Ve a ⚙️ Configuración y pulsa 'Actualizar datos'.")
@@ -170,12 +177,10 @@ if not breakdown.empty:
         return ["" if col != "Percentil" else gradient_style(row_["Percentil"]) for col in display_breakdown.columns]
 
     styled_breakdown = display_breakdown.style.apply(_style_percentile, axis=1)
-    st.dataframe(
-        styled_breakdown, width="stretch", hide_index=True,
-        column_config={
-            "Qué significa": st.column_config.TextColumn("Qué significa", width="large"),
-        },
-    )
+    # st.dataframe trunca el texto de cada celda sin posibilidad de ajuste de línea
+    # (comprobado: "Qué significa" se cortaba) — st.table no trunca, crece con el
+    # contenido, y sigue soportando el Styler para el color del percentil.
+    st.table(styled_breakdown, hide_index=True)
 else:
     st.info("Sin métricas disponibles para el desglose.")
 

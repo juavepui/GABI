@@ -310,6 +310,358 @@ reales que habrían bloqueado el backtest para cualquiera que lo ejecutara:
    Sin eso, no hay capitalización de mercado ni PER/P-VC posibles.
    `_extract_raw_facts` ahora busca en ambas taxonomías.
 
+### Segundo resultado, más robusto (2016-2025, hasta 200 empresas, rebalanceo trimestral)
+
+El resultado de un solo año no permitía concluir nada, así que se repitió el
+ejercicio con un rango mucho más largo (universo de hasta 200 empresas por
+trimestre) y con un tercer punto de comparación además de SPY: el retorno
+equal-weight de **todo** el universo elegible de cada trimestre (no solo el
+top-10), para separar si el ranking añade algo o si la diferencia viene solo
+de invertir equal-weight en vez de por capitalización.
+
+Al preparar este rango se encontró y corrigió otro bug real: los tickers con
+notación de clase por punto (`BRK.B`, Berkshire Hathaway) nunca resolvían
+CIK en la SEC porque su archivo de mapeo usa guión (`BRK-B`) — es la misma
+acción, pero como cadena de texto no coincidía. `get_cik_for_symbol` ahora
+normaliza el punto a guión como *fallback* antes de rendirse (no es "adivinar
+otra empresa", es la misma seguridad con otra notación). Corregir esto amplió
+el universo elegible en cada trimestre (de ~120-145 a ~144-185 empresas) y
+**cambió de forma no trivial los números del rango 2016-2024 ya reportados
+antes** — una muestra de lo sensible que es este backtest a huecos de datos
+aparentemente pequeños; cualquier cifra concreta aquí debe tratarse como
+aproximada, no como verdad exacta.
+
+Quedan además **9 empresas activas hoy que no se pueden resolver**: EA, Bank
+of NY Mellon (BK), AvalonBay (AVB), Equity Residential (EQR), Coterra (CTRA),
+Fiserv (FI), Dayforce (DAY), Ansys (ANSS) y Discover (DFS). Se confirmó
+manualmente contra `data.sec.gov/submissions/` que son registrantes SEC
+activos — el hueco está en el archivo `company_tickers.json` de la propia
+SEC, no en nuestro código; no se ha implementado un *fallback* de búsqueda
+por nombre porque el diseño actual evita deliberadamente adivinar (ver
+docstring de `get_cik_for_symbol`).
+
+De los trimestres del rango, los anteriores a 2016-07 se descartan por
+cobertura SEC EDGAR insuficiente (ver la siguiente sección), y **más allá de
+2025-08-23 no hay composición histórica verificada del índice** — el dataset
+gratuito de constituyentes del S&P 500 no llega más lejos, así que 2025-10 en
+adelante también se descarta (usar el universo *actual* como aproximación
+introduciría sesgo de supervivencia). El resultado cubre los **37 trimestres
+de 2016-07 a 2025-07**, los tres últimos (2025) siendo la evidencia más
+reciente y menos susceptible de haber influido en el diseño del score:
+
+| Estrategia | Acumulado | Anualizado | Vol. anualizada | Sharpe | Sortino | Máx. drawdown |
+|---|---|---|---|---|---|---|
+| **Top-10 del ranking** | **+351.4%** | +17.70% | 19.98% | **0.69** | **1.10** | −29.3% |
+| Universo equal-weight (sin ranking) | +177.1% | +11.65% | 18.81% | 0.41 | 0.61 | −28.6% |
+| SPY (cap-weighted) | +235.1% | +13.97% | 17.64% | 0.56 | 0.85 | −23.9% |
+
+Top-10 le gana al universo equal-weight el 59% de los trimestres y al SPY el
+62%. **El ranking sigue compensando el riesgo adicional que asume**: más
+volatilidad que el SPY (esperable con 10 posiciones en vez de 500), pero
+Sharpe y Sortino claramente mejores — no es solo "más riesgo, más retorno".
+
+**Los tres trimestres de 2025 (el dato real más reciente) no son buenos**:
+
+| Periodo | Top-10 | SPY |
+|---|---|---|
+| 2025-01 | −4.1% | −4.0% |
+| 2025-04 | −0.1% | **+9.5%** |
+| 2025-07 | +2.6% | +7.8% |
+
+El ranking se quedó muy por detrás del SPY en 2 de los 3 últimos trimestres
+reales. Un inversor profesional no debería sobreinterpretar ni lo positivo
+del acumulado de 9 años ni lo negativo de estos 3 últimos trimestres — pero
+ambos hechos son reales y hay que tenerlos en cuenta a partes iguales.
+
+Otras salvedades que se mantienen:
+
+- **59-62% no es un margen enorme** — es una ventaja real pero modesta que la
+  capitalización compuesta amplifica visualmente; con menos periodos podría
+  no ser significativa.
+- **Un solo régimen de mercado**: 2016-2025 es mayoritariamente alcista con
+  una caída rápida (COVID) y una corrección (2022) — no incluye un mercado
+  bajista prolongado (ver más abajo por qué no se pudo ampliar hacia atrás).
+- El backtest estándar del módulo (`multifactor_backtest.run`, el que usa el
+  botón de la interfaz) **aborta el rango entero** si un solo trimestre no
+  llega al umbral de cobertura, en vez de saltarlo — por eso este resultado
+  se obtuvo con un script aparte que sí salta trimestres individuales; para
+  reproducirlo tal cual desde la UI hay que arrancar en 2016-07 y terminar en
+  2025-07.
+- En la única caída generalizada real de la muestra (COVID, 2020-01-01) la
+  concentración en 10 posiciones no protegió nada frente a tener todo el
+  universo (−29.3% vs −28.6%) y fue peor que el SPY (−23.9%) — el ranking
+  puntúa mejor "quién sube más", no "quién cae menos" en un pánico de mercado
+  (ver el experimento de nº de posiciones justo abajo).
+
+### Experimento: más posiciones y un filtro de tendencia, ¿bajan el drawdown?
+
+Con la caída del COVID como punto débil identificado, se probaron dos ideas
+simples sobre el mismo rango 2016-2025: ampliar de 10 a 20/30 posiciones, y
+reducir a la mitad la exposición cuando el SPY entra en el rebalanceo por
+debajo de su SMA200 (señal de tendencia bajista, la misma que ya se usa a
+nivel de empresa individual en 🔍 Ficha de empresa).
+
+| Variante | Acumulado | Anualizado | Sharpe | Sortino | Máx. drawdown |
+|---|---|---|---|---|---|
+| Top-10 (base) | +351.4% | +17.70% | **0.69** | **1.10** | −29.3% |
+| **Top-20** | +288.1% | +15.79% | 0.68 | 1.08 | **−25.6%** |
+| Top-30 | +251.0% | +14.54% | 0.61 | 0.92 | −27.1% |
+| Top-10 + filtro SMA200 del SPY (50% en bajista) | +231.3% | +13.83% | 0.55 | 0.79 | −29.3% |
+| SPY | +235.1% | +13.97% | 0.56 | 0.85 | −23.9% |
+
+**Pasar de 10 a 20 posiciones funciona**: el máximo drawdown baja de −29.3%
+a −25.6% (una reducción real) sacrificando prácticamente nada de Sharpe
+(0.69→0.68) ni de Sortino (1.10→1.08). Subir a 30 posiciones ya no compensa
+— diluye demasiado la ventaja del *stock-picking* (Sharpe 0.61) sin bajar más
+el drawdown (−27.1%, peor que con 20). **Recomendación: 20 posiciones en vez
+de 10 es una mejora casi gratis.**
+
+**El filtro de SMA200 del SPY no funcionó, y es importante entender por
+qué**: en el trimestre de la caída del COVID (2020-01-01) el SPY *todavía
+estaba por encima* de su SMA200 al empezar el trimestre — el desplome fue
+tan rápido (febrero-marzo 2020) que una media móvil de 200 sesiones, que por
+diseño reacciona con retraso, no llegó a activarse a tiempo. El drawdown
+máximo quedó exactamente igual (−29.3%) y, peor aún, el filtro penalizó
+varios trimestres de recuperación fuerte que se marcaron erróneamente como
+"bajistas" (ej. 2019-01, con el top-10 subiendo un +24.7% real, habría
+entrado solo al 50%) — el resultado final es peor que no aplicar ningún
+filtro (Sharpe 0.55, por debajo incluso del SPY). Una señal de tendencia
+trimestral es demasiado lenta para proteger de una caída rápida; si se quiere
+protección real hacen falta señales más rápidas (ej. volatilidad implícita,
+rebalanceo mensual en vez de trimestral) — no está implementado.
+
+### ⚠️ Aviso: las cifras de arriba se calcularon con un universo sesgado (bug de muestreo)
+
+Todas las tablas anteriores en esta sección (el resultado 2016-2025, el
+experimento de posiciones/filtro de régimen, la sensibilidad a costes) se
+calcularon con `max_symbols=200`, y se descubrió después que ese parámetro
+**no cogía una muestra representativa del S&P 500**, sino sistemáticamente
+las primeras ~200 empresas por orden alfabético — ver "Corrección crítica"
+más abajo para la causa exacta y el arreglo (ya aplicado). El resto de esta
+auditoría (look-ahead, supervivencia a nivel de universo, costes) sigue
+siendo metodológicamente correcto — lo que fallaba era la composición de la
+muestra, no el mecanismo de cálculo. **El backtest ya se rehizo con el
+muestreo corregido — resultado en "Resultado corregido" más abajo.** La
+tabla de sensibilidad a costes no se ha vuelto a calcular todavía sobre el
+universo corregido (la lección cualitativa — que el margen se estrecha
+mucho con costes realistas — probablemente se mantenga, pero la cifra
+exacta del punto de equilibrio debería revisarse).
+
+### Resultado corregido (muestreo aleatorio con semilla fija, guard de reciclaje activo)
+
+Mismo periodo (2016-07 a 2025-04, 36 trimestres — uno menos que antes por un
+ajuste de fecha de corte, ver nota), mismo `max_symbols=200`, pero con
+`_sample_symbols` (aleatorio, semilla 42) en vez del recorte alfabético, y
+con el guard de reciclaje de tickers activo:
+
+| Estrategia | Acumulado | Anualizado | Vol. anualizada | Sharpe | Sortino | Máx. drawdown |
+|---|---|---|---|---|---|---|
+| Top-10 | +397.8% | +19.52% | 20.94% | 0.74 | 1.28 | −27.0% |
+| **Top-20** | +362.8% | +18.56% | 19.24% | **0.76** | **1.32** | **−25.4%** |
+| Top-30 | +229.4% | +14.16% | 19.87% | 0.51 | 0.83 | −26.4% |
+| Top-10 + filtro SMA200 del SPY | +269.8% | +15.64% | 19.47% | 0.60 | 0.96 | −27.0% |
+| Universo equal-weight (sin ranking) | +195.4% | +12.79% | 19.86% | 0.44 | 0.67 | −30.5% |
+| SPY (cap-weighted) | +210.8% | +13.43% | 17.83% | 0.53 | 0.79 | −23.9% |
+
+Top-10 le gana al universo equal-weight el 72% de los trimestres (antes
+59%) y al SPY el 75% (antes 62%).
+
+**La conclusión direccional se mantiene, y de hecho sale más limpia que
+antes, no más débil**:
+
+- El universo equal-weight ahora rinde casi exactamente igual que el SPY
+  (le gana el 50% de los trimestres, antes 56% con el universo sesgado) —
+  justo lo que cabría esperar de una muestra aleatoria representativa del
+  índice cap-weighted. Antes, parte de la "ventaja" del equal-weight sobre
+  el SPY podía venir del sesgo alfabético, no de un efecto real de
+  ponderación; ahora que esa ventaja desaparece casi del todo, la que le
+  queda al ranking frente al SPY es más creíble como señal genuina, no como
+  artefacto de la muestra.
+- **Pasar de 10 a 20 posiciones ahora es una mejora limpia en todos los
+  frentes**, no solo en drawdown: Sharpe (0.76 vs 0.74), Sortino (1.32 vs
+  1.28) y máximo drawdown (−25.4% vs −27.0%) mejoran los tres a la vez con
+  20 posiciones — la recomendación de usar 20 en vez de 10 queda reforzada.
+- Top-30 sigue siendo peor en todo (Sharpe 0.51) — diluye demasiado.
+- El filtro de SMA200 del SPY **sigue sin reducir el drawdown** (−27.0%,
+  idéntico a la base) por la misma razón de siempre: reacciona demasiado
+  tarde para una caída rápida como la del COVID. Sigue sin recomendarse tal
+  como está planteado.
+
+**Nota sobre los 36 vs 37 periodos**: el rango se cortó en `2025-07-02` en
+vez de bien avanzado 2025 por un ajuste de la fecha de fin al relanzar el
+script, perdiendo el trimestre 2025-07-01 (un dato ya conocido, no un
+problema de cobertura) — diferencia menor, no afecta a las conclusiones.
+
+### Auditoría de sesgos: supervivencia, look-ahead y costes
+
+Cualquier resultado de backtesting tan bueno como el de arriba merece
+desconfianza por defecto hasta comprobar los fallos que más lo falsean. Se
+auditó el código línea a línea para cada uno, a petición explícita de una
+revisión externa muy concreta sobre survivorship bias, look-ahead bias y
+costes de fricción:
+
+**Sesgo de supervivencia** — resuelto en el diseño. `universe.get_sp500_constituents_asof(fecha)`
+(`src/gabi/universe.py:91-135`) reconstruye la composición real del índice en
+cada fecha (`history[history["date"] <= fecha].iloc[-1]`), no usa el universo
+de hoy — prueba de ello: al preparar los datos aparecieron decenas de
+empresas ya desaparecidas (ABMD, CELG, ANTM, ATVI, BBBY...) precisamente
+porque el sistema pidió los componentes reales de esos años. Cuando la fecha
+cae fuera del histórico gratuito, la función marca `is_exact=False` y tanto
+`multifactor_backtest.run()` como los scripts de este backtest **descartan
+ese periodo en vez de usar el universo actual en silencio** (por eso
+2025-10 en adelante no aparece en ningún resultado). El matiz que sí queda:
+69 de 301 empresas históricas reales no resuelven en el mapeo de tickers de
+la SEC (recicladas/deslistadas hace tiempo) y por tanto no pueden puntuarse
+esos periodos, aunque sí cuentan en el universo — un sesgo más sutil hacia
+"lo que todavía es resoluble", no hacia "lo que sobrevivió en el índice".
+
+**Look-ahead bias** — comprobado línea a línea. `get_value_as_of()`
+(`src/gabi/edgar.py:349-361`) filtra `df["filed_date"] <= as_of_date`, donde
+`filed_date` es el campo `filed` que devuelve la propia SEC (`src/gabi/edgar.py:308`):
+la fecha real en que el 10-K/10-Q se hizo público, no la fecha de cierre del
+ejercicio. Si el FY2020 se publicó en febrero de 2021, un `as_of_date` de
+enero de 2020 no lo ve. Los precios se truncan igual
+(`_price_history_as_of`, `src/gabi/screener_asof.py:81`: `df[df.index <= as_of_date]`),
+así que momentum, RSI, SMA, Sharpe y beta reconstruidos para una fecha
+pasada tampoco ven precios futuros.
+
+**Costes de fricción** — modelados, pero la primera comparación que se hizo
+era optimista sin querer. `_period_returns()` aplica el coste a **todas**
+las posiciones, en **todos** los periodos, incluido el SPY de referencia —
+es decir, cobraba la misma fricción de rotación trimestral completa a un
+inversor pasivo que en la práctica no rota nada. Corrigiendo eso (SPY como
+*buy-and-hold* real, coste ≈0, frente a la estrategia con coste creciente):
+
+| Coste por lado | Top-10 anualizado | Sharpe | Brecha vs SPY *buy-and-hold* real |
+|---|---|---|---|
+| 10 pb (el usado en todo este documento) | +17.70% | 0.69 | +2.81pp |
+| 25 pb | +16.29% | 0.62 | +1.41pp |
+| **50 pb** | +13.98% | 0.50 | **−0.90pp (pierde)** |
+| 100 pb | +9.48% | 0.28 | −5.41pp |
+
+**La ventaja desaparece entre 25 y 50 puntos básicos por lado.** 10pb es una
+estimación razonable para grandes capitalizadas líquidas con buena
+ejecución, pero no heroica — con spreads más anchos, slippage en el día de
+rebalanceo, o empresas menos líquidas del universo, no es descabellado
+acercarse a 50pb. Esto no invalida el resultado, pero sí dice con toda
+claridad que **el margen de seguridad es más estrecho de lo que sugería la
+comparación original**, y que antes de operar esto con dinero real hace
+falta medir costes de ejecución reales, no asumirlos.
+
+Falta además un coste real no modelado en absoluto: **la fiscalidad**. Con
+rebalanceo trimestral casi todas las plusvalías serían a corto plazo (tipo
+marginal, no el reducido de largo plazo) — un descuento adicional que no
+aparece en ninguna cifra de este documento y que en una cuenta no protegida
+fiscalmente podría por sí solo consumir el margen que queda tras los costes
+de ejecución.
+
+**Sobre los factores como probabilidad, no predicción**: el resultado de
+2025 (el top-10 perdiendo en 2 de los últimos 3 trimestres reales frente al
+SPY, ver arriba) es justo la firma que cabría esperar de una ventaja
+estadística pequeña aplicada muchas veces — no la de una máquina de acertar
+cada trimestre. Y frente al test de "sospechosamente bueno" (un backtest que
+mejora retorno *y* drawdown a la vez suele oler a fuga de información): aquí
+el drawdown es *peor* que el del SPY (−29.3% vs −23.9%), lo contrario de esa
+firma — coherente con una estrategia concentrada real, no con un resultado
+inflado.
+
+### Corrección crítica: el universo de 200 empresas nunca fue representativo
+
+Al comprobar en detalle el sesgo de supervivencia con un caso real (la
+quiebra de PG&E, `PCG`, enero de 2019 — sí seguía siendo constituyente real
+del S&P 500 en 2018-10-01 según la reconstrucción histórica), se descubrió
+que `universe.get_sp500_constituents_asof()` devuelve los símbolos **en
+orden alfabético estricto**, y que tanto `multifactor_backtest.run()` como
+`required_symbols()` recortaban con `symbols[:max_symbols]` — con
+`max_symbols=200` sobre ~500 empresas, **siempre se cogían las primeras ~200
+alfabéticamente**, trimestre tras trimestre. Prueba concreta: PG&E está en
+la posición 353 de 496 en la composición de 2018-10-01 — nunca entraba en
+ningún backtest con `max_symbols=200`, y con ella toda empresa desde
+aproximadamente la "N/O" en adelante (Pepsi, Pfizer, Procter & Gamble,
+Qualcomm, Starbucks, Target, UnitedHealth, Visa, Walmart, Exxon...), tanto
+del ranking top-N como del benchmark "universo equal-weight" con el que se
+comparaba. No es un sesgo con lógica económica (como el de supervivencia) —
+es puramente accidental, pero afecta a **todos** los resultados numéricos de
+esta sección calculados con `max_symbols` fijado (200, 100 o 50, incluido el
+primer resultado de 2019).
+
+**Corregido** en `src/gabi/multifactor_backtest.py`: se sustituyó el
+recorte `[:max_symbols]` por un muestreo aleatorio con semilla fija
+(`random.Random(42).sample(...)`, función `_sample_symbols`) — reproducible
+entre llamadas, pero sin sesgo hacia ninguna parte del alfabeto. Afecta
+también al selector "Universo: 50/100/500" de 🕰️ Ranking histórico, no solo
+a los scripts de este documento. **Ya rehecho — ver "Resultado corregido"
+más arriba.**
+
+### Riesgo adicional descubierto: reciclaje de ticker en los precios
+
+Al investigar por qué PG&E no aparecía, se comprobó también si los precios
+de empresas que desaparecen del índice siguen reflejando su destino real
+(quiebra, exclusión) en vez de desaparecer sin más del dataset — la segunda
+pregunta crítica planteada. Resultado mixto:
+
+- **PG&E**: yfinance sí tiene el histórico completo con la caída real
+  (−72% real entre finales de octubre de 2018 y principios de febrero de
+  2019) — el problema era solo que nunca se pedía (por el bug de arriba).
+- **Bed Bath & Beyond (`BBBY`, quiebra y exclusión real en 2023)**: yfinance
+  devuelve para ese mismo ticker **cotización "viva" de 2026**, sobre 3-4$
+  con volumen normal — la bolsa ha reasignado el símbolo a una empresa
+  distinta que no tiene nada que ver con la original. El lado EDGAR/CIK del
+  código ya tenía protección explícita contra esto (guarda el `title`
+  resuelto para poder detectarlo, ver docstring de `get_cik_for_symbol`),
+  pero el lado de precios no tenía ninguna salvaguarda.
+
+**Corregido**: `edgar.get_last_filed_dates(symbols)` (nuevo, en lote) da la
+fecha del filing SEC más reciente que tenemos por símbolo. En
+`multifactor_backtest._period_returns()`, si una empresa lleva más de 450
+días sin presentar nada ante la SEC (una empresa viva presenta un 10-Q como
+mínimo cada trimestre) pero el precio de salida cae después de ese hueco, se
+trata como no verificable y se descarta ese periodo (`ValueError`, con
+mensaje explícito) en vez de usar en silencio lo que devuelva yfinance. Dos
+tests nuevos en `tests/test_multifactor_backtest.py` cubren ambos casos
+(empresa con filing reciente: se acepta; empresa con hueco largo: se
+rechaza).
+
+**Alcance real de esta protección, con honestidad**: solo funciona para
+empresas de las que ya tenemos algún histórico en `edgar_facts` (como
+PG&E). Para una empresa que **nunca** resolvió CIK en absoluto (como
+`BBBY`, que tampoco aparece en el mapeo de tickers de la SEC) no hay fecha
+de filing con la que comparar, así que el guard no puede activarse para
+ella — en la práctica esto importa poco porque esas mismas empresas ya
+quedan excluidas del ranking por el filtro de cobertura mínima de
+fundamentales (sin CIK no hay métricas, sin métricas no hay `score_coverage`
+suficiente), así que su precio contaminado tampoco llegaba a usarse. El
+riesgo real que cierra este arreglo es el más peligroso: una empresa con
+historial real y fiable en la base de datos que deja de filtrar en algún
+punto y cuyo ticker se recicla después — ese caso sí podía colarse en
+silencio antes de esta corrección.
+
+### Por qué no se pudo ampliar a 2010 o antes
+
+Se intentó extender el backtest a 2010-2024 para incluir más ciclos de
+mercado. El resultado confirma con datos reales lo que predice el calendario
+regulatorio: la SEC no exigió XBRL estructurado (los datos que necesita el
+ranking para reconstruirse en una fecha pasada) hasta 2009, y la cobertura
+tardó años en madurar incluso después:
+
+| Fecha | Empresas con cobertura suficiente (de 200) |
+|---|---|
+| Ene 2010 | 7 |
+| Ene 2011 | 64 |
+| Ene 2013 | 105 |
+| Ene 2015 | 112 |
+| Abr 2016 | 118 |
+| **Jul 2016** | **122 (primer trimestre que supera el umbral del 60%)** |
+
+**Los 24 trimestres de 2010 a mediados de 2016 se saltan enteros** por no
+llegar nunca al 60% de cobertura del universo — no es un fallo de caché ni
+de fetching, es que la mayoría de empresas medianas del S&P 500 de esa época
+simplemente no tenían fundamentales en formato estructurado todavía. 2000 o
+2005 son directamente inviables: en 2000 y 2005 no existía ninguna
+obligación de reportar XBRL, así que no hay datos que descargar por muy
+atrás que se intente. El backtest fiable con esta fuente de datos empieza,
+como mucho, a mediados de 2016.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

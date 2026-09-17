@@ -20,7 +20,14 @@ MAX_COMPANIES = 5
 
 uni = screener.get_universe(limit=None)
 weights = config.load_weights()
-df = screener.build_screener_table(uni, weights=weights)
+with st.spinner(f"Cargando {len(uni)} empresas del universo..."):
+    load_bar = st.progress(0.0)
+
+    def _load_progress(done, total):
+        load_bar.progress(done / total if total else 1.0)
+
+    df = screener.build_screener_table(uni, weights=weights, progress_cb=_load_progress)
+    load_bar.empty()
 
 if df.empty:
     st.info("Todavía no hay datos. Ve a ⚙️ Configuración y pulsa 'Actualizar datos'.")
@@ -36,18 +43,24 @@ def _label(sym):
 
 default_selection = [s for s in st.session_state.get("compare_symbols", options[:2]) if s in options]
 
-selected = st.multiselect(
-    "Empresas a comparar", options, default=default_selection, format_func=_label,
-    help=f"Selecciona entre 2 y {MAX_COMPANIES} empresas.",
-)
+# En un formulario: elegir empresas no dispara nada hasta pulsar "Comparar" —
+# sin esto, cada empresa que añades al buscar relanza toda la página (incluye
+# reconstruir la tabla del screener completo) antes de que termines de elegir.
+with st.form("compare_form"):
+    pending_selection = st.multiselect(
+        "Empresas a comparar", options, default=default_selection, format_func=_label,
+        help=f"Selecciona entre 2 y {MAX_COMPANIES} empresas y pulsa 'Comparar'.",
+    )
+    st.form_submit_button("Comparar", type="primary")
 
+selected = [s for s in pending_selection if s in options]
 if len(selected) > MAX_COMPANIES:
     st.warning(f"Máximo {MAX_COMPANIES} empresas a la vez — se usan las primeras {MAX_COMPANIES} seleccionadas.")
     selected = selected[:MAX_COMPANIES]
 st.session_state["compare_symbols"] = selected
 
 if len(selected) < 2:
-    st.info("Selecciona al menos 2 empresas para compararlas.")
+    st.info("Selecciona al menos 2 empresas y pulsa 'Comparar'.")
     st.stop()
 
 subset = df.loc[selected]
@@ -115,14 +128,15 @@ table.rename(columns=label_map, inplace=True)
 color_basis.rename(columns=label_map, inplace=True)
 color_basis = color_basis.reindex(index=table.index, columns=table.columns)
 
+# Empresas en columnas, métricas en filas — más legible al comparar pocas
+# empresas con muchas métricas que al revés.
+table = table.T
+color_basis = color_basis.T
+
 
 def _apply_colors(_data):
     return color_basis.map(gradient_style)
 
 
 styled = table.style.apply(_apply_colors, axis=None)
-column_config = {
-    label_map[k]: st.column_config.TextColumn(label_map[k], help=METRIC_INFO[k]["help"])
-    for k in present_keys
-}
-st.dataframe(styled, width="stretch", height=min(500, 40 * (len(selected) + 1)), column_config=column_config)
+st.dataframe(styled, width="stretch", height=min(600, 35 * (len(present_keys) + 1)))

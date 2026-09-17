@@ -189,18 +189,58 @@ for months in (6, 12):
 st.divider()
 st.subheader("Backtest multifactor por rebalanceos")
 st.caption("Reconstruye el ranking en cada fecha con SEC EDGAR y la composición histórica del índice. "
-           "Requiere precios y fundamentales cacheados para todos los periodos; se detiene si falta cobertura. "
+           "Un periodo sin cobertura suficiente se salta (no aborta todo el rango); se listan los saltados. "
            "El universo histórico gratuito termina en 2025 y puede contener símbolos reutilizados. "
            "Los tamaños de 50/100 empresas son pruebas parciales, no resultados representativos del S&P 500.")
+
+with st.expander("📖 Cómo probarlo (léelo si es la primera vez)"):
+    st.markdown(
+        """
+**Qué hace**: en cada fecha de rebalanceo, reconstruye el ranking tal y como se habría visto ese día
+(sin usar datos futuros), elige las N mejores candidatas, y mide cuánto habría rentado esa cesta hasta
+el siguiente rebalanceo — comparándolo con comprar y mantener el SPY, y con repartir el dinero a partes
+iguales entre **todas** las empresas elegibles de ese periodo (el "universo equiponderado": sirve para
+saber si elegir bien aporta algo por encima de simplemente estar invertido).
+
+**Pasos para probarlo tú mismo**:
+1. Deja fechas por defecto o elige un rango — **empieza en 2016-07-02 o después**: antes de eso apenas
+   hay empresas con fundamentales SEC EDGAR completos y la mayoría de periodos se saltarán.
+2. Pulsa **"Preparar datos de todos los rebalanceos"** primero — descarga SEC EDGAR y precios para
+   todas las empresas que hagan falta en ese rango. Con rangos largos (varios años) puede tardar varios
+   minutos; con pocos meses es casi instantáneo si ya tienes datos cacheados.
+3. Pulsa **"Ejecutar backtest multifactor"**.
+4. Mira primero **Sharpe y Sortino** (abajo), no solo el retorno — un retorno más alto con mucho más
+   riesgo no es necesariamente mejor. Compara los tres: tu estrategia, el universo equiponderado y el SPY.
+
+**Qué probar**: sube "Empresas por periodo" a 20 y compara — en nuestras pruebas, 20 posiciones bajó el
+drawdown máximo sin apenas perder Sharpe/Sortino frente a 10 (ver README, sección de backtesting). Prueba
+también a subir "Coste por lado" a 25-50 puntos básicos — el margen de la estrategia frente al SPY se
+estrecha mucho más de lo que parece a primera vista con solo 10pb.
+        """
+    )
+
 with st.form("multifactor_test"):
     a, b, c = st.columns(3)
-    bt_start = a.date_input("Inicio", value=date(2019, 1, 2), key="bt_start")
+    bt_start = a.date_input("Inicio", value=date(2019, 1, 2), key="bt_start",
+                             help="Recomendado: 2016-07-02 o después. Antes de eso, la mayoría de "
+                                  "periodos se saltarán por falta de cobertura SEC EDGAR.")
     bt_end = b.date_input("Fin", value=date(2020, 1, 2), max_value=date.today(), key="bt_end")
-    interval = c.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses")
+    interval = c.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses",
+                           help="Cada cuánto se recalcula el ranking y se cambia de cesta de empresas.")
     d, e, f = st.columns(3)
-    n_picks = d.number_input("Empresas por periodo", 1, 50, 10)
-    universe_size = e.selectbox("Universo", [50, 100, 500], index=0)
-    bt_cost = f.number_input("Coste por lado (pb)", min_value=0.0, value=10.0)
+    n_picks = d.number_input("Empresas por periodo", 1, 50, 10,
+                             help="Cuántas de las mejores candidatas se compran cada rebalanceo, a partes "
+                                  "iguales. Más posiciones suele bajar el riesgo (drawdown) a costa de "
+                                  "diluir algo el retorno — no hay un número 'correcto' único.")
+    universe_size = e.selectbox("Universo", [50, 100, 500], index=0,
+                                help="Cuántas empresas del S&P 500 de esa fecha se consideran como "
+                                     "candidatas (muestreo aleatorio si hay más de las indicadas, no "
+                                     "las primeras alfabéticamente). 500 ≈ el índice completo.")
+    bt_cost = f.number_input("Coste por lado (pb)", min_value=0.0, value=10.0,
+                             help="Fricción de comprar/vender (spread, comisión, slippage) en puntos "
+                                  "básicos (100pb = 1%). Se aplica en cada rebalanceo a cada posición. "
+                                  "10pb es razonable para grandes capitalizadas líquidas; con empresas "
+                                  "menos líquidas o peor ejecución, 25-50pb es más realista.")
     if st.form_submit_button("Ejecutar backtest multifactor"):
         try:
             test = multifactor_backtest.run(bt_start.isoformat(), bt_end.isoformat(), interval,
@@ -229,11 +269,40 @@ if st.button("Preparar datos de todos los rebalanceos"):
         st.error(str(exc))
 if "multifactor_result" in st.session_state:
     test = st.session_state["multifactor_result"]
-    x, y, z = st.columns(3)
-    x.metric("Estrategia", f"{test['return']:+.1%}")
-    y.metric("SPY", f"{test['spy_return']:+.1%}")
-    z.metric("Drawdown entre rebalanceos", f"{test['drawdown']:.1%}")
-    st.line_chart(test["periods"].set_index("hasta")[["capital", "spy_capital"]])
+    if test["skipped"]:
+        with st.expander(f"⚠️ {len(test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
+            st.dataframe(pd.DataFrame(test["skipped"]), hide_index=True, width="stretch")
+
+    st.caption(
+        "**Sharpe**: retorno por encima de la tasa libre de riesgo, dividido entre la volatilidad total — "
+        "más alto es mejor (más retorno por unidad de riesgo asumido). **Sortino**: lo mismo pero solo "
+        "penaliza la volatilidad a la baja (caídas), no la al alza — más informativo que Sharpe si lo que "
+        "te preocupa es perder dinero, no que suba mucho. **Drawdown**: la mayor caída desde un máximo "
+        "hasta un mínimo posterior — cuánto habrías llegado a perder en el peor momento."
+    )
+    strat_m, universo_m, spy_m = test["metrics"]["estrategia"], test["metrics"]["universo_ew"], test["metrics"]["spy"]
+
+    def _metric_row(label, ret, m, help_extra=""):
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric(f"{label} · acumulado", f"{ret:+.1%}")
+        c2.metric("Sharpe", f"{m['sharpe']:.2f}" if m["sharpe"] is not None else "—",
+                  help="Retorno anualizado (sobre el 4% libre de riesgo) dividido entre la volatilidad. " + help_extra)
+        c3.metric("Sortino", f"{m['sortino']:.2f}" if m["sortino"] is not None else "—",
+                  help="Como Sharpe, pero solo cuenta la volatilidad a la baja.")
+        c4.metric("Máx. drawdown", f"{m['max_drawdown']:.1%}" if m["max_drawdown"] is not None else "—",
+                  help="Mayor caída desde un máximo hasta un mínimo posterior, entre rebalanceos.")
+
+    st.markdown("**Tu estrategia (top-N del ranking)**")
+    _metric_row("Estrategia", test["return"], strat_m)
+    st.markdown("**Universo equiponderado** — todas las candidatas elegibles de cada periodo, a partes iguales")
+    _metric_row("Universo", test["universo_ew_return"], universo_m,
+                "Compáralo con la estrategia: si Sharpe aquí es parecido o mejor, elegir las top-N no está "
+                "aportando tanto como parece por el retorno bruto.")
+    st.markdown("**SPY** — comprar y mantener el índice, sin rebalanceos")
+    _metric_row("SPY", test["spy_return"], spy_m)
+
+    st.line_chart(test["periods"].set_index("hasta")[["capital", "universo_capital", "spy_capital"]])
+    st.caption("Capital acumulado (partiendo de 1) de la estrategia, el universo equiponderado y el SPY.")
     st.dataframe(test["periods"], hide_index=True, width="stretch")
 with st.expander("Comparar qué bloque aporta más en esta fecha"):
     st.caption("Comparación exploratoria de una sola fecha. Para ajustar pesos hacen falta varias fechas y validación posterior independiente.")
