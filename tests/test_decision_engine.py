@@ -1,10 +1,19 @@
 import sys
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, decision_engine
+from gabi import config, decision_engine, storage
+
+
+def _seed_to_today(symbol, p_start, p_today, start_date):
+    df = pd.DataFrame({
+        "Open": [p_start, p_today], "High": [p_start, p_today], "Low": [p_start, p_today],
+        "Close": [p_start, p_today], "Adj Close": [p_start, p_today], "Volume": [100, 100],
+    }, index=pd.to_datetime([start_date, date.today().isoformat()]))
+    storage.upsert_prices(symbol, df)
 
 
 def _history():
@@ -88,6 +97,74 @@ def test_plan_audit_roundtrip(tmp_path, monkeypatch):
     assert decision_engine.list_saved_plans().iloc[0]["name"] == "Prueba renovada"
     assert decision_engine.delete_saved_plan(run_id)
     assert decision_engine.list_saved_plans().empty
+
+
+def _backdate_plan(run_id, days_ago):
+    """save_plan siempre usa datetime.now() real como created_at (fecha de
+    origen del plan) — para poder probar 'progreso desde entonces hasta
+    hoy' hace falta retrasarlo manualmente, igual que ya hace
+    test_existing_plan_table_gets_name_column con una fila insertada a mano."""
+    past = (pd.Timestamp(date.today()) - pd.Timedelta(days=days_ago)).isoformat()
+    with storage.get_connection() as conn:
+        conn.execute("UPDATE decision_runs SET created_at=? WHERE id=?", (past, run_id))
+        conn.commit()
+    return past[:10]
+
+
+def test_plan_progress_weights_by_target_pct_not_equally(tmp_path, monkeypatch):
+    """A diferencia de un ranking de Screener (equiponderado), un plan de
+    decisiones SI pondera por target_pct real de cada posicion."""
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    plan = {"decisions": pd.DataFrame([
+        {"symbol": "AAA", "action": "COMPRAR", "target_pct": 80.0},
+        {"symbol": "BBB", "action": "COMPRAR", "target_pct": 20.0},
+    ]), "method": "test"}
+    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {})
+    origin_date = _backdate_plan(run_id, days_ago=3)
+    _seed_to_today("AAA", 100, 150, origin_date)  # +50%, pesa 80%
+    _seed_to_today("BBB", 100, 100, origin_date)  # +0%, pesa 20%
+    _seed_to_today("SPY", 100, 110, origin_date)  # +10%
+
+    result = decision_engine.plan_progress(run_id)
+    assert result["requested"] == 2
+    assert result["available"] == 2
+    # 0.8*50% + 0.2*0% = 40%, NO el 25% que saldria equiponderado
+    assert round(result["portfolio_return"], 3) == .40
+    assert round(result["benchmark_return"], 3) == .10
+    assert len(result["detail"]) == 2
+
+
+def test_plan_progress_ignores_zero_weight_positions(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    plan = {"decisions": pd.DataFrame([
+        {"symbol": "AAA", "action": "COMPRAR", "target_pct": 100.0},
+        {"symbol": "CCC", "action": "VENDER", "target_pct": 0.0},
+    ]), "method": "test"}
+    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {})
+    result = decision_engine.plan_progress(run_id)
+    assert result["requested"] == 1  # CCC (peso 0, ya fuera de cartera) no cuenta
+
+
+def test_plan_price_curve_weighted_normalizes_to_100(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    plan = {"decisions": pd.DataFrame([
+        {"symbol": "AAA", "action": "COMPRAR", "target_pct": 75.0},
+        {"symbol": "BBB", "action": "COMPRAR", "target_pct": 25.0},
+    ]), "method": "test"}
+    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {})
+    origin_date = _backdate_plan(run_id, days_ago=3)
+    _seed_to_today("AAA", 100, 200, origin_date)  # x2
+    _seed_to_today("BBB", 100, 100, origin_date)  # sin cambio
+    _seed_to_today("SPY", 100, 105, origin_date)
+
+    curve = decision_engine.plan_price_curve(run_id)
+    assert curve.iloc[0]["Cartera"] == 100
+    # 0.75*200 + 0.25*100 = 175
+    assert round(curve.iloc[-1]["Cartera"], 1) == 175.0
+    assert round(curve.iloc[-1]["SPY"], 1) == 105.0
 
 
 def test_existing_plan_table_gets_name_column(tmp_path, monkeypatch):

@@ -662,6 +662,19 @@ obligación de reportar XBRL, así que no hay datos que descargar por muy
 atrás que se intente. El backtest fiable con esta fuente de datos empieza,
 como mucho, a mediados de 2016.
 
+### Checklist de sesgos de backtesting — auditoría completa
+
+Revisión explícita contra los seis errores más habituales en backtesting casero
+(supervivencia, look-ahead, *multiple testing*, costes, *data snooping*, validación
+temporal): supervivencia y look-ahead están resueltos con evidencia (ver arriba);
+costes están modelados pero con matices; *multiple testing*, *data snooping* y
+validación temporal **no** lo estaban — toda la exploración de esta sección se hizo
+mirando el mismo rango histórico una y otra vez, sin corrección estadística ni tramo
+reservado. Ver **[`HIPOTESIS_CONGELADA.md`](HIPOTESIS_CONGELADA.md)**: la configuración
+concreta que se cree buena, congelada por escrito antes de tener ningún dato nuevo con
+el que validarla — es la única forma honesta de comprobar si de verdad funciona, en vez
+de seguir ajustando sobre el mismo pasado.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

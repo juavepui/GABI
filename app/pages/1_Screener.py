@@ -139,28 +139,113 @@ for key in present_keys:
 st.dataframe(styled, width="stretch", height=500, column_config=column_config)
 
 st.subheader("Seguimiento de rankings")
-top_n = st.number_input("Número de candidatas", min_value=1, max_value=50, value=10)
+st.caption(
+    "Guarda una foto del ranking de hoy (con los pesos actuales de ⚙️ Configuración) para poder revisar "
+    "más adelante si esas candidatas batieron al SPY. Si cambias los pesos y guardas otro, ponle un "
+    "nombre distinto — así podrás comparar 'con estos pesos' vs 'con estos otros' cuando los revises."
+)
+c1, c2 = st.columns([1, 2])
+top_n = c1.number_input("Número de candidatas", min_value=1, max_value=50, value=10)
+snapshot_name = c2.text_input(
+    "Nombre de este ranking (opcional)", placeholder=f"Ranking {date.today().isoformat()}",
+    help="Útil sobre todo si vas a probar varias configuraciones de pesos — te ayuda a saber luego con "
+         "qué pesos se generó cada ranking guardado.",
+)
 if st.button("Guardar ranking de hoy"):
-    snapshot_id = evaluation.save_snapshot(df, date.today().isoformat(), top_n=int(top_n))
+    snapshot_id = evaluation.save_snapshot(df, date.today().isoformat(), top_n=int(top_n),
+                                           name=snapshot_name or None)
     if snapshot_id:
         st.success(f"Ranking #{snapshot_id} guardado. Sus resultados se podrán revisar a 6 y 12 meses.")
+        st.rerun()
     else:
         st.warning("No hay candidatas con cobertura suficiente.")
 snapshots = evaluation.list_snapshots()
 if not snapshots.empty:
-    selected_id = st.selectbox("Ranking guardado", snapshots["id"].tolist())
+    labels = {int(row["id"]): f"{row['name']} · {row['as_of_date']} (#{row['id']})"
+              for _, row in snapshots.iterrows()}
+    selected_id = st.selectbox(
+        "Ranking guardado", snapshots["id"].tolist(), format_func=lambda i: labels[i],
+        help="Al cambiar esta selección se cargan las candidatas y la evaluación de ESE ranking concreto "
+             "— cada uno guardó su propia fecha y sus propias empresas en el momento en que se creó.",
+    )
     selected_row = snapshots[snapshots["id"] == selected_id].iloc[0]
-    st.caption(f"Fecha: {selected_row['as_of_date']} · {selected_row['candidates']} candidatas")
-    for months in (6, 12):
-        outcome = evaluation.evaluate(evaluation.snapshot_symbols(selected_id), selected_row["as_of_date"], months)
-        if outcome["status"] == "pending":
-            st.write(f"{months} meses: pendiente hasta {outcome['end_date']}")
+    created_display = selected_row["created_at"].replace("T", " a las ")
+    st.caption(f"Fecha objetivo: {selected_row['as_of_date']} · guardado el {created_display} (hora española) "
+              f"· {selected_row['candidates']} candidatas")
+    with st.form(f"rename_snapshot_{selected_id}"):
+        new_name = st.text_input("Cambiar nombre de este ranking", value=selected_row["name"])
+        if st.form_submit_button("Guardar nombre"):
+            try:
+                evaluation.rename_snapshot(int(selected_id), new_name)
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
+    st.markdown(f"#### Progreso desde {selected_row['as_of_date']} hasta hoy")
+    progress = evaluation.snapshot_progress(selected_id)
+    if progress and progress.get("stale"):
+        if progress["data_as_of"]:
+            st.info(
+                f"ℹ️ Los precios en caché solo llegan hasta el **{progress['data_as_of']}** — la misma fecha "
+                "(o anterior) en que se guardó este ranking, así que todavía no hay ningún día nuevo que "
+                "comparar (por eso el retorno sale en 0,0%, no es que no se haya movido nada). Actualiza los "
+                "datos en ⚙️ Configuración y vuelve a mirarlo más tarde.",
+            )
         else:
-            pf = f"{outcome['portfolio_return']:+.1%}" if outcome["portfolio_return"] is not None else "—"
-            spy = f"{outcome['benchmark_return']:+.1%}" if outcome["benchmark_return"] is not None else "—"
-            st.write(f"{months} meses: candidatas {pf} · SPY {spy} · cobertura {outcome['available']}/{outcome['requested']}")
-            if outcome["status"] == "incomplete":
-                st.caption("Resultado parcial: faltan precios para " + ", ".join(outcome["missing"]))
+            st.info("ℹ️ Todavía no hay ningún precio cacheado para estas empresas. Actualiza los datos en ⚙️ Configuración.")
+    if progress and progress["portfolio_return"] is not None:
+        pc1, pc2, pc3 = st.columns(3)
+        pc1.metric(
+            "Cesta guardada", f"{progress['portfolio_return']:+.1%}",
+            help="Media del retorno de cada candidata guardada desde la fecha del snapshot hasta hoy — "
+                 "todas pesan igual (1/N), un ranking guardado no lleva pesos distintos por empresa.",
+        )
+        if progress["benchmark_return"] is not None:
+            pc2.metric("SPY (mismo periodo)", f"{progress['benchmark_return']:+.1%}",
+                      help="Qué habría rentado el SPY entre la misma fecha guardada y hoy.")
+            pc3.metric("Diferencia", f"{progress['excess_return']:+.1%}",
+                      help="Cesta menos SPY — positivo significa que la cesta bate al índice hasta ahora.")
+        else:
+            pc2.metric("SPY (mismo periodo)", "—")
+        if progress["available"] < progress["requested"]:
+            st.caption(
+                f"⚠️ Cobertura {progress['available']}/{progress['requested']} — sin precio hasta hoy para: "
+                + ", ".join(progress["missing"]) + " (no cuentan como 0%, simplemente se excluyen de la media)."
+            )
+
+        curve = evaluation.snapshot_price_curve(selected_id)
+        if not curve.empty:
+            st.line_chart(curve, y_label="Valor (100 = fecha guardada)")
+
+        st.caption(f"Detalle por empresa — exactamente las {progress['requested']} candidatas guardadas, ninguna más:")
+        detail = progress["detail"].copy()
+        detail["return"] = detail["return"] * 100
+        detail = detail.rename(columns={
+            "symbol": "Ticker", "price_start": f"Precio {progress['as_of_date']}",
+            "price_now": "Precio hoy", "return": "Retorno %",
+        })
+        st.dataframe(
+            detail, hide_index=True, width="stretch",
+            column_config={
+                "Retorno %": st.column_config.NumberColumn("Retorno %", format="%.1f%%"),
+                f"Precio {progress['as_of_date']}": st.column_config.NumberColumn(format="%.2f"),
+                "Precio hoy": st.column_config.NumberColumn(format="%.2f"),
+            },
+        )
+    else:
+        st.info("Sin precios suficientes todavía para calcular el progreso de este ranking.")
+
+    with st.expander("Ver también a plazo fijo (6 y 12 meses desde que se guardó)"):
+        st.caption("Referencia adicional con un punto de corte fijo, útil para comparar entre rankings de forma homogénea.")
+        for months in (6, 12):
+            outcome = evaluation.evaluate(evaluation.snapshot_symbols(selected_id), selected_row["as_of_date"], months)
+            if outcome["status"] == "pending":
+                st.write(f"{months} meses: pendiente hasta {outcome['end_date']}")
+            else:
+                pf = f"{outcome['portfolio_return']:+.1%}" if outcome["portfolio_return"] is not None else "—"
+                spy = f"{outcome['benchmark_return']:+.1%}" if outcome["benchmark_return"] is not None else "—"
+                st.write(f"{months} meses: candidatas {pf} · SPY {spy} · cobertura {outcome['available']}/{outcome['requested']}")
+                if outcome["status"] == "incomplete":
+                    st.caption("Resultado parcial: faltan precios para " + ", ".join(outcome["missing"]))
 
 st.divider()
 st.subheader("Ver ficha de una empresa")

@@ -188,7 +188,33 @@ if not saved.empty:
         labels = {int(row["id"]): f"{row['name']} · {row['created_at'][:16]} (#{row['id']})"
                   for _, row in saved.iterrows()}
         selected = st.selectbox("Plan guardado", saved["id"].tolist(), format_func=lambda run_id: labels[run_id])
-        st.dataframe(decision_engine.load_saved_plan(selected), hide_index=True, width="stretch")
+
+        old_decisions = decision_engine.load_saved_plan(selected)
+        if not old_decisions.empty:
+            display_old = old_decisions.rename(columns={
+                "symbol": "Ticker", "action": "Decisión", "current_pct": "Actual %",
+                "target_pct": "Objetivo %", "change_pct": "Cambio %", "reason": "Motivo", "score": "Score",
+            })
+            st.dataframe(
+                display_old, hide_index=True, width="stretch",
+                column_config={
+                    "Ticker": st.column_config.TextColumn(help="Símbolo bursátil de la empresa."),
+                    "Decisión": st.column_config.TextColumn(
+                        help="COMPRAR/VENDER/REDUCIR/MANTENER según la diferencia entre el % actual y el "
+                             "objetivo; REVISAR cuando no hay datos fiables para decidir con seguridad."),
+                    "Actual %": st.column_config.NumberColumn(
+                        format="%.2f", help="% de tu patrimonio que ya tenías en esta empresa al generar el plan."),
+                    "Objetivo %": st.column_config.NumberColumn(
+                        format="%.2f", help="% que el plan recomienda tener, según la optimización de cartera."),
+                    "Cambio %": st.column_config.NumberColumn(
+                        format="%.2f", help="Objetivo menos Actual — cuánto habría que comprar (+) o vender (−)."),
+                    "Motivo": st.column_config.TextColumn(help="Por qué esa decisión: regla de la política o motivo del descarte."),
+                    "Score": st.column_config.NumberColumn(format="%.1f", help="Composite Score de la empresa en el momento del plan."),
+                },
+            )
+        else:
+            st.info("Este plan no tiene posiciones guardadas.")
+
         current_name = saved.loc[saved["id"] == selected, "name"].iloc[0]
         with st.form(f"rename_plan_{selected}"):
             new_name = st.text_input("Cambiar nombre", value=current_name)
@@ -198,6 +224,62 @@ if not saved.empty:
                     st.rerun()
                 except ValueError as exc:
                     st.error(str(exc))
+
+        progress = decision_engine.plan_progress(int(selected))
+        if progress:
+            st.markdown(f"#### Progreso desde {progress['as_of_date']} hasta hoy")
+            if progress.get("stale"):
+                if progress["data_as_of"]:
+                    st.info(
+                        f"ℹ️ Los precios en caché solo llegan hasta el **{progress['data_as_of']}** — la misma "
+                        "fecha (o anterior) en que se generó este plan, así que todavía no hay ningún día "
+                        "nuevo que comparar. Actualiza los datos en ⚙️ Configuración y vuelve a mirarlo."
+                    )
+                else:
+                    st.info("ℹ️ Todavía no hay precios cacheados para estas empresas.")
+            if progress["portfolio_return"] is not None:
+                dc1, dc2, dc3 = st.columns(3)
+                dc1.metric(
+                    "Cartera del plan", f"{progress['portfolio_return']:+.1%}",
+                    help="Retorno ponderado por el % OBJETIVO real de cada posición (no a partes iguales) "
+                         "desde que se generó el plan hasta hoy.",
+                )
+                if progress["benchmark_return"] is not None:
+                    dc2.metric("SPY (mismo periodo)", f"{progress['benchmark_return']:+.1%}",
+                              help="Qué habría rentado el SPY desde la misma fecha del plan hasta hoy.")
+                    dc3.metric("Diferencia", f"{progress['excess_return']:+.1%}",
+                              help="Cartera menos SPY — positivo significa que el plan bate al índice hasta ahora.")
+                else:
+                    dc2.metric("SPY (mismo periodo)", "—")
+                if progress["available"] < progress["requested"]:
+                    st.caption(
+                        f"⚠️ Cobertura {progress['available']}/{progress['requested']} — sin precio hasta hoy "
+                        "para: " + ", ".join(progress["missing"]) + " (no cuentan como 0%, se excluyen del cálculo)."
+                    )
+
+                curve = decision_engine.plan_price_curve(int(selected))
+                if not curve.empty:
+                    st.line_chart(curve, y_label="Valor (100 = fecha del plan)")
+
+                st.caption("Detalle por posición (solo las que tienen peso objetivo > 0):")
+                detail = progress["detail"].copy()
+                detail["return"] = detail["return"] * 100
+                detail = detail.rename(columns={
+                    "symbol": "Ticker", "weight_pct": "Peso objetivo %",
+                    "price_start": f"Precio {progress['as_of_date']}", "price_now": "Precio hoy", "return": "Retorno %",
+                })
+                st.dataframe(
+                    detail, hide_index=True, width="stretch",
+                    column_config={
+                        "Peso objetivo %": st.column_config.NumberColumn(format="%.2f"),
+                        "Retorno %": st.column_config.NumberColumn("Retorno %", format="%.1f%%"),
+                        f"Precio {progress['as_of_date']}": st.column_config.NumberColumn(format="%.2f"),
+                        "Precio hoy": st.column_config.NumberColumn(format="%.2f"),
+                    },
+                )
+            else:
+                st.info("Sin precios suficientes todavía para calcular el progreso de este plan.")
+
         if st.button("Borrar este plan", key=f"delete_plan_{selected}"):
             decision_engine.delete_saved_plan(selected)
             if st.session_state.get("decision_run_id") == selected:
