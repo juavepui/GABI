@@ -60,7 +60,10 @@ def _period_returns(symbols: list[str], as_of: pd.Timestamp, months: int,
     histories = storage.get_prices_multi(symbols + ["SPY"])
     # SPY es un ETF, no una "reporting company" que pueda desaparecer y ver su
     # ticker reasignado a otra cosa — no necesita esta comprobación.
-    last_filed = edgar.get_last_filed_dates(symbols)
+    # as_of=exit_session: point-in-time correcto -- si no se acota, un ticker
+    # reciclado puede colar un filing FUTURO (de la empresa nueva que se
+    # quedó el símbolo) y el guard nunca saltaría.
+    last_filed = edgar.get_last_filed_dates(symbols, as_of=exit_session.date().isoformat())
     missing = []
     recycled = []
     returns = {}
@@ -96,13 +99,21 @@ def _period_returns(symbols: list[str], as_of: pd.Timestamp, months: int,
             "benchmark_return": returns["SPY"]}
 
 
-def _risk_metrics(returns: pd.Series, periods_per_year: float) -> dict:
+def _risk_metrics(returns: pd.Series, periods_per_year: float, years: float = None) -> dict:
     """Sharpe, Sortino, volatilidad anualizada y máximo drawdown sobre una
     serie de retornos por periodo (no diarios) — mismas fórmulas que
     risk.py pero anualizando por nº de rebalanceos/año en vez de por 252
     sesiones, y con la misma tasa libre de riesgo (config.RISK_FREE_RATE)
     que usa el resto de la app para que Sharpe/Sortino sean comparables
-    entre pantallas."""
+    entre pantallas.
+
+    `years`: años de calendario REALES transcurridos entre el inicio del
+    primer periodo y el final del último — si se omite, se aproxima con
+    `len(returns) / periods_per_year`, pero esa aproximación **se equivoca
+    en cuanto se salta algún periodo** (`skipped` en `run()`): el retorno
+    total se comprimiría en menos años de los que realmente pasaron y el
+    anualizado/Sharpe saldrían inflados. Pásalo siempre que se conozcan las
+    fechas reales de inicio y fin (ver `run()`)."""
     n = len(returns)
     if n == 0:
         return {"anualizado": None, "vol_anualizada": None, "sharpe": None,
@@ -110,7 +121,8 @@ def _risk_metrics(returns: pd.Series, periods_per_year: float) -> dict:
     rf = config.RISK_FREE_RATE
     capital = (1 + returns).cumprod()
     total_return = float(capital.iloc[-1] - 1)
-    years = n / periods_per_year
+    if years is None:
+        years = n / periods_per_year
     ann_return = (1 + total_return) ** (1 / years) - 1 if (1 + total_return) > 0 and years > 0 else None
     ann_vol = float(returns.std(ddof=1) * np.sqrt(periods_per_year)) if n > 1 else None
     sharpe = (ann_return - rf) / ann_vol if ann_return is not None and ann_vol else None
@@ -174,6 +186,12 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
     periods["spy_capital"] = (1 + periods["spy"]).cumprod()
     periods["universo_capital"] = (1 + periods["universo_ew"]).cumprod()
     periods_per_year = 12 / months
+    # Años de calendario REALES entre el inicio del primer periodo y el fin
+    # del último — no len(periods)/periods_per_year, que se equivoca en
+    # cuanto algún trimestre se salta por falta de cobertura (ver `skipped`):
+    # comprimiría el mismo retorno total en menos años de los que realmente
+    # pasaron e inflaría el anualizado y el Sharpe.
+    calendar_years = (pd.Timestamp(periods["hasta"].iloc[-1]) - pd.Timestamp(periods["fecha"].iloc[0])).days / 365.25
     return {
         "periods": periods, "skipped": skipped,
         "return": float(periods["capital"].iloc[-1] - 1),
@@ -181,8 +199,8 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
         "universo_ew_return": float(periods["universo_capital"].iloc[-1] - 1),
         "drawdown": float((periods["capital"] / periods["capital"].cummax() - 1).min()),
         "metrics": {
-            "estrategia": _risk_metrics(periods["retorno"], periods_per_year),
-            "universo_ew": _risk_metrics(periods["universo_ew"], periods_per_year),
-            "spy": _risk_metrics(periods["spy"], periods_per_year),
+            "estrategia": _risk_metrics(periods["retorno"], periods_per_year, years=calendar_years),
+            "universo_ew": _risk_metrics(periods["universo_ew"], periods_per_year, years=calendar_years),
+            "spy": _risk_metrics(periods["spy"], periods_per_year, years=calendar_years),
         },
     }

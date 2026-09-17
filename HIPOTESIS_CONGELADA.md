@@ -107,3 +107,72 @@ trimestrales reales completos desde hoy, lo que llegue después. Revisarlo antes
 aunque sea "solo para mirar cómo va", vuelve a contaminar la validez de la prueba —
 mirar a medio camino y decidir parar o cambiar algo en función de lo que se ve es
 exactamente el mismo error que estamos intentando evitar.
+
+## Addendum 2026-09-17 (mismo día): dos bugs de medición corregidos — no es reabrir la hipótesis
+
+Una revisión externa adicional del código (no de la configuración, del *motor de
+medida*) encontró dos fallos reales en `src/gabi/multifactor_backtest.py` y
+`src/gabi/edgar.py`, ya corregidos con tests:
+
+1. **Anualización con recuento de periodos, no con años de calendario reales**:
+   `_risk_metrics()` calculaba `years = n_periodos_validos / periodos_por_año`. Si algún
+   trimestre se saltaba (`skipped`), el mismo retorno total se comprimía en menos años de
+   los que realmente pasaron, inflando el anualizado y el Sharpe. Corregido: ahora se pasa
+   el número de años real (fecha de fin del último periodo menos fecha de inicio del
+   primero). **No afecta a las cifras ya congeladas arriba**: la validación 2016-07 a
+   2025-04 no tuvo ningún trimestre saltado (36/36 válidos), así que el bug no llegó a
+   dispararse en ese cálculo concreto — pero sí lo haría en cuanto apareciera un hueco,
+   incluida la validación prospectiva que empieza ahora.
+2. **El guard de reciclaje de ticker no era point-in-time correcto**: `get_last_filed_dates()`
+   miraba el filing SEC más reciente **de cualquier fecha**, incluido el futuro respecto al
+   periodo evaluado. Si un ticker se recicla y la empresa nueva presenta filings bajo el
+   mismo símbolo, esos filings futuros podían colarse como "reciente" y el guard nunca
+   saltaba — justo el fallo que debía detectar. Corregido con un parámetro `as_of`: solo
+   cuentan los filings con `filed_date <= fecha_evaluada`. Verificado con un test que
+   reproduce el caso exacto (filing viejo de 2018 + filing futuro de 2026 simulando la
+   empresa recicladora — el guard ahora sí salta).
+
+**Por qué esto no es "descongelar por antojo"**: corregir cómo se mide algo no es lo mismo
+que buscar una configuración distinta porque el número no gustaba — es arreglar la
+herramienta con la que se leerá el resultado real que ya está en marcha. La configuración
+congelada (Composite, N=20, trimestral, sin filtro de tendencia) y la predicción concreta
+de la sección de arriba **no cambian**.
+
+## Contraste con factores académicos (Kenneth French Data Library) — 2026-09-17
+
+Nuevo módulo `src/gabi/academic_factors.py`: descarga y cachea las series mensuales de
+Fama-French 5 factores + Momentum (Mkt-RF, SMB, HML, RMW, CMA, Mom — gratis, sin API key,
+mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) y regresiona el retorno
+de la estrategia contra ellos: `retorno_GABI − RF = alfa + Σ(beta_i · factor_i) + error`.
+Disponible también en 🕰️ Ranking histórico tras ejecutar el backtest multifactor.
+
+**Resultado real sobre los 36 trimestres de la validación (2016-07 a 2025-04, top-20):**
+
+| | Valor |
+|---|---|
+| R² | 0.915 |
+| Alfa (por trimestre) | +0.95% (t-stat +1.61) |
+| Alfa anualizado | **+3.85%** |
+| Beta Mercado (Mkt-RF) | +0.974 (t-stat +12.68) |
+| Beta Tamaño (SMB) | +0.240 (t-stat +1.68) |
+| Beta Value (HML) | +0.155 (t-stat +1.46) |
+| Beta Calidad (RMW) | +0.264 (t-stat +1.80) |
+| Beta Inversión (CMA) | +0.006 (t-stat +0.04) |
+| Beta Momentum (Mom) | +0.023 (t-stat +0.22) |
+
+**Lectura honesta**: el 91.5% de la varianza del retorno de la estrategia ya la explican
+los 6 factores académicos conocidos — mayormente exposición al mercado (beta≈1, como
+cualquier cartera de acciones long-only) con tilts moderados a tamaño y calidad/rentabilidad
+(coherente con que Quality es el bloque con más peso, 35%, en el Composite). El alfa
+apunta positivo (+3.85% anualizado, lo que GABI aportaría por encima de esas exposiciones
+ya conocidas) pero **su t-stat (1.61) no llega ni al umbral convencional de 2.0, y mucho
+menos al 3.0 que proponen Harvey, Liu y Zhu para corregir por las muchas configuraciones
+que se prueban en este tipo de investigación** — no se puede afirmar con confianza
+estadística que ese alfa sea distinto de cero. Curioso además: pese a que Momentum pesa un
+25% en el Composite, la beta de Momentum realizada es prácticamente nula (0.023) — la
+construcción de GABI (concentrada, con límites de sector/cobertura) no se traduce en la
+misma exposición que el factor académico de momentum (long-short, universo completo).
+
+Esto no cambia la hipótesis congelada — es evidencia adicional, en la misma línea que el
+resto del diagnóstico: hay una señal direccional real, pero modesta y no demostrada con
+la confianza estadística que haría falta para actuar sobre ella sin más validación.

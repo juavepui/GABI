@@ -157,3 +157,63 @@ def test_period_returns_accepts_symbol_with_recent_sec_filing(tmp_path, monkeypa
     _seed_filing("AAA", "2024-01-01")  # filing reciente, empresa viva
     result = bt._period_returns(["AAA"], pd.Timestamp("2024-01-05"), 1, 0)
     assert result["portfolio_return"] == pytest.approx(.1)
+
+
+def test_period_returns_ignores_future_filing_from_recycled_ticker(tmp_path, monkeypatch):
+    """Caso señalado en revisión externa: si el guard de reciclaje mirase el
+    filing MÁS RECIENTE sin acotar por fecha, un ticker reciclado a una
+    empresa nueva que SÍ presenta filings (pero años después del periodo que
+    se evalúa) coincidiría con un filing 'reciente' y el guard no saltaría
+    -- justo el fallo que se supone que detecta. Aquí la empresa tiene un
+    filing viejo (2018) Y uno futuro (2026, de la 'empresa nueva' que se
+    quedó el ticker) -- el guard debe usar solo lo conocido HASTA la fecha
+    evaluada (2024) e ignorar el filing futuro."""
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    dates = pd.to_datetime(["2024-01-05", "2024-01-08", "2024-02-05"])
+    _seed_prices(dates, [("ZOMBIE", [100, 200, 220]), ("SPY", [100, 100, 110])])
+    _seed_filing("ZOMBIE", "2018-01-01")
+    edgar.upsert_edgar_facts("ZOMBIE", [{
+        "tag": "NetIncomeLoss", "unit": "USD", "start_date": "2026-01-01", "end_date": "2026-12-31",
+        "val": 1, "form": "10-K", "fp": "FY", "fy": 2026, "filed_date": "2026-03-01", "accn": "0002-26-000001",
+    }])
+    with pytest.raises(ValueError, match="reciclado"):
+        bt._period_returns(["ZOMBIE"], pd.Timestamp("2024-01-05"), 1, 0)
+
+
+def test_run_annualizes_by_real_calendar_span_not_period_count(monkeypatch):
+    """Si se salta un periodo, los años reales transcurridos son mayores que
+    len(periodos_validos)/periodos_por_año -- anualizar con el recuento
+    (el bug señalado en revisión externa) infla el retorno anualizado."""
+    monkeypatch.setattr(bt.universe, "get_sp500_constituents_asof",
+                        lambda day: {"is_exact": True, "symbols": ["AAA"], "note": ""})
+
+    def rank(day, symbols):
+        # El periodo de abril se salta (cobertura insuficiente); enero y julio si.
+        if day == "2023-04-02":
+            return {"table": pd.DataFrame({"composite_score": [None], "score_coverage": [0]}, index=symbols)}
+        return {"table": pd.DataFrame({"composite_score": [80], "score_coverage": [.9]}, index=symbols)}
+
+    monkeypatch.setattr(bt.screener_asof, "build_ranking_as_of", rank)
+
+    def fake_period_returns(symbols, day, months, cost):
+        end = day + pd.DateOffset(months=months)
+        return {"end_date": end.date().isoformat(), "portfolio_return": .1, "benchmark_return": .05}
+
+    monkeypatch.setattr(bt, "_period_returns", fake_period_returns)
+    result = bt.run("2023-01-02", "2023-10-02", months=3, top_n=1)
+    assert len(result["periods"]) == 2  # enero y julio; abril saltado
+    assert len(result["skipped"]) == 1
+
+    # 2 periodos validos de +10% cada uno = +21% acumulado, pero el primero
+    # empieza en enero y el ultimo termina en octubre: 9 meses reales de
+    # calendario (0.75 anios), NO 2 periodos/4 = 0.5 anios como saldria
+    # contando solo periodos validos.
+    naive_years = 2 / 4  # el calculo INCORRECTO que habria dado el bug
+    correct_years = (pd.Timestamp("2023-10-02") - pd.Timestamp("2023-01-02")).days / 365.25
+    assert correct_years > naive_years * 1.3  # confirma que el hueco importa
+
+    ann_naive = (1.21) ** (1 / naive_years) - 1
+    ann_correct = result["metrics"]["estrategia"]["anualizado"]
+    assert ann_correct < ann_naive  # el anualizado correcto es menor, no inflado
+    assert ann_correct == pytest.approx((1.21) ** (1 / correct_years) - 1, rel=1e-6)

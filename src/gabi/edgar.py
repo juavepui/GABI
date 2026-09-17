@@ -346,7 +346,7 @@ def get_edgar_facts(symbol: str, tags: list = None) -> pd.DataFrame:
         return pd.read_sql_query(query, conn, params=params)
 
 
-def get_last_filed_dates(symbols: list) -> dict:
+def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
     """{symbol: fecha del filing SEC más reciente que tenemos} para cada
     símbolo (de cualquier tipo: 10-K, 10-Q...). Una empresa viva presenta un
     10-Q como mínimo cada trimestre; si este dato es muy antiguo, casi seguro
@@ -357,15 +357,25 @@ def get_last_filed_dates(symbols: list) -> dict:
     lo más probable es que la bolsa haya reasignado el ticker a otra empresa
     distinta, no que la original siga cotizando. En lote (no una consulta por
     símbolo) porque el backtest la llama con el universo completo en cada
-    rebalanceo."""
+    rebalanceo.
+
+    `as_of`: si se pasa, solo cuenta filings con `filed_date <= as_of` —
+    imprescindible para que el guard sea point-in-time correcto. Sin esto,
+    un ticker reciclado puede colar un filing FUTURO (de la empresa nueva
+    que se quedó el símbolo) como si fuera reciente, y el guard nunca
+    saltaría — justo el fallo que se pretende detectar. También protege de
+    que esos `edgar_facts` de la empresa nueva contaminen el resultado con
+    fechas fuera del periodo que se está evaluando."""
     if not symbols:
         return {}
     placeholders = ",".join("?" * len(symbols))
+    date_filter = "AND filed_date <= ?" if as_of else ""
+    params = list(symbols) + ([as_of] if as_of else [])
     with storage.get_connection() as conn:
         conn.executescript(FACTS_SCHEMA)
         rows = conn.execute(
             f"SELECT symbol, MAX(filed_date) FROM edgar_facts WHERE symbol IN ({placeholders}) "
-            "GROUP BY symbol", symbols,
+            f"{date_filter} GROUP BY symbol", params,
         ).fetchall()
     return {symbol: last for symbol, last in rows if last}
 

@@ -673,7 +673,11 @@ mirando el mismo rango histórico una y otra vez, sin corrección estadística n
 reservado. Ver **[`HIPOTESIS_CONGELADA.md`](HIPOTESIS_CONGELADA.md)**: la configuración
 concreta que se cree buena, congelada por escrito antes de tener ningún dato nuevo con
 el que validarla — es la única forma honesta de comprobar si de verdad funciona, en vez
-de seguir ajustando sobre el mismo pasado.
+de seguir ajustando sobre el mismo pasado. También incluye un contraste externo con las
+series académicas de factores de Kenneth French (`src/gabi/academic_factors.py`,
+disponible en 🕰️ Ranking histórico): el 91.5% del retorno de la estrategia ya lo explican
+seis factores de mercado conocidos, y el alfa restante, aunque positivo, no llega al
+umbral de significancia estadística habitual.
 
 ## Insiders (SEC Form 4)
 

@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import config, data_fetch, edgar, evaluation, multifactor_backtest, screener_asof, universe
+from gabi import academic_factors, config, data_fetch, edgar, evaluation, multifactor_backtest, screener_asof, universe
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("🕰️ Ranking histórico")
@@ -304,6 +304,58 @@ if "multifactor_result" in st.session_state:
     st.line_chart(test["periods"].set_index("hasta")[["capital", "universo_capital", "spy_capital"]])
     st.caption("Capital acumulado (partiendo de 1) de la estrategia, el universo equiponderado y el SPY.")
     st.dataframe(test["periods"], hide_index=True, width="stretch")
+
+    st.markdown("#### Contraste con factores académicos (Fama-French)")
+    st.caption(
+        "¿Lo que hace la estrategia es distinto de las primas de factor ya documentadas en la literatura "
+        "académica (mercado, tamaño, value, calidad/rentabilidad, inversión, momentum — Kenneth French Data "
+        "Library, Dartmouth), o es la misma exposición con otro nombre? Se regresiona el retorno de la "
+        "estrategia contra esos 6 factores; 'alfa' es lo que queda sin explicar por ellos.",
+        help="Fuente: mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html — gratis, sin API key. "
+             "Se descarga y cachea la primera vez que se usa esta sección.",
+    )
+    try:
+        with st.spinner("Descargando series de Kenneth French (Fama-French 5 factores + Momentum)..."):
+            ff_factors = academic_factors.fetch_ff_factors()
+        reg = academic_factors.regress_returns_on_factors(test["periods"], ff_factors)
+        rc1, rc2, rc3 = st.columns(3)
+        rc1.metric(
+            "Alfa anualizado", f"{reg['alpha_anualizado']:+.2%}",
+            help="Retorno anualizado que NO explican los 6 factores académicos — la parte 'propia' de la "
+                 "estrategia, si es que existe alguna.",
+        )
+        rc2.metric(
+            "t-stat del alfa", f"{reg['t_stat']['alpha']:+.2f}",
+            help="Por debajo de ~2.0 no se puede distinguir de cero con confianza estadística habitual; "
+                 "Harvey, Liu y Zhu proponen exigir >3.0 precisamente porque se prueban muchas configuraciones "
+                 "en este tipo de investigación (ver HIPOTESIS_CONGELADA.md).",
+        )
+        rc3.metric("R² de la regresión", f"{reg['r2']:.2f}",
+                  help="Qué % de la varianza del retorno de la estrategia explican los 6 factores conocidos — "
+                       "más alto significa que la estrategia se parece más a una combinación de exposiciones ya "
+                       "documentadas y menos a algo genuinamente distinto.")
+        st.caption(f"Regresión con {reg['periodos_alineados']}/{reg['periodos_totales']} periodos alineados "
+                  f"({reg['dof']} grados de libertad tras 6 factores + alfa).")
+        betas_df = pd.DataFrame([
+            {"Factor": f, "Qué mide": label, "Beta": reg["coef"][f], "t-stat": reg["t_stat"][f]}
+            for f, label in [
+                ("Mkt-RF", "Exposición al mercado (~1 = se mueve como la bolsa en general)"),
+                ("SMB", "Tamaño (small minus big) — tilt hacia empresas más pequeñas"),
+                ("HML", "Value (high minus low book-to-market)"),
+                ("RMW", "Calidad/rentabilidad (robust minus weak)"),
+                ("CMA", "Inversión (conservative minus aggressive)"),
+                ("Mom", "Momentum"),
+            ]
+        ])
+        st.dataframe(
+            betas_df, hide_index=True, width="stretch",
+            column_config={
+                "Beta": st.column_config.NumberColumn(format="%.3f"),
+                "t-stat": st.column_config.NumberColumn(format="%.2f"),
+            },
+        )
+    except (ValueError, RuntimeError, ImportError) as exc:
+        st.warning(f"No se pudo calcular el contraste con factores académicos: {exc}")
 with st.expander("Comparar qué bloque aporta más en esta fecha"):
     st.caption("Comparación exploratoria de una sola fecha. Para ajustar pesos hacen falta varias fechas y validación posterior independiente.")
     factor_rows = []
