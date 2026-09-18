@@ -125,6 +125,41 @@ def test_buy_and_hold_curve_pays_commission_once(tmp_path, monkeypatch):
     assert curve.iloc[2] == pytest.approx(shares_bought * 99.0, rel=1e-9)
 
 
+# --- mode (validation vs fast_dev) ---
+
+def test_run_rejects_validation_mode_with_max_symbols():
+    with pytest.raises(ValueError, match="validation"):
+        pb.run("2023-01-02", "2023-07-02", mode="validation", max_symbols=200)
+
+
+def test_run_rejects_fast_dev_mode_without_max_symbols():
+    with pytest.raises(ValueError, match="fast_dev"):
+        pb.run("2023-01-02", "2023-07-02", mode="fast_dev", max_symbols=None)
+
+
+def test_run_rejects_unknown_mode():
+    with pytest.raises(ValueError, match="mode"):
+        pb.run("2023-01-02", "2023-07-02", mode="bogus", max_symbols=200)
+
+
+def test_run_result_reports_mode_used(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    dates = pd.date_range("2023-01-01", "2023-10-15", freq="D")
+    _seed_prices(dates, [("AAA", [100.0] * len(dates)), ("SPY", [100.0] * len(dates))])
+    monkeypatch.setattr(pb.universe, "get_sp500_constituents_asof",
+                        lambda day: {"is_exact": True, "symbols": ["AAA"], "note": ""})
+    monkeypatch.setattr(pb.screener_asof, "build_ranking_as_of",
+                        lambda day, symbols: {"table": pd.DataFrame(
+                            {"composite_score": [80], "score_coverage": [.9]}, index=["AAA"])})
+    result = pb.run("2023-01-02", "2023-07-02", months=3, top_n=1, initial_capital=10_000.0)
+    assert result["mode"] == "validation"
+
+    result_fast = pb.run("2023-01-02", "2023-07-02", months=3, top_n=1, initial_capital=10_000.0,
+                         mode="fast_dev", max_symbols=50)
+    assert result_fast["mode"] == "fast_dev"
+
+
 # --- run() (integracion, con monkeypatch del ranking) ---
 
 def test_run_rebalances_using_each_periods_ranking(tmp_path, monkeypatch):

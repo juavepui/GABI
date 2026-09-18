@@ -118,8 +118,12 @@ def _daily_segment(cash: float, shares: dict, entry_session: pd.Timestamp,
     return segment
 
 
+VALID_MODES = ("validation", "fast_dev")
+
+
 def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int | None = None,
-        initial_capital: float = 100_000.0, commission_usd: float = broker_costs.STOCK_FEE_USD,
+        mode: str = "validation", initial_capital: float = 100_000.0,
+        commission_usd: float = broker_costs.STOCK_FEE_USD,
         spread_bps: float = 10.0, min_coverage: float = .7, min_universe_coverage: float = .5) -> dict:
     """Backtest V2 con contabilidad real de cartera. Mismo bucle de
     reconstrucción point-in-time que `multifactor_backtest.run()`
@@ -129,11 +133,31 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
     walk-forward diario real (`_daily_segment`), no una reconstrucción
     escalada.
 
+    `mode` (pedido explícitamente por el usuario, paso 2 de la hoja de ruta
+    V2): seleccionar las mejores N de una muestra aleatoria de 200 empresas
+    no es la misma estrategia que seleccionar las mejores N del S&P 500
+    completo -- útil para iterar rápido, pero no es evidencia de la
+    estrategia real. Dos modos, mutuamente excluyentes con `max_symbols`:
+    - `"validation"` (por defecto): universo histórico COMPLETO, sin
+      muestreo -- exige `max_symbols=None`. Es el único modo cuyo resultado
+      debería citarse como evidencia de la estrategia.
+    - `"fast_dev"`: exige `max_symbols` (ej. 50/100/200) -- para iterar
+      rápido en desarrollo. El resultado incluye `mode` explícitamente para
+      que no se pueda confundir sin querer con una validación real.
+
     `commission_usd`/`spread_bps`: mismo modelo de coste que
     `sim_portfolios.py`, calibrado en `broker_costs.py` (por defecto 1 USD
     fijo por operación + 10pb de spread). `commission_usd=0` recupera un
     modelo puramente proporcional si se quiere barrer solo `spread_bps`
     (25/50pb) para sensibilidad a costes, comparable con las tablas de V1."""
+    if mode not in VALID_MODES:
+        raise ValueError(f"mode debe ser uno de {VALID_MODES}.")
+    if mode == "validation" and max_symbols is not None:
+        raise ValueError("mode='validation' no permite muestreo (max_symbols debe ser None) -- "
+                         "usa mode='fast_dev' para pruebas rápidas con un subconjunto.")
+    if mode == "fast_dev" and max_symbols is None:
+        raise ValueError("mode='fast_dev' necesita max_symbols (ej. 50/100/200) -- "
+                         "usa mode='validation' para el universo histórico completo.")
     if not 1 <= months <= 12 or not 1 <= top_n <= 50:
         raise ValueError("Parámetros del backtest inválidos.")
     if not 0 < min_coverage <= 1 or not 0 < min_universe_coverage <= 1:
@@ -233,7 +257,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                                        commission_usd=commission_usd, spread_bps=spread_bps)
 
     return {
-        "periods": periods, "skipped": skipped,
+        "mode": mode, "periods": periods, "skipped": skipped,
         "nav_curve": nav_curve, "nav_curve_spy": nav_curve_spy,
         "turnover_medio": float(periods["turnover_pct"].mean()),
         "comision_total": float(periods["comision_pagada"].sum()),

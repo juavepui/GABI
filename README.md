@@ -996,6 +996,53 @@ la hipótesis congelada, y el optimizador min-vol recorta límites después de o
 vez de dentro del problema). Tampoco se ha integrado V2 en la UI de Streamlit todavía.
 
 
+### Paso 2: validación sobre el universo histórico completo (500 empresas, sin muestreo)
+
+El usuario señaló una cuestión conceptual, no solo estadística: seleccionar las mejores 20
+empresas de una muestra aleatoria de 200 no es la misma estrategia que seleccionar las
+mejores 20 del S&P 500 completo — `max_symbols=200` es útil para iterar rápido, pero un
+resultado que se vaya a citar como evidencia de la estrategia real debería usar el
+universo completo, sin muestrear.
+
+**`portfolio_backtest.run()` ahora exige `mode` explícito**, mutuamente excluyente con
+`max_symbols`: `mode="validation"` (por defecto) exige `max_symbols=None` — universo
+histórico completo, sin muestreo; `mode="fast_dev"` exige `max_symbols` (50/100/200) para
+iterar rápido, y el resultado lleva `mode` marcado explícitamente para que un número de
+`fast_dev` no se cite por error como validación real.
+
+**Corrido de verdad, no solo implementado**: mismo rango (2016-07 a 2025-07, top-20,
+trimestral), pero con el universo histórico completo cada trimestre (~460-500 empresas
+elegibles según la fecha, frente a la muestra de 200 del paso 1) — 671 símbolos únicos
+necesarios en todo el rango, 113 sin resolución de CIK (mismo hueco estructural ya
+documentado), 36/36 periodos completos, sin ninguno saltado. Tardó ~26 minutos en total
+(preparar datos + ejecutar), frente a los ~39s/periodo que tarda un `fast_dev` con datos
+ya cacheados.
+
+| | V2 `fast_dev` (muestra de 200, paso 1) | V2 `validation` (500 completo) |
+|---|---|---|
+| Retorno total estrategia | +347.3% | **+444.9%** |
+| Turnover medio | 127.4% | **74.9%** (menor: con más candidatas elegibles, el ranking es más estable) |
+| Comisión total pagada | 1.161 $ | 968 $ |
+| Sharpe estrategia (diario) | 0.70 | **0.83** |
+| Gap de Sharpe vs SPY (0.59 en ambos) | 0.111 | **0.243** |
+| Max drawdown | −37.8% | −37.4% |
+| Calmar | 0.48 | 0.56 |
+| Information Ratio | 0.43 | 0.70 |
+| Capture upside / downside | 108% / 95% | **111% / 86%** |
+
+**Lectura honesta**: el universo completo rinde MEJOR en todos los frentes, no peor —
+sorprendente si la hipótesis fuera "una muestra aleatoria más pequeña simplemente añade
+ruido en ambas direcciones", pero coherente con un mecanismo concreto: con más candidatas
+elegibles cada trimestre, el ranking tiene más profundidad para elegir y es más estable
+(turnover baja de 127% a 75%), y la mejora de downside capture (95%→86%) sugiere que la
+muestra de 200 estaba perdiendo algunas de las mejores opciones defensivas en las caídas.
+Dicho esto, la diferencia de Sharpe (0.70 vs 0.83, gap 0.13) sigue siendo menor que un
+error estándar completo (~0.39 con estos ~9 años de datos) — **no se declara una victoria
+estadísticamente probada**, la misma disciplina que ya se aplicó al resto de este
+documento. Lo que sí cambia con certeza es que **este número (`mode="validation"`) es
+ahora el que debería citarse como evidencia de la estrategia real** — el de `fast_dev`
+queda para iterar, no para reportar.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,
