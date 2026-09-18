@@ -50,7 +50,8 @@ que puedas ver **por qué** una empresa puntúa bien, empresa a empresa.
 
 ### Primeros pasos
 
-1. Si estás empezando, echa un vistazo a **🎓 Aprender**: términos, estrategias y psicología de la inversión.
+1. Si estás empezando, echa un vistazo a **🎓 Aprender**: términos, estrategias, psicología de la
+   inversión, y cómo piensa GABI por dentro (con sus sesgos, límites y motores V1/V2).
 2. Ve a **⚙️ Configuración** y pulsa "Actualizar datos" (empieza con un
    subconjunto pequeño para probar rápido).
 3. Ve a **📊 Screener** para buscar empresas, ver el ranking y ajustar filtros/pesos.

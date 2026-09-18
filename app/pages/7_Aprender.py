@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
+import pandas as pd
 import streamlit as st
 
 from gabi import scoring
@@ -10,13 +11,15 @@ from gabi.ui_helpers import METRIC_INFO
 
 st.title("🎓 Aprender")
 st.caption(
-    "Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por qué, y los "
-    "errores mentales más comunes al invertir dinero real. No sustituye a un buen libro, pero es un "
-    "punto de partida rápido y conectado con el resto de GABI."
+    "Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por qué, los "
+    "errores mentales más comunes al invertir dinero real, y — en la última pestaña — cómo funciona "
+    "GABI por dentro y qué rigor hay (y no hay) detrás de sus números. No sustituye a un buen libro, "
+    "pero es un punto de partida rápido y conectado con el resto de la app."
 )
 
-tab_terminos, tab_estrategias, tab_psicologia = st.tabs(
-    ["📖 Términos útiles", "🧭 Estrategias de inversión", "🧠 Psicología de la inversión"]
+tab_terminos, tab_estrategias, tab_psicologia, tab_gabi = st.tabs(
+    ["📖 Términos útiles", "🧭 Estrategias de inversión", "🧠 Psicología de la inversión",
+     "🔬 Cómo piensa GABI"]
 )
 
 # ----------------------------------------------------------------------------
@@ -251,4 +254,199 @@ with tab_psicologia:
    una mala decisión puede salir bien por suerte. Vuelve a leer tu tesis del Diario pasados unos meses:
    se aprende más de por qué que de si ganaste o perdiste.
         """
+    )
+
+# ----------------------------------------------------------------------------
+# TAB 4: Cómo piensa GABI (mecánica interna, rigor y sus límites)
+# ----------------------------------------------------------------------------
+with tab_gabi:
+    st.markdown(
+        "Todo lo de aquí describe **decisiones de diseño reales de GABI**, no teoría general — con las "
+        "cifras reales que se midieron al construirlas. El detalle técnico completo vive en "
+        "`README.md` y `HIPOTESIS_CONGELADA.md`; esto es la versión explicada para entenderlo sin leer "
+        "código."
+    )
+
+    st.subheader("1. El pipeline point-in-time: nunca mirar al futuro")
+    st.markdown(
+        "Un ranking 'tal y como se habría visto' una fecha pasada solo es honesto si **cada pieza** de "
+        "información usa exclusivamente lo que se conocía ese día — universo, fundamentales y precio:"
+    )
+    st.code(
+        """\
+Universo histórico          SEC EDGAR                    Precios
+(qué empresas formaban  +   (fundamentales con la    +   (histórico truncado a
+ el índice ESE día,          fecha REAL en que se          la fecha del ranking,
+ no las de hoy)               presentaron, no la            nunca un precio
+                               fecha a la que se             futuro)
+                               refieren)
+        |                          |                            |
+        +--------------------------+----------------------------+
+                                    |
+                                    v
+                    Scoring (Value / Quality / Momentum / Risk)
+                                    |
+                                    v
+                  Ranking tal y como se habría visto ESE día""",
+        language=None,
+    )
+    st.caption(
+        "Cada flecha de este diagrama es una decisión de diseño concreta en el código: "
+        "`universe.get_sp500_constituents_asof`, `edgar.get_value_as_of` (filtra por `filed_date`), "
+        "y el histórico de precios truncado en `screener_asof.py`."
+    )
+
+    st.divider()
+    st.subheader("2. Tres sesgos que GABI evita — con el fallo real que se encontró en cada uno")
+    with st.expander("📉 Sesgo de supervivencia"):
+        st.write(
+            "Si el ranking de 2016 usara la lista ACTUAL del S&P 500, todas las empresas que quebraron o "
+            "fueron excluidas desde entonces (ej. la que sea que era el 'perdedor' de su sector) "
+            "desaparecerían del universo — el backtest solo vería a las que sobrevivieron, y parecería "
+            "mucho mejor de lo que habría sido en la realidad."
+        )
+        st.caption(
+            "Arreglado con un histórico de composición del índice día a día. Hallazgo real al intentar "
+            "usarlo a fondo: ~16% de los símbolos necesarios para cubrir 2016-2025 no resuelven CIK en "
+            "SEC EDGAR (empresas deslistadas antes de 2022) — un límite estructural de la fuente gratuita, "
+            "documentado, no oculto."
+        )
+    with st.expander("🔮 Look-ahead bias (mirar datos del futuro sin darse cuenta)"):
+        st.code(
+            """\
+                      fecha del ranking
+                             |
+  ──────────────────────────┼───────────────────────────▶ tiempo
+  filed_date: 2019-02-01    |      filed_date: 2019-08-15
+  (ya se conocía)           |      (todavía NO existía ese día)
+        ✅ se usa            |             ❌ se descarta""",
+            language=None,
+        )
+        st.write(
+            "Cada dato de SEC EDGAR lleva su propia fecha real de presentación (`filed_date`) — un "
+            "resultado trimestral no 'existe' para el mercado hasta que la empresa lo publica, aunque se "
+            "refiera a un trimestre ya cerrado. Usar la última cifra disponible HOY para rankear una "
+            "fecha pasada sería tan irreal como invertir con información privilegiada del futuro."
+        )
+    with st.expander("🔁 Reciclaje de ticker"):
+        st.write(
+            "Cuando una empresa quiebra o se excluye del índice, la bolsa puede reasignar su símbolo a "
+            "una empresa completamente distinta años después. Caso real comprobado: **BBBY** devuelve "
+            "cotización viva en yfinance hoy, pero Bed Bath & Beyond quebró y fue excluida en 2023 — el "
+            "precio 'vivo' bajo ese ticker pertenece a otra cosa."
+        )
+        st.caption(
+            "GABI descarta un símbolo si lleva más de 450 días sin ningún filing SEC — señal de que ya no "
+            "es una 'reporting company' viva, comprobando la fecha del filing en el momento exacto del "
+            "backtest, no la más reciente conocida hoy (que podría ser de la empresa nueva)."
+        )
+
+    st.divider()
+    st.subheader("3. ¿Cuánto te puedes fiar de un resultado de backtest?")
+    st.markdown(
+        "Con pocos años de historia, un Sharpe algo más alto puede ser pura casualidad de muestreo, no "
+        "una estrategia mejor. Con ~9 años de datos, el error típico de estimación de un Sharpe ronda "
+        "**±0,35-0,39** — así que una diferencia de 0,1-0,15 entre dos variantes **no demuestra nada**, "
+        "aunque en una tabla parezca una la clara ganadora."
+    )
+    st.caption(
+        "Comprobado con datos reales esta sesión: el Sharpe trimestral (0,71) parecía mejor que el anual "
+        "(0,61), pero la diferencia (0,10) es una fracción de un error estándar — la conclusión honesta es "
+        "que la frecuencia de rebalanceo casi no importa, no que el trimestral gane."
+    )
+    st.markdown(
+        "Otro problema, más visual: medir el riesgo solo en las fechas de rebalanceo esconde lo que pasa "
+        "**entre medias**. Aquí tienes una caída real (sintética, para ilustrar) dentro de un solo "
+        "trimestre — empieza en 100 y termina en 104, así que si solo miras el punto de inicio y el de "
+        "fin, esa caída del 28% es completamente invisible:"
+    )
+    _demo_dates = pd.date_range("2020-01-01", periods=63, freq="B")
+    _mid = len(_demo_dates) // 2
+    _demo_prices = []
+    for i in range(len(_demo_dates)):
+        if i <= _mid:
+            _demo_prices.append(100 - 28 * i / _mid)
+        else:
+            frac = (i - _mid) / (len(_demo_dates) - 1 - _mid)
+            _demo_prices.append(72 + 32 * frac)
+    st.line_chart(pd.Series(_demo_prices, index=_demo_dates, name="Capital (ejemplo sintético)"))
+    st.caption(
+        "Capital al inicio y al final del trimestre: idéntico patrón de 'sin caída' que verías si solo "
+        "midieras en fechas de rebalanceo. La caída real del -28% a mitad de camino solo aparece con una "
+        "curva de capital DIARIA — exactamente lo que corrige el motor V2 (ver más abajo)."
+    )
+
+    st.divider()
+    st.subheader("4. Score vs Confidence: un número alto no siempre significa lo mismo")
+    st.markdown(
+        "**Score** = cuán atractiva parece la empresa. **Confidence** = cuánto te puedes fiar de ese "
+        "score. Son cosas distintas: si a una empresa solo le falta un dato de Quality y el que tiene es "
+        "excelente, puede sacar el mismo Quality Score que otra con los 4 datos completos — Confidence es "
+        "lo que te avisa de la diferencia."
+    )
+    st.caption(
+        "Ejemplo real (S&P 500, 2024-01-02): AAPL confidence=100 (13/13 métricas disponibles), "
+        "XOM confidence=32 (mucho dato ausente) — mira siempre los dos números juntos en 📊 Screener o "
+        "🔎 Ficha de Empresa, no solo el Composite."
+    )
+
+    st.divider()
+    st.subheader("5. De la señal a la cartera: son dos decisiones distintas")
+    st.code(
+        """\
+   MODELO DE SELECCIÓN                      MODELO DE CARTERA
+   "¿qué empresas parecen atractivas?"       "¿cuánto dinero pongo en cada una?"
+
+   Composite Score                    -->    decision_engine.Policy
+   (Value/Quality/Momentum/Risk)              máx. 10 posiciones, filtro SMA200,
+                                               reparto por mínima volatilidad,
+                                               límites de posición/sector
+
+   Validado en HIPOTESIS_CONGELADA.md         Estrategia DISTINTA, nunca
+   (20 posiciones, equiponderado,             contrastada en un backtest --
+    trimestral)                               ver el aviso en 🧭 Decisiones""",
+        language=None,
+    )
+    st.markdown(
+        "Es perfectamente legítimo construir una cartera con reglas propias (límite por empresa, filtro "
+        "de tendencia, optimización de riesgo) — el problema sería presentarla como si heredara la "
+        "validación del backtest, cuando en realidad comparte solo el punto de partida (el score)."
+    )
+
+    st.divider()
+    st.subheader("6. V1 vs V2 del backtest: contabilidad real de cartera")
+    st.markdown(
+        "El motor original (V1) simula el retorno como un porcentaje agregado: cobra el mismo coste "
+        "sobre el 100% de cada posición cada rebalanceo, se mantenga o no, y rota el SPY como si fuera "
+        "parte de la estrategia. El motor V2 (pestaña **Motor V2** en 🕰️ Ranking histórico) lleva "
+        "contabilidad real de acciones + caja: solo paga comisión sobre lo que de verdad se compra o "
+        "vende, y el SPY se compra una vez y se mantiene, como haría un inversor pasivo real."
+    )
+    st.dataframe(
+        pd.DataFrame([
+            {"": "Turnover medido", "V1": "63,0% (solo nombres, 1 lado)", "V2": "127,4% (importe real, 2 lados)"},
+            {"": "SPY", "V1": "rotado cada trimestre", "V2": "comprado una vez y mantenido"},
+            {"": "Sharpe estrategia", "V1": "0,71", "V2": "0,70 (dentro del ruido de muestreo)"},
+            {"": "Margen de Sharpe vs SPY", "V1": "0,151", "V2": "0,111 (~26% menor, medido bien)"},
+        ]),
+        hide_index=True, width="stretch",
+    )
+    st.caption(
+        "La lectura honesta no es 'V2 rinde más' — es que V1 sobreestimaba el margen real frente al SPY "
+        "en aproximadamente un 26%. V2 no cambia la estrategia, cambia cuánto te puedes fiar del número."
+    )
+
+    st.divider()
+    st.subheader("7. Costes reales del bróker: fijo vs proporcional, depositar vs operar")
+    st.markdown(
+        "Un bróker como eToro cobra un importe **fijo** por operación (no un %), así que pesa mucho más "
+        "en una posición pequeña que en una grande — 1$ es un 0,18% de una posición de 550$ pero solo un "
+        "0,01% de una de 10.000$. Y hay dos costes que NO son lo mismo: **depositar** dinero nuevo desde "
+        "el banco (conversión de divisa, una vez por aportación) y **operar** dentro de la cuenta "
+        "(abrir/cerrar una posición, en cada rebalanceo). Un backtest simula mover dinero entre empresas, "
+        "no traerlo del banco — por eso solo modela el segundo."
+    )
+    st.caption(
+        "La calculadora de 🕰️ Ranking histórico (pestaña Motor V1) convierte tu capital y nº de "
+        "posiciones al coste real por lado — pruébala con tus propios números."
     )

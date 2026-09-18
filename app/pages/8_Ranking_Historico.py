@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import academic_factors, broker_costs, config, data_fetch, edgar, evaluation, multifactor_backtest, screener_asof, universe
+from gabi import academic_factors, broker_costs, config, data_fetch, edgar, evaluation, multifactor_backtest, portfolio_backtest, portfolio_metrics, screener_asof, universe
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("🕰️ Ranking histórico")
@@ -193,9 +193,12 @@ st.caption("Reconstruye el ranking en cada fecha con SEC EDGAR y la composición
            "El universo histórico gratuito termina en 2025 y puede contener símbolos reutilizados. "
            "Los tamaños de 50/100 empresas son pruebas parciales, no resultados representativos del S&P 500.")
 
-with st.expander("📖 Cómo probarlo (léelo si es la primera vez)"):
-    st.markdown(
-        """
+tab_v1, tab_v2 = st.tabs(["Motor V1 (clásico)", "🆕 Motor V2 (contabilidad real)"])
+
+with tab_v1:
+    with st.expander("📖 Cómo probarlo (léelo si es la primera vez)"):
+        st.markdown(
+            """
 **Qué hace**: en cada fecha de rebalanceo, reconstruye el ranking tal y como se habría visto ese día
 (sin usar datos futuros), elige las N mejores candidatas, y mide cuánto habría rentado esa cesta hasta
 el siguiente rebalanceo — comparándolo con comprar y mantener el SPY, y con repartir el dinero a partes
@@ -212,167 +215,328 @@ saber si elegir bien aporta algo por encima de simplemente estar invertido).
 4. Mira primero **Sharpe y Sortino** (abajo), no solo el retorno — un retorno más alto con mucho más
    riesgo no es necesariamente mejor. Compara los tres: tu estrategia, el universo equiponderado y el SPY.
 
+**⚠️ Este motor cobra el coste como un % plano sobre el 100% de cada posición cada rebalanceo (se
+mantenga o no) y rota el SPY como si fuera parte de la estrategia** — ver la pestaña "Motor V2" para
+la versión con contabilidad real de cartera (acciones + caja, SPY comprado y mantenido), y 🎓 Aprender
+→ "Cómo piensa GABI" para el porqué importa la diferencia.
+
 **Qué probar**: sube "Empresas por periodo" a 20 y compara — en nuestras pruebas, 20 posiciones bajó el
 drawdown máximo sin apenas perder Sharpe/Sortino frente a 10 (ver README, sección de backtesting). Prueba
 también a subir "Coste por lado" a 25-50 puntos básicos — el margen de la estrategia frente al SPY se
 estrecha mucho más de lo que parece a primera vista con solo 10pb.
-        """
-    )
+            """
+        )
 
-with st.expander("🧮 Calculadora: coste real de eToro para tu cartera"):
-    st.caption(
-        "eToro cobra un importe FIJO por apertura/cierre (1$ en acciones/ETF), no un %, así que pesa "
-        "más cuanto menor sea la posición. Este cálculo es solo del coste de **operar** (abrir/cerrar "
-        "dentro de la cuenta) — el coste de **depositar** dinero nuevo desde el banco (conversión de "
-        "divisa) es un coste distinto, de una sola vez por aportación, que no se aplica en cada "
-        "rebalanceo del backtest (ver README, sección \"Costes reales del bróker\")."
-    )
-    cc1, cc2 = st.columns(2)
-    calc_capital = cc1.number_input("Capital total (€ o $)", min_value=0.0, value=10000.0, step=500.0,
-                                    key="calc_capital")
-    calc_n = cc2.number_input("Nº de posiciones", min_value=1, max_value=50, value=10, key="calc_n")
-    calc_position = broker_costs.position_size_usd(calc_capital, int(calc_n))
-    calc_bps = broker_costs.effective_trade_cost_bps(calc_position)
-    st.write(f"Posición media: **{calc_position:,.0f}** · coste real por lado: **{calc_bps:.1f} puntos "
-             f"básicos** — cópialo en \"Coste por lado (pb)\" más abajo si quieres usarlo.")
+    with st.expander("🧮 Calculadora: coste real de eToro para tu cartera"):
+        st.caption(
+            "eToro cobra un importe FIJO por apertura/cierre (1$ en acciones/ETF), no un %, así que pesa "
+            "más cuanto menor sea la posición. Este cálculo es solo del coste de **operar** (abrir/cerrar "
+            "dentro de la cuenta) — el coste de **depositar** dinero nuevo desde el banco (conversión de "
+            "divisa) es un coste distinto, de una sola vez por aportación, que no se aplica en cada "
+            "rebalanceo del backtest (ver README, sección \"Costes reales del bróker\")."
+        )
+        cc1, cc2 = st.columns(2)
+        calc_capital = cc1.number_input("Capital total (€ o $)", min_value=0.0, value=10000.0, step=500.0,
+                                        key="calc_capital")
+        calc_n = cc2.number_input("Nº de posiciones", min_value=1, max_value=50, value=10, key="calc_n")
+        calc_position = broker_costs.position_size_usd(calc_capital, int(calc_n))
+        calc_bps = broker_costs.effective_trade_cost_bps(calc_position)
+        st.write(f"Posición media: **{calc_position:,.0f}** · coste real por lado: **{calc_bps:.1f} puntos "
+                 f"básicos** — cópialo en \"Coste por lado (pb)\" más abajo si quieres usarlo.")
 
-with st.form("multifactor_test"):
-    a, b, c = st.columns(3)
-    bt_start = a.date_input("Inicio", value=date(2019, 1, 2), key="bt_start",
-                             help="Recomendado: 2016-07-02 o después. Antes de eso, la mayoría de "
-                                  "periodos se saltarán por falta de cobertura SEC EDGAR.")
-    bt_end = b.date_input("Fin", value=date(2020, 1, 2), max_value=date.today(), key="bt_end")
-    interval = c.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses",
-                           help="Cada cuánto se recalcula el ranking y se cambia de cesta de empresas.")
-    d, e, f = st.columns(3)
-    n_picks = d.number_input("Empresas por periodo", 1, 50, 10,
-                             help="Cuántas de las mejores candidatas se compran cada rebalanceo, a partes "
-                                  "iguales. Más posiciones suele bajar el riesgo (drawdown) a costa de "
-                                  "diluir algo el retorno — no hay un número 'correcto' único.")
-    universe_size = e.selectbox("Universo", [50, 100, 500], index=0,
-                                help="Cuántas empresas del S&P 500 de esa fecha se consideran como "
-                                     "candidatas (muestreo aleatorio si hay más de las indicadas, no "
-                                     "las primeras alfabéticamente). 500 ≈ el índice completo.")
-    bt_cost = f.number_input("Coste por lado (pb)", min_value=0.0, value=10.0,
-                             help="Fricción de comprar/vender (spread, comisión, slippage) en puntos "
-                                  "básicos (100pb = 1%). Se aplica en cada rebalanceo a cada posición. "
-                                  "10pb es razonable para grandes capitalizadas líquidas; con empresas "
-                                  "menos líquidas o peor ejecución, 25-50pb es más realista.")
-    if st.form_submit_button("Ejecutar backtest multifactor"):
+    with st.form("multifactor_test"):
+        a, b, c = st.columns(3)
+        bt_start = a.date_input("Inicio", value=date(2019, 1, 2), key="bt_start",
+                                 help="Recomendado: 2016-07-02 o después. Antes de eso, la mayoría de "
+                                      "periodos se saltarán por falta de cobertura SEC EDGAR.")
+        bt_end = b.date_input("Fin", value=date(2020, 1, 2), max_value=date.today(), key="bt_end")
+        interval = c.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses",
+                               help="Cada cuánto se recalcula el ranking y se cambia de cesta de empresas.")
+        d, e, f = st.columns(3)
+        n_picks = d.number_input("Empresas por periodo", 1, 50, 10,
+                                 help="Cuántas de las mejores candidatas se compran cada rebalanceo, a partes "
+                                      "iguales. Más posiciones suele bajar el riesgo (drawdown) a costa de "
+                                      "diluir algo el retorno — no hay un número 'correcto' único.")
+        universe_size = e.selectbox("Universo", [50, 100, 500], index=0,
+                                    help="Cuántas empresas del S&P 500 de esa fecha se consideran como "
+                                         "candidatas (muestreo aleatorio si hay más de las indicadas, no "
+                                         "las primeras alfabéticamente). 500 ≈ el índice completo.")
+        bt_cost = f.number_input("Coste por lado (pb)", min_value=0.0, value=10.0,
+                                 help="Fricción de comprar/vender (spread, comisión, slippage) en puntos "
+                                      "básicos (100pb = 1%). Se aplica en cada rebalanceo a cada posición. "
+                                      "10pb es razonable para grandes capitalizadas líquidas; con empresas "
+                                      "menos líquidas o peor ejecución, 25-50pb es más realista.")
+        if st.form_submit_button("Ejecutar backtest multifactor"):
+            try:
+                test = multifactor_backtest.run(bt_start.isoformat(), bt_end.isoformat(), interval,
+                                                n_picks, bt_cost, max_symbols=universe_size)
+                st.session_state["multifactor_result"] = test
+            except (ValueError, RuntimeError) as exc:
+                st.error(str(exc))
+    if st.button("Preparar datos de todos los rebalanceos"):
         try:
-            test = multifactor_backtest.run(bt_start.isoformat(), bt_end.isoformat(), interval,
-                                            n_picks, bt_cost, max_symbols=universe_size)
-            st.session_state["multifactor_result"] = test
+            all_symbols = multifactor_backtest.required_symbols(bt_start.isoformat(), bt_end.isoformat(),
+                                                                 interval, universe_size)
+            st.info(f"Preparando {len(all_symbols)} símbolos históricos y SPY. Puede tardar varios minutos.")
+            with st.spinner("Descargando SEC EDGAR y precios históricos..."):
+                edgar_result = edgar.ensure_edgar_data(all_symbols)
+                price_failures = {}
+                for offset in range(0, len(all_symbols), 25):
+                    batch = all_symbols[offset:offset + 25]
+                    price_failures.update(data_fetch.fetch_prices_batch(batch, period="max"))
+                price_failures.update(data_fetch.fetch_prices_batch(["SPY"], period="max"))
+            st.success(f"Preparación terminada. Fallos SEC: {len(edgar_result['failed'])}; "
+                       f"fallos de precios: {len(price_failures)}.")
+            if price_failures:
+                st.dataframe(pd.DataFrame([{"Ticker": s, "Motivo": reason}
+                                           for s, reason in price_failures.items()]), hide_index=True)
         except (ValueError, RuntimeError) as exc:
             st.error(str(exc))
-if st.button("Preparar datos de todos los rebalanceos"):
-    try:
-        all_symbols = multifactor_backtest.required_symbols(bt_start.isoformat(), bt_end.isoformat(),
-                                                             interval, universe_size)
-        st.info(f"Preparando {len(all_symbols)} símbolos históricos y SPY. Puede tardar varios minutos.")
-        with st.spinner("Descargando SEC EDGAR y precios históricos..."):
-            edgar_result = edgar.ensure_edgar_data(all_symbols)
-            price_failures = {}
-            for offset in range(0, len(all_symbols), 25):
-                batch = all_symbols[offset:offset + 25]
-                price_failures.update(data_fetch.fetch_prices_batch(batch, period="max"))
-            price_failures.update(data_fetch.fetch_prices_batch(["SPY"], period="max"))
-        st.success(f"Preparación terminada. Fallos SEC: {len(edgar_result['failed'])}; "
-                   f"fallos de precios: {len(price_failures)}.")
-        if price_failures:
-            st.dataframe(pd.DataFrame([{"Ticker": s, "Motivo": reason}
-                                       for s, reason in price_failures.items()]), hide_index=True)
-    except (ValueError, RuntimeError) as exc:
-        st.error(str(exc))
-if "multifactor_result" in st.session_state:
-    test = st.session_state["multifactor_result"]
-    if test["skipped"]:
-        with st.expander(f"⚠️ {len(test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
-            st.dataframe(pd.DataFrame(test["skipped"]), hide_index=True, width="stretch")
+    if "multifactor_result" in st.session_state:
+        test = st.session_state["multifactor_result"]
+        if test["skipped"]:
+            with st.expander(f"⚠️ {len(test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
+                st.dataframe(pd.DataFrame(test["skipped"]), hide_index=True, width="stretch")
 
+        st.caption(
+            "**Sharpe**: retorno por encima de la tasa libre de riesgo, dividido entre la volatilidad total — "
+            "más alto es mejor (más retorno por unidad de riesgo asumido). **Sortino**: lo mismo pero solo "
+            "penaliza la volatilidad a la baja (caídas), no la al alza — más informativo que Sharpe si lo que "
+            "te preocupa es perder dinero, no que suba mucho. **Drawdown**: la mayor caída desde un máximo "
+            "hasta un mínimo posterior — cuánto habrías llegado a perder en el peor momento."
+        )
+        strat_m, universo_m, spy_m = test["metrics"]["estrategia"], test["metrics"]["universo_ew"], test["metrics"]["spy"]
+
+        def _metric_row(label, ret, m, help_extra=""):
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric(f"{label} · acumulado", f"{ret:+.1%}")
+            c2.metric("Sharpe", f"{m['sharpe']:.2f}" if m["sharpe"] is not None else "—",
+                      help="Retorno anualizado (sobre el 4% libre de riesgo) dividido entre la volatilidad. " + help_extra)
+            c3.metric("Sortino", f"{m['sortino']:.2f}" if m["sortino"] is not None else "—",
+                      help="Como Sharpe, pero solo cuenta la volatilidad a la baja.")
+            c4.metric("Máx. drawdown", f"{m['max_drawdown']:.1%}" if m["max_drawdown"] is not None else "—",
+                      help="Mayor caída desde un máximo hasta un mínimo posterior, entre rebalanceos.")
+
+        st.markdown("**Tu estrategia (top-N del ranking)**")
+        _metric_row("Estrategia", test["return"], strat_m)
+        st.markdown("**Universo equiponderado** — todas las candidatas elegibles de cada periodo, a partes iguales")
+        _metric_row("Universo", test["universo_ew_return"], universo_m,
+                    "Compáralo con la estrategia: si Sharpe aquí es parecido o mejor, elegir las top-N no está "
+                    "aportando tanto como parece por el retorno bruto.")
+        st.markdown("**SPY** — comprar y mantener el índice, sin rebalanceos")
+        _metric_row("SPY", test["spy_return"], spy_m)
+
+        st.line_chart(test["periods"].set_index("hasta")[["capital", "universo_capital", "spy_capital"]])
+        st.caption("Capital acumulado (partiendo de 1) de la estrategia, el universo equiponderado y el SPY.")
+        st.dataframe(test["periods"], hide_index=True, width="stretch")
+
+        st.markdown("#### Contraste con factores académicos (Fama-French)")
+        st.caption(
+            "¿Lo que hace la estrategia es distinto de las primas de factor ya documentadas en la literatura "
+            "académica (mercado, tamaño, value, calidad/rentabilidad, inversión, momentum — Kenneth French Data "
+            "Library, Dartmouth), o es la misma exposición con otro nombre? Se regresiona el retorno de la "
+            "estrategia contra esos 6 factores; 'alfa' es lo que queda sin explicar por ellos.",
+            help="Fuente: mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html — gratis, sin API key. "
+                 "Se descarga y cachea la primera vez que se usa esta sección.",
+        )
+        try:
+            with st.spinner("Descargando series de Kenneth French (Fama-French 5 factores + Momentum)..."):
+                ff_factors = academic_factors.fetch_ff_factors()
+            reg = academic_factors.regress_returns_on_factors(test["periods"], ff_factors)
+            rc1, rc2, rc3 = st.columns(3)
+            rc1.metric(
+                "Alfa anualizado", f"{reg['alpha_anualizado']:+.2%}",
+                help="Retorno anualizado que NO explican los 6 factores académicos — la parte 'propia' de la "
+                     "estrategia, si es que existe alguna.",
+            )
+            rc2.metric(
+                "t-stat del alfa", f"{reg['t_stat']['alpha']:+.2f}",
+                help="Por debajo de ~2.0 no se puede distinguir de cero con confianza estadística habitual; "
+                     "Harvey, Liu y Zhu proponen exigir >3.0 precisamente porque se prueban muchas configuraciones "
+                     "en este tipo de investigación (ver HIPOTESIS_CONGELADA.md).",
+            )
+            rc3.metric("R² de la regresión", f"{reg['r2']:.2f}",
+                      help="Qué % de la varianza del retorno de la estrategia explican los 6 factores conocidos — "
+                           "más alto significa que la estrategia se parece más a una combinación de exposiciones ya "
+                           "documentadas y menos a algo genuinamente distinto.")
+            st.caption(f"Regresión con {reg['periodos_alineados']}/{reg['periodos_totales']} periodos alineados "
+                      f"({reg['dof']} grados de libertad tras 6 factores + alfa).")
+            betas_df = pd.DataFrame([
+                {"Factor": f, "Qué mide": label, "Beta": reg["coef"][f], "t-stat": reg["t_stat"][f]}
+                for f, label in [
+                    ("Mkt-RF", "Exposición al mercado (~1 = se mueve como la bolsa en general)"),
+                    ("SMB", "Tamaño (small minus big) — tilt hacia empresas más pequeñas"),
+                    ("HML", "Value (high minus low book-to-market)"),
+                    ("RMW", "Calidad/rentabilidad (robust minus weak)"),
+                    ("CMA", "Inversión (conservative minus aggressive)"),
+                    ("Mom", "Momentum"),
+                ]
+            ])
+            st.dataframe(
+                betas_df, hide_index=True, width="stretch",
+                column_config={
+                    "Beta": st.column_config.NumberColumn(format="%.3f"),
+                    "t-stat": st.column_config.NumberColumn(format="%.2f"),
+                },
+            )
+        except (ValueError, RuntimeError, ImportError) as exc:
+            st.warning(f"No se pudo calcular el contraste con factores académicos: {exc}")
+
+with tab_v2:
     st.caption(
-        "**Sharpe**: retorno por encima de la tasa libre de riesgo, dividido entre la volatilidad total — "
-        "más alto es mejor (más retorno por unidad de riesgo asumido). **Sortino**: lo mismo pero solo "
-        "penaliza la volatilidad a la baja (caídas), no la al alza — más informativo que Sharpe si lo que "
-        "te preocupa es perder dinero, no que suba mucho. **Drawdown**: la mayor caída desde un máximo "
-        "hasta un mínimo posterior — cuánto habrías llegado a perder en el peor momento."
+        "Contabilidad real de cartera: acciones + caja, comisión fija + spread real (no un % plano sobre "
+        "el 100% de cada posición cada periodo), SPY comprado y mantenido (no rotado), y una curva de "
+        "capital DIARIA real en vez de una reconstrucción por periodos. Ver 🎓 Aprender → \"Cómo piensa "
+        "GABI\" → \"V1 vs V2\" para el porqué, y README.md para el detalle técnico."
     )
-    strat_m, universo_m, spy_m = test["metrics"]["estrategia"], test["metrics"]["universo_ew"], test["metrics"]["spy"]
+    with st.expander("📖 Cómo probarlo"):
+        st.markdown(
+            """
+**Diferencia clave con el motor clásico (V1)**: aquí cada rebalanceo es una operación real sobre
+acciones y caja — lo que se mantiene solo paga comisión sobre el ajuste de peso frente al objetivo, no
+sobre el 100% de la posición; el SPY se compra una vez y se mantiene; y la curva de capital es un
+cálculo día a día real, no una reconstrucción escalada.
 
-    def _metric_row(label, ret, m, help_extra=""):
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric(f"{label} · acumulado", f"{ret:+.1%}")
-        c2.metric("Sharpe", f"{m['sharpe']:.2f}" if m["sharpe"] is not None else "—",
-                  help="Retorno anualizado (sobre el 4% libre de riesgo) dividido entre la volatilidad. " + help_extra)
-        c3.metric("Sortino", f"{m['sortino']:.2f}" if m["sortino"] is not None else "—",
-                  help="Como Sharpe, pero solo cuenta la volatilidad a la baja.")
-        c4.metric("Máx. drawdown", f"{m['max_drawdown']:.1%}" if m["max_drawdown"] is not None else "—",
-                  help="Mayor caída desde un máximo hasta un mínimo posterior, entre rebalanceos.")
+**Modo de universo**:
+- **Validación**: usa el universo histórico COMPLETO, sin muestrear — es el único modo cuyo resultado
+  debería citarse como evidencia de la estrategia real. En un rango de varios años puede tardar
+  **20-30 minutos** (medido: ~26 min para 2016-2025 completo) — no se ha colgado, espera.
+- **Desarrollo rápido**: muestrea a un tamaño fijo (50/100/200) — útil para probar rápido, sus
+  resultados no deben citarse como evidencia.
 
-    st.markdown("**Tu estrategia (top-N del ranking)**")
-    _metric_row("Estrategia", test["return"], strat_m)
-    st.markdown("**Universo equiponderado** — todas las candidatas elegibles de cada periodo, a partes iguales")
-    _metric_row("Universo", test["universo_ew_return"], universo_m,
-                "Compáralo con la estrategia: si Sharpe aquí es parecido o mejor, elegir las top-N no está "
-                "aportando tanto como parece por el retorno bruto.")
-    st.markdown("**SPY** — comprar y mantener el índice, sin rebalanceos")
-    _metric_row("SPY", test["spy_return"], spy_m)
-
-    st.line_chart(test["periods"].set_index("hasta")[["capital", "universo_capital", "spy_capital"]])
-    st.caption("Capital acumulado (partiendo de 1) de la estrategia, el universo equiponderado y el SPY.")
-    st.dataframe(test["periods"], hide_index=True, width="stretch")
-
-    st.markdown("#### Contraste con factores académicos (Fama-French)")
-    st.caption(
-        "¿Lo que hace la estrategia es distinto de las primas de factor ya documentadas en la literatura "
-        "académica (mercado, tamaño, value, calidad/rentabilidad, inversión, momentum — Kenneth French Data "
-        "Library, Dartmouth), o es la misma exposición con otro nombre? Se regresiona el retorno de la "
-        "estrategia contra esos 6 factores; 'alfa' es lo que queda sin explicar por ellos.",
-        help="Fuente: mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html — gratis, sin API key. "
-             "Se descarga y cachea la primera vez que se usa esta sección.",
-    )
-    try:
-        with st.spinner("Descargando series de Kenneth French (Fama-French 5 factores + Momentum)..."):
-            ff_factors = academic_factors.fetch_ff_factors()
-        reg = academic_factors.regress_returns_on_factors(test["periods"], ff_factors)
-        rc1, rc2, rc3 = st.columns(3)
-        rc1.metric(
-            "Alfa anualizado", f"{reg['alpha_anualizado']:+.2%}",
-            help="Retorno anualizado que NO explican los 6 factores académicos — la parte 'propia' de la "
-                 "estrategia, si es que existe alguna.",
+**Pasos**: pulsa "Preparar datos" primero (reutiliza lo que ya hayas descargado para el mismo rango,
+aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
+            """
         )
-        rc2.metric(
-            "t-stat del alfa", f"{reg['t_stat']['alpha']:+.2f}",
-            help="Por debajo de ~2.0 no se puede distinguir de cero con confianza estadística habitual; "
-                 "Harvey, Liu y Zhu proponen exigir >3.0 precisamente porque se prueban muchas configuraciones "
-                 "en este tipo de investigación (ver HIPOTESIS_CONGELADA.md).",
+
+    with st.form("portfolio_v2_form"):
+        va, vb, vc = st.columns(3)
+        v2_start = va.date_input("Inicio", value=date(2019, 1, 2), key="v2_start",
+                                 help="Recomendado: 2016-07-02 o después.")
+        v2_end = vb.date_input("Fin", value=date(2020, 1, 2), max_value=date.today(), key="v2_end")
+        v2_interval = vc.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses",
+                                   key="v2_interval")
+        vd, ve = st.columns(2)
+        v2_n_picks = vd.number_input("Empresas por periodo", 1, 50, 20, key="v2_n_picks")
+        v2_capital = ve.number_input("Capital inicial ($)", min_value=1000.0, value=100_000.0, step=10_000.0,
+                                     key="v2_capital")
+        vf, vg = st.columns(2)
+        v2_commission = vf.number_input("Comisión fija por operación ($)", min_value=0.0,
+                                        value=broker_costs.STOCK_FEE_USD, step=0.5, key="v2_commission",
+                                        help="Por defecto, la comisión real de eToro calibrada esta sesión.")
+        v2_spread = vg.number_input("Spread (pb)", min_value=0.0, value=10.0, key="v2_spread")
+        v2_mode = st.radio(
+            "Modo", ["Validación (universo completo — lento)", "Desarrollo rápido (muestra)"],
+            index=1, horizontal=True, key="v2_mode",
+            help="Validación no admite tamaño de muestra: usa el universo histórico completo de cada fecha.",
         )
-        rc3.metric("R² de la regresión", f"{reg['r2']:.2f}",
-                  help="Qué % de la varianza del retorno de la estrategia explican los 6 factores conocidos — "
-                       "más alto significa que la estrategia se parece más a una combinación de exposiciones ya "
-                       "documentadas y menos a algo genuinamente distinto.")
-        st.caption(f"Regresión con {reg['periodos_alineados']}/{reg['periodos_totales']} periodos alineados "
-                  f"({reg['dof']} grados de libertad tras 6 factores + alfa).")
-        betas_df = pd.DataFrame([
-            {"Factor": f, "Qué mide": label, "Beta": reg["coef"][f], "t-stat": reg["t_stat"][f]}
-            for f, label in [
-                ("Mkt-RF", "Exposición al mercado (~1 = se mueve como la bolsa en general)"),
-                ("SMB", "Tamaño (small minus big) — tilt hacia empresas más pequeñas"),
-                ("HML", "Value (high minus low book-to-market)"),
-                ("RMW", "Calidad/rentabilidad (robust minus weak)"),
-                ("CMA", "Inversión (conservative minus aggressive)"),
-                ("Mom", "Momentum"),
-            ]
-        ])
-        st.dataframe(
-            betas_df, hide_index=True, width="stretch",
-            column_config={
-                "Beta": st.column_config.NumberColumn(format="%.3f"),
-                "t-stat": st.column_config.NumberColumn(format="%.2f"),
-            },
+        v2_max_symbols = None
+        if v2_mode == "Desarrollo rápido (muestra)":
+            v2_max_symbols = st.selectbox("Tamaño de la muestra", [50, 100, 200], index=2, key="v2_max_symbols")
+        else:
+            st.caption("⏱️ Puede tardar 20-30 minutos en un rango de varios años — no se ha colgado.")
+        if st.form_submit_button("Ejecutar backtest V2"):
+            try:
+                v2_mode_value = "validation" if v2_mode.startswith("Validación") else "fast_dev"
+                v2_test = portfolio_backtest.run(
+                    v2_start.isoformat(), v2_end.isoformat(), months=v2_interval, top_n=int(v2_n_picks),
+                    max_symbols=v2_max_symbols, mode=v2_mode_value, initial_capital=float(v2_capital),
+                    commission_usd=float(v2_commission), spread_bps=float(v2_spread),
+                )
+                st.session_state["portfolio_v2_result"] = v2_test
+            except (ValueError, RuntimeError) as exc:
+                st.error(str(exc))
+
+    if st.button("Preparar datos de todos los rebalanceos", key="v2_prepare"):
+        try:
+            all_symbols = multifactor_backtest.required_symbols(
+                v2_start.isoformat(), v2_end.isoformat(), v2_interval, v2_max_symbols)
+            st.info(f"Preparando {len(all_symbols)} símbolos históricos y SPY. Puede tardar varios minutos.")
+            with st.spinner("Descargando SEC EDGAR y precios históricos..."):
+                edgar_result = edgar.ensure_edgar_data(all_symbols)
+                price_failures = {}
+                for offset in range(0, len(all_symbols), 25):
+                    batch = all_symbols[offset:offset + 25]
+                    price_failures.update(data_fetch.fetch_prices_batch(batch, period="max"))
+                price_failures.update(data_fetch.fetch_prices_batch(["SPY"], period="max"))
+            st.success(f"Preparación terminada. Fallos SEC: {len(edgar_result['failed'])}; "
+                       f"fallos de precios: {len(price_failures)}.")
+            if price_failures:
+                st.dataframe(pd.DataFrame([{"Ticker": s, "Motivo": reason}
+                                           for s, reason in price_failures.items()]), hide_index=True)
+        except (ValueError, RuntimeError) as exc:
+            st.error(str(exc))
+
+    if "portfolio_v2_result" in st.session_state:
+        v2_test = st.session_state["portfolio_v2_result"]
+        if v2_test["skipped"]:
+            with st.expander(f"⚠️ {len(v2_test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
+                st.dataframe(pd.DataFrame(v2_test["skipped"]), hide_index=True, width="stretch")
+
+        nav = v2_test["nav_curve"]
+        nav_spy = v2_test["nav_curve_spy"]
+        daily = multifactor_backtest.daily_risk_metrics(nav)
+        daily_spy = multifactor_backtest.daily_risk_metrics(nav_spy)
+        returns = nav.pct_change().dropna()
+        returns_spy = nav_spy.pct_change().dropna()
+
+        mode_label = ("✅ Validación — citable como evidencia de la estrategia" if v2_test["mode"] == "validation"
+                      else "🧪 Desarrollo rápido — no citar como evidencia")
+        st.markdown(f"**Modo usado: {mode_label}**")
+
+        g1, g2, g3 = st.columns(3)
+        g1.metric("Turnover medio", f"{v2_test['turnover_medio']:.1f}%",
+                  help="Importe realmente negociado cada periodo (los 2 lados + reequilibrio de lo mantenido) "
+                       "como % del valor de la cartera — no solo qué fracción de nombres cambia.")
+        g2.metric("Comisión total pagada", f"{v2_test['comision_total']:,.0f} $",
+                  help=f"Partiendo de {v2_capital:,.0f} $ iniciales.")
+        g3.metric("Capital final", f"{v2_test['capital_final']:,.0f} $")
+
+        st.caption(
+            "**Sharpe**: retorno por encima de la tasa libre de riesgo, dividido entre la volatilidad total. "
+            "**Sortino**: lo mismo pero solo penaliza la volatilidad a la baja. **Drawdown**: la mayor caída "
+            "desde un máximo hasta un mínimo posterior — aquí calculado sobre la curva DIARIA real, no solo "
+            "en fechas de rebalanceo."
         )
-    except (ValueError, RuntimeError, ImportError) as exc:
-        st.warning(f"No se pudo calcular el contraste con factores académicos: {exc}")
+
+        def _metric_row_v2(label, m):
+            d1, d2, d3, d4 = st.columns(4)
+            d1.metric(f"{label} · anualizado", f"{m['anualizado']:+.1%}" if m["anualizado"] is not None else "—")
+            d2.metric("Sharpe", f"{m['sharpe']:.2f}" if m["sharpe"] is not None else "—")
+            d3.metric("Sortino", f"{m['sortino']:.2f}" if m["sortino"] is not None else "—")
+            d4.metric("Máx. drawdown", f"{m['max_drawdown']:.1%}" if m["max_drawdown"] is not None else "—")
+
+        st.markdown("**Tu estrategia**")
+        _metric_row_v2("Estrategia", daily)
+        st.markdown("**SPY** — comprado una vez y mantenido")
+        _metric_row_v2("SPY", daily_spy)
+
+        h1, h2, h3, h4 = st.columns(4)
+        calmar = portfolio_metrics.calmar_ratio(daily["anualizado"], daily["max_drawdown"])
+        h1.metric("Calmar", f"{calmar:.2f}" if calmar is not None else "—",
+                  help="Retorno anualizado / |máximo drawdown| — retorno obtenido por unidad de la peor caída.")
+        recovery = portfolio_metrics.recovery_time(nav)
+        h2.metric("Días de recuperación", f"{recovery}" if recovery is not None else "—",
+                  help="Días de calendario desde el pico previo al máximo drawdown hasta volver a superarlo.")
+        beta = portfolio_metrics.beta_vs_benchmark(returns, returns_spy)
+        h3.metric("Beta vs SPY", f"{beta:.2f}" if beta is not None else "—",
+                  help="Sensibilidad al SPY — 1.0 = se mueve igual que el mercado.")
+        ir = portfolio_metrics.information_ratio(returns, returns_spy)
+        h4.metric("Information Ratio", f"{ir:.2f}" if ir is not None else "—",
+                  help="Exceso de retorno anualizado frente al SPY, dividido entre el tracking error.")
+
+        capture = portfolio_metrics.capture_ratios(returns, returns_spy)
+        i1, i2 = st.columns(2)
+        i1.metric("Capture al alza", f"{capture['upside'] * 100:.0f}%" if capture["upside"] is not None else "—",
+                  help="Cuánto se mueve la estrategia, de media, en los meses en que el SPY sube.")
+        i2.metric("Capture a la baja", f"{capture['downside'] * 100:.0f}%" if capture["downside"] is not None else "—",
+                  help="Cuánto se mueve la estrategia, de media, en los meses en que el SPY baja — menos de 100% es deseable.")
+
+        curve_df = pd.DataFrame({"Estrategia": nav / nav.iloc[0] * 100, "SPY": nav_spy / nav_spy.iloc[0] * 100})
+        st.line_chart(curve_df)
+        st.caption("Curva de capital DIARIA real (base 100), no una reconstrucción por periodos de rebalanceo.")
+        st.dataframe(v2_test["periods"], hide_index=True, width="stretch")
+
 with st.expander("Comparar qué bloque aporta más en esta fecha"):
     st.caption("Comparación exploratoria de una sola fecha. Para ajustar pesos hacen falta varias fechas y validación posterior independiente.")
     factor_rows = []
