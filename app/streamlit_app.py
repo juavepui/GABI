@@ -79,6 +79,7 @@ pages = [
     st.Page("pages/2_Ficha_Empresa.py", title="Ficha de empresa", icon="🔍"),
     st.Page("pages/6_Comparar_Empresas.py", title="Comparar empresas", icon="⚖️"),
     st.Page("pages/8_Ranking_Historico.py", title="Ranking histórico", icon="🕰️"),
+    st.Page("pages/11_Research_Lab.py", title="Research Lab", icon="🔬"),
     st.Page("pages/9_Decisiones.py", title="Decisiones de cartera", icon="🧭"),
     st.Page("pages/10_Carteras_Simuladas.py", title="Carteras simuladas", icon="🧪"),
     st.Page("pages/5_Panel_Macro.py", title="Panel Macro", icon="🌐"),

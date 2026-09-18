@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import academic_factors, broker_costs, config, data_fetch, edgar, evaluation, multifactor_backtest, portfolio_backtest, portfolio_metrics, screener_asof, universe
+from gabi import academic_factors, broker_costs, config, data_fetch, edgar, evaluation, multifactor_backtest, portfolio_backtest, portfolio_metrics, research_lab, screener_asof, universe
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("🕰️ Ranking histórico")
@@ -330,6 +330,28 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
         st.caption("Capital acumulado (partiendo de 1) de la estrategia, el universo equiponderado y el SPY.")
         st.dataframe(test["periods"], hide_index=True, width="stretch")
 
+        with st.expander("📋 Registrar este experimento en el Research Lab"):
+            rl1, rl2 = st.columns(2)
+            rl_stage = rl1.selectbox(
+                "Fase", research_lab.STAGES, key="v1_rl_stage",
+                format_func=lambda s: f"{research_lab.STAGE_INFO[s]['emoji']} {research_lab.STAGE_INFO[s]['label']}")
+            rl_family = rl2.text_input("Familia (agrupa intentos comparables)", value="", key="v1_rl_family")
+            rl_hypothesis = st.checkbox("¿Hipótesis registrada formalmente antes de ver el resultado?", key="v1_rl_hyp")
+            rl_notes = st.text_area("Notas", key="v1_rl_notes")
+            if st.button("Registrar en el Research Lab", key="v1_rl_button"):
+                returns_series = test["periods"].set_index(pd.to_datetime(test["periods"]["hasta"]))["retorno"]
+                exp_id = research_lab.log_experiment(
+                    "GABI-MF-v1", rl_stage, rl_hypothesis, universe=f"S&P 500 histórico, muestra de {universe_size}",
+                    factors="Value/Quality/Momentum/Risk", n_positions=int(n_picks),
+                    rebalance={1: "Monthly", 3: "Quarterly", 6: "Semiannual", 12: "Annual"}[interval],
+                    cost_model=f"V1: {bt_cost:.0f}pb round-trip sobre el 100% de cada posición cada periodo",
+                    is_start=bt_start.isoformat(), is_end=bt_end.isoformat(), family=rl_family or None,
+                    sharpe=strat_m["sharpe"], sortino=strat_m["sortino"], max_drawdown=strat_m["max_drawdown"],
+                    total_return=test["return"], n_periods=len(test["periods"]), periods_per_year=12 / interval,
+                    returns=returns_series, notes=rl_notes or None,
+                )
+                st.success(f"Experimento #{exp_id} registrado — consúltalo en 🔬 Research Lab.")
+
         st.markdown("#### Contraste con factores académicos (Fama-French)")
         st.caption(
             "¿Lo que hace la estrategia es distinto de las primas de factor ya documentadas en la literatura "
@@ -536,6 +558,33 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
         st.line_chart(curve_df)
         st.caption("Curva de capital DIARIA real (base 100), no una reconstrucción por periodos de rebalanceo.")
         st.dataframe(v2_test["periods"], hide_index=True, width="stretch")
+
+        with st.expander("📋 Registrar este experimento en el Research Lab"):
+            st.caption("Se guarda la curva de retornos DIARIA real — habilita PBO/CSCV y bootstrap para "
+                      "este experimento, a diferencia de los sembrados con cifras resumen del README.")
+            rv1, rv2 = st.columns(2)
+            rv_stage = rv1.selectbox(
+                "Fase", research_lab.STAGES, key="v2_rl_stage",
+                format_func=lambda s: f"{research_lab.STAGE_INFO[s]['emoji']} {research_lab.STAGE_INFO[s]['label']}")
+            rv_family = rv2.text_input("Familia (agrupa intentos comparables)", value="", key="v2_rl_family")
+            rv_hypothesis = st.checkbox("¿Hipótesis registrada formalmente antes de ver el resultado?", key="v2_rl_hyp")
+            rv_notes = st.text_area("Notas", key="v2_rl_notes")
+            if st.button("Registrar en el Research Lab", key="v2_rl_button"):
+                exp_id = research_lab.log_experiment(
+                    "GABI-MF-v2", rv_stage, rv_hypothesis,
+                    universe=("S&P 500 histórico completo, sin muestreo" if v2_test["mode"] == "validation"
+                             else f"S&P 500 histórico, muestra de {v2_max_symbols}"),
+                    factors="Value/Quality/Momentum/Risk", n_positions=int(v2_n_picks),
+                    rebalance={1: "Monthly", 3: "Quarterly", 6: "Semiannual", 12: "Annual"}[v2_interval],
+                    cost_model=f"V2: {v2_commission:.2f}$ fijo + {v2_spread:.0f}pb spread, solo sobre variación de peso real",
+                    is_start=v2_start.isoformat(), is_end=v2_end.isoformat(), family=rv_family or None,
+                    sharpe=daily["sharpe"], sortino=daily["sortino"], max_drawdown=daily["max_drawdown"],
+                    total_return=float(nav.iloc[-1] / nav.iloc[0] - 1), n_periods=len(returns),
+                    periods_per_year=252, returns=returns, notes=rv_notes or None,
+                    result={"mode": v2_test["mode"], "turnover_medio": v2_test["turnover_medio"],
+                           "comision_total": v2_test["comision_total"], "capital_inicial": v2_capital},
+                )
+                st.success(f"Experimento #{exp_id} registrado — consúltalo en 🔬 Research Lab.")
 
 with st.expander("Comparar qué bloque aporta más en esta fecha"):
     st.caption("Comparación exploratoria de una sola fecha. Para ajustar pesos hacen falta varias fechas y validación posterior independiente.")

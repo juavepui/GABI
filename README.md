@@ -1165,6 +1165,55 @@ a la cartera actual frente a no penalizar) — 215 tests en total, ninguno de lo
 previos de `decision_engine.py` cambia de comportamiento. Disponible desde la UI (🧭
 Decisiones de cartera → "Reglas y límites" → casilla "Portfolio Engine V2").
 
+## 🔬 Research Lab: registro de experimentos + rigor estadístico
+
+Propuesta del usuario, motivada por algo que esta misma sesión ya hacía a mano: se probaron 10+
+configuraciones sobre el mismo rango 2016-2025 (top-10/20/30, filtro SMA200, banda de turnover,
+3 frecuencias de rebalanceo, universo 200 vs 500, V1 vs V2), documentando cada vez si el resultado
+era ruido o señal. El Research Lab formaliza esa disciplina: un registro de experimentos
+(`src/gabi/research_lab.py`, tabla `experiments`, página 🔬 Research Lab) con metodología, commit
+de código exacto y resultado, etiquetado por fase (**RESEARCH** / **IN_SAMPLE** / **OUT_OF_SAMPLE**
+/ **LIVE_FORWARD**), y un módulo de rigor estadístico (`src/gabi/stats_rigor.py`) que implementa
+Probabilistic Sharpe Ratio → Deflated Sharpe Ratio → PBO/CSCV → intervalos de confianza bootstrap
+(Bailey & López de Prado; umbral t>3 de Harvey, Liu & Zhu ya citado en `HIPOTESIS_CONGELADA.md`).
+
+**Límite real, comunicado con la misma honestidad que el resto de este documento**: los ~10
+experimentos ya documentados en este README solo tienen métricas RESUMEN (Sharpe, Sortino,
+drawdown) — no se guardó la serie de retornos completa de cada uno en su momento. Sembrar el
+registro con ellos permite un **DSR real** (solo necesita el Sharpe de cada intento y cuántos se
+probaron), pero el **PSR exacto, PBO y bootstrap necesitan la serie de retornos real**, que no
+existe para esos experimentos históricos — se usa una aproximación normal (skew=0, kurtosis=3,
+equivalente a `sharpe_standard_error`) para ellos, marcada explícitamente como aproximación.
+Cualquier experimento registrado desde 🕰️ Ranking histórico a partir de ahora SÍ guarda la serie de
+retornos real (V1: retorno por periodo; V2: retorno diario de la curva NAV), así que PSR
+exacto/PBO/bootstrap están disponibles de verdad para lo que se registre de aquí en adelante.
+
+**Sembrado con 9 experimentos reales** (familias `posiciones_frecuencia_v1` — top-10/20/30, +filtro
+SMA200, semestral/anual, banda 1.5x, todos con el muestreo y el drawdown-por-snapshot ya
+corregidos — y `universo_v2` — V2 fast_dev vs validation), cada uno con su cita exacta a la sección
+del README de la que sale. **Resultado real del primer cálculo de DSR sobre la hipótesis
+congelada** (Top-20 trimestral, N=7 intentos de la familia `posiciones_frecuencia_v1`):
+
+| | Valor |
+|---|---|
+| PSR sin deflactar (vs Sharpe=0) | 97.9% |
+| SR*₀ (máximo esperado por azar, N=7) | 0.11 |
+| **DSR (deflactado por los 7 intentos)** | **95.8%** |
+
+Con solo 7 configuraciones probadas y 36 observaciones trimestrales, la corrección por *multiple
+testing* apenas mueve la aguja (97.9%→95.8%) — un resultado tranquilizador, pero que no habría sido
+así con más intentos o menos historia: el propio cálculo de `expected_max_sharpe` muestra que SR*₀
+crece con N, así que esta cifra debe repetirse si en el futuro se añaden más configuraciones a la
+familia.
+
+**Cómo se usa**: desde 🕰️ Ranking histórico, tras ejecutar un backtest (V1 o V2), un botón "📋
+Registrar este experimento en el Research Lab" pre-rellena la metodología y el resultado — la fase
+(RESEARCH/IN_SAMPLE/OUT_OF_SAMPLE/LIVE_FORWARD) es una decisión del usuario sobre su propia
+intención con ese run, no algo que el código pueda inferir. Desde 🔬 Research Lab: tabla de
+experimentos filtrable por familia/fase, formulario de registro manual, y las tres secciones de
+cálculo (PSR/DSR, PBO/CSCV, bootstrap) — estas dos últimas solo ofrecen experimentos con serie de
+retornos guardada.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,
