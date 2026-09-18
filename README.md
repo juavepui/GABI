@@ -1288,6 +1288,74 @@ rebalanceo real (10 símbolos reales del ranking de hoy, precios reales), confir
 bloqueado no expone ninguna clave de rendimiento y que la integridad verifica correctamente — y limpiado
 después de la prueba.
 
+## 🧮 Portfolio Lab: comparar esquemas de ponderación + stress tests
+
+Cuarta propuesta del usuario, la más grande de las cuatro. Hasta ahora todo el backtesting asumía
+implícitamente que repartir el capital a partes iguales entre las candidatas del ranking ("Equal Weight")
+era "la" forma de construir la cartera. **`src/gabi/portfolio_lab.py`** (página 🧮 Portfolio Lab) compara,
+sin declarar ganador de antemano, seis esquemas sobre las MISMAS candidatas de cada rebalanceo: **Equal
+Weight, Inverse Volatility, Minimum Variance, Score-weighted, Score + risk constrained y Risk Parity** —
+con rentabilidad, volatilidad, drawdown, turnover, coste, concentración (HHI), contribution-to-risk y
+tracking error frente al SPY para cada uno, más una serie de stress tests explícitamente marcados como
+**no pronósticos**.
+
+**Reutilización, no reinvención**: Minimum Variance reutiliza directamente `decision_engine._risk_weights`
+(sin límites); Score + risk constrained sigue el mismo patrón que `decision_engine._risk_weights_constrained`
+(límites de posición/sector dentro del propio solver de PyPortfolioOpt, con `max_quadratic_utility()` en vez
+de `min_volatility()`); la ejecución real de cartera reutiliza `_apply_trade`/`_daily_segment`/
+`buy_and_hold_curve` de `portfolio_backtest.py` sin cambios. Lo único genuinamente nuevo es CÓMO se calcula
+el peso objetivo de cada esquema — para eso, `portfolio_backtest._rebalance` (antes solo equiponderado) se
+generalizó a `_rebalance_to_weights(target_weights)`, con `_rebalance` como caso particular
+`{s: 1/top_n}` — refactor verificado puro: los 17 tests ya existentes de `test_portfolio_backtest.py`
+siguen pasando exactamente igual tras el cambio.
+
+**Insight de rendimiento**: reconstruir el ranking point-in-time es el paso caro del bucle y es el MISMO
+para los 6 esquemas en una fecha dada — se hace una sola vez por periodo, y los 6 esquemas se calculan
+sobre esas mismas candidatas (optimizar sobre 20-50 valores es cuestión de milisegundos), así que el coste
+total es aproximadamente el de un solo backtest V2, no seis.
+
+**Tres bugs reales encontrados y corregidos durante el desarrollo** (con una prueba de integración real
+antes de escribir los tests unitarios, no solo revisando el código):
+
+1. **Look-ahead en el cálculo de pesos** (el más importante): `.tail(252)` sobre el historial de precios
+   en caché tomaba los últimos 252 días HASTA HOY, no los 252 anteriores a la fecha de cada rebalanceo —
+   comprobado con datos reales: un backtest de 2019 estaba construyendo la covarianza con precios de
+   2025-2026. Corregido truncando `histories` a `<= entry_session` inmediatamente después de obtenerlas,
+   el mismo patrón que ya usa `decision_engine.build_plan`. Hay un test de regresión específico
+   (`test_run_portfolio_lab_point_in_time_ignores_future_price_spike`) que inyecta un pico de volatilidad
+   FUTURO y comprueba que no afecta a los pesos calculados en un rebalanceo anterior.
+2. **`pypfopt.hierarchical_portfolio.HRPOpt` roto en este entorno** (`AttributeError: module
+   'scipy.cluster.hierarchy' has no attribute '_LINKAGE_METHODS'`, confirmado de forma aislada). Risk
+   Parity se resuelve en su lugar a mano: minimizar con `scipy.optimize.minimize` (SLSQP) la dispersión
+   entre la `contribution_to_risk` de cada posición y `1/N` — Equal Risk Contribution, el mismo objetivo
+   que persigue HRP, sin depender de esa clase.
+3. **Faltaba "SPY" en los símbolos descargados para cada periodo**, así que `compute_betas` siempre
+   recibía un historial vacío para el SPY y todas las betas caían silenciosamente a 1.0 — se notó porque
+   el impacto de "S&P −10%" salía idéntico en los 6 esquemas, algo estadísticamente inverosímil. Corregido
+   añadiendo `SPY` al conjunto de símbolos necesarios cada periodo.
+
+Verificado con una ejecución real pequeña (`mode="fast_dev"`, 2019-01 a 2019-10, 25 símbolos, top-8) tras
+las tres correcciones: los impactos de "S&P −10%" pasaron a diferir genuinamente por esquema
+(−7.0% a −8.3% según cuánto beta lleve cada cartera) y Risk Parity dejó de coincidir con Equal Weight
+(Sharpe, HHI y top-3 contribution-to-risk todos distintos). Un caso adicional observado y verificado como
+comportamiento esperado, no un bug: en ese mismo test, Score-weighted y Score + risk constrained daban
+HHI/turnover/escenarios idénticos en el último periodo (aunque el Sharpe total difería) — investigado
+directamente reproduciendo el solver sin capturar la excepción: el segundo periodo lanzaba
+`OptimizationError: infeasible` (los límites de 20% posición / 35% sector son incompatibles con esas 8
+candidatas concretas), así que ese periodo cae al fallback documentado (`_weights_score`) — el primer
+periodo sí había convergido con pesos genuinamente distintos (capados a 20%, dos posiciones a 0%), lo que
+explica que el Sharpe total difiriera aunque los pesos del ÚLTIMO rebalanceo coincidieran.
+
+**Stress tests, separados explícitamente en dos grupos de confianza** (`SCENARIO_GROUND`, marcado también
+en la UI con 🟢/⚠️): S&P −10%/−20%, Tecnología −25% y Volatilidad ×2 usan beta/sector calculados de
+precios reales cacheados; Tipos +100pb y USD ±10% usan una tabla de sensibilidad por sector **sin
+calibrar** (GABI no tiene datos de duración ni de exposición a divisa por empresa) — se presentan como
+orientativos, nunca con la misma solidez aparente que los primeros cuatro. Ninguno pretende ser un
+pronóstico: son shocks arbitrarios aplicados con supuestos simples y explícitos sobre los pesos del último
+rebalanceo, pensados para responder a preguntas como "esta cartera tiene 20 empresas, pero 3 de ellas
+representan un 34% del riesgo" — información mucho más útil para un junior que "20 posiciones =
+diversificada".
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

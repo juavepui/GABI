@@ -47,22 +47,24 @@ def _apply_trade(cash: float, shares: dict, symbol: str, side: str, notional: fl
     return cash
 
 
-def _rebalance(cash: float, shares: dict, picks: list, entry_price: dict, top_n: int,
-              commission_usd: float, spread_bps: float) -> dict:
-    """Rebalanceo equiponderado real: vende lo que sale de la selección,
-    compra lo nuevo, y ajusta (compra/vende solo el delta) lo que se
-    mantiene para volver al peso objetivo -- la "variación de peso" que no
-    modelaba V1 (que no cobraba nada a lo mantenido, pero tampoco lo
-    reequilibraba). Solo paga comisión/spread sobre lo realmente negociado,
-    nunca sobre el 100% de una posición que sigue en cartera."""
+def _rebalance_to_weights(cash: float, shares: dict, target_weights: dict, entry_price: dict,
+                          commission_usd: float, spread_bps: float) -> dict:
+    """Rebalanceo real a CUALQUIER conjunto de pesos objetivo (que sumen
+    ~1, no necesariamente equiponderado -- ver `portfolio_lab.py`, que
+    reutiliza esto con Inverse Volatility/Minimum Variance/Score-weighted/
+    Risk Parity/etc.): vende lo que sale de la selección, compra lo nuevo,
+    y ajusta (compra/vende solo el delta) lo que se mantiene para volver a
+    SU peso objetivo -- la "variación de peso" que no modelaba V1 (que no
+    cobraba nada a lo mantenido, pero tampoco lo reequilibraba). Solo paga
+    comisión/spread sobre lo realmente negociado, nunca sobre el 100% de
+    una posición que sigue en cartera."""
     current_symbols = set(shares.keys())
-    picks_set = set(picks)
+    picks_set = set(target_weights)
     held = current_symbols & picks_set
     sold = current_symbols - picks_set
     bought = picks_set - current_symbols
 
     portfolio_value = cash + sum(shares[s] * entry_price[s] for s in shares)
-    target_value = portfolio_value / top_n if top_n else 0.0
 
     traded_notional = 0.0
     trades_executed = 0
@@ -76,6 +78,7 @@ def _rebalance(cash: float, shares: dict, picks: list, entry_price: dict, top_n:
             trades_executed += 1
 
     for s in sorted(held):
+        target_value = target_weights[s] * portfolio_value
         current_value = shares[s] * entry_price[s]
         delta = target_value - current_value
         side = "BUY" if delta > 0 else "SELL"
@@ -86,6 +89,7 @@ def _rebalance(cash: float, shares: dict, picks: list, entry_price: dict, top_n:
             trades_executed += 1
 
     for s in sorted(bought):
+        target_value = target_weights[s] * portfolio_value
         before = cash
         cash = _apply_trade(cash, shares, s, "BUY", target_value, entry_price[s], commission_usd, spread_bps)
         if cash != before:
@@ -96,6 +100,14 @@ def _rebalance(cash: float, shares: dict, picks: list, entry_price: dict, top_n:
     return {"cash": cash, "turnover_pct": turnover_pct,
             "comision_pagada": trades_executed * commission_usd,
             "held": held, "sold": sold, "bought": bought}
+
+
+def _rebalance(cash: float, shares: dict, picks: list, entry_price: dict, top_n: int,
+              commission_usd: float, spread_bps: float) -> dict:
+    """Rebalanceo equiponderado -- caso particular de `_rebalance_to_weights`
+    con `{s: 1/top_n for s in picks}`. Ver esa función para el detalle."""
+    target_weights = {s: 1.0 / top_n for s in picks} if top_n else {}
+    return _rebalance_to_weights(cash, shares, target_weights, entry_price, commission_usd, spread_bps)
 
 
 def _daily_segment(cash: float, shares: dict, entry_session: pd.Timestamp,
