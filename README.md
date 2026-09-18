@@ -477,11 +477,15 @@ antes, no más débil**:
   ponderación; ahora que esa ventaja desaparece casi del todo, la que le
   queda al ranking frente al SPY es más creíble como señal genuina, no como
   artefacto de la muestra.
-- **Pasar de 10 a 20 posiciones ahora es una mejora limpia en todos los
-  frentes**, no solo en drawdown: Sharpe (0.76 vs 0.74), Sortino (1.32 vs
-  1.28) y máximo drawdown (−25.4% vs −27.0%) mejoran los tres a la vez con
-  20 posiciones — la recomendación de usar 20 en vez de 10 queda reforzada.
-- Top-30 sigue siendo peor en todo (Sharpe 0.51) — diluye demasiado.
+- Pasar de 10 a 20 posiciones mejora los tres frentes a la vez (Sharpe 0.76
+  vs 0.74, Sortino 1.32 vs 1.28, máx. drawdown −25.4% vs −27.0%) — pero
+  **el gap de Sharpe (0.02) es muchísimo menor que el error estándar
+  esperable con ~9 años de datos (~0.36, ver más abajo)**, así que no se
+  puede llamar "mejora limpia" en sentido estadístico. Se mantiene 20 como
+  valor por defecto porque el drawdown algo menor es deseable y no cuesta
+  nada de retorno esperado, no porque la comparación de Sharpe la respalde.
+- Top-30 sigue siendo claramente peor (Sharpe 0.51) — esa diferencia sí es
+  mayor que el ruido de muestreo típico.
 - El filtro de SMA200 del SPY **sigue sin reducir el drawdown** (−27.0%,
   idéntico a la base) por la misma razón de siempre: reacciona demasiado
   tarde para una caída rápida como la del COVID. Sigue sin recomendarse tal
@@ -491,6 +495,19 @@ antes, no más débil**:
 vez de bien avanzado 2025 por un ajuste de la fecha de fin al relanzar el
 script, perdiendo el trimestre 2025-07-01 (un dato ya conocido, no un
 problema de cobertura) — diferencia menor, no afecta a las conclusiones.
+
+**⚠️ Aviso añadido después, con dos problemas de medida más (ver sección
+"Hipótesis descongelada" más abajo para el detalle y la corrección
+numérica completa)**: (1) el máximo drawdown de esta tabla se calculó
+sobre el capital SOLO en fechas de rebalanceo (`periods["capital"]`), el
+mismo defecto de medida que infravaloró el drawdown real en la comparación
+de frecuencias de rebalanceo (−25.4% medido así, pero se comprobó después
+que el drawdown diario real de una configuración equivalente ronda −37%);
+(2) ninguna de las diferencias de Sharpe de esta tabla se contrastó nunca
+contra su error estándar de muestreo. Los números de esta tabla, tal cual,
+probablemente subestiman el riesgo real y sobreinterpretan diferencias
+pequeñas — tratarlos como orientativos, no como la medición más fiable
+disponible.
 
 ### Auditoría de sesgos: supervivencia, look-ahead y costes
 
@@ -724,24 +741,117 @@ verificaciones adicionales, ambas importantes, **cambian la conclusión por comp
 
    | Frecuencia | Sharpe (diario, comparable) | Sortino (diario) | Max DD (diario) |
    |---|---|---|---|
-   | **Trimestral** | **0.74** | 1.04 | −37.2% |
+   | Trimestral | 0.74 | 1.04 | −37.2% |
    | Semestral | 0.69 | 0.95 | −37.2% |
    | Anual | 0.57 | 0.80 | −35.4% |
+
+   (Ver la corrección justo debajo de la tabla — estas diferencias no son estadísticamente
+   significativas; no interpretar el trimestral como "el que gana".)
 
    **Los tres sufrieron prácticamente la misma caída real durante el COVID** (−35% a
    −37%) — es una caída de mercado generalizada, no algo de lo que protegiera rebalancear
    menos. Lo que antes parecía "el semestral/anual protege mejor" nunca fue protección
    real: era, literalmente, no mirar la cuenta durante la caída y fijarse solo en cómo
-   había quedado meses después, ya recuperada. **Con la métrica correcta, es el
-   trimestral el que tiene mejor Sharpe** — rebalancear más a menudo permite refrescar
-   hacia mejores candidatas con más frecuencia, y ese beneficio de selección pesa más que
-   el coste de rotación adicional, al menos a 10pb. **La recomendación de pasar a
-   rebalanceo semestral queda retirada** — se apoyaba en una métrica de riesgo defectuosa.
+   había quedado meses después, ya recuperada. **La recomendación de pasar a rebalanceo
+   semestral queda retirada** — se apoyaba en una métrica de riesgo defectuosa.
 
    Verificado que `daily_capital_curve` reproduce exactamente los mismos retornos totales
    ya validados con el cálculo por periodos (+374.9% trimestral, +337.2% semestral,
    +257.1% anual) — el único cambio es la visibilidad del camino diario dentro de cada
    tramo, no el retorno final.
+
+   **⚠️ Corrección — "el trimestral gana" tampoco es una conclusión sólida, es el mismo
+   error en sentido contrario.** Con solo ~9 años de datos, el error estándar de un
+   Sharpe estimado así (`sharpe_standard_error`, fórmula de Lo 2002:
+   `√((1 + Sharpe²/2) / años)`) ronda **±0.36-0.38** para los tres Sharpes de la tabla —
+   ver la cifra exacta, recalculada, en la verificación final más abajo. La diferencia
+   entre trimestral y anual es una fracción de un error estándar, indistinguible del
+   ruido de muestreo con esta cantidad de historia. La lectura honesta no es "el
+   trimestral es mejor", es que **la frecuencia de rebalanceo no cambia gran cosa dentro
+   de este rango de datos** — la elección de quedarse con trimestral es razonable porque
+   ya es la que se usa y es operativamente más simple (más oportunidades de refrescar
+   hacia mejores candidatas, coste ya medido y asumible a 10-25pb), no porque haya
+   "ganado" una comparación estadísticamente significativa. Ver
+   `multifactor_backtest.sharpe_standard_error()` — a partir de ahora, cualquier
+   comparación de Sharpe entre variantes en este documento debe acompañarse de su error
+   estándar antes de declarar una ganadora.
+
+### Verificación final: un tercer problema de medida (cobertura del universo) y comparación honesta contra el SPY
+
+Al intentar reproducir la tabla de arriba de forma limpia (con `sharpe_standard_error` y
+una comparación de drawdown contra el SPY con la MISMA metodología de curva diaria, dos
+peticiones explícitas del usuario tras revisar este documento) se descubrió un **tercer
+problema real, independiente de los dos anteriores**: `multifactor_backtest.run()` con
+sus parámetros por defecto (`min_universe_coverage=0.7`) solo conseguía reconstruir 13 de
+los 36 trimestres del rango 2016-2025 — **todo 2016-2021, incluido el crash de marzo de
+2020, se saltaba en silencio**, y el resto de este documento nunca lo mencionó porque las
+cifras "de 36 periodos" se habían generado con un script aparte, con un umbral de
+cobertura distinto (no el `run()` estándar que usa el botón de la interfaz).
+
+La causa: de los ~640 símbolos distintos que hacen falta para cubrir el rango completo,
+**100 (≈16%) nunca resuelven CIK en SEC EDGAR** — son empresas realmente deslistadas o
+adquiridas antes de 2022 (ABC, ANTM, ATVI, CELG, BBBY, RTN, UTX, JEC, MYL... la lista
+completa es mucho más larga) que sí formaban parte del S&P 500 en su momento, pero
+`company_tickers.json` de la SEC solo mapea registrantes **activos hoy**, no históricos.
+Eso limita la cobertura alcanzable de cualquier trimestre anterior a 2022 a un techo
+estructural de ~57-69% del universo muestreado — no es que esos periodos tengan peor
+calidad de datos, es que ese es el máximo posible con esta fuente gratuita. Con el 0.7
+por defecto, ese techo caía justo por debajo del umbral y el periodo entero desaparecía.
+
+**Arreglado**: `min_universe_coverage` por defecto pasa de 0.7 a **0.5** (`multifactor_backtest.run()`,
+ver su docstring) — recupera los 36/36 trimestres sin dejar pasar periodos realmente
+vacíos (comprobado). Esto es un límite de origen de datos conocido y documentado, no un
+sesgo oculto: las empresas no resueltas simplemente nunca pueden entrar en el ranking en
+los periodos anteriores a 2022, así que sí introducen un sesgo de "solo lo que hoy sigue
+siendo fácil de mapear" adicional al de supervivencia de índice (que ese sí está
+corregido) — pendiente de una mejora futura (búsqueda por nombre en vez de solo por
+ticker actual) si se quiere cerrar del todo.
+
+**Con los 36/18/9 periodos reales, cobertura completa, y calculando por fin Sharpe/Sortino/
+drawdown/SE con exactamente la misma curva diaria para la estrategia y para el SPY**
+(`daily_benchmark_curve`, nueva):
+
+| Frecuencia | Sharpe estrategia (±SE) | Sharpe SPY | Sortino estrategia | Max DD estrategia | Max DD SPY | Turnover |
+|---|---|---|---|---|---|---|
+| Trimestral | 0.71 ± 0.37 | 0.56 | 1.00 | −37.8% | −33.7% | 63.0% |
+| Semestral | 0.68 ± 0.37 | 0.56 | 0.95 | −37.8% | −33.7% | 74.4% |
+| Anual | 0.61 ± 0.36 | 0.56 | 0.85 | −33.2% | −33.7% | 81.3% |
+
+**Lo que esto dice, con el mismo cuidado de no sobreinterpretar que llevó a las dos
+correcciones anteriores**:
+
+- **Entre frecuencias, sigue sin haber diferencia significativa** (0.71 vs 0.61 es una
+  fracción de un SE de ±0.37) — se confirma la conclusión de la sección anterior con
+  datos ahora completos y reproducibles, no solo con una aproximación.
+- **Frente al SPY, la estrategia gana en Sharpe en las tres frecuencias, de forma
+  consistente** (0.71/0.68/0.61 vs 0.56 del propio SPY) — esto es un patrón más robusto
+  que "trimestral gana a anual", porque se repite en las tres variantes en vez de
+  depender de cuál se mire. Aun así, el margen (0.05 a 0.15) sigue siendo pequeño frente
+  al SE individual de cada serie (~0.36-0.37); no se ha hecho el test correcto para
+  series correlacionadas (las dos comparten buena parte del mismo riesgo de mercado, así
+  que la incertidumbre real de la diferencia es probablemente menor que sumar los dos SE
+  como si fueran independientes) — tratar esto como una señal a favor de la estrategia,
+  no como una certeza estadística confirmada.
+- **El drawdown SÍ muestra algo real y antes invisible**: con rebalanceo trimestral o
+  semestral, la estrategia cae más que el SPY en el mismo pánico (−37.8% vs −33.7%, 4.1
+  puntos peor) — concentrar en 20 posiciones sí añade riesgo a la baja frente al índice
+  completo, coherente con lo ya visto en "Segundo resultado" (10 posiciones cayó más que
+  el universo completo en el COVID). Con rebalanceo **anual**, en cambio, el drawdown
+  queda prácticamente igual al del SPY (−33.2% vs −33.7%) — la cartera de enero de 2020
+  (fijada un año entero) resultó, por esta vez, no más concentrada en riesgo de caída que
+  el propio índice. No hay base para generalizar esto como "el anual protege" (un solo
+  episodio de mercado, y ya se vio que "el anual gana" fue un espejismo la primera vez) —
+  se documenta como lo que es: una observación puntual de este episodio concreto, útil
+  para no asumir que más posiciones/más rotación siempre reduce el riesgo de caída.
+- **La banda de permanencia (`buffer_multiplier`) también se re-verificó con curva
+  diaria y cobertura completa** (36/36 periodos, top-20 trimestral, 1.5x, 10pb): Sharpe
+  diario 0.66 frente a 0.71 sin banda, drawdown prácticamente igual (−37.7% vs −37.8%) —
+  **confirma la conclusión de "descartado"** del principio de esta sección con datos
+  ahora completos, no solo con el rango parcial que se había probado hasta ahora.
+
+Reproducible con `multifactor_backtest.run(..., min_universe_coverage=0.5)` para cada
+frecuencia, `daily_capital_curve`/`daily_benchmark_curve`/`daily_risk_metrics` sobre el
+resultado, y `sharpe_standard_error(sharpe, years)` sobre cada Sharpe diario.
 
 ### Costes reales del bróker (eToro): calibración y por qué el backtest NO incluye la conversión de divisa
 

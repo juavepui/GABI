@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -49,6 +50,19 @@ def test_required_symbols_unions_memberships(monkeypatch):
     assert bt.required_symbols("2023-01-02", "2023-07-02", 3) == ["AAA", "BBB"]
 
 
+def test_default_min_universe_coverage_is_low_enough_for_pre_2022_history():
+    """~16% de los simbolos necesarios para cubrir 2016-2025 no resuelven CIK
+    en SEC EDGAR (empresas deslistadas antes de 2022 que ya no aparecen en
+    company_tickers.json) -- eso limita la cobertura alcanzable de cualquier
+    trimestre anterior a 2022 a un techo estructural de ~57-69%, comprobado
+    con datos reales. Un default mas alto que eso descarta en silencio TODO
+    2016-2021 (incluido el crash de covid) en cualquier backtest lanzado
+    desde la UI con los valores por defecto -- ver README, "Verificacion
+    final: un tercer problema de medida"."""
+    import inspect
+    assert inspect.signature(bt.run).parameters["min_universe_coverage"].default <= 0.5
+
+
 def test_rejects_when_every_period_lacks_coverage(monkeypatch):
     """Si TODOS los periodos del rango carecen de composición histórica
     verificable, no hay nada que backtest-ear: debe fallar."""
@@ -76,7 +90,10 @@ def test_skips_single_bad_period_instead_of_aborting_whole_range(monkeypatch):
     monkeypatch.setattr(bt, "_period_returns",
                         lambda symbols, day, months, cost, held_symbols=None: {"end_date": str(day.date()),
                                                              "portfolio_return": .1, "benchmark_return": .05})
-    result = bt.run("2023-01-02", "2023-07-02", months=3, top_n=1)
+    # min_universe_coverage explicito: el test verifica el mecanismo de saltar
+    # y seguir, no el valor por defecto (que ya no es 0.7 -- ver docstring de
+    # run() sobre el techo estructural de cobertura pre-2022).
+    result = bt.run("2023-01-02", "2023-07-02", months=3, top_n=1, min_universe_coverage=.7)
     assert len(result["periods"]) == 1
     assert len(result["skipped"]) == 1
     assert result["skipped"][0]["fecha"] == "2023-01-02"
@@ -360,3 +377,47 @@ def test_daily_capital_curve_chains_periods_compounding_correctly(tmp_path, monk
     ])
     curve = bt.daily_capital_curve(periods)
     assert curve.iloc[-1] == pytest.approx(1.10 * 1.10, rel=1e-6)  # se encadena, no se reinicia
+
+
+def test_daily_benchmark_curve_uses_return_column_and_matches_strategy_dates(tmp_path, monkeypatch):
+    """daily_benchmark_curve debe dar la misma longitud/fechas que
+    daily_capital_curve para el mismo rango, usando el retorno del benchmark
+    (columna `spy`) en vez del de la estrategia -- para que el max_drawdown de
+    los dos se pueda comparar con la misma metodologia (el problema que
+    senalo la revision: comparar drawdown diario de la estrategia contra
+    drawdown por snapshots del indice no es una comparacion justa)."""
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    calendar = bt.xcals.get_calendar("XNYS")
+    as_of = pd.Timestamp("2024-01-05")
+    entry = calendar.next_session(calendar.date_to_session(as_of, direction="previous"))
+    exit_session = calendar.date_to_session(as_of + pd.DateOffset(months=3), direction="next")
+    sessions = calendar.sessions_in_range(entry, exit_session)
+
+    prices = [100.0] * len(sessions)
+    prices[-1] = 90.0
+    df = pd.DataFrame({"Open": prices, "High": prices, "Low": prices, "Close": prices,
+                       "Adj Close": prices, "Volume": [1] * len(prices)}, index=sessions)
+    storage.upsert_prices("SPY", df)
+
+    periods = pd.DataFrame([{
+        "fecha": as_of.date().isoformat(), "hasta": exit_session.date().isoformat(),
+        "candidatas": "AAPL", "retorno": 0.05, "spy": -0.10,
+    }])
+    curve = bt.daily_benchmark_curve(periods)
+    assert len(curve) == len(sessions)
+    assert curve.iloc[-1] == pytest.approx(0.90, abs=1e-6)  # coincide con periods["spy"], no con "retorno"
+
+
+def test_sharpe_standard_error_matches_manual_formula():
+    se = bt.sharpe_standard_error(0.74, 9.4)
+    assert se == pytest.approx(np.sqrt((1 + 0.74 ** 2 / 2) / 9.4), rel=1e-9)
+
+
+def test_sharpe_standard_error_shrinks_with_more_years():
+    assert bt.sharpe_standard_error(0.7, 20) < bt.sharpe_standard_error(0.7, 5)
+
+
+def test_sharpe_standard_error_rejects_non_positive_years():
+    with pytest.raises(ValueError):
+        bt.sharpe_standard_error(0.7, 0)

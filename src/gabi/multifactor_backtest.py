@@ -172,7 +172,7 @@ def _apply_holding_buffer(previous_picks: list, ranked_pool: list, top_n: int,
 
 
 def run(start: str, end: str, months: int = 3, top_n: int = 10,
-        cost_bps: float = 10, min_coverage: float = .7, min_universe_coverage: float = .7,
+        cost_bps: float = 10, min_coverage: float = .7, min_universe_coverage: float = .5,
         max_symbols: int | None = None, buffer_multiplier: float = 1.0) -> dict:
     """Backtest de rebalanceos periódicos. Un periodo sin cobertura suficiente
     (fundamentales/precios insuficientes para ese trimestre) se SALTA, no
@@ -180,6 +180,20 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
     los años con menos cobertura SEC EDGAR) no impide ver el resto. Solo
     falla si NINGÚN periodo del rango es utilizable. `skipped` en el
     resultado lista qué se saltó y por qué.
+
+    `min_universe_coverage=0.5` (antes 0.7): comprobado con datos reales que
+    ~100 de los ~640 símbolos que hacen falta para cubrir 2016-2025 (≈16%)
+    nunca resuelven CIK en SEC EDGAR — son empresas realmente deslistadas o
+    adquiridas antes de 2022 (ABC, ANTM, ATVI, CELG, BBBY, RTN, UTX...), y
+    `company_tickers.json` de la SEC solo mapea registrantes ACTIVOS hoy, no
+    históricos. Eso limita la cobertura alcanzable de cualquier trimestre
+    anterior a 2022 a un techo estructural de ~57-69% (no es un problema de
+    calidad de esos periodos, es que ese es el máximo posible con esta
+    fuente) — con el 0.7 anterior, TODO 2016-2021 se saltaba en silencio,
+    incluido el crash de marzo de 2020, y un backtest lanzado desde la UI con
+    los valores por defecto nunca lo mostraba salvo que se abriera el
+    desplegable de periodos saltados. 0.5 recupera el rango completo (36/36
+    trimestres verificado) sin dejar pasar periodos realmente vacíos.
 
     `buffer_multiplier` (>1.0) reduce el turnover con una banda de
     permanencia — ver `_apply_holding_buffer`. Por defecto 1.0: sin banda,
@@ -309,6 +323,41 @@ def daily_capital_curve(periods: pd.DataFrame) -> pd.Series:
     if not pieces:
         return pd.Series(dtype=float)
     return pd.concat(pieces).sort_index()
+
+
+def daily_benchmark_curve(periods: pd.DataFrame, return_column: str = "spy",
+                          symbol: str = "SPY") -> pd.Series:
+    """Curva de capital DIARIA de un benchmark comprado-y-mantenido (por
+    defecto SPY) sobre el MISMO rango de fechas y con la MISMA reconstrucción
+    que `daily_capital_curve` usa para la estrategia — imprescindible para
+    comparar max_drawdown con el índice de forma justa: si se compara el
+    drawdown diario de la estrategia contra el drawdown por snapshots del
+    benchmark (o viceversa), la diferencia puede venir solo de la metodología,
+    no de un riesgo real distinto. Reutiliza `daily_capital_curve` construyendo
+    una tabla de periodos "de mentira" con una sola candidata (el símbolo del
+    benchmark) y el retorno de ese periodo ya calculado en `periods[return_column]`."""
+    pseudo = periods[["fecha", "hasta"]].copy()
+    pseudo["candidatas"] = symbol
+    pseudo["retorno"] = periods[return_column]
+    return daily_capital_curve(pseudo)
+
+
+def sharpe_standard_error(sharpe: float, years: float) -> float:
+    """Error estándar aproximado de un Sharpe ratio estimado sobre `years`
+    años de datos (fórmula estándar para retornos ~ i.i.d., ver Lo 2002):
+    SE ≈ sqrt((1 + sharpe²/2) / years).
+
+    Con los ~9 años de historia disponibles en estos backtests, el SE ronda
+    ±0.35-0.37 — una diferencia de Sharpe entre dos variantes (ej. distinta
+    frecuencia de rebalanceo, o con/sin banda de permanencia) por debajo de
+    eso NO se puede distinguir del ruido de muestreo, aunque una parezca
+    claramente mejor en la tabla. Con solo ~9 realizaciones anuales de
+    historia de mercado, la incertidumbre de muestreo es grande — hace falta
+    usarlo SIEMPRE que se compare el Sharpe de dos variantes sobre el mismo
+    rango de fechas, para no convertir ruido en una conclusión."""
+    if years <= 0:
+        raise ValueError("years debe ser positivo.")
+    return float(np.sqrt((1 + sharpe ** 2 / 2) / years))
 
 
 def daily_risk_metrics(curve: pd.Series) -> dict:
