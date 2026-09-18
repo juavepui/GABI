@@ -913,6 +913,89 @@ día de hoy (~10.000€ entre 20 posiciones ≈ 500€/posición), el coste real
 equivale a **~18-20 puntos básicos por lado** — dentro del rango 10-25pb ya explorado en
 la tabla de arriba, más cerca del extremo alto que del optimista 10pb usado por defecto.
 
+## GABI V2 — Paso 1: motor de backtest con contabilidad real de cartera
+
+`HIPOTESIS_CONGELADA.md` y todo el histórico de backtesting de arriba se generaron con
+`multifactor_backtest.py` (a partir de aquí, **V1**), que **no simula una cartera real**:
+cada rebalanceo calcula el retorno como la media simple de `(precio_salida/precio_entrada)
+* factor_coste`, con el coste aplicado sobre el 100% de cada posición cada trimestre — se
+mantuviera o no — y también sobre el SPY (que debería comprarse una vez y mantenerse, no
+rotarse cada trimestre). El usuario, revisando este documento, señaló ambos fallos con
+precisión y pidió un motor nuevo, más riguroso, como primer paso de una "V2" — manteniendo
+V1/`HIPOTESIS_CONGELADA.md` intactos y reproducibles tal cual (quedan como versión
+archivada). Ese motor nuevo es **`src/gabi/portfolio_backtest.py`** +
+**`src/gabi/portfolio_metrics.py`** (tests en `tests/test_portfolio_backtest.py` y
+`tests/test_portfolio_metrics.py`).
+
+**Qué hace distinto**, reutilizando la misma convención de coste ya validada en
+`sim_portfolios.py` (Carteras Simuladas — comisión fija en dólares + spread proporcional,
+calibrada en `broker_costs.py`) en vez de inventar un modelo nuevo:
+
+- **Contabilidad real por acciones + caja**, no un % agregado. En cada rebalanceo se
+  clasifica cada símbolo en `held` (se mantiene), `sold` (sale) o `bought` (entra nueva):
+  `sold`/`bought` pagan coste real sobre el 100% de su importe (operación real); `held`
+  solo paga sobre la **variación de peso** — el ajuste para volver al peso objetivo
+  equiponderado tras el movimiento de precio del trimestre — nunca sobre el 100% de una
+  posición que no se ha tocado. Esto es lo que V1 no podía representar (con o sin el
+  `held_symbols` de coste cero añadido antes en esta sesión: cero coste para lo mantenido
+  tampoco es correcto si el peso ha derivado).
+- **SPY como comprar-y-mantener de verdad** (`buy_and_hold_curve`): coste real de entrada
+  una sola vez, nunca más — corrige directamente el fallo señalado.
+- **Curva NAV diaria genuina** (`_daily_segment`): walk-forward día a día valorando
+  `caja + Σ(acciones × adj_close)`, igual que `sim_portfolios.portfolio_history()` — no
+  una curva agregada reescalada a posteriori. Además, a diferencia de V1, un periodo
+  saltado por falta de cobertura ya no deja un hueco en la curva: la cartera sigue
+  flotando con lo que ya tenía en vez de desaparecer del análisis.
+- **Métricas nuevas** (`portfolio_metrics.py`, no existían en `risk.py` ni en V1): Calmar,
+  tiempo de recuperación, beta, tracking error, Information Ratio, capture ratios
+  upside/downside, Sharpe rodante.
+
+### Comparación real V1 vs V2, mismo rango exacto (2016-07 a 2025-07, top-20, trimestral, 36/36 periodos)
+
+| | V1 (coste 10pb round-trip, SPY rotado) | V2 (1 USD + 10pb spread, SPY buy-and-hold) |
+|---|---|---|
+| Retorno total estrategia | +356.4% | +347.3% |
+| Retorno total SPY | +233.2% | **+245.7%** |
+| Turnover medio | 63.0% (solo nombres que cambian, 1 lado) | **127.4%** (importe real negociado, los 2 lados + reequilibrio de lo mantenido) |
+| Comisión total pagada | — (no se modela en dólares) | **1.161 $** (sobre 100.000 $ iniciales, ~9 años) |
+| Sharpe estrategia (diario) | 0.71 | 0.70 |
+| Sharpe SPY (diario) | 0.56 | **0.59** |
+| **Gap de Sharpe vs SPY** | **0.151** | **0.111** |
+| Max drawdown estrategia | −37.8% | −37.8% |
+| Calmar | 0.48 | 0.48 |
+| Días de recuperación (COVID) | 179 | 186 |
+
+**Lectura honesta, con la misma disciplina de no sobreinterpretar que ya se aplicó al
+resto de este documento**: la diferencia de Sharpe entre V1 y V2 (0.71 vs 0.70) es
+minúscula frente al error estándar de ~0.37 (`sharpe_standard_error`) — no es que V2
+"empeore" el resultado, es una medición más honesta del mismo resultado, prácticamente
+igual en magnitud. Lo que sí cambia de forma real y explicable es **el margen frente al
+SPY**: se reduce de 0.151 a 0.111 (~26% menos) porque las dos correcciones apuntan en
+sentidos opuestos y ninguna favorecía antes a la estrategia — V1 penalizaba de más a la
+propia estrategia con menos precisión de la que aparentaba (coste sobre el 100% de lo
+mantenido) *y* penalizaba de más al SPY (rotación que nunca ocurriría en un índice
+pasivo), y las dos cosas casi se cancelaban en el resultado agregado de V1. Con ambas
+corregidas por separado, el resultado neto es un margen real pero **más modesto** que el
+que sugería V1 — exactamente lo que el usuario anticipó ("probablemente cambiará bastante
+tu sensibilidad a costes").
+
+**Lo nuevo que V1 no podía mostrar**: capture ratio upside 108%/downside 95% — la
+estrategia participa más de las subidas que de las bajadas del mercado, una asimetría
+deseable y coherente con la tesis de calidad/momento, visible por primera vez porque
+Calmar/capture/tracking error no existían antes de esta iteración. Beta 1.02 (exposición
+de mercado casi neutra, como cabía esperar de una cesta de 20 large-caps del propio
+S&P 500). Information Ratio 0.43.
+
+**Sigue pendiente** (pasos 2-5 ya identificados por el usuario, no abordados en esta
+iteración): validar sobre el universo completo de 500 empresas en vez de una muestra de
+200 (el resultado de arriba sigue siendo `max_symbols=200`); sector point-in-time real vía
+CIK/Entity Master en vez del sector actual; separar score y confidence en el scoring para
+el missingness de métricas; separar explícitamente el modelo de selección del modelo de
+cartera (Policy/optimizador de `decision_engine.py` usa reglas y pesos distintos a los de
+la hipótesis congelada, y el optimizador min-vol recorta límites después de optimizar en
+vez de dentro del problema). Tampoco se ha integrado V2 en la UI de Streamlit todavía.
+
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,
