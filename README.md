@@ -1043,6 +1043,51 @@ documento. Lo que sí cambia con certeza es que **este número (`mode="validatio
 ahora el que debería citarse como evidencia de la estrategia real** — el de `fast_dev`
 queda para iterar, no para reportar.
 
+### Paso 3: sector point-in-time (entity_master.py) — corrige un look-ahead pequeño pero real
+
+El usuario detectó un look-ahead conceptual, más sutil que usar beneficios futuros pero
+real: `screener_asof.build_ranking_as_of` reconstruye fundamentales y precios point-in-time
+correctamente (SEC EDGAR con `filed_date`, precios truncados a la fecha), pero para
+sector/nombre usaba **el universo ACTUAL** (`universe.get_sp500_constituents()`, sin
+fecha) — una empresa de 2016 se rankeaba dentro de su sector de **2026**, no del que tenía
+entonces. Las empresas ya deslistadas se quedaban sin sector (caían al percentil global vía
+el fallback ya existente en `scoring.py`), pero las que siguen cotizando hoy sí arrastraban
+esta contaminación.
+
+**No existe una fuente gratuita de sector histórico** — lo único honesto es empezar a
+guardarlo desde ahora. Nuevo módulo **`src/gabi/entity_master.py`** (tests en
+`tests/test_entity_master.py`, más un test dedicado en `test_screener_asof.py` que confirma
+que `universe.get_sp500_constituents()` ya NO se llama en absoluto desde el ranking
+histórico):
+
+- `record_snapshot(universe_df, effective_date=None)`: guarda una foto con fecha de
+  sector/industria/nombre — y el **CIK** resuelto vía `edgar.get_cik_for_symbol` (semilla
+  de "Entity Master": identidad por CIK, no por ticker, que cambia/se recicla/desaparece —
+  funcionalidad futura pedida explícitamente por el usuario; NO migra `prices`/
+  `fundamentals`/`edgar_facts`, que siguen indexadas por símbolo — eso queda fuera de esta
+  iteración). Enganchado a `screener.get_universe(force_refresh=True)`: cada vez que se
+  confirma la composición del índice contra la fuente en vivo, se guarda una foto nueva.
+- `get_sector_asof(symbols, as_of_date)`: la foto más reciente con `effective_date <=
+  as_of_date` si existe (point-in-time real, `is_approximate=False`); si no, la foto más
+  antigua disponible como aproximación explícita (`is_approximate=True`). Un símbolo sin
+  ninguna foto (deslistado antes de que existiera esto) sigue devolviendo `sector=None`,
+  igual que antes.
+
+`build_ranking_as_of` ahora añade una columna `sector_is_approximate` a la tabla — visible
+para cualquier código o UI que quiera distinguir sector point-in-time real de aproximado.
+
+**Efecto en los resultados ya reportados en este documento: ninguno, verificado, no solo
+asumido.** Antes de hoy no existía ninguna foto guardada, así que `get_sector_asof` cae
+siempre a "sin foto más antigua disponible" — comportamiento idéntico al anterior (sector
+actual) para CUALQUIER fecha histórica, con `is_approximate=True` en todas las filas. Los
+206 tests existentes (incluidos los de V1/V2/`HIPOTESIS_CONGELADA.md`) pasan sin cambios.
+**Declaración explícita, tal y como pidió el usuario**: todos los backtests de este
+documento (V1, V2 paso 1 y paso 2) usan sector APROXIMADO (el actual, no el histórico real)
+— dimensión conocida y ahora medible (`sector_is_approximate`), no oculta. A partir de hoy
+(sembrada una foto real de las 503 empresas actuales, con CIK resuelto) GABI empieza a
+acumular historial point-in-time real; dentro de meses/años, backtests que empiecen después
+de hoy podrán usar sector genuinamente point-in-time para ese tramo.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

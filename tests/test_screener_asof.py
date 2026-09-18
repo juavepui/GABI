@@ -6,7 +6,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import edgar, screener_asof, storage, universe
+from gabi import edgar, entity_master, screener_asof, storage, universe
 
 
 def _isolate_db(tmp_path, monkeypatch):
@@ -148,3 +148,30 @@ def test_build_ranking_as_of_uses_historical_universe_when_symbols_not_given(tmp
     assert result["universe_info"]["is_exact"] is True
     assert result["universe_info"]["source_date"] == "2019-01-01"
     assert set(result["table"].index) == {"AAA", "BBB"}  # CCC todavía no había entrado
+
+
+def test_build_ranking_as_of_uses_entity_master_sector_not_todays_universe(tmp_path, monkeypatch):
+    """El sector viene de entity_master.get_sector_asof (point-in-time,
+    aunque hoy en día sea aproximado), NUNCA de universe.get_sp500_constituents()
+    (el sector ACTUAL) -- el look-ahead señalado por el usuario."""
+    _isolate_db(tmp_path, monkeypatch)
+    storage.init_db()
+    monkeypatch.setattr(edgar, "get_cik_map", lambda: pd.DataFrame(columns=["symbol", "cik", "title"]))
+    monkeypatch.setattr(edgar, "get_cik_for_symbol", lambda symbol, cik_map=None: (None, None))
+    # Si build_ranking_as_of todavía usara el universo actual, esto rompería
+    # (no hay red/caché disponible) -- confirma que ya no se llama en absoluto.
+    monkeypatch.delattr(universe, "get_sp500_constituents")
+
+    entity_master.record_snapshot(
+        pd.DataFrame([{"symbol": "AAA", "name": "Empresa A", "sector": "Salud", "industry": "Farma"}]),
+        effective_date="2019-01-01",
+    )
+    _seed_edgar_facts("AAA", revenue=1000, net_income=150, equity=500, debt=100, shares=100,
+                       filed_date="2019-02-01")
+    storage.upsert_prices("AAA", _price_df("2018-06-01", 250, start_price=20.0))
+
+    result = screener_asof.build_ranking_as_of("2019-06-01", symbols=["AAA"])
+    df = result["table"]
+    assert df.loc["AAA", "sector"] == "Salud"
+    assert df.loc["AAA", "name"] == "Empresa A"
+    assert df.loc["AAA", "sector_is_approximate"] == False  # foto de 2019-01, fecha pedida 2019-06: real

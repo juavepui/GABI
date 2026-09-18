@@ -16,7 +16,7 @@ vez de romper el resto — igual que ya se hace en el screener "en vivo".
 """
 import pandas as pd
 
-from . import edgar, risk, scoring, storage, technicals, universe
+from . import edgar, entity_master, risk, scoring, storage, technicals, universe
 
 
 def _classic_metrics_as_of(symbol: str, as_of_date: str) -> dict:
@@ -133,13 +133,21 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     if df.empty:
         return {"table": df, "universe_info": universe_info}
 
-    # No hay fuente gratuita de sector/nombre HISTÓRICO: se usa el universo
-    # ACTUAL para las empresas que todavía existen. Las que ya se deslistaron
-    # quedan sin sector -> scoring.py cae automáticamente al percentil sobre
-    # todo el universo para esas filas en vez de romper.
-    current_uni = universe.get_sp500_constituents().set_index("symbol")
-    df["sector"] = [current_uni["sector"].get(s) for s in df.index]
-    df["name"] = [current_uni["name"].get(s) for s in df.index]
+    # No hay fuente gratuita de sector/nombre HISTÓRICO -- entity_master
+    # guarda una foto con fecha cada vez que se refresca el universo en vivo
+    # (screener.get_universe(force_refresh=True)) para acumular historial
+    # real a partir de ahora. get_sector_asof usa la foto real más cercana a
+    # as_of_date si existe (point-in-time correcto), o si no, la más antigua
+    # disponible como aproximación explícita (sector_is_approximate=True) --
+    # hoy en día, con poco historial de fotos acumulado, esa es la rama que
+    # se usa para la mayoría de fechas de un backtest. Un símbolo sin
+    # ninguna foto (deslistado antes de que existiera este mecanismo) sigue
+    # sin sector -> scoring.py cae automáticamente al percentil global para
+    # esas filas en vez de romper, igual que antes.
+    snapshots = entity_master.get_sector_asof(list(df.index), as_of_date)
+    df["sector"] = [snapshots[s]["sector"] for s in df.index]
+    df["name"] = [snapshots[s]["name"] for s in df.index]
+    df["sector_is_approximate"] = [snapshots[s]["is_approximate"] for s in df.index]
 
     df = scoring.build_scores(df, weights=weights)
     return {"table": df, "universe_info": universe_info}

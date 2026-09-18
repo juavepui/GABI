@@ -1,11 +1,18 @@
 """Orquesta universo -> datos -> métricas -> técnicos -> riesgo -> scoring en una sola tabla."""
 import pandas as pd
 
-from . import config, storage, data_fetch, edgar, macro, universe, metrics, technicals, risk, scoring
+from . import config, storage, data_fetch, edgar, entity_master, macro, universe, metrics, technicals, risk, scoring
 
 
 def get_universe(limit: int = None, force_refresh: bool = False) -> pd.DataFrame:
     uni = universe.get_sp500_constituents(force_refresh=force_refresh)
+    if force_refresh:
+        # Guarda una foto con fecha de sector/industria/nombre (entity_master)
+        # cada vez que se confirma la composición actual del índice contra la
+        # fuente en vivo -- así se acumula historial point-in-time real para
+        # screener_asof.build_ranking_as_of, en vez de depender para siempre
+        # del sector ACTUAL como aproximación de cualquier fecha pasada.
+        entity_master.record_snapshot(uni)
     if limit:
         uni = uni.head(limit)
     return uni
