@@ -25,6 +25,15 @@ class Policy:
     min_drawdown: float = -0.50
     max_price_age_days: int = 7
     trade_threshold_pct: float = 0.50
+    # Portfolio Engine V2 (opt-in, no cambia el comportamiento por defecto):
+    # ver docstring de _risk_weights_constrained. False conserva exactamente
+    # el comportamiento de siempre (optimizador sin límites + recorte
+    # posterior por posición/sector).
+    constrained_optimizer: bool = False
+    # >0 (típico 0.01-0.1) penaliza en el propio objetivo la distancia a los
+    # pesos actuales (`holdings`) -- solo tiene efecto con
+    # constrained_optimizer=True.
+    turnover_penalty: float = 0.0
 
 
 def _recent_price(history: pd.DataFrame, as_of: pd.Timestamp, max_age_days: int) -> bool:
@@ -82,6 +91,73 @@ def _risk_weights(histories: dict[str, pd.DataFrame], symbols: list[str]) -> tup
     return {s: w / total for s, w in weights.items()}, method
 
 
+def _risk_weights_constrained(
+    histories: dict[str, pd.DataFrame], symbols: list[str], investable_budget: float,
+    max_position_pct: float, max_sector_pct: float, sector_by_symbol: dict[str, str],
+    w_prev: dict[str, float] | None = None, turnover_penalty: float = 0.0,
+) -> tuple[dict[str, float], str, bool]:
+    """Portfolio Engine V2: los límites de posición/sector entran en el
+    PROBLEMA de optimización (`weight_bounds` + `add_sector_constraints` de
+    PyPortfolioOpt), no se recortan después con un clip de un solo paso como
+    hace `_risk_weights` + el bucle de `build_plan` -- así la solución que
+    devuelve el solver ya es la cartera de mínima volatilidad ÓPTIMA sujeta
+    a esos límites, no una aproximación recortada (y por tanto subóptima,
+    con peso sobrante sin redistribuir) de la óptima SIN límites.
+
+    Los límites de `Policy` son % del patrimonio TOTAL; el solver trabaja
+    con pesos que suman 1 sobre el presupuesto invertible (`investable_budget`,
+    también % del patrimonio total) — de ahí la conversión `pct / investable_budget`.
+
+    `turnover_penalty` (>0, con `w_prev` = pesos actuales como fracción del
+    presupuesto invertible): añade `objective_functions.transaction_cost` al
+    objetivo, para no rotar la cartera solo por ruido de re-optimizar con
+    datos ligeramente distintos de una ejecución a otra.
+
+    Devuelve `(weights, method, constrained_ok)`. Si el problema restringido
+    no se puede resolver (ej. límites demasiado ajustados para sumar el
+    100% del presupuesto invertible con las candidatas disponibles —
+    ocurre si `max_positions * max_position_pct < max_invested_pct`),
+    `constrained_ok=False` y cae a `_risk_weights` sin restringir, para que
+    `build_plan` aplique el recorte posterior de siempre sobre esos pesos
+    en vez de fallar."""
+    if len(symbols) == 1:
+        return {symbols[0]: 1.0}, "una empresa", True
+    prices = pd.concat({s: histories[s]["adj_close"].tail(252) for s in symbols}, axis=1).dropna()
+    if len(prices) < 126:
+        raise ValueError("Se necesitan al menos 126 sesiones comunes con Adj Close para asignar pesos.")
+    if (prices <= 0).any().any():
+        raise ValueError("Hay precios no positivos en el histórico.")
+    position_bound = min(1.0, max_position_pct / investable_budget) if investable_budget > 0 else 1.0
+    sector_bound = min(1.0, max_sector_pct / investable_budget) if investable_budget > 0 else 1.0
+    try:
+        from pypfopt import EfficientFrontier, objective_functions, risk_models
+        cov = risk_models.CovarianceShrinkage(prices).ledoit_wolf()
+        ef = EfficientFrontier(None, cov, weight_bounds=(0, position_bound))
+        sectors = {s: sector_by_symbol.get(s, "Desconocido") for s in symbols}
+        sector_upper = {sec: sector_bound for sec in set(sectors.values())}
+        sector_lower = {sec: 0.0 for sec in set(sectors.values())}
+        ef.add_sector_constraints(sectors, sector_lower, sector_upper)
+        used_turnover = bool(turnover_penalty > 0 and w_prev)
+        if used_turnover:
+            # objective_functions.transaction_cost espera un array en el
+            # MISMO orden que el vector de pesos interno del solver
+            # (prices.columns/ef.tickers), no un diccionario.
+            w_prev_vec = np.array([w_prev.get(s, 0.0) for s in prices.columns])
+            ef.add_objective(objective_functions.transaction_cost, w_prev=w_prev_vec, k=turnover_penalty)
+        ef.min_volatility()
+        weights = {s: max(0.0, float(w)) for s, w in ef.clean_weights(cutoff=0, rounding=8).items()}
+        total = sum(weights.values())
+        if total <= 0:
+            raise ValueError("El optimizador restringido no devolvió pesos válidos.")
+        method = "PyPortfolioOpt: mínima volatilidad con límites de posición/sector dentro del problema"
+        if used_turnover:
+            method += " y penalización por turnover"
+        return {s: w / total for s, w in weights.items()}, method, True
+    except Exception:
+        raw, method = _risk_weights(histories, symbols)
+        return raw, method + " (límites no resolubles dentro del problema; recortados después)", False
+
+
 def _portfolio_risk(histories: dict[str, pd.DataFrame], targets: dict[str, float]) -> dict:
     if not targets:
         return {}
@@ -124,16 +200,32 @@ def build_plan(table: pd.DataFrame, histories: dict[str, pd.DataFrame], holdings
     if not candidates or investable_budget <= 0:
         return _finish(table, holdings, {}, reasons, "sin candidatas", {}, policy)
 
-    raw, method = _risk_weights(histories, candidates)
-    targets = {}
-    sectors = {}
-    for symbol in sorted(candidates, key=lambda s: raw[s], reverse=True):
-        sector = table.loc[symbol].get("sector") or "Desconocido"
-        room = policy.max_sector_pct - sectors.get(sector, 0.0)
-        target = min(raw[symbol] * investable_budget, policy.max_position_pct, room)
-        if target > 0:
-            targets[symbol] = round(target, 4)
-            sectors[sector] = sectors.get(sector, 0.0) + target
+    if policy.constrained_optimizer:
+        sector_by_symbol = {s: (table.loc[s].get("sector") or "Desconocido") for s in candidates}
+        w_prev = ({s: holdings.get(s, 0.0) / investable_budget for s in candidates}
+                 if policy.turnover_penalty > 0 else None)
+        raw, method, constrained_ok = _risk_weights_constrained(
+            histories, candidates, investable_budget, policy.max_position_pct, policy.max_sector_pct,
+            sector_by_symbol, w_prev=w_prev, turnover_penalty=policy.turnover_penalty)
+    else:
+        raw, method = _risk_weights(histories, candidates)
+        constrained_ok = False
+
+    if constrained_ok:
+        # Los pesos YA respetan los límites de posición/sector dentro del
+        # propio problema -- ni hace falta ni es correcto recortarlos otra
+        # vez (perdería la optimalidad que acaba de calcular el solver).
+        targets = {s: round(w * investable_budget, 4) for s, w in raw.items() if w * investable_budget > 0}
+    else:
+        targets = {}
+        sectors = {}
+        for symbol in sorted(candidates, key=lambda s: raw[s], reverse=True):
+            sector = table.loc[symbol].get("sector") or "Desconocido"
+            room = policy.max_sector_pct - sectors.get(sector, 0.0)
+            target = min(raw[symbol] * investable_budget, policy.max_position_pct, room)
+            if target > 0:
+                targets[symbol] = round(target, 4)
+                sectors[sector] = sectors.get(sector, 0.0) + target
     risk = _portfolio_risk(histories, {s: w / 100 for s, w in targets.items()})
     return _finish(table, holdings, targets, reasons, method, risk, policy)
 

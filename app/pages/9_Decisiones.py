@@ -13,6 +13,17 @@ st.markdown(
     "según reglas explícitas. Usa los datos descargados en Configuración. Las decisiones quedan "
     "registradas; esta página no envía órdenes al bróker."
 )
+st.warning(
+    "⚠️ **Esta es una estrategia DISTINTA de la que se ha respaldado con el backtest histórico** "
+    "(`HIPOTESIS_CONGELADA.md`/🕰️ Ranking histórico: 20 posiciones equiponderadas, pesos "
+    "Value/Quality/Momentum/Risk 30/35/25/10, rebalanceo trimestral, sin filtro de tendencia). Esta "
+    "página añade un **modelo de cartera** distinto encima del mismo score — máximo 10 posiciones, "
+    "filtro de precio sobre SMA200, y reparto por mínima volatilidad (no equiponderado) — que **nunca "
+    "se ha probado en un backtest**. Es una estrategia legítima, pero no trates su resultado como una "
+    "consecuencia validada de la hipótesis congelada: son dos estrategias distintas que comparten el "
+    "mismo score de partida.",
+    icon="⚠️",
+)
 
 with st.expander("📖 Cómo funciona y cómo probarlo (léelo si es la primera vez)"):
     st.markdown(
@@ -68,6 +79,24 @@ with st.expander("Reglas y límites", expanded=True):
                              help="Qué porcentaje del patrimonio total puede estar invertido en acciones "
                                   "en total — el resto queda como 'efectivo objetivo'.")
     st.caption("También exige precio reciente sobre SMA200, volatilidad ≤60 %, drawdown ≥−50 % y 126 sesiones de retornos.")
+    c7, c8 = st.columns(2)
+    constrained_optimizer = c7.checkbox(
+        "Portfolio Engine V2: límites dentro del optimizador", value=False,
+        help="Por defecto (desmarcado), el optimizador calcula primero la cartera de mínima volatilidad "
+             "SIN límites y luego recorta las posiciones que superan el máximo por empresa/sector — el "
+             "resultado deja de ser la cartera óptima una vez recortada. Marcado, los límites de arriba "
+             "entran en el propio problema de optimización (PyPortfolioOpt: weight_bounds + "
+             "add_sector_constraints), así que el resultado sí es la cartera de mínima volatilidad "
+             "óptima sujeta a esos límites. Si los límites son demasiado estrechos para poder invertir "
+             "todo el presupuesto (ej. pocas candidatas para el máximo por posición), cae automáticamente "
+             "al comportamiento de siempre en vez de fallar.")
+    turnover_penalty = c8.slider(
+        "Penalización por turnover", 0.0, 0.20, 0.0, step=0.01,
+        help="Solo con Portfolio Engine V2 activado y posiciones actuales indicadas abajo. Penaliza en el "
+             "propio optimizador alejarse de tus posiciones actuales — evita rotar la cartera solo por "
+             "ruido de recalcular con datos ligeramente distintos cada vez. 0 = sin penalización.",
+        disabled=not constrained_optimizer,
+    )
 
 holdings_text = st.text_area(
     "Posiciones actuales (ticker, porcentaje de la cartera; una por línea)",
@@ -100,6 +129,7 @@ if st.button("Generar decisiones", type="primary"):
             min_score=float(min_score), min_coverage=min_coverage / 100,
             max_positions=int(max_positions), max_position_pct=float(max_position),
             max_sector_pct=float(max_sector), max_invested_pct=float(max_invested),
+            constrained_optimizer=bool(constrained_optimizer), turnover_penalty=float(turnover_penalty),
         )
         universe = screener.get_universe()
         progress = st.progress(0.0, text="Comprobando histórico de precios...")

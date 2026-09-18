@@ -1119,6 +1119,52 @@ por baja cobertura). Cableado en ambos sitios donde se construye un ranking —
 Ficha de Empresa, junto al resto de scores) para que un inversor junior vea de un vistazo si
 un score alto merece confianza o se apoya en poco dato.
 
+### Paso 5: señal vs cartera son dos estrategias distintas, y el optimizador ya no recorta después de resolver
+
+El usuario señaló dos problemas reales en `decision_engine.py` (🧭 Decisiones de cartera):
+
+**1. Se presentaba como si fuera una consecuencia de la hipótesis congelada, y no lo es.**
+`HIPOTESIS_CONGELADA.md` valida: 20 posiciones equiponderadas, pesos 30/35/25/10, rebalanceo
+trimestral, sin filtro de tendencia. `Policy` por defecto usa: máximo 10 posiciones, filtro
+duro de precio sobre SMA200 (ni siquiera configurable — hardcodeado en `_reasons()`), y
+reparto por **mínima volatilidad** (PyPortfolioOpt), no equiponderado. Es una estrategia
+legítima, pero nunca se ha contrastado con un backtest — y la UI no lo decía en ningún
+sitio. **Arreglado con un aviso explícito** en 🧭 Decisiones de cartera: dice exactamente
+qué distingue a esta estrategia de la validada, para no dar a entender que hereda la
+validación del backtest.
+
+**2. El optimizador no resolvía el problema que decía resolver.** `_risk_weights` calculaba
+la cartera de mínima volatilidad **sin ningún límite** (`weight_bounds=(0, 1)`, sin límite de
+posición ni de sector pasado al solver) y **después** `build_plan` recortaba con un bucle de
+un solo paso (`min(peso, max_position_pct, hueco_de_sector)`, sin redistribuir lo recortado).
+Consecuencia: tras el recorte, la cartera **ya no es la de mínima volatilidad** — es una
+aproximación recortada y subóptima, con peso sobrante que simplemente queda sin invertir en
+vez de repartirse entre el resto de candidatas.
+
+**Arreglado, opt-in (`Policy.constrained_optimizer=True`, por defecto `False` — no cambia el
+comportamiento existente ni los tests que ya dependían de él)**: nueva
+`_risk_weights_constrained()` pasa los límites de posición y sector **dentro del propio
+problema** de optimización, usando capacidades nativas de PyPortfolioOpt en vez de recortar
+después:
+- `weight_bounds=(0, max_position_pct/presupuesto_invertible)` — límite de posición real,
+  no una caja sin restricciones seguida de un clip.
+- `ef.add_sector_constraints(...)` — límite de sector dentro del solver.
+- `ef.add_objective(objective_functions.transaction_cost, w_prev=..., k=turnover_penalty)`
+  — **penalización por turnover** pedida explícitamente por el usuario: penaliza alejarse de
+  las posiciones actuales en el propio objetivo, para no rotar la cartera solo por ruido de
+  recalcular con datos ligeramente distintos.
+- Si los límites son demasiado estrechos para poder invertir el 100% del presupuesto con las
+  candidatas disponibles (`max_positions × max_position_pct < max_invested_pct` — un caso
+  real, no hipotético: ocurre con los valores por defecto si sobreviven menos de 10
+  candidatas), el problema restringido es infactible — cae automáticamente al comportamiento
+  de siempre (sin límites + recorte posterior) en vez de fallar.
+
+Verificado con tests dedicados (límites respetados exactamente con el solver real, caída
+elegante en el caso infactible, y que la penalización por turnover de verdad acerca los pesos
+a la cartera actual frente a no penalizar) — 215 tests en total, ninguno de los 10 tests
+previos de `decision_engine.py` cambia de comportamiento. Disponible desde la UI (🧭
+Decisiones de cartera → "Reglas y límites" → casilla "Portfolio Engine V2").
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

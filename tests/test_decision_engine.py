@@ -3,6 +3,7 @@ from datetime import date
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from gabi import config, decision_engine, storage
@@ -180,3 +181,99 @@ def test_existing_plan_table_gets_name_column(tmp_path, monkeypatch):
     assert saved.iloc[0]["name"] == "Plan #1"
     assert decision_engine.rename_saved_plan(1, "Histórico")
     assert decision_engine.list_saved_plans().iloc[0]["name"] == "Histórico"
+
+
+# --- Portfolio Engine V2: optimizador con límites dentro del problema (opt-in) ---
+
+def _diverse_histories(symbols, n=200):
+    dates = pd.date_range("2026-01-01", periods=n, freq="B")
+    histories = {}
+    for i, symbol in enumerate(symbols):
+        base = 50 + i * 20
+        trend = 0.05 + i * 0.03
+        noise_period = 5 + i
+        prices = [base + j * trend + (j % noise_period) * (0.3 + i * 0.1) for j in range(n)]
+        histories[symbol] = pd.DataFrame({"adj_close": prices}, index=dates)
+    return histories
+
+
+def test_risk_weights_constrained_respects_position_and_sector_bounds():
+    symbols = ["AAA", "BBB", "CCC", "DDD"]
+    histories = _diverse_histories(symbols)
+    sector_by_symbol = {"AAA": "Tech", "BBB": "Tech", "CCC": "Energy", "DDD": "Energy"}
+    # Presupuesto invertible 50; limite por posicion 20 (=0.4 de fraccion) y por
+    # sector 30 (=0.6): factible (4*0.4=1.6 >= 1, 2*0.6=1.2 >= 1) y a la vez
+    # mas estrecho que dejar que 2 posiciones de 0.4 llenen un sector (0.8 > 0.6).
+    weights, method, ok = decision_engine._risk_weights_constrained(
+        histories, symbols, investable_budget=50.0, max_position_pct=20.0, max_sector_pct=30.0,
+        sector_by_symbol=sector_by_symbol,
+    )
+    assert ok is True
+    assert method.startswith("PyPortfolioOpt")
+    for w in weights.values():
+        assert w <= 0.4 + 1e-6
+    tech_total = weights.get("AAA", 0) + weights.get("BBB", 0)
+    energy_total = weights.get("CCC", 0) + weights.get("DDD", 0)
+    assert tech_total <= 0.6 + 1e-6
+    assert energy_total <= 0.6 + 1e-6
+
+
+def test_risk_weights_constrained_falls_back_when_bounds_infeasible():
+    """max_positions*max_position_pct < max_invested_pct -> imposible sumar
+    el 100% del presupuesto invertible dentro del limite por posicion.
+    Debe caer a _risk_weights sin restringir, no lanzar excepcion."""
+    symbols = ["AAA", "BBB"]
+    histories = _diverse_histories(symbols)
+    sector_by_symbol = {"AAA": "Tech", "BBB": "Tech"}
+    weights, method, ok = decision_engine._risk_weights_constrained(
+        histories, symbols, investable_budget=50.0, max_position_pct=1.0,  # 1/50=0.02 * 2 = 0.04 << 1.0
+        max_sector_pct=1.0, sector_by_symbol=sector_by_symbol,
+    )
+    assert ok is False
+    assert "recortados después" in method
+    assert sum(weights.values()) == pytest.approx(1.0)
+
+
+def test_build_plan_constrained_optimizer_targets_respect_caps(monkeypatch):
+    table = pd.DataFrame({
+        "composite_score": [80, 78, 76, 74], "score_coverage": [.9, .9, .9, .9],
+        "price_vs_sma200": [.1, .1, .1, .1], "volatility": [.2, .2, .2, .2],
+        "max_drawdown": [-.2, -.2, -.2, -.2], "sector": ["Tech", "Tech", "Energy", "Energy"],
+    }, index=["AAA", "BBB", "CCC", "DDD"])
+    histories = _diverse_histories(list(table.index))
+    monkeypatch.setattr(decision_engine, "_portfolio_risk", lambda h, w: {})
+    policy = decision_engine.Policy(max_position_pct=20, max_sector_pct=30, max_invested_pct=50,
+                                    constrained_optimizer=True)
+    plan = decision_engine.build_plan(table, histories, {}, policy, as_of=list(histories.values())[0].index[-1].date().isoformat())
+    assert plan["method"].startswith("PyPortfolioOpt")
+    assert "dentro del problema" in plan["method"]
+    for target in plan["targets"].values():
+        assert target <= 20.0 + 1e-6
+    tech = sum(w for s, w in plan["targets"].items() if s in ("AAA", "BBB"))
+    energy = sum(w for s, w in plan["targets"].items() if s in ("CCC", "DDD"))
+    assert tech <= 30.0 + 1e-6
+    assert energy <= 30.0 + 1e-6
+
+
+def test_turnover_penalty_keeps_weights_closer_to_previous_holdings():
+    symbols = ["AAA", "BBB", "CCC"]
+    histories = _diverse_histories(symbols)
+    sector_by_symbol = {"AAA": "Tech", "BBB": "Tech", "CCC": "Energy"}
+    # Cartera actual muy alejada del minimo-varianza natural (todo en AAA).
+    w_prev = {"AAA": 1.0, "BBB": 0.0, "CCC": 0.0}
+
+    no_penalty, _, ok1 = decision_engine._risk_weights_constrained(
+        histories, symbols, investable_budget=50.0, max_position_pct=50.0, max_sector_pct=100.0,
+        sector_by_symbol=sector_by_symbol, w_prev=w_prev, turnover_penalty=0.0,
+    )
+    with_penalty, method, ok2 = decision_engine._risk_weights_constrained(
+        histories, symbols, investable_budget=50.0, max_position_pct=50.0, max_sector_pct=100.0,
+        sector_by_symbol=sector_by_symbol, w_prev=w_prev, turnover_penalty=5.0,
+    )
+    assert ok1 and ok2
+    assert "penalización por turnover" in method
+
+    def _distance(w):
+        return sum(abs(w.get(s, 0) - w_prev[s]) for s in symbols)
+
+    assert _distance(with_penalty) <= _distance(no_penalty) + 1e-9
