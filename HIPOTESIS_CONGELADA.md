@@ -1,5 +1,30 @@
 # Hipótesis congelada — 2026-09-17
 
+## ⚠️ DESCONGELADA el 2026-09-17 (mismo día) — decisión explícita del usuario
+
+El compromiso de no tocar esto hasta 2027-09-17 (o 4 rebalanceos reales) se rompe a
+petición explícita del usuario, que prefiere seguir mejorando el backtest activamente en
+vez de esperar a la validación prospectiva. Es una decisión legítima — la disciplina de
+congelar una hipótesis reduce el riesgo de *data snooping*, pero no es una obligación, y
+el usuario es quien decide qué compensación entre rigor y velocidad de iteración prefiere.
+
+**Lo que esto significa en la práctica, con honestidad**:
+- El snapshot **"Hipótesis congelada 2026-09-17"** guardado en 📊 Screener sigue existiendo
+  y se puede seguir consultando, pero deja de ser una prueba prospectiva limpia — cualquier
+  cosa que se explore a partir de ahora vuelve a mirar el mismo rango 2016-2025, así que el
+  problema de *multiple testing*/*data snooping* documentado abajo sigue plenamente vigente
+  para lo que se descubra a partir de aquí.
+- Los dos bugs corregidos (anualización con huecos, guard de reciclaje point-in-time) y el
+  contraste con Kenneth French **siguen siendo válidos** — eso era arreglar el instrumento
+  de medida, no parte de la disciplina que se abandona ahora.
+- Si en el futuro se quiere volver a intentar una validación prospectiva limpia, hace falta
+  un documento nuevo con su propio corte de datos — este ya no sirve para eso.
+
+El resto de este archivo se conserva tal cual se escribió, como registro de lo que se
+intentó y por qué, no como regla vigente.
+
+---
+
 Este documento existe por una razón concreta: toda la exploración de backtesting hecha
 hasta esta fecha (ver `README.md`, secciones de backtesting) se hizo mirando los mismos
 datos históricos una y otra vez — 10+ configuraciones distintas comparadas sobre el mismo

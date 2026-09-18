@@ -679,6 +679,70 @@ disponible en 🕰️ Ranking histórico): el 91.5% del retorno de la estrategia
 seis factores de mercado conocidos, y el alfa restante, aunque positivo, no llega al
 umbral de significancia estadística habitual.
 
+### Hipótesis descongelada — exploración activa de turnover y frecuencia de rebalanceo
+
+`HIPOTESIS_CONGELADA.md` se descongeló el 2026-09-18 a petición explícita del usuario,
+que prefiere seguir mejorando el backtest activamente en vez de esperar a la validación
+prospectiva — decisión legítima, documentada con transparencia en el propio archivo (que
+se conserva como registro histórico de lo que se intentó). A partir de aquí, cualquier
+hallazgo vuelve a estar sujeto al mismo riesgo de *multiple testing*/*data snooping* que
+motivó congelarla la primera vez — tenerlo presente al leer lo siguiente.
+
+**Banda de permanencia para reducir turnover (`buffer_multiplier` en
+`multifactor_backtest.run()`)**: probado a 1.3x/1.5x/2.0x contra el top-20 estricto, en
+10/25/50 puntos básicos de coste, con el ahorro de coste real de las posiciones mantenidas
+correctamente modelado (`held_symbols` en `_period_returns()`). **Resultado: no compensa
+a ningún nivel de coste probado** — reduce turnover (63.1%→51-57%) pero pierde más en
+calidad de selección de lo que ahorra en coste, en los tres niveles. Descartado.
+
+**Frecuencia de rebalanceo (trimestral vs semestral vs anual)**, mismo top-20, 2016-2025:
+
+| Frecuencia | Coste | Turnover | Sharpe | Sortino | Anualizado | Max DD | Periodos |
+|---|---|---|---|---|---|---|---|
+| Trimestral | 10/25/50pb | 63.1% | 0.77/0.73/0.65 | 1.36/1.26/1.11 | +18.9%/+18.0%/+16.5% | −25.4% a −25.8% | 36 |
+| Semestral | 10/25/50pb | 72.4% | 0.96/0.92/0.87 | 2.02/1.92/1.76 | +17.8%/+17.3%/+16.4% | −16.4% a −16.7% | 18 |
+| Anual | 10/25/50pb | 80.0% | 0.90/0.88/0.85 | 3.05/2.92/2.71 | +15.2%/+14.9%/+14.5% | −7.0% a −7.6% | 9 |
+
+A primera vista, semestral y anual parecen mucho mejores en riesgo ajustado. Dos
+verificaciones adicionales, ambas importantes, **cambian la conclusión por completo**:
+
+1. **Contraste con Kenneth French sobre la serie semestral**: R²=0.926 (más explicado por
+   factores conocidos que el trimestral, no menos), alfa anualizado +1.55% con t-stat 0.62
+   (más débil que el trimestral: +3.85% con t-stat 1.61). La mejora de Sharpe de la tabla
+   de arriba **no venía de más alfa genuino — venía de una beta de Calidad (RMW) mucho más
+   fuerte y esta vez sí significativa** (0.618, t=2.75, vs 0.264 del trimestral).
+2. **El drawdown de la tabla de arriba estaba mal calculado — confirmado, no solo
+   sospechado**. `max_drawdown` se calculaba sobre `periods["capital"]`, el capital SOLO en
+   las fechas de rebalanceo — con rebalanceos más espaciados, una caída y recuperación
+   completa *dentro* de un periodo (el crash de marzo de 2020 dentro de un periodo semestral
+   o anual que termina recuperado) era invisible para ese cálculo. Nuevas
+   `multifactor_backtest.daily_capital_curve()` y `daily_risk_metrics()` reconstruyen una
+   curva de capital DIARIA (ancladas exactamente a los mismos retornos por periodo ya
+   validados, solo revelan el camino real dentro de cada tramo) para poder comparar de
+   verdad entre frecuencias distintas. **Resultado real sobre el mismo backtest, medido
+   correctamente:**
+
+   | Frecuencia | Sharpe (diario, comparable) | Sortino (diario) | Max DD (diario) |
+   |---|---|---|---|
+   | **Trimestral** | **0.74** | 1.04 | −37.2% |
+   | Semestral | 0.69 | 0.95 | −37.2% |
+   | Anual | 0.57 | 0.80 | −35.4% |
+
+   **Los tres sufrieron prácticamente la misma caída real durante el COVID** (−35% a
+   −37%) — es una caída de mercado generalizada, no algo de lo que protegiera rebalancear
+   menos. Lo que antes parecía "el semestral/anual protege mejor" nunca fue protección
+   real: era, literalmente, no mirar la cuenta durante la caída y fijarse solo en cómo
+   había quedado meses después, ya recuperada. **Con la métrica correcta, es el
+   trimestral el que tiene mejor Sharpe** — rebalancear más a menudo permite refrescar
+   hacia mejores candidatas con más frecuencia, y ese beneficio de selección pesa más que
+   el coste de rotación adicional, al menos a 10pb. **La recomendación de pasar a
+   rebalanceo semestral queda retirada** — se apoyaba en una métrica de riesgo defectuosa.
+
+   Verificado que `daily_capital_curve` reproduce exactamente los mismos retornos totales
+   ya validados con el cálculo por periodos (+374.9% trimestral, +337.2% semestral,
+   +257.1% anual) — el único cambio es la visibilidad del camino diario dentro de cada
+   tramo, no el retorno final.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,
