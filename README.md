@@ -1214,6 +1214,46 @@ experimentos filtrable por familia/fase, formulario de registro manual, y las tr
 cálculo (PSR/DSR, PBO/CSCV, bootstrap) — estas dos últimas solo ofrecen experimentos con serie de
 retornos guardada.
 
+## 📐 Factor Lab: ¿el score predice de forma gradual y consistente?
+
+Segunda propuesta del usuario tras el Research Lab. En vez de seguir preguntando "¿el Top-20 ganó al
+SPY?" (una pregunta binaria sobre una cesta concreta), una más informativa: **¿el Composite Score —y
+cada uno de sus bloques— contiene información predictiva de forma gradual y consistente?** Cada
+rebalanceo, el universo se divide en quintiles por score (Q1 peor → Q5 mejor) y se mide el retorno
+FUTURO real a 1/3/6/12 meses de cada quintil — si el score funciona, se espera una relación
+razonablemente monotónica (no necesariamente perfecta ni todos los periodos), no solo que una cesta
+concreta ganara al índice.
+
+**`src/gabi/factor_lab.py`** (página 📐 Factor Lab) reutiliza tal cual la reconstrucción point-in-time
+ya existente (`universe.get_sp500_constituents_asof` + `screener_asof.build_ranking_as_of`, mismo
+contrato `mode="validation"`/`"fast_dev"` de `portfolio_backtest.py`) y el mismo patrón de sesión de
+entrada de `multifactor_backtest._period_returns` — el retorno futuro que mide **nunca lleva coste**
+(esto mide información del score, no el resultado de una cartera con fricción). Por cada (fecha,
+factor, horizonte) calcula:
+
+- **Rank IC** (Spearman) entre score y retorno futuro real.
+- **ICIR** (IC medio / desviación típica del IC en el tiempo) — mide si el IC es consistente, no solo
+  alto de media.
+- **% de periodos con IC>0**, spread **Q_máx−Q1**, y **turnover por quintil** (se asigna una vez por
+  fecha+factor con el score de esa fecha, independiente del horizonte).
+- **Versión sector-neutral** (en la misma pasada, no una ejecución aparte): retorno de cada empresa
+  menos la media de su sector ese periodo, antes de calcular IC/quintiles — aísla si el score elige
+  ganadores DENTRO de su sector o solo capta qué sector estuvo de moda. Corregido durante el desarrollo
+  un fallo real: un solo símbolo sin sector asignado (ver `entity_master.py`, Paso 3) descartaba el IC
+  sector-neutral del periodo ENTERO en vez de solo esa fila — ahora se excluyen únicamente las filas sin
+  sector, comprobado con datos reales (una prueba pequeña pasó de 0 filas sector-neutral calculables a
+  las 15 esperadas tras el arreglo).
+
+Verificado con casos de referencia sintéticos, no solo "no rompe" (`tests/test_factor_lab.py`): un score
+que ordena perfectamente el retorno futuro da IC≈1 y spread claramente positivo; un score sin relación
+da IC≈0; turnover exactamente 0% con quintiles idénticos y 100% cuando cambian por completo; y el caso
+clave del sector-neutral — un score correlacionado solo con el sector (sin ninguna relación específica
+de empresa) da un IC crudo artificialmente alto que el sector-neutral filtra correctamente a ~0.
+
+Puede descubrirse que un bloque entero (ej. Risk) no aporta prácticamente nada en ningún horizonte — esa
+es información tan valiosa como encontrar uno que sí funcione, y mucho más que seguir ajustando pesos
+para maximizar el CAGR de una cesta concreta.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,
