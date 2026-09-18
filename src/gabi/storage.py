@@ -34,8 +34,24 @@ CREATE TABLE IF NOT EXISTS splits (
 
 @contextmanager
 def get_connection():
+    """Única función de todo el proyecto que abre una conexión SQLite (todos
+    los módulos pasan por aquí, incluido `storage.py` mismo) — así que el
+    modo WAL y el timeout se aplican en un solo sitio, no en cada llamador.
+
+    `timeout=30`: SQLite reintenta adquirir el lock hasta 30s (el default de
+    Python son solo 5s) antes de lanzar `sqlite3.OperationalError: database
+    is locked` — cubre con margen una escritura larga concurrente (ej. dos
+    pestañas del navegador, o una sesión de Streamlit que quedó a medias)
+    sin fallar de inmediato. `PRAGMA journal_mode=WAL`: permite que lecturas
+    y escrituras no se bloqueen mutuamente (a diferencia del modo por
+    defecto, donde una escritura bloquea todas las lecturas) — comprobado
+    con datos reales que esto era la causa de un "database is locked" real
+    con varias sesiones de Streamlit abiertas a la vez sobre el mismo
+    fichero. El modo WAL queda grabado en el propio fichero .db, así que
+    poner el PRAGMA en cada conexión es barato (no-op si ya estaba activo)."""
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(config.DB_PATH)
+    conn = sqlite3.connect(config.DB_PATH, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL")
     try:
         yield conn
     finally:

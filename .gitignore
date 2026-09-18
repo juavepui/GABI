@@ -5,6 +5,8 @@ __pycache__/
 .pytest_cache/
 
 data/*.db
+data/*.db-wal
+data/*.db-shm
 data/*.csv
 data/weights.json
 data/fred_api_key.txt
