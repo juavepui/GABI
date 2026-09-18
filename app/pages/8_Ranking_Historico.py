@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import academic_factors, config, data_fetch, edgar, evaluation, multifactor_backtest, screener_asof, universe
+from gabi import academic_factors, broker_costs, config, data_fetch, edgar, evaluation, multifactor_backtest, screener_asof, universe
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("🕰️ Ranking histórico")
@@ -218,6 +218,23 @@ también a subir "Coste por lado" a 25-50 puntos básicos — el margen de la es
 estrecha mucho más de lo que parece a primera vista con solo 10pb.
         """
     )
+
+with st.expander("🧮 Calculadora: coste real de eToro para tu cartera"):
+    st.caption(
+        "eToro cobra un importe FIJO por apertura/cierre (1$ en acciones/ETF), no un %, así que pesa "
+        "más cuanto menor sea la posición. Este cálculo es solo del coste de **operar** (abrir/cerrar "
+        "dentro de la cuenta) — el coste de **depositar** dinero nuevo desde el banco (conversión de "
+        "divisa) es un coste distinto, de una sola vez por aportación, que no se aplica en cada "
+        "rebalanceo del backtest (ver README, sección \"Costes reales del bróker\")."
+    )
+    cc1, cc2 = st.columns(2)
+    calc_capital = cc1.number_input("Capital total (€ o $)", min_value=0.0, value=10000.0, step=500.0,
+                                    key="calc_capital")
+    calc_n = cc2.number_input("Nº de posiciones", min_value=1, max_value=50, value=10, key="calc_n")
+    calc_position = broker_costs.position_size_usd(calc_capital, int(calc_n))
+    calc_bps = broker_costs.effective_trade_cost_bps(calc_position)
+    st.write(f"Posición media: **{calc_position:,.0f}** · coste real por lado: **{calc_bps:.1f} puntos "
+             f"básicos** — cópialo en \"Coste por lado (pb)\" más abajo si quieres usarlo.")
 
 with st.form("multifactor_test"):
     a, b, c = st.columns(3)

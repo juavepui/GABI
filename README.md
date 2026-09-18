@@ -743,6 +743,66 @@ verificaciones adicionales, ambas importantes, **cambian la conclusión por comp
    +257.1% anual) — el único cambio es la visibilidad del camino diario dentro de cada
    tramo, no el retorno final.
 
+### Costes reales del bróker (eToro): calibración y por qué el backtest NO incluye la conversión de divisa
+
+GABI es de uso personal, y el bróker real del usuario es eToro. Se calibraron los costes
+contra dos fuentes reales: el extracto oficial de cuenta (`Posiciones cerradas`,
+`Actividad de la cuenta`, `Resumen de la cuenta`, abril-septiembre 2026) y un TSV de
+movimientos bancarios, para poder separar depósitos hechos con tarjeta de los hechos con
+transferencia. Cada cifra de abajo se verificó transacción a transacción contra esas
+fuentes (no se tomó de memoria ni de un análisis externo sin comprobar) — módulo
+`src/gabi/broker_costs.py`, tests en `tests/test_broker_costs.py`.
+
+**Costes de operar (abrir/cerrar una posición), verificados sobre 61 cargos reales:**
+
+| Concepto | Importe | Evidencia |
+|---|---|---|
+| Acción/ETF (EE.UU. y la mayoría de mercados) | 1.00 USD por lado, fijo | 56/61 cargos reales |
+| Acción de Hong Kong | 2.00 USD por lado, fijo | 1/61 cargos reales |
+| Criptomoneda | ~1.00% del importe, por lado | 4/61 cargos, 1.000% exacto |
+| SDRT (compra de acciones del Reino Unido) | 0.50% | impuesto, no comisión del bróker |
+
+**Costes de depositar (conversión EUR→USD al meter dinero nuevo desde el banco):**
+
+| Método | Coste efectivo | Evidencia |
+|---|---|---|
+| Transferencia bancaria | ~0.60% | 24+ conversiones reales, verificadas cruzando fecha/importe del TSV bancario contra el extracto de eToro |
+| Tarjeta de crédito/débito | ~1.30% | 4/4 depósitos con tarjeta, 1.294%-1.318% |
+
+Nota aparte (no usada como valor por defecto, solo documentada): los dos primeros
+depósitos de la cuenta (abril de 2026) pagaron ~0.75% en vez del ~0.60% habitual —
+posible tarifa de arranque o de tramo bajo de saldo, no confirmado que sea la tarifa
+vigente.
+
+**Decisión de diseño — el backtest (`multifactor_backtest.py`) solo usa el coste de
+operar, nunca el de depositar.** Un rebalanceo del backtest simula vender una empresa y
+comprar otra *dentro* de la cuenta — dinero que ya está en eToro moviéndose entre
+posiciones, exactamente lo que cobra el coste de operar. El coste de depositar es un
+evento distinto: EUR saliendo del banco y convirtiéndose a USD al entrar en eToro, que
+ocurre una vez por aportación real, no una vez por rebalanceo. Cobrarlo en cada periodo
+del backtest sería un error de categoría — inflaría el coste modelado sin representar
+ningún movimiento de dinero real que el backtest esté simulando, ya que el capital que se
+rota trimestre a trimestre no vuelve a cruzar la frontera banco↔eToro en cada rotación
+(tanto si viene de una aportación reciente como si ya llevaba tiempo invertido: rotarlo
+sigue siendo mover dinero entre empresas, no traerlo de fuera).
+
+El coste de depositar sí importa, pero en otro sitio: en el coste real de vida de la
+cartera del usuario (10.000€ ya invertidos en septiembre de 2026, +~700€/mes de media,
+depositados históricamente con tarjeta), no en la mecánica del backtest de selección de
+empresas. Por eso vive en Carteras Simuladas (🧪, que sí modela capital entrando a la
+cuenta) y en este documento, no como parámetro de `multifactor_backtest.run()`.
+
+**El coste de operar SÍ es sensible al tamaño de posición** (a diferencia de un `cost_bps`
+plano): 1 USD es un 0.18% sobre una posición de 550 USD pero solo un 0.01% sobre una de
+10.000 USD, porque eToro cobra un importe fijo, no un porcentaje.
+`broker_costs.effective_trade_cost_bps(position_size_usd)` hace esa conversión para un
+tamaño de posición concreto — la página 🕰️ Ranking histórico tiene una calculadora que,
+dado el capital total y el nº de posiciones del usuario, muestra el coste por lado
+equivalente para copiarlo en "Coste por lado (pb)". Con la situación real del usuario a
+día de hoy (~10.000€ entre 20 posiciones ≈ 500€/posición), el coste real de operar
+equivale a **~18-20 puntos básicos por lado** — dentro del rango 10-25pb ya explorado en
+la tabla de arriba, más cerca del extremo alto que del optimista 10pb usado por defecto.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

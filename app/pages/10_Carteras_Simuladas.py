@@ -71,11 +71,15 @@ with create_tab:
             except ValueError as exc:
                 st.error(str(exc))
     st.markdown(
-        "[eToro publica las tarifas vigentes](https://www.etoro.com/es/trading/fees/): "
-        "algunas acciones tienen 1 o 2 USD por apertura y cierre según país y bolsa; "
-        "los ETF no tienen comisión de operación. El diferencial de mercado varía. "
-        "Comprueba el coste estimado de tu instrumento en eToro y ajusta esta cartera antes de simular. "
-        "El cambio y su coste se pueden introducir por operación. No se modelan impuestos, CFD ni financiación."
+        "Valores por defecto ya calibrados contra un extracto de cuenta real de eToro (ver README, "
+        "sección \"Costes reales del bróker\"): **1 USD** por lado en acciones/ETF de EE.UU. (2 USD en "
+        "Hong Kong), **~1%** por lado en cripto. El diferencial de mercado varía por instrumento — "
+        "[eToro publica las tarifas vigentes](https://www.etoro.com/es/trading/fees/) si quieres "
+        "comprobar tu caso concreto. Estos costes son solo de **operar** (abrir/cerrar una posición): "
+        "el coste de **depositar** dinero nuevo desde el banco es aparte (verificado: ~0.60% por "
+        "transferencia bancaria, ~1.30% por tarjeta) y no lo modela esta pantalla, que solo simula "
+        "operaciones dentro de la cuenta a partir de un capital inicial ya depositado. "
+        "No se modelan impuestos, CFD ni financiación."
     )
 
 portfolios = sim_portfolios.list_portfolios()
