@@ -44,12 +44,13 @@ st.session_state["selected_symbol"] = symbol
 
 row = df.loc[symbol]
 
-col_a, col_b, col_c, col_d, col_e = st.columns(5)
+col_a, col_b, col_c, col_d, col_e, col_f = st.columns(6)
 col_a.metric("Composite", f"{row['composite_score']:.1f}" if pd.notna(row["composite_score"]) else "—", help=METRIC_INFO["composite_score"]["help"])
 col_b.metric("Value", f"{row['value_score']:.1f}" if pd.notna(row["value_score"]) else "—", help=METRIC_INFO["value_score"]["help"])
 col_c.metric("Quality", f"{row['quality_score']:.1f}" if pd.notna(row["quality_score"]) else "—", help=METRIC_INFO["quality_score"]["help"])
 col_d.metric("Momentum", f"{row['momentum_score']:.1f}" if pd.notna(row["momentum_score"]) else "—", help=METRIC_INFO["momentum_score"]["help"])
 col_e.metric("Risk", f"{row['risk_score']:.1f}" if pd.notna(row["risk_score"]) else "—", help=METRIC_INFO["risk_score"]["help"])
+col_f.metric("Confidence", f"{row['confidence']:.0f}" if pd.notna(row.get("confidence")) else "—", help=METRIC_INFO["confidence"]["help"])
 
 sector_es = translate_sector(row.get("sector")) or "Sector desconocido"
 title_col, action_col = st.columns([4, 1])

@@ -151,6 +151,46 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
     return df.sort_values("composite_score", ascending=False)
 
 
+def compute_confidence(df: pd.DataFrame, weights: dict = None) -> pd.Series:
+    """Confidence: cuánto nos podemos fiar del `composite_score` de cada
+    fila -- una dimensión DISTINTA de cuánto de atractiva es la empresa
+    (eso ya lo dice el score). Pensado para el caso señalado por el
+    usuario: una empresa con 1 de 4 métricas de Quality en percentil 95
+    obtiene `quality_score = 95` (la media de esa única métrica) exactamente
+    igual que una con las 4 métricas en percentil 95 — `build_scores` no
+    distingue "score alto con mucho dato detrás" de "score alto con casi
+    ningún dato detrás". Esta función no cambia `build_scores` ni ningún
+    score existente (V1/`HIPOTESIS_CONGELADA.md` siguen exactamente igual) —
+    es aditiva: una columna nueva y opcional, pensada para mostrarse junto
+    al score, no para filtrar ni reordenar el ranking.
+
+    Por bloque: fracción de las métricas de `SCORE_METRICS[bloque]` con dato
+    disponible (0.0 si el bloque entero falta, 1.0 si están todas). La
+    confidence global es la media de las confidence por bloque, ponderada
+    con los MISMOS pesos que el composite score (`weights`, por defecto
+    `DEFAULT_WEIGHTS`) — si el bloque con más peso es el que más falta,
+    Confidence cae más que si es el de menos peso. Escala 0-100, igual que
+    los scores, para que sean directamente comparables en una tabla.
+
+    Requiere llamarse DESPUÉS de `build_scores` (o de
+    `add_percentile_columns`), que es quien crea las columnas `_pct` que
+    esta función cuenta."""
+    weights = weights or DEFAULT_WEIGHTS
+    w = np.array([weights.get(b, 0) for b in SCORE_METRICS])
+    if w.sum() == 0:
+        return pd.Series(0.0, index=df.index)
+    block_fracs = []
+    for block, cols in SCORE_METRICS.items():
+        pct_cols = [c + "_pct" for c in cols]
+        available = [c for c in pct_cols if c in df.columns]
+        if not available:
+            block_fracs.append(pd.Series(0.0, index=df.index))
+        else:
+            block_fracs.append(df.reindex(columns=available).notna().sum(axis=1) / len(cols))
+    matrix = np.column_stack([s.to_numpy(dtype=float) for s in block_fracs])
+    return pd.Series(matrix @ w / w.sum() * 100, index=df.index)
+
+
 def explain_row(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
     """Devuelve una tabla larga (métrica, valor, percentil) para explicar por
     qué una empresa concreta obtuvo el score que obtuvo."""

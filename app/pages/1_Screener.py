@@ -21,7 +21,7 @@ DISPLAY_KEYS = [
     "name", "sector", "market_cap", "pe", "roe", "roic", "revenue_growth_yoy",
     "price", "price_vs_sma50", "rsi14", "volatility", "max_drawdown",
     "metrics_available", "metrics_possible", "score_coverage",
-    "value_score", "quality_score", "momentum_score", "risk_score", "composite_score",
+    "value_score", "quality_score", "momentum_score", "risk_score", "composite_score", "confidence",
 ]
 
 saved_weights = config.load_weights()

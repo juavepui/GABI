@@ -1088,6 +1088,37 @@ documento (V1, V2 paso 1 y paso 2) usan sector APROXIMADO (el actual, no el hist
 acumular historial point-in-time real; dentro de meses/años, backtests que empiecen después
 de hoy podrán usar sector genuinamente point-in-time para ese tramo.
 
+### Paso 4: Score vs Confidence — cuánto fiarse de un score, no solo cuál es
+
+El usuario señaló una sutileza real de `scoring.build_scores`: cada bloque (Value/Quality/
+Momentum/Risk) promedia sus métricas ignorando las que faltan (`skipna=True`), y el
+Composite renormaliza los pesos entre los bloques que sí existen. Consecuencia: una empresa
+con **1 de las 4 métricas de Quality**, si esa única métrica está en percentil 95, obtiene
+`quality_score = 95` — exactamente igual que otra con las 4 métricas en percentil 95. No
+hay forma de distinguir, mirando solo el score, "score alto con mucho dato detrás" de
+"score alto con casi ningún dato detrás".
+
+**El modelo congelado no se toca** (petición explícita del usuario) — de las cuatro
+alternativas que se plantearon (cobertura mínima por bloque, imputación al percentil 50,
+penalización explícita, o separar score y confidence), se implementó la preferida por el
+usuario: **`scoring.compute_confidence()`**, puramente aditiva, no cambia `build_scores` ni
+ningún score existente (verificado con test dedicado — 211 tests en verde, sin cambios).
+
+- **Score** sigue significando lo mismo: atractivo de la empresa.
+- **Confidence** (nueva, 0-100, misma escala que los scores): cuánto fiarse de ese score.
+  Por bloque, fracción de las métricas de `SCORE_METRICS[bloque]` con dato disponible (0 si
+  el bloque entero falta, 1 si están todas); la confidence global es la media de las
+  confidence por bloque, ponderada con los MISMOS pesos que el composite score — si el
+  bloque con más peso es el que más falta, Confidence cae más que si es el de menos peso.
+
+Ejemplo real (S&P 500, 2024-01-02): AAPL confidence=100 (13/13 métricas), MSFT=90, JPM=72.5,
+XOM=31.7 (mucho dato ausente, coherente con que su `composite_score` también sale inválido
+por baja cobertura). Cableado en ambos sitios donde se construye un ranking —
+`screener.build_screener_table` (en vivo) y `screener_asof.build_ranking_as_of`
+(point-in-time, usado por V1 y V2) — y visible en la UI (📊 Screener, tabla completa; 🔎
+Ficha de Empresa, junto al resto de scores) para que un inversor junior vea de un vistazo si
+un score alto merece confianza o se apoya en poco dato.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,

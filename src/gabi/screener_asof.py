@@ -150,4 +150,5 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     df["sector_is_approximate"] = [snapshots[s]["is_approximate"] for s in df.index]
 
     df = scoring.build_scores(df, weights=weights)
+    df["confidence"] = scoring.compute_confidence(df, weights=weights)
     return {"table": df, "universe_info": universe_info}

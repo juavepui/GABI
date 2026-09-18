@@ -250,6 +250,14 @@ METRIC_INFO = {
     "metrics_available": {"label": "Datos", "help": "Número de métricas disponibles de las 13 que puntúan."},
     "metrics_possible": {"label": "Datos posibles", "help": "Número total de métricas que puntúan."},
     "score_coverage": {"label": "Cobertura %", "help": "Porcentaje de las 13 métricas puntuables disponibles."},
+    "confidence": {
+        "label": "Confidence",
+        "help": "Cuánto fiarse del Composite — NO cuánto de atractiva es la empresa (eso ya lo dice el "
+                "Composite). Una empresa con solo 1 de las 4 métricas de Quality disponible puede sacar el "
+                "mismo Quality score que otra con las 4, si esa única métrica es muy buena — Confidence baja "
+                "en ese caso para avisar de que ese score se apoya en poco dato. 100 = las 13 métricas "
+                "presentes; baja más cuanto más pesan (según tus sliders) los bloques con datos ausentes.",
+    },
 }
 
 # Columnas cuyo valor crudo es una fracción (0.09 = 9%) — se multiplican por
@@ -277,7 +285,7 @@ SECTOR_ES = {
     "Materials": "Materiales",
 }
 
-SCORE_COLUMNS = {"value_score", "quality_score", "momentum_score", "risk_score", "composite_score"}
+SCORE_COLUMNS = {"value_score", "quality_score", "momentum_score", "risk_score", "composite_score", "confidence"}
 
 
 def translate_sector(sector_en):

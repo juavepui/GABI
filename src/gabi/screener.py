@@ -84,4 +84,6 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progre
     df = pd.DataFrame(rows).set_index("symbol")
     if df.empty:
         return df
-    return scoring.build_scores(df, weights=weights)
+    df = scoring.build_scores(df, weights=weights)
+    df["confidence"] = scoring.compute_confidence(df, weights=weights)
+    return df

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -171,3 +172,74 @@ def test_sparse_company_has_no_composite_score():
     assert result.loc["A", "metrics_available"] == 2
     assert result.loc["A", "metrics_possible"] == 13
     assert pd.isna(result.loc["A", "composite_score"])
+
+
+def _full_coverage_df():
+    """Las 13 métricas de SCORE_METRICS presentes para las 3 filas -- para
+    aislar los tests de confidence de qué metricas concretas faltan."""
+    return pd.DataFrame(
+        {
+            "pe": [10, 20, 30], "pb": [1.0, 2.0, 3.0], "ev_ebitda": [8.0, 12.0, 16.0],
+            "roic": [0.20, 0.15, 0.10], "operating_margin": [0.30, 0.20, 0.10],
+            "revenue_cagr_3y": [0.15, 0.10, 0.05], "fcf_cagr_3y": [0.12, 0.08, 0.04],
+            "momentum_12m": [0.25, 0.10, -0.15], "rel_strength_6m": [0.08, 0.0, -0.08],
+            "price_vs_sma200": [0.10, 0.02, -0.10],
+            "debt_to_equity": [20.0, 60.0, 120.0], "volatility": [0.15, 0.25, 0.40],
+            "max_drawdown": [-0.10, -0.25, -0.45],
+        },
+        index=["AAA", "BBB", "CCC"],
+    )
+
+
+def test_compute_confidence_is_100_with_full_block_coverage():
+    df = scoring.build_scores(_full_coverage_df())
+    confidence = scoring.compute_confidence(df)
+    assert confidence.tolist() == pytest.approx([100.0, 100.0, 100.0])
+
+
+def test_compute_confidence_matches_the_users_example():
+    """Caso exacto senalado por el usuario: una empresa con solo 1 de las 4
+    metricas de Quality (aunque ese unico dato sea excelente) debe tener
+    confidence mas baja que una con las 4, aunque el quality_score en si
+    pueda salir igual de alto para ambas."""
+    df_raw = _full_coverage_df()
+    # BBB solo conserva roic de Quality; las otras 3 se marcan como no disponibles.
+    df_raw.loc["BBB", ["operating_margin", "revenue_cagr_3y", "fcf_cagr_3y"]] = np.nan
+    df = scoring.build_scores(df_raw)
+    confidence = scoring.compute_confidence(df)
+
+    # Con los pesos por defecto (quality=0.35): BBB pierde 3/4 de la confianza
+    # de un bloque que pesa 0.35 -> 100 - 0.35*(3/4)*100 = 73.75
+    assert confidence.loc["BBB"] == pytest.approx(73.75)
+    assert confidence.loc["AAA"] == pytest.approx(100.0)
+    assert confidence.loc["BBB"] < confidence.loc["AAA"]
+
+
+def test_compute_confidence_zero_when_entire_block_missing():
+    df_raw = _full_coverage_df().drop(columns=["roic", "operating_margin", "revenue_cagr_3y", "fcf_cagr_3y"])
+    df = scoring.build_scores(df_raw)
+    confidence = scoring.compute_confidence(df)
+    # Falta el bloque Quality entero (peso 0.35): confidence = 100 * (1 - 0.35) = 65
+    assert confidence.tolist() == pytest.approx([65.0, 65.0, 65.0])
+
+
+def test_compute_confidence_weighs_missing_block_by_its_own_weight():
+    """Un bloque de mucho peso que falta debe penalizar mas que uno de poco peso."""
+    df_missing_quality = _full_coverage_df().drop(
+        columns=["roic", "operating_margin", "revenue_cagr_3y", "fcf_cagr_3y"])
+    df_missing_risk = _full_coverage_df().drop(columns=["debt_to_equity", "volatility", "max_drawdown"])
+    conf_missing_quality = scoring.compute_confidence(scoring.build_scores(df_missing_quality))
+    conf_missing_risk = scoring.compute_confidence(scoring.build_scores(df_missing_risk))
+    # quality pesa 0.35 por defecto, risk solo 0.10 -> falta quality duele mas.
+    assert (conf_missing_quality < conf_missing_risk).all()
+
+
+def test_compute_confidence_does_not_change_composite_score():
+    """compute_confidence es puramente aditivo -- build_scores (y por tanto
+    V1/HIPOTESIS_CONGELADA.md) no cambian en absoluto."""
+    df_raw = _full_coverage_df()
+    df_raw.loc["BBB", ["operating_margin", "revenue_cagr_3y", "fcf_cagr_3y"]] = np.nan
+    before = scoring.build_scores(df_raw.copy())
+    scoring.compute_confidence(before)  # no debe mutar `before`
+    after = scoring.build_scores(df_raw.copy())
+    pd.testing.assert_frame_equal(before, after)
