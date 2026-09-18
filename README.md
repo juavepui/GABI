@@ -1254,6 +1254,40 @@ Puede descubrirse que un bloque entero (ej. Risk) no aporta prácticamente nada 
 es información tan valiosa como encontrar uno que sí funcione, y mucho más que seguir ajustando pesos
 para maximizar el CAGR de una cesta concreta.
 
+## 🔒 Blind Forward Validation
+
+Tercera propuesta del usuario. `HIPOTESIS_CONGELADA.md` prometía una validación prospectiva real (4
+rebalanceos trimestrales reales, 2026-Q4 a 2027-Q3, sin tocar la estrategia hasta 2027-09-17) — promesa
+que se rompió el mismo día que se escribió ("Descongelemos la hipótesis"), una decisión legítima y
+documentada, pero que deja sin resolver el problema real: **nada en el código impedía mirar el
+resultado a medias y "ajustar un poco" la estrategia**, la tentación exacta que describe el usuario
+("llevamos seis meses perdiendo, quizá Momentum debería pasar de 25 a 35%..." — en cuanto se hace eso,
+la prueba prospectiva ha muerto, sin que nadie necesite hacer trampa conscientemente).
+
+**`src/gabi/blind_validation.py`** (página 🔒 Blind Forward Validation) convierte esa promesa en algo
+real: cada rebalanceo se registra de forma **inmutable** (`UNIQUE(validation_id, rebalance_date)` —
+reintentar el mismo periodo lanza, no sobrescribe) con picks, precios de entrada reales, commit de
+código (`git rev-parse --short HEAD`, reutilizado de `research_lab.py`), y un **hash encadenado con el
+anterior** (`record_hash = sha256(prev_hash + datos_del_periodo)`) — si alguien edita un periodo antiguo
+a mano en la base de datos, `verify_integrity()` lo detecta porque la cadena deja de encajar (probado
+con una manipulación real en el test). Mientras la validación está bloqueada, **`get_status()` no
+incluye ninguna clave de rendimiento en el diccionario que devuelve** (no solo las oculta en la UI —
+comprobado explícitamente con un test que el dict ni siquiera contiene `"performance"`), así que no hay
+ningún camino por el que un resultado a medias se pueda colar en pantalla por accidente.
+
+**Honestidad en vez de un candado falso**: una app local no puede impedir de verdad que su propio dueño
+mire su base de datos a mano. `break_seal_early(reason)` no finge ser irrompible — permite romper el
+sello antes de tiempo si el usuario decide hacerlo conscientemente, pero deja constancia PERMANENTE de
+que se rompió y por qué, igual que se documentó la propia ruptura de `HIPOTESIS_CONGELADA.md` esta
+sesión. Una vez desbloqueada (por fecha o por ruptura consciente), `export_to_research_lab()` registra
+el resultado real como experimento `LIVE_FORWARD` en 🔬 Research Lab — conecta directamente con el
+registro ya existente en vez de duplicarlo.
+
+Verificado con datos reales, no solo con mocks: creada una validación de prueba, registrado un
+rebalanceo real (10 símbolos reales del ranking de hoy, precios reales), confirmado que `get_status()`
+bloqueado no expone ninguna clave de rendimiento y que la integridad verifica correctamente — y limpiado
+después de la prueba.
+
 ## Insiders (SEC Form 4)
 
 `src/gabi/insider.py` descarga y guarda las operaciones de directivos,
