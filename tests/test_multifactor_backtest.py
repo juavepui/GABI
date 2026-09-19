@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, edgar, multifactor_backtest as bt, storage
+from gabi import config, edgar, storage
+from gabi import multifactor_backtest as bt
 
 
 def _seed_prices(dates, symbol_closes):
@@ -131,6 +132,23 @@ def test_period_returns_charges_no_cost_to_held_symbols(tmp_path, monkeypatch):
     aaa_no_cost = raw_return  # held: factor=1.0
     bbb_with_cost = (1 + raw_return) * (1 - 100 / 10000) ** 2 - 1
     assert with_held["portfolio_return"] == pytest.approx((aaa_no_cost + bbb_with_cost) / 2)
+
+
+def test_period_returns_charges_no_cost_to_spy(tmp_path, monkeypatch):
+    """SPY es la referencia pasiva (comprar y mantener), no una posición que
+    se rota cada rebalanceo -- nunca debe pagar el coste de compra/venta,
+    a diferencia de las posiciones de la estrategia (que sí lo pagan salvo
+    que estén en held_symbols)."""
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    dates = pd.to_datetime(["2024-01-05", "2024-01-08", "2024-02-05"])
+    for symbol, closes in (("AAA", [100, 100, 110]), ("SPY", [100, 100, 110])):
+        storage.upsert_prices(symbol, pd.DataFrame({"Open": closes, "High": closes,
+            "Low": closes, "Close": closes, "Adj Close": closes, "Volume": [1] * 3}, index=dates))
+
+    result = bt._period_returns(["AAA"], pd.Timestamp("2024-01-05"), 1, 100)
+    assert result["benchmark_return"] == pytest.approx(.10)  # SPY: sin coste
+    assert result["portfolio_return"] < .10  # AAA: con coste, al no estar en held_symbols
 
 
 def test_risk_metrics_on_steady_positive_returns():
@@ -361,7 +379,6 @@ def test_daily_capital_curve_chains_periods_compounding_correctly(tmp_path, monk
     as_of1 = pd.Timestamp("2024-01-05")
     entry1 = calendar.next_session(calendar.date_to_session(as_of1, direction="previous"))
     exit1 = calendar.date_to_session(as_of1 + pd.DateOffset(months=3), direction="next")
-    entry2 = calendar.next_session(calendar.date_to_session(exit1, direction="previous"))
     exit2 = calendar.date_to_session(exit1 + pd.DateOffset(months=3), direction="next")
 
     for symbol in ("AAA", "BBB"):

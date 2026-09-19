@@ -2,10 +2,32 @@
 datos de mercado ya cacheados.
 
 Sin acceso al bróker: la salida es una asignación objetivo fechada y
-auditable, con los cambios respecto a la cartera actual — nunca una orden."""
-from dataclasses import asdict, dataclass
-from datetime import date, datetime, timezone
+auditable, con los cambios respecto a la cartera actual — nunca una orden.
+
+**Esto NO es la estrategia validada en `HIPOTESIS_CONGELADA.md`/🕰️ Ranking
+histórico, es otra distinta**, pensada como capa de gestión de riesgo más
+conservadora para dinero real, no como ejecución 1:1 del backtest. Diferencias
+deliberadas frente a la hipótesis congelada (Top-20, equal-weight, SIN filtro
+SMA200, sin gates de volatilidad/drawdown):
+- `Policy.max_positions=10`, no 20.
+- Exige `price_vs_sma200 > 0` (`_reasons`) — la hipótesis probó este filtro
+  explícitamente y lo descartó por no reducir el drawdown real.
+- Filtra por volatilidad/drawdown máximos (`max_volatility`, `min_drawdown`)
+  — no existen en el backtest.
+- Pondera por mínima varianza (Ledoit-Wolf, `_risk_weights`), no a partes
+  iguales.
+
+Nada de esto es un bug: es una decisión de diseño para no apostar dinero real
+según un backtest con matches de *data snooping* sin validar todavía en
+prospectivo (ver checklist de sesgos en `HIPOTESIS_CONGELADA.md`). Pero
+significa que el rendimiento histórico de la hipótesis congelada NO predice
+el de las carteras que arma este módulo — son estrategias distintas que
+comparten el mismo `composite_score` de entrada, nada más. Si en algún
+momento se decide acercar una a la otra, que sea explícito y medido, no un
+axioma tácito."""
 import json
+from dataclasses import asdict, dataclass
+from datetime import UTC, date, datetime
 
 import numpy as np
 import pandas as pd
@@ -279,7 +301,7 @@ def _plan_name(name: str) -> str:
 def save_plan(plan: dict, policy: Policy, holdings: dict[str, float], name: str | None = None) -> int:
     """Guarda exactamente las decisiones generadas, para poder auditarlas más adelante."""
     payload = plan["decisions"].to_json(orient="records")
-    created_at = datetime.now(timezone.utc).isoformat()
+    created_at = datetime.now(UTC).isoformat()
     name = _plan_name(name) if name is not None else f"Plan {created_at[:16].replace('T', ' ')}"
     with storage.get_connection() as conn:
         _init_runs(conn)

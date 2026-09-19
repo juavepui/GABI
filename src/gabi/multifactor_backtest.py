@@ -4,9 +4,9 @@ ajustados ya cacheados."""
 import random
 from datetime import date
 
+import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
-import exchange_calendars as xcals
 
 from . import config, edgar, screener_asof, storage, universe
 
@@ -83,7 +83,11 @@ def _period_returns(symbols: list[str], as_of: pd.Timestamp, months: int,
                 or h.loc[entry, "adj_close"] <= 0):
             missing.append(symbol)
             continue
-        factor = 1.0 if symbol in held_symbols else factor_traded
+        # SPY es la referencia pasiva (comprar y mantener), no una posición
+        # que se rota cada rebalanceo -- cobrarle compra+venta completa cada
+        # periodo, como al resto, infla artificialmente la ventaja de la
+        # estrategia sobre su propio benchmark.
+        factor = 1.0 if symbol == "SPY" or symbol in held_symbols else factor_traded
         if symbol != "SPY" and symbol in last_filed:
             gap_days = (exit_session - pd.Timestamp(last_filed[symbol])).days
             if gap_days > _MAX_DAYS_WITHOUT_FILING:

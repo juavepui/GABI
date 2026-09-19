@@ -83,6 +83,12 @@ def add_percentile_columns(
 
 
 def compute_block_score(df: pd.DataFrame, pct_cols) -> pd.Series:
+    """Media de las columnas de percentil disponibles del bloque (Value/
+    Quality/Momentum/Risk). Una fila con 1 sola métrica del bloque disponible
+    promedia solo esa -- deliberadamente NO se penaliza aquí (ver
+    `compute_confidence`, aditiva y pensada exactamente para esto sin
+    alterar `composite_score` ni la reproducibilidad de
+    `HIPOTESIS_CONGELADA.md`/el backtest)."""
     available = [c for c in pct_cols if c in df.columns]
     if not available:
         return pd.Series(np.nan, index=df.index)

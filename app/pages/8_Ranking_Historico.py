@@ -7,8 +7,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import academic_factors, broker_costs, config, data_fetch, edgar, evaluation, multifactor_backtest, portfolio_backtest, portfolio_metrics, research_lab, screener_asof, universe
-from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
+from gabi import (
+    academic_factors,
+    broker_costs,
+    data_fetch,
+    edgar,
+    evaluation,
+    multifactor_backtest,
+    portfolio_backtest,
+    portfolio_metrics,
+    research_lab,
+    screener_asof,
+    universe,
+)
+from gabi.ui_helpers import METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("🕰️ Ranking histórico")
 st.warning(
@@ -114,9 +126,13 @@ if df.empty:
 has_price = df["market_cap"].notna()
 n_with_price = int(has_price.sum())
 n_with_fundamentals = int(df["roic"].notna().sum())
+n_no_sector = int(df["sector"].isna().sum()) if "sector" in df.columns else 0
+n_sector_approx = int(df["sector_is_approximate"].sum()) if "sector_is_approximate" in df.columns else 0
 st.caption(
     f"{len(df)} empresas en la tabla · {n_with_fundamentals} con fundamentales reconstruidos · "
-    f"{n_with_price} con precio/capitalización de esa fecha (requiere histórico de precios profundo)."
+    f"{n_with_price} con precio/capitalización de esa fecha (requiere histórico de precios profundo) · "
+    f"{n_sector_approx} con sector aproximado (sin foto point-in-time anterior a esta fecha) · "
+    f"{n_no_sector} sin ningún sector conocido (típicamente deslistadas antes de existir este registro)."
 )
 
 hide_no_data = st.checkbox("Ocultar empresas sin ningún dato reconstruido", value=True)
@@ -164,8 +180,9 @@ def _apply_colors(_data):
 styled = table.style.apply(_apply_colors, axis=None)
 st.dataframe(styled, width="stretch", height=500)
 st.caption(
-    "🟩 mejor · 🟨 medio · 🟥 peor, comparado con el resto de empresas de su sector (sector actual — no "
-    "hay fuente gratuita de sector histórico). Las columnas sin color no se usan para puntuar."
+    "🟩 mejor · 🟨 medio · 🟥 peor, comparado con el resto de empresas de su sector (sector aproximado "
+    "salvo que ya exista una foto point-in-time anterior a esta fecha — ver aviso arriba; sin sector "
+    "conocido, se compara contra todo el universo en su lugar). Las columnas sin color no se usan para puntuar."
 )
 
 st.subheader("Resultado posterior de las primeras candidatas")
@@ -215,10 +232,11 @@ saber si elegir bien aporta algo por encima de simplemente estar invertido).
 4. Mira primero **Sharpe y Sortino** (abajo), no solo el retorno — un retorno más alto con mucho más
    riesgo no es necesariamente mejor. Compara los tres: tu estrategia, el universo equiponderado y el SPY.
 
-**⚠️ Este motor cobra el coste como un % plano sobre el 100% de cada posición cada rebalanceo (se
-mantenga o no) y rota el SPY como si fuera parte de la estrategia** — ver la pestaña "Motor V2" para
-la versión con contabilidad real de cartera (acciones + caja, SPY comprado y mantenido), y 🎓 Aprender
-→ "Cómo piensa GABI" para el porqué importa la diferencia.
+**⚠️ Este motor cobra el coste como un % plano de compra+venta sobre cada posición nueva** (no a las
+que ya se tenían en el periodo anterior, ni al SPY, que se trata como referencia pasiva) — pero sigue
+siendo una simulación por periodos de rebalanceo, no una cartera real con acciones + caja. Ver la
+pestaña "Motor V2" para la versión con contabilidad real de cartera, y 🎓 Aprender → "Cómo piensa
+GABI" para el porqué importa la diferencia.
 
 **Qué probar**: sube "Empresas por periodo" a 20 y compara — en nuestras pruebas, 20 posiciones bajó el
 drawdown máximo sin apenas perder Sharpe/Sortino frente a 10 (ver README, sección de backtesting). Prueba
