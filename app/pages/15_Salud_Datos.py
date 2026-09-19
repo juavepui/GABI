@@ -6,13 +6,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import config, data_health, scoring, screener
+from gabi import config, data_quality, scoring, screener
 from gabi.ui_helpers import METRIC_INFO, translate_sector
 
-st.title("🩺 Salud de los datos")
+st.title("🩺 Calidad de los datos")
 st.caption(
-    "Cobertura y frescura de cada fuente para el universo descargado, y de dónde procede cada pieza "
-    "del score de una empresa concreta. Esta página no descarga nada -- solo lee lo que ya hay en caché."
+    "Cobertura, frescura y procedencia de cada fuente para el universo descargado -- no solo qué score "
+    "produce un símbolo, sino con qué calidad de dato se calculó. Esta página no descarga nada -- solo "
+    "lee lo que ya hay en caché."
+)
+
+st.warning(
+    "\n\n".join(f"**Limitación estructural conocida:** {msg}" for msg in data_quality.STRUCTURAL_LIMITATIONS),
+    icon="⚠️",
 )
 
 
@@ -35,9 +41,24 @@ def _status_icon(fraction: float) -> str:
 uni = screener.get_universe(limit=None)
 symbols = uni["symbol"].tolist()
 
+
+def _scored_universe():
+    """Cachea en session_state -- lo usan tanto la cobertura por bloque
+    (todo el universo) como el score de una empresa concreta, y construirlo
+    (500 empresas) es lo único caro de esta página."""
+    if "dq_scored_universe" not in st.session_state:
+        weights = config.load_weights()
+        load_bar = st.progress(0.0)
+        st.session_state["dq_scored_universe"] = screener.build_screener_table(
+            uni, weights=weights,
+            progress_cb=lambda done, total: load_bar.progress(done / total if total else 1.0),
+        )
+        load_bar.empty()
+    return st.session_state["dq_scored_universe"]
+
 st.subheader("Resumen de universo")
 st.caption(f"{len(symbols)} empresas en el universo actual (S&P 500).")
-summary = data_health.universe_summary(symbols)
+summary = data_quality.universe_summary(symbols)
 
 rows = [
     {
@@ -84,6 +105,38 @@ if summary["macro"]:
 else:
     c2.caption("Sin datos macro descargados todavía -- ver 🌐 Panel Macro.")
 
+recent_errors = data_quality.recent_errors_summary()
+if recent_errors.empty:
+    st.caption("✅ Sin fallos de actualización registrados en los últimos 7 días.")
+else:
+    with st.expander(f"🔴 {len(recent_errors)} fallo(s) de actualización en los últimos 7 días"):
+        st.dataframe(recent_errors, hide_index=True, width="stretch")
+        st.caption(
+            "Fuente · símbolo · motivo · cuándo. Se guardan al actualizar datos desde ⚙️ Configuración / "
+            "🌐 Panel Macro -- antes se mostraban una vez tras el refresco y se perdían."
+        )
+
+with st.expander("📐 Cobertura por bloque del score (todo el universo)"):
+    st.caption(
+        "Qué % del universo tiene datos COMPLETOS para cada bloque del score (Value/Quality/Momentum/"
+        "Risk), no solo si la fuente está fresca -- calcula el ranking completo (sin red), puede tardar "
+        "unos segundos."
+    )
+    if st.button("Calcular", key="block_coverage_button"):
+        block_coverage = data_quality.score_block_coverage(_scored_universe())
+        block_rows = [
+            {"Bloque": block.capitalize(), "Nº métricas": info["n_metrics"],
+             "Completo (todas)": f"{info['complete']:.0%}", "Al menos una": f"{info['any']:.0%}",
+             "Ninguna": f"{info['none']:.0%}"}
+            for block, info in block_coverage.items()
+        ]
+        st.dataframe(pd.DataFrame(block_rows), hide_index=True, width="stretch")
+        st.caption(
+            "\"Completo\" = tiene dato en TODAS las métricas oficiales de ese bloque (`scoring.SCORE_METRICS`) "
+            "-- una empresa con solo 1 de 4 métricas de Quality no cuenta aquí como completa, aunque "
+            "`quality_score` le dé un valor (ver `scoring.compute_confidence` para ese caso por empresa)."
+        )
+
 st.divider()
 st.subheader("Procedencia de una empresa")
 st.caption("Qué fuente y qué fecha respalda cada dato detrás del resultado de una empresa concreta.")
@@ -99,7 +152,7 @@ symbol = st.selectbox(
     index=symbols.index(st.session_state["selected_symbol"]) if st.session_state.get("selected_symbol") in symbols else 0,
     format_func=_label,
 )
-prov = data_health.symbol_provenance(symbol)
+prov = data_quality.symbol_provenance(symbol)
 
 
 def _source_row(name, info, extra=""):
@@ -129,6 +182,18 @@ detail_rows = [
     ),
     _source_row("Insider (Form 4)", prov["insider"]),
 ]
+em = prov["entity_master"]
+if not em["has_snapshot"]:
+    em_status, em_detail = "⚪ sin foto nunca", "no hay sector point-in-time disponible para esta empresa"
+elif em["is_approximate"]:
+    em_status, em_detail = "🟡 aproximado", f"sector actual ({em['sector'] or '—'}), no el real de una fecha pasada"
+else:
+    em_status, em_detail = "🟢 point-in-time real", f"sector: {em['sector'] or '—'}"
+detail_rows.append({
+    "Fuente": "Entity Master (sector)",
+    "Última descarga": em["effective_date"] or "—",
+    "Estado": em_status, "Detalle": em_detail,
+})
 st.dataframe(pd.DataFrame(detail_rows), hide_index=True, width="stretch")
 st.caption(
     "\"Última descarga\" es cuándo GABI trajo el dato, no la fecha del propio informe -- una descarga de "
@@ -142,13 +207,7 @@ with st.expander("📊 Ver también su score y confidence actuales"):
         "mostrar el score de esta empresa en su contexto -- puede tardar unos segundos."
     )
     if st.button("Calcular"):
-        weights = config.load_weights()
-        load_bar = st.progress(0.0)
-        df = screener.build_screener_table(
-            uni, weights=weights,
-            progress_cb=lambda done, total: load_bar.progress(done / total if total else 1.0),
-        )
-        load_bar.empty()
+        df = _scored_universe()
         if symbol not in df.index:
             st.info("Esta empresa no tiene fila en el ranking (sin datos suficientes).")
         else:

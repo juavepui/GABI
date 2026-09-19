@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 import streamlit as st
 
-from gabi import config, evaluation, screener
+from gabi import config, data_quality, evaluation, screener
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("📊 Screener")
@@ -73,6 +73,15 @@ with st.spinner(f"Cargando {len(uni)} empresas del universo..."):
 if df.empty:
     st.info("Todavía no hay datos. Ve a ⚙️ Configuración y pulsa 'Actualizar datos'.")
     st.stop()
+
+block_warnings = data_quality.block_coverage_warnings(data_quality.score_block_coverage(df))
+if block_warnings:
+    st.warning(
+        "**Cobertura de datos degradada** -- este ranking incluye bloques con menos del "
+        f"{data_quality.DEFAULT_DEGRADED_BLOCK_THRESHOLD:.0%} del universo con todas sus métricas "
+        "disponibles (ver 🩺 Calidad de los datos):\n\n" + "\n".join(f"- {w}" for w in block_warnings),
+        icon="⚠️",
+    )
 
 filtered = df.copy()
 if search_query.strip():

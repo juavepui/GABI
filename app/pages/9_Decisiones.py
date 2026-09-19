@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 import streamlit as st
 
-from gabi import data_fetch, decision_engine, screener, storage
+from gabi import data_fetch, data_quality, decision_engine, screener, storage
 
 st.title("🧭 Decisiones de cartera")
 st.markdown(
@@ -161,7 +161,9 @@ if st.button("Generar decisiones", type="primary"):
         histories = storage.get_prices_multi(table.index.tolist())
         plan = decision_engine.build_plan(table, histories, holdings, policy)
         run_id = decision_engine.save_plan(plan, policy, holdings, plan_name or None)
+        target_symbols = [s for s, pct in plan["targets"].items() if pct > 0]
         st.session_state["decision_plan"] = plan
+        st.session_state["decision_quality_warnings"] = data_quality.low_confidence_candidates(table, target_symbols)
         st.session_state["decision_run_id"] = run_id
         st.session_state["decision_inputs"] = (holdings_text, min_score, min_coverage,
                                                  max_positions, max_position, max_sector, max_invested)
@@ -174,6 +176,19 @@ if "decision_plan" in st.session_state:
                                                     max_positions, max_position, max_sector, max_invested):
         st.warning("Has cambiado las entradas. Pulsa «Generar decisiones» para actualizar el plan mostrado.")
     plan = st.session_state["decision_plan"]
+    quality_warnings = st.session_state.get("decision_quality_warnings") or []
+    if quality_warnings:
+        st.warning(
+            f"**{len(quality_warnings)} candidata(s) del plan con confidence por debajo de "
+            f"{data_quality.DEFAULT_CONFIDENCE_THRESHOLD:.0f}** (ver 🩺 Calidad de los datos) -- entran en "
+            "el plan por cumplir el score mínimo, pero con menos métricas detrás de lo habitual:\n\n"
+            + "\n".join(
+                f"- **{w['symbol']}**: confidence {w['confidence']:.0f}"
+                + (f", cobertura del score {w['score_coverage']:.0%}" if w["score_coverage"] is not None else "")
+                for w in quality_warnings
+            ),
+            icon="⚠️",
+        )
     st.caption(
         f"Asignación: {plan['method']} · Efectivo objetivo: {plan['cash_target_pct']:.1f} %",
         help="El 'método' indica cómo se repartió el capital entre las candidatas elegidas — normalmente "

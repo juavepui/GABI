@@ -11,6 +11,7 @@ from gabi import (
     academic_factors,
     broker_costs,
     data_fetch,
+    data_quality,
     edgar,
     evaluation,
     multifactor_backtest,
@@ -134,6 +135,22 @@ st.caption(
     f"{n_sector_approx} con sector aproximado (sin foto point-in-time anterior a esta fecha) · "
     f"{n_no_sector} sin ningún sector conocido (típicamente deslistadas antes de existir este registro)."
 )
+
+_degradation_msgs = []
+_sector_bad_frac = (n_sector_approx + n_no_sector) / len(df) if len(df) else 0
+if _sector_bad_frac > (1 - data_quality.DEFAULT_DEGRADED_BLOCK_THRESHOLD):
+    _degradation_msgs.append(
+        f"**Sector**: {_sector_bad_frac:.0%} de las empresas de esta tabla tienen sector aproximado o "
+        "desconocido para esta fecha -- el color por sector y los percentiles sectoriales de una buena "
+        "parte de la tabla no son point-in-time reales."
+    )
+_degradation_msgs += data_quality.block_coverage_warnings(data_quality.score_block_coverage(df))
+if _degradation_msgs:
+    st.warning(
+        "**Cobertura de datos degradada en esta reconstrucción** (ver 🩺 Calidad de los datos):\n\n"
+        + "\n".join(f"- {m}" for m in _degradation_msgs),
+        icon="⚠️",
+    )
 
 hide_no_data = st.checkbox("Ocultar empresas sin ningún dato reconstruido", value=True)
 filtered = df[df["roic"].notna() | df["market_cap"].notna()] if hide_no_data else df
@@ -358,6 +375,7 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
             rl_notes = st.text_area("Notas", key="v1_rl_notes")
             if st.button("Registrar en el Research Lab", key="v1_rl_button"):
                 returns_series = test["periods"].set_index(pd.to_datetime(test["periods"]["hasta"]))["retorno"]
+                used_symbols = {s.strip() for row in test["periods"]["candidatas"] for s in row.split(",")}
                 exp_id = research_lab.log_experiment(
                     "GABI-MF-v1", rl_stage, rl_hypothesis, universe=f"S&P 500 histórico, muestra de {universe_size}",
                     factors="Value/Quality/Momentum/Risk", n_positions=int(n_picks),
@@ -367,6 +385,7 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                     sharpe=strat_m["sharpe"], sortino=strat_m["sortino"], max_drawdown=strat_m["max_drawdown"],
                     total_return=test["return"], n_periods=len(test["periods"]), periods_per_year=12 / interval,
                     returns=returns_series, notes=rl_notes or None,
+                    data_fingerprint=data_quality.compute_data_fingerprint(used_symbols),
                 )
                 st.success(f"Experimento #{exp_id} registrado — consúltalo en 🔬 Research Lab.")
 
@@ -588,6 +607,12 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
             rv_hypothesis = st.checkbox("¿Hipótesis registrada formalmente antes de ver el resultado?", key="v2_rl_hyp")
             rv_notes = st.text_area("Notas", key="v2_rl_notes")
             if st.button("Registrar en el Research Lab", key="v2_rl_button"):
+                used_symbols = {
+                    s.strip()
+                    for col in ("held", "sold", "bought")
+                    for row in v2_test["periods"][col]
+                    for s in row.split(",") if s.strip()
+                }
                 exp_id = research_lab.log_experiment(
                     "GABI-MF-v2", rv_stage, rv_hypothesis,
                     universe=("S&P 500 histórico completo, sin muestreo" if v2_test["mode"] == "validation"
@@ -599,6 +624,7 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
                     sharpe=daily["sharpe"], sortino=daily["sortino"], max_drawdown=daily["max_drawdown"],
                     total_return=float(nav.iloc[-1] / nav.iloc[0] - 1), n_periods=len(returns),
                     periods_per_year=252, returns=returns, notes=rv_notes or None,
+                    data_fingerprint=data_quality.compute_data_fingerprint(used_symbols),
                     result={"mode": v2_test["mode"], "turnover_medio": v2_test["turnover_medio"],
                            "comision_total": v2_test["comision_total"], "capital_inicial": v2_capital},
                 )
