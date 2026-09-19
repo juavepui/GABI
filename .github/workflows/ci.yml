@@ -26,5 +26,24 @@ jobs:
       - name: Type check (mypy)
         run: uv run mypy src/gabi
 
+      # Importa gabi.* de verdad (no solo compila) -- src/gabi es librería
+      # pura, sin dependencia de datos ni de un runtime de Streamlit, así
+      # que hacerlo con seguridad no tiene coste. app/pages/*.py SÍ depende
+      # de datos cacheados y de ScriptRunContext (st.stop() no frena la
+      # ejecución fuera de `streamlit run`), así que ahí solo se comprueba
+      # sintaxis (compile), no import -- importarlas de verdad daría falsos
+      # positivos por falta de caché, no por bugs reales.
+      - name: Import smoke test (gabi package)
+        run: |
+          uv run python -c "
+          import pkgutil, importlib, gabi
+          for m in pkgutil.iter_modules(gabi.__path__):
+              importlib.import_module(f'gabi.{m.name}')
+          print(f'{sum(1 for _ in pkgutil.iter_modules(gabi.__path__))} módulos importados OK')
+          "
+
+      - name: Compile smoke test (Streamlit app)
+        run: uv run python -m py_compile app/streamlit_app.py app/pages/*.py
+
       - name: Tests (pytest)
         run: uv run pytest -q
