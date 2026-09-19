@@ -3,15 +3,19 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from gabi import technicals
 
 
-def _price_df(prices):
+def _price_df(prices, adj_close=None):
     dates = pd.date_range("2022-01-03", periods=len(prices), freq="B")
-    return pd.DataFrame({"close": prices}, index=dates)
+    data = {"close": prices}
+    if adj_close is not None:
+        data["adj_close"] = adj_close
+    return pd.DataFrame(data, index=dates)
 
 
 def test_empty_df_returns_empty_result():
@@ -68,3 +72,32 @@ def test_relative_strength_uses_benchmark():
     result = technicals.compute_technicals(stock, benchmark_df=bench)
     assert result["rel_strength_6m"] is not None
     assert result["rel_strength_6m"] > 0
+
+
+def test_momentum_uses_adj_close_not_nominal_close():
+    # 'close' plano (sin tendencia): si momentum mirase esta columna, daría
+    # ~0. 'adj_close' con tendencia alcista simula lo que pasaría de verdad
+    # tras repartir dividendos -- el precio en pantalla ('close') no sube,
+    # pero el retorno real para quien mantuvo la posición sí.
+    n = 400
+    close = np.full(n, 100.0)
+    adj_close = np.linspace(70, 100, n)
+    df = _price_df(close, adj_close=adj_close)
+    result = technicals.compute_technicals(df)
+
+    assert result["price"] == 100.0  # nominal, no ajustado -- lo que se ve en pantalla
+    assert result["momentum_6m"] > 0
+    assert result["momentum_12m"] > 0
+
+
+def test_falls_back_to_close_when_adj_close_incomplete():
+    # Caché antiguo: algunas filas sin adj_close -- todo o nada, cae a close
+    # entero en vez de mezclar ajustado y sin ajustar en la misma serie.
+    n = 400
+    close = np.linspace(50, 150, n)
+    adj_close = np.concatenate([[np.nan] * 10, np.linspace(70, 150, n - 10)])
+    df = _price_df(close, adj_close=adj_close)
+    result = technicals.compute_technicals(df)
+
+    assert result["price"] == close[-1]
+    assert result["momentum_12m"] == pytest.approx(close[-1] / close[-1 - 252] - 1)

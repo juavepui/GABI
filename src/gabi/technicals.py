@@ -31,6 +31,18 @@ def _pct_change_n(series: pd.Series, n: int):
     return float(now / past - 1)
 
 
+def _return_price(price_df: pd.DataFrame) -> pd.Series:
+    """Prioriza `adj_close` (ajustado por splits Y dividendos) sobre `close`
+    (solo splits, vía yfinance) para que momentum/medias/RSI midan lo mismo
+    que retorno real -- si no, una acción de alto dividendo (REIT, utility)
+    puntúa peor en momentum solo por repartir caja, no por precio. Mismo
+    criterio que ya usa `risk._return_price` para Sharpe/Sortino/drawdown.
+    Cae a `close` si el símbolo tiene caché antiguo sin `adj_close` completo
+    -- todo o nada, para no mezclar ajustado y sin ajustar en la misma serie."""
+    column = "adj_close" if "adj_close" in price_df and price_df["adj_close"].notna().all() else "close"
+    return price_df[column]
+
+
 EMPTY_RESULT = {
     "price": None, "sma50": None, "sma200": None,
     "price_vs_sma50": None, "price_vs_sma200": None,
@@ -40,17 +52,23 @@ EMPTY_RESULT = {
 
 
 def compute_technicals(price_df: pd.DataFrame, benchmark_df: pd.DataFrame = None) -> dict:
-    """price_df: DataFrame indexado por fecha (ascendente) con columna 'close'."""
+    """price_df: DataFrame indexado por fecha (ascendente) con columna 'close'
+    (y opcionalmente 'adj_close', preferida para todo lo que no sea el precio
+    nominal mostrado -- ver `_return_price`)."""
     if price_df is None or price_df.empty or "close" not in price_df:
         return dict(EMPTY_RESULT)
 
-    close = price_df["close"].dropna()
+    nominal_close = price_df["close"].dropna()
+    if nominal_close.empty:
+        return dict(EMPTY_RESULT)
+
+    close = _return_price(price_df).dropna()
     if close.empty:
         return dict(EMPTY_RESULT)
 
     result = dict(EMPTY_RESULT)
-    price = close.iloc[-1]
-    result["price"] = float(price)
+    result["price"] = float(nominal_close.iloc[-1])
+    price = close.iloc[-1]  # base ajustada -- misma serie que sma50/sma200, para que el ratio no salte por un dividendo
 
     sma50 = _sma(close, config.SMA_SHORT)
     sma200 = _sma(close, config.SMA_LONG)
@@ -77,7 +95,7 @@ def compute_technicals(price_df: pd.DataFrame, benchmark_df: pd.DataFrame = None
     result["momentum_12m"] = _pct_change_n(close, config.MOMENTUM_LONG_DAYS)
 
     if benchmark_df is not None and not benchmark_df.empty and "close" in benchmark_df:
-        bench_close = benchmark_df["close"].dropna()
+        bench_close = _return_price(benchmark_df).dropna()
         bench_mom_6m = _pct_change_n(bench_close, config.MOMENTUM_SHORT_DAYS)
         if result["momentum_6m"] is not None and bench_mom_6m is not None:
             result["rel_strength_6m"] = result["momentum_6m"] - bench_mom_6m
