@@ -62,6 +62,18 @@ def test_log_and_get_experiment_roundtrips_all_fields(tmp_path, monkeypatch):
     pd.testing.assert_series_equal(row["returns"], returns.sort_index(), check_names=False)
 
 
+def test_log_experiment_stores_data_fingerprint_when_given(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    exp_id = rl.log_experiment("A", "RESEARCH", True, data_fingerprint="abc123def456")
+    assert rl.get_experiment(exp_id)["data_fingerprint"] == "abc123def456"
+
+
+def test_log_experiment_data_fingerprint_defaults_to_none(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    exp_id = rl.log_experiment("A", "RESEARCH", True)
+    assert rl.get_experiment(exp_id)["data_fingerprint"] is None
+
+
 def test_log_experiment_captures_python_version_and_env_fingerprint(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
     monkeypatch.setattr(rl, "_env_fingerprint", lambda: "deadbeef1234")

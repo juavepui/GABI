@@ -108,7 +108,7 @@ def test_research_lab_migrates_experiments_table_without_new_columns(tmp_path, m
     row = experiments.iloc[0]
     assert row["model_id"] == "GABI-MF-v0"  # dato antiguo intacto
     assert row["git_commit"] == "old1234"
-    for col in ("deps_json", "python_version", "env_fingerprint"):
+    for col in ("deps_json", "python_version", "env_fingerprint", "data_fingerprint"):
         assert col in experiments.columns
         assert row[col] is None  # columnas nuevas, sin dato retroactivo
 

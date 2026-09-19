@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS experiments (
     deps_json TEXT,
     python_version TEXT,
     env_fingerprint TEXT,
+    data_fingerprint TEXT,
     sharpe REAL,
     sortino REAL,
     max_drawdown REAL,
@@ -91,6 +92,8 @@ def _ensure_columns(conn):
         conn.execute("ALTER TABLE experiments ADD COLUMN python_version TEXT")
     if "env_fingerprint" not in columns:
         conn.execute("ALTER TABLE experiments ADD COLUMN env_fingerprint TEXT")
+    if "data_fingerprint" not in columns:
+        conn.execute("ALTER TABLE experiments ADD COLUMN data_fingerprint TEXT")
 
 
 def _dependency_versions() -> dict:
@@ -135,6 +138,7 @@ def log_experiment(
     family: str = None, sharpe: float = None, sortino: float = None, max_drawdown: float = None,
     total_return: float = None, annualized_return: float = None, periods_per_year: float = None,
     n_periods: int = None, returns: pd.Series = None, notes: str = None, result: dict = None,
+    data_fingerprint: str = None,
 ) -> int:
     """Registra un experimento. `stage` debe ser uno de `STAGES`.
     `git_commit` se captura automáticamente (`git rev-parse --short HEAD`) si
@@ -142,7 +146,14 @@ def log_experiment(
     produjo. `returns` (opcional, `pd.Series` indexada por fecha): la serie
     de retornos real del experimento -- si se guarda, habilita PSR exacto,
     bootstrap y PBO/CSCV para este experimento en `stats_rigor.py`; si no,
-    solo queda disponible la aproximación normal a partir del Sharpe resumen."""
+    solo queda disponible la aproximación normal a partir del Sharpe resumen.
+
+    `data_fingerprint` (opcional, ver `data_quality.compute_data_fingerprint`):
+    a diferencia de `env_fingerprint` (que fija las DEPENDENCIAS), este fija
+    los DATOS concretos usados -- no se calcula aquí automáticamente porque
+    research_lab no conoce el universo de símbolos de cada run; lo calcula
+    el llamador, que sí lo sabe (ej. el backtest de 🕰️ Ranking histórico), y
+    lo pasa ya hecho."""
     if stage not in STAGES:
         raise ValueError(f"stage debe ser uno de {STAGES}.")
     if git_commit is None:
@@ -159,15 +170,15 @@ def log_experiment(
         cur = conn.execute(
             "INSERT INTO experiments (created_at, model_id, git_commit, data_cutoff, universe, factors, "
             "weights_json, n_positions, rebalance, cost_model, is_start, is_end, oos_start, oos_end, "
-            "hypothesis_registered, stage, family, deps_json, python_version, env_fingerprint, sharpe, "
-            "sortino, max_drawdown, total_return, annualized_return, periods_per_year, n_periods, "
-            "returns_json, notes, result_json) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "hypothesis_registered, stage, family, deps_json, python_version, env_fingerprint, "
+            "data_fingerprint, sharpe, sortino, max_drawdown, total_return, annualized_return, "
+            "periods_per_year, n_periods, returns_json, notes, result_json) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (pd.Timestamp.now().isoformat(), model_id, git_commit, data_cutoff, universe, factors,
              json.dumps(weights) if weights else None, n_positions, rebalance, cost_model,
              is_start, is_end, oos_start, oos_end, int(bool(hypothesis_registered)), stage, family,
-             deps_json, python_version, env_fingerprint, sharpe, sortino, max_drawdown, total_return,
-             annualized_return, periods_per_year, n_periods, returns_json, notes,
+             deps_json, python_version, env_fingerprint, data_fingerprint, sharpe, sortino, max_drawdown,
+             total_return, annualized_return, periods_per_year, n_periods, returns_json, notes,
              json.dumps(result) if result else None),
         )
         conn.commit()
