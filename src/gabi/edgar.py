@@ -724,7 +724,10 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
     if cik_map is None and not cik_by_symbol:
         # Sin mapeo en vivo Y sin nada en la caché local: no hay forma de
         # seguir para ninguno de los símbolos pedidos.
-        return {"edgar_refreshed": 0, "failed": {s: live_map_error for s in symbols}}
+        failed = {s: live_map_error for s in symbols}
+        storage.record_update_errors("sec_edgar", failed)
+        return {"edgar_refreshed": 0, "failed": failed}
 
     failed = fetch_edgar_batch(stale, cik_by_symbol, progress_cb=progress_cb) if stale else {}
+    storage.record_update_errors("sec_edgar", failed)
     return {"edgar_refreshed": len(stale) - len(failed), "failed": failed}

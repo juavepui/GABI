@@ -164,6 +164,7 @@ def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=
             failed[sid] = reason
         if progress_cb:
             progress_cb(i + 1, len(stale), sid)
+    storage.record_update_errors("fred_macro", failed)
     return {"ok": True, "refreshed": len(stale) - len(failed), "failed": failed}
 
 

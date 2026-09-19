@@ -261,6 +261,10 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     for sym, reason in fundamentals_failed.items():
         failed.setdefault(sym, {})["fundamentales"] = reason
 
+    storage.record_update_errors("yahoo_precio", {s: r["precio"] for s, r in failed.items() if "precio" in r})
+    storage.record_update_errors(
+        "yahoo_fundamentales", {s: r["fundamentales"] for s, r in failed.items() if "fundamentales" in r})
+
     return {
         "price_refreshed": needs_price_refresh,
         "fundamentals_refreshed": len(stale) - len(fundamentals_failed),

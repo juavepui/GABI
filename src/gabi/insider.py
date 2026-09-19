@@ -273,7 +273,9 @@ def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: i
         cik_map = edgar.get_cik_map()
     except Exception as exc:
         _, reason = _classify_error(exc, service="SEC EDGAR")
-        return {"refreshed": 0, "failed": {s: reason for s in symbols}}
+        failed = {s: reason for s in symbols}
+        storage.record_update_errors("insider_form4", failed)
+        return {"refreshed": 0, "failed": failed}
 
     fetched_at = get_insider_fetched_at(symbols)
     now = datetime.now(UTC)
@@ -313,4 +315,5 @@ def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: i
             if progress_cb:
                 progress_cb(done, total, sym)
 
+    storage.record_update_errors("insider_form4", failed)
     return {"refreshed": len(stale) - len(failed), "failed": failed}

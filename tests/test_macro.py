@@ -19,6 +19,24 @@ def test_ensure_macro_data_without_api_key_does_not_hit_network(tmp_path, monkey
     assert result == {"ok": False, "reason": "no_api_key", "refreshed": 0, "failed": {}}
 
 
+def test_ensure_macro_data_persists_failures_to_update_errors(tmp_path, monkeypatch):
+    from gabi import config, storage
+    _isolate_db(tmp_path, monkeypatch)
+    config.FRED_KEY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    config.save_fred_key("fake-key")
+
+    def _boom(series_id, api_key, units="lin"):
+        raise RuntimeError("FRED no responde")
+
+    monkeypatch.setattr(macro, "fetch_series", _boom)
+    result = macro.ensure_macro_data(force=True)
+
+    assert result["failed"]  # todas las series fallan
+    errors = storage.get_recent_update_errors(source="fred_macro")
+    assert len(errors) == len(result["failed"])
+    assert set(errors["symbol"]) == set(result["failed"])
+
+
 def test_upsert_and_get_series_history_roundtrip(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
     obs = [("2026-09-01", 4.2), ("2026-08-01", 4.1), ("2026-07-01", 4.0)]

@@ -2,7 +2,7 @@
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
@@ -29,7 +29,17 @@ CREATE TABLE IF NOT EXISTS splits (
     ratio REAL NOT NULL,
     PRIMARY KEY (symbol, date)
 );
+CREATE TABLE IF NOT EXISTS update_errors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL,
+    symbol TEXT,
+    reason TEXT NOT NULL,
+    occurred_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_update_errors_source_time ON update_errors (source, occurred_at);
 """
+
+UPDATE_ERRORS_RETENTION_DAYS = 90
 
 
 @contextmanager
@@ -296,3 +306,42 @@ def get_fundamentals_fetched_at(symbols: list) -> dict:
         except Exception:
             result[symbol] = None
     return result
+
+
+def record_update_errors(source: str, failed: dict):
+    """Persiste los fallos de una actualización (`failed`: {symbol_o_series:
+    motivo}) -- antes de esto, `ensure_*` de data_fetch/edgar/insider/macro
+    solo devolvía `failed` como valor de retorno, así que se mostraba una
+    vez tras pulsar 'Actualizar datos' y se perdía; no había forma de saber
+    después qué había fallado en el último refresco. No-op si `failed` está
+    vacío. Poda entradas de más de `UPDATE_ERRORS_RETENTION_DAYS` en cada
+    llamada -- suficiente para una tabla de uso personal, sin mecanismo de
+    limpieza aparte."""
+    if not failed:
+        return
+    occurred_at = datetime.now(UTC).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=UPDATE_ERRORS_RETENTION_DAYS)).isoformat()
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        conn.executemany(
+            "INSERT INTO update_errors (source, symbol, reason, occurred_at) VALUES (?,?,?,?)",
+            [(source, symbol, str(reason), occurred_at) for symbol, reason in failed.items()],
+        )
+        conn.execute("DELETE FROM update_errors WHERE occurred_at < ?", (cutoff,))
+        conn.commit()
+
+
+def get_recent_update_errors(source: str = None, since_hours: float = 24 * 7) -> pd.DataFrame:
+    """Fallos de actualización de los últimos `since_hours` (por defecto, 7
+    días), opcionalmente filtrados por fuente ('yahoo_precio',
+    'yahoo_fundamentales', 'sec_edgar', 'insider_form4', 'fred_macro')."""
+    cutoff = (datetime.now(UTC) - timedelta(hours=since_hours)).isoformat()
+    query = "SELECT source, symbol, reason, occurred_at FROM update_errors WHERE occurred_at >= ?"
+    params: list = [cutoff]
+    if source:
+        query += " AND source = ?"
+        params.append(source)
+    query += " ORDER BY occurred_at DESC"
+    with get_connection() as conn:
+        conn.executescript(SCHEMA)
+        return pd.read_sql_query(query, conn, params=params)
