@@ -87,6 +87,7 @@ pages = [
     st.Page("pages/10_Carteras_Simuladas.py", title="Carteras simuladas", icon="🧪"),
     st.Page("pages/5_Panel_Macro.py", title="Panel Macro", icon="🌐"),
     st.Page("pages/4_Diario_Inversion.py", title="Diario de inversión", icon="📓"),
+    st.Page("pages/15_Salud_Datos.py", title="Salud de los datos", icon="🩺"),
     st.Page("pages/3_Configuracion.py", title="Configuración", icon="⚙️"),
 ]
 
