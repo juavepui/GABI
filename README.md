@@ -28,6 +28,15 @@ versiones exactas de cada dependencia quedan fijadas en `uv.lock`, así que dos
 instalaciones en fechas distintas usan siempre las mismas versiones de
 pandas, numpy, yfinance, etc.
 
+En Windows, instala `uv` una vez con PowerShell (no hace falta Python
+preinstalado, `uv` también gestiona la versión de Python):
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Y luego, en el proyecto:
+
 ```bash
 uv sync
 ```
