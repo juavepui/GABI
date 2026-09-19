@@ -6,7 +6,7 @@ datos, timeout, red, respuesta inválida...) para poder explicarle al usuario
 por qué ha fallado cada empresa, en vez de solo decir "ha fallado"."""
 import concurrent.futures as cf
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 import yfinance as yf
@@ -144,7 +144,7 @@ def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
     """Migra el caché de precios antiguo y refresca los símbolos desactualizados, para las decisiones de cartera."""
     symbols = list(dict.fromkeys(symbols))
     coverage = storage.get_price_coverage(symbols)
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     need = []
     for symbol in symbols:
         item = coverage.get(symbol, {})
@@ -224,7 +224,7 @@ def fetch_fundamentals_batch(symbols: list, max_workers: int = 6, progress_cb=No
 
 
 def _is_stale_trading_day(latest_date) -> bool:
-    return (datetime.now(timezone.utc).date() - latest_date).days >= 1
+    return (datetime.now(UTC).date() - latest_date).days >= 1
 
 
 def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None):
@@ -245,7 +245,7 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     price_failed = fetch_prices_batch(price_symbols) if needs_price_refresh else {}
 
     fetched_at = storage.get_fundamentals_fetched_at(symbols)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stale = [
         s for s in symbols
         if force or fetched_at.get(s) is None

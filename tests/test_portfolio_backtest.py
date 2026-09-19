@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, edgar, portfolio_backtest as pb, storage
+from gabi import config, edgar, storage
+from gabi import portfolio_backtest as pb
 
 
 def _seed_prices(dates, symbol_closes):
@@ -103,8 +104,8 @@ def test_rebalance_conserves_value_minus_commissions():
 def test_rebalance_charges_spread_on_traded_amount_only():
     shares = {}
     entry_price = {"AAA": 100.0}
-    result = pb._rebalance(cash=1000.0, shares=shares, picks=["AAA"],
-                           entry_price=entry_price, top_n=1, commission_usd=0.0, spread_bps=200.0)
+    pb._rebalance(cash=1000.0, shares=shares, picks=["AAA"],
+                  entry_price=entry_price, top_n=1, commission_usd=0.0, spread_bps=200.0)
     # target = 1000; spread 200pb -> half = 1%. shares = 1000 / (100*1.01)
     assert shares["AAA"] == pytest.approx(1000 / (100 * 1.01))
 

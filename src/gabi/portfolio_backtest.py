@@ -15,10 +15,11 @@ compra / reduce lo cobrado en la venta (`_apply_trade`, ver
 `sim_portfolios._cash_delta`/`replay`). No se inventa un modelo nuevo."""
 from datetime import date
 
-import pandas as pd
 import exchange_calendars as xcals
+import pandas as pd
 
-from . import broker_costs, edgar, multifactor_backtest as v1, screener_asof, storage, universe
+from . import broker_costs, edgar, screener_asof, storage, universe
+from . import multifactor_backtest as v1
 
 _CALENDAR = "XNYS"
 

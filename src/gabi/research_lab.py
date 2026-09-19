@@ -20,10 +20,20 @@ validado":
   influido en el diseño -- la prueba más honesta que existe."""
 import json
 import subprocess
+from importlib.metadata import PackageNotFoundError, version
 
 import pandas as pd
 
 from . import config, storage
+
+# Paquetes cuya versión exacta puede cambiar el resultado numérico de un
+# backtest (cálculo, no solo I/O) -- se registran junto al commit para que un
+# experimento antiguo sea reproducible sin tener que adivinar qué versión de
+# pandas/numpy estaba instalada en su momento.
+TRACKED_PACKAGES = [
+    "pandas", "numpy", "scipy", "yfinance", "pyportfolioopt",
+    "backtesting", "exchange_calendars", "quantstats",
+]
 
 STAGES = ["RESEARCH", "IN_SAMPLE", "OUT_OF_SAMPLE", "LIVE_FORWARD"]
 
@@ -54,6 +64,7 @@ CREATE TABLE IF NOT EXISTS experiments (
     hypothesis_registered INTEGER NOT NULL,
     stage TEXT NOT NULL,
     family TEXT,
+    deps_json TEXT,
     sharpe REAL,
     sortino REAL,
     max_drawdown REAL,
@@ -66,6 +77,21 @@ CREATE TABLE IF NOT EXISTS experiments (
     result_json TEXT
 );
 """
+
+
+def _ensure_columns(conn):
+    if "deps_json" not in {row[1] for row in conn.execute("PRAGMA table_info(experiments)")}:
+        conn.execute("ALTER TABLE experiments ADD COLUMN deps_json TEXT")
+
+
+def _dependency_versions() -> dict:
+    versions = {}
+    for pkg in TRACKED_PACKAGES:
+        try:
+            versions[pkg] = version(pkg)
+        except PackageNotFoundError:
+            pass
+    return versions
 
 
 def _current_git_commit() -> str | None:
@@ -100,18 +126,20 @@ def log_experiment(
     returns_json = None
     if returns is not None:
         returns_json = json.dumps({str(k): float(v) for k, v in returns.dropna().items()})
+    deps_json = json.dumps(_dependency_versions())
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_columns(conn)
         cur = conn.execute(
             "INSERT INTO experiments (created_at, model_id, git_commit, data_cutoff, universe, factors, "
             "weights_json, n_positions, rebalance, cost_model, is_start, is_end, oos_start, oos_end, "
-            "hypothesis_registered, stage, family, sharpe, sortino, max_drawdown, total_return, "
+            "hypothesis_registered, stage, family, deps_json, sharpe, sortino, max_drawdown, total_return, "
             "annualized_return, periods_per_year, n_periods, returns_json, notes, result_json) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (pd.Timestamp.now().isoformat(), model_id, git_commit, data_cutoff, universe, factors,
              json.dumps(weights) if weights else None, n_positions, rebalance, cost_model,
              is_start, is_end, oos_start, oos_end, int(bool(hypothesis_registered)), stage, family,
-             sharpe, sortino, max_drawdown, total_return, annualized_return, periods_per_year,
+             deps_json, sharpe, sortino, max_drawdown, total_return, annualized_return, periods_per_year,
              n_periods, returns_json, notes, json.dumps(result) if result else None),
         )
         conn.commit()
@@ -132,6 +160,7 @@ def list_experiments(family: str = None, stage: str = None) -> pd.DataFrame:
     query += " ORDER BY id DESC"
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_columns(conn)
         conn.commit()
         return pd.read_sql_query(query, conn, params=params)
 
@@ -139,6 +168,7 @@ def list_experiments(family: str = None, stage: str = None) -> pd.DataFrame:
 def get_experiment(experiment_id: int) -> dict:
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
+        _ensure_columns(conn)
         row = conn.execute("SELECT * FROM experiments WHERE id = ?", (experiment_id,)).fetchone()
         columns = [d[0] for d in conn.execute("SELECT * FROM experiments LIMIT 0").description]
         conn.commit()
@@ -147,6 +177,7 @@ def get_experiment(experiment_id: int) -> dict:
     data = dict(zip(columns, row))
     data["weights"] = json.loads(data["weights_json"]) if data.get("weights_json") else None
     data["result"] = json.loads(data["result_json"]) if data.get("result_json") else None
+    data["deps"] = json.loads(data["deps_json"]) if data.get("deps_json") else None
     if data.get("returns_json"):
         series = pd.Series(json.loads(data["returns_json"]))
         series.index = pd.to_datetime(series.index)

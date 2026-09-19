@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import academic_factors as af, config
+from gabi import academic_factors as af
+from gabi import config
 
 
 def test_parse_monthly_csv_ignores_annual_section():

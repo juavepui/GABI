@@ -1,7 +1,7 @@
 """Obtiene el universo de empresas a analizar (constituyentes del S&P 500),
 tanto el actual como (aproximado) el de una fecha pasada."""
-import requests
 import pandas as pd
+import requests
 
 from . import config
 

@@ -20,12 +20,13 @@ sobre ~20-50 valores es cuestión de milisegundos), así que el coste total es
 aproximadamente el de un solo backtest V2, no seis."""
 from datetime import date
 
+import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
-import exchange_calendars as xcals
 
-from . import broker_costs, decision_engine, edgar, multifactor_backtest as v1, portfolio_backtest as v2, \
-    portfolio_metrics, screener_asof, storage, universe
+from . import broker_costs, decision_engine, edgar, portfolio_metrics, screener_asof, storage, universe
+from . import multifactor_backtest as v1
+from . import portfolio_backtest as v2
 
 _CALENDAR = "XNYS"
 

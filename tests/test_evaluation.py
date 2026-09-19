@@ -44,7 +44,7 @@ def test_snapshot_default_name_uses_date(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     table = pd.DataFrame({"composite_score": [80.], "score_coverage": [.9]}, index=["AAA"])
-    snapshot = evaluation.save_snapshot(table, "2024-01-02")
+    evaluation.save_snapshot(table, "2024-01-02")
     row = evaluation.list_snapshots().iloc[0]
     assert row["name"] == "Ranking 2024-01-02"
 

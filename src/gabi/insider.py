@@ -13,7 +13,7 @@ De momento es solo informativo (se muestra en la Ficha de empresa): no entra
 en el Composite Score. Igual que con el resto de bloques nuevos, primero hay
 que ver si la señal aporta algo con datos reales antes de dejar que vote."""
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 import requests
@@ -192,7 +192,7 @@ def upsert_insider_transactions(symbol: str, rows: list):
             )
         conn.execute(
             "INSERT OR REPLACE INTO insider_fetch_meta (symbol, fetched_at) VALUES (?, ?)",
-            (symbol, datetime.now(timezone.utc).isoformat()),
+            (symbol, datetime.now(UTC).isoformat()),
         )
         conn.commit()
 
@@ -276,7 +276,7 @@ def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: i
         return {"refreshed": 0, "failed": {s: reason for s in symbols}}
 
     fetched_at = get_insider_fetched_at(symbols)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stale = [
         s for s in symbols
         if fetched_at.get(s) is None or (now - fetched_at[s]).total_seconds() > max_age_hours * 3600

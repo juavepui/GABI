@@ -23,16 +23,22 @@ alcista en un horizonte de 6-12 meses, y sobre todo **entender por qué**.
 
 ## Instalación
 
+Requiere [uv](https://docs.astral.sh/uv/) (gestor de paquetes/entornos). Las
+versiones exactas de cada dependencia quedan fijadas en `uv.lock`, así que dos
+instalaciones en fechas distintas usan siempre las mismas versiones de
+pandas, numpy, yfinance, etc.
+
 ```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -r requirements.txt
+uv sync
 ```
+
+Esto crea `.venv/` e instala dependencias + dependencias de desarrollo
+(pytest, ruff, mypy). Para actualizar versiones deliberadamente: `uv lock --upgrade`.
 
 ## Uso
 
 ```bash
-streamlit run app/streamlit_app.py
+uv run streamlit run app/streamlit_app.py
 ```
 
 0. Si vienes sin experiencia previa, empieza por **🎓 Aprender** (términos, estrategias, psicología).
@@ -228,8 +234,13 @@ data/           caché SQLite + CSVs + claves locales (todo gitignored)
 ## Ejecutar los tests
 
 ```bash
-pytest tests/
+uv run pytest
+uv run ruff check .     # linting
+uv run mypy src/gabi    # type checking
 ```
+
+Los tres se ejecutan también en CI (GitHub Actions) en cada push/PR a
+`main`/`develop`, contra las versiones exactas fijadas en `uv.lock`.
 
 ## Limitaciones conocidas
 

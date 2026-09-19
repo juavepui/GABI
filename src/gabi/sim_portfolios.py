@@ -1,10 +1,10 @@
 """Carteras locales (nunca conectadas a un bróker) de operaciones simuladas
 y fechadas de acciones/ETF."""
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from math import isfinite
 
-import pandas as pd
 import exchange_calendars as xcals
+import pandas as pd
 
 from . import storage
 
@@ -76,7 +76,7 @@ def create_portfolio(name: str, initial_cash: float, stock_commission: float = 1
                 "INSERT INTO sim_portfolios (name, initial_cash, stock_commission, etf_commission, spread_bps, created_at, base_currency) "
                 "VALUES (?,?,?,?,?,?,?)",
                 (name, initial_cash, stock_commission, etf_commission, spread_bps,
-                 datetime.now(timezone.utc).isoformat(), base_currency),
+                 datetime.now(UTC).isoformat(), base_currency),
             )
         except Exception as exc:
             if "UNIQUE" in str(exc).upper():
@@ -241,7 +241,7 @@ def add_trade(portfolio_id: int, symbol: str, asset_type: str, side: str,
         "notional": float(notional), "commission": float(commission),
         "spread_bps": float(spread_bps), "market": market,
         "quote_currency": quote_currency, "fx_rate": float(fx_rate), "fx_fee_bps": float(fx_fee_bps),
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
     combined = pd.concat([existing, pd.DataFrame([new_trade])], ignore_index=True)
     symbols = combined["symbol"].unique().tolist()

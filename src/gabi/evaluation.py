@@ -1,5 +1,4 @@
 """Guarda candidatas rankeadas y evalúa más adelante su rentabilidad total frente al SPY."""
-import sqlite3
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 

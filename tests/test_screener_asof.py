@@ -174,4 +174,4 @@ def test_build_ranking_as_of_uses_entity_master_sector_not_todays_universe(tmp_p
     df = result["table"]
     assert df.loc["AAA", "sector"] == "Salud"
     assert df.loc["AAA", "name"] == "Empresa A"
-    assert df.loc["AAA", "sector_is_approximate"] == False  # foto de 2019-01, fecha pedida 2019-06: real
+    assert not df.loc["AAA", "sector_is_approximate"]  # foto de 2019-01, fecha pedida 2019-06: real

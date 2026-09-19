@@ -9,7 +9,7 @@ El objetivo no es meter macro en el score (eso ya es terreno de "qué factor
 funciona bajo qué régimen", que requiere el backtesting que se decidió NO
 construir todavía) sino tener a mano, al escribir una tesis en el Diario de
 inversión, las relaciones causales típicas: tipos, inflación, curva, crédito..."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 import requests
@@ -102,7 +102,7 @@ def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 
 
 
 def upsert_series(series_id: str, observations: list):
-    fetched_at = datetime.now(timezone.utc).isoformat()
+    fetched_at = datetime.now(UTC).isoformat()
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
         conn.executemany(
@@ -148,7 +148,7 @@ def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=
         return {"ok": False, "reason": "no_api_key", "refreshed": 0, "failed": {}}
 
     fetched_at = get_all_fetched_at()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stale = [
         sid for sid in SERIES
         if force or fetched_at.get(sid) is None

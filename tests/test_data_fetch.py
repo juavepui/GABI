@@ -98,7 +98,9 @@ def test_ensure_price_history_asof_skips_network_when_all_covered(tmp_path, monk
 
 def test_decision_prices_migrate_only_missing_adjusted_history(tmp_path, monkeypatch):
     from datetime import date
+
     import pandas as pd
+
     from gabi import config, storage
 
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
@@ -124,6 +126,7 @@ def test_decision_prices_migrate_only_missing_adjusted_history(tmp_path, monkeyp
 
 def test_single_ticker_multiindex_download_keeps_adjusted_close(tmp_path, monkeypatch):
     import pandas as pd
+
     from gabi import config, storage
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")

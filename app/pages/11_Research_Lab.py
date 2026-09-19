@@ -54,6 +54,14 @@ else:
            "max_drawdown", "hypothesis_registered", "git_commit", "tiene retornos", "notes"]
     st.dataframe(display[[c for c in cols if c in display.columns]], hide_index=True, width="stretch")
 
+    with st.expander("🔧 Ver dependencias registradas de un experimento"):
+        dep_id = st.selectbox("Experimento", filtered["id"], key="deps_id")
+        deps = research_lab.get_experiment(int(dep_id)).get("deps")
+        if deps:
+            st.table(pd.DataFrame(sorted(deps.items()), columns=["paquete", "versión"]))
+        else:
+            st.caption("Este experimento no tiene dependencias registradas (creado antes de esta función).")
+
     del1, del2 = st.columns([3, 1])
     del_id = del1.number_input("Eliminar experimento por id", min_value=0, value=0, step=1, key="del_id")
     if del2.button("Eliminar", key="del_button") and del_id:

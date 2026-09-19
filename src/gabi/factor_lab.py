@@ -14,12 +14,14 @@ nada, solo se mide algo distinto: información del score, no el resultado de
 una cartera concreta (por eso el retorno futuro aquí NUNCA lleva coste)."""
 from datetime import date
 
+import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
-import exchange_calendars as xcals
 from scipy import stats as scipy_stats
 
-from . import multifactor_backtest as v1, portfolio_backtest as v2, screener_asof, storage, universe
+from . import multifactor_backtest as v1
+from . import portfolio_backtest as v2
+from . import screener_asof, storage, universe
 
 _CALENDAR = "XNYS"
 

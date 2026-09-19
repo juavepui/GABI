@@ -106,6 +106,7 @@ def test_parse_form4_xml_detects_10b5_1_plan_from_footnote():
 
 def test_parse_form4_xml_handles_malformed_xml_gracefully():
     import xml.etree.ElementTree as ET
+
     import pytest
     with pytest.raises(ET.ParseError):
         insider.parse_form4_xml("<not valid xml")

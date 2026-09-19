@@ -2,7 +2,7 @@
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -242,7 +242,7 @@ def get_latest_price_date(symbols: list = None):
 
 
 def upsert_fundamentals(symbol: str, info: dict, quarterly_income_df, quarterly_cashflow_df):
-    fetched_at = datetime.now(timezone.utc).isoformat()
+    fetched_at = datetime.now(UTC).isoformat()
     payload = (
         symbol, fetched_at,
         json.dumps(info),

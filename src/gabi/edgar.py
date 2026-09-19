@@ -10,7 +10,7 @@ Yahoo son poco fiables o directamente no existen:
     de la empresa (justo lo que recomienda cualquier guía de aprendizaje).
 """
 import concurrent.futures as cf
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pandas as pd
 import requests
@@ -158,7 +158,7 @@ def _remember_cik_resolution(symbol: str, cik: str, title: str):
         conn.executescript(RESOLUTIONS_SCHEMA)
         conn.execute(
             "INSERT OR REPLACE INTO cik_resolutions (symbol, cik, title, resolved_at) VALUES (?,?,?,?)",
-            (symbol, cik, title, datetime.now(timezone.utc).isoformat()),
+            (symbol, cik, title, datetime.now(UTC).isoformat()),
         )
         conn.commit()
 
@@ -584,7 +584,7 @@ def _fetch_one(symbol: str, cik: str) -> tuple:
 
 
 def upsert_edgar_metrics(symbol: str, cik: str, metrics: dict):
-    fetched_at = datetime.now(timezone.utc).isoformat()
+    fetched_at = datetime.now(UTC).isoformat()
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
         conn.execute(
@@ -703,7 +703,7 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
 
     fetched_at = get_edgar_fetched_at(symbols)
     with_facts = get_symbols_with_facts(symbols)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stale = [
         s for s in symbols
         if force or fetched_at.get(s) is None

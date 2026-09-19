@@ -1,7 +1,7 @@
 """Orquesta universo -> datos -> métricas -> técnicos -> riesgo -> scoring en una sola tabla."""
 import pandas as pd
 
-from . import config, storage, data_fetch, edgar, entity_master, macro, universe, metrics, technicals, risk, scoring
+from . import config, data_fetch, edgar, entity_master, macro, metrics, risk, scoring, storage, technicals, universe
 
 
 def get_universe(limit: int = None, force_refresh: bool = False) -> pd.DataFrame:

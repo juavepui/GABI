@@ -6,7 +6,9 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, portfolio_lab as pl, portfolio_backtest as pb, storage
+from gabi import config, storage
+from gabi import portfolio_backtest as pb
+from gabi import portfolio_lab as pl
 
 
 def _seed_prices(dates, symbol_closes):
