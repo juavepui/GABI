@@ -1,3 +1,4 @@
+import platform
 import sys
 from pathlib import Path
 
@@ -59,6 +60,31 @@ def test_log_and_get_experiment_roundtrips_all_fields(tmp_path, monkeypatch):
     assert row["result"] == {"extra": "dato libre"}
     assert row["n_periods"] == 36
     pd.testing.assert_series_equal(row["returns"], returns.sort_index(), check_names=False)
+
+
+def test_log_experiment_captures_python_version_and_env_fingerprint(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(rl, "_env_fingerprint", lambda: "deadbeef1234")
+    exp_id = rl.log_experiment("A", "RESEARCH", True)
+    row = rl.get_experiment(exp_id)
+    assert row["python_version"] == platform.python_version()
+    assert row["env_fingerprint"] == "deadbeef1234"
+
+
+def test_env_fingerprint_is_stable_for_same_lockfile_and_changes_with_it(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "BASE_DIR", tmp_path)
+    lock = tmp_path / "uv.lock"
+    lock.write_text("version = 1\n")
+    first = rl._env_fingerprint()
+    assert first == rl._env_fingerprint()  # mismo contenido -> mismo fingerprint
+
+    lock.write_text("version = 2\n")
+    assert rl._env_fingerprint() != first  # lockfile distinto -> fingerprint distinto
+
+
+def test_env_fingerprint_is_none_without_lockfile(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "BASE_DIR", tmp_path)  # sin uv.lock aquí
+    assert rl._env_fingerprint() is None
 
 
 def test_get_experiment_missing_id_returns_empty_dict(tmp_path, monkeypatch):

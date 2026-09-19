@@ -54,9 +54,15 @@ else:
            "max_drawdown", "hypothesis_registered", "git_commit", "tiene retornos", "notes"]
     st.dataframe(display[[c for c in cols if c in display.columns]], hide_index=True, width="stretch")
 
-    with st.expander("🔧 Ver dependencias registradas de un experimento"):
+    with st.expander("🔧 Ver entorno registrado de un experimento"):
         dep_id = st.selectbox("Experimento", filtered["id"], key="deps_id")
-        deps = research_lab.get_experiment(int(dep_id)).get("deps")
+        exp = research_lab.get_experiment(int(dep_id))
+        e1, e2 = st.columns(2)
+        e1.metric("Versión de Python", exp.get("python_version") or "—")
+        e2.metric("Fingerprint del entorno (uv.lock)", exp.get("env_fingerprint") or "—",
+                  help="Hash corto de uv.lock -- dos experimentos con el mismo fingerprint instalaron "
+                       "exactamente el mismo árbol de dependencias, transitivas incluidas.")
+        deps = exp.get("deps")
         if deps:
             st.table(pd.DataFrame(sorted(deps.items()), columns=["paquete", "versión"]))
         else:

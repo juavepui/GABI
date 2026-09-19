@@ -18,7 +18,9 @@ validado":
   distinto nunca explorado).
 - **LIVE_FORWARD**: seguimiento real a partir de hoy, sin margen para haber
   influido en el diseño -- la prueba más honesta que existe."""
+import hashlib
 import json
+import platform
 import subprocess
 from importlib.metadata import PackageNotFoundError, version
 
@@ -65,6 +67,8 @@ CREATE TABLE IF NOT EXISTS experiments (
     stage TEXT NOT NULL,
     family TEXT,
     deps_json TEXT,
+    python_version TEXT,
+    env_fingerprint TEXT,
     sharpe REAL,
     sortino REAL,
     max_drawdown REAL,
@@ -80,8 +84,13 @@ CREATE TABLE IF NOT EXISTS experiments (
 
 
 def _ensure_columns(conn):
-    if "deps_json" not in {row[1] for row in conn.execute("PRAGMA table_info(experiments)")}:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(experiments)")}
+    if "deps_json" not in columns:
         conn.execute("ALTER TABLE experiments ADD COLUMN deps_json TEXT")
+    if "python_version" not in columns:
+        conn.execute("ALTER TABLE experiments ADD COLUMN python_version TEXT")
+    if "env_fingerprint" not in columns:
+        conn.execute("ALTER TABLE experiments ADD COLUMN env_fingerprint TEXT")
 
 
 def _dependency_versions() -> dict:
@@ -92,6 +101,21 @@ def _dependency_versions() -> dict:
         except PackageNotFoundError:
             pass
     return versions
+
+
+def _env_fingerprint() -> str | None:
+    """Hash corto de `uv.lock` -- a diferencia de `deps_json` (una lista
+    curada de paquetes que afectan el cálculo), esto fija TODO el árbol de
+    dependencias resuelto (transitivas incluidas) en un único valor
+    comparable: si dos experimentos tienen el mismo fingerprint, se
+    instalaron exactamente los mismos paquetes, sin tener que diffear el
+    lockfile entero a mano. None si no se encuentra (ej. instalación sin
+    checkout del repo, sin `uv.lock` junto al código)."""
+    lock_path = config.BASE_DIR / "uv.lock"
+    try:
+        return hashlib.sha256(lock_path.read_bytes()).hexdigest()[:12]
+    except OSError:
+        return None
 
 
 def _current_git_commit() -> str | None:
@@ -127,20 +151,24 @@ def log_experiment(
     if returns is not None:
         returns_json = json.dumps({str(k): float(v) for k, v in returns.dropna().items()})
     deps_json = json.dumps(_dependency_versions())
+    python_version = platform.python_version()
+    env_fingerprint = _env_fingerprint()
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
         _ensure_columns(conn)
         cur = conn.execute(
             "INSERT INTO experiments (created_at, model_id, git_commit, data_cutoff, universe, factors, "
             "weights_json, n_positions, rebalance, cost_model, is_start, is_end, oos_start, oos_end, "
-            "hypothesis_registered, stage, family, deps_json, sharpe, sortino, max_drawdown, total_return, "
-            "annualized_return, periods_per_year, n_periods, returns_json, notes, result_json) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "hypothesis_registered, stage, family, deps_json, python_version, env_fingerprint, sharpe, "
+            "sortino, max_drawdown, total_return, annualized_return, periods_per_year, n_periods, "
+            "returns_json, notes, result_json) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (pd.Timestamp.now().isoformat(), model_id, git_commit, data_cutoff, universe, factors,
              json.dumps(weights) if weights else None, n_positions, rebalance, cost_model,
              is_start, is_end, oos_start, oos_end, int(bool(hypothesis_registered)), stage, family,
-             deps_json, sharpe, sortino, max_drawdown, total_return, annualized_return, periods_per_year,
-             n_periods, returns_json, notes, json.dumps(result) if result else None),
+             deps_json, python_version, env_fingerprint, sharpe, sortino, max_drawdown, total_return,
+             annualized_return, periods_per_year, n_periods, returns_json, notes,
+             json.dumps(result) if result else None),
         )
         conn.commit()
         return cur.lastrowid
