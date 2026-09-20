@@ -33,10 +33,16 @@ CREATE TABLE IF NOT EXISTS ranking_snapshots (
 def _ensure_snapshot_columns(conn):
     """`name` se añadió después — misma migración ligera que ya usa
     decision_engine.py para sus planes guardados: ALTER TABLE si falta la
-    columna, y un nombre por defecto para snapshots antiguos sin nombre."""
+    columna, y un nombre por defecto para snapshots antiguos sin nombre.
+    `confidence`/`sector` se añadieron para signal_monitor.py -- snapshots
+    antiguos se quedan con NULL ahí (se comparan con lo que tengan)."""
     columns = {row[1] for row in conn.execute("PRAGMA table_info(ranking_snapshots)")}
     if "name" not in columns:
         conn.execute("ALTER TABLE ranking_snapshots ADD COLUMN name TEXT")
+    if "confidence" not in columns:
+        conn.execute("ALTER TABLE ranking_snapshots ADD COLUMN confidence REAL")
+    if "sector" not in columns:
+        conn.execute("ALTER TABLE ranking_snapshots ADD COLUMN sector TEXT")
     conn.execute(
         "UPDATE ranking_snapshots SET name = 'Ranking ' || as_of_date "
         "WHERE name IS NULL OR TRIM(name) = ''"
@@ -62,10 +68,12 @@ def save_snapshot(table: pd.DataFrame, as_of_date: str, source: str = "live", to
         _ensure_snapshot_columns(conn)
         snapshot_id = conn.execute("SELECT COALESCE(MAX(snapshot_id), 0) + 1 FROM ranking_snapshots").fetchone()[0]
         conn.executemany(
-            "INSERT INTO ranking_snapshots (snapshot_id, created_at, as_of_date, source, symbol, rank, score, coverage, name) "
-            "VALUES (?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO ranking_snapshots (snapshot_id, created_at, as_of_date, source, symbol, rank, score, "
+            "coverage, name, confidence, sector) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             [(snapshot_id, _now_madrid_iso(), as_of_date, source, symbol, rank,
-              float(row.composite_score), float(row.score_coverage), name)
+              float(row.composite_score), float(row.score_coverage), name,
+              float(row.confidence) if "confidence" in row and pd.notna(row.confidence) else None,
+              row.sector if "sector" in row and pd.notna(row.sector) else None)
              for rank, (symbol, row) in enumerate(candidates.iterrows(), 1)],
         )
         conn.commit()
@@ -99,6 +107,35 @@ def snapshot_symbols(snapshot_id: int) -> list[str]:
         return [r[0] for r in conn.execute(
             "SELECT symbol FROM ranking_snapshots WHERE snapshot_id=? ORDER BY rank", (snapshot_id,)
         )]
+
+
+def get_snapshot_table(snapshot_id: int) -> pd.DataFrame:
+    """Un snapshot guardado, indexado por symbol -- misma forma (rank/score/
+    coverage/confidence/sector) que espera signal_monitor.compare_snapshots.
+    confidence/sector pueden venir NULL en snapshots guardados antes de que
+    existieran esas columnas."""
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        _ensure_snapshot_columns(conn)
+        df = pd.read_sql_query(
+            "SELECT symbol, rank, score AS composite_score, coverage AS score_coverage, confidence, sector "
+            "FROM ranking_snapshots WHERE snapshot_id=? ORDER BY rank", conn, params=(snapshot_id,),
+        )
+    return df.set_index("symbol")
+
+
+def latest_snapshot_id() -> int | None:
+    """El snapshot más reciente guardado (por fecha de creación, no por
+    snapshot_id numérico -- coinciden salvo que se borre alguno a mano) --
+    el "último snapshot compatible" de signal_monitor cuando no se pide uno
+    concreto."""
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        _ensure_snapshot_columns(conn)
+        row = conn.execute(
+            "SELECT snapshot_id FROM ranking_snapshots ORDER BY created_at DESC, snapshot_id DESC LIMIT 1"
+        ).fetchone()
+    return row[0] if row else None
 
 
 def _adjusted_at(symbol: str, target: pd.Timestamp, after: bool = False):
