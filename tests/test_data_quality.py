@@ -8,7 +8,20 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, data_quality, edgar, entity_master, insider, macro, scoring, storage
+from gabi import config, data_quality, edgar, entity_master, identity, insider, macro, scoring, storage
+
+
+@pytest.fixture(autouse=True)
+def isolated_offline_cache(tmp_path, monkeypatch):
+    _set_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(edgar, "CIK_CACHE", tmp_path / "sec_cik_map.csv")
+    monkeypatch.setattr(edgar, "get_cik_map", lambda: pd.DataFrame(columns=["symbol", "cik", "title"]))
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Los checks de calidad no deben realizar peticiones de red")
+
+    monkeypatch.setattr("requests.sessions.Session.request", forbidden)
+    monkeypatch.setattr("socket.create_connection", forbidden)
 
 
 def _set_db(tmp_path, monkeypatch):
@@ -249,3 +262,75 @@ def test_low_confidence_candidates_flags_only_symbols_below_threshold():
 def test_low_confidence_candidates_without_confidence_column_returns_empty():
     df = pd.DataFrame({"other": [1, 2]}, index=["AAA", "BBB"])
     assert data_quality.low_confidence_candidates(df, ["AAA"]) == []
+
+
+def test_missing_metric_column_never_counts_as_complete():
+    df = pd.DataFrame({"pe_pct": [50.0]})
+    assert data_quality.score_block_coverage(df)["value"]["complete"] == 0
+
+
+@pytest.mark.parametrize("value", ["invalid", "2020-01-01", datetime(2020, 1, 1),
+                                  datetime.now(UTC) + timedelta(days=1)])
+def test_invalid_or_future_freshness_is_unknown(value):
+    assert data_quality._age_hours(value) is None
+
+
+def test_fingerprint_detects_corrected_history_and_benchmark():
+    storage.upsert_prices("AAA", _price_df("2024-01-05"))
+    original = data_quality.compute_data_fingerprint(["AAA"])
+    corrected = _price_df("2024-01-05")
+    corrected.iloc[0, corrected.columns.get_loc("Adj Close")] = 80.0
+    storage.upsert_prices("AAA", corrected)
+    changed = data_quality.compute_data_fingerprint(["AAA"])
+    assert original != changed
+    storage.upsert_prices(config.BENCHMARK_SYMBOL, _price_df("2024-01-05"))
+    assert data_quality.compute_data_fingerprint(["AAA"]) != changed
+
+
+def test_fingerprint_detects_sector_splits_and_inputs():
+    original = data_quality.compute_data_fingerprint(["AAA"])
+    entity_master.record_snapshot(pd.DataFrame({"symbol": ["AAA"], "sector": ["Tech"]}), "2020-01-01")
+    sector = data_quality.compute_data_fingerprint(["AAA"])
+    assert sector != original
+    storage.upsert_splits("AAA", {"2024-01-01": 2.0})
+    split = data_quality.compute_data_fingerprint(["AAA"])
+    assert split != sector
+    assert data_quality.compute_data_fingerprint(["AAA"], inputs={"cutoff": "2024-01-01"}) != split
+
+
+def test_cached_cik_without_csv_and_explicit_sector_reference():
+    edgar._remember_cik_resolution("AAA", "0000000001", "Acme")
+    assert data_quality.universe_summary(["AAA"])["cik"]["resolved"] == 1
+    entity_master.record_snapshot(pd.DataFrame({"symbol": ["AAA"], "cik": ["0000000001"], "sector": ["Tech"]}), "2020-01-01")
+    identity.add_alias("cik:0000000001", "AAA", "2010-01-01", source="test:historical-identity")
+    assert data_quality.symbol_provenance("AAA", "2019-01-01")["entity_master"]["status"] == "approximate"
+    assert data_quality.symbol_provenance("AAA", "2021-01-01")["entity_master"]["status"] == "point_in_time"
+    assert data_quality.symbol_provenance("BBB", "2021-01-01")["entity_master"]["status"] == "missing"
+
+
+def test_empty_fred_download_is_not_data_coverage():
+    macro.upsert_series("DGS10", [])
+    fred = data_quality.universe_summary(["AAA"])["sources"]["fred"]
+    assert fred["coverage"] == 0
+    assert fred["fresh"] == 0
+
+
+def test_ranking_quality_counts_missing_sector_only_once_and_thresholds():
+    df = pd.DataFrame({"sector": [None, "Tech"], "sector_is_approximate": [True, False]})
+    quality = data_quality.ranking_quality(df)
+    assert quality["sector_degraded"] == 0.5
+    assert any("Sector" in w for w in data_quality.ranking_quality_warnings(quality, 0.7))
+    assert not any("Sector" in w for w in data_quality.ranking_quality_warnings(quality, 0.4))
+
+
+def test_global_status_keeps_structural_degradation_visible():
+    summary = data_quality.universe_summary(["AAA"])
+    assert summary["status"] == "degraded"
+    assert summary["structural_limitations"]
+
+
+def test_fred_latest_observation_is_independent_of_download_time():
+    macro.upsert_series("DGS10", [("2020-01-01", 2.0)])
+    fred = data_quality.universe_summary(["AAA"])["sources"]["fred"]
+    assert fred["latest_dates"]["DGS10"] == "2020-01-01"
+    assert fred["coverage"] == pytest.approx(1 / len(macro.SERIES))

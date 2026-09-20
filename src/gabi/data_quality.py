@@ -12,6 +12,7 @@ agrega lo que ya existe: no añade ninguna fuente, umbral ni llamada de red
 nueva -- todo se lee de la caché local (SQLite/CSV), nunca dispara un
 fetch, así que es seguro de usar en tests."""
 import hashlib
+import json
 from datetime import UTC, datetime
 
 import pandas as pd
@@ -51,7 +52,27 @@ def _age_hours(fetched_at) -> float | None:
             fetched_at = datetime.fromisoformat(fetched_at)
         except ValueError:
             return None
-    return (datetime.now(UTC) - fetched_at).total_seconds() / 3600
+    if not isinstance(fetched_at, datetime) or fetched_at.tzinfo is None:
+        return None
+    age = (datetime.now(UTC) - fetched_at).total_seconds() / 3600
+    return age if age >= 0 else None
+
+
+def local_cik_status(symbols: list) -> dict:
+    """Resuelve únicamente contra archivos/tablas locales, sin refrescar ni escribir."""
+    result = dict.fromkeys(symbols)
+    with storage.get_connection() as conn:
+        exists = conn.execute("SELECT 1 FROM sqlite_master WHERE name='cik_resolutions'").fetchone()
+        if exists:
+            for symbol, cik in conn.execute("SELECT symbol, cik FROM cik_resolutions"):
+                if symbol in result:
+                    result[symbol] = cik
+    if edgar.CIK_CACHE.exists():
+        frame = pd.read_csv(edgar.CIK_CACHE, dtype={"cik": str})
+        mapping = dict(zip(frame["symbol"], frame["cik"], strict=True))
+        for symbol in symbols:
+            result[symbol] = mapping.get(symbol, mapping.get(symbol.replace(".", "-"), result[symbol]))
+    return result
 
 
 def _fetched_at_summary(label: str, symbols: list, fetched_map: dict, threshold_hours: float) -> dict:
@@ -93,7 +114,7 @@ def universe_summary(symbols: list) -> dict:
         if not latest:
             continue
         age_days = (today - pd.Timestamp(latest, tz="UTC")).days
-        if age_days <= PRICE_STALE_DAYS:
+        if 0 <= age_days <= PRICE_STALE_DAYS:
             fresh_price += 1
         if oldest_price_date is None or latest < oldest_price_date:
             oldest_price_date = latest
@@ -117,7 +138,7 @@ def universe_summary(symbols: list) -> dict:
 
     today_iso = pd.Timestamp.now(tz="UTC").date().isoformat()
     entity_snapshots_today = entity_master.get_sector_asof(symbols, today_iso)
-    has_snapshot = sum(1 for s in symbols if entity_snapshots_today[s]["effective_date"] is not None)
+    has_snapshot = sum(1 for s in symbols if entity_snapshots_today[s]["sector"])
     # "is_approximate" no dice nada preguntando por HOY -- cualquier foto que
     # exista ya es <= hoy por construcción, así que siempre saldría exacta.
     # Lo que de verdad importa es cuánto ALCANCE point-in-time real hay hacia
@@ -130,7 +151,7 @@ def universe_summary(symbols: list) -> dict:
     entity_snapshots_past = entity_master.get_sector_asof(symbols, reference_past_date)
     exact_for_reference_past = sum(
         1 for s in symbols
-        if entity_snapshots_past[s]["effective_date"] is not None and not entity_snapshots_past[s]["is_approximate"]
+        if entity_snapshots_past[s]["sector"] and not entity_snapshots_past[s]["is_approximate"]
     )
     sources["entity_master"] = {
         "label": "Entity Master (sector)", "coverage": has_snapshot / n,
@@ -140,12 +161,27 @@ def universe_summary(symbols: list) -> dict:
     }
 
     cik_status = None
-    if edgar.CIK_CACHE.exists():
-        cik_map = edgar.get_cik_map()
-        resolved = sum(1 for s in symbols if edgar.get_cik_for_symbol(s, cik_map=cik_map)[0])
+    local_ciks = local_cik_status(symbols)
+    if edgar.CIK_CACHE.exists() or any(local_ciks.values()):
+        resolved = sum(bool(cik) for cik in local_ciks.values())
         cik_status = {"resolved": resolved, "total": n, "pct": resolved / n}
 
     macro_fetched = macro.get_all_fetched_at()
+    fred_dates = {}
+    for series_id in macro.SERIES:
+        history = macro.get_series_history(series_id)
+        valid = history.dropna(subset=["value"]) if not history.empty else history
+        fred_dates[series_id] = str(valid.index.max().date()) if not valid.empty else None
+    fred = _fetched_at_summary("FRED", list(macro.SERIES), macro_fetched, 24)
+    fred["have"] = sum(value is not None for value in fred_dates.values())
+    fred["coverage"] = fred["have"] / len(macro.SERIES)
+    fred["latest_dates"] = fred_dates
+    fred["fresh_n"] = sum(
+        fred_dates[s] is not None and (age := _age_hours(macro_fetched.get(s))) is not None and age <= 24
+        for s in macro.SERIES
+    )
+    fred["fresh"] = fred["fresh_n"] / len(macro.SERIES)
+    sources["fred"] = fred
     macro_status = None
     if macro_fetched:
         ages: list[float] = [a for dt in macro_fetched.values() if (a := _age_hours(dt)) is not None]
@@ -155,10 +191,11 @@ def universe_summary(symbols: list) -> dict:
             "threshold_hours": 24,
         }
 
-    return {"n_symbols": n, "sources": sources, "cik": cik_status, "macro": macro_status}
+    return {"n_symbols": n, "sources": sources, "cik": cik_status, "macro": macro_status,
+            "status": "degraded", "structural_limitations": list(STRUCTURAL_LIMITATIONS)}
 
 
-def symbol_provenance(symbol: str) -> dict:
+def symbol_provenance(symbol: str, as_of: str | None = None) -> dict:
     """Para una empresa concreta: qué fuente y qué fecha respalda cada pieza
     de dato detrás de su score actual -- el "de dónde procede este
     resultado". Distingue `fetched_at` (cuándo lo descargó GABI) de la fecha
@@ -183,10 +220,12 @@ def symbol_provenance(symbol: str) -> dict:
     # universe_summary, para que el flag diga algo real sobre el alcance
     # point-in-time disponible, no un "sí" trivial.
     reference_past_date = (pd.Timestamp.now(tz="UTC") - pd.DateOffset(years=1)).date().isoformat()
+    reference_past_date = as_of or reference_past_date
     entity_snapshot = entity_master.get_sector_asof([symbol], reference_past_date)[symbol]
 
     return {
         "symbol": symbol,
+        "cik": local_cik_status([symbol])[symbol],
         "prices": {
             "latest_date": latest_price_date,
             "adjusted_sessions": price_row.get("adjusted_count", 0),
@@ -212,6 +251,9 @@ def symbol_provenance(symbol: str) -> dict:
             "threshold_hours": 24,
         },
         "entity_master": {
+            "reference_date": reference_past_date,
+            "status": ("missing" if not entity_snapshot["sector"] else
+                       "approximate" if entity_snapshot["is_approximate"] else "point_in_time"),
             "sector": entity_snapshot["sector"],
             "effective_date": entity_snapshot["effective_date"],
             "is_approximate": entity_snapshot["is_approximate"],
@@ -240,7 +282,7 @@ def score_block_coverage(df: pd.DataFrame) -> dict:
             continue
         counts = df[available].notna().sum(axis=1)
         result[block] = {
-            "complete": float((counts == len(available)).sum()) / n,
+            "complete": float((counts == len(cols)).sum()) / n,
             "any": float((counts > 0).sum()) / n,
             "none": float((counts == 0).sum()) / n,
             "n_metrics": len(cols),
@@ -254,33 +296,57 @@ def recent_errors_summary(since_hours: float = 24 * 7) -> pd.DataFrame:
     return storage.get_recent_update_errors(since_hours=since_hours)
 
 
-def compute_data_fingerprint(symbols: list) -> str:
-    """Hash reproducible de qué datos concretos respaldan un run (precio,
-    fundamentales, SEC EDGAR más recientes cacheados para cada símbolo) --
-    distinto de `research_lab._env_fingerprint` (que fija las DEPENDENCIAS,
-    no los datos). Dos runs con el mismo `data_fingerprint` usaron
-    exactamente los mismos datos cacheados, aunque el código y las
-    dependencias hayan cambiado entre medias; si cambia CUALQUIER fecha de
-    dato usada (se refrescó un precio o un 10-K entre dos ejecuciones), el
-    fingerprint cambia aunque el universo de símbolos sea el mismo.
+def compute_data_fingerprint(symbols: list | None = None, *, inputs: dict | None = None) -> str:
+    """SHA-256 v2 del contenido local, en una transacción de lectura coherente.
 
-    Determinista: incluye una versión ordenada de `symbols` (deduplicado)
-    en el hash, así que el orden de entrada no importa. No dispara ningún
-    fetch -- lee solo de la caché local."""
-    symbols = sorted(set(symbols))
-    price_coverage = storage.get_price_coverage(symbols)
-    fundamentals_fetched = storage.get_fundamentals_fetched_at(symbols)
-    edgar_fetched = edgar.get_edgar_fetched_at(symbols)
-    parts = []
-    for s in symbols:
-        latest_price = price_coverage.get(s, {}).get("latest_adjusted_date") or ""
-        fund_at = fundamentals_fetched.get(s)
-        edg_at = edgar_fetched.get(s)
-        parts.append(
-            f"{s}|{latest_price}|{fund_at.isoformat() if fund_at else ''}|{edg_at.isoformat() if edg_at else ''}"
-        )
-    payload = "\n".join(parts)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+    Incluye precios (también benchmark), splits, XBRL, fundamentales, sectores,
+    CIK, FRED y composición del universo. None incluye todos los símbolos.
+    El llamador debe capturarlo al ejecutar, y conservarlo con el resultado.
+    Identifica una caché: no conserva por sí solo una copia recuperable de ella.
+    """
+    selected = None if symbols is None else sorted(set(symbols) | {config.BENCHMARK_SYMBOL})
+    digest = hashlib.sha256()
+
+    def feed(value):
+        digest.update(json.dumps(value, sort_keys=True, ensure_ascii=False,
+                                 separators=(",", ":"), default=str).encode("utf-8"))
+        digest.update(b"\n")
+
+    feed({"version": 2, "symbols": selected, "inputs": inputs or {}})
+    tables = ("prices", "splits", "fundamentals", "edgar_metrics", "edgar_facts",
+              "entity_snapshots", "cik_resolutions", "macro_series", "macro_meta",
+              "entities", "entity_aliases", "entity_observations", "entity_candidates")
+    with storage.get_connection() as conn:
+        conn.execute("BEGIN")
+        existing = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        for table in tables:
+            feed(table)
+            if table not in existing:
+                continue
+            columns = [r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')]
+            # Download times do not change the actual financial input.
+            columns = [c for c in columns if c not in {"fetched_at", "resolved_at"}]
+            feed(columns)
+            fields = ",".join(f'"{c}"' for c in columns)
+            query = f'SELECT {fields} FROM "{table}"'
+            params = []
+            if selected is not None and "symbol" in columns and not table.startswith("entit"):
+                query += " WHERE symbol IN (" + ",".join("?" for _ in selected) + ")"
+                params = selected
+            query += " ORDER BY " + fields
+            for row in conn.execute(query, params):
+                feed([json.loads(value) if column.endswith("_json") and value else value
+                      for column, value in zip(columns, row, strict=True)])
+    for name in ("sp500_constituents.csv", "sp500_historical_membership.csv", "sec_cik_map.csv"):
+        path = config.DATA_DIR / name
+        feed(name)
+        if path.exists():
+            frame = pd.read_csv(path, dtype=str).fillna("")
+            columns = sorted(frame.columns)
+            feed(columns)
+            for row in sorted(frame[columns].itertuples(index=False, name=None)):
+                feed(row)
+    return "v2:" + digest.hexdigest()
 
 
 # Umbrales por defecto para los avisos visibles en Screener/Ranking
@@ -288,6 +354,27 @@ def compute_data_fingerprint(symbols: list) -> str:
 # valores son solo el punto de partida razonable.
 DEFAULT_DEGRADED_BLOCK_THRESHOLD = 0.70  # % de cobertura COMPLETA de un bloque por debajo del cual se avisa
 DEFAULT_CONFIDENCE_THRESHOLD = 60.0  # confidence (0-100) de una candidata por debajo del cual se avisa
+
+
+def ranking_quality(df: pd.DataFrame) -> dict:
+    """Diagnóstico serializable del universo realmente evaluado en una fecha."""
+    missing = df.get("sector", pd.Series(index=df.index, dtype=object)).isna()
+    approximate = df.get("sector_is_approximate", pd.Series(True, index=df.index)).fillna(True)
+    return {
+        "blocks": score_block_coverage(df),
+        "sector_degraded": float((missing | approximate).mean()) if len(df) else 1.0,
+        "identity_unresolved": float(df["identity_status"].ne("resolved").mean()) if "identity_status" in df else None,
+    }
+
+
+def ranking_quality_warnings(quality: dict, threshold: float = DEFAULT_DEGRADED_BLOCK_THRESHOLD) -> list[str]:
+    warnings = block_coverage_warnings(quality["blocks"], threshold)
+    unresolved = quality.get("identity_unresolved")
+    if unresolved is not None and unresolved > 0:
+        warnings.append(f"Identidad histórica sin acreditar en {unresolved:.0%} del universo; excluida del score.")
+    if quality["sector_degraded"] > 1 - threshold:
+        warnings.append(f"Sector aproximado o ausente en {quality['sector_degraded']:.0%} del universo.")
+    return warnings
 
 
 def block_coverage_warnings(block_coverage: dict, threshold: float = DEFAULT_DEGRADED_BLOCK_THRESHOLD) -> list[str]:
