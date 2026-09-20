@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 import streamlit as st
 
-from gabi import config, data_quality, evaluation, screener
+from gabi import app_mode, config, data_quality, evaluation, screener
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("📊 Screener")
@@ -24,23 +24,31 @@ DISPLAY_KEYS = [
     "value_score", "quality_score", "momentum_score", "risk_score", "composite_score", "confidence",
 ]
 
+mode = app_mode.get_mode()
 saved_weights = config.load_weights()
 
 with st.sidebar:
     st.header("Pesos del score")
-    st.caption(
-        "💡 Si estás empezando, considera dar más peso a Value y Quality que a Momentum: "
-        "los fundamentos importan más que los indicadores técnicos al principio."
-    )
-    w_value = st.slider("Value", 0, 100, int(saved_weights.get("value", 0.30) * 100), help=METRIC_INFO["value_score"]["help"])
-    w_quality = st.slider("Quality", 0, 100, int(saved_weights.get("quality", 0.35) * 100), help=METRIC_INFO["quality_score"]["help"])
-    w_momentum = st.slider("Momentum", 0, 100, int(saved_weights.get("momentum", 0.25) * 100), help=METRIC_INFO["momentum_score"]["help"])
-    w_risk = st.slider("Risk", 0, 100, int(saved_weights.get("risk", 0.10) * 100), help=METRIC_INFO["risk_score"]["help"])
-    total_w = max(w_value + w_quality + w_momentum + w_risk, 1)
-    weights = {
-        "value": w_value / total_w, "quality": w_quality / total_w,
-        "momentum": w_momentum / total_w, "risk": w_risk / total_w,
-    }
+    if mode == "INVESTOR":
+        weights = dict(app_mode.FROZEN_WEIGHTS)
+        st.caption(
+            f"🔒 Bloqueados a la {app_mode.FROZEN_LABEL} -- Value 30% · Quality 35% · Momentum 25% · "
+            "Risk 10%. Cambia a modo Research (arriba del todo) para experimentar con otros pesos."
+        )
+    else:
+        st.caption(
+            "💡 Si estás empezando, considera dar más peso a Value y Quality que a Momentum: "
+            "los fundamentos importan más que los indicadores técnicos al principio."
+        )
+        w_value = st.slider("Value", 0, 100, int(saved_weights.get("value", 0.30) * 100), help=METRIC_INFO["value_score"]["help"])
+        w_quality = st.slider("Quality", 0, 100, int(saved_weights.get("quality", 0.35) * 100), help=METRIC_INFO["quality_score"]["help"])
+        w_momentum = st.slider("Momentum", 0, 100, int(saved_weights.get("momentum", 0.25) * 100), help=METRIC_INFO["momentum_score"]["help"])
+        w_risk = st.slider("Risk", 0, 100, int(saved_weights.get("risk", 0.10) * 100), help=METRIC_INFO["risk_score"]["help"])
+        total_w = max(w_value + w_quality + w_momentum + w_risk, 1)
+        weights = {
+            "value": w_value / total_w, "quality": w_quality / total_w,
+            "momentum": w_momentum / total_w, "risk": w_risk / total_w,
+        }
 
     st.header("Filtros")
     search_query = st.text_input(
@@ -83,6 +91,11 @@ if block_warnings:
         "disponibles (ver 🩺 Calidad de los datos):\n\n" + "\n".join(f"- {w}" for w in block_warnings),
         icon="⚠️",
     )
+
+if mode == "RESEARCH":
+    experimental_banner = app_mode.experimental_banner_message(weights)
+    if experimental_banner:
+        st.warning(experimental_banner, icon="🧪")
 
 filtered = df.copy()
 if search_query.strip():

@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import config, screener
+from gabi import app_mode, config, screener
 
 st.title("⚙️ Configuración")
 
@@ -123,29 +123,37 @@ if result is not None:
 
 st.divider()
 st.subheader("Pesos del score compuesto")
-st.caption("Se guardan como valores por defecto para el Screener (puedes seguir ajustándolos allí).")
 
-weights = config.load_weights()
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    w_value = st.slider("Value", 0, 100, int(weights.get("value", 0.30) * 100), help="Peso de lo barata que está la empresa (PER, PEG, P/VC, P/Ventas, EV/EBITDA).")
-with col2:
-    w_quality = st.slider("Quality", 0, 100, int(weights.get("quality", 0.35) * 100), help="Peso de la calidad de los fundamentales (rentabilidad, ROIC, márgenes, crecimiento).")
-with col3:
-    w_momentum = st.slider("Momentum", 0, 100, int(weights.get("momentum", 0.25) * 100), help="Peso de las señales técnicas de tendencia alcista (medias móviles, RSI, fuerza relativa).")
-with col4:
-    w_risk = st.slider("Risk", 0, 100, int(weights.get("risk", 0.10) * 100), help="Peso de lo poco arriesgada que es la empresa (deuda, volatilidad, máximo drawdown, Sharpe, Sortino). Más alto = penaliza más el riesgo.")
+if app_mode.get_mode() == "INVESTOR":
+    st.caption(
+        f"🔒 Bloqueados a la {app_mode.FROZEN_LABEL} -- Value 30% · Quality 35% · Momentum 25% · "
+        "Risk 10%. Cambia a modo Research (menú lateral, arriba del todo) para poder editarlos: en "
+        "Investor no hay forma de tocar por accidente los pesos por defecto del modelo ya validado."
+    )
+else:
+    st.caption("Se guardan como valores por defecto para el Screener (puedes seguir ajustándolos allí).")
 
-if st.button("💾 Guardar pesos por defecto"):
-    total = max(w_value + w_quality + w_momentum + w_risk, 1)
-    new_weights = {
-        "value": w_value / total,
-        "quality": w_quality / total,
-        "momentum": w_momentum / total,
-        "risk": w_risk / total,
-    }
-    config.save_weights(new_weights)
-    st.success("Pesos guardados.")
+    weights = config.load_weights()
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        w_value = st.slider("Value", 0, 100, int(weights.get("value", 0.30) * 100), help="Peso de lo barata que está la empresa (PER, PEG, P/VC, P/Ventas, EV/EBITDA).")
+    with col2:
+        w_quality = st.slider("Quality", 0, 100, int(weights.get("quality", 0.35) * 100), help="Peso de la calidad de los fundamentales (rentabilidad, ROIC, márgenes, crecimiento).")
+    with col3:
+        w_momentum = st.slider("Momentum", 0, 100, int(weights.get("momentum", 0.25) * 100), help="Peso de las señales técnicas de tendencia alcista (medias móviles, RSI, fuerza relativa).")
+    with col4:
+        w_risk = st.slider("Risk", 0, 100, int(weights.get("risk", 0.10) * 100), help="Peso de lo poco arriesgada que es la empresa (deuda, volatilidad, máximo drawdown, Sharpe, Sortino). Más alto = penaliza más el riesgo.")
+
+    if st.button("💾 Guardar pesos por defecto"):
+        total = max(w_value + w_quality + w_momentum + w_risk, 1)
+        new_weights = {
+            "value": w_value / total,
+            "quality": w_quality / total,
+            "momentum": w_momentum / total,
+            "risk": w_risk / total,
+        }
+        config.save_weights(new_weights)
+        st.success("Pesos guardados.")
 
 st.divider()
 st.subheader("🌐 API key de FRED (panel macro)")
