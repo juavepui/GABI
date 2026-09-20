@@ -6,13 +6,22 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import edgar, entity_master, screener_asof, storage, universe
+from gabi import edgar, entity_master, identity, screener_asof, storage, universe
 
 
 def _isolate_db(tmp_path, monkeypatch):
     from gabi import config
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+    # These synthetic metric tests use known issuers; provenance is explicit.
+    entities = {}
+    for symbol, cik in (("AAA", "1"), ("BBB", "2")):
+        entities[symbol] = identity.ensure_entity(cik)
+        identity.add_alias(entities[symbol], symbol, "2000-01-01", source="synthetic-fixture")
+    original_prices, original_splits, original_facts = storage.upsert_prices, storage.upsert_splits, edgar.upsert_edgar_facts
+    monkeypatch.setattr(storage, "upsert_prices", lambda s, df: original_prices(s, df, entity_id=entities.get(s)))
+    monkeypatch.setattr(storage, "upsert_splits", lambda s, splits: original_splits(s, splits, entity_id=entities.get(s)))
+    monkeypatch.setattr(edgar, "upsert_edgar_facts", lambda s, rows: original_facts(s, rows, cik={"AAA": "1", "BBB": "2"}.get(s)))
 
 
 def _price_df(start, n, start_price=100.0, daily_return=0.0005):
@@ -157,13 +166,13 @@ def test_build_ranking_as_of_uses_entity_master_sector_not_todays_universe(tmp_p
     _isolate_db(tmp_path, monkeypatch)
     storage.init_db()
     monkeypatch.setattr(edgar, "get_cik_map", lambda: pd.DataFrame(columns=["symbol", "cik", "title"]))
-    monkeypatch.setattr(edgar, "get_cik_for_symbol", lambda symbol, cik_map=None: (None, None))
+    monkeypatch.setattr(edgar, "get_cik_for_symbol", lambda symbol, cik_map=None: ("0000000001", "Empresa A"))
     # Si build_ranking_as_of todavía usara el universo actual, esto rompería
     # (no hay red/caché disponible) -- confirma que ya no se llama en absoluto.
     monkeypatch.delattr(universe, "get_sp500_constituents")
 
     entity_master.record_snapshot(
-        pd.DataFrame([{"symbol": "AAA", "name": "Empresa A", "sector": "Salud", "industry": "Farma"}]),
+        pd.DataFrame([{"symbol": "AAA", "cik": "0000000001", "name": "Empresa A", "sector": "Salud", "industry": "Farma"}]),
         effective_date="2019-01-01",
     )
     _seed_edgar_facts("AAA", revenue=1000, net_income=150, equity=500, debt=100, shares=100,

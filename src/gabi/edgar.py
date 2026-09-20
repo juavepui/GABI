@@ -310,9 +310,11 @@ def _extract_raw_facts(facts: dict, tags: list, unit: str = "USD") -> list:
     return rows
 
 
-def upsert_edgar_facts(symbol: str, rows: list):
+def upsert_edgar_facts(symbol: str, rows: list, *, cik: str | None = None):
     if not rows:
         return
+    from . import identity
+    entity_id = identity.ensure_entity(cik) if cik else None
     with storage.get_connection() as conn:
         conn.executescript(FACTS_SCHEMA)
         conn.executemany(
@@ -327,13 +329,24 @@ def upsert_edgar_facts(symbol: str, rows: list):
                 for r in rows
             ],
         )
+        if entity_id:
+            identity.put_observations(conn, entity_id, "edgar_facts", symbol, rows,
+                                      f"https://data.sec.gov/api/xbrl/companyfacts/CIK{identity.normalize_cik(cik)}.json")
         conn.commit()
 
 
-def get_edgar_facts(symbol: str, tags: list = None) -> pd.DataFrame:
+def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = None) -> pd.DataFrame:
     """Histórico crudo y fechado para una empresa. Sin filtrar: incluye
     trimestres, anuales y restataciones. Base para reconstruir 'qué se sabía
     en una fecha concreta' (fase 2), no algo para usar directamente en scoring."""
+    if entity_id:
+        from .identity import observations
+        frame = observations(entity_id, "edgar_facts")
+        if not frame.empty:
+            if tags:
+                frame = frame[frame["tag"].isin(tags)]
+            frame = frame.drop_duplicates(["tag", "unit", "start_date", "end_date", "accn"])
+        return frame
     query = "SELECT * FROM edgar_facts WHERE symbol = ?"
     params = [symbol]
     if tags:
@@ -380,12 +393,12 @@ def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
     return {symbol: last for symbol, last in rows if last}
 
 
-def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD"):
+def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD", *, entity_id: str | None = None):
     """El valor de un concepto (probando los tags en orden) tal y como se
     conocía en as_of_date — el hecho con el filed_date más reciente que no
     sea posterior a esa fecha, evitando look-ahead bias. None si no había
     ningún dato presentado todavía."""
-    df = get_edgar_facts(symbol, tags=tags)
+    df = get_edgar_facts(symbol, tags=tags, entity_id=entity_id)
     if df.empty:
         return None
     df = df[(df["unit"] == unit) & (df["filed_date"].notna()) & (df["filed_date"] <= as_of_date)]
@@ -395,14 +408,14 @@ def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD")
     return float(df.iloc[-1]["val"])
 
 
-def get_shares_outstanding_as_of(symbol: str, as_of_date: str):
+def get_shares_outstanding_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None):
     """Nº de acciones en circulación conocido en as_of_date (para poder
     calcular capitalización de mercado y múltiplos de una fecha pasada sin
     usar el nº de acciones de HOY, que sería inconsistente con esa fecha)."""
-    return get_value_as_of(symbol, SHARES_TAGS, as_of_date, unit="shares")
+    return get_value_as_of(symbol, SHARES_TAGS, as_of_date, unit="shares", entity_id=entity_id)
 
 
-def _facts_dict_from_stored(symbol: str, as_of_date: str = None) -> dict:
+def _facts_dict_from_stored(symbol: str, as_of_date: str = None, *, entity_id: str | None = None) -> dict:
     """Reconstruye una estructura equivalente a la que devuelve
     fetch_company_facts(), pero leída de edgar_facts (ya descargado y
     guardado antes) y, si se pasa as_of_date, recortada a los hechos cuyo
@@ -410,7 +423,7 @@ def _facts_dict_from_stored(symbol: str, as_of_date: str = None) -> dict:
     compute_edgar_metrics() sin red y sin duplicar su lógica, tanto para
     'ahora' como para una fecha pasada — es la pieza central que hace
     posible compute_edgar_metrics_as_of()."""
-    df = get_edgar_facts(symbol)
+    df = get_edgar_facts(symbol, entity_id=entity_id)
     if df.empty:
         return {"facts": {"us-gaap": {}}}
     if as_of_date:
@@ -432,12 +445,12 @@ def _facts_dict_from_stored(symbol: str, as_of_date: str = None) -> dict:
     return {"facts": {"us-gaap": us_gaap}}
 
 
-def compute_edgar_metrics_as_of(symbol: str, as_of_date: str) -> dict:
+def compute_edgar_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
     """compute_edgar_metrics(), pero solo con lo que se conocía públicamente
     en as_of_date (sin red: usa edgar_facts, que debe haberse descargado
     antes desde ⚙️ Configuración). Es la reconstrucción fundamental point-in-
     time — la pieza que evita el look-ahead bias en el ranking histórico."""
-    facts = _facts_dict_from_stored(symbol, as_of_date=as_of_date)
+    facts = _facts_dict_from_stored(symbol, as_of_date=as_of_date, entity_id=entity_id)
     return compute_edgar_metrics(facts)
 
 
@@ -679,7 +692,7 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
             try:
                 metrics, raw_facts = fut.result()
                 upsert_edgar_metrics(sym, cik, metrics)
-                upsert_edgar_facts(sym, raw_facts)  # escritura en el hilo principal, no en el worker
+                upsert_edgar_facts(sym, raw_facts, cik=cik)  # atribución explícita al CIK descargado
             except Exception as exc:
                 _, reason = _classify_error(exc, service="SEC EDGAR")
                 failed[sym] = reason
@@ -688,7 +701,17 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
     return failed
 
 
-def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None) -> dict:
+def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
+                      *, as_of: str | None = None) -> dict:
+    if as_of:
+        from . import identity
+        resolved = {s: identity.resolve(s, as_of) for s in symbols}
+        ciks = {s: r["cik"] for s, r in resolved.items() if r["cik"]}
+        failed = {s: "Identidad/CIK histórico sin acreditar para esta fecha" for s in symbols if s not in ciks}
+        needed = [s for s in ciks if force or identity.observations(resolved[s]["entity_id"], "edgar_facts").empty]
+        failed.update(fetch_edgar_batch(needed, ciks, progress_cb=progress_cb))
+        storage.record_update_errors("sec_edgar", failed)
+        return {"edgar_refreshed": len(needed) - sum(s in failed for s in needed), "failed": failed}
     max_age_hours = max_age_hours or config.EDGAR_CACHE_MAX_AGE_HOURS
     symbols = list(dict.fromkeys(symbols))
 

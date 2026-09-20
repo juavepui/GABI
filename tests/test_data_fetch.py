@@ -44,26 +44,32 @@ def test_normalize_symbol_dots_to_dashes():
 
 
 def test_ensure_price_history_asof_only_fetches_symbols_without_coverage(tmp_path, monkeypatch):
-    from gabi import config, storage
+    from gabi import config, identity, storage
 
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
     storage.init_db()
+    entities = {symbol: identity.ensure_entity(cik) for symbol, cik in (("COVERED", "1"), ("NOTCOVERED", "2"))}
+    for symbol, owner in entities.items():
+        identity.add_alias(owner, symbol, "2010-01-01", source="test:known-issuer")
 
     import pandas as pd
     covered_df = pd.DataFrame(
         {"Open": [10], "High": [10], "Low": [10], "Close": [10], "Adj Close": [10], "Volume": [100]},
         index=pd.to_datetime(["2015-01-02"]),
     )
-    storage.upsert_prices("COVERED", covered_df)  # ya llega hasta 2015
+    storage.upsert_prices("COVERED", covered_df, entity_id=entities["COVERED"])  # ya llega hasta 2015
 
     calls = []
 
     def fake_fetch_prices_batch(symbols, period="2y"):
         calls.append((tuple(symbols), period))
+        for symbol in symbols:
+            storage.upsert_prices(symbol, covered_df, entity_id=entities[symbol])
         return {}
 
     monkeypatch.setattr(data_fetch, "fetch_prices_batch", fake_fetch_prices_batch)
+    monkeypatch.setattr(data_fetch, "fetch_splits_batch", lambda symbols: {})
 
     result = data_fetch.ensure_price_history_asof(["COVERED", "NOTCOVERED"], "2019-01-01")
 
@@ -74,18 +80,20 @@ def test_ensure_price_history_asof_only_fetches_symbols_without_coverage(tmp_pat
 
 
 def test_ensure_price_history_asof_skips_network_when_all_covered(tmp_path, monkeypatch):
-    from gabi import config, storage
+    from gabi import config, identity, storage
 
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
     storage.init_db()
+    owner = identity.ensure_entity("1")
+    identity.add_alias(owner, "COVERED", "2010-01-01", source="test:known-issuer")
 
     import pandas as pd
     df = pd.DataFrame(
         {"Open": [10], "High": [10], "Low": [10], "Close": [10], "Adj Close": [10], "Volume": [100]},
         index=pd.to_datetime(["2015-01-02"]),
     )
-    storage.upsert_prices("COVERED", df)
+    storage.upsert_prices("COVERED", df, entity_id=owner)
 
     def fail_if_called(*args, **kwargs):
         raise AssertionError("no debería llamar a la red si ya hay cobertura suficiente")

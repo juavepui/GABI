@@ -16,16 +16,21 @@ vez de romper el resto — igual que ya se hace en el screener "en vivo".
 """
 import pandas as pd
 
-from . import edgar, entity_master, risk, scoring, storage, technicals, universe
+from . import edgar, entity_master, identity, risk, scoring, storage, technicals, universe
 
 
-def _classic_metrics_as_of(symbol: str, as_of_date: str) -> dict:
+def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
     """Fundamentales + múltiplos clásicos (ROIC, deuda neta/EBITDA, crecimiento
     de FCF, márgenes, PER/P-VC/P-Ventas/EV-EBITDA) reconstruidos con lo que se
     conocía en as_of_date."""
-    m = edgar.compute_edgar_metrics_as_of(symbol, as_of_date)
-    price = storage.get_price_as_of(symbol, as_of_date) if storage.has_verified_price_as_of(symbol, as_of_date) else None
-    shares = edgar.get_shares_outstanding_as_of(symbol, as_of_date)
+    m = edgar.compute_edgar_metrics_as_of(symbol, as_of_date, entity_id=entity_id)
+    if entity_id:
+        history = identity.price_history(symbol, as_of_date, entity_id=entity_id)
+        history = history[history.index <= pd.Timestamp(as_of_date)] if not history.empty else history
+        price = float(history["close"].iloc[-1]) if not history.empty and pd.notna(history["adj_close"].iloc[-1]) else None
+    else:
+        price = storage.get_price_as_of(symbol, as_of_date) if storage.has_verified_price_as_of(symbol, as_of_date) else None
+    shares = edgar.get_shares_outstanding_as_of(symbol, as_of_date, entity_id=entity_id)
 
     # yfinance devuelve el precio siempre ajustado por splits (con o sin
     # auto_adjust) — para que la capitalización cuadre con el nº de acciones
@@ -36,7 +41,13 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str) -> dict:
     # por debajo en un caso con Apple, que tuvo un split 4:1 en 2020).
     price_asof_unadjusted = None
     if price is not None:
-        split_factor = storage.get_split_factor_since(symbol, as_of_date)
+        if entity_id:
+            splits = identity.observations(entity_id, "splits")
+            if not splits.empty:
+                splits = splits[splits["source_symbol"] == history.attrs.get("source_symbol", identity.normalize_symbol(symbol))]
+            split_factor = float(splits[splits["date"] > as_of_date]["ratio"].prod()) if not splits.empty else 1.0
+        else:
+            split_factor = storage.get_split_factor_since(symbol, as_of_date)
         price_asof_unadjusted = price * split_factor
 
     market_cap = price_asof_unadjusted * shares if price_asof_unadjusted and shares else None
@@ -74,8 +85,9 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str) -> dict:
     }
 
 
-def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp) -> pd.DataFrame:
-    df = storage.get_prices(symbol)
+def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp, *, entity_id: str | None = None) -> pd.DataFrame:
+    df = (identity.price_history(symbol, as_of_date.date().isoformat(), entity_id=entity_id)
+          if entity_id else storage.get_prices(symbol))
     if df.empty:
         return df
     df = df[df.index <= as_of_date]
@@ -86,7 +98,8 @@ def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp) -> pd.DataFrame:
     return df[df["adj_close"].notna()]
 
 
-def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = None) -> dict:
+def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = None,
+                        *, strict_identity: bool = False) -> dict:
     """Reconstruye el ranking completo para as_of_date (YYYY-MM-DD).
 
     symbols=None (por defecto) usa el universo histórico reconstruido para
@@ -97,7 +110,17 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     Devuelve {"table": DataFrame, "universe_info": {...}}. universe_info trae
     is_exact/source_date/note de universe.get_sp500_constituents_asof (o un
     aviso genérico si se pasó `symbols` explícitamente).
-    """
+
+    `strict_identity=False` por defecto (igual que `entity_master.get_sector_asof`,
+    con el mismo criterio): `data/gabi.db` no tiene alias migrados todavía
+    (ver `docs/entity-identity.md` -- la migración es aditiva y no se ha
+    ejecutado sobre la base real), así que con `strict_identity=True` por
+    defecto CUALQUIER backtest histórico falla con "ningún periodo tiene
+    datos suficientes" -- comprobado contra la base real. `True` sigue
+    disponible para cuando se complete la migración/atribución y se quiera
+    exigir identidad acreditada; hasta entonces, las empresas SIN alias
+    registrado (todas, hoy) siguen leyendo de la caché legacy por ticker,
+    exactamente como antes de este cambio."""
     if symbols is None:
         universe_info = universe.get_sp500_constituents_asof(as_of_date)
         symbols = universe_info["symbols"]
@@ -112,8 +135,13 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
 
     rows = []
     for sym in symbols:
-        classic = _classic_metrics_as_of(sym, as_of_date)
-        price_df = _price_history_as_of(sym, as_of_ts)
+        resolved = identity.resolve(sym, as_of_date)
+        entity_id = resolved["entity_id"]
+        # Explicit legacy mode is diagnostic only; a known conflicting/recycled
+        # alias never falls back to ticker-indexed data.
+        allowed = entity_id or (not strict_identity and not identity.has_aliases(sym))
+        classic = _classic_metrics_as_of(sym, as_of_date, entity_id=entity_id) if allowed else {"pe": None, "roic": None, "market_cap": None, "price": None}
+        price_df = _price_history_as_of(sym, as_of_ts, entity_id=entity_id) if allowed else pd.DataFrame()
 
         t = technicals.compute_technicals(price_df, bench_df) if not price_df.empty else {}
         r = risk.compute_risk_metrics(price_df, bench_df) if not price_df.empty else {}
@@ -123,13 +151,14 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
         # classic (corregida por splits posteriores, ver más arriba) es la
         # que debe quedar — la de technicals es el cierre tal cual, sin esa
         # corrección, pensado para el screener "en vivo" donde no aplica.
-        row = {"symbol": sym}
+        row = {"symbol": sym, "entity_id": entity_id, "identity_status": resolved["status"],
+               "identity_source": resolved["source"]}
         row.update(t)
         row.update(r)
         row.update(classic)
         rows.append(row)
 
-    df = pd.DataFrame(rows).set_index("symbol")
+    df = pd.DataFrame(rows).set_index("symbol") if rows else pd.DataFrame()
     if df.empty:
         return {"table": df, "universe_info": universe_info}
 
@@ -144,7 +173,7 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     # ninguna foto (deslistado antes de que existiera este mecanismo) sigue
     # sin sector -> scoring.py cae automáticamente al percentil global para
     # esas filas en vez de romper, igual que antes.
-    snapshots = entity_master.get_sector_asof(list(df.index), as_of_date)
+    snapshots = entity_master.get_sector_asof(list(df.index), as_of_date, strict_identity=strict_identity)
     df["sector"] = [snapshots[s]["sector"] for s in df.index]
     df["name"] = [snapshots[s]["name"] for s in df.index]
     df["sector_is_approximate"] = [snapshots[s]["is_approximate"] for s in df.index]

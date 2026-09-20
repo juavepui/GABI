@@ -15,15 +15,15 @@ guardada (todo el histórico 2016-2025 actual) no hay point-in-time real —
 marcada explícitamente (`is_approximate=True`) en vez de fingir que es un
 dato point-in-time genuino.
 
-Semilla de "Entity Master" (identidad por CIK, no por ticker, que cambia,
-se recicla o desaparece — pedido explícitamente por el usuario como
-funcionalidad futura): cada snapshot guarda también el CIK resuelto vía
-`edgar.get_cik_for_symbol`. Esto NO migra `prices`/`fundamentals`/
-`edgar_facts` (siguen indexadas por símbolo) — es solo el punto de partida,
-la migración completa queda fuera de esta iteración."""
+La identidad persistente y los alias temporales viven en `identity.py`.
+Los snapshots con CIK se atribuyen también a esa entidad. Las consultas
+estrictas nunca cruzan entre compañías que reutilizan un ticker; la API
+legacy se conserva para snapshots aún no migrados. Un snapshot fechado en
+el pasado exige CIK explícito para acreditar identidad: el mapa SEC actual
+no demuestra identidad histórica. Véase docs/entity-identity.md."""
 import pandas as pd
 
-from . import edgar, storage
+from . import edgar, identity, storage
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS entity_snapshots (
@@ -51,26 +51,43 @@ def record_snapshot(universe_df: pd.DataFrame, effective_date: str = None) -> in
     if universe_df.empty:
         return 0
     effective_date = effective_date or pd.Timestamp.today().date().isoformat()
-    cik_map = edgar.get_cik_map()
+    observed_today = effective_date == pd.Timestamp.today().date().isoformat()
+    cik_map = edgar.get_cik_map() if observed_today else None
     rows = []
+    attributed = []
     for _, row in universe_df.iterrows():
         symbol = row["symbol"]
         try:
-            cik, _title = edgar.get_cik_for_symbol(symbol, cik_map=cik_map)
+            explicit_cik = row.get("cik")
+            if explicit_cik is not None and pd.notna(explicit_cik):
+                cik = identity.normalize_cik(explicit_cik)
+            elif observed_today:
+                cik, _title = edgar.get_cik_for_symbol(symbol, cik_map=cik_map)
+            else:
+                cik = None  # today's mapping cannot certify a backdated snapshot
         except Exception:
             cik = None
         rows.append((symbol, cik, row.get("name"), row.get("sector"), row.get("industry"), effective_date))
+        if cik:
+            entity_id = identity.import_filing_identity(symbol, cik, effective_date,
+                                                        source="observed-universe-snapshot", name=row.get("name"))
+            attributed.append((entity_id, symbol, {
+                "name": row.get("name"), "sector": row.get("sector"), "industry": row.get("industry"),
+                "cik": cik, "effective_date": effective_date,
+            }))
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
         conn.executemany(
             "INSERT OR REPLACE INTO entity_snapshots (symbol, cik, name, sector, industry, effective_date) "
             "VALUES (?,?,?,?,?,?)", rows,
         )
+        for entity_id, symbol, payload in attributed:
+            identity.put_observations(conn, entity_id, "sector", symbol, [payload], "observed-universe-snapshot")
         conn.commit()
     return len(rows)
 
 
-def get_sector_asof(symbols: list, as_of_date: str) -> dict:
+def get_sector_asof(symbols: list, as_of_date: str, *, strict_identity: bool = False) -> dict:
     """{symbol: {"sector", "industry", "name", "cik", "effective_date",
     "is_approximate"}} en lote (el ranking la llama con el universo completo
     en cada periodo, igual que `edgar.get_last_filed_dates`).
@@ -85,6 +102,23 @@ def get_sector_asof(symbols: list, as_of_date: str) -> dict:
     que existiera este mecanismo) devuelven sector=None, igual que antes."""
     result = {s: {"sector": None, "industry": None, "name": None, "cik": None,
                   "effective_date": None, "is_approximate": True} for s in symbols}
+    if not symbols:
+        return result
+    legacy_symbols = []
+    for symbol in symbols:
+        resolved = identity.resolve(symbol, as_of_date)
+        if resolved["entity_id"]:
+            frame = identity.observations(resolved["entity_id"], "sector")
+            if not frame.empty:
+                before = frame[frame["effective_date"] <= as_of_date]
+                chosen = (before.sort_values("effective_date").iloc[-1] if not before.empty
+                          else frame.sort_values("effective_date").iloc[0])
+                result[symbol] = {key: chosen.get(key) for key in
+                                  ("sector", "industry", "name", "cik", "effective_date")}
+                result[symbol]["is_approximate"] = before.empty
+        elif not strict_identity and not identity.has_aliases(symbol):
+            legacy_symbols.append(symbol)
+    symbols = legacy_symbols
     if not symbols:
         return result
     placeholders = ",".join("?" * len(symbols))

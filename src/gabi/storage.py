@@ -91,7 +91,7 @@ def _df_to_json(df):
     return json.dumps(d.to_dict(orient="index"))
 
 
-def upsert_prices(symbol: str, price_df: pd.DataFrame):
+def upsert_prices(symbol: str, price_df: pd.DataFrame, *, entity_id: str | None = None):
     """price_df: DataFrame indexado por fecha con columnas Open/High/Low/Close/Volume
     (formato nativo de yfinance)."""
     if price_df is None or price_df.empty:
@@ -119,6 +119,11 @@ def upsert_prices(symbol: str, price_df: pd.DataFrame):
             "INSERT OR REPLACE INTO prices (symbol, date, open, high, low, close, volume, adj_close) "
             "VALUES (?,?,?,?,?,?,?,?)", records,
         )
+        if entity_id:
+            from .identity import put_observations
+            columns = ("symbol", "date", "open", "high", "low", "close", "volume", "adj_close")
+            put_observations(conn, entity_id, "prices", symbol,
+                             [dict(zip(columns, r, strict=True)) for r in records], "yahoo:explicit-entity")
         conn.commit()
 
 
@@ -203,7 +208,7 @@ def has_verified_price_as_of(symbol: str, as_of_date: str) -> bool:
     return bool(row and row[0] is not None)
 
 
-def upsert_splits(symbol: str, splits: dict):
+def upsert_splits(symbol: str, splits: dict, *, entity_id: str | None = None):
     """splits: {fecha_iso: ratio} — ej. {'2020-08-31': 4.0} para un split 4:1."""
     if not splits:
         return
@@ -213,6 +218,10 @@ def upsert_splits(symbol: str, splits: dict):
             "INSERT OR REPLACE INTO splits (symbol, date, ratio) VALUES (?,?,?)",
             [(symbol, d, r) for d, r in splits.items()],
         )
+        if entity_id:
+            from .identity import put_observations
+            put_observations(conn, entity_id, "splits", symbol,
+                             [{"date": d, "ratio": r} for d, r in splits.items()], "yahoo:explicit-entity")
         conn.commit()
 
 
@@ -251,7 +260,8 @@ def get_latest_price_date(symbols: list = None):
     return datetime.strptime(row[0], "%Y-%m-%d").date()
 
 
-def upsert_fundamentals(symbol: str, info: dict, quarterly_income_df, quarterly_cashflow_df):
+def upsert_fundamentals(symbol: str, info: dict, quarterly_income_df, quarterly_cashflow_df,
+                        *, entity_id: str | None = None):
     fetched_at = datetime.now(UTC).isoformat()
     payload = (
         symbol, fetched_at,
@@ -266,6 +276,12 @@ def upsert_fundamentals(symbol: str, info: dict, quarterly_income_df, quarterly_
             "(symbol, fetched_at, info_json, quarterly_income_json, quarterly_cashflow_json) "
             "VALUES (?,?,?,?,?)", payload,
         )
+        if entity_id:
+            from .identity import put_observations
+            put_observations(conn, entity_id, "fundamentals", symbol, [{
+                "fetched_at": fetched_at, "info": info,
+                "quarterly_income": json.loads(payload[3]), "quarterly_cashflow": json.loads(payload[4]),
+            }], "yahoo:explicit-entity")
         conn.commit()
 
 

@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 import pandas as pd
 import yfinance as yf
 
-from . import config, storage
+from . import config, identity, storage
 
 RETRYABLE_CATEGORIES = {"rate_limit", "timeout", "connection"}
 RETRY_BACKOFF_SECONDS = 1.5
@@ -70,7 +70,8 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
         except Exception:
             df = None
         if df is not None and not df.empty:
-            storage.upsert_prices(orig, df.dropna(how="all"))
+            owner = identity.resolve(orig, datetime.now(UTC).date().isoformat())["entity_id"]
+            storage.upsert_prices(orig, df.dropna(how="all"), entity_id=owner)
         else:
             failed[orig] = "Sin datos de precio devueltos por Yahoo Finance (posible ticker incorrecto o deslistado)"
     return failed
@@ -98,7 +99,8 @@ def fetch_splits_batch(symbols: list, max_workers: int = 6) -> dict:
         for fut in cf.as_completed(futures):
             sym = futures[fut]
             try:
-                storage.upsert_splits(sym, fut.result())
+                owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
+                storage.upsert_splits(sym, fut.result(), entity_id=owner)
             except Exception as exc:
                 _, reason = _classify_error(exc)
                 failed[sym] = reason
@@ -115,15 +117,34 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
     a las ~500 empresas en cada refresco normal sería mucho más lento y
     pesado de almacenar para un caso de uso (consultar el pasado) que se usa
     ocasionalmente, no en cada sesión."""
-    need_deep_fetch = [s for s in symbols if not storage.has_verified_price_as_of(s, as_of_date)]
-    if not need_deep_fetch:
-        return {"deep_fetched": 0, "already_covered": len(symbols), "failed": {}}
-
     failed = {}
+    download_for = {}
+    already_covered = 0
+    for symbol in symbols:
+        if symbol == config.BENCHMARK_SYMBOL:
+            if storage.has_verified_price_as_of(symbol, as_of_date):
+                already_covered += 1
+            else:
+                download_for[symbol] = symbol
+            continue
+        history = identity.price_history(symbol, as_of_date)
+        if not history.empty and history.loc[history.index <= pd.Timestamp(as_of_date), "adj_close"].notna().any():
+            already_covered += 1
+            continue
+        download_symbol = identity.price_download_symbol(symbol, as_of_date)
+        if download_symbol:
+            download_for[symbol] = download_symbol
+        else:
+            failed[symbol] = "Sin identidad temporal o ticker sucesor acreditado; requiere precios históricos atribuidos"
+    need_deep_fetch = sorted(set(download_for.values()))
+    if not need_deep_fetch:
+        return {"deep_fetched": 0, "already_covered": already_covered, "failed": failed}
+
+    download_failed = {}
     batch_size = 50  # yf.download con 'period=max' es más pesado; lotes moderados
     for i in range(0, len(need_deep_fetch), batch_size):
         batch = need_deep_fetch[i:i + batch_size]
-        failed.update(fetch_prices_batch(batch, period="max"))
+        download_failed.update(fetch_prices_batch(batch, period="max"))
         if progress_cb:
             progress_cb(min(i + batch_size, len(need_deep_fetch)), len(need_deep_fetch), batch[-1])
 
@@ -131,11 +152,19 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
     # fecha correctamente (ver fetch_splits_batch). No se cuentan como fallo
     # aparte porque son secundarios al precio en sí — si fallan, el precio
     # sigue estando disponible, solo la capitalización quedará sin corregir.
-    fetch_splits_batch([s for s in need_deep_fetch if s not in failed])
+    fetch_splits_batch([s for s in need_deep_fetch if s not in download_failed])
+    for original, downloaded in download_for.items():
+        if downloaded in download_failed:
+            failed[original] = download_failed[downloaded]
+            continue
+        history = (storage.get_prices(original) if original == config.BENCHMARK_SYMBOL
+                   else identity.price_history(original, as_of_date))
+        if history.empty or not history.loc[history.index <= pd.Timestamp(as_of_date), "adj_close"].notna().any():
+            failed[original] = "La descarga no aportó precios ajustados atribuidos para esta fecha"
 
     return {
-        "deep_fetched": len(need_deep_fetch) - len(failed),
-        "already_covered": len(symbols) - len(need_deep_fetch),
+        "deep_fetched": sum(s not in failed for s in download_for),
+        "already_covered": already_covered,
         "failed": failed,
     }
 
@@ -214,7 +243,8 @@ def fetch_fundamentals_batch(symbols: list, max_workers: int = 6, progress_cb=No
             done += 1
             try:
                 info, qi, qcf = fut.result()
-                storage.upsert_fundamentals(sym, info, qi, qcf)
+                owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
+                storage.upsert_fundamentals(sym, info, qi, qcf, entity_id=owner)
             except Exception as exc:
                 _, reason = _classify_error(exc)
                 failed[sym] = reason
