@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from gabi import ai_prompt, config, insider, scoring, screener, storage
+from gabi import ai_prompt, config, filing_tracker, insider, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, format_metric_value, gradient_style, translate_sector
 
 st.title("🔍 Ficha de empresa")
@@ -108,6 +108,39 @@ if has_10k or has_10q:
         fcol1.link_button(f"📘 Último 10-K ({row.get('latest_10k_date')})", row["latest_10k_url"])
     if has_10q:
         fcol2.link_button(f"📗 Último 10-Q ({row.get('latest_10q_date')})", row["latest_10q_url"])
+
+    st.markdown("**Qué cambió respecto al filing anterior**")
+    st.caption(
+        "\"Cambio material\" es una regla explícita de GABI (umbrales de % o puntos porcentuales sobre "
+        "cada métrica), no una conclusión de inversión -- exactamente igual que el Composite Score. "
+        "Compara solo métricas fundamentales ya parseadas (ingresos, márgenes, FCF, deuda, caja, ROIC); "
+        "no analiza el texto del filing (Risk Factors, MD&A) todavía."
+    )
+    METRIC_LABELS_FILING = {
+        "revenue": "Ingresos", "operating_margin": "Margen operativo", "gross_margin": "Margen bruto",
+        "fcf": "Flujo de caja libre", "debt": "Deuda a largo plazo", "cash": "Caja", "roic": "ROIC",
+    }
+    for form in [f for f, has in (("10-K", has_10k), ("10-Q", has_10q)) if has]:
+        filing_result = filing_tracker.compare_filings(symbol, form)
+        if filing_result["previous"] is not None:
+            expander_label = f"{form}: {filing_result['previous']['filed_date']} → {filing_result['current']['filed_date']}"
+        else:
+            expander_label = f"{form}: {filing_result['reason']}"
+        with st.expander(expander_label):
+            if not filing_result["rows"]:
+                st.caption(filing_result["reason"])
+                continue
+            change_rows = [
+                {
+                    "Métrica": METRIC_LABELS_FILING.get(r["metric"], r["metric"]),
+                    "Anterior": r["previous_value"], "Actual": r["current_value"],
+                    "Cambio": f"{r['pct_change']:+.1%}" if r["pct_change"] is not None else f"{r['abs_change']:+.2f}",
+                    "Evaluación": {"improvement": "🟢 mejora", "deterioration": "🔴 deterioro",
+                                  "stable": "⚪ estable"}[r["direction"]],
+                }
+                for r in filing_result["rows"]
+            ]
+            st.dataframe(pd.DataFrame(change_rows), hide_index=True, width="stretch")
 
 st.divider()
 st.subheader("🕵️ Actividad de insiders (SEC Form 4)")

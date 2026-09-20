@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import evaluation, signal_monitor
+from gabi import evaluation, filing_tracker, signal_monitor
 
 st.title("📡 Signal Monitor")
 st.caption(
@@ -29,11 +29,21 @@ EVENT_LABEL = {
 }
 
 
+def _event_label(event_type: str) -> str:
+    if event_type in EVENT_LABEL:
+        return EVENT_LABEL[event_type]
+    if event_type.startswith("filing_"):
+        # "filing_operating_margin_deterioration" -> "Filing: operating margin (deterioration)"
+        metric, _, direction = event_type.removeprefix("filing_").rpartition("_")
+        return f"Filing: {metric.replace('_', ' ')} ({direction})"
+    return event_type
+
+
 def _format_events(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
     out = df.copy()
-    out["Evento"] = out["event_type"].map(lambda t: EVENT_LABEL.get(t, t))
+    out["Evento"] = out["event_type"].map(_event_label)
     out["Severidad"] = out["severity"].map(lambda s: f"{SEVERITY_ICON.get(s, '')} {s}")
     out["Antes"] = out["previous_value"].map(lambda v: "—" if v is None else v)
     out["Ahora"] = out["new_value"].map(lambda v: "—" if v is None else v)
@@ -91,6 +101,37 @@ if st.button("🔍 Comparar con el ranking en vivo", type="primary"):
             detected_at=result["compared_at"])), hide_index=True, width="stretch")
         st.caption("Los eventos ya han quedado guardados -- consúltalos más abajo en cualquier momento, "
                    "aunque cierres esta página. Repetir la comparación con el mismo snapshot no duplica eventos.")
+
+st.divider()
+st.subheader("Cambios en filings SEC (10-K/10-Q)")
+st.caption(
+    "Compara el último filing de cada tipo con el anterior para las candidatas del snapshot elegido -- "
+    "ingresos, márgenes, FCF, deuda, caja y ROIC. Solo datos ya cacheados, sin red. \"Material\" es una "
+    "regla de umbral explícita (🩺 ver src/gabi/filing_tracker.py), no una conclusión de inversión."
+)
+if st.button("📄 Comprobar filings de las candidatas del snapshot"):
+    filing_symbols = evaluation.snapshot_symbols(int(selected_snapshot))
+    with st.spinner(f"Comparando filings de {len(filing_symbols)} candidatas..."):
+        filing_events = []
+        checked, with_comparison = 0, 0
+        for filing_symbol in filing_symbols:
+            for form in ("10-K", "10-Q"):
+                checked += 1
+                filing_result = filing_tracker.compare_filings(filing_symbol, form)
+                if filing_result["reason"] is None:
+                    with_comparison += 1
+                    filing_tracker.record_comparison(filing_result)
+                    filing_events += filing_tracker.material_events_for_signal_monitor(filing_result)
+        signal_monitor.record_events(filing_events, from_snapshot_id=int(selected_snapshot), to_snapshot_id=None)
+    st.caption(f"{with_comparison}/{checked} combinaciones símbolo/tipo tenían filing actual Y anterior "
+              "para comparar (el resto no tenía suficiente historial todavía).")
+    if not filing_events:
+        st.success("Sin cambios materiales de filings para estas candidatas.")
+    else:
+        st.dataframe(_format_events(pd.DataFrame(filing_events).assign(
+            detected_at=pd.Timestamp.now(tz="UTC").isoformat())), hide_index=True, width="stretch")
+        st.caption("Estos eventos ya han quedado guardados junto a los de arriba -- consúltalos en "
+                   "\"Eventos recientes\".")
 
 st.divider()
 st.subheader("Eventos recientes")
