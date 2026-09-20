@@ -11,5 +11,6 @@ data/*.bak
 data/*.csv
 data/weights.json
 data/fred_api_key.txt
+data/app_mode.json
 
 .streamlit/secrets.toml
