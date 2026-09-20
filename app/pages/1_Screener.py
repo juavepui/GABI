@@ -74,11 +74,12 @@ if df.empty:
     st.info("Todavía no hay datos. Ve a ⚙️ Configuración y pulsa 'Actualizar datos'.")
     st.stop()
 
-block_warnings = data_quality.block_coverage_warnings(data_quality.score_block_coverage(df))
+quality_threshold = st.sidebar.slider("Cobertura completa mínima (%)", 0, 100, 70) / 100
+block_warnings = data_quality.block_coverage_warnings(data_quality.score_block_coverage(df), quality_threshold)
 if block_warnings:
     st.warning(
         "**Cobertura de datos degradada** -- este ranking incluye bloques con menos del "
-        f"{data_quality.DEFAULT_DEGRADED_BLOCK_THRESHOLD:.0%} del universo con todas sus métricas "
+        f"{quality_threshold:.0%} del universo con todas sus métricas "
         "disponibles (ver 🩺 Calidad de los datos):\n\n" + "\n".join(f"- {w}" for w in block_warnings),
         icon="⚠️",
     )

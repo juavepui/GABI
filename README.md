@@ -9,6 +9,38 @@ alcista en un horizonte de 6-12 meses, y sobre todo **entender por qué**.
 > (Yahoo Finance, SEC EDGAR, FRED) y pueden tener errores, retraso o estar
 > incompletos. Verifica siempre por tu cuenta antes de invertir.
 
+## Calidad y trazabilidad de datos
+
+La identidad persistente por CIK, los alias con vigencia, la migración aditiva
+de SQLite y la cobertura histórica medida se describen en
+[Identidad de entidades](docs/entity-identity.md). Por defecto, el ranking
+histórico sigue leyendo de la caché legacy por ticker para los símbolos sin
+alias migrado (todos, hasta completar la migración) — `identity_status` marca
+cada fila como resuelta, ambigua o sin acreditar, visible en vez de oculto.
+Activar identidad estricta (`strict_identity=True`) exige datos atribuidos a
+una entidad acreditada y deja ausentes los que no la tengan; solo tiene
+sentido tras migrar y atribuir `data/gabi.db`.
+
+La página **🩺 Calidad de los datos** consulta solo la caché local. Muestra
+cobertura y frescura de Yahoo, SEC EDGAR, FRED y Entity Master, porcentaje
+completo por bloque del score, CIK resuelto, últimos filings y errores recientes.
+El detalle permite elegir la fecha de referencia del sector y distingue
+point-in-time, aproximado y ausente. El estado global sigue degradado mientras
+existan las limitaciones estructurales indicadas, aunque las descargas sean recientes.
+
+Screener y Ranking histórico permiten ajustar el umbral de cobertura en la
+barra lateral. Los backtests V1/V2 conservan el diagnóstico por fecha y lo
+guardan con el experimento del Research Lab.
+
+El `data_fingerprint` v2 usa SHA-256 sobre contenido ordenado de precios,
+benchmark, splits, fundamentales, XBRL, sectores, CIK, FRED y snapshots del
+universo. Detecta correcciones históricas aunque no cambie la última fecha.
+La UI lo captura al terminar el backtest y conserva esa huella al registrarlo;
+las entradas manuales permiten pegar la huella del run original. La versión
+del entorno y el commit se registran por separado. Una huella identifica la
+caché, pero **no archiva los datos**: reproducir un run exige conservar también
+su caché y configuración. No se equiparan las huellas antiguas con las v2.
+
 ## Fuentes de datos
 
 - **Yahoo Finance** (`yfinance`) — precios y fundamentales básicos. Gratis, sin API key.

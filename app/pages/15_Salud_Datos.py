@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import config, data_quality, scoring, screener
+from gabi import config, data_quality, identity, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, translate_sector
 
 st.title("🩺 Calidad de los datos")
@@ -38,7 +38,13 @@ def _status_icon(fraction: float) -> str:
     return "🔴"
 
 
-uni = screener.get_universe(limit=None)
+if not config.SP500_CACHE.exists():
+    st.warning("Universo ausente en caché. Actualiza los datos en Configuración para iniciar el diagnóstico.")
+    st.stop()
+uni = pd.read_csv(config.SP500_CACHE)
+if uni.empty:
+    st.warning("El universo local está vacío.")
+    st.stop()
 symbols = uni["symbol"].tolist()
 
 
@@ -46,19 +52,22 @@ def _scored_universe():
     """Cachea en session_state -- lo usan tanto la cobertura por bloque
     (todo el universo) como el score de una empresa concreta, y construirlo
     (500 empresas) es lo único caro de esta página."""
-    if "dq_scored_universe" not in st.session_state:
-        weights = config.load_weights()
+    weights = config.load_weights()
+    fingerprint = data_quality.compute_data_fingerprint(symbols, inputs={"weights": weights})
+    if st.session_state.get("dq_fingerprint") != fingerprint:
         load_bar = st.progress(0.0)
         st.session_state["dq_scored_universe"] = screener.build_screener_table(
             uni, weights=weights,
             progress_cb=lambda done, total: load_bar.progress(done / total if total else 1.0),
         )
         load_bar.empty()
+        st.session_state["dq_fingerprint"] = fingerprint
     return st.session_state["dq_scored_universe"]
 
 st.subheader("Resumen de universo")
 st.caption(f"{len(symbols)} empresas en el universo actual (S&P 500).")
 summary = data_quality.universe_summary(symbols)
+st.caption("Estado global: degradado por limitaciones estructurales conocidas. La frescura de una fuente no certifica calidad point-in-time.")
 
 rows = [
     {
@@ -66,7 +75,7 @@ rows = [
         "Cobertura": f"{s['coverage']:.0%} ({s['have']}/{s['total']})" if "have" in s else f"{s['coverage']:.0%}",
         "Frescura": f"{_status_icon(s['fresh'])} {s['fresh']:.0%}",
         "Umbral de frescura": _fmt_age(s["threshold_hours"]),
-        "Dato más antiguo": _fmt_age(s.get("oldest_hours")),
+        "Dato más antiguo": s.get("oldest_date") or _fmt_age(s.get("oldest_hours")),
     }
     for s in summary["sources"].values()
 ]
@@ -80,7 +89,7 @@ st.caption(
 edgar_summary = summary["sources"].get("edgar", {})
 if "with_facts_pct" in edgar_summary:
     st.caption(
-        f"De las empresas con SEC EDGAR, {edgar_summary['with_facts_pct']:.0%} tienen además el histórico "
+        f"Del universo completo, {edgar_summary['with_facts_pct']:.0%} tienen además el histórico "
         "XBRL completo (`edgar_facts`) que hace falta para reconstruir rankings pasados en 🕰️ Ranking "
         "histórico -- tener solo `edgar_metrics` (el resumen actual) no basta para eso."
     )
@@ -104,6 +113,12 @@ if summary["macro"]:
     )
 else:
     c2.caption("Sin datos macro descargados todavía -- ver 🌐 Panel Macro.")
+
+with st.expander("FRED: Última observación disponible por serie"):
+    st.dataframe(pd.DataFrame([
+        {"Serie": key, "Última observación": value or "ausente"}
+        for key, value in summary["sources"]["fred"]["latest_dates"].items()
+    ]), hide_index=True)
 
 recent_errors = data_quality.recent_errors_summary()
 if recent_errors.empty:
@@ -152,7 +167,30 @@ symbol = st.selectbox(
     index=symbols.index(st.session_state["selected_symbol"]) if st.session_state.get("selected_symbol") in symbols else 0,
     format_func=_label,
 )
-prov = data_quality.symbol_provenance(symbol)
+reference_date = st.date_input("Fecha de referencia del sector point-in-time")
+prov = data_quality.symbol_provenance(symbol, as_of=reference_date.isoformat())
+resolution = identity.resolve(symbol, reference_date.isoformat())
+st.write(f"Identidad a {reference_date}: **{resolution['status']}** · entidad: {resolution['entity_id'] or 'sin acreditar'}")
+if resolution["candidates"]:
+    st.caption("Entidades candidatas: " + ", ".join(resolution["candidates"]))
+with st.expander("Diagnóstico de identidad del universo"):
+    if st.button("Comprobar identidades por fecha"):
+        identities = identity.diagnostics(symbols, reference_date.isoformat())
+        st.dataframe(identities, hide_index=True)
+        st.caption(f"{identities['cik'].isna().sum()} símbolos sin CIK acreditado para esta fecha.")
+    with storage.get_connection() as conn:
+        identity.ensure_schema(conn)
+        candidates = pd.read_sql_query("SELECT * FROM entity_candidates WHERE symbol=?", conn,
+                                       params=(identity.normalize_symbol(symbol),))
+    if not candidates.empty:
+        st.caption("Coincidencias por nombre pendientes de evidencia temporal; no se usan para el score.")
+        st.dataframe(candidates, hide_index=True)
+st.caption(f"CIK: {prov['cik'] or 'no resuelto'}")
+if not recent_errors.empty:
+    symbol_errors = recent_errors[recent_errors["symbol"] == symbol]
+    if not symbol_errors.empty:
+        st.warning(f"{len(symbol_errors)} errores recientes de actualización para {symbol}.")
+        st.dataframe(symbol_errors, hide_index=True)
 
 
 def _source_row(name, info, extra=""):
@@ -183,7 +221,7 @@ detail_rows = [
     _source_row("Insider (Form 4)", prov["insider"]),
 ]
 em = prov["entity_master"]
-if not em["has_snapshot"]:
+if em["status"] == "missing":
     em_status, em_detail = "⚪ sin foto nunca", "no hay sector point-in-time disponible para esta empresa"
 elif em["is_approximate"]:
     em_status, em_detail = "🟡 aproximado", f"sector actual ({em['sector'] or '—'}), no el real de una fecha pasada"

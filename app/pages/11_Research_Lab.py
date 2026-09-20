@@ -59,6 +59,7 @@ else:
         exp = research_lab.get_experiment(int(dep_id))
         e1, e2 = st.columns(2)
         e1.metric("Versión de Python", exp.get("python_version") or "—")
+        st.code(exp.get("data_fingerprint") or "Sin fingerprint de datos", language=None)
         e2.metric("Fingerprint del entorno (uv.lock)", exp.get("env_fingerprint") or "—",
                   help="Hash corto de uv.lock -- dos experimentos con el mismo fingerprint instalaron "
                        "exactamente el mismo árbol de dependencias, transitivas incluidas.")
@@ -105,11 +106,13 @@ with st.expander("➕ Registrar experimento manualmente"):
             "Fase", research_lab.STAGES,
             format_func=lambda s: f"{research_lab.STAGE_INFO[s]['emoji']} {research_lab.STAGE_INFO[s]['label']}")
         hypothesis_registered = st.checkbox("¿Hipótesis registrada formalmente antes de ver el resultado?")
+        fingerprint = st.text_input("Fingerprint de datos del run", help="Pega la huella capturada al ejecutar el experimento. Si no existe, queda sin trazabilidad de datos.")
         notes = st.text_area("Notas")
         if st.form_submit_button("Registrar"):
             try:
                 exp_id = research_lab.log_experiment(
                     model_id, stage, hypothesis_registered, data_cutoff=data_cutoff.isoformat(),
+                    data_fingerprint=fingerprint.strip() or None,
                     universe=universe, factors="Value/Quality/Momentum/Risk", n_positions=int(n_positions),
                     rebalance=rebalance, cost_model=cost_model, is_start=is_start.isoformat(),
                     is_end=is_end.isoformat(), family=family or None, sharpe=sharpe or None,

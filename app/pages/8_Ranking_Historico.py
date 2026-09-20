@@ -88,7 +88,7 @@ if st.button("🔄 Preparar datos que falten para esta fecha", type="primary"):
         edgar_bar.progress(min(done / total, 1.0) if total else 1.0, text=f"SEC EDGAR: {done}/{total} ({sym})")
 
     with st.spinner("Descargando fundamentales SEC EDGAR..."):
-        edgar_result = edgar.ensure_edgar_data(symbols, progress_cb=edgar_progress_cb)
+        edgar_result = edgar.ensure_edgar_data(symbols, progress_cb=edgar_progress_cb, as_of=as_of_str)
     edgar_bar.progress(1.0, text="SEC EDGAR: completado")
 
     price_bar = st.progress(0.0, text="Precios: comprobando cobertura...")
@@ -119,6 +119,16 @@ st.divider()
 
 result = screener_asof.build_ranking_as_of(as_of_str, symbols=symbols)
 df = result["table"]
+if "identity_status" in df:
+    ambiguous_identity = df["identity_status"].eq("ambiguous")
+    unresolved_identity = df["identity_status"].eq("unresolved")
+    if ambiguous_identity.any():
+        st.warning(f"{ambiguous_identity.sum()}/{len(df)} empresas con identidad ambigua (varios alias en "
+                   "conflicto para esta fecha). No se usan sus datos por ticker para calcular el score. "
+                   "Consulta el diagnóstico de identidad en 🩺 Calidad de los datos.")
+    if unresolved_identity.any():
+        st.caption(f"{unresolved_identity.sum()}/{len(df)} empresas sin identidad histórica acreditada todavía "
+                   "(migración no completada) -- siguen usando la caché por ticker de siempre, sin cambios.")
 
 if df.empty:
     st.info("Sin datos todavía para este universo. Pulsa 'Preparar datos' arriba.")
@@ -136,15 +146,16 @@ st.caption(
     f"{n_no_sector} sin ningún sector conocido (típicamente deslistadas antes de existir este registro)."
 )
 
+quality_threshold = st.sidebar.slider("Cobertura completa mínima (%)", 0, 100, 70) / 100
 _degradation_msgs = []
-_sector_bad_frac = (n_sector_approx + n_no_sector) / len(df) if len(df) else 0
-if _sector_bad_frac > (1 - data_quality.DEFAULT_DEGRADED_BLOCK_THRESHOLD):
+_sector_bad_frac = float((df["sector"].isna() | df.get("sector_is_approximate", False)).mean()) if len(df) else 0
+if _sector_bad_frac > (1 - quality_threshold):
     _degradation_msgs.append(
         f"**Sector**: {_sector_bad_frac:.0%} de las empresas de esta tabla tienen sector aproximado o "
         "desconocido para esta fecha -- el color por sector y los percentiles sectoriales de una buena "
         "parte de la tabla no son point-in-time reales."
     )
-_degradation_msgs += data_quality.block_coverage_warnings(data_quality.score_block_coverage(df))
+_degradation_msgs += data_quality.block_coverage_warnings(data_quality.score_block_coverage(df), quality_threshold)
 if _degradation_msgs:
     st.warning(
         "**Cobertura de datos degradada en esta reconstrucción** (ver 🩺 Calidad de los datos):\n\n"
@@ -305,6 +316,7 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
             try:
                 test = multifactor_backtest.run(bt_start.isoformat(), bt_end.isoformat(), interval,
                                                 n_picks, bt_cost, max_symbols=universe_size)
+                test["data_fingerprint"] = data_quality.compute_data_fingerprint()
                 st.session_state["multifactor_result"] = test
             except (ValueError, RuntimeError) as exc:
                 st.error(str(exc))
@@ -329,6 +341,11 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
             st.error(str(exc))
     if "multifactor_result" in st.session_state:
         test = st.session_state["multifactor_result"]
+        st.warning("Limitaciones estructurales de datos históricos: sector aproximado y cobertura SEC incompleta. Consulta Calidad de los datos.")
+        for period_date, quality in test.get("data_quality", {}).items():
+            messages = data_quality.ranking_quality_warnings(quality, quality_threshold)
+            if messages:
+                st.warning(f"{period_date}: " + " · ".join(messages))
         if test["skipped"]:
             with st.expander(f"⚠️ {len(test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
                 st.dataframe(pd.DataFrame(test["skipped"]), hide_index=True, width="stretch")
@@ -375,7 +392,6 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
             rl_notes = st.text_area("Notas", key="v1_rl_notes")
             if st.button("Registrar en el Research Lab", key="v1_rl_button"):
                 returns_series = test["periods"].set_index(pd.to_datetime(test["periods"]["hasta"]))["retorno"]
-                used_symbols = {s.strip() for row in test["periods"]["candidatas"] for s in row.split(",")}
                 exp_id = research_lab.log_experiment(
                     "GABI-MF-v1", rl_stage, rl_hypothesis, universe=f"S&P 500 histórico, muestra de {universe_size}",
                     factors="Value/Quality/Momentum/Risk", n_positions=int(n_picks),
@@ -385,7 +401,8 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                     sharpe=strat_m["sharpe"], sortino=strat_m["sortino"], max_drawdown=strat_m["max_drawdown"],
                     total_return=test["return"], n_periods=len(test["periods"]), periods_per_year=12 / interval,
                     returns=returns_series, notes=rl_notes or None,
-                    data_fingerprint=data_quality.compute_data_fingerprint(used_symbols),
+                    result={"data_quality": test.get("data_quality", {})},
+                    data_fingerprint=test.get("data_fingerprint"),
                 )
                 st.success(f"Experimento #{exp_id} registrado — consúltalo en 🔬 Research Lab.")
 
@@ -502,6 +519,7 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
                     max_symbols=v2_max_symbols, mode=v2_mode_value, initial_capital=float(v2_capital),
                     commission_usd=float(v2_commission), spread_bps=float(v2_spread),
                 )
+                v2_test["data_fingerprint"] = data_quality.compute_data_fingerprint()
                 st.session_state["portfolio_v2_result"] = v2_test
             except (ValueError, RuntimeError) as exc:
                 st.error(str(exc))
@@ -528,6 +546,11 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
 
     if "portfolio_v2_result" in st.session_state:
         v2_test = st.session_state["portfolio_v2_result"]
+        st.warning("Limitaciones estructurales de datos históricos: sector aproximado y cobertura SEC incompleta. Consulta Calidad de los datos.")
+        for period_date, quality in v2_test.get("data_quality", {}).items():
+            messages = data_quality.ranking_quality_warnings(quality, quality_threshold)
+            if messages:
+                st.warning(f"{period_date}: " + " · ".join(messages))
         if v2_test["skipped"]:
             with st.expander(f"⚠️ {len(v2_test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
                 st.dataframe(pd.DataFrame(v2_test["skipped"]), hide_index=True, width="stretch")
@@ -539,7 +562,7 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
         returns = nav.pct_change().dropna()
         returns_spy = nav_spy.pct_change().dropna()
 
-        mode_label = ("✅ Validación — citable como evidencia de la estrategia" if v2_test["mode"] == "validation"
+        mode_label = ("Validación — sujeta a las limitaciones de calidad indicadas" if v2_test["mode"] == "validation"
                       else "🧪 Desarrollo rápido — no citar como evidencia")
         st.markdown(f"**Modo usado: {mode_label}**")
 
@@ -607,12 +630,6 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
             rv_hypothesis = st.checkbox("¿Hipótesis registrada formalmente antes de ver el resultado?", key="v2_rl_hyp")
             rv_notes = st.text_area("Notas", key="v2_rl_notes")
             if st.button("Registrar en el Research Lab", key="v2_rl_button"):
-                used_symbols = {
-                    s.strip()
-                    for col in ("held", "sold", "bought")
-                    for row in v2_test["periods"][col]
-                    for s in row.split(",") if s.strip()
-                }
                 exp_id = research_lab.log_experiment(
                     "GABI-MF-v2", rv_stage, rv_hypothesis,
                     universe=("S&P 500 histórico completo, sin muestreo" if v2_test["mode"] == "validation"
@@ -624,8 +641,9 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
                     sharpe=daily["sharpe"], sortino=daily["sortino"], max_drawdown=daily["max_drawdown"],
                     total_return=float(nav.iloc[-1] / nav.iloc[0] - 1), n_periods=len(returns),
                     periods_per_year=252, returns=returns, notes=rv_notes or None,
-                    data_fingerprint=data_quality.compute_data_fingerprint(used_symbols),
-                    result={"mode": v2_test["mode"], "turnover_medio": v2_test["turnover_medio"],
+                    data_fingerprint=v2_test.get("data_fingerprint"),
+                    result={"data_quality": v2_test.get("data_quality", {}),
+                           "mode": v2_test["mode"], "turnover_medio": v2_test["turnover_medio"],
                            "comision_total": v2_test["comision_total"], "capital_inicial": v2_capital},
                 )
                 st.success(f"Experimento #{exp_id} registrado — consúltalo en 🔬 Research Lab.")
