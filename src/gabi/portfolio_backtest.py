@@ -18,7 +18,7 @@ from datetime import date
 import exchange_calendars as xcals
 import pandas as pd
 
-from . import broker_costs, edgar, screener_asof, storage, universe
+from . import broker_costs, data_quality, identity, screener_asof, universe
 from . import multifactor_backtest as v1
 
 _CALENDAR = "XNYS"
@@ -112,7 +112,7 @@ def _rebalance(cash: float, shares: dict, picks: list, entry_price: dict, top_n:
 
 
 def _daily_segment(cash: float, shares: dict, entry_session: pd.Timestamp,
-                   exit_session: pd.Timestamp, sessions: pd.DatetimeIndex) -> pd.Series:
+                   exit_session: pd.Timestamp, sessions: pd.DatetimeIndex, *, owners: dict | None = None) -> pd.Series:
     """Valora caja + Σ(acciones × adj_close del día) sesión a sesión --
     mismo patrón que `sim_portfolios.portfolio_history()`. Se calcula
     SIEMPRE, incluso si el rebalanceo de ese periodo se saltó por falta de
@@ -121,9 +121,12 @@ def _daily_segment(cash: float, shares: dict, entry_session: pd.Timestamp,
     segment = pd.Series(cash, index=sessions, dtype=float)
     if not shares:
         return segment
-    histories = storage.get_prices_multi(list(shares.keys()))
+    histories = identity.backtest_prices(list(shares.keys()), entry_session.date().isoformat(), owners)
     for symbol, qty in shares.items():
         h = histories.get(symbol, pd.DataFrame())
+        if owners and owners.get(symbol):
+            if h.empty or h["adj_close"].reindex(sessions).isna().any():
+                raise ValueError(f"Missing attributed prices for held entity {owners[symbol]}")
         if h.empty or "adj_close" not in h:
             continue
         price_series = h["adj_close"].reindex(sessions).ffill().bfill()
@@ -193,8 +196,10 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
 
     cash = float(initial_capital)
     shares: dict[str, float] = {}
+    owners: dict[str, str] = {}
     rows = []
     skipped = []
+    quality_by_date = {}
     nav_pieces = []
 
     for i in range(len(boundaries) - 1):
@@ -212,6 +217,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                 raise ValueError(membership["note"])
             symbols = v1._sample_symbols(membership["symbols"], max_symbols)
             ranked = screener_asof.build_ranking_as_of(as_of_str, symbols=symbols)["table"]
+            quality_by_date[as_of_str] = data_quality.ranking_quality(ranked)
             eligible = ranked[(ranked["composite_score"].notna())
                               & (ranked["score_coverage"] >= min_coverage)]
             if len(eligible) / len(symbols) < min_universe_coverage:
@@ -221,8 +227,14 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                 raise ValueError(f"solo {len(picks)}/{top_n} candidatas con cobertura suficiente")
 
             needed = sorted(set(shares.keys()) | set(picks))
-            histories = storage.get_prices_multi(needed)
-            last_filed = edgar.get_last_filed_dates(needed, as_of=exit_session.date().isoformat())
+            for symbol in needed:
+                owner = identity.resolve(symbol, as_of_str)["entity_id"]
+                if symbol in shares and owners.get(symbol) and owner and owners[symbol] != owner:
+                    raise ValueError(f"Ticker reassigned while holding {symbol}")
+                if owner and (symbol not in owners or symbol not in shares):
+                    owners[symbol] = owner
+            histories = identity.backtest_prices(needed, as_of_str, owners)
+            last_filed = identity.last_filings(needed, as_of=exit_session.date().isoformat())
             missing, recycled, entry_price = [], [], {}
             for s in needed:
                 h = histories.get(s, pd.DataFrame())
@@ -255,7 +267,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
             skipped.append({"fecha": as_of_str, "motivo": str(exc)})
 
         sessions = calendar.sessions_in_range(entry_session, exit_session)
-        nav_pieces.append(_daily_segment(cash, shares, entry_session, exit_session, sessions))
+        nav_pieces.append(_daily_segment(cash, shares, entry_session, exit_session, sessions, owners=owners))
 
     if not rows:
         raise ValueError("Ningún periodo del rango tiene datos suficientes — "
@@ -270,6 +282,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                                        commission_usd=commission_usd, spread_bps=spread_bps)
 
     return {
+        "data_quality": quality_by_date,
         "mode": mode, "periods": periods, "skipped": skipped,
         "nav_curve": nav_curve, "nav_curve_spy": nav_curve_spy,
         "turnover_medio": float(periods["turnover_pct"].mean()),
@@ -295,7 +308,7 @@ def buy_and_hold_curve(symbol: str, start: str, end: str, initial_capital: float
     # snap a la sesión válida en/después de `start`, sin saltarla.
     entry_session = calendar.date_to_session(start_ts, direction="next")
     exit_session = calendar.date_to_session(end_ts, direction="previous")
-    history = storage.get_prices(symbol)
+    history = identity.backtest_prices([symbol], start)[symbol]
     if (history.empty or entry_session not in history.index
             or pd.isna(history.loc[entry_session, "adj_close"]) or history.loc[entry_session, "adj_close"] <= 0):
         raise ValueError(f"Faltan precios ajustados de {symbol} en {entry_session.date()}.")

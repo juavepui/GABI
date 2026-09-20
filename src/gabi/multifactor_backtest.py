@@ -8,7 +8,7 @@ import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, edgar, screener_asof, storage, universe
+from . import config, data_quality, identity, screener_asof, universe
 
 # Si una empresa lleva más de esto sin presentar NADA ante la SEC (ni un
 # 10-Q trimestral), lo normal es que haya dejado de ser una "reporting
@@ -64,13 +64,13 @@ def _period_returns(symbols: list[str], as_of: pd.Timestamp, months: int,
     exit_session = calendar.date_to_session(as_of + pd.DateOffset(months=months), direction="next")
     if exit_session > pd.Timestamp(date.today()):
         raise ValueError(f"El periodo iniciado en {as_of.date()} aún no tiene salida.")
-    histories = storage.get_prices_multi(symbols + ["SPY"])
+    histories = identity.backtest_prices(symbols + ["SPY"], as_of.date().isoformat())
     # SPY es un ETF, no una "reporting company" que pueda desaparecer y ver su
     # ticker reasignado a otra cosa — no necesita esta comprobación.
     # as_of=exit_session: point-in-time correcto -- si no se acota, un ticker
     # reciclado puede colar un filing FUTURO (de la empresa nueva que se
     # quedó el símbolo) y el guard nunca saltaría.
-    last_filed = edgar.get_last_filed_dates(symbols, as_of=exit_session.date().isoformat())
+    last_filed = identity.last_filings(symbols, as_of=exit_session.date().isoformat())
     missing = []
     recycled = []
     returns = {}
@@ -213,6 +213,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
         raise ValueError("El intervalo debe terminar después del inicio y no superar hoy.")
     rows = []
     skipped = []
+    quality_by_date = {}
     previous_picks = None
     current = start_ts
     while current + pd.DateOffset(months=months) <= end_ts:
@@ -223,6 +224,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
                 raise ValueError(membership["note"])
             symbols = _sample_symbols(membership["symbols"], max_symbols)
             ranked = screener_asof.build_ranking_as_of(as_of, symbols=symbols)["table"]
+            quality_by_date[as_of] = data_quality.ranking_quality(ranked)
             eligible = ranked[(ranked["composite_score"].notna())
                               & (ranked["score_coverage"] >= min_coverage)]
             if len(eligible) / len(symbols) < min_universe_coverage:
@@ -261,6 +263,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
     turnover_valid = periods["turnover_pct"].dropna()
     turnover_medio = float(turnover_valid.mean()) if not turnover_valid.empty else None
     return {
+        "data_quality": quality_by_date,
         "periods": periods, "skipped": skipped, "turnover_medio": turnover_medio,
         "return": float(periods["capital"].iloc[-1] - 1),
         "spy_return": float(periods["spy_capital"].iloc[-1] - 1),
@@ -305,7 +308,7 @@ def daily_capital_curve(periods: pd.DataFrame) -> pd.Series:
         signal_session = calendar.date_to_session(pd.Timestamp(row["fecha"]), direction="previous")
         entry = calendar.next_session(signal_session)
         exit_session = pd.Timestamp(row["hasta"])
-        histories = storage.get_prices_multi(symbols)
+        histories = identity.backtest_prices(symbols, str(row["fecha"])[:10])
         series = {}
         for symbol in symbols:
             h = histories.get(symbol)
