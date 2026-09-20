@@ -1,0 +1,38 @@
+{
+  "history_start": "1996-01-02",
+  "history_end": "2025-08-23",
+  "distinct_symbols": 1126,
+  "symbol_date_pairs": 1644637,
+  "before_unmapped_symbols": 454,
+  "before_unmapped_pct": 40.319715808170514,
+  "after_unmapped_symbols": 452,
+  "after_unmapped_pct": 40.14209591474245,
+  "recovered_symbols": [
+    "ANTM",
+    "FB"
+  ],
+  "verified_symbol_date_pairs": 2843,
+  "ambiguous_symbol_date_pairs": 0,
+  "unverified_symbol_date_pct": 99.8271351064095,
+  "warning": "Current-map matches are candidates, NOT verified historical identity or usable data coverage.",
+  "history_sha256": "02f37a12c11f82218fce422ecf7d95fae1074bd96e664c262a5ea42c120d5fe9",
+  "cik_map_sha256": "887df2759e699d665dc7f9296b55ecd9ad104c6c49e6f6464d6a9dcd89db4573",
+  "since_2016": {
+    "history_start": "2016-01-04",
+    "history_end": "2025-08-23",
+    "distinct_symbols": 690,
+    "symbol_date_pairs": 622161,
+    "before_unmapped_symbols": 123,
+    "before_unmapped_pct": 17.82608695652174,
+    "after_unmapped_symbols": 121,
+    "after_unmapped_pct": 17.536231884057973,
+    "recovered_symbols": [
+      "ANTM",
+      "FB"
+    ],
+    "verified_symbol_date_pairs": 2498,
+    "ambiguous_symbol_date_pairs": 0,
+    "unverified_symbol_date_pct": 99.59849620918058,
+    "warning": "Current-map matches are candidates, NOT verified historical identity or usable data coverage."
+  }
+}
