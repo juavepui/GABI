@@ -52,6 +52,10 @@ INFO_KEYS = [
     "trailingEps", "forwardEps", "beta",
     "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "currentPrice", "regularMarketPrice",
     "trailingAnnualDividendYield", "averageDailyVolume3Month",
+    # Calendario de eventos corporativos (gabi.events_calendar) -- Yahoo ya
+    # las incluye en el mismo fetch de fundamentales, sin llamada aparte.
+    "earningsTimestampStart", "earningsTimestampEnd", "isEarningsDateEstimate",
+    "exDividendDate", "dividendDate",
 ]
 
 

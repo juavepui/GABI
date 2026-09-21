@@ -250,6 +250,13 @@ METRIC_INFO = {
     "metrics_available": {"label": "Datos", "help": "Número de métricas disponibles de las 13 que puntúan."},
     "metrics_possible": {"label": "Datos posibles", "help": "Número total de métricas que puntúan."},
     "score_coverage": {"label": "Cobertura %", "help": "Porcentaje de las 13 métricas puntuables disponibles."},
+    "next_earnings_days": {
+        "label": "Próx. earnings (días)",
+        "help": "Días hasta la próxima publicación de resultados conocida (fuente: Yahoo Finance). La "
+                "fecha suele ser una estimación hasta que la empresa la confirma -- abre la Ficha de la "
+                "empresa para ver si está confirmada o estimada. Contexto temporal: no entra en el "
+                "Composite Score.",
+    },
     "confidence": {
         "label": "Confidence",
         "help": "Cuánto fiarse del Composite — NO cuánto de atractiva es la empresa (eso ya lo dice el "

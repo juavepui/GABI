@@ -1,7 +1,20 @@
 """Orquesta universo -> datos -> métricas -> técnicos -> riesgo -> scoring en una sola tabla."""
 import pandas as pd
 
-from . import config, data_fetch, edgar, entity_master, macro, metrics, risk, scoring, storage, technicals, universe
+from . import (
+    config,
+    data_fetch,
+    edgar,
+    entity_master,
+    events_calendar,
+    macro,
+    metrics,
+    risk,
+    scoring,
+    storage,
+    technicals,
+    universe,
+)
 
 
 def get_universe(limit: int = None, force_refresh: bool = False) -> pd.DataFrame:
@@ -77,6 +90,16 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progre
         row["latest_10k_date"] = edg.get("latest_10k_date")
         row["latest_10q_url"] = edg.get("latest_10q_url")
         row["latest_10q_date"] = edg.get("latest_10q_date")
+        next_earnings = None
+        if record:
+            future_earnings = [
+                e for e in events_calendar.parse_corporate_events(sym, record.get("info", {}), record.get("fetched_at", ""))
+                if e["event_type"] == "earnings" and e["days_until"] >= 0
+            ]
+            next_earnings = future_earnings[0] if future_earnings else None
+        row["next_earnings_date"] = next_earnings["event_date"] if next_earnings else None
+        row["next_earnings_days"] = next_earnings["days_until"] if next_earnings else None
+        row["next_earnings_is_estimate"] = next_earnings["is_estimate"] if next_earnings else None
         rows.append(row)
         if progress_cb and (i % 25 == 0 or i == total - 1):
             progress_cb(i + 1, total)
