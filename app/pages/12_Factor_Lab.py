@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import factor_lab
+from gabi import estimates, factor_lab
 
 st.title("📐 Factor Lab")
 st.caption(
@@ -121,3 +121,28 @@ if "factor_lab_result" in st.session_state:
         st.bar_chart(by_quantile)
         st.caption("Q1 = peor score, Q_máx = mejor score — si el modelo funciona, debería subir de "
                   "izquierda a derecha, no necesariamente en línea recta.")
+
+st.divider()
+st.subheader("🧪 Revisiones de estimaciones de consenso (experimental)")
+st.caption(
+    "Bloque separado del resto de este Factor Lab a propósito -- gabi.estimates no reconstruye el "
+    "pasado (Yahoo no lo expone), así que este IC solo se mide sobre fechas en las que GABI ya "
+    "sincronizó estimaciones de verdad (🔍 Ficha de empresa → \"Estimaciones de consenso\"). No entra "
+    "en el Composite Score bajo ningún concepto sin un experimento registrado en 🔬 Research Lab."
+)
+estimates_result = estimates.evaluate_estimate_revision_signal()
+if estimates_result["status"] == "insufficient_data":
+    st.info(
+        f"ℹ️ Todavía sin datos suficientes ({estimates_result['batches_available']}/"
+        f"{estimates_result['batches_needed']} capturas, {estimates_result['span_days']}/"
+        f"{estimates_result['span_days_needed']} días de margen). {estimates_result['reason']}"
+    )
+else:
+    st.dataframe(
+        estimates_result["summary"], hide_index=True, width="stretch",
+        column_config={col: st.column_config.NumberColumn(format="%.3f")
+                      for col in estimates_result["summary"].columns if col != "horizonte"},
+    )
+    st.caption(f"Basado en {estimates_result['batches_available']} capturas reales a lo largo de "
+              f"{estimates_result['span_days']} días -- 'net_revision_30d' = revisiones al alza menos "
+              "a la baja en los últimos 30 días, tal cual las da Yahoo en el momento de cada captura.")

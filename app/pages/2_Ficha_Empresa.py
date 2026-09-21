@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from gabi import ai_prompt, config, events_calendar, filing_tracker, insider, scoring, screener, storage
+from gabi import ai_prompt, config, estimates, events_calendar, filing_tracker, insider, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, format_metric_value, gradient_style, translate_sector
 
 st.title("🔍 Ficha de empresa")
@@ -124,6 +124,49 @@ with st.expander("📊 Historial de sorpresas de resultados (dato de investigaci
         ]].copy()
         display_surprises.columns = ["Fecha", "EPS estimado", "EPS reportado", "Sorpresa %", "Reacción precio %"]
         st.dataframe(display_surprises, hide_index=True, width="stretch")
+
+with st.expander("🧪 Estimaciones de consenso (experimental, no puntuado)"):
+    st.caption(
+        "Revisiones y dispersión del consenso de analistas (EPS/ingresos) -- fuente: Yahoo Finance, sin "
+        "licencia formal (uso no oficial, igual que el resto de datos de Yahoo en GABI). Yahoo NO "
+        "expone un histórico point-in-time: esto se va guardando en cada sincronización con la fecha "
+        "real de captura, así que el propio histórico de GABI empieza vacío y solo crece hacia delante "
+        "-- nunca se reconstruye qué pensaban los analistas en el pasado. No entra en el Composite Score "
+        "sin validación explícita en 📐 Factor Lab / 🔬 Research Lab."
+    )
+    if st.button("🔄 Sincronizar estimaciones de esta empresa"):
+        with st.spinner("Descargando estimaciones de consenso de Yahoo Finance..."):
+            est_failed = estimates.sync_estimates([symbol])
+        if est_failed:
+            st.error(f"No se pudo sincronizar: {est_failed.get(symbol)}")
+        else:
+            st.success("Sincronizado.")
+            st.rerun()
+    latest = estimates.latest_estimate_snapshot(symbol, period="0q")
+    if latest is None:
+        st.caption("Sin estimaciones sincronizadas todavía -- pulsa el botón de arriba.")
+    else:
+        ec1, ec2, ec3 = st.columns(3)
+        ec1.metric("EPS consenso (trimestre actual)", f"{latest['eps_avg']:.2f}" if latest["eps_avg"] is not None else "—",
+                  help=f"Rango {latest['eps_low']}–{latest['eps_high']}, {latest['eps_analysts']} analistas.")
+        ec2.metric("Dispersión del consenso", f"{latest['eps_dispersion_pct']:.1%}" if latest["eps_dispersion_pct"] is not None else "—",
+                  help="(máximo − mínimo) / medio -- proxy de desacuerdo entre analistas, no la dispersión real (Yahoo no da estimaciones individuales).")
+        net_revision = None
+        if latest["revised_up_30d"] is not None and latest["revised_down_30d"] is not None:
+            net_revision = latest["revised_up_30d"] - latest["revised_down_30d"]
+        ec3.metric("Revisiones netas (30 días)", net_revision if net_revision is not None else "—",
+                  help="Nº de analistas que subieron su estimación menos los que la bajaron en los últimos 30 días, según Yahoo en el momento de esta captura.")
+        st.caption(f"Capturado el {latest['captured_at']} · fuente: {latest['source']}")
+        revision = estimates.revision_since(symbol, lookback_days=90, period="0q")
+        if revision:
+            st.caption(
+                f"📈 Cambio propio de GABI en el consenso EPS en los últimos {revision['actual_lookback_days']} "
+                f"días (entre capturas reales, no estimado): {revision['change']:+.2f} "
+                f"({revision['change_pct']:+.1%})."
+            )
+        else:
+            st.caption("Aún sin margen suficiente en el histórico propio de GABI para medir un cambio -- "
+                      "vuelve a sincronizar más adelante.")
 
 st.divider()
 st.subheader("📐 Otras métricas (informativas, no puntuadas)")
