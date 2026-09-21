@@ -905,6 +905,67 @@ Reproducible con `multifactor_backtest.run(..., min_universe_coverage=0.5)` para
 frecuencia, `daily_capital_curve`/`daily_benchmark_curve`/`daily_risk_metrics` sobre el
 resultado, y `sharpe_standard_error(sharpe, years)` sobre cada Sharpe diario.
 
+### Auditoría retroactiva de *multiple testing*: PBO y DSR sobre las configuraciones reales
+
+El checklist de sesgos de más arriba admitía que *multiple testing*/*data snooping* **no**
+estaban corregidos — `stats_rigor.pbo_cscv`/`deflated_sharpe_ratio` (López de Prado et
+al.) existían como herramienta, cableados en 🔬 Research Lab, pero nunca se habían
+aplicado a la secuencia real de configuraciones que sí se probaron. Esta sección lo hace.
+
+**Metodología**: 8 configuraciones reales de las probadas en esta misma sección (Top-10/
+20/30 trimestral, banda de turnover 1.3x/1.5x/2.0x sobre Top-20 trimestral, Top-20
+semestral y anual) reconstruidas **hoy**, con el motor ya libre de los tres bugs de
+medida que se fueron encontrando después (muestreo alfabético, cobertura mínima,
+anualización con huecos) — 2016-07 a 2025-07, mismo coste 10pb. Universo muestreado a
+N=100 (no el universo completo) por coste computacional: **los Sharpes absolutos de esta
+tabla no son comparables con los citados en el resto de esta sección** (que usaban
+N=200/500), pero la comparación *interna* entre las 8, todas calculadas igual, sí es
+válida para PBO/DSR. **No incluye** el filtro SMA200 ni variaciones de pesos de
+factores — parte real de las "10+ configuraciones" mencionadas en el checklist, pero no
+reproducibles con un parámetro simple de `multifactor_backtest.run()` — así que esto es
+una estimación **parcial** del proceso de búsqueda completo, no su totalidad.
+
+| Configuración | Periodos | Sharpe |
+|---|---|---|
+| Top-10 trimestral | 36 | 0.648 |
+| **Top-20 trimestral (elegida)** | 36 | **0.469** |
+| Top-30 trimestral | 36 | 0.472 |
+| Top-20 + banda 1.3x | 36 | 0.492 |
+| Top-20 + banda 1.5x | 36 | 0.524 |
+| Top-20 + banda 2.0x | 36 | 0.542 |
+| Top-20 semestral | 18 | 0.631 |
+| Top-20 anual | 9 | 0.624 |
+
+**DSR (Deflated Sharpe Ratio)** sobre los 8 Sharpes: SR0 (máximo esperable por puro azar
+entre 8 intentos, a partir de su varianza) = **0.108**; DSR del Sharpe seleccionado
+(0.469) = **0.83**. Lectura: la varianza entre los 8 intentos es pequeña (0.469–0.648),
+así que el "listón de la suerte" que corrige por *multiple testing* queda bajo, y 0.469
+lo supera con margen razonable — coherente con que Top-20 **no** se eligió por tener el
+mejor Sharpe de la tabla (de hecho tiene el segundo peor): se prefirió por reducir el
+drawdown casi gratis, no por *cherry-picking* del número más alto. Es una decisión que,
+vista con esta lente, resulta menos vulnerable al sobreajuste de lo que parecería si se
+hubiera elegido "la de mejor Sharpe".
+
+**PBO (CSCV)** sobre las 6 variantes trimestrales (misma rejilla de 36 fechas, N=100,
+6 bloques → 20 combinaciones): **PBO = 0.40**. Con la convención de la literatura (PBO
+< 0.5 mejor que azar puro), 0.40 no es alarmante, pero tampoco es tranquilizador — está
+a solo una fracción de la línea de "elegir al azar" (0.5). Interpretación honesta: **si
+alguien tratara "la variante con mejor Sharpe de la tabla" como criterio de selección
+entre variantes muy parecidas (N=10 vs 20 vs 30, o distintos niveles de banda), hay
+~2 de cada 5 posibilidades de que esa elección hubiera perdido frente a la mediana fuera
+de muestra**. No es el criterio que se usó de hecho aquí (ver DSR arriba), pero es un
+aviso real para cualquier futura iteración que compare variantes similares y se sienta
+tentada a quedarse con "la que mejor salió".
+
+**Limitaciones de esta auditoría, con la misma honestidad que el resto del documento**:
+universo muestreado más pequeño que las tablas históricas (no comparable en absoluto,
+sí en relativo); solo 8 de las "10+" configuraciones reales reconstruidas (falta el
+filtro de tendencia y las variaciones de pesos); `n_splits=6` para PBO da solo 20
+combinaciones, una resolución modesta. Registrado como experimento `RESEARCH` #10 en
+🔬 Research Lab (`family="overfitting_audit_multiple_testing"`) con la serie de retornos
+real de la configuración elegida, para que quede trazable y no se repita el mismo
+ejercicio de memoria en el futuro.
+
 ### Costes reales del bróker (eToro): calibración y por qué el backtest NO incluye la conversión de divisa
 
 GABI es de uso personal, y el bróker real del usuario es eToro. Se calibraron los costes
