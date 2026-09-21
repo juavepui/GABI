@@ -19,7 +19,7 @@ st.caption(
 # Columnas que se muestran en la tabla, en orden.
 DISPLAY_KEYS = [
     "name", "sector", "market_cap", "pe", "roe", "roic", "revenue_growth_yoy",
-    "price", "price_vs_sma50", "rsi14", "volatility", "max_drawdown",
+    "price", "price_vs_sma50", "rsi14", "volatility", "max_drawdown", "next_earnings_days",
     "metrics_available", "metrics_possible", "score_coverage",
     "value_score", "quality_score", "momentum_score", "risk_score", "composite_score", "confidence",
 ]
@@ -156,6 +156,8 @@ for key in present_keys:
     help_text = METRIC_INFO.get(key, {}).get("help", "Cobertura de las métricas utilizadas en el score.")
     if key in ("name", "sector"):
         column_config[label] = st.column_config.TextColumn(label, help=help_text)
+    elif key == "next_earnings_days":
+        column_config[label] = st.column_config.NumberColumn(label, help=help_text, format="%d")
     else:
         column_config[label] = st.column_config.NumberColumn(label, help=help_text, format="%.2f")
 

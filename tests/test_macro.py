@@ -104,3 +104,39 @@ def test_fetch_series_parses_observations_and_skips_missing_values():
         macro_module.requests.get = orig_get
 
     assert obs == [("2026-09-01", 4.2), ("2026-07-01", 4.0)]
+
+
+def test_parse_next_release_date_returns_earliest_future_date():
+    payload = {"release_dates": [
+        {"release_id": 10, "date": "2026-08-14"},  # pasado
+        {"release_id": 10, "date": "2026-10-14"},
+        {"release_id": 10, "date": "2026-11-10"},
+    ]}
+    from datetime import date
+
+    assert macro._parse_next_release_date(payload, date(2026, 9, 20)) == date(2026, 10, 14)
+
+
+def test_parse_next_release_date_includes_today_as_valid():
+    from datetime import date
+
+    payload = {"release_dates": [{"release_id": 10, "date": "2026-09-20"}]}
+    assert macro._parse_next_release_date(payload, date(2026, 9, 20)) == date(2026, 9, 20)
+
+
+def test_parse_next_release_date_returns_none_when_no_future_dates():
+    from datetime import date
+
+    payload = {"release_dates": [{"release_id": 10, "date": "2026-01-01"}]}
+    assert macro._parse_next_release_date(payload, date(2026, 9, 20)) is None
+
+
+def test_parse_next_release_date_empty_payload_returns_none():
+    from datetime import date
+
+    assert macro._parse_next_release_date({}, date(2026, 9, 20)) is None
+    assert macro._parse_next_release_date({"release_dates": []}, date(2026, 9, 20)) is None
+
+
+def test_fetch_next_release_date_returns_none_for_unmapped_series():
+    assert macro.fetch_next_release_date("DGS10", api_key="fake-key") is None

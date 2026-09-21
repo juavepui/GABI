@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from gabi import ai_prompt, config, filing_tracker, insider, scoring, screener, storage
+from gabi import ai_prompt, config, events_calendar, filing_tracker, insider, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, format_metric_value, gradient_style, translate_sector
 
 st.title("🔍 Ficha de empresa")
@@ -78,6 +78,52 @@ if not price_df.empty:
     )
 else:
     st.info("Sin histórico de precios cacheado para esta empresa todavía.")
+
+st.divider()
+st.subheader("📅 Próximos catalizadores")
+st.caption(
+    "Fechas conocidas, no una predicción de qué va a pasar con el precio -- contexto temporal para no "
+    "llegar a un buen score sin saber que tiene earnings mañana. No entra en el Composite Score."
+)
+fundamentals_record = storage.get_fundamentals([symbol]).get(symbol, {})
+upcoming = events_calendar.parse_corporate_events(
+    symbol, fundamentals_record.get("info", {}), fundamentals_record.get("fetched_at", ""),
+)
+future_events = [e for e in upcoming if e["days_until"] >= 0]
+if future_events:
+    for e in sorted(future_events, key=lambda e: e["event_date"]):
+        confirmed_label = "estimada" if e["is_estimate"] else "confirmada"
+        st.caption(
+            f"🗓️ **{events_calendar.EVENT_LABELS[e['event_type']]}**: {e['event_date'].isoformat()}"
+            + (f" – {e['range_end'].isoformat()}" if e["range_end"] else "")
+            + f" (fecha {confirmed_label}, en {e['days_until']} días) · fuente: {e['source']}"
+        )
+else:
+    st.caption("Sin próximos eventos conocidos en los datos cacheados de Yahoo Finance para esta empresa.")
+
+with st.expander("📊 Historial de sorpresas de resultados (dato de investigación, no puntuado)"):
+    st.caption(
+        "EPS estimado vs reportado y el gap de precio entre el cierre anterior y el posterior al earnings "
+        "-- se guarda para poder validarlo algún día en 🔬 Research Lab / 📐 Factor Lab como factor "
+        "candidato. Hoy NO influye en el Composite Score de ninguna manera."
+    )
+    if st.button("🔄 Sincronizar historial de earnings de esta empresa"):
+        with st.spinner("Descargando earnings_dates de Yahoo Finance..."):
+            sync_failed = events_calendar.sync_earnings_surprises([symbol])
+        if sync_failed:
+            st.error(f"No se pudo sincronizar: {sync_failed.get(symbol)}")
+        else:
+            st.success("Sincronizado.")
+            st.rerun()
+    surprises = events_calendar.get_earnings_surprises(symbol)
+    if surprises.empty:
+        st.caption("Sin historial sincronizado todavía -- pulsa el botón de arriba.")
+    else:
+        display_surprises = surprises[[
+            "earnings_date", "eps_estimate", "eps_reported", "surprise_pct", "price_reaction_pct",
+        ]].copy()
+        display_surprises.columns = ["Fecha", "EPS estimado", "EPS reportado", "Sorpresa %", "Reacción precio %"]
+        st.dataframe(display_surprises, hide_index=True, width="stretch")
 
 st.divider()
 st.subheader("📐 Otras métricas (informativas, no puntuadas)")

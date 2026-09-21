@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import evaluation, filing_tracker, signal_monitor
+from gabi import evaluation, events_calendar, filing_tracker, signal_monitor
 
 st.title("📡 Signal Monitor")
 st.caption(
@@ -132,6 +132,23 @@ if st.button("📄 Comprobar filings de las candidatas del snapshot"):
             detected_at=pd.Timestamp.now(tz="UTC").isoformat())), hide_index=True, width="stretch")
         st.caption("Estos eventos ya han quedado guardados junto a los de arriba -- consúltalos en "
                    "\"Eventos recientes\".")
+
+st.divider()
+st.subheader("📅 Próximos earnings de las candidatas")
+st.caption(
+    "Días hasta la próxima publicación de resultados conocida de cada candidata del snapshot elegido -- "
+    "contexto temporal, no una señal de compra/venta. Solo datos ya cacheados, sin red."
+)
+calendar_symbols = evaluation.snapshot_symbols(int(selected_snapshot))
+calendar_df = events_calendar.upcoming_events(calendar_symbols)
+calendar_earnings = calendar_df[calendar_df["event_type"] == "earnings"] if not calendar_df.empty else calendar_df
+if calendar_earnings.empty:
+    st.caption("Sin próximos earnings conocidos para las candidatas de este snapshot.")
+else:
+    display_calendar = calendar_earnings[["symbol", "event_date", "is_estimate", "days_until"]].copy()
+    display_calendar["is_estimate"] = display_calendar["is_estimate"].map({True: "Estimada", False: "Confirmada"})
+    display_calendar.columns = ["Símbolo", "Fecha", "¿Confirmada?", "Días"]
+    st.dataframe(display_calendar, hide_index=True, width="stretch")
 
 st.divider()
 st.subheader("Eventos recientes")

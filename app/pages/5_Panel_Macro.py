@@ -1,4 +1,5 @@
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -59,3 +60,18 @@ for i, (_, row) in enumerate(available.iterrows()):
 missing = snapshot[snapshot["latest_value"].isna()]
 if not missing.empty:
     st.caption(f"Sin datos todavía: {', '.join(missing['label'])} — pulsa actualizar de nuevo.")
+
+st.divider()
+st.subheader("📅 Próximo evento macro conocido")
+try:
+    next_cpi = macro.fetch_next_release_date("CPIAUCSL", api_key)
+except Exception:
+    next_cpi = None
+if next_cpi:
+    days_until = (next_cpi - date.today()).days
+    st.caption(
+        f"🗓️ **Inflación (CPI)**: próxima publicación programada el {next_cpi.isoformat()} (en {days_until} "
+        "días) — fecha confirmada por la fuente oficial (BLS, vía FRED), no una estimación de GABI."
+    )
+else:
+    st.caption("Sin fecha de próxima publicación de CPI disponible ahora mismo.")

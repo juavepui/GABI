@@ -9,7 +9,7 @@ El objetivo no es meter macro en el score (eso ya es terreno de "qué factor
 funciona bajo qué régimen", que requiere el backtesting que se decidió NO
 construir todavía) sino tener a mano, al escribir una tesis en el Diario de
 inversión, las relaciones causales típicas: tipos, inflación, curva, crédito..."""
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pandas as pd
 import requests
@@ -166,6 +166,45 @@ def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=
             progress_cb(i + 1, len(stale), sid)
     storage.record_update_errors("fred_macro", failed)
     return {"ok": True, "refreshed": len(stale) - len(failed), "failed": failed}
+
+
+# release_id de FRED (no de series) -- solo para series que representan una
+# publicación programada y discreta (una vez al mes, en fecha conocida de
+# antemano), no una serie que se actualiza a diario como DGS10 o FEDFUNDS:
+# ahí "próxima actualización" no es un evento, es continuo.
+RELEASE_IDS = {"CPIAUCSL": 10}
+RELEASE_DATES_URL = "https://api.stlouisfed.org/fred/release/dates"
+
+
+def _parse_next_release_date(payload: dict, today: date) -> date | None:
+    """Pura: de la respuesta ya parseada (JSON) de /fred/release/dates, la
+    primera fecha >= today -- FRED las devuelve ordenadas ascendente al
+    pedir sort_order=asc, pero se ordena aquí también por si acaso."""
+    dates = sorted(d["date"] for d in payload.get("release_dates", []))
+    for d in dates:
+        parsed = date.fromisoformat(d)
+        if parsed >= today:
+            return parsed
+    return None
+
+
+def fetch_next_release_date(series_id: str, api_key: str) -> date | None:
+    """Próxima fecha de publicación programada (confirmada por la fuente
+    oficial que FRED indexa, ej. BLS para CPI) -- None si `series_id` no
+    tiene un release_id mapeado en RELEASE_IDS o si FRED no devuelve ninguna
+    fecha futura."""
+    release_id = RELEASE_IDS.get(series_id)
+    if release_id is None:
+        return None
+    today = date.today()
+    params = {
+        "release_id": release_id, "api_key": api_key, "file_type": "json",
+        "realtime_start": today.isoformat(), "sort_order": "asc",
+        "include_release_dates_with_no_data": "true",
+    }
+    resp = requests.get(RELEASE_DATES_URL, params=params, timeout=20)
+    resp.raise_for_status()
+    return _parse_next_release_date(resp.json(), today)
 
 
 def get_snapshot() -> pd.DataFrame:
