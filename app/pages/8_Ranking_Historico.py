@@ -24,6 +24,7 @@ from gabi import (
     research_lab,
     screener_asof,
     tail_risk_ui,
+    tax_drag,
     universe,
 )
 from gabi.ui_helpers import METRIC_INFO, build_color_basis, gradient_style, translate_sector
@@ -502,6 +503,61 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                     st.info(f"Benchmark trimestral no disponible: {exc}")
         except (ValueError, RuntimeError, ImportError) as exc:
             st.warning(f"No se pudo calcular el contraste con factores académicos: {exc}")
+
+        with st.expander("💶 Drag fiscal español (aproximado, IRPF base del ahorro)"):
+            st.caption(
+                "El retorno del backtest de arriba es bruto — no paga impuestos. Con rebalanceo trimestral "
+                "y turnover alto, las plusvalías se realizan constantemente, perdiendo el diferimiento "
+                "fiscal que sí tendría un comprar-y-mantener. Simulación aparte con coste medio por "
+                "cartera (no FIFO lote a lote) y los tramos 2024 de la base del ahorro — ver limitaciones "
+                "abajo antes de tomarlo como una cifra exacta."
+            )
+            try:
+                tax_capital = st.number_input(
+                    "Capital inicial de la simulación (€)", min_value=1_000.0, value=100_000.0,
+                    step=10_000.0, key="tax_drag_capital",
+                )
+                strategy_tax = tax_drag.simulate_tax_drag(test["periods"], initial_capital=tax_capital)
+                benchmark_tax = tax_drag.simulate_tax_drag(
+                    tax_drag.zero_turnover_periods(test["periods"], "spy"), initial_capital=tax_capital,
+                )
+                st.dataframe(
+                    pd.DataFrame([
+                        {"": "Retorno bruto", "Estrategia": strategy_tax["pretax_return"],
+                         "SPY comprado y mantenido": benchmark_tax["pretax_return"]},
+                        {"": "Retorno neto (con IRPF)", "Estrategia": strategy_tax["aftertax_return"],
+                         "SPY comprado y mantenido": benchmark_tax["aftertax_return"]},
+                    ]),
+                    hide_index=True, width="stretch",
+                    column_config={
+                        "Estrategia": st.column_config.NumberColumn(format="percent"),
+                        "SPY comprado y mantenido": st.column_config.NumberColumn(format="percent"),
+                    },
+                )
+                tc1, tc2 = st.columns(2)
+                tc1.metric("Impuesto pagado — estrategia", f"{strategy_tax['total_tax_paid']:,.0f} €")
+                tc2.metric("Impuesto pagado — SPY buy & hold", f"{benchmark_tax['total_tax_paid']:,.0f} €",
+                          help="Con turnover 0, casi toda la plusvalía queda sin realizar (sin vender, no "
+                               "tributa) — la comparación directa de cuánto cuesta rotar la cartera cada "
+                               "trimestre frente a no venderla nunca durante el mismo periodo.")
+                st.caption(
+                    f"Ganancia patrimonial no realizada que queda sin tributar al final del periodo: "
+                    f"{strategy_tax['unrealized_gain_remaining']:,.0f} € en la estrategia."
+                )
+                with st.expander("Detalle año a año"):
+                    year_rows = [
+                        {"Año": year, "Ganancia/pérdida neta compensada": v["realized_net"],
+                         "Base imponible": v["taxable"], "Impuesto": v["tax"]}
+                        for year, v in strategy_tax["tax_by_year"].items()
+                    ]
+                    st.dataframe(
+                        pd.DataFrame(year_rows), hide_index=True, width="stretch",
+                        column_config={c: st.column_config.NumberColumn(format="%.0f €")
+                                      for c in ("Ganancia/pérdida neta compensada", "Base imponible", "Impuesto")},
+                    )
+                st.caption("Limitaciones de esta simulación: " + " · ".join(tax_drag.LIMITATIONS))
+            except (ValueError, KeyError) as exc:
+                st.info(f"Simulación fiscal no disponible: {exc}")
 
 with tab_v2:
     st.caption(

@@ -52,6 +52,18 @@ La estabilidad de las permutaciones y perturbaciones de pesos originales
 sigue pendiente por falta de inputs completos. Ver
 [informe temporal y resultados](docs/factor-stability/README.md).
 
+**Drag fiscal — 2026-09-22:** los retornos de arriba y de todas las tablas de
+este documento son **brutos, sin fiscalidad**. Con rebalanceo trimestral y
+turnover alto, las plusvalías se realizan constantemente en vez de diferirse
+como haría un comprar-y-mantener. Simulación aparte (coste medio por
+cartera, tramos 2024 de la base del ahorro, compensación y arrastre de
+pérdidas) sobre un backtest real de ejemplo (Top-10, 2019-2021, incluye el
+crash de COVID): retorno bruto +32,44% → neto +27,37% tras IRPF, frente a
+0 € de impuesto en el mismo periodo para SPY comprado y mantenido, cuya
+plusvalía queda diferida al no venderse nunca. El orden de magnitud del
+drag fiscal puede superar al del propio coste de spread/comisión, que sí
+estaba modelado desde antes. Ver [metodología y limitaciones](docs/tax-drag.md).
+
 La única salida honesta es dejar de mirar hacia atrás y **declarar la configuración que
 se cree buena, por escrito, con fecha, antes de tener ningún dato nuevo con el que
 verificarla**. Eso es lo que hace este archivo.
