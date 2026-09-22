@@ -10,19 +10,16 @@ from gabi import data_fetch, data_quality, decision_engine, screener, storage
 st.title("🧭 Decisiones de cartera")
 st.markdown(
     "GABI elige candidatas, calcula pesos objetivo y decide **comprar, mantener, reducir o vender** "
-    "según reglas explícitas. Usa los datos descargados en Configuración. Las decisiones quedan "
-    "registradas; esta página no envía órdenes al bróker."
+    "según reglas explícitas y configurables — máximo por posición/sector, filtro de tendencia, "
+    "optimización de mínima volatilidad. Usa los datos descargados en Configuración. Las decisiones "
+    "quedan registradas; esta página no envía órdenes al bróker."
 )
-st.warning(
-    "⚠️ **Esta es una estrategia DISTINTA de la que se ha respaldado con el backtest histórico** "
-    "(`HIPOTESIS_CONGELADA.md`/🕰️ Ranking histórico: 20 posiciones equiponderadas, pesos "
-    "Value/Quality/Momentum/Risk 30/35/25/10, rebalanceo trimestral, sin filtro de tendencia). Esta "
-    "página añade un **modelo de cartera** distinto encima del mismo score — máximo 10 posiciones, "
-    "filtro de precio sobre SMA200, y reparto por mínima volatilidad (no equiponderado) — que **nunca "
-    "se ha probado en un backtest**. Es una estrategia legítima, pero no trates su resultado como una "
-    "consecuencia validada de la hipótesis congelada: son dos estrategias distintas que comparten el "
-    "mismo score de partida.",
-    icon="⚠️",
+st.info(
+    "ℹ️ Esta página deja tocar las reglas del modelo, así que su resultado **es una estrategia distinta** "
+    "de la única que tiene un backtest histórico real detrás (hipótesis congelada: 20 posiciones "
+    "equiponderadas, sin filtro de tendencia). Si solo quieres la respuesta directa \"qué compro\" con la "
+    "estrategia ya validada, sin tocar nada, ve a **🎯 Mi cartera** en su lugar.",
+    icon="ℹ️",
 )
 
 with st.expander("📖 Cómo funciona y cómo probarlo (léelo si es la primera vez)"):
@@ -57,7 +54,7 @@ como una orden a ejecutar sin más.
         """
     )
 
-with st.expander("Reglas y límites", expanded=True):
+with st.expander("Reglas y límites", expanded=False):
     c1, c2, c3 = st.columns(3)
     min_score = c1.slider("Score mínimo", 0, 100, 65,
                           help="Composite Score mínimo (0-100) para que una empresa sea candidata. Más "

@@ -51,29 +51,31 @@ que puedas ver **por qué** una empresa puntúa bien, empresa a empresa.
 
 ### Primeros pasos
 
-1. Si estás empezando, echa un vistazo a **🎓 Aprender**: términos, estrategias, psicología de la
-   inversión, y cómo piensa GABI por dentro (con sus sesgos, límites y motores V1/V2).
-2. Ve a **⚙️ Configuración** y pulsa "Actualizar datos" (empieza con un
+1. Ve a **⚙️ Configuración** y pulsa "Actualizar datos" (empieza con un
    subconjunto pequeño para probar rápido).
-3. Ve a **📊 Screener** para buscar empresas, ver el ranking y ajustar filtros/pesos.
-4. Haz clic en una empresa para ver su **🔍 Ficha**: desglose completo del score
-   y enlaces directos a su último 10-K/10-Q oficial (SEC EDGAR).
-5. Usa **⚖️ Comparar empresas** para ver 2-5 empresas lado a lado, tabla y gráfico.
-6. Consulta el **🌐 Panel Macro** (tipos, inflación, curva, crédito) para tener
-   contexto — requiere una API key gratuita de FRED (se configura en ⚙️).
-7. Antes de invertir, escribe tu tesis en el **📓 Diario de inversión**: precio de
+2. Ve directamente a **🎯 Mi cartera** — es la respuesta corta a "¿qué compro?": aplica la hipótesis ya
+   validada con backtest histórico y te da la lista de empresas, el peso de cada una y cuánto invertir con
+   tu capital. Sin nada que configurar.
+3. Haz clic en una empresa (o búscala en **📊 Screener**) para ver su **🔍 Ficha**: desglose completo del
+   score y enlaces directos a su último 10-K/10-Q oficial (SEC EDGAR).
+4. Antes de invertir, escribe tu tesis en el **📓 Diario de inversión**: precio de
    entrada, escenarios de valoración, catalizadores y qué demostraría que te
    equivocaste. Revísala pasados unos meses — se aprende más así que acumulando
    indicadores.
-8. En **🧭 Decisiones de cartera**, introduce tus posiciones y genera un plan
-   de compra, mantenimiento o venta con pesos objetivo y límites de riesgo.
-9. En **🧪 Carteras simuladas**, crea varias carteras, registra operaciones
-   históricas con costes supuestos y compara sus resultados con SPY.
+5. Si estás empezando, echa un vistazo a **🎓 Aprender**: términos, estrategias, psicología de la
+   inversión, y qué son las páginas de investigación de GABI (Research Lab, Blind Validation...) que no
+   necesitas tocar para usar la app.
+6. Usa **⚖️ Comparar empresas** para ver 2-5 empresas lado a lado, tabla y gráfico, y el **🌐 Panel Macro**
+   (tipos, inflación, curva, crédito) para tener contexto — requiere una API key gratuita de FRED.
+7. **🧭 Decisiones de cartera** y **🧪 Carteras simuladas** son para quien quiera ir más allá de la
+   hipótesis validada: reglas de riesgo propias, optimización de cartera, y simulacros con operaciones
+   reales — no hace falta pasar por ahí para invertir con GABI.
         """
     )
 
 
 PAGE_SPECS = [
+    ("pages/0_Mi_Cartera.py", "Mi cartera", "🎯"),
     ("pages/7_Aprender.py", "Aprender", "🎓"),
     ("pages/1_Screener.py", "Screener", "📊"),
     ("pages/2_Ficha_Empresa.py", "Ficha de empresa", "🔍"),

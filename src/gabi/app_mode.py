@@ -41,6 +41,7 @@ FROZEN_WEIGHTS_TOLERANCE = 1e-6
 # USAR el modelo -- todo lo demás (herramientas de investigación) queda
 # solo en RESEARCH.
 INVESTOR_PAGES = frozenset({
+    "pages/0_Mi_Cartera.py",
     "pages/7_Aprender.py",
     "pages/1_Screener.py",
     "pages/2_Ficha_Empresa.py",

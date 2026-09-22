@@ -450,3 +450,46 @@ Universo histórico          SEC EDGAR                    Precios
         "La calculadora de 🕰️ Ranking histórico (pestaña Motor V1) convierte tu capital y nº de "
         "posiciones al coste real por lado — pruébala con tus propios números."
     )
+
+    st.divider()
+    st.subheader("8. \"Hipótesis congelada\", Research Lab, Blind Validation... ¿qué es todo esto?")
+    st.markdown(
+        "Si solo quieres invertir, **no necesitas entrar en nada de esto** — 🎯 Mi cartera ya aplica lo "
+        "que salió de este trabajo, sin que tengas que tocar ni entender ninguna de estas páginas. Esta "
+        "sección existe para cuando te encuentres estos nombres (en la barra lateral en modo Research, o "
+        "en la base de datos) y te preguntes qué son."
+    )
+    with st.expander("🧊 Hipótesis congelada"):
+        st.write(
+            "El documento (`HIPOTESIS_CONGELADA.md`) donde se declaró **por escrito, con fecha, antes de "
+            "tener datos nuevos** la configuración que se cree buena (20 posiciones equiponderadas, pesos "
+            "Value/Quality/Momentum/Risk 30/35/25/10) — así no se puede ir ajustando la estrategia a "
+            "posteriori para que \"funcione mejor\" cada vez que se mira el resultado. Es la única "
+            "configuración con un backtest histórico real detrás, y es exactamente la que usa 🎯 Mi cartera."
+        )
+    with st.expander("🔒 Blind Forward Validation (validación ciega)"):
+        st.write(
+            "La forma de comprobar si la hipótesis congelada funciona **de verdad, hacia delante**, no "
+            "solo mirando el pasado: cada rebalanceo real queda registrado de forma inmutable, y el "
+            "resultado frente al SPY se queda oculto hasta una fecha de desbloqueo. La tentación que esto "
+            "evita: mirar a medias y ajustar la estrategia porque \"llevamos unos meses perdiendo\" — en "
+            "cuanto se hace eso, la prueba deja de servir para nada, aunque nadie haga trampa a propósito."
+        )
+    with st.expander("🔬 Research Lab"):
+        st.write(
+            "El cuaderno de bitácora de cualquier prueba o experimento que se haga con GABI — qué se probó, "
+            "con qué datos, en qué fecha, y el resultado — para poder distinguir después una idea que se "
+            "validó de verdad de una que solo \"parecía funcionar\" la primera vez que se miró."
+        )
+    with st.expander("📐 Factor Lab / 🧮 Portfolio Lab"):
+        st.write(
+            "Herramientas para investigar, no para decidir hoy: Factor Lab comprueba si el score ordena "
+            "bien el retorno futuro real (no solo si una cesta concreta ganó); Portfolio Lab compara formas "
+            "distintas de repartir el capital entre las mismas candidatas. Sirven para poner a prueba ideas "
+            "antes de que entren (o no) en la hipótesis congelada — no para generar tu cartera del día."
+        )
+    st.caption(
+        "Todo esto vive en modo Research (barra lateral, arriba) — en modo Investor queda fuera de la "
+        "navegación a propósito, no porque esté oculto, sino porque no hace falta para usar el modelo ya "
+        "validado."
+    )
