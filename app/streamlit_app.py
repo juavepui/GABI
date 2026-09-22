@@ -115,8 +115,10 @@ with st.sidebar:
         "LIVE_FORWARD": ("🚀", st.success), "EXPERIMENTAL": ("🧪", st.warning),
     }
     _icon, _render = _STATUS_STYLE[_model["status"]]
-    _render(f"{_icon} **{_model['model_id']}** · {_model['status']}",
-           icon=_icon if _model["status"] != "EXPERIMENTAL" else "⚠️")
+    _badge_text = f"{_icon} **{_model['model_id']}** · {_model['status']}"
+    if _model["live_forward_source"] == "blind_validation":
+        _badge_text += f" (validación ciega #{_model['blind_validation_id']})"
+    _render(_badge_text, icon=_icon if _model["status"] != "EXPERIMENTAL" else "⚠️")
     st.divider()
 
 _visible_paths = set(app_mode.visible_pages(mode, [path for path, _, _ in PAGE_SPECS]))

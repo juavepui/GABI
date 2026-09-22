@@ -1,15 +1,41 @@
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import app_mode, config, research_lab
+from gabi import app_mode, blind_validation, config, research_lab, storage
 
 
 def _isolate_db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     monkeypatch.setattr(app_mode, "MODE_PATH", tmp_path / "app_mode.json")
+
+
+def _seed_prices(dates, symbol_closes):
+    for symbol, closes in symbol_closes:
+        storage.upsert_prices(symbol, pd.DataFrame({"Open": closes, "High": closes,
+            "Low": closes, "Close": closes, "Adj Close": closes, "Volume": [1] * len(closes)}, index=dates))
+
+
+def _fake_ranking(monkeypatch, scores: dict):
+    def _rank(day, symbols=None):
+        syms = list(scores)
+        table = pd.DataFrame({"composite_score": [scores[s] for s in syms],
+                              "score_coverage": [.9] * len(syms)}, index=syms)
+        return {"table": table}
+    monkeypatch.setattr(blind_validation.screener_asof, "build_ranking_as_of", _rank)
+
+
+def _create_and_record_validation(monkeypatch, weights, *, as_of="2024-01-10", unlock="2099-01-01"):
+    dates = pd.date_range("2024-01-01", periods=10, freq="D")
+    _seed_prices(dates, [("A", [100.0] * 10), ("B", [50.0] * 10)])
+    _fake_ranking(monkeypatch, {"A": 90, "B": 80})
+    vid = blind_validation.create_validation("Test", weights, 2, 3, as_of, unlock)
+    blind_validation.record_rebalance(vid, as_of=as_of)
+    return vid
 
 
 def test_default_mode_is_investor_without_saved_file(tmp_path, monkeypatch):
@@ -149,3 +175,73 @@ def test_experimental_banner_present_and_mentions_deviation():
     assert message is not None
     assert "EXPERIMENTAL" in message
     assert "Research Lab" in message
+
+
+def test_current_model_status_detects_live_forward_from_locked_blind_validation(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
+    vid = _create_and_record_validation(monkeypatch, dict(app_mode.FROZEN_WEIGHTS))
+
+    result = app_mode.current_model_status()
+    assert result["status"] == "LIVE_FORWARD"
+    assert result["live_forward_source"] == "blind_validation"
+    assert result["blind_validation_id"] == vid
+
+
+def test_current_model_status_ignores_blind_validation_without_recorded_periods(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
+    blind_validation.create_validation("Sin rebalanceos", dict(app_mode.FROZEN_WEIGHTS), 2, 3,
+                                       "2024-01-10", "2099-01-01")
+
+    result = app_mode.current_model_status()
+    assert result["status"] == "VALIDATED"
+    assert result["live_forward_source"] is None
+    assert result["blind_validation_id"] is None
+
+
+def test_current_model_status_ignores_blind_validation_with_different_weights(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
+    other_weights = {"value": 0.5, "quality": 0.2, "momentum": 0.2, "risk": 0.1}
+    _create_and_record_validation(monkeypatch, other_weights)
+
+    result = app_mode.current_model_status()
+    assert result["status"] == "VALIDATED"
+    assert result["blind_validation_id"] is None
+
+
+def test_current_model_status_ignores_broken_early_blind_validation(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
+    vid = _create_and_record_validation(monkeypatch, dict(app_mode.FROZEN_WEIGHTS))
+    blind_validation.break_seal_early(vid, "prueba de que no cuenta")
+
+    result = app_mode.current_model_status()
+    assert result["status"] == "VALIDATED"
+    assert result["blind_validation_id"] is None
+
+
+def test_current_model_status_blind_validation_signal_wins_over_research_lab_source_label(tmp_path, monkeypatch):
+    """Ambas señales pueden estar activas a la vez -- el resultado sigue
+    siendo LIVE_FORWARD, y la fuente mostrada es la fuerte (blind_validation)."""
+    _isolate_db(tmp_path, monkeypatch)
+    config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
+    vid = _create_and_record_validation(monkeypatch, dict(app_mode.FROZEN_WEIGHTS))
+    research_lab.log_experiment("GABI-MF-v1", "LIVE_FORWARD", True, sharpe=0.5)
+
+    result = app_mode.current_model_status()
+    assert result["status"] == "LIVE_FORWARD"
+    assert result["live_forward_source"] == "blind_validation"
+    assert result["blind_validation_id"] == vid
+
+
+def test_current_model_status_still_detects_research_lab_signal_without_blind_validation(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
+    research_lab.log_experiment("GABI-MF-v1", "LIVE_FORWARD", True, sharpe=0.5)
+
+    result = app_mode.current_model_status()
+    assert result["status"] == "LIVE_FORWARD"
+    assert result["live_forward_source"] == "research_lab"
+    assert result["blind_validation_id"] is None
