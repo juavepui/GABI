@@ -84,18 +84,43 @@ def quarterly_period_return(factors: pd.DataFrame, column: str, start: str, end:
     return float((1 + window).prod() - 1)
 
 
-def _ols(y: np.ndarray, X: np.ndarray, names: list) -> dict:
-    """Regresión lineal por mínimos cuadrados a mano (sin añadir statsmodels
-    como dependencia solo para esto): alfa, betas, error estándar, t-stat y R²."""
+def _ols(y: np.ndarray, X: np.ndarray, names: list, *, hac_lags: int | None = None) -> dict:
+    """Coeficientes OLS con inferencia HAC/Newey-West (Bartlett).
+
+    Las filas deben estar ordenadas y equiespaciadas. Por defecto se usan
+    floor(4*(n/100)**(2/9)) retardos y corrección de muestra pequeña n/(n-k),
+    como statsmodels.stats.sandwich_covariance.cov_hac(use_correction=True).
+    Un retardo es un periodo de la regresión, no un mes; 0 equivale a HC1.
+    `se`/`t_stat` son HAC; los homocedásticos quedan en `se_ols`/`t_stat_ols`
+    solo como diagnóstico. HAC no garantiza errores mayores que OLS.
+    """
     n, k = X.shape
-    beta, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
+    if n <= k or not np.isfinite(X).all() or not np.isfinite(y).all():
+        raise ValueError("La regresión requiere datos finitos y más observaciones que coeficientes.")
+    if hac_lags is None:
+        hac_lags = min(int(np.floor(4 * (n / 100) ** (2 / 9))), n - 1)
+    if isinstance(hac_lags, (bool, np.bool_)) or not isinstance(hac_lags, (int, np.integer)) or not 0 <= hac_lags < n:
+        raise ValueError(f"hac_lags debe ser un entero entre 0 y {n - 1}.")
+    hac_lags = int(hac_lags)
+    beta, _, rank, _ = np.linalg.lstsq(X, y, rcond=None)
+    if rank < k:
+        raise ValueError("La matriz de factores no tiene rango completo; no se puede interpretar la inferencia.")
     resid = y - X @ beta
     sse = float(resid @ resid)
-    dof = max(n - k, 1)
+    dof = n - k
     sigma2 = sse / dof
-    xtx_inv = np.linalg.pinv(X.T @ X)
-    se = np.sqrt(np.maximum(np.diag(sigma2 * xtx_inv), 0))
+    x_pinv = np.linalg.pinv(X)
+    xtx_inv = x_pinv @ x_pinv.T
+    se_ols = np.sqrt(np.maximum(np.diag(sigma2 * xtx_inv), 0))
+    scores = X * resid[:, None]
+    meat = scores.T @ scores
+    for lag in range(1, hac_lags + 1):
+        cross = scores[lag:].T @ scores[:-lag]
+        meat += (1 - lag / (hac_lags + 1)) * (cross + cross.T)
+    covariance = (n / dof) * (xtx_inv @ meat @ xtx_inv)
+    se = np.sqrt(np.maximum(np.diag(covariance), 0))
     t_stat = np.divide(beta, se, out=np.full_like(beta, np.nan), where=se > 0)
+    t_stat_ols = np.divide(beta, se_ols, out=np.full_like(beta, np.nan), where=se_ols > 0)
     sst = float(((y - y.mean()) ** 2).sum())
     r2 = 1 - sse / sst if sst > 0 else None
     return {
@@ -103,15 +128,19 @@ def _ols(y: np.ndarray, X: np.ndarray, names: list) -> dict:
         "coef": dict(zip(names, beta.tolist())),
         "se": dict(zip(names, se.tolist())),
         "t_stat": dict(zip(names, t_stat.tolist())),
+        "se_ols": dict(zip(names, se_ols.tolist())),
+        "t_stat_ols": dict(zip(names, t_stat_ols.tolist())),
+        "cov_type": "HAC", "hac_lags": hac_lags, "hac_kernel": "bartlett",
+        "hac_small_sample_correction": True,
     }
 
 
 def regress_returns_on_factors(period_returns: pd.DataFrame, factors: pd.DataFrame,
-                               factor_cols: list = None) -> dict:
+                               factor_cols: list = None, *, hac_lags: int | None = None) -> dict:
     """period_returns: DataFrame con columnas ['fecha','hasta','retorno'] —
     el mismo formato que devuelve multifactor_backtest.run()['periods'].
-    Alinea cada trimestre de GABI con el retorno compuesto de cada factor
-    académico en la MISMA ventana exacta, y regresiona:
+    Alinea cada periodo de GABI con el retorno compuesto de cada factor
+    académico en su ventana mensual (inicio incluido, fin excluido), y regresiona:
 
         retorno_GABI − RF = alfa + Σ(beta_i · factor_i) + error
 
@@ -120,8 +149,13 @@ def regress_returns_on_factors(period_returns: pd.DataFrame, factors: pd.DataFra
     es distinguible de 0 (t-stat bajo), no hay evidencia de que el Composite
     bata a una simple combinación de primas de factor académicas conocidas.
 
-    Con ~30-40 trimestres y 6 factores, la potencia estadística es baja —
-    esto es una primera señal direccional, no una prueba concluyente."""
+    La inferencia es HAC/Newey-West; `hac_lags` permite fijar el máximo
+    retardo en periodos (None: regla automática, 3 para 36 observaciones).
+    Ordena por fecha y exige ventanas mensuales consecutivas de igual duración:
+    saltarse un periodo interior no puede convertirlo en un vecino temporal.
+    La alineación mensual es una aproximación a las fechas bursátiles de V1.
+    Con ~30-40 trimestres y 6 factores, incluso HAC tiene poca potencia y
+    no proporciona una prueba concluyente ni corrige el multiple testing."""
     factor_cols = factor_cols or DEFAULT_FACTOR_COLS
     rows = []
     for _, row in period_returns.iterrows():
@@ -129,16 +163,24 @@ def regress_returns_on_factors(period_returns: pd.DataFrame, factors: pd.DataFra
         if any(v is None for v in factor_rets.values()):
             continue
         rf = quarterly_period_return(factors, "RF", row["fecha"], row["hasta"]) or 0.0
-        rows.append({"fecha": row["fecha"], "y": row["retorno"] - rf, **factor_rets})
+        rows.append({"fecha": pd.Timestamp(row["fecha"]), "hasta": pd.Timestamp(row["hasta"]),
+                     "y": row["retorno"] - rf, **factor_rets})
     aligned = pd.DataFrame(rows)
     if len(aligned) < len(factor_cols) + 2:
         raise ValueError(f"Solo {len(aligned)} periodos con datos de factor académico alineados — "
                          f"insuficientes para una regresión con {len(factor_cols)} factores.")
 
+    aligned = aligned.sort_values("fecha")
+    starts = pd.PeriodIndex(aligned["fecha"], freq="M").asi8
+    ends = pd.PeriodIndex(aligned["hasta"], freq="M").asi8
+    months = int(ends[0] - starts[0])
+    if months <= 0 or not np.all(ends - starts == months) or not np.all(starts[1:] == ends[:-1]):
+        raise ValueError("HAC requiere periodos consecutivos de igual duración, sin huecos ni solapamientos.")
     y = aligned["y"].to_numpy()
     X = np.column_stack([np.ones(len(aligned))] + [aligned[c].to_numpy() for c in factor_cols])
-    result = _ols(y, X, ["alpha"] + factor_cols)
-    result["alpha_anualizado"] = (1 + result["coef"]["alpha"]) ** 4 - 1
+    result = _ols(y, X, ["alpha"] + factor_cols, hac_lags=hac_lags)
+    result["periods_per_year"] = 12 / months
+    result["alpha_anualizado"] = (1 + result["coef"]["alpha"]) ** result["periods_per_year"] - 1
     result["periodos_alineados"] = len(aligned)
     result["periodos_totales"] = len(period_returns)
     return result

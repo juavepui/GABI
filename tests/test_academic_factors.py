@@ -115,3 +115,119 @@ def test_fetch_ff_factors_caches_to_disk(tmp_path, monkeypatch):
     df2 = af.fetch_ff_factors()
     assert len(calls) == 2
     assert df2["Mkt-RF"].iloc[0] == pytest.approx(.01)
+
+
+def test_hac_intercept_only_matches_hand_calculation():
+    # mean=3, residuals=(-2,-1,1,0,2), sum(e²)=10, sum(e[t]*e[t-1])=1.
+    # Bartlett L=1: meat=10+2*(1/2)*1=11; cov=11/5² * 5/4 = .55.
+    result = af._ols(np.array([1., 2., 4., 3., 5.]), np.ones((5, 1)), ["alpha"], hac_lags=1)
+    assert result["coef"]["alpha"] == pytest.approx(3)
+    assert result["se"]["alpha"] == pytest.approx(np.sqrt(.55))
+    assert result["t_stat"]["alpha"] == pytest.approx(3 / np.sqrt(.55))
+    assert result["se_ols"]["alpha"] == pytest.approx(np.sqrt(.5))
+
+
+@pytest.mark.parametrize("lags", [0, 1, 3, 4, 35])
+def test_hac_matches_dense_bartlett_covariance_for_all_coefficients(lags):
+    # Independent dense temporal kernel formulation; includes six factors,
+    # nonconstant residual variance, HC1 (L=0), and the boundary L=n-1.
+    rng = np.random.default_rng(21)
+    n, k = 36, 7
+    X = np.column_stack([np.ones(n), rng.normal(0, .03, (n, k - 1))])
+    y = X @ np.array([.01, .97, -.2, .3, .5, .1, .2]) + rng.normal(size=n) * np.linspace(.01, .04, n)
+    beta = np.linalg.solve(X.T @ X, X.T @ y)
+    residuals = y - X @ beta
+    distance = np.abs(np.arange(n)[:, None] - np.arange(n)[None, :])
+    kernel = np.maximum(1 - distance / (lags + 1), 0)
+    omega = kernel * np.outer(residuals, residuals)
+    bread = np.linalg.inv(X.T @ X)
+    expected_cov = bread @ X.T @ omega @ X @ bread * n / (n - k)
+    names = ["alpha"] + af.DEFAULT_FACTOR_COLS
+    result = af._ols(y, X, names, hac_lags=lags)
+    expected_se = np.sqrt(np.diag(expected_cov))
+    np.testing.assert_allclose(list(result["se"].values()), expected_se, rtol=1e-10)
+    np.testing.assert_allclose(list(result["t_stat"].values()), beta / expected_se, rtol=1e-10)
+    np.testing.assert_allclose(list(result["coef"].values()), beta, rtol=1e-10)
+    classical_se = np.sqrt(np.diag(bread) * (residuals @ residuals) / (n - k))
+    np.testing.assert_allclose(list(result["se_ols"].values()), classical_se, rtol=1e-10)
+    assert result["hac_lags"] == lags
+    assert result["cov_type"] == "HAC"
+    assert result["hac_kernel"] == "bartlett"
+    assert result["hac_small_sample_correction"] is True
+
+
+def test_hac_reduces_alpha_t_stat_with_persistent_residuals():
+    rng = np.random.default_rng(42)
+    residuals = np.zeros(500)
+    for t in range(1, len(residuals)):
+        residuals[t] = .85 * residuals[t - 1] + rng.normal(0, .01)
+    result = af._ols(.02 + residuals, np.ones((500, 1)), ["alpha"], hac_lags=4)
+    assert result["se"]["alpha"] > result["se_ols"]["alpha"]
+    assert abs(result["t_stat"]["alpha"]) < abs(result["t_stat_ols"]["alpha"])
+
+
+@pytest.mark.parametrize("lags", [-1, 5, 1.5, True, "3"])
+def test_hac_rejects_invalid_lags(lags):
+    with pytest.raises(ValueError, match="hac_lags"):
+        af._ols(np.arange(5.), np.ones((5, 1)), ["alpha"], hac_lags=lags)
+
+
+@pytest.mark.parametrize("case", ["singular", "no_dof", "nan", "inf"])
+def test_hac_rejects_unidentifiable_or_nonfinite_regressions(case):
+    X = np.column_stack([np.ones(5), np.arange(5.)])
+    y = np.arange(5.)
+    if case == "singular":
+        X[:, 1] = 1
+    elif case == "no_dof":
+        X, y = X[:2], y[:2]
+    elif case == "nan":
+        y[0] = np.nan
+    else:
+        X[0, 1] = np.inf
+    with pytest.raises(ValueError):
+        af._ols(y, X, ["alpha", "factor"])
+
+
+def _noisy_periods(months=3):
+    dates = pd.date_range("2010-01-01", periods=36 * months, freq="MS")
+    rng = np.random.default_rng(23)
+    factors = pd.DataFrame({"Mkt-RF": rng.normal(.005, .02, len(dates)), "RF": .001}, index=dates)
+    rows = []
+    for start in dates[::months]:
+        end = start + pd.DateOffset(months=months)
+        market = af.quarterly_period_return(factors, "Mkt-RF", start, end)
+        rf = af.quarterly_period_return(factors, "RF", start, end)
+        rows.append({"fecha": start, "hasta": end, "retorno": rf + .01 + .9 * market + rng.normal(0, .01)})
+    return pd.DataFrame(rows), factors
+
+
+@pytest.mark.parametrize("months", [1, 3, 6, 12])
+def test_regression_hac_order_lags_and_annualization(months):
+    periods, factors = _noisy_periods(months)
+    result = af.regress_returns_on_factors(periods, factors, ["Mkt-RF"])
+    shuffled = af.regress_returns_on_factors(periods.sample(frac=1, random_state=5), factors, ["Mkt-RF"])
+    assert shuffled == result
+    assert result["hac_lags"] == 3
+    assert result["periods_per_year"] == 12 / months
+    assert result["alpha_anualizado"] == pytest.approx((1 + result["coef"]["alpha"]) ** (12 / months) - 1)
+    overridden = af.regress_returns_on_factors(periods, factors, ["Mkt-RF"], hac_lags=4)
+    assert overridden["hac_lags"] == 4
+    assert overridden["coef"] == result["coef"]
+    assert overridden["r2"] == result["r2"]
+    assert overridden["se_ols"] == result["se_ols"]
+    assert overridden["se"]["alpha"] != result["se"]["alpha"]
+
+
+@pytest.mark.parametrize("case", ["gap", "duplicate", "duration", "missing_factors"])
+def test_regression_rejects_irregular_hac_time_axis(case):
+    periods, factors = _noisy_periods()
+    if case == "gap":
+        periods = periods.drop(index=5)
+    elif case == "duplicate":
+        periods = pd.concat([periods, periods.iloc[[5]]])
+    elif case == "duration":
+        periods.loc[5, "hasta"] += pd.DateOffset(months=1)
+    else:
+        factors = factors.drop(factors.index[15:18])
+    with pytest.raises(ValueError, match="consecutivos"):
+        af.regress_returns_on_factors(periods, factors, ["Mkt-RF"])

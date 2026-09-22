@@ -1,0 +1,666 @@
+{
+  "stage": "RESEARCH",
+  "source": "overfitting-audit/returns.csv",
+  "source_sha256": "9b8c23744b39688f983af69e319521e7fcd555b735ccecd738c631d3f153597e",
+  "code_sha256": "6fb825ae913270ed0c93a6391483185fe6504fedfaa97577731fd1747376d26b",
+  "selected_trial": "top20_q",
+  "n_trials": 24,
+  "start": "2016-10-03 00:00:00",
+  "end": "2025-07-02 00:00:00",
+  "summaries": {
+    "top10_q": {
+      "n_obs": 36,
+      "skewness": -0.34284387063456584,
+      "excess_kurtosis": 0.6795956020789584,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.14903237554598903,
+        "expected_shortfall": 0.18290130776339508,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.20999645353732,
+        "expected_shortfall": 0.20999645353732,
+        "status": "below_resolution"
+      }
+    },
+    "top20_q": {
+      "n_obs": 36,
+      "skewness": -0.2288686332565792,
+      "excess_kurtosis": 1.5783500751950654,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.12057655517773735,
+        "expected_shortfall": 0.18650083047862132,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.23924025071932864,
+        "expected_shortfall": 0.23924025071932864,
+        "status": "below_resolution"
+      }
+    },
+    "top30_q": {
+      "n_obs": 36,
+      "skewness": -0.5275333848042689,
+      "excess_kurtosis": 2.0265868784248564,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.13628007448342272,
+        "expected_shortfall": 0.21458703605873428,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.27723260531898364,
+        "expected_shortfall": 0.27723260531898364,
+        "status": "below_resolution"
+      }
+    },
+    "top10_sma200_q": {
+      "n_obs": 36,
+      "skewness": -0.8043308205864883,
+      "excess_kurtosis": 0.9590862460415646,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.14903237554598903,
+        "expected_shortfall": 0.18290130776339508,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.20999645353732,
+        "expected_shortfall": 0.20999645353732,
+        "status": "below_resolution"
+      }
+    },
+    "buffer13_q": {
+      "n_obs": 36,
+      "skewness": -0.19073073475794844,
+      "excess_kurtosis": 1.3925856369333227,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.13854179508338194,
+        "expected_shortfall": 0.1944853815477968,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.23924025071932875,
+        "expected_shortfall": 0.23924025071932875,
+        "status": "below_resolution"
+      }
+    },
+    "buffer15_q": {
+      "n_obs": 36,
+      "skewness": -0.1384755566444484,
+      "excess_kurtosis": 1.2973429579129034,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.13854179508338194,
+        "expected_shortfall": 0.19102554177006617,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.23301253911941366,
+        "expected_shortfall": 0.23301253911941366,
+        "status": "below_resolution"
+      }
+    },
+    "buffer20_q": {
+      "n_obs": 36,
+      "skewness": 0.01822696972164793,
+      "excess_kurtosis": 1.6927012867475015,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.13874626433128934,
+        "expected_shortfall": 0.19463451238580404,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.2393451108294159,
+        "expected_shortfall": 0.2393451108294159,
+        "status": "below_resolution"
+      }
+    },
+    "top20_semestral": {
+      "n_obs": 36,
+      "skewness": -0.3390385567185825,
+      "excess_kurtosis": 1.2617340743537744,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.15713745161390413,
+        "expected_shortfall": 0.20278255936346617,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.23929864556311586,
+        "expected_shortfall": 0.23929864556311586,
+        "status": "below_resolution"
+      }
+    },
+    "top20_anual": {
+      "n_obs": 36,
+      "skewness": -0.5223871933612888,
+      "excess_kurtosis": 1.3313990128376985,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.19578467582697257,
+        "expected_shortfall": 0.19611323055400864,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.19637607433563753,
+        "expected_shortfall": 0.19637607433563753,
+        "status": "below_resolution"
+      }
+    },
+    "top10_q_cost25": {
+      "n_obs": 36,
+      "skewness": -0.3387955293497971,
+      "excess_kurtosis": 0.6762084338393173,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1506026395008193,
+        "expected_shortfall": 0.18444985935285807,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.21152763523448914,
+        "expected_shortfall": 0.21152763523448914,
+        "status": "below_resolution"
+      }
+    },
+    "top10_q_cost50": {
+      "n_obs": 36,
+      "skewness": -0.3319230241813124,
+      "excess_kurtosis": 0.6701751243597404,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.15321450270308978,
+        "expected_shortfall": 0.187025607780945,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.21407449184322924,
+        "expected_shortfall": 0.21407449184322924,
+        "status": "below_resolution"
+      }
+    },
+    "top10_q_cost100": {
+      "n_obs": 36,
+      "skewness": -0.31772059444084244,
+      "excess_kurtosis": 0.6566656856355602,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1584185663984542,
+        "expected_shortfall": 0.1921577138083002,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.21914903173617706,
+        "expected_shortfall": 0.21914903173617706,
+        "status": "below_resolution"
+      }
+    },
+    "top20_q_cost25": {
+      "n_obs": 36,
+      "skewness": -0.2253692165531288,
+      "excess_kurtosis": 1.5873519898408004,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.12202196473546234,
+        "expected_shortfall": 0.18791884449978796,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.24063634831124858,
+        "expected_shortfall": 0.24063634831124858,
+        "status": "below_resolution"
+      }
+    },
+    "top20_q_cost50": {
+      "n_obs": 36,
+      "skewness": -0.21939288865451775,
+      "excess_kurtosis": 1.6021853272238127,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.12458228623597378,
+        "expected_shortfall": 0.1903468582239304,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.24295851581429584,
+        "expected_shortfall": 0.24295851581429584,
+        "status": "below_resolution"
+      }
+    },
+    "buffer13_q_cost25": {
+      "n_obs": 36,
+      "skewness": -0.18639860775686393,
+      "excess_kurtosis": 1.4079758375447007,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1395457058100712,
+        "expected_shortfall": 0.19570717386628078,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.24063634831124858,
+        "expected_shortfall": 0.24063634831124858,
+        "status": "below_resolution"
+      }
+    },
+    "buffer13_q_cost50": {
+      "n_obs": 36,
+      "skewness": -0.17903313051523134,
+      "excess_kurtosis": 1.4335491440368846,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.14121553811905252,
+        "expected_shortfall": 0.19773941461640987,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.24295851581429584,
+        "expected_shortfall": 0.24295851581429584,
+        "status": "below_resolution"
+      }
+    },
+    "buffer15_q_cost25": {
+      "n_obs": 36,
+      "skewness": -0.1317884286087514,
+      "excess_kurtosis": 1.3067046933341244,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1395457058100712,
+        "expected_shortfall": 0.19212791704019044,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.23419368602428592,
+        "expected_shortfall": 0.23419368602428592,
+        "status": "below_resolution"
+      }
+    },
+    "buffer15_q_cost50": {
+      "n_obs": 36,
+      "skewness": -0.12048308483720364,
+      "excess_kurtosis": 1.3222211821733303,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.14121553811905252,
+        "expected_shortfall": 0.19396152813103495,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.236158320140621,
+        "expected_shortfall": 0.236158320140621,
+        "status": "below_resolution"
+      }
+    },
+    "buffer20_q_cost25": {
+      "n_obs": 36,
+      "skewness": 0.024084614265879576,
+      "excess_kurtosis": 1.7085714000657302,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.139755109481024,
+        "expected_shortfall": 0.1957332669670534,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.240515792955877,
+        "expected_shortfall": 0.240515792955877,
+        "status": "below_resolution"
+      }
+    },
+    "buffer20_q_cost50": {
+      "n_obs": 36,
+      "skewness": 0.03396918951682753,
+      "excess_kurtosis": 1.7350317833308793,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.14143314935150264,
+        "expected_shortfall": 0.1975608556665603,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.24246302071860648,
+        "expected_shortfall": 0.24246302071860648,
+        "status": "below_resolution"
+      }
+    },
+    "top20_semestral_cost25": {
+      "n_obs": 36,
+      "skewness": -0.33512698088465714,
+      "excess_kurtosis": 1.2558117266441202,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1571763168947472,
+        "expected_shortfall": 0.2036240441063387,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.24078222587561193,
+        "expected_shortfall": 0.24078222587561193,
+        "status": "below_resolution"
+      }
+    },
+    "top20_semestral_cost50": {
+      "n_obs": 36,
+      "skewness": -0.3278332383201305,
+      "excess_kurtosis": 1.2440511298416026,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.15724123974371684,
+        "expected_shortfall": 0.20502383199313726,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.2432499057926737,
+        "expected_shortfall": 0.2432499057926737,
+        "status": "below_resolution"
+      }
+    },
+    "top20_anual_cost25": {
+      "n_obs": 36,
+      "skewness": -0.5053710313857404,
+      "excess_kurtosis": 1.310689519938345,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1958460576780724,
+        "expected_shortfall": 0.1961262167217554,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.1963503439567018,
+        "expected_shortfall": 0.1963503439567018,
+        "status": "below_resolution"
+      }
+    },
+    "top20_anual_cost50": {
+      "n_obs": 36,
+      "skewness": -0.4767051336237309,
+      "excess_kurtosis": 1.2722522708823372,
+      "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected",
+      "horizon": "un trimestre",
+      "method": "historical empirical losses=-returns; fractional-tail ES",
+      "annualized": false,
+      "95": {
+        "confidence": 0.95,
+        "n_obs": 36,
+        "tail_mass": 1.8000000000000016,
+        "tail_observations": 2,
+        "var": 0.1959486939847399,
+        "expected_shortfall": 0.19614789335710142,
+        "status": "sparse"
+      },
+      "99": {
+        "confidence": 0.99,
+        "n_obs": 36,
+        "tail_mass": 0.3600000000000003,
+        "tail_observations": 1,
+        "var": 0.19630725285499062,
+        "expected_shortfall": 0.19630725285499062,
+        "status": "below_resolution"
+      }
+    }
+  },
+  "limitations": [
+    "Quarterly returns, not daily losses or intra-quarter drawdowns.",
+    "36 observations: tail mass at 95%=1.8 and at 99%=0.36.",
+    "Retrospective N=200 universe sample, seed 42. Existing V1 data/identity limitations persist.",
+    "Historical distribution is not a bound on future losses or a normality assumption."
+  ]
+}

@@ -14,11 +14,16 @@ from gabi import (
     data_quality,
     edgar,
     evaluation,
+    factor_benchmark,
+    factor_benchmark_ui,
+    factor_stability,
+    factor_stability_ui,
     multifactor_backtest,
     portfolio_backtest,
     portfolio_metrics,
     research_lab,
     screener_asof,
+    tail_risk_ui,
     universe,
 )
 from gabi.ui_helpers import METRIC_INFO, build_color_basis, gradient_style, translate_sector
@@ -382,6 +387,19 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
         st.caption("Capital acumulado (partiendo de 1) de la estrategia, el universo equiponderado y el SPY.")
         st.dataframe(test["periods"], hide_index=True, width="stretch")
 
+        with st.expander("Riesgo de cola · retornos por rebalanceo"):
+            period_starts = pd.PeriodIndex(test["periods"]["fecha"], freq="M").asi8
+            period_ends = pd.PeriodIndex(test["periods"]["hasta"], freq="M").asi8
+            durations = set(period_ends - period_starts)
+            if len(durations) == 1 and next(iter(durations)) > 0:
+                tail_risk_ui.render_returns(
+                    {"Estrategia": test["periods"]["retorno"], "Universo EW": test["periods"]["universo_ew"],
+                     "SPY": test["periods"]["spy"]}, horizon=f"{next(iter(durations))} meses (rebalanceo V1)", key="v1_tail")
+                st.caption("Solo periodos disponibles del backtest; no mide caídas dentro de cada periodo. "
+                           "Los periodos saltados no se imputan como retornos cero.")
+            else:
+                st.info("No se mezclan retornos de distinta duración en una distribución de cola.")
+
         with st.expander("📋 Registrar este experimento en el Research Lab"):
             rl1, rl2 = st.columns(2)
             rl_stage = rl1.selectbox(
@@ -416,9 +434,18 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                  "Se descarga y cachea la primera vez que se usa esta sección.",
         )
         try:
+            with st.expander("Inferencia HAC/Newey-West"):
+                automatic_lags = st.checkbox("Elegir retardos automáticamente", value=True, key="ff_hac_auto")
+                hac_lags = None if automatic_lags else int(st.number_input(
+                    "Máximo retardo (periodos del backtest)", min_value=0,
+                    max_value=max(len(test["periods"]) - 1, 0),
+                    value=min(3, max(len(test["periods"]) - 1, 0)), key="ff_hac_lags",
+                    help="0 corrige heterocedasticidad; los valores mayores también autocorrelación. "
+                         "Elige el criterio antes de mirar qué t-stat produce.",
+                ))
             with st.spinner("Descargando series de Kenneth French (Fama-French 5 factores + Momentum)..."):
                 ff_factors = academic_factors.fetch_ff_factors()
-            reg = academic_factors.regress_returns_on_factors(test["periods"], ff_factors)
+            reg = academic_factors.regress_returns_on_factors(test["periods"], ff_factors, hac_lags=hac_lags)
             rc1, rc2, rc3 = st.columns(3)
             rc1.metric(
                 "Alfa anualizado", f"{reg['alpha_anualizado']:+.2%}",
@@ -426,8 +453,9 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                      "estrategia, si es que existe alguna.",
             )
             rc2.metric(
-                "t-stat del alfa", f"{reg['t_stat']['alpha']:+.2f}",
-                help="Por debajo de ~2.0 no se puede distinguir de cero con confianza estadística habitual; "
+                "t-stat del alfa (HAC)", f"{reg['t_stat']['alpha']:+.2f}",
+                help="Errores estándar Newey-West robustos a heterocedasticidad y autocorrelación. "
+                     "|t| ≈ 2 es solo una referencia asintótica, poco precisa con muestras pequeñas. "
                      "Harvey, Liu y Zhu proponen exigir >3.0 precisamente porque se prueban muchas configuraciones "
                      "en este tipo de investigación (ver HIPOTESIS_CONGELADA.md).",
             )
@@ -436,9 +464,13 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                            "más alto significa que la estrategia se parece más a una combinación de exposiciones ya "
                            "documentadas y menos a algo genuinamente distinto.")
             st.caption(f"Regresión con {reg['periodos_alineados']}/{reg['periodos_totales']} periodos alineados "
-                      f"({reg['dof']} grados de libertad tras 6 factores + alfa).")
+                      f"({reg['dof']} grados de libertad tras 6 factores + alfa). "
+                      f"HAC/Newey-West: Bartlett, {reg['hac_lags']} retardos, corrección n/(n−k). "
+                      f"t-stat del alfa OLS convencional: {reg['t_stat_ols']['alpha']:+.2f}. "
+                      "Con pocos periodos, la inferencia sigue siendo aproximada; HAC no corrige el multiple testing.")
             betas_df = pd.DataFrame([
-                {"Factor": f, "Qué mide": label, "Beta": reg["coef"][f], "t-stat": reg["t_stat"][f]}
+                {"Factor": f, "Qué mide": label, "Beta": reg["coef"][f],
+                 "SE (HAC)": reg["se"][f], "t-stat (HAC)": reg["t_stat"][f]}
                 for f, label in [
                     ("Mkt-RF", "Exposición al mercado (~1 = se mueve como la bolsa en general)"),
                     ("SMB", "Tamaño (small minus big) — tilt hacia empresas más pequeñas"),
@@ -452,9 +484,22 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                 betas_df, hide_index=True, width="stretch",
                 column_config={
                     "Beta": st.column_config.NumberColumn(format="%.3f"),
-                    "t-stat": st.column_config.NumberColumn(format="%.2f"),
+                    "SE (HAC)": st.column_config.NumberColumn(format="%.3f"),
+                    "t-stat (HAC)": st.column_config.NumberColumn(format="%.2f"),
                 },
             )
+            with st.expander("Estabilidad temporal de alfa y betas"):
+                try:
+                    stability_inputs = factor_stability.aligned_quarters(test["periods"], ff_factors)
+                    factor_stability_ui.render(factor_stability.analyze(stability_inputs), key="ff_stability_live")
+                except (ValueError, KeyError) as exc:
+                    st.info(f"Diagnóstico temporal no disponible: {exc}")
+            with st.expander("Benchmark ajustado por beta y factores"):
+                try:
+                    benchmark_inputs = factor_benchmark.aligned_inputs(test["periods"], ff_factors)
+                    factor_benchmark_ui.render(factor_benchmark.analyze(benchmark_inputs), key="factor_benchmark_live")
+                except (ValueError, KeyError) as exc:
+                    st.info(f"Benchmark trimestral no disponible: {exc}")
         except (ValueError, RuntimeError, ImportError) as exc:
             st.warning(f"No se pudo calcular el contraste con factores académicos: {exc}")
 
@@ -592,6 +637,9 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
         _metric_row_v2("Estrategia", daily)
         st.markdown("**SPY** — comprado una vez y mantenido")
         _metric_row_v2("SPY", daily_spy)
+
+        with st.expander("Riesgo de cola · retornos diarios"):
+            tail_risk_ui.render_nav({"Estrategia": nav, "SPY": nav_spy}, key="v2_tail")
 
         h1, h2, h3, h4 = st.columns(4)
         calmar = portfolio_metrics.calmar_ratio(daily["anualizado"], daily["max_drawdown"])

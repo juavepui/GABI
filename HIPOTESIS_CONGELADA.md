@@ -33,6 +33,25 @@ individuales vs multifactor). Eso es *data snooping* por diseño: cualquier conc
 sacada así está contaminada por cuántas veces se ha mirado el mismo dato, y no hay forma
 de corregirlo estadísticamente a posteriori con garantías.
 
+**Actualización de auditoría — 2026-09-22:** se ha aplicado PBO/DSR a una
+matriz guardada de 36 trimestres × 24 ensayos documentados. La familia
+principal de nueve variantes a coste fijo da PBO 10% y DSR 94,08%; las
+otras quince ejecuciones son sensibilidad a costes. Es una reconstrucción
+parcial con inputs actuales: faltan los parámetros completos de algunos
+ensayos, incluidas las perturbaciones de pesos. No convierte este histórico
+en validación prospectiva. Ver [informe, matriz y reproducción](docs/overfitting-audit/README.md).
+
+**Estabilidad temporal — 2026-09-22:** el recálculo FF5+Momentum con HAC
+da alfas anualizados de −2,91% y +2,65% en las dos mitades cronológicas
+(t −0,83 y 0,64), y de −5,49% a +9,16% en ventanas de cuatro años.
+Hay sensibilidad temporal, sin prueba concluyente de cambio estructural.
+Los episodios cortos se describen con betas globales: 2023–2024 resta
+contribución ajustada, mientras 2021 y 2019 concentran aproximadamente
+el 51% y 31% de la suma ajustada neta. No son alfas locales ni validación.
+La estabilidad de las permutaciones y perturbaciones de pesos originales
+sigue pendiente por falta de inputs completos. Ver
+[informe temporal y resultados](docs/factor-stability/README.md).
+
 La única salida honesta es dejar de mirar hacia atrás y **declarar la configuración que
 se cree buena, por escrito, con fecha, antes de tener ningún dato nuevo con el que
 verificarla**. Eso es lo que hace este archivo.
@@ -164,6 +183,14 @@ congelada (Composite, N=20, trimestral, sin filtro de tendencia) y la predicció
 de la sección de arriba **no cambian**.
 
 ## Contraste con factores académicos (Kenneth French Data Library) — 2026-09-17
+
+**Nota de inferencia — 2026-09-21, issue #11:** los t-stats de esta tabla
+son los originales, calculados con errores OLS homocedásticos, sin HAC.
+Se conservan como registro histórico, no como evidencia robusta a
+autocorrelación. La implementación actual usa Newey-West; metodología y
+comparación reproducible en [academic-factors-hac.md](docs/academic-factors-hac.md).
+Los experimentos antiguos no conservaron los retornos necesarios para
+recalcular exactamente esta tabla sobre los mismos inputs.
 
 Nuevo módulo `src/gabi/academic_factors.py`: descarga y cachea las series mensuales de
 Fama-French 5 factores + Momentum (Mkt-RF, SMB, HML, RMW, CMA, Mom — gratis, sin API key,

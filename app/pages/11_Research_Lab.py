@@ -7,7 +7,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import research_lab, stats_rigor
+from gabi import (
+    config,
+    factor_benchmark,
+    factor_benchmark_ui,
+    factor_stability,
+    factor_stability_ui,
+    overfitting_audit,
+    research_lab,
+    stats_rigor,
+    tail_risk_ui,
+)
 
 st.title("🔬 Research Lab")
 st.caption(
@@ -28,6 +38,64 @@ with st.expander("ℹ️ Las cuatro fases, y por qué importa no confundirlas"):
         "se usaron para elegirla (OUT_OF_SAMPLE) o, mejor aún, en el futuro real (LIVE_FORWARD). Ver "
         "🎓 Aprender → 'Cómo piensa GABI' para el contexto completo."
     )
+
+benchmark_dir = config.BASE_DIR / "docs" / "factor-benchmark"
+if (benchmark_dir / "audit.json").exists():
+    with st.expander("Benchmark ajustado por beta/factores · auditoría guardada"):
+        try:
+            st.caption("V1 Top-20 trimestral, N=200, semilla 42, pesos 30/35/25/10, coste 10 pb/lado.")
+            factor_benchmark_ui.render(factor_benchmark.load_audit(benchmark_dir), key="factor_benchmark_saved")
+        except (OSError, ValueError, KeyError) as exc:
+            st.warning(f"No se pudo cargar el benchmark ajustado: {exc}")
+
+stability_dir = config.BASE_DIR / "docs" / "factor-stability"
+if (stability_dir / "audit.json").exists():
+    with st.expander("Estabilidad temporal FF5 + Momentum · auditoría guardada"):
+        try:
+            st.caption("Recálculo V1 Top-20 trimestral, muestra de 200 empresas, semilla 42, "
+                       "pesos 30/35/25/10 y coste de 10 pb por lado. Inputs de la auditoría HAC de septiembre de 2026.")
+            factor_stability_ui.render(factor_stability.load_audit(stability_dir), key="ff_stability_saved")
+        except (OSError, ValueError, KeyError) as exc:
+            st.warning(f"No se pudo cargar la auditoría temporal: {exc}")
+
+audit_dir = config.BASE_DIR / "docs" / "overfitting-audit"
+if (audit_dir / "audit.json").exists():
+    with st.expander("Auditoría retrospectiva de las configuraciones documentadas", expanded=True):
+        try:
+            audit, audit_matrix = overfitting_audit.load_audit(audit_dir)
+            primary = audit["primary"]
+            ac1, ac2, ac3 = st.columns(3)
+            ac1.metric("PBO · variantes a coste fijo", f"{primary['pbo']['pbo']:.1%}")
+            ac2.metric("DSR · Top-20 trimestral", f"{primary['dsr']['dsr']:.1%}")
+            ac3.metric("Variantes / trimestres", f"{primary['n_trials']} / {primary['n_obs']}")
+            st.caption(
+                f"Reconstrucción V1 con muestra de {audit['inputs']['max_symbols']} empresas, semilla 42. "
+                "La matriz completa conserva también los ensayos de sensibilidad a costes. "
+                "Sharpe aritmético de excesos, RF anual 4%, observaciones trimestrales para todas las frecuencias."
+            )
+            st.warning(
+                "Auditoría parcial de investigación: faltan ensayos con parámetros originales no recuperables. "
+                "PBO evalúa elegir el mejor Sharpe; la elección histórica también miró drawdown. "
+                "DSR usa el número nominal de variantes correlacionadas y no constituye validación prospectiva."
+            )
+            st.dataframe(pd.DataFrame([
+                {"Ensayo": trial["trial_id"], "Tipo": trial["role"], "Rebalanceo (meses)": trial["months"],
+                 "Coste (pb/lado)": trial["cost_bps"],
+                 "Sharpe aritmético": audit["including_cost_sensitivity"]["trial_statistics"][trial["trial_id"]]["sharpe_anualizado"]}
+                for trial in audit["catalog"]
+            ]), hide_index=True, width="stretch")
+            st.caption("Sensibilidad PBO a bloques de igual tamaño: " + "; ".join(
+                f"{splits} bloques: {result['pbo']:.1%}"
+                for splits, result in primary["pbo_sensitivity"].items()
+            ))
+            for excluded in audit["excluded"]:
+                st.caption(f"Fuera de la matriz — {excluded['trial']}: {excluded['reason']}")
+            st.download_button("Descargar matriz completa", (audit_dir / "returns.csv").read_bytes(),
+                               file_name="gabi-retrospective-trials.csv", mime="text/csv")
+            st.download_button("Descargar informe y procedencia", (audit_dir / "audit.json").read_bytes(),
+                               file_name="gabi-retrospective-audit.json", mime="application/json")
+        except (ValueError, KeyError, OSError) as exc:
+            st.error(f"No se puede verificar la auditoría guardada: {exc}")
 
 experiments = research_lab.list_experiments()
 
@@ -153,7 +221,7 @@ else:
             exact = stats_rigor.probabilistic_sharpe_ratio_from_returns(
                 selected["returns"], selected["periods_per_year"] or 4)
             skew, kurtosis = exact["skew"], exact["kurtosis"]
-            st.caption("✅ Serie de retornos real disponible — PSR/DSR exactos (no aproximación normal).")
+            st.caption("Serie disponible: PSR/DSR con asimetría y curtosis estimadas. La inferencia sigue siendo aproximada.")
         else:
             skew, kurtosis = 0.0, 3.0
             st.caption("⚠️ Sin serie de retornos guardada para este experimento — PSR/DSR con aproximación "
@@ -183,15 +251,26 @@ else:
             f"— {'sigue pareciendo genuino incluso corrigiendo por multiple testing' if result['dsr'] > 0.95 else 'convendría más evidencia (out-of-sample o más historia) antes de confiar en él'}."
         )
 
+with_returns = experiments[experiments["returns_json"].notna()] if not experiments.empty else experiments
+if not with_returns.empty:
+    with st.expander("Riesgo de cola · serie guardada de un experimento"):
+        tail_options = {f"#{row.id} · {row.model_id}": row.id for row in with_returns.itertuples()}
+        tail_label = st.selectbox("Experimento con retornos", list(tail_options), key="tail_experiment")
+        tail_exp = research_lab.get_experiment(tail_options[tail_label])
+        tail_frequency = tail_exp.get("periods_per_year")
+        tail_horizon = {252: "una sesión", 12: "un mes", 4: "un trimestre", 2: "un semestre", 1: "un año"}.get(
+            tail_frequency, "una observación (frecuencia no identificada)")
+        st.caption("Horizonte según la frecuencia registrada del experimento; no se convierte ni anualiza la serie.")
+        tail_risk_ui.render_returns({tail_label: tail_exp["returns"]}, horizon=tail_horizon, key="research_tail")
+
 st.divider()
 st.subheader("🔄 PBO / CSCV (Probability of Backtest Overfitting)")
 st.caption(
     "Elige la mejor variante dentro de una muestra y comprueba si esa elección se sostiene fuera de "
-    "ella. Requiere la serie de retornos DIARIA real de al menos 2 experimentos — solo disponible para "
+    "ella. Requiere retornos observados sobre las MISMAS ventanas de al menos 2 experimentos — solo disponible para "
     "los que se registraron desde 🕰️ Ranking histórico (no para los sembrados con cifras históricas del "
     "README, que solo tienen el Sharpe resumen)."
 )
-with_returns = experiments[experiments["returns_json"].notna()] if not experiments.empty else experiments
 if len(with_returns) < 2:
     st.info("Hacen falta al menos 2 experimentos con serie de retornos guardada. Registra backtests desde "
             "🕰️ Ranking histórico para generarlos.")

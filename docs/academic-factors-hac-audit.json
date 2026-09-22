@@ -1,0 +1,109 @@
+{
+  "parameters": {
+    "start": "2016-07-02",
+    "end": "2025-07-02",
+    "months": 3,
+    "top_n": 20,
+    "cost_bps": 10,
+    "max_symbols": 200,
+    "seed": 42,
+    "weights": {
+      "value": 0.3,
+      "quality": 0.35,
+      "momentum": 0.25,
+      "risk": 0.1
+    },
+    "min_coverage": 0.7,
+    "min_universe_coverage": 0.5,
+    "buffer_multiplier": 1.0,
+    "strict_identity": false
+  },
+  "skipped": [],
+  "regression": {
+    "n_obs": 36,
+    "dof": 29,
+    "r2": 0.8873454804801078,
+    "coef": {
+      "alpha": 0.005960886860065963,
+      "Mkt-RF": 1.0460658403146568,
+      "SMB": 0.06864469455983002,
+      "HML": 0.11799605409809598,
+      "RMW": 0.180331487170642,
+      "CMA": 0.1360319581003901,
+      "Mom": -0.053319833704317365
+    },
+    "se": {
+      "alpha": 0.0051403588646983436,
+      "Mkt-RF": 0.08530537298427196,
+      "SMB": 0.13758992703994322,
+      "HML": 0.11393419841811477,
+      "RMW": 0.2039328524398597,
+      "CMA": 0.16672471909951833,
+      "Mom": 0.10638148788622895
+    },
+    "t_stat": {
+      "alpha": 1.1596246520846305,
+      "Mkt-RF": 12.262602034546212,
+      "SMB": 0.4989078491182137,
+      "HML": 1.0356508909210478,
+      "RMW": 0.8842689395707943,
+      "CMA": 0.8159075560906619,
+      "Mom": -0.5012134607605878
+    },
+    "se_ols": {
+      "alpha": 0.007051171524474848,
+      "Mkt-RF": 0.09174712551311771,
+      "SMB": 0.17024771618375115,
+      "HML": 0.12627001311089794,
+      "RMW": 0.17498492334207855,
+      "CMA": 0.20346425856764597,
+      "Mom": 0.12150862899475451
+    },
+    "t_stat_ols": {
+      "alpha": 0.8453753875331963,
+      "Mkt-RF": 11.401619772437378,
+      "SMB": 0.4032047894594996,
+      "HML": 0.9344740781365464,
+      "RMW": 1.0305544256410677,
+      "CMA": 0.668579135510247,
+      "Mom": -0.4388152030471775
+    },
+    "cov_type": "HAC",
+    "hac_lags": 3,
+    "hac_kernel": "bartlett",
+    "hac_small_sample_correction": true,
+    "periods_per_year": 4.0,
+    "alpha_anualizado": 0.02405758894878285,
+    "periodos_alineados": 36,
+    "periodos_totales": 36
+  },
+  "sensitivity": {
+    "0": 0.882325571151828,
+    "1": 0.942014405070941,
+    "2": 1.0198338178550221,
+    "3": 1.1596246520846305,
+    "4": 1.275239617239392
+  },
+  "seconds": 1214.6165968000423,
+  "residual_lag1_correlation": -0.12526978242610087,
+  "generated_at": "2026-09-21T18:24:33.439803+00:00",
+  "stage": "RESEARCH",
+  "base_commit": "152ebf7718b0c910aa0ba7cb5e0ae04123ec1d31",
+  "versions": {
+    "python": "3.13.7",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6"
+  },
+  "sha256": {
+    "docs/academic-factors-hac-inputs.csv": "74a3e06b0a6484c8399fc796527fb47e10d0870da413463a9b6f6f84ed74797f",
+    "data/ff_factors.csv": "9fb293085414898f5a19ca82b101f0596a649230066acdf26cb869a4939fe6df",
+    "src/gabi/academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6",
+    "src/gabi/multifactor_backtest.py": "9c9f941aecedcdf8ce2339727f9dfffe1bdfde82049d4d5313fcfca4a4afc64f"
+  },
+  "limitations": [
+    "Current local cache and sampled universe N=200; not a prospective validation.",
+    "Original returns behind historical t=1.61 were not saved. This is a new run, not a paired correction of that historical number.",
+    "Monthly factor windows approximate trading-session return windows.",
+    "The local entity alias table is empty; the backtest uses its existing non-strict identity fallback."
+  ]
+}

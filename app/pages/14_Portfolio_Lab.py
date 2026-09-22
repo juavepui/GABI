@@ -8,6 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from gabi import portfolio_lab as pl
+from gabi import tail_risk_ui
 
 st.title("🧮 Portfolio Lab")
 st.caption(
@@ -129,6 +130,10 @@ if "portfolio_lab_result" in st.session_state:
     )
 
     st.subheader("Curvas de capital")
+    with st.expander("Riesgo de cola · comparar esquemas y SPY"):
+        tail_curves = {data["label"]: data["nav_curve"] for data in schemes_data.values()}
+        tail_curves["SPY (buy & hold)"] = result["nav_curve_spy"]
+        tail_risk_ui.render_nav(tail_curves, key="pl_tail")
     nav_table = pd.DataFrame({data["label"]: data["nav_curve"] for data in schemes_data.values()})
     nav_table["SPY (buy & hold)"] = result["nav_curve_spy"]
     st.line_chart(nav_table)

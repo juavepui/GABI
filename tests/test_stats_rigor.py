@@ -63,8 +63,32 @@ def test_expected_max_sharpe_requires_at_least_two_trials():
         sr.expected_max_sharpe([0.5])
 
 
-def test_expected_max_sharpe_zero_variance_returns_the_common_value():
-    assert sr.expected_max_sharpe([0.5, 0.5, 0.5]) == pytest.approx(0.5)
+def test_expected_max_sharpe_zero_variance_uses_zero_null_mean():
+    assert sr.expected_max_sharpe([0.5, 0.5, 0.5]) == 0.0
+    assert sr.expected_max_sharpe([-0.5, -0.5]) == 0.0
+
+
+def test_dsr_sensitivity_uses_observed_variance_and_explicit_count():
+    trials = [.1, .3, .5]
+    result = sr.deflated_sharpe_ratio(.3, trials, 36, 4, n_trials=20)
+    gamma = sr.EULER_MASCHERONI
+    threshold = np.std(trials, ddof=1) * ((1 - gamma) * norm.ppf(1 - 1 / 20)
+                                         + gamma * norm.ppf(1 - 1 / (20 * np.e)))
+    assert result["sr0_benchmark"] == pytest.approx(threshold)
+    assert result["n_trials"] == 20
+    assert result["n_observed_trials"] == 3
+    assert result["dsr"] < sr.deflated_sharpe_ratio(.3, trials, 36, 4)["dsr"]
+
+
+@pytest.mark.parametrize("count", [1, 2.5, True])
+def test_dsr_rejects_invalid_trial_count(count):
+    with pytest.raises(ValueError):
+        sr.expected_max_sharpe([.1, .2], n_trials=count)
+
+
+def test_expected_max_sharpe_rejects_nonfinite_inputs():
+    with pytest.raises(ValueError):
+        sr.expected_max_sharpe([.1, np.nan])
 
 
 def test_expected_max_sharpe_grows_with_more_trials_same_variance():
@@ -146,3 +170,26 @@ def test_pbo_rejects_single_strategy():
     matrix = pd.DataFrame({"a": np.random.normal(0, 0.01, 50)})
     with pytest.raises(ValueError):
         sr.pbo_cscv(matrix, n_splits=8)
+
+
+@pytest.mark.parametrize("splits", [0, -2, 2.5, True])
+def test_pbo_rejects_invalid_split_count(splits):
+    with pytest.raises(ValueError):
+        sr.pbo_cscv(pd.DataFrame({"a": [1., 2., 3., 4.], "b": [2., 1., 4., 3.]}), n_splits=splits)
+
+
+def test_pbo_does_not_silently_drop_missing_dates():
+    with pytest.raises(ValueError, match="finitos"):
+        sr.pbo_cscv(pd.DataFrame({"a": [1., np.nan, 3., 4.], "b": [2., 1., 4., 3.]}), n_splits=2)
+
+
+def test_pbo_is_column_order_invariant_with_tied_in_sample_winners():
+    matrix = pd.DataFrame({"a": [1., 2., 1., 2., -2., -1., -2., -1.],
+                           "b": [1., 2., 1., 2., 3., 4., 3., 4.],
+                           "c": [-2., -1., -2., -1., 1., 2., 1., 2.]})
+    result = sr.pbo_cscv(matrix, n_splits=2)
+    permuted = sr.pbo_cscv(matrix[["c", "b", "a"]], n_splits=2)
+    assert result["pbo"] == permuted["pbo"] == .25
+    assert result["n_combinations"] == 2
+    assert result["tied_splits"] == 1
+    assert sum(result["logit_weights"]) == pytest.approx(2)

@@ -65,7 +65,7 @@ def probabilistic_sharpe_ratio_annualized(annualized_sharpe: float, n: int, peri
 def probabilistic_sharpe_ratio_from_returns(returns: pd.Series, periods_per_year: float,
                                             risk_free_rate: float = 0.0,
                                             benchmark_sharpe: float = 0.0) -> dict:
-    """PSR EXACTO (no aproximación normal) a partir de una serie de retornos
+    """PSR estimado a partir de una serie de retornos
     real: calcula Sharpe anualizado, skew y kurtosis reales de esa serie
     (`scipy.stats.kurtosis(..., fisher=False)` -- convención NO excedente,
     para que encaje con `probabilistic_sharpe_ratio`) y `n` = nº de
@@ -88,19 +88,23 @@ def probabilistic_sharpe_ratio_from_returns(returns: pd.Series, periods_per_year
     return {"psr": psr, "sharpe_anualizado": annualized_sharpe, "skew": skew, "kurtosis": kurtosis, "n": n}
 
 
-def expected_max_sharpe(trial_sharpes: list) -> float:
+def expected_max_sharpe(trial_sharpes: list, *, n_trials: int | None = None) -> float:
     """SR*₀: el Sharpe MÁXIMO esperado por puro azar entre N intentos SIN
     ninguna ventaja real, a partir de la varianza de los Sharpe de esos N
     intentos (fórmula de valores extremos). `trial_sharpes` puede estar en
     cualquier unidad consistente (anualizada o por periodo) -- el resultado
     queda en esa misma unidad. Exige N >= 2 (no se puede estimar varianza
-    entre intentos con un único intento)."""
-    n = len(trial_sharpes)
-    if n < 2:
+    entre intentos con un único intento). `n_trials` permite una sensibilidad
+    explícita al número de intentos manteniendo fija la varianza observada;
+    no reconstruye los retornos de los intentos ausentes."""
+    n = len(trial_sharpes) if n_trials is None else n_trials
+    if isinstance(n, bool) or not isinstance(n, (int, np.integer)) or n < 2 or len(trial_sharpes) < 2:
         raise ValueError("Hacen falta al menos 2 intentos para estimar la varianza entre ellos.")
+    if not np.isfinite(trial_sharpes).all():
+        raise ValueError("Los Sharpe de los intentos deben ser finitos.")
     variance = float(np.var(trial_sharpes, ddof=1))
     if variance <= 0:
-        return float(np.mean(trial_sharpes))
+        return 0.0  # the null mean is zero, not the observed common Sharpe
     gamma = EULER_MASCHERONI
     z1 = stats.norm.ppf(1 - 1 / n)
     z2 = stats.norm.ppf(1 - 1 / (n * np.e))
@@ -108,7 +112,8 @@ def expected_max_sharpe(trial_sharpes: list) -> float:
 
 
 def deflated_sharpe_ratio(selected_sharpe: float, trial_sharpes: list, n_obs: int,
-                          periods_per_year: float, skew: float = 0.0, kurtosis: float = 3.0) -> dict:
+                          periods_per_year: float, skew: float = 0.0, kurtosis: float = 3.0,
+                          *, n_trials: int | None = None) -> dict:
     """DSR: el PSR del Sharpe seleccionado usando como listón de comparación
     el Sharpe máximo esperable por azar entre los `trial_sharpes`
     (`expected_max_sharpe`) en vez de 0 -- corrige por *multiple testing*:
@@ -129,10 +134,14 @@ def deflated_sharpe_ratio(selected_sharpe: float, trial_sharpes: list, n_obs: in
     tratamiento exacto, compara solo experimentos de la misma frecuencia, o
     usa `pbo_cscv` sobre curvas diarias, que sí da una rejilla temporal
     común real entre frecuencias distintas."""
-    sr0 = expected_max_sharpe(trial_sharpes)
+    # An explicit count supports disclosed sensitivity to missing/independent
+    # trials, holding the observed variance fixed. It does not recover their returns.
+    sr0 = expected_max_sharpe(trial_sharpes, n_trials=n_trials)
     dsr = probabilistic_sharpe_ratio_annualized(selected_sharpe, n_obs, periods_per_year,
                                                 skew, kurtosis, benchmark_sharpe=sr0)
-    return {"dsr": dsr, "sr0_benchmark": sr0, "n_trials": len(trial_sharpes), "selected_sharpe": selected_sharpe}
+    return {"dsr": dsr, "sr0_benchmark": sr0,
+            "n_trials": len(trial_sharpes) if n_trials is None else int(n_trials),
+            "n_observed_trials": len(trial_sharpes), "selected_sharpe": selected_sharpe}
 
 
 def bootstrap_sharpe_ci(returns: pd.Series, periods_per_year: float, risk_free_rate: float = 0.0,
@@ -199,9 +208,12 @@ def pbo_cscv(returns_matrix: pd.DataFrame, n_splits: int = 16, metric=None) -> d
     aporta nada fuera de muestra, la elección era ruido, no señal."""
     if metric is None:
         metric = _default_metric
-    if n_splits % 2 != 0:
-        raise ValueError("n_splits debe ser par.")
-    clean = returns_matrix.dropna(how="any")
+    if isinstance(n_splits, bool) or not isinstance(n_splits, (int, np.integer)) or n_splits < 2 or n_splits % 2 != 0:
+        raise ValueError("n_splits debe ser un entero par >= 2.")
+    if (not returns_matrix.columns.is_unique or not returns_matrix.index.is_unique
+            or not np.isfinite(returns_matrix.to_numpy()).all()):
+        raise ValueError("La matriz requiere datos finitos e índices/variantes únicos; no se eliminan huecos.")
+    clean = returns_matrix
     t, n_strategies = clean.shape
     if n_strategies < 2:
         raise ValueError("Hacen falta al menos 2 variantes para comparar.")
@@ -209,17 +221,29 @@ def pbo_cscv(returns_matrix: pd.DataFrame, n_splits: int = 16, metric=None) -> d
         raise ValueError("No hay suficientes observaciones para tantos bloques.")
     chunks = np.array_split(np.arange(t), n_splits)
     logits = []
+    logit_weights = []
+    n_combinations = 0
+    tied_splits = 0
     for is_combo in combinations(range(n_splits), n_splits // 2):
         is_rows = np.concatenate([chunks[i] for i in is_combo])
         oos_combo = [i for i in range(n_splits) if i not in is_combo]
         oos_rows = np.concatenate([chunks[i] for i in oos_combo])
         is_perf = clean.iloc[is_rows].apply(metric)
         oos_perf = clean.iloc[oos_rows].apply(metric)
-        best_is = is_perf.idxmax()
-        oos_rank = oos_perf.rank(method="average")[best_is]
-        omega = oos_rank / (n_strategies + 1)
-        omega = min(max(omega, 1e-6), 1 - 1e-6)
-        logits.append(float(np.log(omega / (1 - omega))))
+        if not np.isfinite(is_perf).all() or not np.isfinite(oos_perf).all():
+            raise ValueError("Métrica no finita en una partición CSCV (posible varianza nula).")
+        # Uniform tie breaking avoids dependence on input column order.
+        best_is = is_perf.index[is_perf == is_perf.max()]
+        ranks = oos_perf.rank(method="average")
+        n_combinations += 1
+        tied_splits += int(len(best_is) > 1)
+        for name in best_is:
+            omega = float(ranks[name]) / (n_strategies + 1)
+            omega = min(max(omega, 1e-6), 1 - 1e-6)
+            logits.append(float(np.log(omega / (1 - omega))))
+            logit_weights.append(1 / len(best_is))
     logits = np.array(logits)
-    pbo = float(np.mean(logits <= 0))
-    return {"pbo": pbo, "n_combinations": len(logits), "logits": logits.tolist()}
+    pbo = float(np.average(logits <= 0, weights=logit_weights))
+    return {"pbo": pbo, "n_combinations": n_combinations, "logits": logits.tolist(),
+            "logit_weights": logit_weights, "tied_splits": tied_splits,
+            "tie_policy": "uniform over tied IS winners; average OOS ranks; lambda <= 0"}

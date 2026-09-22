@@ -2,17 +2,145 @@
 benchmark) — completa lo que ni risk.py (pensado para una sola empresa) ni
 multifactor_backtest.daily_risk_metrics (CAGR/vol/Sharpe/Sortino/max
 drawdown, que no se duplican aquí) tienen: Calmar, tiempo de recuperación,
-beta, tracking error, Information Ratio, capture ratios y Sharpe rodante.
+beta, tracking error, Information Ratio, capture ratios, Sharpe rodante y
+riesgo de cola histórico (VaR/ES, asimetría y exceso de curtosis).
 
 Opera sobre pd.Series genéricas (curva NAV o retornos diarios), no depende
 de portfolio_backtest.py ni de ningún formato propio — reutilizable donde
 haga falta comparar dos curvas de capital (ej. Carteras Simuladas)."""
+from numbers import Real
+
 import numpy as np
 import pandas as pd
 
 from . import config
 
 TRADING_DAYS_PER_YEAR = 252
+
+
+def _finite_returns(returns: pd.Series) -> np.ndarray:
+    """No elimina/imputa observaciones ausentes en una distribución de pérdidas."""
+    values = np.asarray(returns, dtype=float)
+    if values.ndim != 1 or not np.isfinite(values).all():
+        raise ValueError("Se requiere una serie unidimensional de retornos finitos, sin NaN ni infinitos.")
+    return values
+
+
+def historical_tail_risk(returns: pd.Series, confidence: float = .95) -> dict:
+    """VaR y Expected Shortfall/CVaR empíricos de pérdidas L=-retorno.
+
+    VaR es la inversa de la CDF empírica (sin interpolación). ES integra
+    exactamente la masa superior 1-confidence, con peso fraccionario en la
+    observación frontera, también cuando hay empates. Un resultado positivo
+    es pérdida; uno negativo es ganancia (no se recorta a cero).
+
+    Horizonte: UNA observación original, sin anualizar ni usar sqrt(t).
+    `tail_mass` = n*(1-confidence), no número de eventos independientes.
+    <1: cola inferior a resolución muestral; <5: cola escasa (regla de aviso,
+    no test de precisión). Incluso >=5 no garantiza fiabilidad predictiva.
+    """
+    if isinstance(confidence, (bool, np.bool_)) or not isinstance(confidence, Real):
+        raise ValueError("confidence debe estar estrictamente entre 0 y 1.")
+    try:
+        confidence = float(confidence)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("confidence debe estar estrictamente entre 0 y 1.") from exc
+    if not np.isfinite(confidence) or not 0 < confidence < 1:
+        raise ValueError("confidence debe estar estrictamente entre 0 y 1.")
+    values = _finite_returns(returns)
+    n = len(values)
+    mass = n * (1 - confidence)
+    # Evita que 100*(1-.95)=5.000000000000004 cuente una sexta fila.
+    if round(mass) > 0 and abs(mass - round(mass)) < 1e-12:
+        mass = float(round(mass))
+    result: dict = {"confidence": confidence, "n_obs": n, "tail_mass": mass,
+              "tail_observations": int(np.ceil(mass)), "var": None, "expected_shortfall": None,
+              "status": "empty" if not n else "below_resolution" if mass < 1 else "sparse" if mass < 5 else "descriptive"}
+    if not n:
+        return result
+    losses = np.sort(-values)
+    var = float(np.quantile(losses, confidence, method="inverted_cdf"))
+    worst = losses[::-1]
+    whole = int(np.floor(mass))
+    fraction = mass - whole
+    # Normaliza pesos antes de sumar, evitando sumas innecesariamente grandes.
+    es = float((worst[:whole] / mass).sum())
+    if fraction > 0:
+        es += float(worst[whole] * (fraction / mass))
+    result.update(var=var, expected_shortfall=es)
+    return result
+
+
+def historical_var(returns: pd.Series, confidence: float = .95) -> float | None:
+    """Cuantil histórico de pérdidas de una observación; ver historical_tail_risk."""
+    return historical_tail_risk(returns, confidence)["var"]
+
+
+def expected_shortfall(returns: pd.Series, confidence: float = .95) -> float | None:
+    """ES/CVaR histórico de una observación, con masa fraccionaria exacta."""
+    return historical_tail_risk(returns, confidence)["expected_shortfall"]
+
+
+def return_distribution(returns: pd.Series) -> dict:
+    """Asimetría Fisher-Pearson ajustada y exceso de curtosis corregido.
+
+    Equivalen a scipy.stats.skew(bias=False) y kurtosis(fisher=True,
+    bias=False) cuando son estimables. No son momentos de pérdidas sino de
+    RETORNOS: asimetría negativa indica cola izquierda. Curtosis normal=0
+    (exceso); curtosis Pearson normal=3. None si n<3/n<4 o serie constante.
+    La corrección de muestra finita no corrige dependencia temporal.
+    """
+    values = _finite_returns(returns)
+    n = len(values)
+    result: dict = {"n_obs": n, "skewness": None, "excess_kurtosis": None,
+                    "kurtosis_convention": "Fisher excess (normal=0), finite-sample corrected"}
+    if n < 2 or np.all(values == values[0]):
+        return result
+    # Escala previa para evitar overflow de potencias y detectar constante
+    # antes de la resta (pandas devuelve cero para algunas constantes).
+    scaled = values / np.max(np.abs(values))
+    centered = scaled - scaled.mean()
+    m2 = float(np.mean(centered ** 2))
+    if m2 <= 0:
+        return result
+    g1 = float(np.mean(centered ** 3) / m2 ** 1.5)
+    g2 = float(np.mean(centered ** 4) / m2 ** 2 - 3)
+    if n >= 3:
+        result["skewness"] = float(np.sqrt(n * (n - 1)) / (n - 2) * g1)
+    if n >= 4:
+        result["excess_kurtosis"] = float((n - 1) / ((n - 2) * (n - 3)) * ((n + 1) * g2 + 6))
+    return result
+
+
+def tail_risk_metrics(returns: pd.Series, *, horizon: str = "una observación") -> dict:
+    """Resumen JSON serializable; el llamante declara la frecuencia real.
+
+    No transforma retornos trimestrales en diarios ni añade un cero inicial.
+    Vacío produce None en métricas; NaN/inf se rechazan explícitamente.
+    """
+    if not isinstance(horizon, str) or not horizon.strip():
+        raise ValueError("Se requiere un horizonte explícito no vacío.")
+    distribution = return_distribution(returns)
+    return {**distribution, "horizon": horizon, "method": "historical empirical losses=-returns; fractional-tail ES",
+            "annualized": False, "95": historical_tail_risk(returns, .95),
+            "99": historical_tail_risk(returns, .99)}
+
+
+def returns_from_nav(nav: pd.Series) -> pd.Series:
+    """Retornos simples entre valores NAV consecutivos, sin forward-fill.
+
+    Solo descarta la primera diferencia no definida; una NAV ausente se
+    rechaza. No certifica la frecuencia del calendario. Cero se admite solo
+    al final (pérdida total); un divisor cero o NAV negativo es inválido.
+    """
+    values = _finite_returns(nav)
+    if nav.index.has_duplicates or not nav.index.is_monotonic_increasing or nav.index.hasnans:
+        raise ValueError("NAV requiere fechas ordenadas, únicas y no ausentes.")
+    if (values < 0).any() or (values[:-1] <= 0).any() or (len(values) == 1 and values[0] == 0):
+        raise ValueError("NAV requiere capital positivo salvo una pérdida total terminal.")
+    result = nav.pct_change(fill_method=None).iloc[1:]
+    _finite_returns(result)
+    return result
 
 
 def calmar_ratio(cagr: float, max_drawdown: float):

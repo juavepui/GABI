@@ -744,7 +744,7 @@ concreta que se cree buena, congelada por escrito antes de tener ningún dato nu
 el que validarla — es la única forma honesta de comprobar si de verdad funciona, en vez
 de seguir ajustando sobre el mismo pasado. También incluye un contraste externo con las
 series académicas de factores de Kenneth French (`src/gabi/academic_factors.py`,
-disponible en 🕰️ Ranking histórico): el 91.5% del retorno de la estrategia ya lo explican
+disponible en 🕰️ Ranking histórico): el 91.5% de la varianza del retorno de la estrategia ya lo explican
 seis factores de mercado conocidos, y el alfa restante, aunque positivo, no llega al
 umbral de significancia estadística habitual.
 
@@ -777,9 +777,12 @@ verificaciones adicionales, ambas importantes, **cambian la conclusión por comp
 
 1. **Contraste con Kenneth French sobre la serie semestral**: R²=0.926 (más explicado por
    factores conocidos que el trimestral, no menos), alfa anualizado +1.55% con t-stat 0.62
-   (más débil que el trimestral: +3.85% con t-stat 1.61). La mejora de Sharpe de la tabla
-   de arriba **no venía de más alfa genuino — venía de una beta de Calidad (RMW) mucho más
-   fuerte y esta vez sí significativa** (0.618, t=2.75, vs 0.264 del trimestral).
+   (más débil que el trimestral: +3.85% con t-stat 1.61). **Estos t-stats históricos
+   son OLS homocedásticos, sin corrección HAC**; la regresión actual usa Newey-West
+   y anualiza según la frecuencia real. Ver [metodología y recálculo](docs/academic-factors-hac.md).
+   La comparación histórica apuntaba a una beta de Calidad (RMW) mayor
+   (0.618, t OLS=2.75, vs 0.264 del trimestral), sin evidencia de más alfa.
+   La significancia de esa beta también debe revisarse con HAC.
 2. **El drawdown de la tabla de arriba estaba mal calculado — confirmado, no solo
    sospechado**. `max_drawdown` se calculaba sobre `periods["capital"]`, el capital SOLO en
    las fechas de rebalanceo — con rebalanceos más espaciados, una caída y recuperación
@@ -905,66 +908,104 @@ Reproducible con `multifactor_backtest.run(..., min_universe_coverage=0.5)` para
 frecuencia, `daily_capital_curve`/`daily_benchmark_curve`/`daily_risk_metrics` sobre el
 resultado, y `sharpe_standard_error(sharpe, years)` sobre cada Sharpe diario.
 
-### Auditoría retroactiva de *multiple testing*: PBO y DSR sobre las configuraciones reales
+### Benchmark ajustado por beta y factores
 
-El checklist de sesgos de más arriba admitía que *multiple testing*/*data snooping* **no**
-estaban corregidos — `stats_rigor.pbo_cscv`/`deflated_sharpe_ratio` (López de Prado et
-al.) existían como herramienta, cableados en 🔬 Research Lab, pero nunca se habían
-aplicado a la secuencia real de configuraciones que sí se probaron. Esta sección lo hace.
+**2026-09-22, issue #16.** Se añaden referencias `RF + beta*(SPY−RF)` y
+`RF + suma(beta_j*factor_j)` para FF5+Momentum, excluyendo siempre el alfa.
+Ranking histórico V1 y Research Lab muestran curvas comparables, exposiciones
+y descargas. La beta SPY del recálculo es **1,035**, sin fijar el 0,97 histórico.
 
-**Metodología**: 8 configuraciones reales de las probadas en esta misma sección (Top-10/
-20/30 trimestral, banda de turnover 1.3x/1.5x/2.0x sobre Top-20 trimestral, Top-20
-semestral y anual) reconstruidas **hoy**, con el motor ya libre de los tres bugs de
-medida que se fueron encontrando después (muestreo alfabético, cobertura mínima,
-anualización con huecos) — 2016-07 a 2025-07, mismo coste 10pb. Universo muestreado a
-N=100 (no el universo completo) por coste computacional: **los Sharpes absolutos de esta
-tabla no son comparables con los citados en el resto de esta sección** (que usaban
-N=200/500), pero la comparación *interna* entre las 8, todas calculadas igual, sí es
-válida para PBO/DSR. **No incluye** el filtro SMA200 ni variaciones de pesos de
-factores — parte real de las "10+ configuraciones" mencionadas en el checklist, pero no
-reproducibles con un parámetro simple de `multifactor_backtest.run()` — así que esto es
-una estimación **parcial** del proceso de búsqueda completo, no su totalidad.
+Se distingue atribución sobre toda la muestra de estimación expansiva con
+18 trimestres mínimos y uno de embargo. En los 17 trimestres evaluables del
+segundo protocolo, la estrategia da CAGR **14,66%**, frente a **13,98%** del
+SPY ajustado y **15,27%** del benchmark multifactor. Las diferencias de
+**+0,68 y −0,61 puntos/año** no son alfa de regresión ni prueba de selección.
+Los factores revisados y la exploración previa impiden llamar a este ejercicio
+validación prospectiva; la financiación y replicación son idealizadas.
 
-| Configuración | Periodos | Sharpe |
-|---|---|---|
-| Top-10 trimestral | 36 | 0.648 |
-| **Top-20 trimestral (elegida)** | 36 | **0.469** |
-| Top-30 trimestral | 36 | 0.472 |
-| Top-20 + banda 1.3x | 36 | 0.492 |
-| Top-20 + banda 1.5x | 36 | 0.524 |
-| Top-20 + banda 2.0x | 36 | 0.542 |
-| Top-20 semestral | 18 | 0.631 |
-| Top-20 anual | 9 | 0.624 |
+[Informe, curvas e inputs reproducibles](docs/factor-benchmark/README.md).
 
-**DSR (Deflated Sharpe Ratio)** sobre los 8 Sharpes: SR0 (máximo esperable por puro azar
-entre 8 intentos, a partir de su varianza) = **0.108**; DSR del Sharpe seleccionado
-(0.469) = **0.83**. Lectura: la varianza entre los 8 intentos es pequeña (0.469–0.648),
-así que el "listón de la suerte" que corrige por *multiple testing* queda bajo, y 0.469
-lo supera con margen razonable — coherente con que Top-20 **no** se eligió por tener el
-mejor Sharpe de la tabla (de hecho tiene el segundo peor): se prefirió por reducir el
-drawdown casi gratis, no por *cherry-picking* del número más alto. Es una decisión que,
-vista con esta lente, resulta menos vulnerable al sobreajuste de lo que parecería si se
-hubiera elegido "la de mejor Sharpe".
+### Riesgo de cola: VaR, Expected Shortfall y momentos
 
-**PBO (CSCV)** sobre las 6 variantes trimestrales (misma rejilla de 36 fechas, N=100,
-6 bloques → 20 combinaciones): **PBO = 0.40**. Con la convención de la literatura (PBO
-< 0.5 mejor que azar puro), 0.40 no es alarmante, pero tampoco es tranquilizador — está
-a solo una fracción de la línea de "elegir al azar" (0.5). Interpretación honesta: **si
-alguien tratara "la variante con mejor Sharpe de la tabla" como criterio de selección
-entre variantes muy parecidas (N=10 vs 20 vs 30, o distintos niveles de banda), hay
-~2 de cada 5 posibilidades de que esa elección hubiera perdido frente a la mediana fuera
-de muestra**. No es el criterio que se usó de hecho aquí (ver DSR arriba), pero es un
-aviso real para cualquier futura iteración que compare variantes similares y se sienta
-tentada a quedarse con "la que mejor salió".
+**2026-09-22, issue #15.** `portfolio_metrics.py` incorpora VaR y ES/CVaR
+históricos al 95%/99%, asimetría y exceso de curtosis. Están disponibles en
+Ranking histórico V1/V2, Portfolio Lab y las series guardadas en Research Lab.
+Se muestra siempre el horizonte: un retorno trimestral no se convierte en
+riesgo diario ni se anualiza el ES con raíz del tiempo.
 
-**Limitaciones de esta auditoría, con la misma honestidad que el resto del documento**:
-universo muestreado más pequeño que las tablas históricas (no comparable en absoluto,
-sí en relativo); solo 8 de las "10+" configuraciones reales reconstruidas (falta el
-filtro de tendencia y las variaciones de pesos); `n_splits=6` para PBO da solo 20
-combinaciones, una resolución modesta. Registrado como experimento `RESEARCH` #10 en
-🔬 Research Lab (`family="overfitting_audit_multiple_testing"`) con la serie de retornos
-real de la configuración elegida, para que quede trazable y no se repita el mismo
-ejercicio de memoria en el futuro.
+Aplicado a los 36 trimestres del Top-20 reconstruido: VaR95 **12,06%**, ES95
+**18,65%**, VaR99/ES99 **23,92%**; asimetría **−0,229**, exceso de curtosis
+**1,578**. Son pérdidas positivas. La cola al 99% equivale a 0,36 observaciones:
+el resultado es la peor pérdida observada, sin resolución suficiente para
+caracterizar ese extremo. Se conservan resultados de las 24 configuraciones.
+
+[Método, límites y reproducción](docs/tail-risk.md) ·
+[Resultados y procedencia](docs/tail-risk-audit.json).
+
+### Estabilidad temporal de alfa y betas
+
+**2026-09-22, issue #13.** El recálculo HAC de 36 trimestres se ha dividido
+en mitades cronológicas y 51 ventanas móviles de 4/5/6 años. El alfa anualizado
+es −2,91% en la primera mitad y +2,65% en la segunda (t HAC −0,83 y 0,64);
+en ventanas de cuatro años oscila entre −5,49% y +9,16%. También cambian las
+betas, con incertidumbre amplia: no se demuestra una ruptura estadística.
+
+2018, COVID 2020, tipos 2022 y rally 2023–2024 tienen muy pocos trimestres
+para estimar seis betas y alfa por separado. Se publica su atribución con
+betas globales y la sensibilidad de coeficientes al excluir cada episodio.
+2023–2024 resta contribución ajustada; 2021 y 2019 explican aproximadamente
+el 51% y 31% de la suma ajustada neta. Estas cifras son una descomposición
+in-sample, no alfas locales ni retornos compuestos.
+
+[Informe, metodología y datos](docs/factor-stability/README.md). Research Lab
+muestra gráficos interactivos e intervalos HAC; Ranking histórico permite
+repetir el diagnóstico del backtest trimestral actual. Se reproduce sin red
+con `uv run python -m gabi.factor_stability`. Sigue pendiente la estabilidad
+por régimen de las permutaciones y perturbaciones de pesos originales, cuyos
+inputs completos no se conservaron. El turnover agregado no demuestra decay.
+
+### Auditoría retroactiva de *multiple testing*: matriz de los ensayos recuperables
+
+**Actualizada el 2026-09-22, issue #12.** La auditoría ahora conserva una matriz
+reproducible de **36 trimestres × 24 ensayos documentados**, no solo métricas
+resumen ni la serie elegida. Usa un snapshot SQLite consistente, N=200 por
+fecha, semilla 42, el motor V1 actual y el rango 2016-07 a 2025-07.
+
+La familia principal contiene nueve variantes a coste fijo de 10 pb:
+Top-10/20/30, filtro SMA200 del SPY sobre Top-10, bandas 1.3/1.5/2.0 sobre
+Top-20 y rebalanceo semestral/anual. Los otros quince ensayos son sensibilidad
+a costes documentada, no quince estrategias independientes.
+
+| Comparación | PBO (6 bloques, 20 particiones) | DSR del Top-20 |
+|---|---:|---:|
+| 9 variantes a coste fijo | **10,0%** | **94,08%** |
+| 24 ensayos, incluidos costes | **10,0%** | **93,29%** |
+
+Todas las carteras se observan sobre la misma rejilla trimestral con precios
+reales, incluso cuando rebalancean semestral o anualmente. El Sharpe usado para
+PBO/DSR es media aritmética de excesos/desviación muestral, no CAGR/volatilidad;
+el Top-20 da 0.7367. Se conservan sensibilidades al número de bloques y de ensayos.
+
+**Alcance parcial:** no se recuperaron los vectores completos de las
+perturbaciones de pesos ni todos los ensayos de factores individuales/versiones
+anteriores. PBO evalúa selección por Sharpe, no la decisión histórica conjunta
+con drawdown. DSR usa N nominal en variantes muy correlacionadas y no alcanza
+el 95%. Esto no valida prospectivamente la estrategia ni corrige con garantías
+todo el proceso histórico de búsqueda.
+
+Esta medición sustituye la lectura anterior (experimento #10: N=100, 8
+variantes, DSR≈0.83 y PBO≈0.40 sobre 6 trimestrales), cuyo DSR mezclaba
+frecuencias y usaba un Sharpe basado en CAGR. Las diferencias no se deben
+exclusivamente al número de ensayos: cambian también universo, convención de
+Sharpe y muestra comparable. El experimento antiguo se conserva como registro.
+
+[Informe y reproducción](docs/overfitting-audit/README.md) ·
+[Matriz de retornos](docs/overfitting-audit/returns.csv) ·
+[Resultados y procedencia](docs/overfitting-audit/audit.json).
+Las 24 series quedan registradas en Research Lab como RESEARCH; la app
+muestra el informe verificado y permite descargar los artefactos.
+Para repetir solo el cálculo estadístico:
+`uv run python -m gabi.overfitting_audit --analyze-only`.
 
 ### Costes reales del bróker (eToro): calibración y por qué el backtest NO incluye la conversión de divisa
 
