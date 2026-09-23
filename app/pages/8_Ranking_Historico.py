@@ -179,6 +179,7 @@ DISPLAY_KEYS = [
     "quality_persistence_score", "roic_persistence_mean", "roic_persistence_std", "roic_years",
     "operating_margin_persistence_mean", "operating_margin_persistence_std", "operating_margin_years",
     "fcf_conversion_mean", "fcf_years", "revenue_per_share_cagr",
+    "implied_fcf_growth", "historical_fcf_cagr", "expectations_gap",
     "metrics_available", "metrics_possible", "score_coverage",
     "value_score", "quality_score", "momentum_score", "risk_score", "composite_score",
 ]
@@ -223,7 +224,9 @@ st.caption(
 )
 st.caption(
     "Las métricas de persistencia de calidad son descriptivas y point-in-time; se muestran para investigar "
-    "la hipótesis del roadmap #18, pero todavía no cambian el Composite ni el orden del ranking."
+    "la hipótesis del roadmap #18, pero todavía no cambian el Composite ni el orden del ranking. "
+    "El reverse DCF usa descuento fijo del 9%, crecimiento terminal del 2,5% y horizonte de 5 años; "
+    "sus supuestos tampoco se optimizan con esta tabla."
 )
 
 st.subheader("Resultado posterior de las primeras candidatas")

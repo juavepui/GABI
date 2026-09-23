@@ -266,6 +266,17 @@ METRIC_INFO = {
         "label": "Ventas por acción CAGR",
         "help": "Crecimiento anualizado histórico de ventas por acción con los ejercicios disponibles.",
     },
+    "implied_fcf_growth": {
+        "label": "Crecimiento FCF implícito",
+        "help": "Crecimiento anual de FCF que el reverse DCF necesita para justificar el valor de empresa observado. "
+                "Supuestos fijos: descuento 9%, crecimiento terminal 2,5% y 5 años.",
+    },
+    "expectations_gap": {
+        "label": "Brecha expectativas",
+        "help": "FCF CAGR histórico de 3 años menos crecimiento implícito en precio. Es descriptivo y no entra en el Composite.",
+    },
+    "expectations_discount_rate": {"label": "Descuento DCF", "help": "Tasa de descuento fija usada por el reverse DCF."},
+    "expectations_terminal_growth": {"label": "Crecimiento terminal", "help": "Crecimiento terminal fijo usado por el reverse DCF."},
     "momentum_score": {
         "label": "Momentum",
         "help": "Score 0-100 de momentum a 12 meses, fuerza relativa a 6 meses y precio frente a SMA200. "
@@ -311,6 +322,7 @@ FRACTION_COLUMNS = {
     "quality_persistence_score", "roic_persistence_mean", "roic_persistence_std",
     "operating_margin_persistence_mean", "operating_margin_persistence_std", "fcf_conversion_mean",
     "revenue_per_share_cagr",
+    "implied_fcf_growth", "historical_fcf_cagr", "expectations_gap",
     "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
     "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield", "score_coverage",
 }

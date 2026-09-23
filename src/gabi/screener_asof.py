@@ -17,6 +17,7 @@ vez de romper el resto — igual que ya se hace en el screener "en vivo".
 import pandas as pd
 
 from . import edgar, entity_master, identity, quality_persistence, risk, scoring, storage, technicals, universe
+from .valuation_expectations import expectations_metrics
 
 
 def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
@@ -64,6 +65,11 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     enterprise_value = (market_cap + (debt or 0) - (cash or 0)) if market_cap is not None else None
     ev_ebitda = (enterprise_value / ebitda) if enterprise_value and ebitda and ebitda > 0 else None
     debt_to_equity = (debt / equity * 100) if debt is not None and equity and equity > 0 else None
+    expectations = expectations_metrics(
+        enterprise_value=enterprise_value,
+        latest_fcf=m.get("latest_fcf"),
+        historical_fcf_cagr=m.get("fcf_cagr_3y"),
+    )
 
     persistence = quality_persistence.as_of(symbol, as_of_date, entity_id=entity_id)
     return {
@@ -82,7 +88,9 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
         "fcf_cagr_3y": m.get("fcf_cagr_3y"),
         "debt_to_equity": debt_to_equity,
         "net_debt_to_ebitda": m.get("net_debt_to_ebitda"),
+        "latest_fcf": m.get("latest_fcf"), "enterprise_value": enterprise_value,
         "fundamentals_period_end": m.get("latest_period_end"),
+        **expectations,
         **persistence,
     }
 

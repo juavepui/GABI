@@ -37,3 +37,17 @@ La función no inventa estabilidad: una empresa con un solo año disponible
 conserva el recuento, pero no obtiene una serie larga por interpolación. Las
 pruebas cubren años positivos, conversión de FCF, crecimiento por acción y
 ausencia de datos.
+
+## Entrega 2: precio frente a expectativas
+
+`src/gabi/valuation_expectations.py` añade un reverse DCF descriptivo. Resuelve
+el crecimiento constante de FCF a cinco años que hace coincidir el valor
+presente con el valor de empresa observado, usando una tasa de descuento fija
+del 9% y crecimiento terminal del 2,5%. `screener_asof` muestra el crecimiento
+implícito, el FCF CAGR histórico y la brecha entre ambos.
+
+Los supuestos están fijados en el código, las entradas se recortan por fecha de
+presentación SEC y la métrica no modifica el Composite. No se presenta como
+precio objetivo: FCF negativo, valor empresarial no positivo o ausencia de
+histórico devuelven una métrica vacía. La validación de rentabilidad de una
+variante de selección queda para el issue #23.
