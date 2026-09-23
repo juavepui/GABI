@@ -1140,9 +1140,7 @@ Calmar/capture/tracking error no existían antes de esta iteración. Beta 1.02 (
 de mercado casi neutra, como cabía esperar de una cesta de 20 large-caps del propio
 S&P 500). Information Ratio 0.43.
 
-**Sigue pendiente** (pasos 2-5 ya identificados por el usuario, no abordados en esta
-iteración): validar sobre el universo completo de 500 empresas en vez de una muestra de
-200 (el resultado de arriba sigue siendo `max_symbols=200`); sector point-in-time real vía
+**La auditoría completa posterior ya está disponible** en [docs/full-universe-audit](docs/full-universe-audit/README.md): valida desde enero de 2016 hasta octubre de 2025 sobre todos los constituyentes históricos disponibles, sin muestrear. El resultado reproducible es 23,68% CAGR neto para V2 Top-10 y 21,12% para V2 Top-20, frente a 15,00% de SPY. El resto de este apartado conserva la comparación anterior para no mezclar rangos ni motores. Sigue pendiente integrar V2 en la UI y mejorar las limitaciones de datos. La comparación anterior usa `max_symbols=200`; el sector point-in-time real vía
 CIK/Entity Master en vez del sector actual; separar score y confidence en el scoring para
 el missingness de métricas; separar explícitamente el modelo de selección del modelo de
 cartera (Policy/optimizador de `decision_engine.py` usa reglas y pesos distintos a los de
