@@ -75,3 +75,23 @@ presentación SEC y la métrica no modifica el Composite. No se presenta como
 precio objetivo: FCF negativo, valor empresarial no positivo o ausencia de
 histórico devuelven una métrica vacía. La validación de rentabilidad de una
 variante de selección queda para el issue #23.
+## Entrega 5: validaciÃ³n de variantes sobre V2
+
+`variant_validation.run_validation` ejecuta siempre un control
+`control_composite` y las variantes declaradas con el universo histÃ³rico
+completo (`mode="validation"`, sin `max_symbols`), 39 rebalanceos trimestrales
+de 2016-07 a 2026-04 y el mismo `top_n`. Rechaza variantes que intenten cambiar
+el protocolo o que devuelvan fechas distintas. Para cada variante y para las
+ventanas `development`, `validation` y `future` reporta CAGR neto, ES 95/99,
+drawdown, turnover, comisiones y beta realizada frente a SPY. La configuraciÃ³n
+se declara antes de ejecutar y el mÃ³dulo no toca la validaciÃ³n ciega.
+
+```python
+from gabi.variant_validation import VariantSpec, run_validation
+
+report = run_validation([
+    VariantSpec("hurdle_5", {"rotation_hurdle_points": 5}),
+    VariantSpec("hurdle_10", {"rotation_hurdle_points": 10}),
+])
+print(report["report"])
+```
