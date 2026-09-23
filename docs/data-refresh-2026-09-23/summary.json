@@ -1,0 +1,289 @@
+{
+  "completed_at": "2026-09-23T13:55:55.048590+00:00",
+  "cost_eur": 0,
+  "database": "data/gabi.db",
+  "membership_file": "data/sp500_historical_membership.csv",
+  "backup_directory": "data/history_refresh/20260923T133937",
+  "membership": {
+    "original_rows": 3482,
+    "rows": 3508,
+    "events": 36,
+    "current_symbols": 503,
+    "ledger_sha256": "354015a1d8c5aca79f9adb3840bc5908dc6212bcfff8e2a6141c43bcf644ad71"
+  },
+  "membership_verified_through": "2026-09-23",
+  "before": {
+    "prices": {
+      "rows": 5033331,
+      "first": "1962-01-02",
+      "last": "2026-09-22"
+    },
+    "edgar_facts": {
+      "rows": 1185439,
+      "first": "2009-04-15",
+      "last": "2026-09-15"
+    },
+    "macro_series": {
+      "rows": 2314,
+      "first": "2005-01-01",
+      "last": "2026-09-21"
+    },
+    "macro_by_series": {
+      "BAMLH0A0HYM2": {
+        "first": "2025-09-22",
+        "last": "2026-09-18",
+        "rows": 262
+      },
+      "CPIAUCSL": {
+        "first": "2005-01-01",
+        "last": "2026-08-01",
+        "rows": 259
+      },
+      "DFII10": {
+        "first": "2025-09-16",
+        "last": "2026-09-18",
+        "rows": 253
+      },
+      "DGS10": {
+        "first": "2025-09-16",
+        "last": "2026-09-18",
+        "rows": 253
+      },
+      "DTWEXBGS": {
+        "first": "2025-09-15",
+        "last": "2026-09-18",
+        "rows": 254
+      },
+      "FEDFUNDS": {
+        "first": "2005-01-01",
+        "last": "2026-08-01",
+        "rows": 260
+      },
+      "SAHMREALTIME": {
+        "first": "2005-01-01",
+        "last": "2026-08-01",
+        "rows": 259
+      },
+      "T10Y2Y": {
+        "first": "2025-09-17",
+        "last": "2026-09-21",
+        "rows": 253
+      },
+      "WALCL": {
+        "first": "2021-09-22",
+        "last": "2026-09-16",
+        "rows": 261
+      }
+    }
+  },
+  "after": {
+    "prices": {
+      "rows": 5087907,
+      "first": "1962-01-02",
+      "last": "2026-09-22"
+    },
+    "edgar_facts": {
+      "rows": 1377954,
+      "first": "2009-04-15",
+      "last": "2026-09-22"
+    },
+    "macro_series": {
+      "rows": 34937,
+      "first": "1948-01-01",
+      "last": "2026-09-22"
+    },
+    "macro_by_series": {
+      "BAMLH0A0HYM2": {
+        "first": "2023-09-25",
+        "last": "2026-09-21",
+        "rows": 785
+      },
+      "CPIAUCSL": {
+        "first": "1948-01-01",
+        "last": "2026-08-01",
+        "rows": 943
+      },
+      "DFII10": {
+        "first": "2003-01-02",
+        "last": "2026-09-21",
+        "rows": 5934
+      },
+      "DGS10": {
+        "first": "1988-05-24",
+        "last": "2026-09-21",
+        "rows": 9588
+      },
+      "DTWEXBGS": {
+        "first": "2006-01-02",
+        "last": "2026-09-18",
+        "rows": 5193
+      },
+      "FEDFUNDS": {
+        "first": "1954-07-01",
+        "last": "2026-08-01",
+        "rows": 866
+      },
+      "SAHMREALTIME": {
+        "first": "1959-12-01",
+        "last": "2026-08-01",
+        "rows": 800
+      },
+      "T10Y2Y": {
+        "first": "1988-05-25",
+        "last": "2026-09-22",
+        "rows": 9588
+      },
+      "WALCL": {
+        "first": "2002-12-18",
+        "last": "2026-09-16",
+        "rows": 1240
+      }
+    }
+  },
+  "net_new_rows": {
+    "prices": 54576,
+    "edgar_facts": 192515,
+    "macro_series": 32623
+  },
+  "edgar": {
+    "requested": 544,
+    "refreshed": 544,
+    "failed": {}
+  },
+  "yahoo_fundamentals": {
+    "requested": [
+      "BE",
+      "BF-B",
+      "BRK-B",
+      "ILMN",
+      "P"
+    ],
+    "failed": {}
+  },
+  "current_symbols": 503,
+  "current_with_prices_through_2026_09_22": 500,
+  "current_ending_2026_09_21": [
+    "BE",
+    "ILMN",
+    "P"
+  ],
+  "price_download_failures": {
+    "ANSS": "No adjusted prices returned",
+    "CTRA": "No adjusted prices returned",
+    "DAY": "No adjusted prices returned",
+    "DFS": "No adjusted prices returned",
+    "EA": "No adjusted prices returned",
+    "HES": "No adjusted prices returned",
+    "HOLX": "No adjusted prices returned",
+    "IPG": "No adjusted prices returned",
+    "JNPR": "No adjusted prices returned",
+    "K": "No adjusted prices returned",
+    "WBA": "No adjusted prices returned"
+  },
+  "symbols_without_prices": [
+    "ANSS",
+    "CTRA",
+    "DAY",
+    "DFS",
+    "HES",
+    "HOLX",
+    "IPG",
+    "JNPR",
+    "K",
+    "WBA"
+  ],
+  "period_coverage": [
+    {
+      "date": "2025-01-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 491,
+      "filed_facts": 502,
+      "both": 490
+    },
+    {
+      "date": "2025-04-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 491,
+      "filed_facts": 502,
+      "both": 490
+    },
+    {
+      "date": "2025-07-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 492,
+      "filed_facts": 502,
+      "both": 491
+    },
+    {
+      "date": "2025-10-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 496,
+      "filed_facts": 502,
+      "both": 495
+    },
+    {
+      "date": "2026-01-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 498,
+      "filed_facts": 502,
+      "both": 497
+    },
+    {
+      "date": "2026-04-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 499,
+      "filed_facts": 502,
+      "both": 498
+    },
+    {
+      "date": "2026-07-02",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 501,
+      "filed_facts": 500,
+      "both": 498
+    },
+    {
+      "date": "2026-09-22",
+      "universe": 503,
+      "exact_membership": true,
+      "recent_price": 503,
+      "filed_facts": 503,
+      "both": 503
+    }
+  ],
+  "sqlite_quick_check": "ok",
+  "verification": {
+    "pytest_passed": 664,
+    "ruff": "passed",
+    "mypy": "passed",
+    "latest_targeted_tests_passed": 19
+  },
+  "limitations": [
+    "Coverage means observations exist, not that every ranking metric is computable.",
+    "2026 is partial; incomplete current trading session excluded from new downloads.",
+    "FRED contains current revised observations, not historical ALFRED vintages.",
+    "Existing sector and issuer identity migration limitations remain."
+  ],
+  "share_class_spelling": {
+    "BRK-B": {
+      "source_symbol": "BRK.B",
+      "dates": [
+        "2026-09-22"
+      ]
+    },
+    "BF-B": {
+      "source_symbol": "BF.B",
+      "dates": [
+        "2026-09-22"
+      ]
+    }
+  },
+  "final_verified_at": "2026-09-23T18:58:55.113031+00:00"
+}

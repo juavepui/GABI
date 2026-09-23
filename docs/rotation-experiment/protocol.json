@@ -1,0 +1,96 @@
+{
+  "declared_at": "2026-09-23T10:21:28.060232+00:00",
+  "stage": "retrospective_research",
+  "variants": {
+    "control_composite": 0,
+    "hurdle_5": 5,
+    "hurdle_10": 10
+  },
+  "start": "2016-01-02",
+  "end": "2025-10-02",
+  "top_n": 20,
+  "months": 3,
+  "initial_capital": 100000.0,
+  "commission_usd": 1.0,
+  "spread_bps": 10.0,
+  "weights": {
+    "value": 0.3,
+    "quality": 0.35,
+    "momentum": 0.25,
+    "risk": 0.1
+  },
+  "max_symbols": null,
+  "windows": {
+    "full_history": [
+      "2016-01-02",
+      "2025-10-02"
+    ],
+    "development_retrospective": [
+      "2016-01-02",
+      "2021-01-02"
+    ],
+    "validation_retrospective": [
+      "2021-01-02",
+      "2025-10-02"
+    ]
+  },
+  "future": "not_evaluated",
+  "snapshot_sha256": "e501612fb2524253b5c99d04031801d47ea619faefd9145d252e0642b3c9dc68",
+  "source_manifest_sha256": "de1ab7dd0ff0ab44103f5cd0d306fffb306f1bacb8a21931a828d2b373de1612",
+  "rankings_sha256": {
+    "2016-01-02": "24ae11b40f30ed2faadada08d9e7bb69fc01f25a8e63f08cedca34d18ff3df6a",
+    "2016-04-02": "28e926e15c210411ab27072bbf74c2e53f2ec433686da1aeb95207d53120c812",
+    "2016-07-02": "988d14fe4d20c42b777c1c4c33445aea6eacc89e01d08886ac0e80b3c0d3714e",
+    "2016-10-02": "fb1d33ba12c754355621ce1d286a34e467c626c38114bbcf59fc2294f6d534f7",
+    "2017-01-02": "d08f8d6bc86a5d067bd132da2d1a4dc132cc07348b8f34d2f8368486d6f49908",
+    "2017-04-02": "2b0c857588613b204b3705ad5a35e8cb3f69fd90e898fbe093c8ac091fa148cd",
+    "2017-07-02": "bbf662876d5e0f4008ea3cb1838a783b1661c614bec34e1a508ad2699611fe81",
+    "2017-10-02": "3883d6b3a107b73558c1e8d44bfcc767d217b875d8995bc4fdd7ede55ac277c3",
+    "2018-01-02": "9cacf8e3903229d16122e3b406767c3146220036c70197f1d9f760642b008f96",
+    "2018-04-02": "0a7aef26f7c7affe4cccae15d245307edce68df3c7c82f46d42053f2bbd9fe42",
+    "2018-07-02": "86e58a140af3300fc02eb4a6f74b9b72b1c919ce59ef8ae80c59a92f31303696",
+    "2018-10-02": "6de958e6a7c84466221b7e4a990c5cb15270162e50b074332841dbba0517aa3e",
+    "2019-01-02": "700b5005208b2e7fec227ac61400fbdc7eecf697cac61157d1eb6d5620063c0a",
+    "2019-04-02": "83737f0f456a6468f94486bd5f16e87b063d835c916615e590122cabd6a31bb1",
+    "2019-07-02": "54ea5cad69519ee4050b4134b4dc29d4ce7612adf5276b7b7eff8327c3bb5fa2",
+    "2019-10-02": "577a9d166867315ab323f0330fbed67f512bf4f875b536ea6b39fb3629a18449",
+    "2020-01-02": "cb9d1529357923263cca8c23a479a0bfdeb3743aa087f95ee81524073db8c692",
+    "2020-04-02": "c06a963220428e2f3e66592dab94a80816633aa57438bd4b27ca3bc1550ecef1",
+    "2020-07-02": "94441adbc1285fc8728da779da837e3430664bced3bc1263f5ef765523dd02fc",
+    "2020-10-02": "f3474f7e4f5085d25fdb9e3f7e25d5a2d2f9cbc46b9080930f67f8912980be17",
+    "2021-01-02": "31a55837b962d572269e6fc4d748ab362a0367fc00dc9b83e5171ceb466e82e1",
+    "2021-04-02": "ac1fc077ac9b83dc616d0286ef047dfc28d745dee6bf08fb854b346203a5d8f6",
+    "2021-07-02": "c06aa06e15c2200631b0e7f399189aa0c8c894caf8ea838adc8da44fbf6f63fa",
+    "2021-10-02": "dc4bdd1ec864549da2acc9142690c809c89e929c5d2289357fcc3e83748c88ac",
+    "2022-01-02": "cc6e0b0ebe6e6ca45f0ca9bd2a8cfc7ee49c56edd5d72afb0be3792fa89a0371",
+    "2022-04-02": "25c1b3fc1d3b47c85f987b3e494deecc947a0d2c8ec4cfbcdb184d63b6299576",
+    "2022-07-02": "926442efade174a911d1be5f3dce72cf51d560a83ab946d4565a36c47fb3b399",
+    "2022-10-02": "14e0b08fbb0457933f3c489b3cf175dee1a952be771da97f11c8e9f6164c92b8",
+    "2023-01-02": "fca1613f1fca1f77ea1d42c072026df5aa6c0c6e99b8dbf2c445a145a98391a1",
+    "2023-04-02": "1dc463c2d887ccd90fd6c1edc5286f8d98a09069df1accfb2f335d9a245b7aa1",
+    "2023-07-02": "2c934a48118437bb68528d29f6798e4349ce602705a4db743fd823c17c86e64e",
+    "2023-10-02": "2b0a274a905d2c0bfc26fde92d8eb00691d550724ac2e2d84597f1b4e82a4968",
+    "2024-01-02": "889d41b7c75beebe2bae8744861f2d337bb61bef82a746da271309f7ae454073",
+    "2024-04-02": "4055a0d1c3b630b025d4edb1b11f2d47e779d535e7e200d08ce0b2547a01c8f0",
+    "2024-07-02": "5dcef9475037b053431781ea89c289e665e58f1bf3ed320e4e16a1d53596c330",
+    "2024-10-02": "90b469b9372f309db0a9456b55befc8ae694f6487becda2ee90d688f1d3fa0ca",
+    "2025-01-02": "773f7c2f0fb82a7bb13de6f301524ca7b9d1dd9fa90ad645c3def8852f5bc034",
+    "2025-04-02": "c1164f48c5991b2d4bcecfb3e3cc5841b80d460535fafe92f37d0c497da061fb",
+    "2025-07-02": "4b690c0926131946966bc20609e5ded134dece9f6f59c0f544ac3091b467a920"
+  },
+  "code_sha256": {
+    "portfolio_backtest.py": "1ca57882b4ad4dceb299464d92af9f7414365b00b311fcd6d628d3b1ebff6772",
+    "rotation_policy.py": "898c57eca5f61fb795e8e09e75b5ffc6100ab45cc7e269385648f6b9fb57baf3",
+    "variant_validation.py": "cac4f8cc6da8c011a21056e10847578e2a86619ae7e220c906ea150393905e32",
+    "identity.py": "1d3333e27bd9b0b5819856c0911404154a5472c2f22899e15b4cd57e9150a98f"
+  },
+  "limitations": [
+    "Frozen rankings and source coverage from the previous full-universe audit.",
+    "Historical identity and sector approximations remain.",
+    "Development/validation split is retrospective, not an untouched holdout.",
+    "Only the rotation change is tested; descriptive metrics do not change selection.",
+    "USD returns net of commissions/spread, before tax/FX, without final liquidation.",
+    "Turnover is gross buys plus sells divided by NAV, including weight adjustments.",
+    "V2 retains its small negative cash balances after costs; no funding charge."
+  ]
+}

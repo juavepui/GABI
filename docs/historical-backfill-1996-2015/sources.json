@@ -1,0 +1,32 @@
+{
+  "start": "1996-01-02",
+  "end_exclusive": "2016-01-01",
+  "sources": {
+    "membership": {
+      "name": "S&P 500 Historical Components & Changes (Updated).csv",
+      "url": "https://raw.githubusercontent.com/fja05680/sp500/a2430f2af0c79ddf0748e91de11bdeb1616ab5a7/S%26P%20500%20Historical%20Components%20%26%20Changes%20%28Updated%29.csv",
+      "sha256": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54",
+      "bytes": 5530907,
+      "filename": "membership.csv"
+    },
+    "issuers": {
+      "repository": "lawcal/sp500-components-history",
+      "commit": "2e59b86998a119d68e377f9f98aa7a816cfc7d5b",
+      "url": "https://raw.githubusercontent.com/lawcal/sp500-components-history/2e59b86998a119d68e377f9f98aa7a816cfc7d5b/data/components_history.csv",
+      "sha256": "7b9a8f358cdfc83b853f44c9801be40ff0d300f4e6c09407f48f7e5cffb9f2ad",
+      "filename": "issuer_history.csv"
+    },
+    "prices": {
+      "url": "https://huggingface.co/datasets/finsaber-team/FINSABER-reproduce/resolve/ba3a6907a29027b1f40da3381f3bc834e08e99a6/data/price/all_sp500_prices_2000_2024_delisted_include.csv",
+      "revision": "ba3a6907a29027b1f40da3381f3bc834e08e99a6",
+      "sha256": "f67e3972dceefbbdf6c17b84b30957a7b83518401955fff8ae0bc4ae206fa83f",
+      "bytes": 265180873,
+      "license": "apache-2.0",
+      "format": "CSV; never loads pickle",
+      "filename": "finsaber_prices.csv"
+    }
+  },
+  "membership_source_id": "fja05680:a2430f2af0c79ddf0748e91de11bdeb1616ab5a7",
+  "issuer_source_id": "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b",
+  "price_source_id": "finsaber:ba3a6907a29027b1f40da3381f3bc834e08e99a6"
+}

@@ -1,0 +1,123 @@
+[
+  {
+    "url": "https://investors.fiserv.com/news-releases/news-release-details/fiserv-announces-transfer-stock-exchange-listing-nasdaq",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "ReadTimeout"
+  },
+  {
+    "url": "https://ir.echostar.com/news-releases/news-release-details/echostar-changing-stocker-ticker-sats-echo-marking-companys-next",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "ConnectionError"
+  },
+  {
+    "url": "https://press.spglobal.com/2025-08-25-Interactive-Brokers-Group-Set-to-Join-S-P-500,-Talen-Energy-to-Join-S-P-MidCap-400-and-Kinetik-Holdings-to-Join-S-P-SmallCap-600",
+    "sha256": "b62f516837569f1354c9ec680f658759082d9349bd67633d0b1de7c17a284787",
+    "bytes": 55772,
+    "file": "b62f516837569f1354c9ec680f658759082d9349bd67633d0b1de7c17a284787.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://press.spglobal.com/2025-10-27-Solstice-Advance-Materials-and-Qnity-Electronics-Set-to-Join-S-P-500-Others-to-Join-S-P-SmallCap-600",
+    "sha256": "bcae492cb418d88a266d1f2f6ad67a099031a9f1ca764ffdeccbaf5d74edfe03",
+    "bytes": 57072,
+    "file": "bcae492cb418d88a266d1f2f6ad67a099031a9f1ca764ffdeccbaf5d74edfe03.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://press.spglobal.com/2025-11-24-Sandisk-Set-to-Join-S-P-500-Upwork,-First-Interstate-BancSystem,-PTC-Therapeutics-to-Join-S-P-SmallCap-600",
+    "sha256": "5bfa6484c53a98337d43a1922570243834be3f1f5bbe21f8ec20f548fd7c2c42",
+    "bytes": 57290,
+    "file": "5bfa6484c53a98337d43a1922570243834be3f1f5bbe21f8ec20f548fd7c2c42.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://press.spglobal.com/2026-04-30-Veeva-Systems-Set-to-Join-S-P-500",
+    "sha256": "965ab442450ffcee7c6161f3d2450e611f02fd8be6ae450af48768ce24a459ba",
+    "bytes": 50842,
+    "file": "965ab442450ffcee7c6161f3d2450e611f02fd8be6ae450af48768ce24a459ba.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://press.spglobal.com/2026-08-13-Reddit-Set-to-Join-S-P-500-and-Sun-Communities-to-Join-S-P-MidCap-400",
+    "sha256": "732cb71dd8125940f695995081bbef2da126ff7475c7a39c2c1ccb82bac951cb",
+    "bytes": 52923,
+    "file": "732cb71dd8125940f695995081bbef2da126ff7475c7a39c2c1ccb82bac951cb.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://www.bny.com/corporate/global/en/about-us/newsroom/press-release/bny-announces-planned-change-of-stock-ticker-symbol-to-bny-130465.html",
+    "sha256": "e2d27e6fa09dfd36c83439947f294f4c29293a5fcb7b6124f2328fb2cd682e53",
+    "bytes": 156931,
+    "file": "e2d27e6fa09dfd36c83439947f294f4c29293a5fcb7b6124f2328fb2cd682e53.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://www.marsh.com/en/corp/about/news/marsh-mclennan-to-change-nyse-symbol-to-mrsh.html",
+    "sha256": "33ead213c1c6aa0218eb543f8422e8c21ff79c57c1e3e5f4cdcb6d25e66cc042",
+    "bytes": 45230,
+    "file": "33ead213c1c6aa0218eb543f8422e8c21ff79c57c1e3e5f4cdcb6d25e66cc042.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://www.sec.gov/Archives/edgar/data/906107/000114036126033377/ef20080318_ex99-1.htm",
+    "sha256": "d9b5f4b2375d079c21535e5493db780c7e6526d9c28aae7504b0cea3c9c9b49c",
+    "bytes": 34758,
+    "file": "d9b5f4b2375d079c21535e5493db780c7e6526d9c28aae7504b0cea3c9c9b49c.html",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20250905-1479730/1479730_sept2025-1500rebalance.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20251205-1480992/1480992_december2025rebalance.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20251208-1481001/1481001_56-k-hsii-vtle.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260204-1482028/1482028_day5dvax6.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260306-1482263/1482263_march2026rebalance1546.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260406-1482697/1482697_5holx.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260527-1483532/1483532_fdx-amwd-56.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260605-1483743/1483743_shuffle546-june2026.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260623-1484127/1484127_hon-jhg-bld-ari-1546.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260731-1484374/1484374_ea5-rezi6.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  },
+  {
+    "url": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260904-1484999/1484999_shuffle5461-sept2026.pdf",
+    "review": "Effective dates and tickers checked against official announcement via browser on 2026-09-23",
+    "local_archive_error": "HTTPError"
+  }
+]

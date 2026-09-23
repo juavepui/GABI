@@ -110,6 +110,17 @@ def test_rebalance_charges_spread_on_traded_amount_only():
     assert shares["AAA"] == pytest.approx(1000 / (100 * 1.01))
 
 
+def test_rebalance_reports_both_sides_spread_and_commissions():
+    shares = {"AAA": 10.0}
+    result = pb._rebalance(0., shares, ["BBB"], {"AAA": 100., "BBB": 50.},
+                           1, commission_usd=1., spread_bps=200.)
+    # Sell 1000 at -1%; buy 1000 at +1%: loss 10 + 1000 - 1000/1.01.
+    expected_spread = 10. + 1000. - 1000. / 1.01
+    assert result["spread_pagado"] == pytest.approx(expected_spread)
+    assert result["coste_total"] == pytest.approx(2. + expected_spread)
+    assert result["cash"] + shares["BBB"] * 50. == pytest.approx(1000 - result["coste_total"])
+
+
 # --- buy_and_hold_curve ---
 
 def test_buy_and_hold_curve_pays_commission_once(tmp_path, monkeypatch):

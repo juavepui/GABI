@@ -14,5 +14,6 @@ data/fred_api_key.txt
 data/app_mode.json
 data/overfitting_audit/
 data/full_universe_audit/
+data/history_refresh/
 
 .streamlit/secrets.toml

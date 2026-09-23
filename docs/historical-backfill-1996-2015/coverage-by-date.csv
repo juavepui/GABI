@@ -1,0 +1,7 @@
+date,members,operational_prices_10d,archived_prices_10d,union_prices_10d,operational_any_filed_facts,archived_candidate_any_filed_facts
+1996-12-31,488,175,0,175,0,0
+2000-12-31,492,231,393,394,0,0
+2005-12-31,497,270,433,434,0,0
+2009-12-31,499,322,459,460,251,79
+2010-12-31,497,329,458,460,314,129
+2015-12-31,502,379,476,478,373,99

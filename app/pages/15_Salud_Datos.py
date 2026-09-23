@@ -1,4 +1,5 @@
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -6,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import config, data_quality, identity, scoring, screener, storage
+from gabi import config, data_quality, historical_archive, identity, scoring, screener, storage
 from gabi.ui_helpers import METRIC_INFO, translate_sector
 
 st.title("🩺 Calidad de los datos")
@@ -20,6 +21,38 @@ st.warning(
     "\n\n".join(f"**Limitación estructural conocida:** {msg}" for msg in data_quality.STRUCTURAL_LIMITATIONS),
     icon="⚠️",
 )
+
+with st.expander("Archivo histórico anterior a 2016"):
+    st.caption(
+        "Fuentes históricas descargadas para investigación. La composición de los primeros años puede ser incompleta. "
+        "Los precios archivados conservan los ajustes de su fuente y requieren validar la identidad de cada empresa "
+        "antes de incorporarlos a un backtest. Los fundamentales estructurados de SEC empiezan en 2009. "
+        "Los informes nuevos se conservan por CIK; su asociación con tickers antiguos queda pendiente de acreditar."
+    )
+    if st.button("Consultar cobertura del archivo"):
+        st.session_state["historical_archive_summary"] = historical_archive.source_summary()
+    archive_summary = st.session_state.get("historical_archive_summary", [])
+    if archive_summary:
+        st.dataframe(pd.DataFrame(archive_summary), hide_index=True, width="stretch")
+        membership_sources = [r["Fuente"] for r in archive_summary if r["Datos"] == "Composición"]
+        if membership_sources:
+            archive_date = st.date_input("Fecha de composición archivada", value=date(1996, 1, 2),
+                                         min_value=date(1996, 1, 2), max_value=date(2015, 12, 31))
+            if st.button("Ver miembros del índice en el archivo"):
+                snapshot = historical_archive.get_membership(membership_sources[0], archive_date.isoformat())
+                st.write(f"{len(snapshot['symbols'])} valores en la composición registrada el {snapshot['source_date']}.")
+                st.dataframe(pd.DataFrame({"Símbolo": snapshot["symbols"]}), hide_index=True)
+        price_sources = [r["Fuente"] for r in archive_summary if r["Datos"] == "Precios"]
+        if price_sources:
+            archive_symbol = st.text_input("Símbolo para consultar precios archivados", value="ATVI").strip().upper()
+            if st.button("Ver precios del archivo"):
+                archived = historical_archive.get_prices(price_sources[0], archive_symbol, "1996-01-02", "2016-01-01")
+                if archived.empty:
+                    st.info("El archivo no tiene precios de ese símbolo en este periodo.")
+                else:
+                    st.caption("Cierre original y cierre ajustado según la fuente; la fecha final mostrada es 2015.")
+                    st.dataframe(archived[["close", "adj_close", "volume"]].rename(
+                        columns={"close": "Cierre", "adj_close": "Cierre ajustado", "volume": "Volumen"}), width="stretch")
 
 
 def _fmt_age(hours):

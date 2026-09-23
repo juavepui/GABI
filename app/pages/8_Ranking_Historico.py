@@ -27,6 +27,7 @@ from gabi import (
     tax_drag,
     universe,
 )
+from gabi.membership_extension import reviewed_through
 from gabi.ui_helpers import METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("🕰️ Ranking histórico")
@@ -39,11 +40,12 @@ st.warning(
 
 with st.expander("ℹ️ Cómo funciona y sus límites (léelo antes de usarlo)"):
     st.markdown(
-        """
+        f"""
 - **Universo**: se reconstruye qué empresas formaban realmente el S&P 500 ese día (evita el sesgo de
   supervivencia de usar la lista actual) con datos de la comunidad
   ([`hanshof/sp500_constituents`](https://github.com/hanshof/sp500_constituents), sin garantías,
-  cobertura hasta 2025-08-23 — para fechas más recientes se usa el universo actual como aproximación).
+  cobertura original hasta 2025-08-23), ampliados con cambios fechados contrastados con S&P DJI
+  y los emisores hasta **{reviewed_through()}**. Después de esa fecha se usa el universo actual como aproximación.
 - **Fundamentales y múltiplos** (ROIC, márgenes, deuda neta/EBITDA, PER, P/VC, P/Ventas, EV/EBITDA):
   100% desde SEC EDGAR con la fecha real de presentación de cada dato — nunca desde Yahoo Finance, que
   no guarda histórico.
@@ -252,7 +254,7 @@ st.divider()
 st.subheader("Backtest multifactor por rebalanceos")
 st.caption("Reconstruye el ranking en cada fecha con SEC EDGAR y la composición histórica del índice. "
            "Un periodo sin cobertura suficiente se salta (no aborta todo el rango); se listan los saltados. "
-           "El universo histórico gratuito termina en 2025 y puede contener símbolos reutilizados. "
+           f"La composición histórica está ampliada hasta {reviewed_through()}; puede contener símbolos reutilizados. "
            "Los tamaños de 50/100 empresas son pruebas parciales, no resultados representativos del S&P 500.")
 
 tab_v1, tab_v2 = st.tabs(["Motor V1 (clásico)", "🆕 Motor V2 (contabilidad real)"])

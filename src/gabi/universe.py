@@ -1,9 +1,12 @@
 """Obtiene el universo de empresas a analizar (constituyentes del S&P 500),
 tanto el actual como (aproximado) el de una fecha pasada."""
+from io import BytesIO
+
 import pandas as pd
 import requests
 
 from . import config
+from .membership_extension import apply_reviewed_extension
 
 # Fuente principal: CSV plano mantenido en sincronía con la Wikipedia oficial.
 # Se prefiere sobre el scraping directo de Wikipedia porque es más ligero
@@ -31,7 +34,7 @@ HISTORICAL_MEMBERSHIP_CACHE = config.DATA_DIR / "sp500_historical_membership.csv
 
 def _normalize(raw: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({
-        "symbol": raw["Symbol"].astype(str).str.strip(),
+        "symbol": raw["Symbol"].astype(str).str.strip().str.replace(".", "-", regex=False),
         "name": raw["Security"].astype(str).str.strip(),
         "sector": raw["GICS Sector"].astype(str).str.strip(),
         "industry": raw["GICS Sub-Industry"].astype(str).str.strip(),
@@ -80,12 +83,21 @@ def get_historical_membership(force_refresh: bool = False) -> pd.DataFrame:
     ese momento separados por comas. Se cachea en disco porque el archivo
     pesa varios MB y cambia poco; solo hace falta refrescarlo de vez en cuando."""
     if not force_refresh and HISTORICAL_MEMBERSHIP_CACHE.exists():
-        return pd.read_csv(HISTORICAL_MEMBERSHIP_CACHE, dtype={"date": str})
+        history = pd.read_csv(HISTORICAL_MEMBERSHIP_CACHE, dtype={"date": str})
+        return apply_reviewed_extension(history)
     resp = requests.get(HISTORICAL_MEMBERSHIP_URL, timeout=60)
     resp.raise_for_status()
+    history = pd.read_csv(BytesIO(resp.content), dtype={"date": str})
+    if HISTORICAL_MEMBERSHIP_CACHE.exists():
+        cached = pd.read_csv(HISTORICAL_MEMBERSHIP_CACHE, dtype={"date": str})
+        # A stale upstream download must not erase a newer local extension.
+        history = pd.concat([history, cached[cached["date"] > history["date"].max()]], ignore_index=True)
+    history = apply_reviewed_extension(history)
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    HISTORICAL_MEMBERSHIP_CACHE.write_bytes(resp.content)
-    return pd.read_csv(HISTORICAL_MEMBERSHIP_CACHE, dtype={"date": str})
+    temporary = HISTORICAL_MEMBERSHIP_CACHE.with_suffix(".csv.tmp")
+    history.to_csv(temporary, index=False)
+    temporary.replace(HISTORICAL_MEMBERSHIP_CACHE)
+    return history
 
 
 def get_sp500_constituents_asof(target_date: str) -> dict:
@@ -131,5 +143,5 @@ def get_sp500_constituents_asof(target_date: str) -> dict:
         "symbols": symbols,
         "source_date": row["date"],
         "is_exact": True,
-        "note": f"Composición registrada el {row['date']} (el cambio más reciente antes de {target_date}).",
+        "note": f"Última composición registrada el {row['date']}, aplicable a {target_date}.",
     }

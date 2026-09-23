@@ -1,0 +1,100 @@
+{
+  "ANSS": {
+    "cik": "0001013462",
+    "name": "ANSYS INC",
+    "source_url": "https://data.sec.gov/submissions/CIK0001013462.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "0beacf20f0faa4e86012f64e384ff244f23d4eeb4d36d6277dfe14c5d3349ce8"
+  },
+  "AVB": {
+    "cik": "0000915912",
+    "name": "AVALONBAY COMMUNITIES INC",
+    "source_url": "https://data.sec.gov/submissions/CIK0000915912.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "7570ad3ab7ebb079528705f7ef22b9bb357e61857122ffd8afbff6c449a8602a"
+  },
+  "CTRA": {
+    "cik": "0000858470",
+    "name": "Coterra Energy Inc.",
+    "source_url": "https://data.sec.gov/submissions/CIK0000858470.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "30beff023caed3d85422015756567d606b86066daf28a11ebfb63891bb3facf6"
+  },
+  "DAY": {
+    "cik": "0001725057",
+    "name": "Dayforce, Inc.",
+    "source_url": "https://data.sec.gov/submissions/CIK0001725057.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "d0da3fa551b36e45706cecc65c8222f79231294597e68fdcbe9e84b2dbdad65b"
+  },
+  "DFS": {
+    "cik": "0001393612",
+    "name": "Discover Financial Services",
+    "source_url": "https://data.sec.gov/submissions/CIK0001393612.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "e196a181258afdf96a740ae51914a335595fd36f3930bfc3c78edad3ddd5f1de"
+  },
+  "EA": {
+    "cik": "0000712515",
+    "name": "ELECTRONIC ARTS INC.",
+    "source_url": "https://data.sec.gov/submissions/CIK0000712515.json",
+    "tickers": [
+      "EA"
+    ],
+    "verified_on": "2026-09-23",
+    "source_sha256": "0c629d15e404724c1c7f47239f4c82ecd8fbe8393bbfb5be966075e35acc9c3d"
+  },
+  "HES": {
+    "cik": "0000004447",
+    "name": "HESS CORP",
+    "source_url": "https://data.sec.gov/submissions/CIK0000004447.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "ca2d4bf303f56e45e6aa79363eaf9e7bd8cf657b20a48f1e045547b932d1eec7"
+  },
+  "HOLX": {
+    "cik": "0000859737",
+    "name": "HOLOGIC INC",
+    "source_url": "https://data.sec.gov/submissions/CIK0000859737.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "b873947eceb420e117f542ec9cb45429e009da86192f3599c3179fa62f7fea9b"
+  },
+  "IPG": {
+    "cik": "0000051644",
+    "name": "INTERPUBLIC GROUP OF COMPANIES, INC.",
+    "source_url": "https://data.sec.gov/submissions/CIK0000051644.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "8f81eebb14456a833a793f07f057c7c9a0adaba3d17c06c5fc41884cfb52e09e"
+  },
+  "JNPR": {
+    "cik": "0001043604",
+    "name": "JUNIPER NETWORKS INC",
+    "source_url": "https://data.sec.gov/submissions/CIK0001043604.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "de1ff11e6ddbe2712b4ea54b8a9d1aa9e878da1ed85e3bba6a3a055f89ce9963"
+  },
+  "K": {
+    "cik": "0000055067",
+    "name": "KELLANOVA",
+    "source_url": "https://data.sec.gov/submissions/CIK0000055067.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "c3b922cdca78752d6bbc1526f8bf2530a73664f1f9c1b655c389fe36f95e45a1"
+  },
+  "WBA": {
+    "cik": "0001618921",
+    "name": "Walgreens Boots Alliance, Inc.",
+    "source_url": "https://data.sec.gov/submissions/CIK0001618921.json",
+    "tickers": [],
+    "verified_on": "2026-09-23",
+    "source_sha256": "65fe8e663ca07894645570699b75212cefdbbc87494a6ff1304ff437556414fb"
+  }
+}

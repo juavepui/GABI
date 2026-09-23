@@ -45,8 +45,8 @@ cero. Estas columnas no entran en el `composite_score`; sirven para comprobar
 si aportan información incremental frente a ROIC, márgenes, crecimiento y
 valoración antes de diseñar una variante experimental.
 
-Las entregas 2–5 permanecen pendientes hasta que la primera tenga cobertura y
-pruebas suficientes. Ninguna entrega puede modificar la prueba ciega existente
+Las entregas 1–5 tienen implementación; la evidencia económica requiere
+experimentos ejecutados y revisados. Ninguna entrega puede modificar la prueba ciega existente
 ni convertirse en la nueva configuración elegida por mirar el resultado.
 
 ## Entrega 1: observabilidad implementada
@@ -75,16 +75,29 @@ presentación SEC y la métrica no modifica el Composite. No se presenta como
 precio objetivo: FCF negativo, valor empresarial no positivo o ausencia de
 histórico devuelven una métrica vacía. La validación de rentabilidad de una
 variante de selección queda para el issue #23.
-## Entrega 5: validaciÃ³n de variantes sobre V2
+
+## Entrega 5: validación de variantes sobre V2
 
 `variant_validation.run_validation` ejecuta siempre un control
-`control_composite` y las variantes declaradas con el universo histÃ³rico
+`control_composite` y las variantes declaradas con el universo histórico
 completo (`mode="validation"`, sin `max_symbols`), 39 rebalanceos trimestrales
-de 2016-07 a 2026-04 y el mismo `top_n`. Rechaza variantes que intenten cambiar
+de 2016-01 a 2025-10 y el mismo `top_n`. Rechaza variantes que intenten cambiar
 el protocolo o que devuelvan fechas distintas. Para cada variante y para las
-ventanas `development`, `validation` y `future` reporta CAGR neto, ES 95/99,
-drawdown, turnover, comisiones y beta realizada frente a SPY. La configuraciÃ³n
-se declara antes de ejecutar y el mÃ³dulo no toca la validaciÃ³n ciega.
+ventanas retrospectivas 2016–2020 y 2021–2025 reporta CAGR neto, ES 95/99,
+drawdown, turnover, comisiones, spread y beta realizada frente a SPY.
+También presenta el intervalo completo. El periodo futuro se declara sin evaluar:
+un tramo histórico no es validación prospectiva. El módulo no toca la prueba ciega.
+
+Corrección tras la primera ejecución real: el arnés inicial tenía unas fechas
+distintas de la auditoría completa, omitía costes de entrada en CAGR y llamaba
+coste total solo a las comisiones. Las pruebas originales no detectaban esos
+problemas porque usaban series sintéticas simplificadas. Se han añadido pruebas
+de reconciliación contable, límites de ventanas e inclusión de costes iniciales.
+
+El experimento de rotación usa los rankings congelados y exige reproducir el
+NAV publicado del control Top-20 antes de comparar las dos variantes:
+`python -m gabi.rotation_experiment`. Protocolo, retornos y resultados se guardan
+en [rotation-experiment](rotation-experiment/README.md).
 
 ```python
 from gabi.variant_validation import VariantSpec, run_validation

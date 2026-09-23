@@ -1,0 +1,187 @@
+"""Versioned historical source data, kept separate from operational Yahoo series.
+
+Research archives can use different split conventions and reused tickers. Their
+rows are queryable here without silently replacing the operational price cache.
+"""
+import json
+
+import numpy as np
+import pandas as pd
+
+from . import identity, storage
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS historical_sources (
+ source_id TEXT PRIMARY KEY, metadata_json TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS historical_membership (
+ source_id TEXT NOT NULL, date TEXT NOT NULL, tickers TEXT NOT NULL,
+ PRIMARY KEY(source_id,date)
+);
+CREATE TABLE IF NOT EXISTS historical_issuer_candidates (
+ source_id TEXT NOT NULL, symbol TEXT NOT NULL, cik TEXT NOT NULL,
+ name TEXT, date_added TEXT, date_removed TEXT, observed_from TEXT,
+ PRIMARY KEY(source_id,symbol,cik,date_added,observed_from)
+);
+CREATE TABLE IF NOT EXISTS historical_prices (
+ source_id TEXT NOT NULL, symbol TEXT NOT NULL, date TEXT NOT NULL,
+ open REAL, high REAL, low REAL, close REAL, adj_close REAL, volume REAL,
+ close_basis TEXT NOT NULL,
+ PRIMARY KEY(source_id,symbol,date)
+);
+CREATE TABLE IF NOT EXISTS historical_facts (
+ source_id TEXT NOT NULL, candidate_symbol TEXT NOT NULL, cik TEXT NOT NULL,
+ record_key TEXT NOT NULL, filed_date TEXT NOT NULL, payload_json TEXT NOT NULL,
+ PRIMARY KEY(source_id,candidate_symbol,cik,record_key)
+);
+"""
+
+
+def register_source(source_id: str, metadata: dict):
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        conn.execute("INSERT OR REPLACE INTO historical_sources VALUES (?,?)",
+                     (source_id, json.dumps(metadata, sort_keys=True)))
+        conn.commit()
+
+
+def import_membership(source_id: str, frame: pd.DataFrame, start: str, end: str) -> int:
+    selected = frame[(frame["date"] >= start) & (frame["date"] < end)].copy()
+    dates = pd.to_datetime(selected["date"], format="%Y-%m-%d", errors="raise")
+    if dates.duplicated().any():
+        raise ValueError("Conflicting/duplicate source snapshot dates require review")
+    rows = []
+    for row in selected.itertuples(index=False):
+        members = sorted({s.strip().replace(".", "-") for s in row.tickers.split(",") if s.strip()})
+        if not members:
+            raise ValueError("Empty source membership")
+        rows.append((source_id, row.date, ",".join(members)))
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        conn.executemany("INSERT OR REPLACE INTO historical_membership VALUES (?,?,?)", rows)
+        conn.commit()
+    return len(rows)
+
+
+def get_membership(source_id: str, as_of: str) -> dict:
+    """Source-specific membership; does not assert a complete or verified universe."""
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        metadata = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?", (source_id,)).fetchone()
+        if not metadata:
+            raise ValueError("Unknown historical source")
+        details = json.loads(metadata[0])
+        if not details["start"] <= as_of < details["end_exclusive"]:
+            raise ValueError("Date outside imported source coverage")
+        row = conn.execute("SELECT date,tickers FROM historical_membership WHERE source_id=? AND date<=? "
+                           "ORDER BY date DESC LIMIT 1", (source_id, as_of)).fetchone()
+    if row is None:
+        raise ValueError("No source snapshot at this date")
+    return {"symbols": row[1].split(","), "source_date": row[0], "source_id": source_id,
+            "quality": "community_unverified", "metadata": details}
+
+
+def import_issuer_candidates(source_id: str, frame: pd.DataFrame) -> int:
+    records = []
+    for row in frame.fillna("").itertuples(index=False):
+        if row.cik:
+            records.append((source_id, row.symbol.replace(".", "-"), row.cik.zfill(10), row.name,
+                            row.date_added, row.date_removed, row.created_at))
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        conn.executemany("INSERT OR REPLACE INTO historical_issuer_candidates VALUES (?,?,?,?,?,?,?)", records)
+        conn.commit()
+    return len(records)
+
+
+def import_price_chunk(source_id: str, frame: pd.DataFrame, symbols: set[str], start: str, end: str) -> dict:
+    frame = frame.rename(columns={"adjusted_close": "adj_close"}).copy()
+    frame["symbol"] = frame["symbol"].str.replace(".", "-", regex=False)
+    frame = frame[(frame["date"] >= start) & (frame["date"] < end) & frame["symbol"].isin(symbols)]
+    pd.to_datetime(frame["date"], format="%Y-%m-%d", errors="raise")
+    columns = ["open", "high", "low", "close", "adj_close", "volume"]
+    values = frame[columns].apply(pd.to_numeric, errors="coerce")
+    valid = np.isfinite(values).all(axis=1) & (values[columns[:-1]] > 0).all(axis=1) & (values["volume"] >= 0)
+    valid &= values["high"] + 0.001 >= values[["open", "close", "low"]].max(axis=1)
+    valid &= values["low"] - 0.001 <= values[["open", "close", "high"]].min(axis=1)
+    rejected = int((~valid).sum())
+    frame[columns] = values
+    frame = frame[valid]
+    if frame.duplicated(["symbol", "date"]).any():
+        raise ValueError("Duplicate price observations within source chunk")
+    records = [(source_id, row.symbol, row.date, row.open, row.high, row.low, row.close, row.adj_close,
+                row.volume, "as_traded") for row in frame.itertuples(index=False)]
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        # Rerunning a pinned source is idempotent; a new revision uses a new ID.
+        conn.executemany("INSERT OR IGNORE INTO historical_prices VALUES (?,?,?,?,?,?,?,?,?,?)", records)
+        conn.commit()
+    return {"accepted": len(records), "rejected": rejected}
+
+
+def get_prices(source_id: str, symbol: str, start: str, end: str) -> pd.DataFrame:
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        frame = pd.read_sql_query("SELECT date,open,high,low,close,adj_close,volume,close_basis "
+                                  "FROM historical_prices WHERE source_id=? AND symbol=? AND date>=? AND date<? "
+                                  "ORDER BY date", conn, params=(source_id, symbol.replace(".", "-"), start, end))
+    frame["date"] = pd.to_datetime(frame["date"])
+    result = frame.set_index("date")
+    result.attrs.update(source_id=source_id, identity_status="unverified", close_basis="as_traded")
+    return result
+
+
+def import_sec_facts(source_id: str, candidate_symbol: str, cik: str, rows: list[dict]) -> int:
+    """SEC verifies the issuer of facts, not a community ticker-to-issuer mapping.
+
+    Keep candidate provenance and issuer observations, without populating the
+    legacy symbol cache or activating a historical alias.
+    """
+    entity_id = identity.ensure_entity(cik)
+    cik = identity.normalize_cik(cik)
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        records = [(source_id, candidate_symbol, cik,
+                    json.dumps([r.get(k, "") for k in identity.DATA_KEYS["edgar_facts"]]),
+                    r["filed_date"], json.dumps(r, allow_nan=False)) for r in rows]
+        conn.executemany("INSERT OR REPLACE INTO historical_facts VALUES (?,?,?,?,?,?)", records)
+        identity.put_observations(conn, entity_id, "edgar_facts", candidate_symbol, rows,
+                                  f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json")
+        conn.commit()
+    return len(records)
+
+
+def source_summary() -> list[dict]:
+    """Local archive coverage, independent of live-universe data quality."""
+    with storage.get_connection() as conn:
+        if not conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_sources'").fetchone():
+            return []
+        result = []
+        for table, kind in [("historical_membership", "Composición"), ("historical_prices", "Precios")]:
+            for sid, count, first, last in conn.execute(
+                    f"SELECT source_id,COUNT(*),MIN(date),MAX(date) FROM {table} GROUP BY source_id"):
+                result.append({"Fuente": sid, "Datos": kind, "Filas": count, "Desde": first, "Hasta": last})
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_facts'").fetchone():
+            for sid, count, first, last in conn.execute(
+                    "SELECT source_id,COUNT(*),MIN(filed_date),MAX(filed_date) FROM historical_facts GROUP BY source_id"):
+                result.append({"Fuente": sid, "Datos": "Fundamentales SEC por CIK", "Filas": count,
+                               "Desde": first, "Hasta": last})
+    return result
+
+
+def unique_historical_ciks(frame: pd.DataFrame, targets: set[str], live: dict, stored: dict) -> tuple[dict, dict]:
+    frame = frame.fillna("").copy()
+    frame["symbol"] = frame["symbol"].str.replace(".", "-", regex=False)
+    frame = frame[(frame["created_at"] < "2016-01-01") & (frame["date_added"].str[:10] < "2016-01-01")]
+    safe, blocked = {}, {}
+    for symbol in sorted(targets):
+        candidates = set(frame.loc[frame["symbol"] == symbol, "cik"]) - {""}
+        if len(candidates) != 1:
+            blocked[symbol] = "missing_historical_cik" if not candidates else "ambiguous_historical_cik"
+            continue
+        cik = next(iter(candidates)).zfill(10)
+        if any(mapping.get(symbol) and mapping[symbol] != cik for mapping in (live, stored)):
+            blocked[symbol] = "issuer_conflict_or_reused_ticker"
+        else:
+            safe[symbol] = cik
+    return safe, blocked

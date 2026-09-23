@@ -98,8 +98,12 @@ def _rebalance_to_weights(cash: float, shares: dict, target_weights: dict, entry
             trades_executed += 1
 
     turnover_pct = (traded_notional / portfolio_value * 100) if portfolio_value > 0 else 0.0
+    commission_paid = trades_executed * commission_usd
+    value_after = cash + sum(shares[s] * entry_price[s] for s in shares)
+    total_cost = portfolio_value - value_after
     return {"cash": cash, "turnover_pct": turnover_pct,
-            "comision_pagada": trades_executed * commission_usd,
+            "comision_pagada": commission_paid,
+            "spread_pagado": total_cost - commission_paid, "coste_total": total_cost,
             "held": held, "sold": sold, "bought": bought}
 
 
@@ -268,6 +272,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                 "held": ", ".join(sorted(result["held"])), "sold": ", ".join(sorted(result["sold"])),
                 "bought": ", ".join(sorted(result["bought"])), "turnover_pct": result["turnover_pct"],
                 "comision_pagada": result["comision_pagada"],
+                "spread_pagado": result["spread_pagado"], "coste_total": result["coste_total"],
             })
         except (ValueError, RuntimeError) as exc:
             skipped.append({"fecha": as_of_str, "motivo": str(exc)})
@@ -294,6 +299,9 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
         "nav_curve": nav_curve, "nav_curve_spy": nav_curve_spy,
         "turnover_medio": float(periods["turnover_pct"].mean()),
         "comision_total": float(periods["comision_pagada"].sum()),
+        "spread_total": float(periods["spread_pagado"].sum()),
+        "coste_total": float(periods["coste_total"].sum()),
+        "initial_capital": float(initial_capital),
         "capital_final": float(nav_curve.iloc[-1]),
     }
 

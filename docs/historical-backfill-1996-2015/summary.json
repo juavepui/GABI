@@ -1,0 +1,1396 @@
+{
+  "started_at": "2026-09-23T19:24:57.524307+00:00",
+  "completed_at": "2026-09-23T19:30:41.117355+00:00",
+  "cost_eur": 0,
+  "before": {
+    "prices": {
+      "rows": 5087907,
+      "first": "1962-01-02",
+      "last": "2026-09-22"
+    },
+    "edgar_facts": {
+      "rows": 1377954,
+      "first": "2009-04-15",
+      "last": "2026-09-22"
+    },
+    "macro_series": {
+      "rows": 34937,
+      "first": "1948-01-01",
+      "last": "2026-09-22"
+    },
+    "macro_by_series": {
+      "BAMLH0A0HYM2": {
+        "first": "2023-09-25",
+        "last": "2026-09-21",
+        "rows": 785
+      },
+      "CPIAUCSL": {
+        "first": "1948-01-01",
+        "last": "2026-08-01",
+        "rows": 943
+      },
+      "DFII10": {
+        "first": "2003-01-02",
+        "last": "2026-09-21",
+        "rows": 5934
+      },
+      "DGS10": {
+        "first": "1988-05-24",
+        "last": "2026-09-21",
+        "rows": 9588
+      },
+      "DTWEXBGS": {
+        "first": "2006-01-02",
+        "last": "2026-09-18",
+        "rows": 5193
+      },
+      "FEDFUNDS": {
+        "first": "1954-07-01",
+        "last": "2026-08-01",
+        "rows": 866
+      },
+      "SAHMREALTIME": {
+        "first": "1959-12-01",
+        "last": "2026-08-01",
+        "rows": 800
+      },
+      "T10Y2Y": {
+        "first": "1988-05-25",
+        "last": "2026-09-22",
+        "rows": 9588
+      },
+      "WALCL": {
+        "first": "2002-12-18",
+        "last": "2026-09-16",
+        "rows": 1240
+      }
+    }
+  },
+  "after": {
+    "prices": {
+      "rows": 5302967,
+      "first": "1962-01-02",
+      "last": "2026-09-22"
+    },
+    "edgar_facts": {
+      "rows": 1377954,
+      "first": "2009-04-15",
+      "last": "2026-09-22"
+    },
+    "macro_series": {
+      "rows": 34937,
+      "first": "1948-01-01",
+      "last": "2026-09-22"
+    },
+    "macro_by_series": {
+      "BAMLH0A0HYM2": {
+        "first": "2023-09-25",
+        "last": "2026-09-21",
+        "rows": 785
+      },
+      "CPIAUCSL": {
+        "first": "1948-01-01",
+        "last": "2026-08-01",
+        "rows": 943
+      },
+      "DFII10": {
+        "first": "2003-01-02",
+        "last": "2026-09-21",
+        "rows": 5934
+      },
+      "DGS10": {
+        "first": "1988-05-24",
+        "last": "2026-09-21",
+        "rows": 9588
+      },
+      "DTWEXBGS": {
+        "first": "2006-01-02",
+        "last": "2026-09-18",
+        "rows": 5193
+      },
+      "FEDFUNDS": {
+        "first": "1954-07-01",
+        "last": "2026-08-01",
+        "rows": 866
+      },
+      "SAHMREALTIME": {
+        "first": "1959-12-01",
+        "last": "2026-08-01",
+        "rows": 800
+      },
+      "T10Y2Y": {
+        "first": "1988-05-25",
+        "last": "2026-09-22",
+        "rows": 9588
+      },
+      "WALCL": {
+        "first": "2002-12-18",
+        "last": "2026-09-16",
+        "rows": 1240
+      }
+    }
+  },
+  "before_old_coverage": {
+    "symbols_with_prices": 396,
+    "symbols_with_facts": 392
+  },
+  "after_old_coverage": {
+    "symbols_with_prices": 417,
+    "symbols_with_facts": 392
+  },
+  "membership_snapshots": 2231,
+  "issuer_candidates": 1002,
+  "archived_prices": {
+    "accepted": 2604620,
+    "rejected": 0
+  },
+  "archive_coverage": {
+    "rows": 2604620,
+    "symbols": 788,
+    "first": "2000-01-03",
+    "last": "2015-12-31"
+  },
+  "archived_sec_facts": {
+    "rows": 151444,
+    "candidate_symbols": 205,
+    "issuers": 203,
+    "first_filed": "2009-04-29",
+    "last_filed": "2015-12-21"
+  },
+  "sqlite_integrity": "ok",
+  "sec_attribution": "SEC facts archived by CIK with unverified candidate ticker; no legacy symbol facts or aliases activated",
+  "target_symbols": 984,
+  "source_only_symbols": [
+    "AABA",
+    "ADT",
+    "AGN",
+    "AKS",
+    "ALTR",
+    "ANRZQ",
+    "ARNC",
+    "BEAM",
+    "BHGE",
+    "BMC",
+    "CCE",
+    "CEG",
+    "CHK",
+    "CPWR",
+    "CVH",
+    "DELL",
+    "DNB",
+    "DO",
+    "DOW",
+    "DTV",
+    "EMC",
+    "FOSL",
+    "FOX",
+    "FOXA",
+    "GAS",
+    "HAR",
+    "HCP",
+    "HOT",
+    "HSH",
+    "IR",
+    "JAVA",
+    "KG",
+    "LIFE",
+    "LLL",
+    "MFE",
+    "MI",
+    "MIL",
+    "MNK",
+    "MON",
+    "NE",
+    "NSM",
+    "NVLS",
+    "PCL",
+    "PCP",
+    "PGN",
+    "PLL",
+    "POM",
+    "PTV",
+    "PX",
+    "Q",
+    "RIG",
+    "RSHCQ",
+    "S",
+    "SE",
+    "SHLD",
+    "SIG",
+    "SII",
+    "STR",
+    "SUN",
+    "SUNEQ",
+    "TEG",
+    "URBN",
+    "WYND",
+    "XL"
+  ],
+  "membership_differing_snapshots": 2231,
+  "yahoo": {
+    "updated": {
+      "BC": 11270,
+      "CIEN": 7450,
+      "DDS": 11723,
+      "FOSL": 8420,
+      "ITT": 7740,
+      "KBH": 10111,
+      "MBI": 9880,
+      "MTG": 8843,
+      "MTW": 9189,
+      "NBR": 13509,
+      "NYT": 13459,
+      "RIG": 8385,
+      "SANM": 8417,
+      "SIG": 9618,
+      "SLM": 10832,
+      "SSP": 9627,
+      "TEX": 11721,
+      "THC": 11723,
+      "UIS": 13689,
+      "URBN": 8271,
+      "WEN": 11688
+    },
+    "failed": {
+      "BUD": "Provider history does not overlap historical membership"
+    }
+  },
+  "sec": {
+    "updated": {
+      "ABC": {
+        "cik": "0001140859",
+        "name": "CENCORA, INC.",
+        "rows": 1261
+      },
+      "ADS": {
+        "cik": "0001101215",
+        "name": "BREAD FINANCIAL HOLDINGS, INC.",
+        "rows": 734
+      },
+      "AET": {
+        "cik": "0001122304",
+        "name": "AETNA INC /PA/",
+        "rows": 922
+      },
+      "AKS": {
+        "cik": "0000918160",
+        "name": "AK STEEL HOLDING CORP",
+        "rows": 886
+      },
+      "ALTR": {
+        "cik": "0000768251",
+        "name": "ALTERA CORP",
+        "rows": 847
+      },
+      "ALXN": {
+        "cik": "0000899866",
+        "name": "ALEXION PHARMACEUTICALS, INC.",
+        "rows": 702
+      },
+      "ANTM": {
+        "cik": "0001156039",
+        "name": "ELEVANCE HEALTH, INC.",
+        "rows": 957
+      },
+      "APOL": {
+        "cik": "0000929887",
+        "name": "Apollo Education Group Inc",
+        "rows": 987
+      },
+      "ARG": {
+        "cik": "0000804212",
+        "name": "AIRGAS INC",
+        "rows": 806
+      },
+      "ATVI": {
+        "cik": "0000718877",
+        "name": "ACTIVISION BLIZZARD, INC.",
+        "rows": 839
+      },
+      "AV": {
+        "cik": "0001116521",
+        "name": "AVAYA INC",
+        "rows": 726
+      },
+      "AVP": {
+        "cik": "0000008868",
+        "name": "Avon Products, Inc.",
+        "rows": 1049
+      },
+      "AYE": {
+        "cik": "0000003673",
+        "name": "ALLEGHENY ENERGY, INC",
+        "rows": 241
+      },
+      "BBBY": {
+        "cik": "0000886158",
+        "name": "20230930-DK-BUTTERFLY-1, INC.",
+        "rows": 728
+      },
+      "BC": {
+        "cik": "0000014930",
+        "name": "Brunswick Corporation",
+        "rows": 756
+      },
+      "BCR": {
+        "cik": "0000009892",
+        "name": "BARD C R INC /NJ/",
+        "rows": 839
+      },
+      "BDK": {
+        "cik": "0000093556",
+        "name": "STANLEY BLACK & DECKER, INC.",
+        "rows": 1193
+      },
+      "BIG": {
+        "cik": "0000768835",
+        "name": "BIG LOTS, INC.",
+        "rows": 793
+      },
+      "BJS": {
+        "cik": "0000864328",
+        "name": "BJ SERVICES CO",
+        "rows": 89
+      },
+      "BLL": {
+        "cik": "0000009389",
+        "name": "BALL CORPORATION",
+        "rows": 878
+      },
+      "BMC": {
+        "cik": "0000835729",
+        "name": "BMC SOFTWARE INC",
+        "rows": 578
+      },
+      "BMET": {
+        "cik": "0000351346",
+        "name": "BIOMET INC",
+        "rows": 208
+      },
+      "BMS": {
+        "cik": "0000011199",
+        "name": "BEMIS CO INC",
+        "rows": 746
+      },
+      "BNI": {
+        "cik": "0000934612",
+        "name": "BURLINGTON NORTHERN SANTA FE, LLC",
+        "rows": 483
+      },
+      "BRCM": {
+        "cik": "0001054374",
+        "name": "BROADCOM CORP",
+        "rows": 931
+      },
+      "BXLT": {
+        "cik": "0001620546",
+        "name": "Baxalta Inc",
+        "rows": 50
+      },
+      "CA": {
+        "cik": "0000356028",
+        "name": "CA, INC.",
+        "rows": 845
+      },
+      "CAM": {
+        "cik": "0000941548",
+        "name": "CAMERON INTERNATIONAL CORP",
+        "rows": 1058
+      },
+      "CBE": {
+        "cik": "0001141982",
+        "name": "COOPER INDUSTRIES PLC",
+        "rows": 518
+      },
+      "CBS": {
+        "cik": "0000813828",
+        "name": "Paramount Skydance Corp",
+        "rows": 1023
+      },
+      "CCE": {
+        "cik": "0001491675",
+        "name": "COCA-COLA ENTERPRISES, INC.",
+        "rows": 917
+      },
+      "CELG": {
+        "cik": "0000816284",
+        "name": "CELGENE CORPORATION",
+        "rows": 708
+      },
+      "CEPH": {
+        "cik": "0000873364",
+        "name": "CEPHALON INC",
+        "rows": 176
+      },
+      "CERN": {
+        "cik": "0000804753",
+        "name": "CERNER Corp",
+        "rows": 767
+      },
+      "CFN": {
+        "cik": "0001457543",
+        "name": "CAREFUSION Corp",
+        "rows": 739
+      },
+      "CHK": {
+        "cik": "0000895126",
+        "name": "EXPAND ENERGY Corp",
+        "rows": 873
+      },
+      "CMA": {
+        "cik": "0000028412",
+        "name": "COMERICA INC",
+        "rows": 421
+      },
+      "CMCSK": {
+        "cik": "0001166691",
+        "name": "COMCAST CORPORATION",
+        "rows": 1064
+      },
+      "COG": {
+        "cik": "0000858470",
+        "name": "COTERRA ENERGY INC.",
+        "rows": 600
+      },
+      "COL": {
+        "cik": "0001137411",
+        "name": "ROCKWELL COLLINS INC",
+        "rows": 823
+      },
+      "COV": {
+        "cik": "0001385187",
+        "name": "Covidien plc",
+        "rows": 959
+      },
+      "CPGX": {
+        "cik": "0001629995",
+        "name": "COLUMBIA PIPELINE GROUP, INC./DE",
+        "rows": 56
+      },
+      "CSRA": {
+        "cik": "0001646383",
+        "name": "CSRA INC.",
+        "rows": 31
+      },
+      "CTL": {
+        "cik": "0000018926",
+        "name": "LUMEN TECHNOLOGIES, INC.",
+        "rows": 849
+      },
+      "CTXS": {
+        "cik": "0000877890",
+        "name": "CITRIX SYSTEMS INC",
+        "rows": 1001
+      },
+      "CVC": {
+        "cik": "0001053112",
+        "name": "CABLEVISION SYSTEMS CORP /NY",
+        "rows": 857
+      },
+      "CVG": {
+        "cik": "0001062047",
+        "name": "CONVERGYS CORP.",
+        "rows": 919
+      },
+      "CVH": {
+        "cik": "0001054833",
+        "name": "COVENTRY HEALTH CARE INC",
+        "rows": 495
+      },
+      "DDR": {
+        "cik": "0000894315",
+        "name": "SITE Centers Corp.",
+        "rows": 648
+      },
+      "DDS": {
+        "cik": "0000028917",
+        "name": "DILLARD’S, INC.",
+        "rows": 832
+      },
+      "DF": {
+        "cik": "0000931336",
+        "name": "DEAN FOODS COMPANY",
+        "rows": 953
+      },
+      "DISCA": {
+        "cik": "0001437107",
+        "name": "Warner Bros. Discovery, Inc.",
+        "rows": 1159
+      },
+      "DISCK": {
+        "cik": "0001437107",
+        "name": "Warner Bros. Discovery, Inc.",
+        "rows": 1159
+      },
+      "DNB": {
+        "cik": "0001115222",
+        "name": "DUN & BRADSTREET CORP/NW",
+        "rows": 830
+      },
+      "DNR": {
+        "cik": "0000945764",
+        "name": "DENBURY INC.",
+        "rows": 623
+      },
+      "DO": {
+        "cik": "0000949039",
+        "name": "Diamond Offshore Drilling, Inc.",
+        "rows": 809
+      },
+      "DTV": {
+        "cik": "0001465112",
+        "name": "DIRECTV",
+        "rows": 1029
+      },
+      "EMC": {
+        "cik": "0000790070",
+        "name": "Dell International L.L.C.",
+        "rows": 1105
+      },
+      "ENDP": {
+        "cik": "0001100962",
+        "name": "ENDO HEALTH SOLUTIONS INC.",
+        "rows": 799
+      },
+      "ESRX": {
+        "cik": "0001532063",
+        "name": "Express Scripts Holding Co.",
+        "rows": 721
+      },
+      "ESV": {
+        "cik": "0000314808",
+        "name": "Valaris Limited",
+        "rows": 977
+      },
+      "ETFC": {
+        "cik": "0001015780",
+        "name": "E TRADE FINANCIAL CORP",
+        "rows": 584
+      },
+      "FB": {
+        "cik": "0001326801",
+        "name": "Meta Platforms, Inc.",
+        "rows": 379
+      },
+      "FDC": {
+        "cik": "0000883980",
+        "name": "FIRST DATA CORP",
+        "rows": 657
+      },
+      "FDO": {
+        "cik": "0000034408",
+        "name": "FAMILY DOLLAR STORES INC",
+        "rows": 610
+      },
+      "FII": {
+        "cik": "0001056288",
+        "name": "Federated Hermes, Inc.",
+        "rows": 780
+      },
+      "FLIR": {
+        "cik": "0000354908",
+        "name": "FLIR SYSTEMS INC",
+        "rows": 947
+      },
+      "FOSL": {
+        "cik": "0000883569",
+        "name": "FOSSIL GROUP, INC.",
+        "rows": 922
+      },
+      "FRX": {
+        "cik": "0000038074",
+        "name": "FOREST LABORATORIES INC",
+        "rows": 570
+      },
+      "FTR": {
+        "cik": "0000020520",
+        "name": "Frontier Communications Parent, Inc.",
+        "rows": 806
+      },
+      "GAS": {
+        "cik": "0001004155",
+        "name": "The Southern Company",
+        "rows": 1236
+      },
+      "GENZ": {
+        "cik": "0000732485",
+        "name": "GENZYME CORP",
+        "rows": 241
+      },
+      "GMCR": {
+        "cik": "0000909954",
+        "name": "KEURIG GREEN MOUNTAIN, INC.",
+        "rows": 943
+      },
+      "GPS": {
+        "cik": "0000039911",
+        "name": "GAP, INC",
+        "rows": 1117
+      },
+      "GR": {
+        "cik": "0000042542",
+        "name": "GOODRICH CORP",
+        "rows": 396
+      },
+      "HAR": {
+        "cik": "0000800459",
+        "name": "HARMAN INTERNATIONAL INDUSTRIES INC /DE/",
+        "rows": 1028
+      },
+      "HBI": {
+        "cik": "0001359841",
+        "name": "Hanesbrands Inc.",
+        "rows": 870
+      },
+      "HCBK": {
+        "cik": "0000921847",
+        "name": "HUDSON CITY BANCORP INC",
+        "rows": 640
+      },
+      "HCP": {
+        "cik": "0000765880",
+        "name": "Healthpeak Properties, Inc.",
+        "rows": 839
+      },
+      "HET": {
+        "cik": "0000858339",
+        "name": "CAESARS HOLDINGS, INC.",
+        "rows": 764
+      },
+      "HNZ": {
+        "cik": "0000046640",
+        "name": "HEINZ H J CO",
+        "rows": 510
+      },
+      "HOT": {
+        "cik": "0000316206",
+        "name": "STARWOOD HOTEL & RESORTS WORLDWIDE, INC",
+        "rows": 1122
+      },
+      "HRS": {
+        "cik": "0000202058",
+        "name": "L3HARRIS TECHNOLOGIES, INC.",
+        "rows": 831
+      },
+      "HSP": {
+        "cik": "0001274057",
+        "name": "HOSPIRA INC",
+        "rows": 618
+      },
+      "IGT": {
+        "cik": "0000353944",
+        "name": "International Game Technology",
+        "rows": 840
+      },
+      "ITT": {
+        "cik": "0000216228",
+        "name": "ITT INC.",
+        "rows": 851
+      },
+      "JCP": {
+        "cik": "0001166126",
+        "name": "OLD COPPER COMPANY, INC.",
+        "rows": 1153
+      },
+      "JEC": {
+        "cik": "0000052988",
+        "name": "JACOBS SOLUTIONS INC.",
+        "rows": 1106
+      },
+      "JNS": {
+        "cik": "0001065865",
+        "name": "JANUS CAPITAL GROUP INC",
+        "rows": 803
+      },
+      "JNY": {
+        "cik": "0000874016",
+        "name": "JONES GROUP INC",
+        "rows": 741
+      },
+      "JOY": {
+        "cik": "0000801898",
+        "name": "JOY GLOBAL INC",
+        "rows": 888
+      },
+      "JWN": {
+        "cik": "0000072333",
+        "name": "Nordstrom, Inc.",
+        "rows": 884
+      },
+      "KBH": {
+        "cik": "0000795266",
+        "name": "KB HOME",
+        "rows": 601
+      },
+      "KORS": {
+        "cik": "0001530721",
+        "name": "CAPRI HOLDINGS LIMITED",
+        "rows": 542
+      },
+      "KRFT": {
+        "cik": "0001545158",
+        "name": "KRAFT FOODS GROUP, INC.",
+        "rows": 440
+      },
+      "KSU": {
+        "cik": "0000054480",
+        "name": "KANSAS CITY SOUTHERN",
+        "rows": 1020
+      },
+      "LEG": {
+        "cik": "0000058492",
+        "name": "LEGGETT & PLATT INC",
+        "rows": 912
+      },
+      "LLTC": {
+        "cik": "0000791907",
+        "name": "LINEAR TECHNOLOGY CORP /CA/",
+        "rows": 792
+      },
+      "LM": {
+        "cik": "0000704051",
+        "name": "LEGG MASON, INC.",
+        "rows": 336
+      },
+      "LO": {
+        "cik": "0001424847",
+        "name": "LORILLARD, INC.",
+        "rows": 1007
+      },
+      "LSI": {
+        "cik": "0000703360",
+        "name": "LSI CORP",
+        "rows": 495
+      },
+      "LVLT": {
+        "cik": "0000794323",
+        "name": "LEVEL 3 PARENT, LLC",
+        "rows": 693
+      },
+      "LXK": {
+        "cik": "0001001288",
+        "name": "LEXMARK INTERNATIONAL INC /KY/",
+        "rows": 760
+      },
+      "MBI": {
+        "cik": "0000814585",
+        "name": "MBIA INC.",
+        "rows": 489
+      },
+      "MDP": {
+        "cik": "0000065011",
+        "name": "Hawkeye Acquisition, Inc.",
+        "rows": 812
+      },
+      "MEE": {
+        "cik": "0000037748",
+        "name": "MASSEY ENERGY CO",
+        "rows": 209
+      },
+      "MER": {
+        "cik": "0000065100",
+        "name": "MERRILL LYNCH & CO., INC.",
+        "rows": 182
+      },
+      "MFE": {
+        "cik": "0000890801",
+        "name": "MCAFEE, INC.",
+        "rows": 188
+      },
+      "MHS": {
+        "cik": "0001170650",
+        "name": "MEDCO HEALTH SOLUTIONS INC",
+        "rows": 248
+      },
+      "MJN": {
+        "cik": "0001452575",
+        "name": "Mead Johnson Nutrition Co",
+        "rows": 631
+      },
+      "MNK": {
+        "cik": "0001567892",
+        "name": "Keenova Therapeutics plc",
+        "rows": 429
+      },
+      "MOLX": {
+        "cik": "0000067472",
+        "name": "MOLEX INC",
+        "rows": 446
+      },
+      "MON": {
+        "cik": "0001110783",
+        "name": "MONSANTO CO /NEW/",
+        "rows": 1572
+      },
+      "MRO": {
+        "cik": "0000101778",
+        "name": "Marathon Oil Corporation",
+        "rows": 901
+      },
+      "MTG": {
+        "cik": "0000876437",
+        "name": "MGIC Investment Corp",
+        "rows": 534
+      },
+      "MTW": {
+        "cik": "0000061986",
+        "name": "The Manitowoc Company, Inc.",
+        "rows": 668
+      },
+      "MWV": {
+        "cik": "0001159297",
+        "name": "MEADWESTVACO CORP",
+        "rows": 838
+      },
+      "MWW": {
+        "cik": "0001020416",
+        "name": "MONSTER WORLDWIDE, INC.",
+        "rows": 817
+      },
+      "MXIM": {
+        "cik": "0000743316",
+        "name": "MAXIM INTEGRATED PRODUCTS, INC.",
+        "rows": 926
+      },
+      "MYL": {
+        "cik": "0001623613",
+        "name": "MYLAN II B.V.",
+        "rows": 152
+      },
+      "NBL": {
+        "cik": "0000072207",
+        "name": "NOBLE ENERGY INC",
+        "rows": 830
+      },
+      "NBR": {
+        "cik": "0001163739",
+        "name": "NABORS INDUSTRIES LTD",
+        "rows": 873
+      },
+      "NCR": {
+        "cik": "0000070866",
+        "name": "NCR VOYIX CORPORATION",
+        "rows": 1134
+      },
+      "NFX": {
+        "cik": "0000912750",
+        "name": "NEWFIELD EXPLORATION CO /DE/",
+        "rows": 697
+      },
+      "NLSN": {
+        "cik": "0001492633",
+        "name": "Nielsen Holdings plc",
+        "rows": 908
+      },
+      "NOVL": {
+        "cik": "0000758004",
+        "name": "NOVELL INC",
+        "rows": 97
+      },
+      "NSM": {
+        "cik": "0000070530",
+        "name": "NATIONAL SEMICONDUCTOR CORP",
+        "rows": 130
+      },
+      "NVLS": {
+        "cik": "0000836106",
+        "name": "NOVELLUS SYSTEMS INC",
+        "rows": 275
+      },
+      "NYT": {
+        "cik": "0000071691",
+        "name": "THE NEW YORK TIMES COMPANY",
+        "rows": 813
+      },
+      "NYX": {
+        "cik": "0001368007",
+        "name": "NYSE EURONEXT",
+        "rows": 657
+      },
+      "ODP": {
+        "cik": "0000800240",
+        "name": "The ODP Corporation",
+        "rows": 943
+      },
+      "OMX": {
+        "cik": "0000012978",
+        "name": "OFFICEMAX INC",
+        "rows": 412
+      },
+      "PBCT": {
+        "cik": "0001378946",
+        "name": "People's United Financial, Inc.",
+        "rows": 646
+      },
+      "PBG": {
+        "cik": "0001076405",
+        "name": "PEPSI BOTTLING GROUP INC",
+        "rows": 63
+      },
+      "PCL": {
+        "cik": "0000849213",
+        "name": "PLUM CREEK TIMBER CO INC",
+        "rows": 88
+      },
+      "PCP": {
+        "cik": "0000079958",
+        "name": "PRECISION CASTPARTS CORP",
+        "rows": 1002
+      },
+      "PCS": {
+        "cik": "0001283699",
+        "name": "T-MOBILE US, INC.",
+        "rows": 805
+      },
+      "PDCO": {
+        "cik": "0000891024",
+        "name": "PATTERSON COMPANIES, INC.",
+        "rows": 886
+      },
+      "PETM": {
+        "cik": "0000863157",
+        "name": "PETSMART INC",
+        "rows": 616
+      },
+      "PGN": {
+        "cik": "0001094093",
+        "name": "PROGRESS ENERGY, INC.",
+        "rows": 475
+      },
+      "PKI": {
+        "cik": "0000031791",
+        "name": "REVVITY, INC",
+        "rows": 892
+      },
+      "PLL": {
+        "cik": "0000075829",
+        "name": "PALL CORP",
+        "rows": 532
+      },
+      "PMCS": {
+        "cik": "0000767920",
+        "name": "PMC SIERRA INC",
+        "rows": 887
+      },
+      "PTV": {
+        "cik": "0001089976",
+        "name": "PACTIV CORP",
+        "rows": 72
+      },
+      "PX": {
+        "cik": "0000884905",
+        "name": "PRAXAIR INC",
+        "rows": 1210
+      },
+      "PXD": {
+        "cik": "0001038357",
+        "name": "PIONEER NATURAL RESOURCES CO",
+        "rows": 715
+      },
+      "QEP": {
+        "cik": "0001108827",
+        "name": "QEP RESOURCES, INC.",
+        "rows": 570
+      },
+      "QLGC": {
+        "cik": "0000918386",
+        "name": "QLOGIC CORP",
+        "rows": 778
+      },
+      "RAI": {
+        "cik": "0001275283",
+        "name": "REYNOLDS AMERICAN INC",
+        "rows": 954
+      },
+      "RDC": {
+        "cik": "0000085408",
+        "name": "ROWAN COMPANIES PLC",
+        "rows": 821
+      },
+      "RHT": {
+        "cik": "0001087423",
+        "name": "RED HAT INC",
+        "rows": 1091
+      },
+      "RIG": {
+        "cik": "0001451505",
+        "name": "Transocean Ltd.",
+        "rows": 1154
+      },
+      "RRD": {
+        "cik": "0000029669",
+        "name": "RR Donnelley & Sons Co",
+        "rows": 998
+      },
+      "RTN": {
+        "cik": "0001047122",
+        "name": "RAYTHEON CO/",
+        "rows": 1147
+      },
+      "SAI": {
+        "cik": "0001336920",
+        "name": "Leidos Holdings, Inc.",
+        "rows": 832
+      },
+      "SANM": {
+        "cik": "0000897723",
+        "name": "Sanmina Corporation",
+        "rows": 687
+      },
+      "SCG": {
+        "cik": "0000754737",
+        "name": "SCANA CORP",
+        "rows": 592
+      },
+      "SEE": {
+        "cik": "0001012100",
+        "name": "SEALED AIR CORP/DE",
+        "rows": 768
+      },
+      "SHLD": {
+        "cik": "0001310067",
+        "name": "SEARS HOLDINGS CORP",
+        "rows": 766
+      },
+      "SIAL": {
+        "cik": "0000090185",
+        "name": "SIGMA ALDRICH CORP",
+        "rows": 937
+      },
+      "SIG": {
+        "cik": "0000832988",
+        "name": "SIGNET JEWELERS LIMITED",
+        "rows": 1059
+      },
+      "SLM": {
+        "cik": "0001032033",
+        "name": "SLM Corp",
+        "rows": 650
+      },
+      "SNI": {
+        "cik": "0001430602",
+        "name": "Scripps Networks Interactive, Inc.",
+        "rows": 955
+      },
+      "SNV": {
+        "cik": "0000018349",
+        "name": "SYNOVUS FINANCIAL CORP",
+        "rows": 605
+      },
+      "SOV": {
+        "cik": "0000811830",
+        "name": "SANTANDER HOLDINGS USA, INC.",
+        "rows": 360
+      },
+      "SPLS": {
+        "cik": "0000791519",
+        "name": "STAPLES INC",
+        "rows": 1010
+      },
+      "SRCL": {
+        "cik": "0000861878",
+        "name": "Stericycle, Inc.",
+        "rows": 835
+      },
+      "SSP": {
+        "cik": "0000832428",
+        "name": "THE E.W. SCRIPPS COMPANY",
+        "rows": 709
+      },
+      "STJ": {
+        "cik": "0000203077",
+        "name": "ST JUDE MEDICAL INC",
+        "rows": 1120
+      },
+      "STR": {
+        "cik": "0000751652",
+        "name": "QUESTAR CORP",
+        "rows": 1296
+      },
+      "SVU": {
+        "cik": "0000095521",
+        "name": "SUPERVALU INC",
+        "rows": 888
+      },
+      "SWN": {
+        "cik": "0000007332",
+        "name": "SOUTHWESTERN ENERGY COMPANY",
+        "rows": 974
+      },
+      "SWY": {
+        "cik": "0000086144",
+        "name": "SAFEWAY INC",
+        "rows": 1130
+      },
+      "SYMC": {
+        "cik": "0000849399",
+        "name": "Gen Digital Inc.",
+        "rows": 857
+      },
+      "TEG": {
+        "cik": "0000916863",
+        "name": "INTEGRYS HOLDING, INC.",
+        "rows": 736
+      },
+      "TEX": {
+        "cik": "0000097216",
+        "name": "Terex Corporation",
+        "rows": 841
+      },
+      "TGNA": {
+        "cik": "0000039899",
+        "name": "TEGNA INC.",
+        "rows": 931
+      },
+      "THC": {
+        "cik": "0000070318",
+        "name": "TENET HEALTHCARE CORP",
+        "rows": 593
+      },
+      "TIE": {
+        "cik": "0001011657",
+        "name": "TITANIUM METALS CORP",
+        "rows": 355
+      },
+      "TIF": {
+        "cik": "0000098246",
+        "name": "TIFFANY & CO",
+        "rows": 986
+      },
+      "TIN": {
+        "cik": "0000731939",
+        "name": "TEMPLE INLAND INC",
+        "rows": 198
+      },
+      "TLAB": {
+        "cik": "0000317771",
+        "name": "TELLABS INC",
+        "rows": 561
+      },
+      "TMK": {
+        "cik": "0000320335",
+        "name": "GLOBE LIFE INC.",
+        "rows": 821
+      },
+      "TRB": {
+        "cik": "0000726513",
+        "name": "TRIBUNE MEDIA CO",
+        "rows": 88
+      },
+      "TSS": {
+        "cik": "0000721683",
+        "name": "TOTAL SYSTEM SERVICES, INC.",
+        "rows": 852
+      },
+      "TWC": {
+        "cik": "0001377013",
+        "name": "TIME WARNER CABLE INC.",
+        "rows": 829
+      },
+      "TWX": {
+        "cik": "0001105705",
+        "name": "TIME WARNER INC.",
+        "rows": 863
+      },
+      "TXU": {
+        "cik": "0001023291",
+        "name": "Energy Future Holdings Corp /TX/",
+        "rows": 492
+      },
+      "UIS": {
+        "cik": "0000746838",
+        "name": "Unisys Corp",
+        "rows": 685
+      },
+      "URBN": {
+        "cik": "0000912615",
+        "name": "Urban Outfitters, Inc.",
+        "rows": 763
+      },
+      "UTX": {
+        "cik": "0000101829",
+        "name": "RTX CORPORATION",
+        "rows": 828
+      },
+      "VAR": {
+        "cik": "0000203527",
+        "name": "VARIAN MEDICAL SYSTEMS INC",
+        "rows": 1060
+      },
+      "VIAB": {
+        "cik": "0001339947",
+        "name": "VIACOM INC.",
+        "rows": 975
+      },
+      "WEN": {
+        "cik": "0000030697",
+        "name": "Wendy's Co",
+        "rows": 686
+      },
+      "WFM": {
+        "cik": "0000865436",
+        "name": "WHOLE FOODS MARKET INC",
+        "rows": 880
+      },
+      "WFT": {
+        "cik": "0001453090",
+        "name": "WEATHERFORD INTERNATIONAL LTD./SWITZERLAND",
+        "rows": 942
+      },
+      "WIN": {
+        "cik": "0001282266",
+        "name": "WINDSTREAM HOLDINGS, INC.",
+        "rows": 909
+      },
+      "WLP": {
+        "cik": "0001156039",
+        "name": "ELEVANCE HEALTH, INC.",
+        "rows": 957
+      },
+      "WPX": {
+        "cik": "0001518832",
+        "name": "WPX Energy, Inc.",
+        "rows": 523
+      },
+      "WYE": {
+        "cik": "0000005187",
+        "name": "WYETH",
+        "rows": 27
+      },
+      "X": {
+        "cik": "0001163302",
+        "name": "United States Steel Corp",
+        "rows": 887
+      },
+      "XEC": {
+        "cik": "0001168054",
+        "name": "CIMAREX ENERGY CO.",
+        "rows": 667
+      },
+      "XL": {
+        "cik": "0000875159",
+        "name": "XL GROUP LTD",
+        "rows": 604
+      },
+      "XLNX": {
+        "cik": "0000743988",
+        "name": "XILINX, INC.",
+        "rows": 717
+      },
+      "XTO": {
+        "cik": "0000868809",
+        "name": "XTO ENERGY INC",
+        "rows": 99
+      }
+    },
+    "failed": {
+      "ABI": "ValueError",
+      "ACAS": "ValueError",
+      "ACS": "ValueError",
+      "ASN": "ValueError",
+      "AT": "ValueError",
+      "AW": "ValueError",
+      "BOL": "ValueError",
+      "BRL": "ValueError",
+      "BSC": "ValueError",
+      "CBH": "ValueError",
+      "CBSS": "ValueError",
+      "CFC": "ValueError",
+      "CMX": "ValueError",
+      "CTX": "ValueError",
+      "DJ": "ValueError",
+      "EDS": "ValueError",
+      "HCR": "ValueError",
+      "HPC": "ValueError",
+      "JAVA": "ValueError",
+      "KSE": "ValueError",
+      "MEDI": "ValueError",
+      "MEL": "ValueError",
+      "MIL": "ValueError",
+      "NCC": "ValueError",
+      "ROH": "ValueError",
+      "RX": "ValueError",
+      "SAF": "ValueError",
+      "SLR": "ValueError",
+      "TEK": "ValueError",
+      "TSG": "ValueError",
+      "UST": "ValueError",
+      "UVN": "ValueError",
+      "WWY": "ValueError"
+    },
+    "no_pre2016_facts": [
+      "APA",
+      "AVGO",
+      "BLK",
+      "BUD",
+      "CI",
+      "DIS",
+      "FTI",
+      "LLL",
+      "WRK",
+      "XOM",
+      "XRX"
+    ]
+  },
+  "blocked_operational_import_counts": {
+    "missing_historical_cik": 326,
+    "issuer_conflict_or_reused_ticker": 36,
+    "ambiguous_historical_cik": 5
+  },
+  "coverage_by_date": [
+    {
+      "date": "1996-12-31",
+      "members": 488,
+      "operational_prices_10d": 175,
+      "archived_prices_10d": 0,
+      "union_prices_10d": 175,
+      "operational_any_filed_facts": 0,
+      "archived_candidate_any_filed_facts": 0
+    },
+    {
+      "date": "2000-12-31",
+      "members": 492,
+      "operational_prices_10d": 231,
+      "archived_prices_10d": 393,
+      "union_prices_10d": 394,
+      "operational_any_filed_facts": 0,
+      "archived_candidate_any_filed_facts": 0
+    },
+    {
+      "date": "2005-12-31",
+      "members": 497,
+      "operational_prices_10d": 270,
+      "archived_prices_10d": 433,
+      "union_prices_10d": 434,
+      "operational_any_filed_facts": 0,
+      "archived_candidate_any_filed_facts": 0
+    },
+    {
+      "date": "2009-12-31",
+      "members": 499,
+      "operational_prices_10d": 322,
+      "archived_prices_10d": 459,
+      "union_prices_10d": 460,
+      "operational_any_filed_facts": 251,
+      "archived_candidate_any_filed_facts": 79
+    },
+    {
+      "date": "2010-12-31",
+      "members": 497,
+      "operational_prices_10d": 329,
+      "archived_prices_10d": 458,
+      "union_prices_10d": 460,
+      "operational_any_filed_facts": 314,
+      "archived_candidate_any_filed_facts": 129
+    },
+    {
+      "date": "2015-12-31",
+      "members": 502,
+      "operational_prices_10d": 379,
+      "archived_prices_10d": 476,
+      "union_prices_10d": 478,
+      "operational_any_filed_facts": 373,
+      "archived_candidate_any_filed_facts": 99
+    }
+  ]
+}
