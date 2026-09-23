@@ -16,7 +16,7 @@ vez de romper el resto — igual que ya se hace en el screener "en vivo".
 """
 import pandas as pd
 
-from . import edgar, entity_master, identity, risk, scoring, storage, technicals, universe
+from . import edgar, entity_master, identity, quality_persistence, risk, scoring, storage, technicals, universe
 
 
 def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
@@ -65,6 +65,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     ev_ebitda = (enterprise_value / ebitda) if enterprise_value and ebitda and ebitda > 0 else None
     debt_to_equity = (debt / equity * 100) if debt is not None and equity and equity > 0 else None
 
+    persistence = quality_persistence.as_of(symbol, as_of_date, entity_id=entity_id)
     return {
         # Precio nominal (sin ajustar por splits posteriores) — el que de
         # verdad se habría visto en pantalla ese día, no el retroajustado
@@ -82,6 +83,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
         "debt_to_equity": debt_to_equity,
         "net_debt_to_ebitda": m.get("net_debt_to_ebitda"),
         "fundamentals_period_end": m.get("latest_period_end"),
+        **persistence,
     }
 
 
