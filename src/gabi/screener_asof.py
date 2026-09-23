@@ -16,7 +16,18 @@ vez de romper el resto — igual que ya se hace en el screener "en vivo".
 """
 import pandas as pd
 
-from . import edgar, entity_master, identity, quality_persistence, risk, scoring, storage, technicals, universe
+from . import (
+    capital_allocation,
+    edgar,
+    entity_master,
+    identity,
+    quality_persistence,
+    risk,
+    scoring,
+    storage,
+    technicals,
+    universe,
+)
 from .valuation_expectations import expectations_metrics
 
 
@@ -70,6 +81,8 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
         latest_fcf=m.get("latest_fcf"),
         historical_fcf_cagr=m.get("fcf_cagr_3y"),
     )
+    allocation = capital_allocation.metrics(
+        edgar.get_edgar_facts(symbol, entity_id=entity_id), as_of_date, market_cap=market_cap)
 
     persistence = quality_persistence.as_of(symbol, as_of_date, entity_id=entity_id)
     return {
@@ -91,6 +104,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
         "latest_fcf": m.get("latest_fcf"), "enterprise_value": enterprise_value,
         "fundamentals_period_end": m.get("latest_period_end"),
         **expectations,
+        **allocation,
         **persistence,
     }
 

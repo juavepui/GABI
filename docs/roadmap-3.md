@@ -33,6 +33,18 @@ parámetro para ambos motores. La comparación empírica completa de variantes
 (CAGR neto, turnover, coste, ES y drawdown) queda reservada al experimento de
 validación del issue #23.
 
+### E4 — Asignación de capital (#22)
+
+Implementado como información descriptiva point-in-time en el ranking
+histórico. `capital_allocation.metrics` usa únicamente hechos XBRL publicados
+antes de cada fecha y expone dilución/reducción de acciones, recompras,
+emisión neta, reinversión (CAPEX frente a flujo operativo) y pagos por
+adquisiciones. Cada fila incluye cobertura (`capital_allocation_coverage`): un
+dato ausente queda en `None` y nunca se rellena con el valor actual ni con
+cero. Estas columnas no entran en el `composite_score`; sirven para comprobar
+si aportan información incremental frente a ROIC, márgenes, crecimiento y
+valoración antes de diseñar una variante experimental.
+
 Las entregas 2–5 permanecen pendientes hasta que la primera tenga cobertura y
 pruebas suficientes. Ninguna entrega puede modificar la prueba ciega existente
 ni convertirse en la nueva configuración elegida por mirar el resultado.

@@ -145,6 +145,11 @@ METRIC_INFO = {
         "help": "Crecimiento anualizado del flujo de caja libre (flujo de caja operativo menos inversión en capital, "
                 "CAPEX) en los últimos 3 años fiscales completos, según los 10-K oficiales en SEC EDGAR.",
     },
+    "shares_dilution_yoy": {"label": "Dilución acciones YoY (%)", "help": "Cambio interanual de acciones en circulación según hechos SEC ya publicados. Positivo diluye; negativo indica reducción."},
+    "buyback_yield": {"label": "Rentabilidad recompra (%)", "help": "Recompras anuales divulgadas divididas por la capitalización de mercado de la fecha. Puede faltar si la empresa no lo etiqueta."},
+    "capex_to_ocf": {"label": "CAPEX / flujo operativo (%)", "help": "Inversión anual en inmovilizado frente al flujo de caja operativo; mide reinversión orgánica cuando ambas partidas están disponibles."},
+    "acquisitions_latest": {"label": "Adquisiciones último año", "help": "Pagos anuales por adquisiciones divulgados en SEC EDGAR. No se interpreta como creación de valor por sí solo."},
+    "capital_allocation_coverage": {"label": "Cobertura asignación", "help": "Número de las cinco señales de asignación de capital con datos point-in-time; los faltantes no se rellenan con cero."},
     "beta": {
         "label": "Beta (Yahoo Finance)",
         "help": "Volatilidad de la acción respecto al mercado en general, tal y como la calcula Yahoo Finance (metodología "

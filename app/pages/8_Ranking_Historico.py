@@ -180,6 +180,7 @@ DISPLAY_KEYS = [
     "operating_margin_persistence_mean", "operating_margin_persistence_std", "operating_margin_years",
     "fcf_conversion_mean", "fcf_years", "revenue_per_share_cagr",
     "implied_fcf_growth", "historical_fcf_cagr", "expectations_gap",
+    "shares_dilution_yoy", "buyback_yield", "capex_to_ocf", "acquisitions_latest", "capital_allocation_coverage",
     "metrics_available", "metrics_possible", "score_coverage",
     "value_score", "quality_score", "momentum_score", "risk_score", "composite_score",
 ]

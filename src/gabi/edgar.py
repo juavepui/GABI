@@ -48,6 +48,12 @@ DEPRECIATION_TAGS = [
 CASH_TAGS = [
     "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "CashAndCashEquivalentsAtCarryingValue",
 ]
+CAPITAL_ALLOCATION_TAGS = [
+    "PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfCommonAndPreferredStock",
+    "ProceedsFromStockOptionsExercised", "ProceedsFromStockIssuedUnderIncentiveAndStockOptionPlans",
+    "ProceedsFromIssuanceOfCommonStock", "PaymentsToAcquireBusinessesNetOfCashAcquired",
+    "PaymentsToAcquireBusinesses", "PaymentsToAcquireInterestInSubsidiariesAndAffiliates",
+]
 # 'shares', no 'USD': se extraen y guardan por separado.
 # "CommonStockSharesOutstanding" vive en la taxonomía us-gaap; muchas
 # empresas (comprobado con Abbott, entre otras) no la usan y solo etiquetan
@@ -103,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_edgar_facts_symbol_tag ON edgar_facts (symbol, ta
 TRACKED_TAGS = (
     REVENUE_TAGS + NET_INCOME_TAGS + OCF_TAGS + CAPEX_TAGS + EQUITY_TAGS + LT_DEBT_TAGS
     + GROSS_PROFIT_TAGS + OPERATING_INCOME_TAGS + DEPRECIATION_TAGS + CASH_TAGS
+    + CAPITAL_ALLOCATION_TAGS
 )
 
 
