@@ -176,6 +176,9 @@ DISPLAY_KEYS = [
     "resolved_title", "sector", "market_cap", "price", "pe", "pb", "roic",
     "gross_margin", "operating_margin", "debt_to_equity", "net_debt_to_ebitda",
     "revenue_growth_yoy", "revenue_cagr_3y", "fcf_cagr_3y", "fundamentals_period_end",
+    "quality_persistence_score", "roic_persistence_mean", "roic_persistence_std", "roic_years",
+    "operating_margin_persistence_mean", "operating_margin_persistence_std", "operating_margin_years",
+    "fcf_conversion_mean", "fcf_years", "revenue_per_share_cagr",
     "metrics_available", "metrics_possible", "score_coverage",
     "value_score", "quality_score", "momentum_score", "risk_score", "composite_score",
 ]
@@ -217,6 +220,10 @@ st.caption(
     "🟩 mejor · 🟨 medio · 🟥 peor, comparado con el resto de empresas de su sector (sector aproximado "
     "salvo que ya exista una foto point-in-time anterior a esta fecha — ver aviso arriba; sin sector "
     "conocido, se compara contra todo el universo en su lugar). Las columnas sin color no se usan para puntuar."
+)
+st.caption(
+    "Las métricas de persistencia de calidad son descriptivas y point-in-time; se muestran para investigar "
+    "la hipótesis del roadmap #18, pero todavía no cambian el Composite ni el orden del ranking."
 )
 
 st.subheader("Resultado posterior de las primeras candidatas")

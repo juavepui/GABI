@@ -231,6 +231,41 @@ METRIC_INFO = {
         "help": "Score 0-100 de ROIC, margen operativo y crecimiento a 3 años de ingresos y FCF. "
                 "100 = los mejores fundamentales de su sector.",
     },
+    "quality_persistence_score": {
+        "label": "Persistencia calidad",
+        "help": "Fracción de años disponibles con ROIC, margen operativo y conversión de FCF positivos. "
+                "Es una métrica descriptiva point-in-time y todavía no entra en el Composite.",
+    },
+    "roic_persistence_mean": {
+        "label": "ROIC medio histórico",
+        "help": "Media anual del ROIC aproximado disponible hasta la fecha reconstruida.",
+    },
+    "roic_persistence_std": {
+        "label": "Variabilidad ROIC",
+        "help": "Desviación estándar anual del ROIC aproximado; no se calcula estabilidad si faltan años.",
+    },
+    "roic_years": {"label": "Años ROIC", "help": "Número de ejercicios anuales de ROIC disponibles hasta la fecha."},
+    "operating_margin_persistence_mean": {
+        "label": "Margen operativo medio",
+        "help": "Media anual del margen operativo disponible hasta la fecha reconstruida.",
+    },
+    "operating_margin_persistence_std": {
+        "label": "Variabilidad margen",
+        "help": "Desviación estándar anual del margen operativo disponible.",
+    },
+    "operating_margin_years": {
+        "label": "Años margen",
+        "help": "Número de ejercicios anuales de margen operativo disponibles.",
+    },
+    "fcf_conversion_mean": {
+        "label": "Conversión FCF media",
+        "help": "Media anual de FCF dividido por ingresos; métrica descriptiva, no parte del Composite.",
+    },
+    "fcf_years": {"label": "Años FCF", "help": "Número de ejercicios anuales con conversión de FCF disponible."},
+    "revenue_per_share_cagr": {
+        "label": "Ventas por acción CAGR",
+        "help": "Crecimiento anualizado histórico de ventas por acción con los ejercicios disponibles.",
+    },
     "momentum_score": {
         "label": "Momentum",
         "help": "Score 0-100 de momentum a 12 meses, fuerza relativa a 6 meses y precio frente a SMA200. "
@@ -273,6 +308,9 @@ FRACTION_COLUMNS = {
     "roe", "roa", "roic", "operating_margin", "gross_margin", "profit_margin",
     "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
     "revenue_cagr_3y", "fcf_cagr_3y",
+    "quality_persistence_score", "roic_persistence_mean", "roic_persistence_std",
+    "operating_margin_persistence_mean", "operating_margin_persistence_std", "fcf_conversion_mean",
+    "revenue_per_share_cagr",
     "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
     "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield", "score_coverage",
 }
