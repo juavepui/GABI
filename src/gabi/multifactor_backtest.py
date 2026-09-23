@@ -8,7 +8,7 @@ import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, data_quality, identity, screener_asof, universe
+from . import config, data_quality, identity, rotation_policy, screener_asof, universe
 
 # Si una empresa lleva más de esto sin presentar NADA ante la SEC (ni un
 # 10-Q trimestral), lo normal es que haya dejado de ser una "reporting
@@ -177,7 +177,8 @@ def _apply_holding_buffer(previous_picks: list, ranked_pool: list, top_n: int,
 
 def run(start: str, end: str, months: int = 3, top_n: int = 10,
         cost_bps: float = 10, min_coverage: float = .7, min_universe_coverage: float = .5,
-        max_symbols: int | None = None, buffer_multiplier: float = 1.0) -> dict:
+        max_symbols: int | None = None, buffer_multiplier: float = 1.0,
+        rotation_hurdle_points: float = 0.0) -> dict:
     """Backtest de rebalanceos periódicos. Un periodo sin cobertura suficiente
     (fundamentales/precios insuficientes para ese trimestre) se SALTA, no
     aborta todo el rango — así un solo trimestre problemático (frecuente en
@@ -208,6 +209,8 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
         raise ValueError("La cobertura debe estar entre 0 y 1.")
     if buffer_multiplier < 1.0:
         raise ValueError("buffer_multiplier debe ser >= 1.0.")
+    if rotation_hurdle_points < 0:
+        raise ValueError("rotation_hurdle_points debe ser >= 0.")
     start_ts, end_ts = pd.Timestamp(start), pd.Timestamp(end)
     if start_ts >= end_ts or end_ts > pd.Timestamp(date.today()):
         raise ValueError("El intervalo debe terminar después del inicio y no superar hoy.")
@@ -230,7 +233,12 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
             if len(eligible) / len(symbols) < min_universe_coverage:
                 raise ValueError(f"cobertura insuficiente del universo ({len(eligible)}/{len(symbols)})")
             ranked_pool = eligible.index.tolist()
-            picks = _apply_holding_buffer(previous_picks, ranked_pool, top_n, buffer_multiplier)
+            if rotation_hurdle_points > 0:
+                scores = eligible["composite_score"].astype(float).to_dict()
+                picks = rotation_policy.select_with_score_hurdle(
+                    previous_picks, ranked_pool, scores, top_n, rotation_hurdle_points)
+            else:
+                picks = _apply_holding_buffer(previous_picks, ranked_pool, top_n, buffer_multiplier)
             if len(picks) < top_n:
                 raise ValueError(f"solo {len(picks)}/{top_n} candidatas con cobertura suficiente")
             held = set(picks) & set(previous_picks or [])
@@ -265,6 +273,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
     return {
         "data_quality": quality_by_date,
         "periods": periods, "skipped": skipped, "turnover_medio": turnover_medio,
+        "rotation_hurdle_points": float(rotation_hurdle_points),
         "return": float(periods["capital"].iloc[-1] - 1),
         "spy_return": float(periods["spy_capital"].iloc[-1] - 1),
         "universo_ew_return": float(periods["universo_capital"].iloc[-1] - 1),

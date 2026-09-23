@@ -328,10 +328,15 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
                                       "básicos (100pb = 1%). Se aplica en cada rebalanceo a cada posición. "
                                       "10pb es razonable para grandes capitalizadas líquidas; con empresas "
                                       "menos líquidas o peor ejecución, 25-50pb es más realista.")
+        rotation_hurdle = st.number_input(
+            "Umbral de rotacion (puntos Composite)", min_value=0.0, value=0.0, step=1.0,
+            help="Solo sustituye una posicion si la candidata mejora a la mas debil por mas puntos. "
+                 "Fijalo antes de mirar el resultado; 0 mantiene el top-N estricto.")
         if st.form_submit_button("Ejecutar backtest multifactor"):
             try:
                 test = multifactor_backtest.run(bt_start.isoformat(), bt_end.isoformat(), interval,
-                                                n_picks, bt_cost, max_symbols=universe_size)
+                                                n_picks, bt_cost, max_symbols=universe_size,
+                                                rotation_hurdle_points=float(rotation_hurdle))
                 test["data_fingerprint"] = data_quality.compute_data_fingerprint()
                 st.session_state["multifactor_result"] = test
             except (ValueError, RuntimeError) as exc:
@@ -357,6 +362,8 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
             st.error(str(exc))
     if "multifactor_result" in st.session_state:
         test = st.session_state["multifactor_result"]
+        st.caption(f"Política de rotación: umbral {test.get('rotation_hurdle_points', 0):.1f} puntos Composite; "
+                   "las comisiones/spread se aplican solo al ejecutar cambios.")
         st.warning("Limitaciones estructurales de datos históricos: sector aproximado y cobertura SEC incompleta. Consulta Calidad de los datos.")
         for period_date, quality in test.get("data_quality", {}).items():
             messages = data_quality.ranking_quality_warnings(quality, quality_threshold)
@@ -612,6 +619,11 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
                                         value=broker_costs.STOCK_FEE_USD, step=0.5, key="v2_commission",
                                         help="Por defecto, la comisión real de eToro calibrada esta sesión.")
         v2_spread = vg.number_input("Spread (pb)", min_value=0.0, value=10.0, key="v2_spread")
+        v2_rotation_hurdle = st.number_input(
+            "Umbral de rotacion (puntos Composite)", min_value=0.0, value=0.0, step=1.0,
+            key="v2_rotation_hurdle",
+            help="Regla fijada ex ante: una nueva posicion debe superar a la mas debil por este margen. "
+                 "Las comisiones y el spread se aplican despues sobre las operaciones reales.")
         v2_mode = st.radio(
             "Modo", ["Validación (universo completo — lento)", "Desarrollo rápido (muestra)"],
             index=1, horizontal=True, key="v2_mode",
@@ -629,6 +641,7 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
                     v2_start.isoformat(), v2_end.isoformat(), months=v2_interval, top_n=int(v2_n_picks),
                     max_symbols=v2_max_symbols, mode=v2_mode_value, initial_capital=float(v2_capital),
                     commission_usd=float(v2_commission), spread_bps=float(v2_spread),
+                    rotation_hurdle_points=float(v2_rotation_hurdle),
                 )
                 v2_test["data_fingerprint"] = data_quality.compute_data_fingerprint()
                 st.session_state["portfolio_v2_result"] = v2_test
@@ -657,6 +670,8 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
 
     if "portfolio_v2_result" in st.session_state:
         v2_test = st.session_state["portfolio_v2_result"]
+        st.caption(f"Política de rotación: umbral {v2_test.get('rotation_hurdle_points', 0):.1f} puntos Composite; "
+                   "las comisiones y el spread se cargan sobre las operaciones reales.")
         st.warning("Limitaciones estructurales de datos históricos: sector aproximado y cobertura SEC incompleta. Consulta Calidad de los datos.")
         for period_date, quality in v2_test.get("data_quality", {}).items():
             messages = data_quality.ranking_quality_warnings(quality, quality_threshold)

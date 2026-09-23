@@ -18,7 +18,7 @@ from datetime import date
 import exchange_calendars as xcals
 import pandas as pd
 
-from . import broker_costs, data_quality, identity, screener_asof, universe
+from . import broker_costs, data_quality, identity, rotation_policy, screener_asof, universe
 from . import multifactor_backtest as v1
 
 _CALENDAR = "XNYS"
@@ -140,7 +140,8 @@ VALID_MODES = ("validation", "fast_dev")
 def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int | None = None,
         mode: str = "validation", initial_capital: float = 100_000.0,
         commission_usd: float = broker_costs.STOCK_FEE_USD,
-        spread_bps: float = 10.0, min_coverage: float = .7, min_universe_coverage: float = .5) -> dict:
+        spread_bps: float = 10.0, min_coverage: float = .7, min_universe_coverage: float = .5,
+        rotation_hurdle_points: float = 0.0) -> dict:
     """Backtest V2 con contabilidad real de cartera. Mismo bucle de
     reconstrucción point-in-time que `multifactor_backtest.run()`
     (universo histórico + ranking SEC EDGAR a fecha), pero el resultado de
@@ -178,6 +179,8 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
         raise ValueError("Parámetros del backtest inválidos.")
     if not 0 < min_coverage <= 1 or not 0 < min_universe_coverage <= 1:
         raise ValueError("La cobertura debe estar entre 0 y 1.")
+    if rotation_hurdle_points < 0:
+        raise ValueError("rotation_hurdle_points debe ser >= 0.")
     if initial_capital <= commission_usd:
         raise ValueError("initial_capital debe ser mayor que commission_usd.")
     start_ts, end_ts = pd.Timestamp(start), pd.Timestamp(end)
@@ -222,7 +225,10 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                               & (ranked["score_coverage"] >= min_coverage)]
             if len(eligible) / len(symbols) < min_universe_coverage:
                 raise ValueError(f"cobertura insuficiente del universo ({len(eligible)}/{len(symbols)})")
-            picks = eligible.index.tolist()[:top_n]
+            ranked_pool = eligible.index.tolist()
+            scores = eligible["composite_score"].astype(float).to_dict()
+            picks = rotation_policy.select_with_score_hurdle(
+                list(shares), ranked_pool, scores, top_n, rotation_hurdle_points)
             if len(picks) < top_n:
                 raise ValueError(f"solo {len(picks)}/{top_n} candidatas con cobertura suficiente")
 
@@ -284,6 +290,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
     return {
         "data_quality": quality_by_date,
         "mode": mode, "periods": periods, "skipped": skipped,
+        "rotation_hurdle_points": float(rotation_hurdle_points),
         "nav_curve": nav_curve, "nav_curve_spy": nav_curve_spy,
         "turnover_medio": float(periods["turnover_pct"].mean()),
         "comision_total": float(periods["comision_pagada"].sum()),

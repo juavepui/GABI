@@ -21,6 +21,18 @@ permitiría elegir retrospectivamente la mejora que más suba el CAGR.
    histórico completo en V2, con el Composite actual como control fijo, y se
    compara en CAGR neto, ES, drawdown, turnover y exposición a factores.
 
+### E3 — Rotación selectiva y costes (#21)
+
+Implementado en los motores V1 y V2. `rotation_policy.select_with_score_hurdle`
+separa tres pasos: el ranking aporta la señal, la política decide si la
+mejora del Composite supera un umbral fijado ex ante y el motor ejecuta la
+operación aplicando los costes calibrados de eToro. Con umbral cero se conserva
+el control top-N estricto; el umbral positivo reduce sustituciones pequeñas sin
+ajustarse a la rentabilidad observada. La pantalla Ranking histórico expone el
+parámetro para ambos motores. La comparación empírica completa de variantes
+(CAGR neto, turnover, coste, ES y drawdown) queda reservada al experimento de
+validación del issue #23.
+
 Las entregas 2–5 permanecen pendientes hasta que la primera tenga cobertura y
 pruebas suficientes. Ninguna entrega puede modificar la prueba ciega existente
 ni convertirse en la nueva configuración elegida por mirar el resultado.
