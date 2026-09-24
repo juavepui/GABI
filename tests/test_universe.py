@@ -56,19 +56,25 @@ def test_get_sp500_constituents_asof_before_coverage_raises(tmp_path, monkeypatc
         universe.get_sp500_constituents_asof("2000-01-01")
 
 
-def test_get_sp500_constituents_asof_after_coverage_falls_back_to_current(tmp_path, monkeypatch):
+def test_get_sp500_constituents_asof_after_coverage_raises_without_current_fallback(tmp_path, monkeypatch):
     cache = tmp_path / "hist.csv"
     _write_history(cache, [("2018-01-01", "AAA,BBB")])
     monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", cache)
 
-    current_df = pd.DataFrame({
-        "symbol": ["ZZZ", "YYY"], "name": ["Z Corp", "Y Corp"],
-        "sector": ["Tech", "Tech"], "industry": ["Software", "Software"],
-    })
-    monkeypatch.setattr(universe, "get_sp500_constituents", lambda: current_df)
+    monkeypatch.setattr(universe, "get_sp500_constituents",
+                        lambda: (_ for _ in ()).throw(AssertionError("current universe used")))
 
-    result = universe.get_sp500_constituents_asof("2099-01-01")
-    assert result["is_exact"] is False
-    assert result["source_date"] is None
-    assert set(result["symbols"]) == {"ZZZ", "YYY"}
-    assert "sesgo de supervivencia" in result["note"]
+    import pytest
+    with pytest.raises(ValueError, match="después de 2018-01-01"):
+        universe.get_sp500_constituents_asof("2099-01-01")
+
+
+def test_get_sp500_constituents_asof_blocks_conflicting_snapshot_until_next_date(tmp_path, monkeypatch):
+    cache = tmp_path / "hist.csv"
+    _write_history(cache, [("2018-01-01", "AAA"), ("2018-03-01", "AAA"),
+                           ("2018-03-01", "BBB"), ("2018-04-01", "CCC")])
+    monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", cache)
+    import pytest
+    with pytest.raises(ValueError, match="contradictoria"):
+        universe.get_sp500_constituents_asof("2018-03-15")
+    assert universe.get_sp500_constituents_asof("2018-04-01")["symbols"] == ["CCC"]

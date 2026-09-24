@@ -569,16 +569,16 @@ auditó el código línea a línea para cada uno, a petición explícita de una
 revisión externa muy concreta sobre survivorship bias, look-ahead bias y
 costes de fricción:
 
-**Sesgo de supervivencia** — resuelto en el diseño. `universe.get_sp500_constituents_asof(fecha)`
-(`src/gabi/universe.py:91-135`) reconstruye la composición real del índice en
+**Sesgo de supervivencia** — mitigado mediante composición histórica comunitaria. `universe.get_sp500_constituents_asof(fecha)`
+reconstruye la composición registrada por la fuente en
 cada fecha (`history[history["date"] <= fecha].iloc[-1]`), no usa el universo
 de hoy — prueba de ello: al preparar los datos aparecieron decenas de
 empresas ya desaparecidas (ABMD, CELG, ANTM, ATVI, BBBY...) precisamente
-porque el sistema pidió los componentes reales de esos años. Cuando la fecha
-cae fuera del histórico gratuito, la función marca `is_exact=False` y tanto
-`multifactor_backtest.run()` como los scripts de este backtest **descartan
-ese periodo en vez de usar el universo actual en silencio** (por eso
-2025-10 en adelante no aparece en ningún resultado). El matiz que sí queda:
+porque el sistema pidió los componentes registrados de esos años. Cuando la fecha
+cae fuera del histórico gratuito, la función lanza un error en vez de usar el
+universo actual. La [comparación de dos fuentes](docs/historical-membership-2010-2026.md)
+detecta discrepancias sustanciales en 2010–2015 que siguen pendientes de verificación.
+El matiz que sí queda:
 69 de 301 empresas históricas reales no resuelven en el mapeo de tickers de
 la SEC (recicladas/deslistadas hace tiempo) y por tanto no pueden puntuarse
 esos periodos, aunque sí cuentan en el universo — un sesgo más sutil hacia
@@ -1543,13 +1543,14 @@ reconstruye el ranking completo tal y como se habría visto ese día:
 
 - **Universo histórico** (`universe.get_sp500_constituents_asof`): usa
   [`hanshof/sp500_constituents`](https://github.com/hanshof/sp500_constituents)
-  (comunidad, MIT, composición diaria desde 1996 hasta 2025-08-23) para
+  (comunidad, MIT, composición desde 1996 hasta 2025-08-23, ampliada mediante
+  eventos revisados hasta 2026-09-23) para
   incluir empresas ya deslistadas/excluidas del índice y evitar el sesgo de
   supervivencia — verificado con datos reales de junio de 2019, que
   correctamente incluye tickers como ABMD, ANTM o ATVI que ya no están en el
-  S&P 500 actual. Para fechas posteriores a la cobertura de esa fuente, cae
-  de vuelta al universo actual (marcado con `is_exact=False`, con el riesgo
-  de sesgo de supervivencia que eso reintroduce).
+  S&P 500 actual. Fuera de la cobertura local se rechaza la consulta. La
+  [auditoría de membresía](docs/historical-membership-2010-2026.md) documenta
+  las discrepancias con una segunda fuente gratuita.
 - **Fundamentales y múltiplos clásicos** (ROIC, margen bruto/operativo/neto,
   deuda neta/EBITDA, crecimiento de ingresos/FCF, PER, P/VC, P/Ventas,
   EV/EBITDA): 100% desde `edgar_facts` + precio y nº de acciones de esa

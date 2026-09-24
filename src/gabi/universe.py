@@ -103,12 +103,10 @@ def get_historical_membership(force_refresh: bool = False) -> pd.DataFrame:
 def get_sp500_constituents_asof(target_date: str) -> dict:
     """Reconstruye qué símbolos formaban el S&P 500 en target_date (YYYY-MM-DD).
 
-    Devuelve {"symbols": [...], "source_date": fecha real usada o None,
-    "is_exact": bool, "note": texto explicativo}. is_exact=False cuando
-    target_date cae fuera del rango cubierto por la fuente histórica y se ha
-    usado el universo ACTUAL como mejor aproximación disponible — con el
-    riesgo de sesgo de supervivencia que eso reintroduce si el índice cambió
-    entre esa fecha y hoy.
+    Devuelve los símbolos de una fecha cubierta por la fuente comunitaria.
+    Fuera del horizonte conocido se rechaza la consulta: la composición actual
+    introduciría sesgo de supervivencia. ``is_exact`` indica cobertura temporal,
+    no certificación de la calidad de la fuente.
     """
     history = get_historical_membership()
     if history.empty:
@@ -124,20 +122,18 @@ def get_sp500_constituents_asof(target_date: str) -> dict:
         )
 
     if target_date > last_date:
-        current = get_sp500_constituents()
-        return {
-            "symbols": current["symbol"].tolist(),
-            "source_date": None,
-            "is_exact": False,
-            "note": (
-                f"El histórico gratuito de composición del índice solo llega hasta {last_date}. "
-                f"Para {target_date} se ha usado el universo ACTUAL como mejor aproximación "
-                "disponible — puede tener sesgo de supervivencia si hubo cambios en el índice "
-                "desde entonces."
-            ),
-        }
+        raise ValueError(f"No hay composición histórica después de {last_date} "
+                         f"(pediste {target_date}).")
 
-    row = history[history["date"] <= target_date].iloc[-1]
+    # A duplicated effective date with different lists leaves membership
+    # unknown until the next unambiguous snapshot. Do not pick the last row.
+    dated = history[history["date"] <= target_date]
+    row = dated.iloc[-1]
+    on_day = dated[dated["date"] == row["date"]]
+    if len({frozenset(s.strip().replace(".", "-") for s in str(value).split(",") if s.strip())
+            for value in on_day["tickers"]}) > 1:
+        raise ValueError(f"Composición histórica contradictoria el {row['date']}; "
+                         "se necesita otro snapshot sin conflicto.")
     symbols = [s.strip() for s in str(row["tickers"]).split(",") if s.strip()]
     return {
         "symbols": symbols,
