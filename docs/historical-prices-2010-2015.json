@@ -1,9 +1,9 @@
 {
   "database": "gabi.db",
   "price_source_id": "finsaber:ba3a6907a29027b1f40da3381f3bc834e08e99a6",
-  "session_definition": "last 253 XNYS sessions through December 31",
-  "fallback_rule": ">=60 common daily returns, p99 absolute difference <= 0.005",
-  "price_attribution": "candidate_only; no archived or legacy price promoted to entity observations",
+  "session_definition": "last 253 XNYS sessions through each rebalance date",
+  "fallback_rule": "independent trading boundaries, corporate actions and adjustment proof; if Yahoo overlap exists, >= 60 returns with p99 difference <= 0.005",
+  "price_attribution": "entity intervals stored separately from legacy prices",
   "years": [
     {
       "year": 2010,
@@ -12,12 +12,14 @@
       "finsaber_complete": 454,
       "selected_yahoo": 304,
       "selected_finsaber": 0,
+      "attributed_usable": 304,
       "excluded": 193,
       "reasons": {
-        "archive_adjustment_unverified": 118,
+        "archive_evidence_missing": 117,
         "identity_unresolved": 45,
         "incomplete_prices": 29,
-        "ticker_recycled": 1
+        "ticker_recycled": 1,
+        "archive_adjustment_divergent": 1
       }
     },
     {
@@ -27,12 +29,14 @@
       "finsaber_complete": 453,
       "selected_yahoo": 312,
       "selected_finsaber": 0,
+      "attributed_usable": 312,
       "excluded": 185,
       "reasons": {
-        "archive_adjustment_unverified": 112,
+        "archive_evidence_missing": 111,
         "identity_unresolved": 41,
         "incomplete_prices": 31,
-        "ticker_recycled": 1
+        "ticker_recycled": 1,
+        "archive_adjustment_divergent": 1
       }
     },
     {
@@ -42,9 +46,10 @@
       "finsaber_complete": 461,
       "selected_yahoo": 326,
       "selected_finsaber": 0,
+      "attributed_usable": 326,
       "excluded": 171,
       "reasons": {
-        "archive_adjustment_unverified": 108,
+        "archive_evidence_missing": 108,
         "identity_unresolved": 35,
         "incomplete_prices": 27,
         "ticker_recycled": 1
@@ -57,12 +62,12 @@
       "finsaber_complete": 461,
       "selected_yahoo": 333,
       "selected_finsaber": 0,
+      "attributed_usable": 333,
       "excluded": 164,
       "reasons": {
-        "archive_adjustment_unverified": 104,
+        "archive_evidence_missing": 105,
         "identity_unresolved": 33,
         "incomplete_prices": 25,
-        "archive_boundary_unverified": 1,
         "ticker_recycled": 1
       }
     },
@@ -73,9 +78,10 @@
       "finsaber_complete": 468,
       "selected_yahoo": 340,
       "selected_finsaber": 0,
+      "attributed_usable": 340,
       "excluded": 159,
       "reasons": {
-        "archive_adjustment_unverified": 103,
+        "archive_evidence_missing": 103,
         "identity_unresolved": 33,
         "incomplete_prices": 22,
         "ticker_recycled": 1
@@ -88,15 +94,415 @@
       "finsaber_complete": 470,
       "selected_yahoo": 348,
       "selected_finsaber": 0,
+      "attributed_usable": 348,
       "excluded": 154,
       "reasons": {
-        "archive_adjustment_unverified": 88,
+        "archive_evidence_missing": 90,
         "identity_unresolved": 44,
         "incomplete_prices": 19,
-        "archive_boundary_unverified": 2,
         "ticker_recycled": 1
       }
     }
   ],
-  "spy_complete_all_years": true
+  "rebalances": [
+    {
+      "as_of": "2010-12-31",
+      "members": 497,
+      "identity_accredited": 451,
+      "price_candidates": 304,
+      "attributed_usable": 304,
+      "excluded_reasons": {
+        "archive_evidence_missing": 117,
+        "identity_unresolved": 45,
+        "incomplete_prices": 29,
+        "ticker_recycled": 1,
+        "archive_adjustment_divergent": 1
+      }
+    },
+    {
+      "as_of": "2011-12-31",
+      "members": 497,
+      "identity_accredited": 455,
+      "price_candidates": 312,
+      "attributed_usable": 312,
+      "excluded_reasons": {
+        "archive_evidence_missing": 111,
+        "identity_unresolved": 41,
+        "incomplete_prices": 31,
+        "ticker_recycled": 1,
+        "archive_adjustment_divergent": 1
+      }
+    },
+    {
+      "as_of": "2012-12-31",
+      "members": 497,
+      "identity_accredited": 461,
+      "price_candidates": 326,
+      "attributed_usable": 326,
+      "excluded_reasons": {
+        "archive_evidence_missing": 108,
+        "identity_unresolved": 35,
+        "incomplete_prices": 27,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "as_of": "2013-12-31",
+      "members": 497,
+      "identity_accredited": 463,
+      "price_candidates": 333,
+      "attributed_usable": 333,
+      "excluded_reasons": {
+        "archive_evidence_missing": 105,
+        "identity_unresolved": 33,
+        "incomplete_prices": 25,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "as_of": "2014-12-31",
+      "members": 499,
+      "identity_accredited": 465,
+      "price_candidates": 340,
+      "attributed_usable": 340,
+      "excluded_reasons": {
+        "archive_evidence_missing": 103,
+        "identity_unresolved": 33,
+        "incomplete_prices": 22,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "as_of": "2015-12-31",
+      "members": 502,
+      "identity_accredited": 457,
+      "price_candidates": 348,
+      "attributed_usable": 348,
+      "excluded_reasons": {
+        "archive_evidence_missing": 90,
+        "identity_unresolved": 44,
+        "incomplete_prices": 19,
+        "ticker_recycled": 1
+      }
+    }
+  ],
+  "spy_complete_all_years": true,
+  "bias_diagnostics": {
+    "sic_2digit": [
+      {
+        "sic_2digit": "10",
+        "observations": 11,
+        "usable": 11
+      },
+      {
+        "sic_2digit": "12",
+        "observations": 7,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "13",
+        "observations": 126,
+        "usable": 53
+      },
+      {
+        "sic_2digit": "14",
+        "observations": 8,
+        "usable": 8
+      },
+      {
+        "sic_2digit": "15",
+        "observations": 18,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "16",
+        "observations": 12,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "17",
+        "observations": 6,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "20",
+        "observations": 126,
+        "usable": 95
+      },
+      {
+        "sic_2digit": "21",
+        "observations": 23,
+        "usable": 12
+      },
+      {
+        "sic_2digit": "22",
+        "observations": 3,
+        "usable": 3
+      },
+      {
+        "sic_2digit": "23",
+        "observations": 21,
+        "usable": 21
+      },
+      {
+        "sic_2digit": "24",
+        "observations": 10,
+        "usable": 10
+      },
+      {
+        "sic_2digit": "25",
+        "observations": 6,
+        "usable": 0
+      },
+      {
+        "sic_2digit": "26",
+        "observations": 30,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "27",
+        "observations": 5,
+        "usable": 3
+      },
+      {
+        "sic_2digit": "28",
+        "observations": 205,
+        "usable": 149
+      },
+      {
+        "sic_2digit": "29",
+        "observations": 48,
+        "usable": 30
+      },
+      {
+        "sic_2digit": "30",
+        "observations": 18,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "31",
+        "observations": 3,
+        "usable": 0
+      },
+      {
+        "sic_2digit": "32",
+        "observations": 6,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "33",
+        "observations": 30,
+        "usable": 17
+      },
+      {
+        "sic_2digit": "34",
+        "observations": 25,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "35",
+        "observations": 159,
+        "usable": 117
+      },
+      {
+        "sic_2digit": "36",
+        "observations": 135,
+        "usable": 95
+      },
+      {
+        "sic_2digit": "37",
+        "observations": 74,
+        "usable": 60
+      },
+      {
+        "sic_2digit": "38",
+        "observations": 157,
+        "usable": 107
+      },
+      {
+        "sic_2digit": "39",
+        "observations": 16,
+        "usable": 12
+      },
+      {
+        "sic_2digit": "40",
+        "observations": 21,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "42",
+        "observations": 12,
+        "usable": 12
+      },
+      {
+        "sic_2digit": "44",
+        "observations": 8,
+        "usable": 8
+      },
+      {
+        "sic_2digit": "45",
+        "observations": 16,
+        "usable": 16
+      },
+      {
+        "sic_2digit": "47",
+        "observations": 18,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "48",
+        "observations": 92,
+        "usable": 22
+      },
+      {
+        "sic_2digit": "49",
+        "observations": 218,
+        "usable": 172
+      },
+      {
+        "sic_2digit": "50",
+        "observations": 30,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "51",
+        "observations": 29,
+        "usable": 18
+      },
+      {
+        "sic_2digit": "52",
+        "observations": 26,
+        "usable": 26
+      },
+      {
+        "sic_2digit": "53",
+        "observations": 51,
+        "usable": 39
+      },
+      {
+        "sic_2digit": "54",
+        "observations": 18,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "55",
+        "observations": 25,
+        "usable": 25
+      },
+      {
+        "sic_2digit": "56",
+        "observations": 34,
+        "usable": 21
+      },
+      {
+        "sic_2digit": "57",
+        "observations": 18,
+        "usable": 12
+      },
+      {
+        "sic_2digit": "58",
+        "observations": 29,
+        "usable": 29
+      },
+      {
+        "sic_2digit": "59",
+        "observations": 36,
+        "usable": 13
+      },
+      {
+        "sic_2digit": "60",
+        "observations": 135,
+        "usable": 105
+      },
+      {
+        "sic_2digit": "61",
+        "observations": 16,
+        "usable": 10
+      },
+      {
+        "sic_2digit": "62",
+        "observations": 68,
+        "usable": 54
+      },
+      {
+        "sic_2digit": "63",
+        "observations": 126,
+        "usable": 99
+      },
+      {
+        "sic_2digit": "64",
+        "observations": 12,
+        "usable": 12
+      },
+      {
+        "sic_2digit": "67",
+        "observations": 107,
+        "usable": 86
+      },
+      {
+        "sic_2digit": "70",
+        "observations": 17,
+        "usable": 11
+      },
+      {
+        "sic_2digit": "72",
+        "observations": 6,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "73",
+        "observations": 214,
+        "usable": 148
+      },
+      {
+        "sic_2digit": "75",
+        "observations": 6,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "78",
+        "observations": 8,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "79",
+        "observations": 1,
+        "usable": 1
+      },
+      {
+        "sic_2digit": "80",
+        "observations": 27,
+        "usable": 27
+      },
+      {
+        "sic_2digit": "82",
+        "observations": 4,
+        "usable": 1
+      },
+      {
+        "sic_2digit": "87",
+        "observations": 6,
+        "usable": 6
+      },
+      {
+        "sic_2digit": "un",
+        "observations": 267,
+        "usable": 13
+      }
+    ],
+    "membership_exit_next_365d": [
+      {
+        "exit_next_year": false,
+        "observations": 2894,
+        "usable": 1949
+      },
+      {
+        "exit_next_year": true,
+        "observations": 95,
+        "usable": 14
+      }
+    ],
+    "size": "not measured: historical market caps unavailable for many excluded securities",
+    "note": "SIC is an issuer-level proxy, not historical GICS; repeated quarterly members are not independent"
+  }
 }

@@ -39,9 +39,9 @@ def test_no_unverified_archive_fallback_or_recycled_ticker():
     complete = {"complete": True, "first": "2012-01-02", "last": "2012-12-31"}
     missing = {"complete": False, "first": "2012-01-02", "last": "2012-12-31"}
     assert choose_source("corroborated_candidate", False, missing, complete,
-                         "insufficient_overlap") == (None, "archive_adjustment_unverified")
+                         "insufficient_overlap") == (None, "archive_evidence_missing")
     assert choose_source("confirmed_by_multiple_evidence", False, missing, complete,
-                         "consistent_overlap") == ("finsaber", "fallback_consistent_overlap")
+                         "consistent_overlap") == (None, "archive_evidence_missing")
     assert choose_source("confirmed_by_multiple_evidence", True, complete, complete,
                          "consistent_overlap") == (None, "ticker_recycled")
     assert choose_source(None, False, complete, complete,
@@ -52,4 +52,4 @@ def test_archive_must_not_extend_a_post_ipo_or_merger_series():
     yahoo = {"complete": False, "first": "2013-01-02", "last": "2013-12-31"}
     archive = {"complete": True, "first": "2012-12-31", "last": "2013-12-31"}
     assert choose_source("confirmed_by_multiple_evidence", False, yahoo, archive,
-                         "consistent_overlap") == (None, "archive_boundary_unverified")
+                         "consistent_overlap") == (None, "archive_evidence_missing")

@@ -1557,17 +1557,19 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   repetido directamente en SEC (~33–34%) y candidatos únicos corroborados por
   informes del mismo emisor (total ~90–93%). Los ambiguos y no resueltos quedan
   explícitamente excluidos del conjunto acreditado; aún no se alcanza el 95%
-  propuesto ni se atribuyen automáticamente precios/fundamentales legacy.
+  propuesto. La atribución de precios se audita por separado a continuación.
 - **Fundamentales y múltiplos clásicos** (ROIC, margen bruto/operativo/neto,
   deuda neta/EBITDA, crecimiento de ingresos/FCF, PER, P/VC, P/Ventas,
   EV/EBITDA): 100% desde `edgar_facts` + precio y nº de acciones de esa
   fecha — nunca yfinance, que no guarda histórico.
 - La [auditoría de precios 2010–2015](docs/historical-prices-2010-2015.md)
-  distingue disponibilidad bruta de ventanas completas con identidad
-  acreditada (304–348 miembros por cierre anual, tras el #29). SPY está
-  completo, pero
-  los precios legacy siguen sin atribución por entidad y FINSABER no se
-  incorpora automáticamente al backtest.
+  distingue disponibilidad bruta de series atribuidas por entidad y fuente.
+  Se acreditaron 363 intervalos Yahoo con evidencia SEC; en los 24 rebalanceos
+  trimestrales la cobertura utilizable es solo 60,32–69,54 %. SPY está
+  completo, pero FINSABER aún no tiene ajustes/bordes acreditados para entrar
+  automáticamente en el backtest histórico. Las empresas que salen del índice
+  en el año siguiente están especialmente infrarrepresentadas; el #28 sigue
+  abierto y 2010–2015 no se usa para validar rendimiento.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 
