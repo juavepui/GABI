@@ -30,18 +30,19 @@ conserva dos niveles adicionales, distintos del alias operativo:
 
 | Año | Miembro-trimestre | CIK candidato único | Ticker+CIK SEC repetido | Candidato corroborado sin ticker SEC | Total acreditado por niveles | Ambiguo |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2010 | 1.992 | 94,53% | 31,68% | 58,38% | 90,06% | 1,91% |
-| 2011 | 1.988 | 95,02% | 31,44% | 59,21% | 90,64% | 2,01% |
-| 2012 | 1.988 | 96,13% | 32,09% | 59,61% | 91,70% | 2,01% |
-| 2013 | 1.988 | 97,13% | 32,55% | 60,01% | 92,56% | 2,21% |
-| 2014 | 1.993 | 97,69% | 32,11% | 60,76% | 92,88% | 2,56% |
-| 2015 | 2.004 | 97,95% | 31,94% | 59,98% | 91,92% | 2,65% |
+| 2010 | 1.992 | 94,53% | 33,28% | 57,18% | 90,46% | 1,91% |
+| 2011 | 1.988 | 95,02% | 33,05% | 58,00% | 91,05% | 2,01% |
+| 2012 | 1.988 | 96,13% | 33,65% | 58,45% | 92,10% | 2,01% |
+| 2013 | 1.988 | 97,13% | 33,95% | 58,95% | 92,91% | 2,21% |
+| 2014 | 1.993 | 97,69% | 33,52% | 59,56% | 93,08% | 2,56% |
+| 2015 | 2.004 | 97,95% | 33,63% | 58,58% | 92,22% | 2,65% |
 
 El 95% propuesto **no se alcanza**. El total del último nivel solo sirve para
 filtrar candidatos de investigación; no equivale a cobertura de precios,
 fundamentales point-in-time ni composición oficial del índice. Para una prueba
 que exija ticker confirmado directamente por SEC, el nivel pertinente es la
-columna del 31–33%, no el total.
+columna del 33–34%, no el total. El usuario aceptó el 90–93% como suficiente
+para continuar; los conflictos siguen explícitamente excluidos.
 
 Antes del #27, la base operativa tenía **0% de aliases fechados** para estos
 miembros. Se activaron solo dos intervalos revisados de `WLP` que abarcan
@@ -63,22 +64,23 @@ originales intactos. En el backtest 2016–2025 no se cambia ningún ticker.
 
 ## Evidencia directa recuperada de SEC
 
-Se examinaron **2.574** instancias XBRL originales de 2010–2015 en
+Se examinaron **2.632** instancias XBRL originales de 2010–2015 en
 `data/history_refresh/validation_1996_2015/instances/`. La segunda fase
 seleccionó 1.751 informes de los CIK candidatos y descargó los que faltaban;
+el #29 recuperó otras 58 instancias dentro de intervalos aún sin resolver.
 el parser también reconoce el espacio de nombres DEI antiguo `xbrl.us/dei`.
-En **896** instancias hay un
+En **907** instancias hay un
 único `dei:TradingSymbol` y un identificador XBRL que coincide con el CIK de la
-presentación; son **313 pares ticker-CIK** distintos. **722** de esas
+presentación; son **316 pares ticker-CIK** distintos. **733** de esas
 observaciones corresponden a un miembro de la serie fja05680 en la fecha de
-presentación. Las **896** tienen nombre del registrante, tomado de DEI o,
+presentación. Las **907** tienen nombre del registrante, tomado de DEI o,
 si falta ahí, del índice estructurado SEC `SUB` del mismo accession. Otras
-**1.676** no proporcionan ticker único utilizable; dos fallan la comprobación
+**1.723** no proporcionan ticker único utilizable; dos fallan la comprobación
 de CIK/XML. Se rechazan sin rellenarlas desde el mapa actual.
 
 El [catálogo CSV](historical-identity-filing-evidence.csv) conserva ticker,
 CIK, nombre histórico si existe, fecha, accession, URL del documento SEC y
-SHA-256 de cada archivo. Se importaron las 896 observaciones a
+SHA-256 de cada archivo. Se importaron las 907 observaciones a
 `entity_observations` como dataset `filing_identity`, con `entity_id` derivado
 del CIK. La importación es idempotente y **no crea `entity_aliases` ni atribuye
 precios o fundamentales**. `historical_archive.get_filing_identity_evidence`
@@ -90,7 +92,7 @@ el nombre histórico y URL SEC; en los demás días sigue exigiendo un alias
 temporal revisado o un intervalo de investigación corroborado. La API legacy
 del backtest no utiliza esta observación como permiso para leer precios por ticker.
 
-De las 896 observaciones SEC, 797 concuerdan con el CIK candidato de lawcal,
+De las 907 observaciones SEC, 808 concuerdan con el CIK candidato de lawcal,
 90 carecen de candidato aplicable, tres coinciden con un candidato múltiple y
 seis discrepan. Las seis corresponden a
 `ACT` en 2014–2015: SEC identifica CIK `0001578845` en esos documentos mientras
@@ -104,8 +106,8 @@ no se debe promover automáticamente un único CIK comunitario a alias históric
 El [CSV de intervalos](historical-identity-intervals.csv) conserva
 `valid_from` inclusivo, `valid_to` exclusivo, CIK, estado, recuentos de
 pruebas directas y de informes del emisor, y referencias SEC con URL y SHA-256.
-Se archivan 595 intervalos: **188** con ticker+CIK SEC repetido, **355**
-candidatos corroborados, **16** ambiguos y **36** sin pruebas suficientes.
+Se archivan 595 intervalos: **199** con ticker+CIK SEC repetido, **347**
+candidatos corroborados, **16** ambiguos y **33** sin pruebas suficientes.
 `historical_membership.constituents_as_of` expone `identity_tier`,
 `accredited_symbols` y `excluded_identity_symbols`. Dos CIK candidatos que se
 solapan, una prueba SEC de otro CIK para el ticker o un ticker diferente
@@ -162,7 +164,7 @@ pertenencia, independiente de la identidad del emisor.
 Queda trabajo para completar el #27: verificar los CIK retrospectivos sin
 informes de época (`APA`, `BLK`, `CI`, `DIS`, `FTI`, `LLL`, `XOM`, `XRX` entre
 otros), resolver las 16 colisiones, contrastar cambios de ticker con avisos
-de mercado y revisar los 36 intervalos sin pruebas suficientes. Además hay
+de mercado y revisar los 33 intervalos sin pruebas suficientes. Además hay
 miembros sin CIK candidato. El 90–93% no permite declarar alcanzado el 95%.
 Incluso si se alcanza, se necesitarán precios y fundamentales históricos
 atribuidos por CIK antes de un backtest fundamental estricto de 2010–2015.

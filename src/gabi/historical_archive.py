@@ -209,6 +209,30 @@ def get_filing_identity_evidence(symbol: str, as_of: str) -> dict:
             "evidence": [row[1] for row in matches]}
 
 
+def list_filing_identity_evidence_as_of(symbol: str, as_of: str) -> dict:
+    """Dated SEC ticker observations visible by this date; never an alias.
+
+    Two CIKs for the same ticker are exposed as a conflict, even if their
+    filings are on different dates. The #27 interval accreditor must resolve
+    any genuine ticker recycling with its dated membership/candidate bounds.
+    """
+    cutoff = pd.Timestamp(as_of).date().isoformat()
+    with storage.get_connection() as conn:
+        identity.ensure_schema(conn)
+        rows = conn.execute(
+            "SELECT entity_id,payload_json FROM entity_observations "
+            "WHERE dataset='filing_identity' AND symbol=? "
+            "AND json_extract(payload_json,'$.filed_date')<=?",
+            (identity.normalize_symbol(symbol), cutoff)).fetchall()
+    evidence = [{**json.loads(payload), "cik": entity_id.removeprefix("cik:")}
+                for entity_id, payload in rows]
+    evidence.sort(key=lambda row: (row["filed_date"], row["accession"], row["cik"]))
+    ciks = sorted({row["cik"] for row in evidence})
+    return {"symbol": identity.normalize_symbol(symbol), "as_of": cutoff,
+            "status": "no_evidence" if not ciks else "conflicting_ciks" if len(ciks) > 1 else "observed",
+            "ciks": ciks, "evidence": evidence}
+
+
 def replace_identity_intervals(source_id: str, rows: list[dict]) -> int:
     """Replace one reproducible research tier; never activate operational aliases."""
     allowed = {"confirmed_by_multiple_evidence", "corroborated_candidate",

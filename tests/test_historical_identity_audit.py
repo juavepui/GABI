@@ -222,7 +222,7 @@ def test_multiple_sec_filings_corroborrate_bounded_interval_without_alias():
         "identity_status"] == "ambiguous"
 
 
-def test_unmatched_name_or_single_filing_does_not_create_interval():
+def test_repeated_direct_ticker_proof_outweighs_candidate_name_but_one_filing_does_not():
     historical_archive.register_source(REFERENCE_SOURCE, {"start": "2010-01-01", "end_exclusive": "2016-01-01"})
     historical_archive.import_membership(REFERENCE_SOURCE, pd.DataFrame([
         ("2010-01-01", "AAA,BBB")], columns=["date", "tickers"]), "2010-01-01", "2016-01-01")
@@ -241,7 +241,8 @@ def test_unmatched_name_or_single_filing_does_not_create_interval():
             ("AAA", "1", "Alpha Corporation", [3, 6]), ("BBB", "2", "Beta Corp", [3])]
         for index in indices])
     rows = audit.build_evidence_intervals()
-    assert {row["symbol"]: row["status"] for row in rows} == {"AAA": "unresolved", "BBB": "unresolved"}
+    assert {row["symbol"]: row["status"] for row in rows} == {
+        "AAA": "confirmed_by_multiple_evidence", "BBB": "unresolved"}
 
 
 def test_recycled_ticker_is_split_by_candidate_dates():
@@ -294,6 +295,28 @@ def test_candidate_download_selection_is_bounded_and_resumable(monkeypatch):
     assert second["fetched"] == 1
     assert len(seen) == 3
     assert audit.fetch_candidate_instances(2)["fetched"] == 0
+
+
+def test_unresolved_second_pass_uses_only_bounded_non_conflicting_filings(monkeypatch):
+    historical_archive.register_source(REFERENCE_SOURCE, {"start": "2010-01-01", "end_exclusive": "2016-01-01"})
+    with storage.get_connection() as conn:
+        conn.executescript(sec_history.SCHEMA)
+        conn.execute("INSERT INTO historical_issuer_candidates VALUES (?,?,?,?,?,?,?)",
+                     (audit.CANDIDATE_SOURCE, "AAA", "0000000001", "Alpha Corp",
+                      "2010-01-01", None, "2020-01-01"))
+        conn.executemany("INSERT INTO sec_bulk_submissions "
+                         "(accn,cik,filed_date,form,instance) VALUES (?,?,?,?,?)", [
+                             (f"1-201{year}-000001", "0000000001", f"201{year}-03-01", "10-K", "x.xml")
+                             for year in range(5)])
+        conn.commit()
+    historical_archive.replace_identity_intervals(audit.INTERVAL_SOURCE, [
+        {"symbol": "AAA", "cik": "1", "valid_from": "2011-01-01", "valid_to": "2014-01-01",
+         "status": "unresolved", "evidence_count": 0, "source_refs": []}])
+    normal = audit.fetch_candidate_instances(0)
+    extra = audit.fetch_candidate_instances(0, prioritize_unresolved=True)
+    assert normal["selected_filings"] == 3
+    assert extra["selected_filings"] == 5
+    assert extra["fetched"] == 0
 
 
 def test_repeated_sec_issuer_name_is_separate_from_direct_ticker_proof():

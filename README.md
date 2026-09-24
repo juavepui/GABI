@@ -1554,7 +1554,7 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   [auditoría de identidad 2010–2015](docs/historical-identity-2010-2015.md)
   corrige el ticker retrospectivo `ANTM` a `WLP` antes del cambio de 2014,
   con fuentes SEC/MIAX y mide dos niveles de identidad histórica: ticker/CIK
-  repetido directamente en SEC (~31–33%) y candidatos únicos corroborados por
+  repetido directamente en SEC (~33–34%) y candidatos únicos corroborados por
   informes del mismo emisor (total ~90–93%). Los ambiguos y no resueltos quedan
   explícitamente excluidos del conjunto acreditado; aún no se alcanza el 95%
   propuesto ni se atribuyen automáticamente precios/fundamentales legacy.
@@ -1564,7 +1564,8 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   fecha — nunca yfinance, que no guarda histórico.
 - La [auditoría de precios 2010–2015](docs/historical-prices-2010-2015.md)
   distingue disponibilidad bruta de ventanas completas con identidad
-  acreditada (303–346 miembros por cierre anual). SPY está completo, pero
+  acreditada (304–348 miembros por cierre anual, tras el #29). SPY está
+  completo, pero
   los precios legacy siguen sin atribución por entidad y FINSABER no se
   incorpora automáticamente al backtest.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
@@ -1630,6 +1631,9 @@ Los resultados, fuentes, límites y comandos están en
 El [inventario anual 2008–2026](docs/historical-data-audit.md) distingue la
 cobertura numérica de la identidad y procedencia acreditadas antes de ampliar
 las descargas históricas.
+La [auditoría SEC 2010–2015](docs/historical-sec-2010-2015.md) mide hechos
+point-in-time por concepto y CIK, corrige la continuidad anual entre etiquetas
+XBRL y documenta las pruebas SEC adicionales de identidad del #29.
 La cobertura también se muestra en **Calidad de los datos → Archivo histórico
 anterior a 2016**.
 

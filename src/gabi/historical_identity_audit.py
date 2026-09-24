@@ -152,7 +152,7 @@ def scan_local_sec_instances() -> tuple[list[dict], dict]:
                      "rejections": failures}
 
 
-def fetch_candidate_instances(limit: int) -> dict:
+def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False) -> dict:
     """Cache selected original SEC covers for historic CIK candidates.
 
     Three filings spread over each candidate's dated tenure give more useful
@@ -173,6 +173,10 @@ def fetch_candidate_instances(limit: int) -> dict:
             "WHERE filed_date>='2010-01-01' AND filed_date<'2016-01-01' "
             "AND form IN ('10-K','10-Q') AND instance IS NOT NULL ORDER BY filed_date,accn"
         ).fetchall()
+        unresolved = conn.execute(
+            "SELECT cik,valid_from,valid_to FROM historical_identity_intervals "
+            "WHERE source_id=? AND status='unresolved'",
+            (INTERVAL_SOURCE,)).fetchall() if prioritize_unresolved else []
     by_cik: dict[str, list[tuple]] = {}
     for row in filings:
         by_cik.setdefault(identity.normalize_cik(row[1]), []).append(row)
@@ -189,6 +193,13 @@ def fetch_candidate_instances(limit: int) -> dict:
         for index in {0, len(eligible) // 2, len(eligible) - 1}:
             row = eligible[index]
             selected[row[0]] = row
+    # The ordinary three-per-candidate sample is already cached. For a second
+    # pass, inspect remaining filings only inside still-unresolved intervals;
+    # never broaden an ambiguous ticker/CIK association automatically.
+    for cik, start, end in unresolved:
+        for row in by_cik.get(identity.normalize_cik(cik), []):
+            if start <= row[2] < end:
+                selected[row[0]] = row
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "instances"
     already_cached = 0
     pending: list[tuple[str, str, Path]] = []
@@ -198,7 +209,7 @@ def fetch_candidate_instances(limit: int) -> dict:
             already_cached += 1
             continue
         if len(pending) >= limit:
-            break
+            continue
         url = (f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/"
                f"{accn.replace('-', '')}/{instance}")
         pending.append((accn, url, path))
@@ -245,7 +256,8 @@ def fetch_candidate_instances(limit: int) -> dict:
                 print(f"SEC identity covers attempted: {fetched + failures}", flush=True)
     return {"selected_filings": len(selected), "already_cached": already_cached,
             "fetched": fetched, "failed": failures,
-            "candidates_with_fewer_than_two_filings": missing_candidates}
+            "candidates_with_fewer_than_two_filings": missing_candidates,
+            "prioritize_unresolved": prioritize_unresolved}
 
 
 def _name_tokens(value: str) -> list[str]:
@@ -437,7 +449,11 @@ def build_evidence_intervals() -> list[dict]:
                                  if row["symbol"] != symbol and left <= row["filed_date"] < right}
                 if len(ciks) > 1 or contradictory or other_tickers:
                     status = "ambiguous"
-                elif len(dates) >= 2 and name_match:
+                elif len(dates) >= 2:
+                    # Two independent SEC covers explicitly report this
+                    # ticker and CIK. A community display-name mismatch (GE,
+                    # JCP) cannot outweigh the primary ticker evidence; the
+                    # no-ticker corroboration tier still requires name match.
                     status = "confirmed_by_multiple_evidence"
                 elif len(issuer_dates) >= 2 and (name_match or chain_match):
                     status = "corroborated_candidate"
@@ -583,6 +599,8 @@ def main() -> None:
     parser.add_argument("--scan-instances", action="store_true", help="Check locally cached original SEC XBRL files")
     parser.add_argument("--fetch-candidate-instances", type=int,
                         help="Download up to N selected 2010-15 SEC XBRL covers for candidate checks")
+    parser.add_argument("--fetch-unresolved-instances", type=int,
+                        help="Download up to N extra SEC covers only for unresolved dated identity intervals")
     parser.add_argument("--fetch-issuer-names", type=int,
                         help="Download up to N SEC issuer name histories for unresolved CIKs")
     parser.add_argument("--evidence-csv", type=Path, help="Save accepted SEC filing-day identity evidence")
@@ -594,8 +612,12 @@ def main() -> None:
                         help="Write interval status, dates and SEC provenance for review")
     args = parser.parse_args()
     fetch_summary = None
-    if args.fetch_candidate_instances is not None:
-        fetch_summary = fetch_candidate_instances(args.fetch_candidate_instances)
+    if args.fetch_candidate_instances is not None and args.fetch_unresolved_instances is not None:
+        parser.error("Choose only one SEC instance download mode")
+    if args.fetch_candidate_instances is not None or args.fetch_unresolved_instances is not None:
+        fetch_summary = fetch_candidate_instances(
+            args.fetch_candidate_instances if args.fetch_candidate_instances is not None else args.fetch_unresolved_instances,
+            prioritize_unresolved=args.fetch_unresolved_instances is not None)
         print(json.dumps(fetch_summary), flush=True)
     if args.fetch_issuer_names is not None:
         name_fetch = fetch_issuer_name_histories(args.fetch_issuer_names)

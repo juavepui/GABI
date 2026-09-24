@@ -36,12 +36,12 @@ precios legacy se convierten aquí en `entity_observations` de precios.
 
 | Año | Miembros | Yahoo completo | FINSABER completo | Yahoo con identidad acreditada y sin conflicto detectado | Fallback FINSABER admisible | Excluidos |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2010 | 497 | 328 | 454 | 303 | 0 | 194 |
-| 2011 | 497 | 336 | 453 | 311 | 0 | 186 |
-| 2012 | 497 | 348 | 461 | 325 | 0 | 172 |
-| 2013 | 497 | 352 | 461 | 332 | 0 | 165 |
-| 2014 | 499 | 362 | 468 | 339 | 0 | 160 |
-| 2015 | 502 | 375 | 470 | 346 | 0 | 156 |
+| 2010 | 497 | 328 | 454 | 304 | 0 | 193 |
+| 2011 | 497 | 336 | 453 | 312 | 0 | 185 |
+| 2012 | 497 | 348 | 461 | 326 | 0 | 171 |
+| 2013 | 497 | 352 | 461 | 333 | 0 | 164 |
+| 2014 | 499 | 362 | 468 | 340 | 0 | 159 |
+| 2015 | 502 | 375 | 470 | 348 | 0 | 154 |
 
 SPY tiene la ventana completa en los seis cierres. Los recuentos Yahoo y
 FINSABER son disponibilidad bruta, **no** empresas elegibles para backtest.
@@ -66,3 +66,7 @@ independientes la identidad de cada serie FINSABER sin solapamiento y sus
 retornos de exclusión/dividendos. Un CIK SEC acredita al emisor, pero no por sí
 solo la serie de una clase de acciones ni su retorno de exclusión. Hasta
 entonces estos 2010–2015 no son una muestra limpia para la validación #33.
+
+Los CSV/JSON se regeneraron tras el #29, que elevó ligeramente la identidad
+acreditada. La tabla anterior refleja ese estado posterior; las series de
+precios y las reglas de fallback permanecen iguales.

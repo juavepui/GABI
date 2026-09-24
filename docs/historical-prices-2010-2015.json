@@ -10,12 +10,12 @@
       "members": 497,
       "yahoo_complete": 328,
       "finsaber_complete": 454,
-      "selected_yahoo": 303,
+      "selected_yahoo": 304,
       "selected_finsaber": 0,
-      "excluded": 194,
+      "excluded": 193,
       "reasons": {
-        "archive_adjustment_unverified": 117,
-        "identity_unresolved": 47,
+        "archive_adjustment_unverified": 118,
+        "identity_unresolved": 45,
         "incomplete_prices": 29,
         "ticker_recycled": 1
       }
@@ -25,12 +25,12 @@
       "members": 497,
       "yahoo_complete": 336,
       "finsaber_complete": 453,
-      "selected_yahoo": 311,
+      "selected_yahoo": 312,
       "selected_finsaber": 0,
-      "excluded": 186,
+      "excluded": 185,
       "reasons": {
-        "archive_adjustment_unverified": 111,
-        "identity_unresolved": 43,
+        "archive_adjustment_unverified": 112,
+        "identity_unresolved": 41,
         "incomplete_prices": 31,
         "ticker_recycled": 1
       }
@@ -40,12 +40,12 @@
       "members": 497,
       "yahoo_complete": 348,
       "finsaber_complete": 461,
-      "selected_yahoo": 325,
+      "selected_yahoo": 326,
       "selected_finsaber": 0,
-      "excluded": 172,
+      "excluded": 171,
       "reasons": {
-        "archive_adjustment_unverified": 107,
-        "identity_unresolved": 37,
+        "archive_adjustment_unverified": 108,
+        "identity_unresolved": 35,
         "incomplete_prices": 27,
         "ticker_recycled": 1
       }
@@ -55,12 +55,12 @@
       "members": 497,
       "yahoo_complete": 352,
       "finsaber_complete": 461,
-      "selected_yahoo": 332,
+      "selected_yahoo": 333,
       "selected_finsaber": 0,
-      "excluded": 165,
+      "excluded": 164,
       "reasons": {
         "archive_adjustment_unverified": 104,
-        "identity_unresolved": 34,
+        "identity_unresolved": 33,
         "incomplete_prices": 25,
         "archive_boundary_unverified": 1,
         "ticker_recycled": 1
@@ -71,12 +71,12 @@
       "members": 499,
       "yahoo_complete": 362,
       "finsaber_complete": 468,
-      "selected_yahoo": 339,
+      "selected_yahoo": 340,
       "selected_finsaber": 0,
-      "excluded": 160,
+      "excluded": 159,
       "reasons": {
         "archive_adjustment_unverified": 103,
-        "identity_unresolved": 34,
+        "identity_unresolved": 33,
         "incomplete_prices": 22,
         "ticker_recycled": 1
       }
@@ -86,12 +86,12 @@
       "members": 502,
       "yahoo_complete": 375,
       "finsaber_complete": 470,
-      "selected_yahoo": 346,
+      "selected_yahoo": 348,
       "selected_finsaber": 0,
-      "excluded": 156,
+      "excluded": 154,
       "reasons": {
         "archive_adjustment_unverified": 88,
-        "identity_unresolved": 46,
+        "identity_unresolved": 44,
         "incomplete_prices": 19,
         "archive_boundary_unverified": 2,
         "ticker_recycled": 1

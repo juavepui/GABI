@@ -10,6 +10,7 @@ Yahoo son poco fiables o directamente no existen:
     de la empresa (justo lo que recomienda cualquier guía de aprendizaje).
 """
 import concurrent.futures as cf
+import json
 from datetime import UTC, date, datetime
 
 import pandas as pd
@@ -233,6 +234,7 @@ def _extract_annual_values(facts: dict, tag_candidates: list, unit: str = "USD")
     trimestres que aparecen mezclados con el mismo form='10-K'/fp='FY' porque
     muchos filings incluyen desgloses trimestrales de contexto."""
     us_gaap = facts.get("facts", {}).get("us-gaap", {})
+    merged: dict[str, float] = {}
     for tag in tag_candidates:
         node = us_gaap.get(tag)
         if not node:
@@ -240,9 +242,10 @@ def _extract_annual_values(facts: dict, tag_candidates: list, unit: str = "USD")
         entries = node.get("units", {}).get(unit)
         if not entries:
             continue
-        by_end = {}
+        by_end: dict[str, tuple[str, str, float]] = {}
+        conflicts: set[str] = set()
         for e in entries:
-            if e.get("form") != "10-K" or e.get("fp") != "FY":
+            if e.get("form") not in {"10-K", "10-K/A"} or e.get("fp") != "FY":
                 continue
             start, end, val = e.get("start"), e.get("end"), e.get("val")
             if not start or not end or val is None:
@@ -252,10 +255,28 @@ def _extract_annual_values(facts: dict, tag_candidates: list, unit: str = "USD")
             except ValueError:
                 continue
             if 340 <= duration_days <= 380:
-                by_end[end] = val
-        if by_end:
-            return sorted(by_end.items())
-    return []
+                candidate = (str(e.get("filed") or ""), str(e.get("accn") or ""), float(val))
+                previous = by_end.get(end)
+                if previous and previous[:2] == candidate[:2] and previous[2] != candidate[2]:
+                    conflicts.add(end)
+                elif previous is None or candidate[:2] > previous[:2]:
+                    by_end[end] = candidate
+        values = {end: row[2] for end, row in by_end.items() if end not in conflicts}
+        if not values:
+            continue
+        if not merged:
+            merged.update(values)
+            continue
+        overlap = set(merged) & set(values)
+        # These tags are candidates, not interchangeable by name alone. Only
+        # bridge a taxonomy change when at least one same-year USD value
+        # reconciles and none of the overlapping values disagree materially.
+        if (overlap and all(abs(merged[day] - values[day]) <=
+                            0.01 * max(abs(merged[day]), abs(values[day]), 1.0)
+                            for day in overlap)):
+            for day, value in values.items():
+                merged.setdefault(day, value)
+    return sorted(merged.items())
 
 
 def _extract_instant_values(facts: dict, tag_candidates: list, unit: str = "USD") -> list:
@@ -271,7 +292,7 @@ def _extract_instant_values(facts: dict, tag_candidates: list, unit: str = "USD"
             continue
         by_end = {}
         for e in entries:
-            if e.get("form") != "10-K" or e.get("fp") != "FY":
+            if e.get("form") not in {"10-K", "10-K/A"} or e.get("fp") != "FY":
                 continue
             end, val = e.get("end"), e.get("val")
             if not end or val is None:
@@ -364,6 +385,34 @@ def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = N
     with storage.get_connection() as conn:
         conn.executescript(FACTS_SCHEMA)
         return pd.read_sql_query(query, conn, params=params)
+
+
+def get_issuer_facts_as_of(cik: str, as_of_date: str, tags: list | None = None) -> pd.DataFrame:
+    """All dated issuer facts known by ``as_of_date``, without a ticker lookup.
+
+    Keep all filing versions so callers can inspect restatements. A CIK
+    identifies the reporting entity, not a historical ticker or share class.
+    SEC bulk rounded dates are deliberately not used as exact fact periods.
+    """
+    from . import identity
+
+    cutoff = date.fromisoformat(as_of_date).isoformat()
+    normalized = identity.normalize_cik(cik)
+    with storage.get_connection() as conn:
+        identity.ensure_schema(conn)
+        rows = conn.execute(
+            "SELECT payload_json,source FROM entity_observations WHERE entity_id=? "
+            "AND dataset='edgar_facts' AND json_extract(payload_json,'$.filed_date')<=? "
+            "AND json_extract(payload_json,'$.end_date')<=?",
+            (f"cik:{normalized}", cutoff, cutoff)).fetchall()
+    frame = pd.DataFrame([{**json.loads(payload), "source_url": source} for payload, source in rows])
+    if frame.empty:
+        return frame
+    frame = frame[frame["form"].isin(["10-K", "10-Q", "10-K/A", "10-Q/A"])].copy()
+    if tags:
+        frame = frame[frame["tag"].isin(tags)].copy()
+    frame["cik"] = normalized
+    return frame.sort_values(["filed_date", "end_date", "accn", "tag"], kind="stable").reset_index(drop=True)
 
 
 def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
@@ -464,6 +513,9 @@ def compute_edgar_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str 
 def _cagr_from_series(series: list, years: int = 3):
     if len(series) < years + 1:
         return None
+    dates = [_annual_date(end) for end, _ in series[-years - 1:]]
+    if any(not 340 <= (right - left).days <= 380 for left, right in zip(dates, dates[1:])):
+        return None
     _, v_now = series[-1]
     _, v_then = series[-1 - years]
     if not v_then or v_then <= 0 or not v_now or v_now <= 0:
@@ -471,11 +523,19 @@ def _cagr_from_series(series: list, years: int = 3):
     return (v_now / v_then) ** (1 / years) - 1
 
 
+def _annual_date(value: str) -> date:
+    # Keep the pre-existing year-only helper input used by callers/tests;
+    # stored SEC periods always have exact ISO dates.
+    return date(int(value), 12, 31) if len(value) == 4 else date.fromisoformat(value)
+
+
 def _yoy_growth(series: dict):
     """series: {fecha_fin: valor}. Crecimiento del último ejercicio anual
     completo frente al anterior."""
     dates = sorted(series)
     if len(dates) < 2:
+        return None
+    if not 340 <= (_annual_date(dates[-1]) - _annual_date(dates[-2])).days <= 380:
         return None
     prev, last = series[dates[-2]], series[dates[-1]]
     if not prev or prev <= 0:
