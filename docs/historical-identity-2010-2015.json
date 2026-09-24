@@ -25,6 +25,10 @@
       "candidate_name": 1883,
       "ambiguous_alias": 0,
       "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 631,
+      "corroborated_candidate": 1163,
+      "accredited_total": 1794,
+      "ambiguous_identity": 38,
       "percent": {
         "resolved_cik": 0.201,
         "resolved_entity_id": 0.201,
@@ -32,7 +36,11 @@
         "historical_name_sec": 0.201,
         "candidate_unique_cik": 94.528,
         "candidate_row_created_by_date": 90.512,
-        "candidate_name": 94.528
+        "candidate_name": 94.528,
+        "confirmed_by_multiple_evidence": 31.677,
+        "corroborated_candidate": 58.384,
+        "accredited_total": 90.06,
+        "ambiguous_identity": 1.908
       }
     },
     "2011": {
@@ -52,6 +60,10 @@
       "candidate_name": 1889,
       "ambiguous_alias": 0,
       "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 625,
+      "corroborated_candidate": 1177,
+      "accredited_total": 1802,
+      "ambiguous_identity": 40,
       "percent": {
         "resolved_cik": 0.201,
         "resolved_entity_id": 0.201,
@@ -59,7 +71,11 @@
         "historical_name_sec": 0.201,
         "candidate_unique_cik": 95.02,
         "candidate_row_created_by_date": 91.751,
-        "candidate_name": 95.02
+        "candidate_name": 95.02,
+        "confirmed_by_multiple_evidence": 31.439,
+        "corroborated_candidate": 59.205,
+        "accredited_total": 90.644,
+        "ambiguous_identity": 2.012
       }
     },
     "2012": {
@@ -79,6 +95,10 @@
       "candidate_name": 1911,
       "ambiguous_alias": 0,
       "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 638,
+      "corroborated_candidate": 1185,
+      "accredited_total": 1823,
+      "ambiguous_identity": 40,
       "percent": {
         "resolved_cik": 0.201,
         "resolved_entity_id": 0.201,
@@ -86,7 +106,11 @@
         "historical_name_sec": 0.201,
         "candidate_unique_cik": 96.127,
         "candidate_row_created_by_date": 93.209,
-        "candidate_name": 96.127
+        "candidate_name": 96.127,
+        "confirmed_by_multiple_evidence": 32.093,
+        "corroborated_candidate": 59.608,
+        "accredited_total": 91.7,
+        "ambiguous_identity": 2.012
       }
     },
     "2013": {
@@ -106,6 +130,10 @@
       "candidate_name": 1931,
       "ambiguous_alias": 0,
       "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 647,
+      "corroborated_candidate": 1193,
+      "accredited_total": 1840,
+      "ambiguous_identity": 44,
       "percent": {
         "resolved_cik": 0.201,
         "resolved_entity_id": 0.201,
@@ -113,7 +141,11 @@
         "historical_name_sec": 0.201,
         "candidate_unique_cik": 97.133,
         "candidate_row_created_by_date": 94.014,
-        "candidate_name": 97.133
+        "candidate_name": 97.133,
+        "confirmed_by_multiple_evidence": 32.545,
+        "corroborated_candidate": 60.01,
+        "accredited_total": 92.555,
+        "ambiguous_identity": 2.213
       }
     },
     "2014": {
@@ -133,6 +165,10 @@
       "candidate_name": 1947,
       "ambiguous_alias": 0,
       "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 640,
+      "corroborated_candidate": 1211,
+      "accredited_total": 1851,
+      "ambiguous_identity": 51,
       "percent": {
         "resolved_cik": 0.151,
         "resolved_entity_id": 0.151,
@@ -140,7 +176,11 @@
         "historical_name_sec": 0.151,
         "candidate_unique_cik": 97.692,
         "candidate_row_created_by_date": 94.882,
-        "candidate_name": 97.692
+        "candidate_name": 97.692,
+        "confirmed_by_multiple_evidence": 32.112,
+        "corroborated_candidate": 60.763,
+        "accredited_total": 92.875,
+        "ambiguous_identity": 2.559
       }
     },
     "2015": {
@@ -160,6 +200,10 @@
       "candidate_name": 1963,
       "ambiguous_alias": 0,
       "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 640,
+      "corroborated_candidate": 1202,
+      "accredited_total": 1842,
+      "ambiguous_identity": 53,
       "percent": {
         "resolved_cik": 0.0,
         "resolved_entity_id": 0.0,
@@ -167,26 +211,58 @@
         "historical_name_sec": 0.0,
         "candidate_unique_cik": 97.954,
         "candidate_row_created_by_date": 95.808,
-        "candidate_name": 97.954
+        "candidate_name": 97.954,
+        "confirmed_by_multiple_evidence": 31.936,
+        "corroborated_candidate": 59.98,
+        "accredited_total": 91.916,
+        "ambiguous_identity": 2.645
       }
     }
   },
   "ambiguous_examples": [
-    "AGN"
+    "AGN",
+    "ARNC",
+    "BRK-B",
+    "CB",
+    "CBRE",
+    "CMCSK",
+    "EA",
+    "LB",
+    "NLSN",
+    "NWSA",
+    "TGNA",
+    "TPR",
+    "UAA",
+    "ZBH"
   ],
   "sec_instance_evidence": {
-    "filings_with_local_instance": 949,
-    "ticker_proofs": 216,
-    "distinct_ticker_cik_pairs": 33,
-    "member_on_filing_date": 100,
-    "historical_names": 186,
+    "filings_with_local_instance": 2574,
+    "ticker_proofs": 896,
+    "distinct_ticker_cik_pairs": 313,
+    "member_on_filing_date": 722,
+    "historical_names": 896,
     "candidate_crosscheck": {
-      "agrees": 130,
+      "agrees": 797,
       "conflicts": 6,
-      "ambiguous": 0,
-      "missing": 80
+      "ambiguous": 3,
+      "missing": 90
     },
     "conflict_examples": [
+      {
+        "symbol": "AGN",
+        "cik": "0000850693",
+        "filed_date": "2010-02-26"
+      },
+      {
+        "symbol": "AGN",
+        "cik": "0000850693",
+        "filed_date": "2010-05-07"
+      },
+      {
+        "symbol": "AGN",
+        "cik": "0000850693",
+        "filed_date": "2010-08-06"
+      },
       {
         "symbol": "ACT",
         "cik": "0001578845",
@@ -219,10 +295,23 @@
       }
     ],
     "rejections": {
-      "Missing or ambiguous SEC trading symbol": 733
+      "Missing or ambiguous SEC trading symbol": 1676,
+      "XBRL issuer CIK mismatch": 1,
+      "xmlSAX2Characters": 1
     },
-    "imported_observations": 216,
-    "stored_observations": 216,
+    "imported_observations": 896,
+    "stored_observations": 896,
     "active_alias_rows": 2
+  },
+  "evidence_intervals": {
+    "source_id": "sec-identity-evidence:2010-2015:v1",
+    "count": 595,
+    "statuses": {
+      "confirmed_by_multiple_evidence": 188,
+      "corroborated_candidate": 355,
+      "ambiguous": 16,
+      "unresolved": 36
+    },
+    "note": "Retrospective corroboration, not a reviewed operational alias"
   }
 }

@@ -1553,8 +1553,11 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   las discrepancias con una segunda fuente gratuita. La
   [auditoría de identidad 2010–2015](docs/historical-identity-2010-2015.md)
   corrige el ticker retrospectivo `ANTM` a `WLP` antes del cambio de 2014,
-  con fuentes SEC/MIAX; los demás enlaces no acreditados siguen visibles como
-  tales.
+  con fuentes SEC/MIAX y mide dos niveles de identidad histórica: ticker/CIK
+  repetido directamente en SEC (~31–33%) y candidatos únicos corroborados por
+  informes del mismo emisor (total ~90–93%). Los ambiguos y no resueltos quedan
+  explícitamente excluidos del conjunto acreditado; aún no se alcanza el 95%
+  propuesto ni se atribuyen automáticamente precios/fundamentales legacy.
 - **Fundamentales y múltiplos clásicos** (ROIC, margen bruto/operativo/neto,
   deuda neta/EBITDA, crecimiento de ingresos/FCF, PER, P/VC, P/Ventas,
   EV/EBITDA): 100% desde `edgar_facts` + precio y nº de acciones de esa

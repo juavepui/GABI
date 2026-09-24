@@ -10,6 +10,8 @@ import pandas as pd
 
 from . import identity, storage
 
+IDENTITY_INTERVAL_SOURCE = "sec-identity-evidence:2010-2015:v1"
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS historical_sources (
  source_id TEXT PRIMARY KEY, metadata_json TEXT NOT NULL
@@ -34,6 +36,15 @@ CREATE TABLE IF NOT EXISTS historical_facts (
  record_key TEXT NOT NULL, filed_date TEXT NOT NULL, payload_json TEXT NOT NULL,
  PRIMARY KEY(source_id,candidate_symbol,cik,record_key)
 );
+CREATE TABLE IF NOT EXISTS historical_identity_intervals (
+ source_id TEXT NOT NULL, symbol TEXT NOT NULL, cik TEXT NOT NULL,
+ valid_from TEXT NOT NULL, valid_to TEXT NOT NULL,
+ status TEXT NOT NULL, evidence_count INTEGER NOT NULL,
+ first_filed TEXT, last_filed TEXT, source_refs_json TEXT NOT NULL,
+ PRIMARY KEY(source_id,symbol,cik,valid_from,valid_to)
+);
+CREATE INDEX IF NOT EXISTS idx_historical_identity_interval_symbol
+ ON historical_identity_intervals(symbol,valid_from,valid_to);
 """
 
 
@@ -169,6 +180,7 @@ def import_filing_identity_evidence(rows: list[dict]) -> int:
         symbol = identity.normalize_symbol(row["symbol"])
         payload = {"accession": row["accession"], "filed_date": row["filed_date"],
                    "historical_name": row.get("historical_name"), "sha256": row["sha256"],
+                   "historical_name_source": row.get("historical_name_source"),
                    "source_url": row["source_url"]}
         with storage.get_connection() as conn:
             identity.put_observations(conn, entity_id, "filing_identity", symbol,
@@ -195,6 +207,29 @@ def get_filing_identity_evidence(symbol: str, as_of: str) -> dict:
     entity_id = next(iter(entities))
     return {"status": "resolved", "entity_id": entity_id, "cik": entity_id.removeprefix("cik:"),
             "evidence": [row[1] for row in matches]}
+
+
+def replace_identity_intervals(source_id: str, rows: list[dict]) -> int:
+    """Replace one reproducible research tier; never activate operational aliases."""
+    allowed = {"confirmed_by_multiple_evidence", "corroborated_candidate",
+               "ambiguous", "unresolved"}
+    records = []
+    for row in rows:
+        if row["status"] not in allowed:
+            raise ValueError("Unknown historical identity tier")
+        start, end = row["valid_from"], row["valid_to"]
+        if start >= end:
+            raise ValueError("Invalid historical identity interval")
+        records.append((source_id, identity.normalize_symbol(row["symbol"]),
+                        identity.normalize_cik(row["cik"]), start, end, row["status"],
+                        row["evidence_count"], row.get("first_filed"), row.get("last_filed"),
+                        json.dumps(row.get("source_refs", []), sort_keys=True)))
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        conn.execute("DELETE FROM historical_identity_intervals WHERE source_id=?", (source_id,))
+        conn.executemany("INSERT INTO historical_identity_intervals VALUES (?,?,?,?,?,?,?,?,?,?)", records)
+        conn.commit()
+    return len(records)
 
 
 def source_summary() -> list[dict]:

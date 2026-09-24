@@ -136,12 +136,14 @@ uv run python -m gabi.entity_migration --submissions-json submissions.json --can
 ```
 
 La portada de un filing con CIK y ticker permite `import_filing_identity` para
-ese día. Extenderlo a un intervalo requiere evidencia adicional de cotización o
-cambio de ticker; las fechas de `formerNames` no se usan como sustituto. No se
-infiere el CIK del prefijo de un accession, que puede corresponder al presentador.
-El CSV de composición histórica local trae tickers, sin nombres: por eso este
-fallback no puede resolver automáticamente todos sus símbolos. No se descargó
-el bulk ni se hizo una campaña masiva de resolución en esta iteración.
+ese día. La [segunda fase del #27](historical-identity-2010-2015.md) combina
+varias portadas originales con pertenencia y candidatas fechadas en una tabla
+de investigación separada, `historical_identity_intervals`. Otro nivel combina
+el candidato único con varios informes SEC del mismo CIK y nombre del emisor;
+**no equivale a prueba directa del ticker**. `formerNames` ayuda a comprobar la
+continuidad del CIK, no las fechas de negociación. No se infiere el CIK del
+prefijo de un accession, que puede corresponder al presentador. Los intervalos
+no se convierten automáticamente en `entity_aliases` ni atribuyen datos legacy.
 
 Fuentes revisadas para las semillas: [inicio de FB](https://www.sec.gov/Archives/edgar/data/1326801/000132680114000007/fb-12312013x10k.htm),
 [cambio a META](https://www.sec.gov/Archives/edgar/data/1326801/000132680123000052/meta-12312022x10kars.htm),
@@ -171,9 +173,11 @@ base de auditoría. Tener CIK tampoco asegura disponer de precios ni XBRL atribu
 La calidad del propio histórico de composición continúa siendo una limitación.
 
 La [auditoría específica de 2010–2015](historical-identity-2010-2015.md)
-cuantifica esa brecha sobre los miembros trimestrales y archiva pruebas directas
-de ticker/CIK en XBRL original. Esas pruebas son de un solo día de filing y no
-activan aliases continuos en la base operativa.
+cuantifica ambos niveles sobre los miembros trimestrales, archiva 896 pruebas
+directas de ticker/CIK y reconstruye intervalos aparte. La cobertura de
+investigación queda en 90–93% según el año, pero solo ~31–33% tiene ticker
+repetido directamente en SEC. Ninguno de los niveles nuevos activa aliases
+continuos en la base operativa.
 
 Para repetir sobre una base de auditoría nueva:
 

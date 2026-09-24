@@ -104,7 +104,7 @@ def _archive() -> tuple[pd.DataFrame, str]:
 
 
 def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
-    """Use only reviewed, date-effective aliases; candidate CIKs never qualify."""
+    """Keep reviewed aliases, SEC filing-day proof and research tiers distinct."""
     with storage.get_connection() as conn:
         identity.ensure_schema(conn)
         rows = conn.execute(
@@ -113,6 +113,12 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
             "AND (a.valid_to IS NULL OR a.valid_to>?)", (as_of, as_of)).fetchall()
         evidence = conn.execute("SELECT symbol,entity_id,payload_json,source FROM entity_observations "
                                 "WHERE dataset='filing_identity'").fetchall()
+        has_intervals = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                                     "AND name='historical_identity_intervals'").fetchone()
+        intervals = conn.execute("SELECT symbol,cik,status,source_id FROM historical_identity_intervals "
+                                 "WHERE source_id=? AND valid_from<=? AND valid_to>?",
+                                 (historical_archive.IDENTITY_INTERVAL_SOURCE, as_of, as_of)
+                                 ).fetchall() if has_intervals else []
     candidates: dict[str, dict[str, float]] = {}
     ciks: dict[str, str | None] = {}
     for symbol, entity_id, cik, confidence in rows:
@@ -125,6 +131,15 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
         payload = json.loads(payload_json)
         if symbol in symbols and payload.get("filed_date") == as_of:
             proofs.setdefault(symbol, {})[entity_id] = (payload, source)
+    corroborated: dict[str, dict[str, tuple[str, str]]] = {}
+    blocked: set[str] = set()
+    for symbol, cik, status, source in intervals:
+        if symbol not in symbols:
+            continue
+        if status == "ambiguous":
+            blocked.add(symbol)
+        elif status in {"confirmed_by_multiple_evidence", "corroborated_candidate"}:
+            corroborated.setdefault(symbol, {})[f"cik:{cik}"] = (status, source)
     result = {}
     for symbol in symbols:
         found = candidates.get(symbol, {})
@@ -132,18 +147,31 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
         entity_id = next(iter(found)) if len(found) == 1 and next(iter(found.values())) >= identity.MIN_CONFIDENCE else None
         if entity_id:
             status = "resolved"
+        tier = "reviewed_alias" if entity_id else None
+        interval = corroborated.get(symbol, {})
+        if symbol in blocked or len(interval) > 1 or (interval and found and set(interval) != set(found)):
+            entity_id, status, tier = None, "ambiguous", None
+        elif len(interval) == 1 and status != "ambiguous":
+            entity_id, status = next(iter(interval)), "resolved"
+            tier = tier or interval[entity_id][0]
         proof = proofs.get(symbol, {})
         if proof and (len(proof) > 1 or status == "ambiguous" or
-                      (found and set(found) != set(proof))):
-            entity_id, status = None, "ambiguous"
+                      (found and set(found) != set(proof)) or
+                      (interval and set(interval) != set(proof))):
+            entity_id, status, tier = None, "ambiguous", None
         elif len(proof) == 1:
             entity_id, status = next(iter(proof)), "resolved"
+            tier = "filing_day"
         filing = proof.get(entity_id) if entity_id else None
         result[symbol] = {"entity_id": entity_id,
                           "cik": (ciks.get(entity_id) or entity_id.removeprefix("cik:")) if entity_id else None,
                           "identity_status": status,
-                          "identity_confidence": 1.0 if filing else found.get(entity_id),
-                          "identity_source": filing[1] if filing else None,
+                          "identity_tier": tier,
+                          "identity_confidence": (1.0 if filing else found.get(entity_id)
+                                                  if tier == "reviewed_alias" else None),
+                          "identity_source": (filing[1] if filing else interval[entity_id][1]
+                                              if tier in {"confirmed_by_multiple_evidence",
+                                                         "corroborated_candidate"} else None),
                           "historical_name": filing[0].get("historical_name") if filing else None}
     return result
 
@@ -190,6 +218,8 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
     identities = _identities(symbols, day)
     members = [{**corrected_intervals[symbol], **identities[symbol], "source_id": source_id,
                 "membership_status": "community_unverified"} for symbol in sorted(symbols)]
+    accredited_symbols = sorted(row["symbol"] for row in members if row["identity_status"] == "resolved")
+    excluded_identity_symbols = sorted(row["symbol"] for row in members if row["identity_status"] != "resolved")
     comparison: dict[str, object] = {"status": "not_requested", "reference_source_id": REFERENCE_SOURCE}
     if compare_reference and source_id == OPERATIONAL_SOURCE:
         try:
@@ -205,6 +235,8 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
             "coverage_start": dates[0], "coverage_end_exclusive": end,
             "source_end_exclusive": source_end,
             "symbols": sorted(symbols), "members": members, "comparison": comparison,
+            "accredited_symbols": accredited_symbols,
+            "excluded_identity_symbols": excluded_identity_symbols,
             "label_corrections": corrections,
             "quality": "community_unverified"}
 
