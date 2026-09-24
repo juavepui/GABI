@@ -12,6 +12,7 @@ from datetime import date, timedelta
 import pandas as pd
 
 from . import historical_archive, identity, storage, universe
+from .historical_ticker_corrections import WLP_END, correct_symbols
 from .membership_extension import apply_reviewed_extension
 
 OPERATIONAL_SOURCE = "hanshof:local+reviewed-extension"
@@ -110,6 +111,8 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
             "SELECT a.symbol,a.entity_id,e.cik,a.confidence FROM entity_aliases a "
             "JOIN entities e USING(entity_id) WHERE a.valid_from<=? "
             "AND (a.valid_to IS NULL OR a.valid_to>?)", (as_of, as_of)).fetchall()
+        evidence = conn.execute("SELECT symbol,entity_id,payload_json,source FROM entity_observations "
+                                "WHERE dataset='filing_identity'").fetchall()
     candidates: dict[str, dict[str, float]] = {}
     ciks: dict[str, str | None] = {}
     for symbol, entity_id, cik, confidence in rows:
@@ -117,6 +120,11 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
             candidates.setdefault(symbol, {})[entity_id] = max(
                 confidence, candidates.get(symbol, {}).get(entity_id, 0))
             ciks[entity_id] = cik
+    proofs: dict[str, dict[str, tuple[dict, str]]] = {}
+    for symbol, entity_id, payload_json, source in evidence:
+        payload = json.loads(payload_json)
+        if symbol in symbols and payload.get("filed_date") == as_of:
+            proofs.setdefault(symbol, {})[entity_id] = (payload, source)
     result = {}
     for symbol in symbols:
         found = candidates.get(symbol, {})
@@ -124,9 +132,19 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
         entity_id = next(iter(found)) if len(found) == 1 and next(iter(found.values())) >= identity.MIN_CONFIDENCE else None
         if entity_id:
             status = "resolved"
-        result[symbol] = {"entity_id": entity_id, "cik": ciks[entity_id] if entity_id else None,
+        proof = proofs.get(symbol, {})
+        if proof and (len(proof) > 1 or status == "ambiguous" or
+                      (found and set(found) != set(proof))):
+            entity_id, status = None, "ambiguous"
+        elif len(proof) == 1:
+            entity_id, status = next(iter(proof)), "resolved"
+        filing = proof.get(entity_id) if entity_id else None
+        result[symbol] = {"entity_id": entity_id,
+                          "cik": (ciks.get(entity_id) or entity_id.removeprefix("cik:")) if entity_id else None,
                           "identity_status": status,
-                          "identity_confidence": found[entity_id] if entity_id else None}
+                          "identity_confidence": 1.0 if filing else found.get(entity_id),
+                          "identity_source": filing[1] if filing else None,
+                          "historical_name": filing[0].get("historical_name") if filing else None}
     return result
 
 
@@ -152,11 +170,25 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
     if index < 0 or day >= end:
         first = dates[0] if dates else "none"
         raise ValueError(f"Date {day} outside {source_id} coverage [{first}, {end})")
-    source_date, symbols = rows[index]
+    source_date, reported_symbols = rows[index]
+    symbols, corrections = correct_symbols(reported_symbols, day)
     active_intervals = {row["symbol"]: row for row in intervals(frame, end, boundary_reason=boundary_reason)
                         if row["valid_from"] <= day < row["valid_to"]}
+    corrected_intervals = {}
+    for symbol in symbols:
+        raw_symbol = "ANTM" if corrections and symbol == "WLP" else symbol
+        interval = {**active_intervals[raw_symbol], "symbol": symbol}
+        if corrections and symbol == "WLP":
+            change = corrections[0]
+            interval["valid_from"] = max(interval["valid_from"], change["valid_from"])
+            if change["valid_to"] <= interval["valid_to"]:
+                interval["valid_to"] = change["valid_to"]
+                interval["end_reason"] = "ticker_change"
+        elif symbol == "ANTM" and day >= WLP_END:
+            interval["valid_from"] = max(interval["valid_from"], WLP_END)
+        corrected_intervals[symbol] = interval
     identities = _identities(symbols, day)
-    members = [{**active_intervals[symbol], **identities[symbol], "source_id": source_id,
+    members = [{**corrected_intervals[symbol], **identities[symbol], "source_id": source_id,
                 "membership_status": "community_unverified"} for symbol in sorted(symbols)]
     comparison: dict[str, object] = {"status": "not_requested", "reference_source_id": REFERENCE_SOURCE}
     if compare_reference and source_id == OPERATIONAL_SOURCE:
@@ -165,7 +197,7 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
         except ValueError:
             comparison["status"] = "outside_reference_coverage_or_not_imported"
         else:
-            other = set(reference["symbols"])
+            other, _ = correct_symbols(set(reference["symbols"]), day)
             comparison.update(status="agree" if symbols == other else "conflict",
                               primary_only=sorted(symbols - other), reference_only=sorted(other - symbols),
                               reference_date=reference["source_date"])
@@ -173,6 +205,7 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
             "coverage_start": dates[0], "coverage_end_exclusive": end,
             "source_end_exclusive": source_end,
             "symbols": sorted(symbols), "members": members, "comparison": comparison,
+            "label_corrections": corrections,
             "quality": "community_unverified"}
 
 

@@ -151,6 +151,52 @@ def import_sec_facts(source_id: str, candidate_symbol: str, cik: str, rows: list
     return len(records)
 
 
+def import_filing_identity_evidence(rows: list[dict]) -> int:
+    """Store original SEC ticker/CIK observations without activating aliases.
+
+    The XBRL cover proves the relationship on its filing date only. Importing
+    these observations must not make legacy ticker prices available to a new
+    issuer or imply a continuous ticker interval.
+    """
+    count = 0
+    for row in rows:
+        if not str(row["source_url"]).startswith("https://www.sec.gov/Archives/edgar/data/"):
+            raise ValueError("Original SEC filing URL required")
+        if len(str(row["sha256"])) != 64:
+            raise ValueError("Original SEC filing SHA-256 required")
+        pd.Timestamp(row["filed_date"])
+        entity_id = identity.ensure_entity(row["cik"])
+        symbol = identity.normalize_symbol(row["symbol"])
+        payload = {"accession": row["accession"], "filed_date": row["filed_date"],
+                   "historical_name": row.get("historical_name"), "sha256": row["sha256"],
+                   "source_url": row["source_url"]}
+        with storage.get_connection() as conn:
+            identity.put_observations(conn, entity_id, "filing_identity", symbol,
+                                      [payload], row["source_url"])
+            conn.commit()
+        count += 1
+    return count
+
+
+def get_filing_identity_evidence(symbol: str, as_of: str) -> dict:
+    """Resolve SEC filing-day evidence only; other dates remain unproven."""
+    day = pd.Timestamp(as_of).date().isoformat()
+    with storage.get_connection() as conn:
+        identity.ensure_schema(conn)
+        rows = conn.execute("SELECT entity_id,payload_json,source FROM entity_observations "
+                            "WHERE dataset='filing_identity' AND symbol=?",
+                            (identity.normalize_symbol(symbol),)).fetchall()
+    matches = [(entity_id, json.loads(payload), source) for entity_id, payload, source in rows
+               if json.loads(payload).get("filed_date") == day]
+    entities = {row[0] for row in matches}
+    if len(entities) != 1:
+        return {"status": "ambiguous" if entities else "unresolved", "entity_id": None,
+                "cik": None, "evidence": [row[1] for row in matches]}
+    entity_id = next(iter(entities))
+    return {"status": "resolved", "entity_id": entity_id, "cik": entity_id.removeprefix("cik:"),
+            "evidence": [row[1] for row in matches]}
+
+
 def source_summary() -> list[dict]:
     """Local archive coverage, independent of live-universe data quality."""
     with storage.get_connection() as conn:

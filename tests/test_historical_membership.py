@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from gabi import config, historical_archive, identity, universe
+from gabi import config, entity_migration, historical_archive, identity, universe
 from gabi import historical_membership as membership
 
 
@@ -95,3 +95,38 @@ def test_conflicting_day_creates_unknown_gap_until_next_clean_snapshot(tmp_path,
         membership.constituents_as_of("2010-02-02", compare_reference=False)
     after = membership.constituents_as_of("2010-03-01", compare_reference=False)
     assert after["symbols"] == ["BBB"]
+
+
+def test_sec_filing_resolves_only_filing_day_without_activating_legacy_alias(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", tmp_path / "members.csv")
+    _frame([("2010-01-04", "AAA"), ("2010-06-01", "AAA,BBB")]).to_csv(
+        universe.HISTORICAL_MEMBERSHIP_CACHE, index=False)
+    historical_archive.import_filing_identity_evidence([{
+        "symbol": "AAA", "cik": "123", "historical_name": "Old Name Inc",
+        "sha256": "a" * 64, "accession": "0000000123-10-000001", "filed_date": "2010-05-01",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/123/x/a.xml",
+    }])
+    on_day = membership.constituents_as_of("2010-05-01", compare_reference=False)["members"][0]
+    assert on_day["identity_status"] == "resolved"
+    assert on_day["cik"] == "0000000123"
+    assert on_day["historical_name"] == "Old Name Inc"
+    assert membership.constituents_as_of("2010-05-02", compare_reference=False)["members"][0]["identity_status"] == "unresolved"
+    assert identity.resolve("AAA", "2010-05-01")["status"] == "unresolved"
+
+
+def test_reviewed_wlp_ticker_correction_has_explicit_change_boundary(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", tmp_path / "members.csv")
+    _frame([("2009-12-01", "ANTM,AAA"), ("2014-12-03", "ANTM,AAA")]).to_csv(
+        universe.HISTORICAL_MEMBERSHIP_CACHE, index=False)
+    entity_migration.activate_reviewed_symbol("WLP")
+    before = membership.constituents_as_of("2010-06-30", compare_reference=False)
+    wlp = next(row for row in before["members"] if row["symbol"] == "WLP")
+    assert wlp["valid_from"] == "2009-12-01"
+    assert wlp["valid_to"] == "2014-12-03"
+    assert wlp["end_reason"] == "ticker_change"
+    assert wlp["cik"] == "0001156039"
+    after = membership.constituents_as_of("2014-12-03", compare_reference=False)
+    antm = next(row for row in after["members"] if row["symbol"] == "ANTM")
+    assert antm["valid_from"] == "2014-12-03"

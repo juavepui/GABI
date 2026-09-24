@@ -25,7 +25,7 @@ contradictorias se conservan: no gana silenciosamente el registro más reciente.
 Los límites abiertos requieren mantenimiento; registrar una nueva compañía con
 el mismo ticker provoca ambigüedad hasta acreditar el fin de la anterior.
 
-La semilla revisada contiene FB→META y ANTM→ELV, con fechas y enlaces de evidencia
+La semilla revisada contiene WLP→ANTM, FB→META y ANTM→ELV, con fechas y enlaces de evidencia
 en `entity_migration.KNOWN_ALIASES`. No es un catálogo exhaustivo de cambios.
 
 ```python
@@ -52,11 +52,10 @@ sus alias; las revisiones se siguen filtrando por `filed_date`. Los fundamentale
 Yahoo mantienen la fecha de descarga y no se usan como fundamentales históricos.
 
 El ranking histórico es **no estricto por defecto** (`strict_identity=False`,
-igual que `entity_master.get_sector_asof`): `data/gabi.db` no tiene alias
-migrados todavía (ver más abajo), así que exigir identidad acreditada por
-defecto dejaba CUALQUIER backtest sin ningún periodo con datos suficientes —
-comprobado contra la base real, no solo contra `data/identity-audit.db`. Por
-eso los símbolos sin alias registrado (todos, hoy) siguen leyendo de la caché
+igual que `entity_master.get_sector_asof`): `data/gabi.db` solo tiene activados
+los intervalos revisados de `WLP` de 2009–2014, sin precios atribuidos. Exigir
+identidad acreditada por defecto dejaría los backtests sin cobertura suficiente.
+Por eso los símbolos sin alias registrado siguen leyendo de la caché
 legacy por ticker, exactamente como antes de esta migración; `identity_status`
 en la tabla resultante marca cada fila como `resolved`/`ambiguous`/`unresolved`
 para que quede visible, no oculto. El sector se busca entre snapshots de esa
@@ -96,7 +95,7 @@ uv run python -m gabi.entity_migration --migrate
 Antes de migrar una base existente, el CLI crea una copia SQLite consistente
 `data/gabi.db.before-identity.bak` si todavía no existe. La migración es aditiva
 e idempotente. Importa los snapshots con CIK como evidencia **solo del día
-observado**, copia su sector y registra los cuatro alias revisados. No toca las
+observado**, copia su sector y registra los seis intervalos revisados. No toca las
 filas financieras originales. Esa copia es previa a la primera migración; para
 un punto de restauración más reciente hay que hacer otra copia con otro nombre.
 
@@ -115,8 +114,9 @@ fundamentales, la descarga. Se admiten `prices`, `splits`, `fundamentals` y
 introducida en `--source`; no debe usarse para atribuir automáticamente todos los
 tickers. Las lecturas por fecha requieren también alias acreditados.
 
-Esta entrega ejecutó el informe sobre `data/identity-audit.db`, una base separada
-con la semilla revisada. **No migró ni atribuyó los datos de `data/gabi.db`.**
+La entrega original ejecutó el informe sobre `data/identity-audit.db`, una base
+separada con la semilla revisada. El #27 activó selectivamente `WLP` en
+`data/gabi.db`; no migró los demás alias ni atribuyó precios/fundamentales.
 Al activar las lecturas estrictas, la cobertura útil baja hasta acreditar alias
 y atribuir/redescargar datos. La UI lo muestra como ausencia, no como calidad verde.
 
@@ -169,6 +169,11 @@ Con solo esta semilla hay 2.843/1.644.637 pares históricos acreditados (0,173%)
 Desde 2016 hay 2.498/622.161 (0,402%). El resto carece de prueba temporal en esta
 base de auditoría. Tener CIK tampoco asegura disponer de precios ni XBRL atribuidos.
 La calidad del propio histórico de composición continúa siendo una limitación.
+
+La [auditoría específica de 2010–2015](historical-identity-2010-2015.md)
+cuantifica esa brecha sobre los miembros trimestrales y archiva pruebas directas
+de ticker/CIK en XBRL original. Esas pruebas son de un solo día de filing y no
+activan aliases continuos en la base operativa.
 
 Para repetir sobre una base de auditoría nueva:
 

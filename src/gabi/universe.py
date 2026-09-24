@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 
 from . import config
+from .historical_ticker_corrections import correct_symbols
 from .membership_extension import apply_reviewed_extension
 
 # Fuente principal: CSV plano mantenido en sincronía con la Wikipedia oficial.
@@ -134,10 +135,14 @@ def get_sp500_constituents_asof(target_date: str) -> dict:
             for value in on_day["tickers"]}) > 1:
         raise ValueError(f"Composición histórica contradictoria el {row['date']}; "
                          "se necesita otro snapshot sin conflicto.")
-    symbols = [s.strip() for s in str(row["tickers"]).split(",") if s.strip()]
+    reported = [s.strip() for s in str(row["tickers"]).split(",") if s.strip()]
+    _, corrections = correct_symbols({s.replace(".", "-") for s in reported}, target_date)
+    symbols = ["WLP" if corrections and symbol == "ANTM" else symbol for symbol in reported]
     return {
         "symbols": symbols,
         "source_date": row["date"],
         "is_exact": True,
-        "note": f"Última composición registrada el {row['date']}, aplicable a {target_date}.",
+        "label_corrections": corrections,
+        "note": (f"Última composición registrada el {row['date']}, aplicable a {target_date}."
+                 + (" ANTM se ha corregido a WLP según evidencia SEC/MIAX fechada." if corrections else "")),
     }

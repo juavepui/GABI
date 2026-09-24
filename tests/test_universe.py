@@ -78,3 +78,15 @@ def test_get_sp500_constituents_asof_blocks_conflicting_snapshot_until_next_date
     with pytest.raises(ValueError, match="contradictoria"):
         universe.get_sp500_constituents_asof("2018-03-15")
     assert universe.get_sp500_constituents_asof("2018-04-01")["symbols"] == ["CCC"]
+
+
+def test_reviewed_wlp_label_replaces_retrospective_antm_only_before_change(tmp_path, monkeypatch):
+    cache = tmp_path / "hist.csv"
+    _write_history(cache, [("2009-12-01", "AAA,ANTM"), ("2014-12-03", "AAA,ANTM")])
+    monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", cache)
+    before = universe.get_sp500_constituents_asof("2010-06-30")
+    assert before["symbols"] == ["AAA", "WLP"]
+    assert before["label_corrections"][0]["reported_symbol"] == "ANTM"
+    after = universe.get_sp500_constituents_asof("2014-12-03")
+    assert after["symbols"] == ["AAA", "ANTM"]
+    assert after["label_corrections"] == []

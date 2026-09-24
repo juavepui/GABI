@@ -1,0 +1,228 @@
+{
+  "membership_source_id": "fja05680:a2430f2af0c79ddf0748e91de11bdeb1616ab5a7",
+  "candidate_source_id": "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b",
+  "window": [
+    "2010-03-31",
+    "2015-12-31"
+  ],
+  "unit": "quarter-end member observation",
+  "candidate_warning": "lawcal CIK/name are reconstructed candidates, not verified ticker aliases; row creation date does not date the manually backfilled CIK",
+  "by_year": {
+    "2010": {
+      "quarter_dates": [
+        "2010-03-31",
+        "2010-06-30",
+        "2010-09-30",
+        "2010-12-31"
+      ],
+      "member_observations": 1992,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1883,
+      "candidate_row_created_by_date": 1803,
+      "candidate_name": 1883,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 94.528,
+        "candidate_row_created_by_date": 90.512,
+        "candidate_name": 94.528
+      }
+    },
+    "2011": {
+      "quarter_dates": [
+        "2011-03-31",
+        "2011-06-30",
+        "2011-09-30",
+        "2011-12-31"
+      ],
+      "member_observations": 1988,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1889,
+      "candidate_row_created_by_date": 1824,
+      "candidate_name": 1889,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 95.02,
+        "candidate_row_created_by_date": 91.751,
+        "candidate_name": 95.02
+      }
+    },
+    "2012": {
+      "quarter_dates": [
+        "2012-03-31",
+        "2012-06-30",
+        "2012-09-30",
+        "2012-12-31"
+      ],
+      "member_observations": 1988,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1911,
+      "candidate_row_created_by_date": 1853,
+      "candidate_name": 1911,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 96.127,
+        "candidate_row_created_by_date": 93.209,
+        "candidate_name": 96.127
+      }
+    },
+    "2013": {
+      "quarter_dates": [
+        "2013-03-31",
+        "2013-06-30",
+        "2013-09-30",
+        "2013-12-31"
+      ],
+      "member_observations": 1988,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1931,
+      "candidate_row_created_by_date": 1869,
+      "candidate_name": 1931,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 97.133,
+        "candidate_row_created_by_date": 94.014,
+        "candidate_name": 97.133
+      }
+    },
+    "2014": {
+      "quarter_dates": [
+        "2014-03-31",
+        "2014-06-30",
+        "2014-09-30",
+        "2014-12-31"
+      ],
+      "member_observations": 1993,
+      "resolved_cik": 3,
+      "resolved_entity_id": 3,
+      "date_valid_alias": 3,
+      "historical_name_sec": 3,
+      "candidate_unique_cik": 1947,
+      "candidate_row_created_by_date": 1891,
+      "candidate_name": 1947,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "percent": {
+        "resolved_cik": 0.151,
+        "resolved_entity_id": 0.151,
+        "date_valid_alias": 0.151,
+        "historical_name_sec": 0.151,
+        "candidate_unique_cik": 97.692,
+        "candidate_row_created_by_date": 94.882,
+        "candidate_name": 97.692
+      }
+    },
+    "2015": {
+      "quarter_dates": [
+        "2015-03-31",
+        "2015-06-30",
+        "2015-09-30",
+        "2015-12-31"
+      ],
+      "member_observations": 2004,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 1963,
+      "candidate_row_created_by_date": 1920,
+      "candidate_name": 1963,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 97.954,
+        "candidate_row_created_by_date": 95.808,
+        "candidate_name": 97.954
+      }
+    }
+  },
+  "ambiguous_examples": [
+    "AGN"
+  ],
+  "sec_instance_evidence": {
+    "filings_with_local_instance": 949,
+    "ticker_proofs": 216,
+    "distinct_ticker_cik_pairs": 33,
+    "member_on_filing_date": 100,
+    "historical_names": 186,
+    "candidate_crosscheck": {
+      "agrees": 130,
+      "conflicts": 6,
+      "ambiguous": 0,
+      "missing": 80
+    },
+    "conflict_examples": [
+      {
+        "symbol": "ACT",
+        "cik": "0001578845",
+        "filed_date": "2014-02-25"
+      },
+      {
+        "symbol": "ACT",
+        "cik": "0001578845",
+        "filed_date": "2014-05-05"
+      },
+      {
+        "symbol": "ACT",
+        "cik": "0001578845",
+        "filed_date": "2014-08-05"
+      },
+      {
+        "symbol": "ACT",
+        "cik": "0001578845",
+        "filed_date": "2014-11-05"
+      },
+      {
+        "symbol": "ACT",
+        "cik": "0001578845",
+        "filed_date": "2015-02-18"
+      },
+      {
+        "symbol": "ACT",
+        "cik": "0001578845",
+        "filed_date": "2015-05-11"
+      }
+    ],
+    "rejections": {
+      "Missing or ambiguous SEC trading symbol": 733
+    },
+    "imported_observations": 216,
+    "stored_observations": 216,
+    "active_alias_rows": 2
+  }
+}

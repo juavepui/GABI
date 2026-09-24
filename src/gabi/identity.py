@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS entity_observations (
     source TEXT NOT NULL,
     PRIMARY KEY(entity_id, dataset, symbol, record_key)
 );
+CREATE INDEX IF NOT EXISTS idx_entity_observations_dataset_symbol
+    ON entity_observations(dataset, symbol);
 CREATE TABLE IF NOT EXISTS entity_candidates (
     symbol TEXT NOT NULL, entity_id TEXT NOT NULL REFERENCES entities(entity_id),
     name TEXT, source TEXT NOT NULL, reason TEXT NOT NULL,
@@ -43,7 +45,7 @@ MIN_CONFIDENCE = 0.9
 DATA_KEYS = {
     "prices": ("date",), "splits": ("date",), "fundamentals": ("fetched_at",),
     "edgar_facts": ("tag", "unit", "start_date", "end_date", "accn"),
-    "sector": ("effective_date",),
+    "sector": ("effective_date",), "filing_identity": ("accession",),
 }
 
 

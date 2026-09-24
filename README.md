@@ -1550,7 +1550,11 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   correctamente incluye tickers como ABMD, ANTM o ATVI que ya no están en el
   S&P 500 actual. Fuera de la cobertura local se rechaza la consulta. La
   [auditoría de membresía](docs/historical-membership-2010-2026.md) documenta
-  las discrepancias con una segunda fuente gratuita.
+  las discrepancias con una segunda fuente gratuita. La
+  [auditoría de identidad 2010–2015](docs/historical-identity-2010-2015.md)
+  corrige el ticker retrospectivo `ANTM` a `WLP` antes del cambio de 2014,
+  con fuentes SEC/MIAX; los demás enlaces no acreditados siguen visibles como
+  tales.
 - **Fundamentales y múltiplos clásicos** (ROIC, margen bruto/operativo/neto,
   deuda neta/EBITDA, crecimiento de ingresos/FCF, PER, P/VC, P/Ventas,
   EV/EBITDA): 100% desde `edgar_facts` + precio y nº de acciones de esa

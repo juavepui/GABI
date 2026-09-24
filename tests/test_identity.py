@@ -52,6 +52,17 @@ def test_real_fb_meta_and_antm_elv_change_with_exclusive_boundary():
     assert identity.resolve("FB", "2022-06-08")["entity_id"] == identity.resolve("META", "2022-06-09")["entity_id"]
     assert identity.resolve("FB", "2022-06-09")["status"] == "unresolved"
     assert identity.resolve("ANTM", "2022-06-27")["entity_id"] == identity.resolve("ELV", "2022-06-28")["entity_id"]
+    assert identity.resolve("WLP", "2010-03-31")["entity_id"] == identity.resolve("ANTM", "2014-12-03")["entity_id"]
+    assert identity.resolve("WLP", "2014-12-03")["status"] == "unresolved"
+
+
+def test_selected_reviewed_historical_alias_does_not_activate_unrelated_tickers():
+    assert entity_migration.activate_reviewed_symbol("WLP") == 2
+    assert entity_migration.activate_reviewed_symbol("WLP") == 2
+    assert identity.resolve("WLP", "2011-01-01")["cik"] == "0001156039"
+    assert identity.resolve("ANTM", "2016-01-01")["status"] == "unresolved"
+    with pytest.raises(ValueError, match="No reviewed alias"):
+        entity_migration.activate_reviewed_symbol("UNKNOWN")
 
 
 def test_recycled_symbol_has_two_entities_and_no_legacy_contamination():

@@ -54,6 +54,14 @@ atribuirlos sin contrastar documentos generaría falsas identidades. En
 etiqueta posterior de Yahoo; por eso un recuento más cercano a 500 tampoco
 acredita que las etiquetas fueran utilizables en 2010.
 
+El [trabajo posterior de identidad (#27)](historical-identity-2010-2015.md)
+confirmó un caso concreto: ambas fuentes etiquetan retrospectivamente como
+`ANTM` a WellPoint antes de su cambio desde `WLP` el 2014-12-03. La consulta
+por fecha corrige ese ticker en el intervalo documentado y conserva las listas
+originales. La tabla comparativa de arriba mide los **CSV originales**; como
+la misma corrección se aplica a ambas fuentes, sus diferencias de conteo no
+cambian.
+
 La fecha `2022-06-21` aparece dos veces con composiciones contradictorias en la caché
 operativa. La consulta nueva bloquea esa fecha y el tramo hasta el siguiente
 snapshot no conflictivo; los intervalos anteriores terminan con
