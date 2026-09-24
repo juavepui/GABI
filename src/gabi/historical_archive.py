@@ -131,7 +131,7 @@ def get_prices(source_id: str, symbol: str, start: str, end: str) -> pd.DataFram
     return result
 
 
-def import_sec_facts(source_id: str, candidate_symbol: str, cik: str, rows: list[dict]) -> int:
+def import_sec_facts(source_id: str, candidate_symbol: str, cik: str, rows: list[dict], *, source_url: str | None = None) -> int:
     """SEC verifies the issuer of facts, not a community ticker-to-issuer mapping.
 
     Keep candidate provenance and issuer observations, without populating the
@@ -146,7 +146,7 @@ def import_sec_facts(source_id: str, candidate_symbol: str, cik: str, rows: list
                     r["filed_date"], json.dumps(r, allow_nan=False)) for r in rows]
         conn.executemany("INSERT OR REPLACE INTO historical_facts VALUES (?,?,?,?,?,?)", records)
         identity.put_observations(conn, entity_id, "edgar_facts", candidate_symbol, rows,
-                                  f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json")
+                                  source_url or f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json")
         conn.commit()
     return len(records)
 

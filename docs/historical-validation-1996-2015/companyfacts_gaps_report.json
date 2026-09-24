@@ -1,0 +1,302 @@
+{
+  "0000005513": {
+    "status": "complete",
+    "rows": 669,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000005513.json"
+  },
+  "0000006201": {
+    "status": "complete",
+    "rows": 637,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000006201.json"
+  },
+  "0000012659": {
+    "status": "complete",
+    "rows": 880,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000012659.json"
+  },
+  "0000024741": {
+    "status": "complete",
+    "rows": 752,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000024741.json"
+  },
+  "0000030625": {
+    "status": "complete",
+    "rows": 1034,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000030625.json"
+  },
+  "0000036966": {
+    "status": "complete",
+    "rows": 604,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000036966.json"
+  },
+  "0000042582": {
+    "status": "complete",
+    "rows": 653,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000042582.json"
+  },
+  "0000046765": {
+    "status": "complete",
+    "rows": 1083,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000046765.json"
+  },
+  "0000059558": {
+    "status": "complete",
+    "rows": 615,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000059558.json"
+  },
+  "0000063276": {
+    "status": "complete",
+    "rows": 1104,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000063276.json"
+  },
+  "0000077476": {
+    "status": "complete",
+    "rows": 873,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000077476.json"
+  },
+  "0000078239": {
+    "status": "complete",
+    "rows": 759,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000078239.json"
+  },
+  "0000078814": {
+    "status": "complete",
+    "rows": 829,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000078814.json"
+  },
+  "0000085961": {
+    "status": "complete",
+    "rows": 638,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000085961.json"
+  },
+  "0000086144": {
+    "status": "complete",
+    "rows": 1130,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000086144.json"
+  },
+  "0000086312": {
+    "status": "complete",
+    "rows": 581,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000086312.json"
+  },
+  "0000095521": {
+    "status": "complete",
+    "rows": 888,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000095521.json"
+  },
+  "0000096223": {
+    "status": "complete",
+    "rows": 1108,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000096223.json"
+  },
+  "0000103379": {
+    "status": "complete",
+    "rows": 1042,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000103379.json"
+  },
+  "0000104889": {
+    "status": "complete",
+    "rows": 881,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000104889.json"
+  },
+  "0000106640": {
+    "status": "complete",
+    "rows": 1008,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000106640.json"
+  },
+  "0000109380": {
+    "status": "complete",
+    "rows": 554,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000109380.json"
+  },
+  "0000315213": {
+    "status": "complete",
+    "rows": 725,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000315213.json"
+  },
+  "0000315852": {
+    "status": "complete",
+    "rows": 920,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000315852.json"
+  },
+  "0000350698": {
+    "status": "complete",
+    "rows": 833,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000350698.json"
+  },
+  "0000701985": {
+    "status": "complete",
+    "rows": 1323,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000701985.json"
+  },
+  "0000717423": {
+    "status": "complete",
+    "rows": 916,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000717423.json"
+  },
+  "0000793952": {
+    "status": "complete",
+    "rows": 782,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000793952.json"
+  },
+  "0000794367": {
+    "status": "complete",
+    "rows": 967,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000794367.json"
+  },
+  "0000812074": {
+    "status": "complete",
+    "rows": 822,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000812074.json"
+  },
+  "0000814453": {
+    "status": "complete",
+    "rows": 810,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000814453.json"
+  },
+  "0000816761": {
+    "status": "complete",
+    "rows": 840,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000816761.json"
+  },
+  "0000818479": {
+    "status": "complete",
+    "rows": 1034,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000818479.json"
+  },
+  "0000858877": {
+    "status": "complete",
+    "rows": 1184,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000858877.json"
+  },
+  "0000866787": {
+    "status": "complete",
+    "rows": 1032,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000866787.json"
+  },
+  "0000885639": {
+    "status": "complete",
+    "rows": 1077,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000885639.json"
+  },
+  "0000899689": {
+    "status": "complete",
+    "rows": 879,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000899689.json"
+  },
+  "0000909832": {
+    "status": "complete",
+    "rows": 1273,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000909832.json"
+  },
+  "0000912242": {
+    "status": "complete",
+    "rows": 602,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000912242.json"
+  },
+  "0000922864": {
+    "status": "complete",
+    "rows": 810,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000922864.json"
+  },
+  "0001004434": {
+    "status": "complete",
+    "rows": 822,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001004434.json"
+  },
+  "0001018840": {
+    "status": "complete",
+    "rows": 714,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018840.json"
+  },
+  "0001018963": {
+    "status": "complete",
+    "rows": 875,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018963.json"
+  },
+  "0001021860": {
+    "status": "complete",
+    "rows": 1261,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001021860.json"
+  },
+  "0001040971": {
+    "status": "complete",
+    "rows": 751,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001040971.json"
+  },
+  "0001041061": {
+    "status": "complete",
+    "rows": 942,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001041061.json"
+  },
+  "0001048286": {
+    "status": "complete",
+    "rows": 975,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001048286.json"
+  },
+  "0001070412": {
+    "status": "complete",
+    "rows": 1022,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001070412.json"
+  },
+  "0001070750": {
+    "status": "complete",
+    "rows": 574,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001070750.json"
+  },
+  "0001100962": {
+    "status": "complete",
+    "rows": 799,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001100962.json"
+  },
+  "0001124198": {
+    "status": "complete",
+    "rows": 896,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001124198.json"
+  },
+  "0001158449": {
+    "status": "complete",
+    "rows": 978,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001158449.json"
+  },
+  "0001276520": {
+    "status": "complete",
+    "rows": 895,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001276520.json"
+  },
+  "0001326380": {
+    "status": "complete",
+    "rows": 978,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001326380.json"
+  },
+  "0001336917": {
+    "status": "complete",
+    "rows": 827,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001336917.json"
+  },
+  "0001365135": {
+    "status": "complete",
+    "rows": 820,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001365135.json"
+  },
+  "0001526520": {
+    "status": "complete",
+    "rows": 504,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001526520.json"
+  },
+  "0001585364": {
+    "status": "complete",
+    "rows": 415,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001585364.json"
+  },
+  "0001593538": {
+    "status": "complete",
+    "rows": 178,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001593538.json"
+  },
+  "0001604778": {
+    "status": "complete",
+    "rows": 169,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001604778.json"
+  }
+}

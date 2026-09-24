@@ -1,0 +1,40 @@
+{
+  "quarters": 80,
+  "company_quarters": 39610,
+  "metrics": [
+    "pe",
+    "pb",
+    "ev_ebitda",
+    "roic",
+    "operating_margin",
+    "revenue_cagr_3y",
+    "fcf_cagr_3y",
+    "momentum_12m",
+    "rel_strength_6m",
+    "price_vs_sma200",
+    "debt_to_equity",
+    "volatility",
+    "max_drawdown"
+  ],
+  "numerical_only": true,
+  "sector_verified": false,
+  "source_comparison": {
+    "insufficient_overlap": 570,
+    "consistent_overlap": 391,
+    "disagreement": 23
+  },
+  "final_quarter": {
+    "date": "2015-12-31",
+    "members": 502,
+    "all_13": 118,
+    "eligible_by_metric_rule": 416,
+    "before_all_13": 108,
+    "before_eligible_by_metric_rule": 376,
+    "prices_253_recent": 473,
+    "fresh_filing": 456,
+    "identity_verified": 0,
+    "sector_verified": 0,
+    "fully_validated": 0,
+    "all_13_fresh_prices_and_filing": 118
+  }
+}

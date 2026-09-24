@@ -1604,6 +1604,19 @@ Si en algún momento se paga acceso a un proveedor point-in-time (tipo
 Sharadar), sustituiría/complementaría esto — pero de momento todo lo
 anterior es gratis.
 
+## Validación de datos anteriores a 2016
+
+Se han importado los 28 paquetes SEC de 2009–2015 y recuperado contextos
+originales para contrastar 454.341 registros. Un extractor con especificaciones
+revisadas cubre un piloto de Microsoft 1996, Lehman 2007 y Apple 2008. El informe
+de 80 trimestres distingue métricas calculables de identidad y sector históricos
+acreditados; todavía no certifica un backtest completo desde 1996.
+
+Los resultados, fuentes, límites y comandos están en
+[la validación histórica 1996–2015](docs/historical-validation-1996-2015/README.md).
+La cobertura también se muestra en **Calidad de los datos → Archivo histórico
+anterior a 2016**.
+
 ## Capa de IA: generador de prompt (no llamada a API)
 
 En 🔍 Ficha de empresa hay una sección "🤖 Prompt para analizar con IA"

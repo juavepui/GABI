@@ -62,7 +62,7 @@ def test_sec_issuer_data_does_not_certify_candidate_ticker(db):
     rows = [{"tag": "Revenues", "unit": "USD", "start_date": "2008-01-01", "end_date": "2008-12-31",
              "val": 100, "form": "10-K", "fp": "FY", "fy": 2008, "filed_date": "2009-03-01", "accn": "example"}]
     for _ in range(2):
-        historical_archive.import_sec_facts("test", "OLD", "123", rows)
+        historical_archive.import_sec_facts("test", "OLD", "123", rows, source_url="https://www.sec.gov/original.xml")
     assert edgar.get_edgar_facts("OLD").empty
     assert identity.resolve("OLD", "2009-03-01")["status"] == "unresolved"
     facts = edgar.get_edgar_facts("OLD", entity_id="cik:0000000123")
@@ -70,3 +70,4 @@ def test_sec_issuer_data_does_not_certify_candidate_ticker(db):
     assert facts.iloc[0]["filed_date"] == "2009-03-01"
     with storage.get_connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM historical_facts").fetchone()[0] == 1
+        assert conn.execute("SELECT source FROM entity_observations").fetchone()[0] == "https://www.sec.gov/original.xml"

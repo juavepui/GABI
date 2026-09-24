@@ -1,0 +1,7 @@
+{
+  "bulk_facts": 454341,
+  "comparison": {
+    "matches": 454341
+  },
+  "notes": "NUM dates/quarters rounded only for reconciliation; original dates retained in exact facts. Values may be reported more than once in an accession."
+}

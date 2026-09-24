@@ -53,6 +53,22 @@ with st.expander("Archivo histórico anterior a 2016"):
                     st.caption("Cierre original y cierre ajustado según la fuente; la fecha final mostrada es 2015.")
                     st.dataframe(archived[["close", "adj_close", "volume"]].rename(
                         columns={"close": "Cierre", "adj_close": "Cierre ajustado", "volume": "Volumen"}), width="stretch")
+    quarterly_path = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "coverage" / "quarterly.csv"
+    if quarterly_path.exists():
+        st.markdown("**Cobertura trimestral de 1996–2015**")
+        st.caption(
+            "Las 13 métricas calculables no acreditan por sí solas un backtest: todavía hay que validar "
+            "identidad, sectores y ajustes de precios. La regla del ranking permite algunas métricas ausentes. "
+            "El control de precios exige las 253 sesiones bursátiles previas completas."
+        )
+        quarterly = pd.read_csv(quarterly_path).set_index("date")
+        st.line_chart(quarterly[["members", "all_13", "eligible_by_metric_rule", "all_13_fresh_prices_and_filing"]].rename(
+            columns={"members": "Miembros enumerados", "all_13": "13 métricas calculables",
+                     "eligible_by_metric_rule": "Cumplen mínimo de métricas del ranking",
+                     "all_13_fresh_prices_and_filing": "13 métricas con precios completos e informe reciente"}))
+        st.dataframe(quarterly, width="stretch")
+        st.download_button("Descargar cobertura trimestral", quarterly.to_csv(),
+                           file_name="gabi-cobertura-1996-2015.csv", mime="text/csv")
 
 
 def _fmt_age(hours):
