@@ -2,105 +2,164 @@
   "database": "gabi.db",
   "price_source_id": "finsaber:ba3a6907a29027b1f40da3381f3bc834e08e99a6",
   "session_definition": "last 253 XNYS sessions through each rebalance date",
-  "fallback_rule": "independent trading boundaries, corporate actions and adjustment proof; if Yahoo overlap exists, >= 60 returns with p99 difference <= 0.005",
+  "fallback_rule": "SEC listing life, SEC public-float price level and split/dividend reconciliation; any Yahoo overlap needs >= 60 returns, p99 difference <= 0.005 and no day above 0.05",
   "price_attribution": "entity intervals stored separately from legacy prices",
   "years": [
     {
       "year": 2010,
       "members": 497,
-      "yahoo_complete": 328,
-      "finsaber_complete": 454,
-      "selected_yahoo": 304,
-      "selected_finsaber": 0,
-      "attributed_usable": 304,
-      "excluded": 193,
+      "identity_accredited": 486,
+      "yahoo_complete": 333,
+      "finsaber_complete": 456,
+      "tier_a": 308,
+      "tier_b": 84,
+      "usable_full_window": 391,
+      "usable_short_history": 1,
+      "excluded": 105,
       "reasons": {
-        "archive_evidence_missing": 117,
-        "identity_unresolved": 45,
-        "incomplete_prices": 29,
-        "ticker_recycled": 1,
-        "archive_adjustment_divergent": 1
+        "incomplete_prices": 27,
+        "archive_dividend_mismatch": 16,
+        "price_level_failed": 13,
+        "archive_sec_dividends_unavailable": 13,
+        "identity_unresolved": 10,
+        "price_level_missing": 10,
+        "sources_divergent_overlap": 8,
+        "archive_unexplained_jump": 5,
+        "multiple_ciks_in_window": 2,
+        "sources_divergent_event": 1
       }
     },
     {
       "year": 2011,
       "members": 497,
-      "yahoo_complete": 336,
-      "finsaber_complete": 453,
-      "selected_yahoo": 312,
-      "selected_finsaber": 0,
-      "attributed_usable": 312,
-      "excluded": 185,
+      "identity_accredited": 487,
+      "yahoo_complete": 341,
+      "finsaber_complete": 455,
+      "tier_a": 321,
+      "tier_b": 71,
+      "usable_full_window": 390,
+      "usable_short_history": 2,
+      "excluded": 105,
       "reasons": {
-        "archive_evidence_missing": 111,
-        "identity_unresolved": 41,
-        "incomplete_prices": 31,
-        "ticker_recycled": 1,
-        "archive_adjustment_divergent": 1
+        "incomplete_prices": 27,
+        "archive_dividend_mismatch": 24,
+        "price_level_failed": 12,
+        "archive_sec_dividends_unavailable": 9,
+        "identity_unresolved": 9,
+        "sources_divergent_overlap": 8,
+        "price_level_missing": 8,
+        "succession_inside_window": 2,
+        "archive_unexplained_jump": 2,
+        "multiple_ciks_in_window": 1,
+        "archive_split_unverified": 1,
+        "sources_divergent_event": 1,
+        "delisted_before_window_end": 1
       }
     },
     {
       "year": 2012,
       "members": 497,
-      "yahoo_complete": 348,
-      "finsaber_complete": 461,
-      "selected_yahoo": 326,
-      "selected_finsaber": 0,
-      "attributed_usable": 326,
-      "excluded": 171,
+      "identity_accredited": 491,
+      "yahoo_complete": 353,
+      "finsaber_complete": 463,
+      "tier_a": 329,
+      "tier_b": 77,
+      "usable_full_window": 405,
+      "usable_short_history": 1,
+      "excluded": 91,
       "reasons": {
-        "archive_evidence_missing": 108,
-        "identity_unresolved": 35,
-        "incomplete_prices": 27,
-        "ticker_recycled": 1
+        "incomplete_prices": 24,
+        "archive_dividend_mismatch": 16,
+        "archive_sec_dividends_unavailable": 10,
+        "sources_divergent_overlap": 9,
+        "price_level_failed": 9,
+        "price_level_missing": 6,
+        "identity_unresolved": 5,
+        "multiple_ciks_in_window": 3,
+        "succession_inside_window": 3,
+        "listing_starts_after_window": 2,
+        "archive_unexplained_jump": 2,
+        "sources_divergent_event": 1,
+        "delisted_before_window_end": 1
       }
     },
     {
       "year": 2013,
       "members": 497,
-      "yahoo_complete": 352,
-      "finsaber_complete": 461,
-      "selected_yahoo": 333,
-      "selected_finsaber": 0,
-      "attributed_usable": 333,
-      "excluded": 164,
+      "identity_accredited": 491,
+      "yahoo_complete": 357,
+      "finsaber_complete": 463,
+      "tier_a": 345,
+      "tier_b": 77,
+      "usable_full_window": 418,
+      "usable_short_history": 4,
+      "excluded": 75,
       "reasons": {
-        "archive_evidence_missing": 105,
-        "identity_unresolved": 33,
-        "incomplete_prices": 25,
-        "ticker_recycled": 1
+        "incomplete_prices": 22,
+        "archive_dividend_mismatch": 15,
+        "archive_sec_dividends_unavailable": 8,
+        "price_level_failed": 7,
+        "price_level_missing": 6,
+        "sources_divergent_overlap": 5,
+        "identity_unresolved": 5,
+        "multiple_ciks_in_window": 3,
+        "archive_unexplained_jump": 2,
+        "archive_unexplained_adjustment": 1,
+        "delisted_before_window_end": 1
       }
     },
     {
       "year": 2014,
       "members": 499,
-      "yahoo_complete": 362,
-      "finsaber_complete": 468,
-      "selected_yahoo": 340,
-      "selected_finsaber": 0,
-      "attributed_usable": 340,
-      "excluded": 159,
+      "identity_accredited": 493,
+      "yahoo_complete": 366,
+      "finsaber_complete": 469,
+      "tier_a": 350,
+      "tier_b": 69,
+      "usable_full_window": 418,
+      "usable_short_history": 1,
+      "excluded": 80,
       "reasons": {
-        "archive_evidence_missing": 103,
-        "identity_unresolved": 33,
-        "incomplete_prices": 22,
-        "ticker_recycled": 1
+        "incomplete_prices": 21,
+        "archive_dividend_mismatch": 19,
+        "archive_sec_dividends_unavailable": 7,
+        "price_level_missing": 7,
+        "sources_divergent_overlap": 5,
+        "identity_unresolved": 5,
+        "price_level_failed": 4,
+        "delisted_before_window_end": 3,
+        "multiple_ciks_in_window": 2,
+        "succession_inside_window": 2,
+        "archive_split_unverified": 2,
+        "archive_unexplained_jump": 2,
+        "listing_starts_after_window": 1
       }
     },
     {
       "year": 2015,
       "members": 502,
-      "yahoo_complete": 375,
-      "finsaber_complete": 470,
-      "selected_yahoo": 348,
-      "selected_finsaber": 0,
-      "attributed_usable": 348,
-      "excluded": 154,
+      "identity_accredited": 489,
+      "yahoo_complete": 379,
+      "finsaber_complete": 471,
+      "tier_a": 356,
+      "tier_b": 67,
+      "usable_full_window": 419,
+      "usable_short_history": 4,
+      "excluded": 79,
       "reasons": {
-        "archive_evidence_missing": 90,
-        "identity_unresolved": 44,
-        "incomplete_prices": 19,
-        "ticker_recycled": 1
+        "incomplete_prices": 16,
+        "price_level_missing": 11,
+        "identity_unresolved": 10,
+        "archive_dividend_mismatch": 9,
+        "archive_sec_dividends_unavailable": 7,
+        "multiple_ciks_in_window": 5,
+        "sources_divergent_overlap": 5,
+        "archive_unexplained_jump": 4,
+        "price_level_failed": 4,
+        "succession_inside_window": 4,
+        "delisted_before_window_end": 2,
+        "sources_divergent_event": 1,
+        "listing_starts_after_window": 1
       }
     }
   ],
@@ -108,81 +167,172 @@
     {
       "as_of": "2010-12-31",
       "members": 497,
-      "identity_accredited": 451,
-      "price_candidates": 304,
-      "attributed_usable": 304,
+      "identity_accredited": 486,
+      "usable_full_window": 391,
+      "usable_including_short_history": 392,
+      "usable_pct": 78.87,
+      "usable_full_window_pct": 78.67,
+      "forward": {
+        "continues_to_next_rebalance": 484,
+        "unknown": 11,
+        "terminal_return_unknown": 1,
+        "terminal_return_confirmed": 1
+      },
       "excluded_reasons": {
-        "archive_evidence_missing": 117,
-        "identity_unresolved": 45,
-        "incomplete_prices": 29,
-        "ticker_recycled": 1,
-        "archive_adjustment_divergent": 1
+        "incomplete_prices": 27,
+        "archive_dividend_mismatch": 16,
+        "price_level_failed": 13,
+        "archive_sec_dividends_unavailable": 13,
+        "identity_unresolved": 10,
+        "price_level_missing": 10,
+        "sources_divergent_overlap": 8,
+        "archive_unexplained_jump": 5,
+        "multiple_ciks_in_window": 2,
+        "sources_divergent_event": 1
       }
     },
     {
       "as_of": "2011-12-31",
       "members": 497,
-      "identity_accredited": 455,
-      "price_candidates": 312,
-      "attributed_usable": 312,
+      "identity_accredited": 487,
+      "usable_full_window": 390,
+      "usable_including_short_history": 392,
+      "usable_pct": 78.87,
+      "usable_full_window_pct": 78.47,
+      "forward": {
+        "continues_to_next_rebalance": 486,
+        "unknown": 10,
+        "terminal_return_unknown": 1
+      },
       "excluded_reasons": {
-        "archive_evidence_missing": 111,
-        "identity_unresolved": 41,
-        "incomplete_prices": 31,
-        "ticker_recycled": 1,
-        "archive_adjustment_divergent": 1
+        "incomplete_prices": 27,
+        "archive_dividend_mismatch": 24,
+        "price_level_failed": 12,
+        "archive_sec_dividends_unavailable": 9,
+        "identity_unresolved": 9,
+        "sources_divergent_overlap": 8,
+        "price_level_missing": 8,
+        "succession_inside_window": 2,
+        "archive_unexplained_jump": 2,
+        "multiple_ciks_in_window": 1,
+        "archive_split_unverified": 1,
+        "sources_divergent_event": 1,
+        "delisted_before_window_end": 1
       }
     },
     {
       "as_of": "2012-12-31",
       "members": 497,
-      "identity_accredited": 461,
-      "price_candidates": 326,
-      "attributed_usable": 326,
+      "identity_accredited": 491,
+      "usable_full_window": 405,
+      "usable_including_short_history": 406,
+      "usable_pct": 81.69,
+      "usable_full_window_pct": 81.49,
+      "forward": {
+        "continues_to_next_rebalance": 491,
+        "unknown": 6
+      },
       "excluded_reasons": {
-        "archive_evidence_missing": 108,
-        "identity_unresolved": 35,
-        "incomplete_prices": 27,
-        "ticker_recycled": 1
+        "incomplete_prices": 24,
+        "archive_dividend_mismatch": 16,
+        "archive_sec_dividends_unavailable": 10,
+        "sources_divergent_overlap": 9,
+        "price_level_failed": 9,
+        "price_level_missing": 6,
+        "identity_unresolved": 5,
+        "multiple_ciks_in_window": 3,
+        "succession_inside_window": 3,
+        "listing_starts_after_window": 2,
+        "archive_unexplained_jump": 2,
+        "sources_divergent_event": 1,
+        "delisted_before_window_end": 1
       }
     },
     {
       "as_of": "2013-12-31",
       "members": 497,
-      "identity_accredited": 463,
-      "price_candidates": 333,
-      "attributed_usable": 333,
+      "identity_accredited": 491,
+      "usable_full_window": 418,
+      "usable_including_short_history": 422,
+      "usable_pct": 84.91,
+      "usable_full_window_pct": 84.1,
+      "forward": {
+        "continues_to_next_rebalance": 490,
+        "unknown": 6,
+        "terminal_return_unknown": 1
+      },
       "excluded_reasons": {
-        "archive_evidence_missing": 105,
-        "identity_unresolved": 33,
-        "incomplete_prices": 25,
-        "ticker_recycled": 1
+        "incomplete_prices": 22,
+        "archive_dividend_mismatch": 15,
+        "archive_sec_dividends_unavailable": 8,
+        "price_level_failed": 7,
+        "price_level_missing": 6,
+        "sources_divergent_overlap": 5,
+        "identity_unresolved": 5,
+        "multiple_ciks_in_window": 3,
+        "archive_unexplained_jump": 2,
+        "archive_unexplained_adjustment": 1,
+        "delisted_before_window_end": 1
       }
     },
     {
       "as_of": "2014-12-31",
       "members": 499,
-      "identity_accredited": 465,
-      "price_candidates": 340,
-      "attributed_usable": 340,
+      "identity_accredited": 493,
+      "usable_full_window": 418,
+      "usable_including_short_history": 419,
+      "usable_pct": 83.97,
+      "usable_full_window_pct": 83.77,
+      "forward": {
+        "continues_to_next_rebalance": 488,
+        "unknown": 6,
+        "terminal_return_unknown": 4,
+        "terminal_return_confirmed": 1
+      },
       "excluded_reasons": {
-        "archive_evidence_missing": 103,
-        "identity_unresolved": 33,
-        "incomplete_prices": 22,
-        "ticker_recycled": 1
+        "incomplete_prices": 21,
+        "archive_dividend_mismatch": 19,
+        "archive_sec_dividends_unavailable": 7,
+        "price_level_missing": 7,
+        "sources_divergent_overlap": 5,
+        "identity_unresolved": 5,
+        "price_level_failed": 4,
+        "delisted_before_window_end": 3,
+        "multiple_ciks_in_window": 2,
+        "succession_inside_window": 2,
+        "archive_split_unverified": 2,
+        "archive_unexplained_jump": 2,
+        "listing_starts_after_window": 1
       }
     },
     {
       "as_of": "2015-12-31",
       "members": 502,
-      "identity_accredited": 457,
-      "price_candidates": 348,
-      "attributed_usable": 348,
+      "identity_accredited": 489,
+      "usable_full_window": 419,
+      "usable_including_short_history": 423,
+      "usable_pct": 84.26,
+      "usable_full_window_pct": 83.47,
+      "forward": {
+        "continues_to_next_rebalance": 485,
+        "unknown": 13,
+        "terminal_return_unknown": 3,
+        "terminal_return_confirmed": 1
+      },
       "excluded_reasons": {
-        "archive_evidence_missing": 90,
-        "identity_unresolved": 44,
-        "incomplete_prices": 19,
-        "ticker_recycled": 1
+        "incomplete_prices": 16,
+        "price_level_missing": 11,
+        "identity_unresolved": 10,
+        "archive_dividend_mismatch": 9,
+        "archive_sec_dividends_unavailable": 7,
+        "multiple_ciks_in_window": 5,
+        "sources_divergent_overlap": 5,
+        "archive_unexplained_jump": 4,
+        "price_level_failed": 4,
+        "succession_inside_window": 4,
+        "delisted_before_window_end": 2,
+        "sources_divergent_event": 1,
+        "listing_starts_after_window": 1
       }
     }
   ],
@@ -191,18 +341,18 @@
     "sic_2digit": [
       {
         "sic_2digit": "10",
-        "observations": 11,
-        "usable": 11
+        "observations": 16,
+        "usable": 16
       },
       {
         "sic_2digit": "12",
-        "observations": 7,
-        "usable": 6
+        "observations": 11,
+        "usable": 7
       },
       {
         "sic_2digit": "13",
-        "observations": 126,
-        "usable": 53
+        "observations": 136,
+        "usable": 107
       },
       {
         "sic_2digit": "14",
@@ -217,7 +367,7 @@
       {
         "sic_2digit": "16",
         "observations": 12,
-        "usable": 6
+        "usable": 12
       },
       {
         "sic_2digit": "17",
@@ -226,13 +376,13 @@
       },
       {
         "sic_2digit": "20",
-        "observations": 126,
-        "usable": 95
+        "observations": 134,
+        "usable": 105
       },
       {
         "sic_2digit": "21",
         "observations": 23,
-        "usable": 12
+        "usable": 13
       },
       {
         "sic_2digit": "22",
@@ -241,38 +391,38 @@
       },
       {
         "sic_2digit": "23",
-        "observations": 21,
-        "usable": 21
+        "observations": 23,
+        "usable": 23
       },
       {
         "sic_2digit": "24",
         "observations": 10,
-        "usable": 10
+        "usable": 8
       },
       {
         "sic_2digit": "25",
-        "observations": 6,
-        "usable": 0
+        "observations": 12,
+        "usable": 9
       },
       {
         "sic_2digit": "26",
-        "observations": 30,
-        "usable": 18
+        "observations": 31,
+        "usable": 23
       },
       {
         "sic_2digit": "27",
-        "observations": 5,
-        "usable": 3
+        "observations": 14,
+        "usable": 4
       },
       {
         "sic_2digit": "28",
-        "observations": 205,
-        "usable": 149
+        "observations": 214,
+        "usable": 184
       },
       {
         "sic_2digit": "29",
-        "observations": 48,
-        "usable": 30
+        "observations": 54,
+        "usable": 51
       },
       {
         "sic_2digit": "30",
@@ -281,8 +431,8 @@
       },
       {
         "sic_2digit": "31",
-        "observations": 3,
-        "usable": 0
+        "observations": 9,
+        "usable": 9
       },
       {
         "sic_2digit": "32",
@@ -291,43 +441,43 @@
       },
       {
         "sic_2digit": "33",
-        "observations": 30,
-        "usable": 17
+        "observations": 36,
+        "usable": 24
       },
       {
         "sic_2digit": "34",
         "observations": 25,
-        "usable": 18
+        "usable": 22
       },
       {
         "sic_2digit": "35",
-        "observations": 159,
-        "usable": 117
+        "observations": 165,
+        "usable": 139
       },
       {
         "sic_2digit": "36",
-        "observations": 135,
-        "usable": 95
+        "observations": 140,
+        "usable": 123
       },
       {
         "sic_2digit": "37",
         "observations": 74,
-        "usable": 60
+        "usable": 59
       },
       {
         "sic_2digit": "38",
-        "observations": 157,
-        "usable": 107
+        "observations": 175,
+        "usable": 148
       },
       {
         "sic_2digit": "39",
         "observations": 16,
-        "usable": 12
+        "usable": 14
       },
       {
         "sic_2digit": "40",
         "observations": 21,
-        "usable": 18
+        "usable": 21
       },
       {
         "sic_2digit": "42",
@@ -341,33 +491,33 @@
       },
       {
         "sic_2digit": "45",
-        "observations": 16,
-        "usable": 16
+        "observations": 17,
+        "usable": 17
       },
       {
         "sic_2digit": "47",
         "observations": 18,
-        "usable": 18
+        "usable": 17
       },
       {
         "sic_2digit": "48",
-        "observations": 92,
-        "usable": 22
+        "observations": 100,
+        "usable": 68
       },
       {
         "sic_2digit": "49",
-        "observations": 218,
-        "usable": 172
+        "observations": 231,
+        "usable": 194
       },
       {
         "sic_2digit": "50",
         "observations": 30,
-        "usable": 18
+        "usable": 28
       },
       {
         "sic_2digit": "51",
         "observations": 29,
-        "usable": 18
+        "usable": 26
       },
       {
         "sic_2digit": "52",
@@ -377,12 +527,12 @@
       {
         "sic_2digit": "53",
         "observations": 51,
-        "usable": 39
+        "usable": 42
       },
       {
         "sic_2digit": "54",
-        "observations": 18,
-        "usable": 6
+        "observations": 19,
+        "usable": 13
       },
       {
         "sic_2digit": "55",
@@ -391,13 +541,13 @@
       },
       {
         "sic_2digit": "56",
-        "observations": 34,
-        "usable": 21
+        "observations": 40,
+        "usable": 27
       },
       {
         "sic_2digit": "57",
         "observations": 18,
-        "usable": 12
+        "usable": 18
       },
       {
         "sic_2digit": "58",
@@ -406,43 +556,48 @@
       },
       {
         "sic_2digit": "59",
-        "observations": 36,
-        "usable": 13
+        "observations": 42,
+        "usable": 33
       },
       {
         "sic_2digit": "60",
         "observations": 135,
-        "usable": 105
+        "usable": 108
       },
       {
         "sic_2digit": "61",
-        "observations": 16,
-        "usable": 10
+        "observations": 17,
+        "usable": 14
       },
       {
         "sic_2digit": "62",
-        "observations": 68,
-        "usable": 54
+        "observations": 82,
+        "usable": 71
       },
       {
         "sic_2digit": "63",
-        "observations": 126,
-        "usable": 99
+        "observations": 140,
+        "usable": 116
       },
       {
         "sic_2digit": "64",
         "observations": 12,
-        "usable": 12
+        "usable": 11
+      },
+      {
+        "sic_2digit": "65",
+        "observations": 6,
+        "usable": 6
       },
       {
         "sic_2digit": "67",
         "observations": 107,
-        "usable": 86
+        "usable": 92
       },
       {
         "sic_2digit": "70",
         "observations": 17,
-        "usable": 11
+        "usable": 13
       },
       {
         "sic_2digit": "72",
@@ -451,8 +606,8 @@
       },
       {
         "sic_2digit": "73",
-        "observations": 214,
-        "usable": 148
+        "observations": 238,
+        "usable": 194
       },
       {
         "sic_2digit": "75",
@@ -466,8 +621,8 @@
       },
       {
         "sic_2digit": "79",
-        "observations": 1,
-        "usable": 1
+        "observations": 3,
+        "usable": 3
       },
       {
         "sic_2digit": "80",
@@ -476,8 +631,8 @@
       },
       {
         "sic_2digit": "82",
-        "observations": 4,
-        "usable": 1
+        "observations": 9,
+        "usable": 8
       },
       {
         "sic_2digit": "87",
@@ -486,23 +641,53 @@
       },
       {
         "sic_2digit": "un",
-        "observations": 267,
-        "usable": 13
+        "observations": 65,
+        "usable": 4
       }
     ],
     "membership_exit_next_365d": [
       {
         "exit_next_year": false,
         "observations": 2894,
-        "usable": 1949
+        "usable": 2411
       },
       {
         "exit_next_year": true,
         "observations": 95,
-        "usable": 14
+        "usable": 43
       }
     ],
-    "size": "not measured: historical market caps unavailable for many excluded securities",
-    "note": "SIC is an issuer-level proxy, not historical GICS; repeated quarterly members are not independent"
+    "public_float_quintile": [
+      {
+        "quintile": 1,
+        "observations": 583,
+        "usable": 446
+      },
+      {
+        "quintile": 2,
+        "observations": 578,
+        "usable": 488
+      },
+      {
+        "quintile": 3,
+        "observations": 578,
+        "usable": 496
+      },
+      {
+        "quintile": 4,
+        "observations": 578,
+        "usable": 501
+      },
+      {
+        "quintile": 5,
+        "observations": 583,
+        "usable": 509
+      }
+    ],
+    "public_float_missing": {
+      "observations": 89,
+      "usable": 14
+    },
+    "note": "SIC is an issuer-level proxy, not historical GICS; public float (SEC dei, latest before the rebalance) is a size proxy; repeated quarterly members are not independent"
   }
 }

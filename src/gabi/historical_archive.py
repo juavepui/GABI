@@ -11,6 +11,10 @@ import pandas as pd
 from . import identity, storage
 
 IDENTITY_INTERVAL_SOURCE = "sec-identity-evidence:2010-2015:v1"
+# Research tiers that may attribute a historical label to one CIK. The
+# historical-ticker tier covers labels applied retroactively by the source.
+ACCREDITED_IDENTITY_TIERS = ("confirmed_by_multiple_evidence", "confirmed_historical_ticker",
+                             "corroborated_candidate")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS historical_sources (
@@ -235,8 +239,7 @@ def list_filing_identity_evidence_as_of(symbol: str, as_of: str) -> dict:
 
 def replace_identity_intervals(source_id: str, rows: list[dict]) -> int:
     """Replace one reproducible research tier; never activate operational aliases."""
-    allowed = {"confirmed_by_multiple_evidence", "corroborated_candidate",
-               "ambiguous", "unresolved"}
+    allowed = {*ACCREDITED_IDENTITY_TIERS, "ambiguous", "unresolved"}
     records = []
     for row in rows:
         if row["status"] not in allowed:

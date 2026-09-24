@@ -386,3 +386,64 @@ def test_official_sec_rename_chain_corroborates_but_other_ticker_blocks(tmp_path
     blocked = audit.build_evidence_intervals()[0]
     assert blocked["status"] == "ambiguous"
     assert blocked["other_sec_tickers_same_cik"] == ["OLD"]
+
+
+def _nomination(**overrides):
+    return {"label": "NEWL", "cik": "0000000007", "valid_from": "2010-01-01", "valid_to": "2016-01-01",
+            "sec_tickers": ("OLDT",), "evidence_window_days": 0, "reason": "retrospective_label", **overrides}
+
+
+def _membership_with_candidate(symbol="NEWL", cik="0000000009"):
+    historical_archive.register_source(REFERENCE_SOURCE, {"start": "2010-01-01", "end_exclusive": "2016-01-01"})
+    historical_archive.import_membership(REFERENCE_SOURCE, pd.DataFrame([
+        ("2010-01-01", symbol)], columns=["date", "tickers"]), "2010-01-01", "2016-01-01")
+    with storage.get_connection() as conn:
+        conn.execute("INSERT INTO historical_issuer_candidates VALUES (?,?,?,?,?,?,?)",
+                     (audit.CANDIDATE_SOURCE, symbol, cik, "Later Holding Plc", "2010-01-01", None, "2020-01-01"))
+        conn.commit()
+
+
+def _proofs(rows):
+    historical_archive.import_filing_identity_evidence([
+        {"symbol": symbol, "cik": cik, "historical_name": "Issuer", "sha256": "a" * 64,
+         "accession": f"{int(cik):010d}-{day[2:4]}-{day[5:7]}{day[8:10]}01", "filed_date": day,
+         "source_url": f"https://www.sec.gov/Archives/edgar/data/{cik}/{day}/x.xml"}
+        for symbol, cik, day in rows])
+
+
+def test_retroactive_label_is_confirmed_by_historical_sec_ticker(monkeypatch):
+    from gabi import historical_ticker_corrections
+    monkeypatch.setattr(historical_ticker_corrections, "identity_nominations", lambda: (_nomination(),))
+    _membership_with_candidate()
+    _proofs([("OLDT", "7", "2011-02-01"), ("OLDT", "7", "2013-02-01")])
+    [row] = audit.build_evidence_intervals()
+    assert (row["cik"], row["status"]) == ("0000000007", "confirmed_historical_ticker")
+
+
+def test_nominated_historical_ticker_used_by_another_issuer_is_ambiguous(monkeypatch):
+    from gabi import historical_ticker_corrections
+    monkeypatch.setattr(historical_ticker_corrections, "identity_nominations", lambda: (_nomination(),))
+    _membership_with_candidate()
+    _proofs([("OLDT", "7", "2011-02-01"), ("OLDT", "7", "2013-02-01"), ("OLDT", "8", "2014-02-01")])
+    assert [row["status"] for row in audit.build_evidence_intervals()] == ["ambiguous"]
+
+
+def test_successor_cik_that_starts_filing_later_is_not_backdated(monkeypatch):
+    _membership_with_candidate(symbol="HOLD", cik="0000000009")
+    _proofs([("HOLD", "9", "2015-02-01"), ("HOLD", "9", "2015-05-01")])
+    monkeypatch.setattr(audit.issuer_evidence, "listing_life",
+                        lambda cik: {"first_periodic": "2014-12-31", "current_tickers": []})
+    assert [row["status"] for row in audit.build_evidence_intervals()] == ["unresolved"]
+
+
+def test_nominations_trim_community_rows_and_price_only_entries_leave_identity(monkeypatch):
+    from gabi import historical_ticker_corrections as corrections
+    community = {"NEWL": [{"cik": "0000000009", "name": "Later", "start": "2009-01-01", "end": "9999-12-31"}]}
+    monkeypatch.setattr(corrections, "identity_nominations",
+                        lambda: (_nomination(valid_from="2010-01-01", valid_to="2014-12-31"),))
+    rows = corrections.apply_nominations(community)["NEWL"]
+    assert [(row["cik"], row["start"], row["end"]) for row in rows] == [
+        ("0000000009", "2009-01-01", "2010-01-01"), ("0000000009", "2014-12-31", "9999-12-31"),
+        ("0000000007", "2010-01-01", "2014-12-31")]
+    monkeypatch.setattr(corrections, "identity_nominations", lambda: (_nomination(price_only=True),))
+    assert corrections.apply_nominations(community) == community

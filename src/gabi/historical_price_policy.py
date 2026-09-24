@@ -56,7 +56,7 @@ def qualify_fallback(*, identity_tier: str | None, recycled: bool, archive: dict
         return False, "identity_unresolved"
     if not archive["complete"]:
         return False, "incomplete_prices"
-    if overlap == "divergent_overlap":
+    if overlap in {"divergent_overlap", "divergent_event"}:
         return False, "archive_adjustment_divergent"
     if not proof:
         return False, "archive_evidence_missing"
@@ -131,7 +131,7 @@ def record_series(*, cik: str, symbol: str, valid_from: str, valid_to: str,
                 archived.index = pd.to_datetime(archived.index)
                 yahoo.index = pd.to_datetime(yahoo.index)
                 overlap, _count, _p99 = overlap_status(yahoo, archived)
-                if overlap == "divergent_overlap":
+                if overlap in {"divergent_overlap", "divergent_event"}:
                     raise ValueError("Fallback adjusted returns diverge from Yahoo")
         historical_conflict = conn.execute(
             "SELECT 1 FROM historical_identity_intervals WHERE symbol=? AND cik<>? "

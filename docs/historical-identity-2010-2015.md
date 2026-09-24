@@ -37,6 +37,13 @@ conserva dos niveles adicionales, distintos del alias operativo:
 | 2014 | 1.993 | 97,69% | 33,52% | 59,56% | 93,08% | 2,56% |
 | 2015 | 2.004 | 97,95% | 33,63% | 58,58% | 92,22% | 2,65% |
 
+> Actualización #28: las nominaciones revisadas de
+> `resources/historical_identity_corrections_2010_2015.json`, el nivel
+> `confirmed_historical_ticker` y el rechazo de CIK sucesores elevan el total
+> acreditado a 97,4–98,8 % y reducen el ambiguo a 0,3–0,45 %; véase
+> [precios 2010–2015](historical-prices-2010-2015.md#identidad). La tabla
+> anterior conserva el estado de #27/#29.
+
 El 95% propuesto **no se alcanza**. El total del último nivel solo sirve para
 filtrar candidatos de investigación; no equivale a cobertura de precios,
 fundamentales point-in-time ni composición oficial del índice. Para una prueba

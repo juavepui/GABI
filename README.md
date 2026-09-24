@@ -1555,21 +1555,26 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   corrige el ticker retrospectivo `ANTM` a `WLP` antes del cambio de 2014,
   con fuentes SEC/MIAX y mide dos niveles de identidad histórica: ticker/CIK
   repetido directamente en SEC (~33–34%) y candidatos únicos corroborados por
-  informes del mismo emisor (total ~90–93%). Los ambiguos y no resueltos quedan
-  explícitamente excluidos del conjunto acreditado; aún no se alcanza el 95%
-  propuesto. La atribución de precios se audita por separado a continuación.
+  informes del mismo emisor. Con las nominaciones revisadas del #28
+  (sucesores y etiquetas retroactivas, verificadas contra SEC) el total
+  acreditado es 97,4–98,8% y el ambiguo 0,3–0,45%. Los ambiguos y no
+  resueltos quedan explícitamente excluidos. La atribución de precios se
+  audita por separado a continuación.
 - **Fundamentales y múltiplos clásicos** (ROIC, margen bruto/operativo/neto,
   deuda neta/EBITDA, crecimiento de ingresos/FCF, PER, P/VC, P/Ventas,
   EV/EBITDA): 100% desde `edgar_facts` + precio y nº de acciones de esa
   fecha — nunca yfinance, que no guarda histórico.
 - La [auditoría de precios 2010–2015](docs/historical-prices-2010-2015.md)
-  distingue disponibilidad bruta de series atribuidas por entidad y fuente.
-  Se acreditaron 363 intervalos Yahoo con evidencia SEC; en los 24 rebalanceos
-  trimestrales la cobertura utilizable es solo 60,32–69,54 %. SPY está
-  completo, pero FINSABER aún no tiene ajustes/bordes acreditados para entrar
-  automáticamente en el backtest histórico. Las empresas que salen del índice
-  en el año siguiente están especialmente infrarrepresentadas; el #28 sigue
-  abierto y 2010–2015 no se usa para validar rendimiento.
+  atribuye cada serie a un CIK solo con evidencia SEC gratuita: vida bursátil
+  (primer informe, sucesiones, bajas), nivel de precio contra *public float* y
+  conciliación de splits/dividendos. Hay 403 intervalos Yahoo (Tier A) y 140
+  FINSABER (Tier B); la cobertura utilizable por rebalanceo trimestral es
+  72,3–85,0 % (antes 60,3–69,5 %) y SPY está completo. Los eventos terminales
+  se registran explícitamente (15 efectivos confirmados; el resto desconocido
+  y excluido en lectura estricta). No se alcanza el 90 %: 36 emisores
+  absorbidos en 2016–2019 no tienen precios en ninguna fuente local, y las
+  empresas que salen del índice al año siguiente siguen infrarrepresentadas
+  (45 % frente a 82 %). 2010–2015 no se usa para validar rendimiento.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 

@@ -71,95 +71,208 @@ Los CSV/JSON se regeneraron tras el #29, que elevó ligeramente la identidad
 acreditada. La tabla anterior refleja ese estado posterior; las series de
 precios y las reglas de fallback permanecen iguales.
 
-## Fase 2: procedencia, salida de cotización y cobertura trimestral
+> Esta sección conserva el estado de la primera entrega. Las fases 2 y 3
+> (abajo) sustituyen sus reglas de selección y sus cifras; los CSV/JSON
+> actuales corresponden a la fase 3.
 
-La segunda pasada reutiliza esta auditoría y la evidencia SEC de #27/#29.
-`historical_price_provenance` guarda por intervalo `entity_id`, CIK, ticker,
-fechas, fuente, base de ajuste, tier y referencias exactas. El comando
-`--quarterly --promote-tier-a` une ventanas Yahoo solapadas y registra los
-intervalos completos con identidad acreditada y referencias SEC; es
-idempotente y no copia precios a `entity_observations` ni altera `prices` o
-`historical_prices`. En la base local se atribuyeron **363 intervalos Yahoo**.
-La identidad SEC se acredita retrospectivamente; no se convierte una prueba
-presentada después de un rebalanceo en un fundamental disponible entonces.
-Para Yahoo, `close` es el cierre nominal almacenado y `adj_close` se usa con
-la convención operativa de GABI (splits + dividendos); el caché legacy no
-conserva la descarga original por fila, por lo que se guarda el hash de cada
-intervalo promovido. Para FINSABER, `close_basis=as_traded` describe `close`,
-pero la convención de `adjusted_close` sigue sin acreditarse.
-El lector `historical_price_policy.price_history` exige un único intervalo de
-fuente y CIK, fechas válidas y, si se indican las sesiones de bolsa, todas las
-observaciones reales. Devuelve `price_source_status`, base de ajuste y
-evidencia; nunca concatena fuentes, rellena sesiones ni extiende un ticker a
-otro emisor. El backtest V1/V2 existente sigue usando su ruta 2016+; la
-integración histórica completa corresponde al #32.
+## Fases 2 y 3: procedencia, evidencia SEC por emisor y eventos terminales
 
-Para Tier B se permite ausencia de solapamiento Yahoo **solo** con pruebas
-independientes de primera/última negociación, identidad, acciones corporativas
-y reconciliación de splits y dividendos. Un solapamiento divergente bloquea la
-serie aunque tenga esos documentos. La [ficha del archivo FINSABER](https://huggingface.co/datasets/finsaber-team/FINSABER-reproduce)
-etiqueta la columna `adjusted_close`, pero no especifica una convención de
-retorno total, metodología de dividendos o retorno de exclusión para cada
-acción. Por ello **ningún fallback FINSABER local está acreditado todavía**.
-ABBV, KHC y QRVO no se reparan con los precios anteriores de FINSABER sin
-prueba de la fecha de inicio de cada acción.
+### ¿Faltaban fuentes o faltaba procesar?
 
-`historical_terminal_events` separa adquisición en efectivo, canje de acciones,
-fusión, liquidación, exclusión y spin-off; sus estados son retorno confirmado,
-acotado o desconocido. El retorno confirmado usa contraprestación y convierte
-precio nominal a la base ajustada. Un canje requiere el precio del sucesor; un
-evento desconocido/acotado, o una solicitud que atraviesa un evento incluso
-confirmado, se rechaza en la lectura estricta hasta contabilizarlo de forma
-explícita. **No hay eventos terminales históricos con términos económicos
-acreditados importados aún**. Una salida del índice por sí sola no demuestra
-una exclusión bursátil ni fija un retorno; los casos siguen visibles en el
-diagnóstico, sin asignarles cero ni el último precio.
+Sobre todo faltaba procesar. Las dos fuentes de precios ya archivadas (caché
+Yahoo y FINSABER) cubren la mayor parte del universo; lo que no existía era
+evidencia **independiente por emisor** para decidir qué serie pertenece a qué
+CIK, en qué intervalo y con qué ajustes. Esa evidencia es gratuita, está en
+SEC EDGAR y se ha incorporado:
 
-El [CSV trimestral por miembro](historical-prices-quarterly-2010-2015.csv) y
-su [resumen JSON](historical-prices-quarterly-2010-2015.json) cubren los 24
-rebalanceos de 2010–2015. Cada uno exige 253 sesiones XNYS hasta esa fecha.
-La tabla siguiente suma las cuatro observaciones trimestrales de cada año:
+- `submissions` de unos 720 CIK (historial completo de presentaciones):
+  primer informe periódico, sucesiones de sociedad holding (8-K12B),
+  registros de salida a bolsa/spin-off y bajas de cotización (Form 25/15
+  seguidos de silencio o de ausencia de *public float* posterior, para
+  distinguirlas de bajas de deuda o traslados de mercado);
+- *XBRL frames* de `dei:EntityPublicFloat`, acciones en circulación y
+  dividendos por acción (declarados, pagados y pagos anuales): 186 ficheros
+  que cubren a todos los emisores de 2008–2016;
+- 8-K de cierre de operación (ítems 1.03/2.01/3.01/5.01) de los miembros que
+  dejan de cotizar antes del siguiente rebalanceo, y el texto de 10-K
+  («under the symbol …») cuando la portada XBRL no declara ticker.
 
-| Año | Observaciones | Identidad acreditada | Precio Tier A atribuido | Tier B | Cobertura utilizable |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| 2010 | 1.992 | 1.802 | 1.210 | 0 | 60,7 % |
-| 2011 | 1.988 | 1.810 | 1.229 | 0 | 61,8 % |
-| 2012 | 1.988 | 1.831 | 1.275 | 0 | 64,1 % |
-| 2013 | 1.988 | 1.847 | 1.322 | 0 | 66,5 % |
-| 2014 | 1.993 | 1.855 | 1.351 | 0 | 67,8 % |
-| 2015 | 2.004 | 1.848 | 1.389 | 0 | 69,3 % |
+Todo se descarga con `sec_history.download` (URL + SHA-256 en
+`sec_archive_files`) y se reutiliza sin red.
 
-El rango por rebalanceo es **60,32–69,54 %**; SPY tiene las 253 sesiones en
-los 24 cortes. La identidad por sí sola está en torno al 90–93 %, pero no
-convierte los precios archivados en retornos válidos. En las 11.953
-observaciones del período, 2.567 quedan fuera por evidencia insuficiente de
-FINSABER, además de identidades, sesiones o conflictos faltantes (desglose
-exacto por fecha en JSON). No se alcanza el objetivo orientativo del 90 %.
+Queda un bloque que **sí** requiere otra fuente: 36 emisores con identidad
+acreditada y sin precios en ninguna de las dos (CA, EMC, DOW, SNDK, STI, MON,
+DTV, SE, TE, XL, CHK, DNB…; 575 observaciones, 4,8 %). Son sobre todo
+empresas absorbidas en 2016–2019, que el archivo FINSABER perdió y que Yahoo
+ya no publica. Las alternativas gratuitas con tickers deslistados (Tiingo,
+Nasdaq Data Link WIKI) requieren cuenta/API key; Stooq exige superar un reto
+anti-bot y no se usa. Añadirlas es una decisión del usuario, no un paso
+automático.
 
-La exclusión tampoco parece inocua. Entre miembros que salen del índice en
-los 365 días posteriores al rebalanceo, solo **58/404 (14,4 %)** tienen precio
-atribuido; entre los demás son **7.718/11.549 (66,8 %)**. Una salida del índice
-no equivale necesariamente a quiebra, pero la diferencia impide defender que
-los ausentes no estén relacionados con desenlaces difíciles. Por SIC de dos
-dígitos (proxy, no GICS histórico), las observaciones de extracción de
-petróleo/gas `13` tienen 209/494 (42,3 %) utilizables; las de utilities `49`,
-680/854 (79,6 %). Otras 1.312 observaciones no tienen SIC point-in-time
-acreditado, de las que 163 son utilizables. Tampoco hay capitalizaciones
-históricas fiables de muchas acciones excluidas para descartar sesgo por
-tamaño. Las observaciones trimestrales repiten emisores; estos cocientes son
-diagnósticos de cobertura, no pruebas estadísticas independientes.
+### Identidad
 
-Reproducir sin red sobre la misma base local:
+La auditoría de identidad (#27/#29) se amplió sin rehacerla:
+
+- `resources/historical_identity_corrections_2010_2015.json` recoge 68
+  **nominaciones revisadas**: CIK de sucesores posteriores que lawcal aplica
+  hacia atrás (XOM → CIK de 2025, DIS, BLK, CI, APA, FTI, XRX, WBA, MYL, ESRX,
+  ETN, ICE, MDT, PRGO…), etiquetas retroactivas de la composición (TPR = COH,
+  ZBH = ZMH, TGNA = GCI, CBRE = CBG, LB = LTD, DXC = CSC, KDP = DPS…) y
+  símbolos con los que las fuentes de precios guardan la historia (LB → BBWI,
+  IR → TT, BHGE → BKR, WLP → ELV/ANTM, HCP → DOC, PX → LIN). Una nominación
+  **no es evidencia**: solo decide qué CIK probar.
+- El nuevo nivel `confirmed_historical_ticker` exige dos portadas SEC del
+  mismo CIK con el ticker histórico y que ningún otro CIK use la etiqueta o
+  ese ticker en el intervalo. Una nominación con informes repetidos y una
+  sola observación de ticker (portada, 10-K o lista de tickers de SEC) llega
+  como mucho a `corroborated_candidate`.
+- Ningún nivel se concede si el primer informe periódico del CIK (historial
+  EDGAR completo) llega más de 200 días después del inicio del intervalo: es
+  un sucesor. Esto elimina, por ejemplo, WBA → Walgreens Boots Alliance en
+  2010.
+- El proceso detecta sus propios errores de nominación: JCI se nominó con el
+  CIK 833444 y SEC devolvió el ticker TYC (era Tyco, vehículo de la fusión de
+  2016); se corrigió a Johnson Controls Inc (CIK 53669).
+
+Resultado: identidad acreditada del **97,4–98,8 %** de las observaciones
+(antes 90,5–93,1 %) y ambigua solo del 0,3–0,45 % (antes 1,9–2,65 %). Siguen
+excluidos casos genuinamente ambiguos (CB/ACE, AGN) y 18 intervalos sin
+evidencia suficiente (XRX, ETN previo a 2012, BHGE, CCE…).
+
+### Reglas de atribución de precios
+
+`historical_issuer_evidence.py` produce los controles y
+`historical_price_audit.py` decide, **fallando cerrado**. Para cada ventana de
+253 sesiones:
+
+1. **Vida bursátil SEC**: primer informe periódico ≤ inicio de la ventana; sin
+   sucesión dentro; sin baja de cotización antes del final.
+2. **Nivel de precio**: *public float* / (acciones de portada × cierre
+   negociado) en [0,25; 1,5] en alguna fecha de float entre 200 días antes y
+   400 días después (sin sucesión ni baja por medio). Las acciones de portada
+   no se reexpresan; los splits entre la fecha de float y la de portada se
+   deshacen con los splits observados. Diferencias >100× son errores de
+   unidad XBRL (no concluyente). Sobre 2.436 comprobaciones de series
+   conocidas como buenas falla el 0,9 %; las series FINSABER erróneas (EP,
+   GR, RRD) fallan. Un fallo excluye la ventana.
+3. **Ajustes** (series FINSABER y cualquier divergencia): eventos implícitos
+   en `close` frente a `adj_close`; splits verificados con el cambio de
+   acciones de portada SEC; dividendos conciliados con los dividendos por
+   acción SEC (trimestrales o, si solo hay anuales, el ejercicio que acaba en
+   la segunda mitad de la ventana); movimientos diarios >25 % sin
+   corroboración o distribuciones >10 % bloquean la ventana. «Sin dividendos»
+   solo se acepta si SEC lo dice (ceros explícitos, o emisor XBRL sin
+   dividendos ni pagos declarados).
+4. **Huella de dividendos**: si no es posible comprobar el nivel (emisores
+   multiclase como STZ, V o TSN no tienen acciones no dimensionales en los
+   frames), identifica la serie que ≥2 dividendos y ≥75 % de los eventos
+   coincidan uno a uno con importes SEC del CIK. Nunca sustituye a un nivel
+   fallido.
+5. **Contraste entre fuentes**: además del p99 ≤ 0,005, un solo día con más de
+   5 puntos de diferencia es `divergent_event` (spin-offs mal ajustados:
+   MDLZ 2012, CAH 2009, EXPE 2011, DXC 2015). La divergencia solo se resuelve
+   a favor de Yahoo cuando ambas fuentes cotizan **los mismos precios
+   negociados** (retornos de `close` idénticos) y los dividendos SEC dan la
+   razón a Yahoo y no a FINSABER.
+
+Hallazgos de fuente relevantes:
+
+- **FINSABER omite ajustes por dividendo en algunas series** (APD, KMB, JWN,
+  UTX…): en cada fecha ex su retorno ajustado es igual al nominal. En
+  2009–2015 el 99,7 % de 706.135 retornos coincide con Yahoo, pero esas
+  series se excluyen (`archive_dividend_mismatch`) salvo que Yahoo,
+  conciliado con SEC, las cubra.
+- **La caché Yahoo contiene valores reciclados**: GENZ (Genzyme, absorbida en
+  2011) sigue cotizando hasta 2026 y BBT cotiza otro valor (18 $ frente a los
+  32 $ reales de BB&T). La primera fase los había atribuido como Tier A; la
+  promoción ahora sustituye las filas generadas por la auditoría y ambas
+  pierden la atribución.
+- FINSABER es en la práctica una instantánea archivada derivada de Yahoo
+  (recuentos idénticos en muchos símbolos): su independencia viene de SEC, no
+  del contraste Yahoo–FINSABER.
+
+Las series que empiezan dentro de la ventana en una salida a bolsa o spin-off
+registrada en SEC (ABBV desde 2013-01-02, KHC desde 2015-07-06, QRVO desde
+2015-01-02, HPE, CSRA…) se atribuyen como `short_history` desde su primera
+sesión real, nunca con los precios previos que incluía FINSABER. Se cuentan
+aparte.
+
+### Eventos terminales
+
+`historical_terminal_events` recoge los 58 miembros cuya baja SEC cae antes del
+siguiente rebalanceo. Solo una contraprestación íntegramente en efectivo y sin
+otros componentes en su cláusula queda `terminal_return_confirmed` (15 casos:
+HNZ 72,50 $, DELL 13,75 $, GR 127,50 $, BEAM, CEPH, GMCR, LSI, MFE, MMI, MOLX,
+NOVL, NSM, PETM, PLL, PTV). Efectivo + acciones, elecciones, CVR, canjes
+(18 fusiones, 4 canjes) y bajas sin términos legibles (21) quedan
+`terminal_return_unknown`; la lectura estricta los rechaza y nunca usa el
+último precio. En la revisión se detectaron y corrigieron casos mixtos que un
+primer patrón daba como efectivo (CBE, COV, CVH, GENZ con CVR, BRCM con
+elección). Dos observaciones (GOOG/GOOGL 2015-09-30) son la sucesión
+Google → Alphabet, sin evento económico registrado.
+
+### Cobertura final
+
+Suma de las cuatro fechas trimestrales de cada año
+([CSV](historical-prices-quarterly-2010-2015.csv),
+[JSON](historical-prices-quarterly-2010-2015.json)):
+
+| Año | Observaciones | Identidad acreditada | Tier A | Tier B | Ventana completa utilizable | Historia corta utilizable | Excluidas |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2010 | 1.992 | 1.941 | 1.210 | 307 | 1.515 | 2 | 475 |
+| 2011 | 1.988 | 1.943 | 1.262 | 324 | 1.583 | 3 | 402 |
+| 2012 | 1.988 | 1.957 | 1.308 | 276 | 1.573 | 11 | 404 |
+| 2013 | 1.988 | 1.964 | 1.359 | 299 | 1.647 | 11 | 330 |
+| 2014 | 1.993 | 1.969 | 1.392 | 284 | 1.669 | 7 | 317 |
+| 2015 | 2.004 | 1.969 | 1.421 | 263 | 1.674 | 10 | 320 |
+
+Por rebalanceo, la cobertura utilizable es **72,3–85,0 %** (ventana completa
+72,3–84,8 %; primera fase 60,3–69,5 %). Se promovieron 403 intervalos Tier A y
+140 Tier B, todos con CIK, fuente, base de ajuste y referencias SEC en
+`historical_price_provenance`. SPY está completo en los 24 cortes.
+
+Exclusiones (11.953 observaciones): sin precios en ninguna fuente 575; FINSABER
+sin dividendos 435; dividendos SEC no disponibles 247; nivel de precio fallido
+234 o no disponible 189; identidad 184; fuentes divergentes 175; saltos o
+splits sin explicar 77; conflictos de CIK, sucesiones y bajas 132.
+
+**No se alcanza el 90 %** y la exclusión **no es neutral**:
+
+- Miembros que salen del índice en el año siguiente: 45,3 % utilizables
+  (183/404), frente a 82,4 % del resto. Salir del índice no implica un mal
+  desenlace, pero los ausentes se concentran en empresas que desaparecen.
+- Tamaño (quintil de *public float* SEC en cada fecha): 75,3 % en el quintil
+  inferior frente a 83,5–86,8 % en los demás; sin float conocido, 22,4 %.
+- Sector (SIC de dos dígitos, proxy): comercio minorista de ropa (56) y
+  comunicaciones (48) 67 %, metales primarios (33) 70 %, frente a 86–88 % en
+  química y refino; sin SIC SEC, 32 %.
+
+Con estas cifras 2010–2015 sigue sin servir para afirmar superioridad frente
+al S&P 500 en un backtest estricto: cualquier resultado debe presentarse con
+la exclusión documentada y, preferiblemente, tras incorporar una fuente con
+precios de las empresas absorbidas en 2016–2019.
+
+### Reproducir
+
+Sin red (con la base y las cachés SEC locales):
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.historical_price_audit --quarterly --promote-tier-a
+.venv/Scripts/python.exe -m gabi.historical_identity_audit --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
+.venv/Scripts/python.exe -m gabi.historical_price_audit --quarterly --terminal-events --promote
 .venv/Scripts/python.exe -m gabi.historical_price_audit
-.venv/Scripts/python.exe -m pytest tests/test_historical_price_audit.py tests/test_historical_price_policy.py -q
+.venv/Scripts/python.exe -m pytest tests/test_historical_issuer_evidence.py tests/test_historical_price_audit.py tests/test_historical_price_policy.py tests/test_historical_identity_audit.py -q
 ```
 
-El #28 sigue abierto. Los siguientes bloqueos son reconciliar FINSABER con
-fuentes independientes de fechas de negociación, splits/dividendos y
-contraprestaciones de adquisición/liquidación; resolver las identidades aún
-ambiguas; y medir concentración por tamaño con capitalizaciones de época.
-Hasta entonces, **2010–2015 no debe incorporarse a un backtest estricto ni
-usarse para afirmar superioridad frente al S&P 500**.
+Descarga de la evidencia (idempotente, ya cacheada):
+
+```powershell
+.venv/Scripts/python.exe -m gabi.historical_issuer_evidence --fetch-frames --fetch-submissions <fichero con CIK>
+.venv/Scripts/python.exe -m gabi.historical_identity_audit --import-nominated-filings --fetch-candidate-instances 400
+.venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 1500 --annual-report-symbols 200
+.venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
+```
+
+Límites conocidos: la banda de nivel no distingue un error de split 2:1; las
+sucesiones (Google → Alphabet, Walgreen → WBA) cortan las ventanas que las
+atraviesan en lugar de encadenar CIK; los eventos terminales con acciones o
+mixtos aún no se calculan; la composición sigue siendo comunitaria (#26).

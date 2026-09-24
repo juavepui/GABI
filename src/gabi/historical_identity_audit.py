@@ -14,7 +14,7 @@ import time
 import unicodedata
 from bisect import bisect_right
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -22,7 +22,8 @@ import requests
 from lxml import etree
 
 from . import config, historical_archive, historical_membership, identity, sec_history, storage
-from .historical_ticker_corrections import correct_symbols
+from . import historical_issuer_evidence as issuer_evidence
+from .historical_ticker_corrections import apply_nominations, correct_symbols, identity_nominations
 
 QUARTERS = [date(year, month, day).isoformat()
             for year in range(2010, 2016)
@@ -31,6 +32,8 @@ TICKER_RE = re.compile(r"[A-Z][A-Z0-9-]{0,11}\Z")
 DEI_NAMESPACES = ("http://xbrl.sec.gov/dei/", "http://xbrl.us/dei/")
 CANDIDATE_SOURCE = "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b"
 INTERVAL_SOURCE = historical_archive.IDENTITY_INTERVAL_SOURCE
+# Quarterly filers report within ~100 days; allow one missed report.
+MAX_FIRST_FILING_LAG_DAYS = 200
 
 
 def _date(value: str | None) -> str | None:
@@ -173,6 +176,10 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
             "WHERE filed_date>='2010-01-01' AND filed_date<'2016-01-01' "
             "AND form IN ('10-K','10-Q') AND instance IS NOT NULL ORDER BY filed_date,accn"
         ).fetchall()
+        candidates += [(row["label"], row["cik"],
+                        (date.fromisoformat(row["valid_from"]) - timedelta(days=row["evidence_window_days"])).isoformat(),
+                        (date.fromisoformat(row["valid_to"]) + timedelta(days=row["evidence_window_days"])).isoformat())
+                       for row in identity_nominations()]
         unresolved = conn.execute(
             "SELECT cik,valid_from,valid_to FROM historical_identity_intervals "
             "WHERE source_id=? AND status='unresolved'",
@@ -258,6 +265,72 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
             "fetched": fetched, "failed": failures,
             "candidates_with_fewer_than_two_filings": missing_candidates,
             "prioritize_unresolved": prioritize_unresolved}
+
+
+def import_nominated_filings() -> dict:
+    """Index SEC bulk 10-K/10-Q rows for nominated CIKs from the cached archive.
+
+    The quarterly Financial Statement Data Sets are already archived with
+    their URL/SHA-256; this only adds rows for CIKs no candidate selected.
+    """
+    ciks = {row["cik"] for row in identity_nominations()}
+    with storage.get_connection() as conn:
+        sec_history.ensure_schema(conn)
+        present = {row[0] for row in conn.execute("SELECT DISTINCT cik FROM sec_bulk_submissions")}
+    missing = ciks - present
+    report: dict[str, object] = {"nominated_ciks": len(ciks), "missing_before": len(missing)}
+    if not missing:
+        return report
+    for year in range(2009, 2016):
+        for quarter in range(1, 5):
+            key = f"{year}q{quarter}"
+            url = f"https://www.sec.gov/files/dera/data/financial-statement-data-sets/{key}.zip"
+            path = sec_history.download(url, sec_history.DIRECTORY / f"{key}.zip")
+            report[key] = sec_history.import_quarter(path, url, missing)
+            print(key, report[key], flush=True)
+    return report
+
+
+def annual_report_symbol_evidence(limit: int) -> dict:
+    """Ticker proofs from 10-K text for intervals the XBRL covers left open.
+
+    Early XBRL covers often omit ``dei:TradingSymbol``. The annual report's
+    market section states the symbol; a report naming exactly one symbol is
+    stored like a cover proof (URL + SHA-256), otherwise it is ignored.
+    """
+    if limit < 0:
+        raise ValueError("limit must be nonnegative")
+    with storage.get_connection() as conn:
+        rows = conn.execute(
+            "SELECT symbol,cik,valid_from,valid_to,status FROM historical_identity_intervals "
+            "WHERE source_id=? AND status IN ('unresolved','corroborated_candidate')",
+            (INTERVAL_SOURCE,)).fetchall()
+    nominated = {(row["label"], row["cik"]) for row in identity_nominations()}
+    # Unresolved intervals, plus nominations still resting on one SEC ticker
+    # observation; community-name corroborations are left as they are.
+    targets = [row for row in rows if row[4] == "unresolved" or (row[0], row[1]) in nominated]
+    downloads = 0
+    records = []
+    for _symbol, cik, start, end, _status in targets:
+        life = issuer_evidence.listing_life(cik)
+        if life is None:
+            continue
+        reports = [row for row in life["annual_reports"] if start <= row["filed"] < end]
+        for report in [reports[index] for index in sorted({0, len(reports) - 1})] if reports else []:
+            if downloads >= limit:
+                break
+            url, path = issuer_evidence.fetch_annual_report(cik, report)
+            downloads += 1
+            symbols = issuer_evidence.annual_report_symbols(path.read_text(encoding="utf-8", errors="ignore"))
+            if len(symbols) != 1:
+                continue
+            with path.open("rb") as source:
+                digest = hashlib.file_digest(source, "sha256").hexdigest()
+            records.append({"symbol": next(iter(symbols)), "cik": cik, "accession": report["accession"],
+                            "filed_date": report["filed"], "historical_name": life["name"],
+                            "historical_name_source": "sec_10k_text", "sha256": digest, "source_url": url})
+    imported = historical_archive.import_filing_identity_evidence(records)
+    return {"intervals": len(targets), "reports": downloads, "symbol_proofs": imported}
 
 
 def _name_tokens(value: str) -> list[str]:
@@ -391,6 +464,9 @@ def build_evidence_intervals() -> list[dict]:
         by_symbol.setdefault(identity.normalize_symbol(symbol), []).append({
             "cik": identity.normalize_cik(cik), "name": name,
             "start": start, "end": _date(removed) or "9999-12-31"})
+    # Reviewed nominations only choose which CIK to test; the SEC ticker
+    # evidence below still decides the tier.
+    by_symbol = apply_nominations(by_symbol)
     evidence: dict[str, list[dict]] = {}
     evidence_by_cik: dict[str, list[dict]] = {}
     for symbol, entity_id, payload_json in proofs:
@@ -427,16 +503,24 @@ def build_evidence_intervals() -> list[dict]:
             if not active:
                 continue
             ciks = {row["cik"] for row in active}
-            relevant = [row for row in evidence.get(symbol, []) if left <= row["filed_date"] < right]
-            contradictory = {row["cik"] for row in relevant} - ciks
+            nomination = next((row["nomination"] for row in active if row.get("nomination")), None)
+            tickers = {symbol, *nomination["sec_tickers"]} if nomination else {symbol}
+            pad = timedelta(days=nomination["evidence_window_days"]) if nomination else timedelta(0)
+            low = (date.fromisoformat(left) - pad).isoformat()
+            high = (date.fromisoformat(right) + pad).isoformat()
+            relevant = [row for ticker in sorted(tickers) for row in evidence.get(ticker, [])
+                        if low <= row["filed_date"] < high]
+            # Another issuer reporting the label, or a nominated historical
+            # ticker, inside the interval is recycling: never resolve it.
+            contradictory = {row["cik"] for row in relevant if left <= row["filed_date"] < right} - ciks
             for cik in sorted(ciks):
                 matching = sorted((row for row in relevant if row["cik"] == cik),
                                   key=lambda row: (row["filed_date"], row["accession"]))
                 dates = {row["filed_date"] for row in matching}
                 issuer_filings = [row for row in filings_by_cik.get(cik, [])
-                                  if left <= row["filed_date"] < right]
+                                  if low <= row["filed_date"] < high]
                 issuer_dates = {row["filed_date"] for row in issuer_filings}
-                names = [row["name"] for row in active if row["cik"] == cik]
+                names = [row["name"] for row in active if row["cik"] == cik and row["name"]]
                 name_match = any(_name_matches(name, row.get("historical_name"))
                                  for name in names for row in matching + issuer_filings)
                 official = official_names.get(cik)
@@ -446,16 +530,35 @@ def build_evidence_intervals() -> list[dict]:
                                    any(_name_matches(row["historical_name"], official_name)
                                        for row in issuer_filings for official_name in official["names"]))
                 other_tickers = {row["symbol"] for row in evidence_by_cik.get(cik, [])
-                                 if row["symbol"] != symbol and left <= row["filed_date"] < right}
+                                 if row["symbol"] not in tickers and left <= row["filed_date"] < right}
+                # A CIK whose first periodic report (full EDGAR history, not
+                # the XBRL-only bulk sets) comes well after the interval opens
+                # is a later successor, e.g. a holding company of the issuer.
+                life = issuer_evidence.listing_life(cik)
+                late_start = bool(life and life["first_periodic"] and
+                                  date.fromisoformat(life["first_periodic"]) >
+                                  date.fromisoformat(left) + timedelta(days=MAX_FIRST_FILING_LAG_DAYS))
                 if len(ciks) > 1 or contradictory or other_tickers:
                     status = "ambiguous"
-                elif len(dates) >= 2:
+                elif late_start:
+                    status = "unresolved"
+                elif len(dates) >= 2 and {row["symbol"] for row in matching} == {symbol}:
                     # Two independent SEC covers explicitly report this
                     # ticker and CIK. A community display-name mismatch (GE,
                     # JCP) cannot outweigh the primary ticker evidence; the
                     # no-ticker corroboration tier still requires name match.
                     status = "confirmed_by_multiple_evidence"
-                elif len(issuer_dates) >= 2 and (name_match or chain_match):
+                elif len(dates) >= 2:
+                    # The label is a later symbol applied retroactively; SEC
+                    # covers report the reviewed historical ticker of this CIK.
+                    status = "confirmed_historical_ticker"
+                elif len(issuer_dates) >= 2 and (name_match or chain_match) and not nomination:
+                    status = "corroborated_candidate"
+                elif nomination and len(issuer_dates) >= 2 and (
+                        dates or set((life or {}).get("current_tickers", [])) & tickers):
+                    # A reviewed nomination with repeated SEC reports of the CIK
+                    # and one SEC ticker observation (cover or SEC's own ticker
+                    # list): as strong as the community-name tier, not stronger.
                     status = "corroborated_candidate"
                 else:
                     status = "unresolved"
@@ -469,6 +572,9 @@ def build_evidence_intervals() -> list[dict]:
                         references.append({key: row.get(key) for key in
                                            ("accession", "filed_date", "source_url", "sha256", "cik",
                                             "historical_name", "evidence_kind")})
+                if nomination and life and set(life.get("current_tickers", [])) & tickers:
+                    references.append({"source_url": life["source_url"], "evidence_kind": "sec_submissions_tickers",
+                                       "tickers": sorted(set(life["current_tickers"]) & tickers)})
                 if chain_match and official:
                     references.append({"source_url": official["source_url"],
                                        "sha256": official["sha256"],
@@ -528,6 +634,7 @@ def coverage_report() -> dict:
                                                "candidate_name": 0, "ambiguous_alias": 0,
                                                "ambiguous_candidate_cik": 0,
                                                "confirmed_by_multiple_evidence": 0,
+                                               "confirmed_historical_ticker": 0,
                                                "corroborated_candidate": 0,
                                                "accredited_total": 0, "ambiguous_identity": 0})
         annual["quarter_dates"].append(day)
@@ -544,11 +651,13 @@ def coverage_report() -> dict:
                                 if row[2] <= day < row[3]]
             interval_confirmed = {row[1] for row in interval_matches
                                   if row[4] == "confirmed_by_multiple_evidence"}
+            interval_historical = {row[1] for row in interval_matches
+                                   if row[4] == "confirmed_historical_ticker"}
             interval_corroborated = {row[1] for row in interval_matches
                                     if row[4] == "corroborated_candidate"}
             interval_ambiguous = any(row[4] == "ambiguous" for row in interval_matches)
             alias_ciks = {row[2] for row in matching}
-            supported = interval_confirmed | interval_corroborated
+            supported = interval_confirmed | interval_historical | interval_corroborated
             conflict = (len(owners) > 1 or interval_ambiguous or len(supported) > 1 or
                         bool(supported and alias_ciks and supported != alias_ciks))
             if conflict:
@@ -556,6 +665,8 @@ def coverage_report() -> dict:
                 ambiguous_examples.add(symbol)
             elif interval_confirmed:
                 annual["confirmed_by_multiple_evidence"] += 1
+            elif interval_historical:
+                annual["confirmed_historical_ticker"] += 1
             elif interval_corroborated:
                 annual["corroborated_candidate"] += 1
             if not conflict and (valid or supported):
@@ -584,7 +695,7 @@ def coverage_report() -> dict:
         annual["percent"] = {key: round(100 * annual[key] / denominator, 3) for key in (
             "resolved_cik", "resolved_entity_id", "date_valid_alias", "historical_name_sec",
             "candidate_unique_cik", "candidate_row_created_by_date", "candidate_name",
-            "confirmed_by_multiple_evidence", "corroborated_candidate",
+            "confirmed_by_multiple_evidence", "confirmed_historical_ticker", "corroborated_candidate",
             "accredited_total", "ambiguous_identity")}
     return {"membership_source_id": historical_membership.REFERENCE_SOURCE,
             "candidate_source_id": CANDIDATE_SOURCE,
@@ -601,6 +712,10 @@ def main() -> None:
                         help="Download up to N selected 2010-15 SEC XBRL covers for candidate checks")
     parser.add_argument("--fetch-unresolved-instances", type=int,
                         help="Download up to N extra SEC covers only for unresolved dated identity intervals")
+    parser.add_argument("--import-nominated-filings", action="store_true",
+                        help="Index cached SEC bulk filings for reviewed CIK nominations")
+    parser.add_argument("--annual-report-symbols", type=int,
+                        help="Download up to N 10-Ks for open intervals and store stated ticker symbols")
     parser.add_argument("--fetch-issuer-names", type=int,
                         help="Download up to N SEC issuer name histories for unresolved CIKs")
     parser.add_argument("--evidence-csv", type=Path, help="Save accepted SEC filing-day identity evidence")
@@ -612,6 +727,10 @@ def main() -> None:
                         help="Write interval status, dates and SEC provenance for review")
     args = parser.parse_args()
     fetch_summary = None
+    if args.import_nominated_filings:
+        print(json.dumps(import_nominated_filings()), flush=True)
+    if args.annual_report_symbols is not None:
+        print(json.dumps(annual_report_symbol_evidence(args.annual_report_symbols)), flush=True)
     if args.fetch_candidate_instances is not None and args.fetch_unresolved_instances is not None:
         parser.error("Choose only one SEC instance download mode")
     if args.fetch_candidate_instances is not None or args.fetch_unresolved_instances is not None:
@@ -643,7 +762,8 @@ def main() -> None:
         intervals = build_evidence_intervals()
         historical_archive.replace_identity_intervals(INTERVAL_SOURCE, intervals)
         counts = {status: sum(row["status"] == status for row in intervals)
-                  for status in ("confirmed_by_multiple_evidence", "corroborated_candidate",
+                  for status in ("confirmed_by_multiple_evidence", "confirmed_historical_ticker",
+                                 "corroborated_candidate",
                                  "ambiguous", "unresolved")}
         if args.intervals_csv:
             args.intervals_csv.parent.mkdir(parents=True, exist_ok=True)

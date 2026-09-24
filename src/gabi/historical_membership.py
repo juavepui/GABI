@@ -138,7 +138,7 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
             continue
         if status == "ambiguous":
             blocked.add(symbol)
-        elif status in {"confirmed_by_multiple_evidence", "corroborated_candidate"}:
+        elif status in historical_archive.ACCREDITED_IDENTITY_TIERS:
             corroborated.setdefault(symbol, {})[f"cik:{cik}"] = (status, source)
     result = {}
     for symbol in symbols:
@@ -170,8 +170,7 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
                           "identity_confidence": (1.0 if filing else found.get(entity_id)
                                                   if tier == "reviewed_alias" else None),
                           "identity_source": (filing[1] if filing else interval[entity_id][1]
-                                              if tier in {"confirmed_by_multiple_evidence",
-                                                         "corroborated_candidate"} else None),
+                                              if tier in historical_archive.ACCREDITED_IDENTITY_TIERS else None),
                           "historical_name": filing[0].get("historical_name") if filing else None}
     return result
 

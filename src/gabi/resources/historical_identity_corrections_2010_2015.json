@@ -1,0 +1,812 @@
+{
+  "description": "Reviewed nominations for 2010-2015 index labels whose community CIK is a later successor, whose label was applied retroactively, or whose candidate interval is too short. A nomination is never evidence: historical_identity_audit accepts it only when original SEC XBRL covers of that CIK report one of `sec_tickers` on at least two dates inside the evidence window and no other CIK reports the label or those tickers there. historical_price_audit separately requires SEC listing-life and public-float/price-level checks before any price series is attributed. Entries marked price_only leave identity to the existing evidence and only name the price-source symbol.",
+  "entries": [
+    {
+      "label": "XOM",
+      "cik": "0000034088",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "XOM"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "lawcal maps XOM to the 2025 ExxonMobil holding company CIK"
+    },
+    {
+      "label": "DIS",
+      "cik": "0001001039",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "DIS"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "lawcal maps DIS to the 2019 post-Fox holding company"
+    },
+    {
+      "label": "BLK",
+      "cik": "0001364742",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "BLK"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "lawcal maps BLK to the 2024 holding company"
+    },
+    {
+      "label": "CI",
+      "cik": "0000701221",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "CI"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "lawcal maps CI to the 2018 Cigna holding company"
+    },
+    {
+      "label": "APA",
+      "cik": "0000006769",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "APA"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Apache Corp; APA Corporation holding company formed 2021"
+    },
+    {
+      "label": "AVGO",
+      "cik": "0001441634",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "AVGO"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Avago Technologies Ltd before the 2016 Broadcom Ltd succession"
+    },
+    {
+      "label": "FTI",
+      "cik": "0001135152",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "FTI"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "FMC Technologies before the 2017 TechnipFMC combination"
+    },
+    {
+      "label": "XRX",
+      "cik": "0000108772",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "XRX"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Xerox Corp before the 2019 holding company"
+    },
+    {
+      "label": "GOOGL",
+      "cik": "0001288776",
+      "valid_from": "2010-01-01",
+      "valid_to": "2015-10-02",
+      "sec_tickers": [
+        "GOOG",
+        "GOOGL"
+      ],
+      "share_class": "A",
+      "reason": "successor_cik_leak",
+      "note": "Google Inc until the Alphabet reorganisation; class A traded as GOOG before 2014-04-03"
+    },
+    {
+      "label": "GOOG",
+      "cik": "0001288776",
+      "valid_from": "2014-04-03",
+      "valid_to": "2015-10-02",
+      "sec_tickers": [
+        "GOOG",
+        "GOOGL"
+      ],
+      "share_class": "C",
+      "reason": "successor_cik_leak",
+      "note": "Google Inc class C until the Alphabet reorganisation"
+    },
+    {
+      "label": "WBA",
+      "cik": "0000104207",
+      "valid_from": "2010-01-01",
+      "valid_to": "2014-12-31",
+      "sec_tickers": [
+        "WAG"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Walgreen Co before the Walgreens Boots Alliance reorganisation"
+    },
+    {
+      "label": "MYL",
+      "cik": "0000069499",
+      "valid_from": "2010-01-01",
+      "valid_to": "2015-02-27",
+      "sec_tickers": [
+        "MYL"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Mylan Inc before Mylan N.V."
+    },
+    {
+      "label": "ESRX",
+      "cik": "0000885721",
+      "valid_from": "2010-01-01",
+      "valid_to": "2012-04-02",
+      "sec_tickers": [
+        "ESRX"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Express Scripts Inc before Express Scripts Holding"
+    },
+    {
+      "label": "CCE",
+      "cik": "0000747676",
+      "valid_from": "2010-01-01",
+      "valid_to": "2010-10-02",
+      "sec_tickers": [
+        "CCE"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Former Coca-Cola Enterprises before its North American business was sold; not economically continuous with the new CCE"
+    },
+    {
+      "label": "ENDP",
+      "cik": "0001593034",
+      "valid_from": "2014-02-28",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "ENDP"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Endo International plc"
+    },
+    {
+      "label": "WRK",
+      "cik": "0001636023",
+      "valid_from": "2015-07-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "WRK"
+      ],
+      "evidence_window_days": 365,
+      "reason": "successor_cik_leak",
+      "note": "WestRock Co formed 2015; lawcal gives the 2018 WestRock holding company"
+    },
+    {
+      "label": "D",
+      "cik": "0000715957",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "D"
+      ],
+      "reason": "missing_candidate",
+      "note": "Dominion Resources; lawcal row starts at the 2017 rename"
+    },
+    {
+      "label": "SRE",
+      "cik": "0001032208",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "SRE"
+      ],
+      "reason": "missing_candidate",
+      "note": "Sempra Energy"
+    },
+    {
+      "label": "TROW",
+      "cik": "0001113169",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "TROW"
+      ],
+      "reason": "missing_candidate",
+      "note": "T. Rowe Price Group"
+    },
+    {
+      "label": "KDP",
+      "cik": "0001418135",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "DPS"
+      ],
+      "reason": "retrospective_label",
+      "note": "Dr Pepper Snapple Group traded as DPS"
+    },
+    {
+      "label": "DXC",
+      "cik": "0000023082",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "CSC"
+      ],
+      "reason": "retrospective_label",
+      "note": "Computer Sciences Corp traded as CSC"
+    },
+    {
+      "label": "LDOS",
+      "cik": "0001336920",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "SAI",
+        "LDOS"
+      ],
+      "reason": "retrospective_label",
+      "note": "SAIC Inc traded as SAI until the 2013 Leidos rename"
+    },
+    {
+      "label": "TMUS",
+      "cik": "0001283699",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "PCS",
+        "TMUS"
+      ],
+      "reason": "retrospective_label",
+      "note": "MetroPCS Communications traded as PCS before the 2013 combination"
+    },
+    {
+      "label": "VIAV",
+      "cik": "0000912093",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "JDSU",
+        "VIAV"
+      ],
+      "reason": "retrospective_label",
+      "note": "JDS Uniphase traded as JDSU"
+    },
+    {
+      "label": "AABA",
+      "cik": "0001011006",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "YHOO"
+      ],
+      "reason": "retrospective_label",
+      "note": "Yahoo! Inc traded as YHOO"
+    },
+    {
+      "label": "ATGE",
+      "cik": "0000730464",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "DV"
+      ],
+      "reason": "retrospective_label",
+      "note": "DeVry Inc traded as DV"
+    },
+    {
+      "label": "BTUUQ",
+      "cik": "0001064728",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "BTU"
+      ],
+      "reason": "retrospective_label",
+      "note": "Peabody Energy traded as BTU; the Q suffix is the 2016 bankruptcy symbol"
+    },
+    {
+      "label": "EKDKQ",
+      "cik": "0000031235",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "EK",
+        "EKDKQ"
+      ],
+      "reason": "retrospective_label",
+      "note": "Eastman Kodak traded as EK"
+    },
+    {
+      "label": "TGNA",
+      "cik": "0000039899",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "GCI",
+        "TGNA"
+      ],
+      "reason": "retrospective_label",
+      "note": "Gannett traded as GCI until the 2015 TEGNA rename"
+    },
+    {
+      "label": "TPR",
+      "cik": "0001116132",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "COH"
+      ],
+      "reason": "retrospective_label",
+      "note": "Coach Inc traded as COH"
+    },
+    {
+      "label": "ZBH",
+      "cik": "0001136869",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "ZMH",
+        "ZBH"
+      ],
+      "reason": "retrospective_label",
+      "note": "Zimmer Holdings traded as ZMH"
+    },
+    {
+      "label": "EA",
+      "cik": "0000712515",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "ERTS",
+        "EA"
+      ],
+      "reason": "retrospective_label",
+      "note": "Electronic Arts traded as ERTS before moving to EA"
+    },
+    {
+      "label": "CBRE",
+      "cik": "0001138118",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "CBG"
+      ],
+      "reason": "retrospective_label",
+      "note": "CBRE Group traded as CBG"
+    },
+    {
+      "label": "LB",
+      "cik": "0000701985",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "LTD",
+        "LB"
+      ],
+      "price_symbols": {
+        "yahoo": "BBWI"
+      },
+      "reason": "retrospective_label",
+      "note": "Limited Brands traded as LTD; Yahoo keeps the issuer history under BBWI"
+    },
+    {
+      "label": "IR",
+      "cik": "0001466258",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "IR"
+      ],
+      "price_symbols": {
+        "yahoo": "TT",
+        "finsaber": "TT"
+      },
+      "reason": "missing_candidate",
+      "note": "Ingersoll-Rand plc; both price sources keep the history under its later TT symbol"
+    },
+    {
+      "label": "BHGE",
+      "cik": "0000808362",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "BHI"
+      ],
+      "price_symbols": {
+        "yahoo": "BKR"
+      },
+      "reason": "retrospective_label",
+      "note": "Baker Hughes Inc traded as BHI"
+    },
+    {
+      "label": "ARNC",
+      "cik": "0000004281",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "AA"
+      ],
+      "reason": "retrospective_label",
+      "note": "Alcoa Inc traded as AA; no local price series under an attributable symbol"
+    },
+    {
+      "label": "NLSN",
+      "cik": "0001492633",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "NLSN",
+        "NLSNNV"
+      ],
+      "reason": "retrospective_label",
+      "note": "Nielsen Holdings N.V. reports a legal-form suffix in DEI"
+    },
+    {
+      "label": "UAA",
+      "cik": "0001336917",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "UA"
+      ],
+      "share_class": "A",
+      "reason": "retrospective_label",
+      "note": "Under Armour class A traded as UA before 2016"
+    },
+    {
+      "label": "NWSA",
+      "cik": "0001564708",
+      "valid_from": "2013-06-19",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "NWSA",
+        "NWS"
+      ],
+      "share_class": "A",
+      "reason": "multi_class_issuer",
+      "note": "New News Corp; DEI reports one of its two listed classes"
+    },
+    {
+      "label": "NWS",
+      "cik": "0001564708",
+      "valid_from": "2013-06-19",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "NWSA",
+        "NWS"
+      ],
+      "share_class": "B",
+      "reason": "multi_class_issuer",
+      "note": "New News Corp; DEI reports one of its two listed classes"
+    },
+    {
+      "label": "BRK-B",
+      "cik": "0001067983",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "BRKA",
+        "BRKB",
+        "BRK.B",
+        "BRK-B"
+      ],
+      "share_class": "B",
+      "reason": "multi_class_issuer",
+      "note": "Berkshire Hathaway; DEI reports the class A symbol"
+    },
+    {
+      "label": "HUM",
+      "cik": "0000049071",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "HUM"
+      ],
+      "reason": "candidate_interval_too_short",
+      "note": "lawcal start date is approximate"
+    },
+    {
+      "label": "MDLZ",
+      "cik": "0001103982",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "KFT",
+        "MDLZ"
+      ],
+      "reason": "retrospective_label",
+      "note": "Kraft Foods Inc traded as KFT before the 2012 Mondelez rename"
+    },
+    {
+      "label": "FCX",
+      "cik": "0000831259",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "FCX"
+      ],
+      "reason": "candidate_interval_too_short",
+      "note": "lawcal start date is approximate"
+    },
+    {
+      "label": "JCI",
+      "cik": "0000053669",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "JCI"
+      ],
+      "reason": "candidate_interval_too_short",
+      "note": "Johnson Controls Inc; lawcal gives CIK 833444, which is Tyco International (the 2016 merger vehicle)"
+    },
+    {
+      "label": "WFM",
+      "cik": "0000865436",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "WFMI",
+        "WFM"
+      ],
+      "reason": "candidate_interval_too_short",
+      "note": "Whole Foods traded as WFMI before 2011"
+    },
+    {
+      "label": "GAS",
+      "cik": "0001004155",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "AGL",
+        "GAS"
+      ],
+      "reason": "retrospective_label",
+      "note": "AGL Resources traded as AGL before its 2011 symbol change"
+    },
+    {
+      "label": "GHC",
+      "cik": "0000104889",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "WPO",
+        "GHC"
+      ],
+      "reason": "retrospective_label",
+      "note": "Washington Post Co traded as WPO before the 2013 rename"
+    },
+    {
+      "label": "CLF",
+      "cik": "0000764065",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "CLF"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Cliffs Natural Resources; verify the CIK against SEC before use"
+    },
+    {
+      "label": "ATVI",
+      "cik": "0000718877",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "ATVI"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Index entry late in 2015"
+    },
+    {
+      "label": "CHD",
+      "cik": "0000313927",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "CHD"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Index entry late in 2015"
+    },
+    {
+      "label": "ILMN",
+      "cik": "0001110803",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "ILMN"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Index entry late in 2015"
+    },
+    {
+      "label": "SYF",
+      "cik": "0001601712",
+      "valid_from": "2014-07-31",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "SYF"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "IPO July 2014; index entry late in 2015"
+    },
+    {
+      "label": "VRSK",
+      "cik": "0001442145",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "VRSK"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Index entry late in 2015"
+    },
+    {
+      "label": "UAL",
+      "cik": "0000100517",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "UAL"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Index entry late in 2015"
+    },
+    {
+      "label": "HPE",
+      "cik": "0001645590",
+      "valid_from": "2015-10-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "HPE"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Spin-off November 2015"
+    },
+    {
+      "label": "CSRA",
+      "cik": "0001646383",
+      "valid_from": "2015-11-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "CSRA"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Spin-off November 2015"
+    },
+    {
+      "label": "MDP",
+      "cik": "0000065011",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "MDP"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Index exit January 2011"
+    },
+    {
+      "label": "MIL",
+      "cik": "0000066479",
+      "valid_from": "2010-01-01",
+      "valid_to": "2010-07-15",
+      "sec_tickers": [
+        "MIL"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Acquired July 2010"
+    },
+    {
+      "label": "BJS",
+      "cik": "0000864328",
+      "valid_from": "2010-01-01",
+      "valid_to": "2010-04-29",
+      "sec_tickers": [
+        "BJS"
+      ],
+      "evidence_window_days": 365,
+      "reason": "candidate_interval_too_short",
+      "note": "Acquired April 2010"
+    },
+    {
+      "label": "ETN",
+      "cik": "0000031277",
+      "valid_from": "2010-01-01",
+      "valid_to": "2012-11-30",
+      "sec_tickers": [
+        "ETN"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Eaton Corp before the Eaton plc redomiciliation"
+    },
+    {
+      "label": "ICE",
+      "cik": "0001174746",
+      "valid_from": "2010-01-01",
+      "valid_to": "2013-11-13",
+      "sec_tickers": [
+        "ICE"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "IntercontinentalExchange Inc before the 2013 holding company"
+    },
+    {
+      "label": "MDT",
+      "cik": "0000064670",
+      "valid_from": "2010-01-01",
+      "valid_to": "2015-01-26",
+      "sec_tickers": [
+        "MDT"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Medtronic Inc before Medtronic plc"
+    },
+    {
+      "label": "PRGO",
+      "cik": "0000820096",
+      "valid_from": "2010-01-01",
+      "valid_to": "2013-12-18",
+      "sec_tickers": [
+        "PRGO"
+      ],
+      "reason": "successor_cik_leak",
+      "note": "Perrigo Co before Perrigo plc"
+    },
+    {
+      "label": "WLP",
+      "cik": "0001156039",
+      "valid_from": "2009-12-01",
+      "valid_to": "2014-12-03",
+      "sec_tickers": [
+        "WLP"
+      ],
+      "price_symbols": {
+        "yahoo": "ELV",
+        "finsaber": "ANTM"
+      },
+      "reason": "price_symbol_continuation",
+      "note": "WellPoint; both price sources keep its history under later symbols (ANTM, ELV)"
+    },
+    {
+      "label": "HCP",
+      "cik": "0000765880",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "HCP"
+      ],
+      "price_symbols": {
+        "yahoo": "DOC"
+      },
+      "reason": "price_symbol_continuation",
+      "note": "HCP Inc; Yahoo keeps the issuer history under Healthpeak's current DOC symbol; identity stays with the community candidate and its SEC corroboration",
+      "price_only": true
+    },
+    {
+      "label": "PX",
+      "cik": "0000884905",
+      "valid_from": "2010-01-01",
+      "valid_to": "2016-01-01",
+      "sec_tickers": [
+        "PX"
+      ],
+      "price_symbols": {
+        "yahoo": "LIN"
+      },
+      "reason": "price_symbol_continuation",
+      "note": "Praxair; Yahoo keeps its pre-2018 history under Linde plc's LIN symbol"
+    }
+  ]
+}
