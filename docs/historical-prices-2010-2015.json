@@ -1,0 +1,102 @@
+{
+  "database": "gabi.db",
+  "price_source_id": "finsaber:ba3a6907a29027b1f40da3381f3bc834e08e99a6",
+  "session_definition": "last 253 XNYS sessions through December 31",
+  "fallback_rule": ">=60 common daily returns, p99 absolute difference <= 0.005",
+  "price_attribution": "candidate_only; no archived or legacy price promoted to entity observations",
+  "years": [
+    {
+      "year": 2010,
+      "members": 497,
+      "yahoo_complete": 328,
+      "finsaber_complete": 454,
+      "selected_yahoo": 303,
+      "selected_finsaber": 0,
+      "excluded": 194,
+      "reasons": {
+        "archive_adjustment_unverified": 117,
+        "identity_unresolved": 47,
+        "incomplete_prices": 29,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "year": 2011,
+      "members": 497,
+      "yahoo_complete": 336,
+      "finsaber_complete": 453,
+      "selected_yahoo": 311,
+      "selected_finsaber": 0,
+      "excluded": 186,
+      "reasons": {
+        "archive_adjustment_unverified": 111,
+        "identity_unresolved": 43,
+        "incomplete_prices": 31,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "year": 2012,
+      "members": 497,
+      "yahoo_complete": 348,
+      "finsaber_complete": 461,
+      "selected_yahoo": 325,
+      "selected_finsaber": 0,
+      "excluded": 172,
+      "reasons": {
+        "archive_adjustment_unverified": 107,
+        "identity_unresolved": 37,
+        "incomplete_prices": 27,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "year": 2013,
+      "members": 497,
+      "yahoo_complete": 352,
+      "finsaber_complete": 461,
+      "selected_yahoo": 332,
+      "selected_finsaber": 0,
+      "excluded": 165,
+      "reasons": {
+        "archive_adjustment_unverified": 104,
+        "identity_unresolved": 34,
+        "incomplete_prices": 25,
+        "archive_boundary_unverified": 1,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "year": 2014,
+      "members": 499,
+      "yahoo_complete": 362,
+      "finsaber_complete": 468,
+      "selected_yahoo": 339,
+      "selected_finsaber": 0,
+      "excluded": 160,
+      "reasons": {
+        "archive_adjustment_unverified": 103,
+        "identity_unresolved": 34,
+        "incomplete_prices": 22,
+        "ticker_recycled": 1
+      }
+    },
+    {
+      "year": 2015,
+      "members": 502,
+      "yahoo_complete": 375,
+      "finsaber_complete": 470,
+      "selected_yahoo": 346,
+      "selected_finsaber": 0,
+      "excluded": 156,
+      "reasons": {
+        "archive_adjustment_unverified": 88,
+        "identity_unresolved": 46,
+        "incomplete_prices": 19,
+        "archive_boundary_unverified": 2,
+        "ticker_recycled": 1
+      }
+    }
+  ],
+  "spy_complete_all_years": true
+}
