@@ -1614,6 +1614,9 @@ acreditados; todavía no certifica un backtest completo desde 1996.
 
 Los resultados, fuentes, límites y comandos están en
 [la validación histórica 1996–2015](docs/historical-validation-1996-2015/README.md).
+El [inventario anual 2008–2026](docs/historical-data-audit.md) distingue la
+cobertura numérica de la identidad y procedencia acreditadas antes de ampliar
+las descargas históricas.
 La cobertura también se muestra en **Calidad de los datos → Archivo histórico
 anterior a 2016**.
 
