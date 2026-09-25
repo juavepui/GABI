@@ -12,18 +12,23 @@
       "yahoo_complete": 333,
       "finsaber_complete": 456,
       "tier_a": 308,
-      "tier_b": 84,
-      "usable_full_window": 391,
+      "tier_b": 116,
+      "tier_b_by_source": {
+        "finsaber": 84,
+        "tiingo": 13,
+        "wiki": 19
+      },
+      "usable_full_window": 423,
       "usable_short_history": 1,
-      "excluded": 105,
+      "excluded": 73,
       "reasons": {
-        "incomplete_prices": 27,
-        "archive_dividend_mismatch": 16,
-        "price_level_failed": 13,
         "archive_sec_dividends_unavailable": 13,
         "identity_unresolved": 10,
-        "price_level_missing": 10,
-        "sources_divergent_overlap": 8,
+        "incomplete_prices": 10,
+        "price_level_failed": 9,
+        "archive_dividend_mismatch": 9,
+        "price_level_missing": 8,
+        "sources_divergent_overlap": 6,
         "archive_unexplained_jump": 5,
         "multiple_ciks_in_window": 2,
         "sources_divergent_event": 1
@@ -36,22 +41,28 @@
       "yahoo_complete": 341,
       "finsaber_complete": 455,
       "tier_a": 321,
-      "tier_b": 71,
-      "usable_full_window": 390,
+      "tier_b": 98,
+      "tier_b_by_source": {
+        "finsaber": 71,
+        "tiingo": 11,
+        "wiki": 16
+      },
+      "usable_full_window": 417,
       "usable_short_history": 2,
-      "excluded": 105,
+      "excluded": 78,
       "reasons": {
-        "incomplete_prices": 27,
-        "archive_dividend_mismatch": 24,
-        "price_level_failed": 12,
+        "archive_dividend_mismatch": 19,
+        "incomplete_prices": 10,
         "archive_sec_dividends_unavailable": 9,
         "identity_unresolved": 9,
-        "sources_divergent_overlap": 8,
         "price_level_missing": 8,
+        "price_level_failed": 8,
+        "sources_divergent_overlap": 6,
         "succession_inside_window": 2,
         "archive_unexplained_jump": 2,
         "multiple_ciks_in_window": 1,
         "archive_split_unverified": 1,
+        "wiki_fallback_accredited": 1,
         "sources_divergent_event": 1,
         "delisted_before_window_end": 1
       }
@@ -63,20 +74,25 @@
       "yahoo_complete": 353,
       "finsaber_complete": 463,
       "tier_a": 329,
-      "tier_b": 77,
-      "usable_full_window": 405,
+      "tier_b": 109,
+      "tier_b_by_source": {
+        "finsaber": 77,
+        "tiingo": 16,
+        "wiki": 16
+      },
+      "usable_full_window": 437,
       "usable_short_history": 1,
-      "excluded": 91,
+      "excluded": 59,
       "reasons": {
-        "incomplete_prices": 24,
-        "archive_dividend_mismatch": 16,
+        "archive_dividend_mismatch": 11,
         "archive_sec_dividends_unavailable": 10,
-        "sources_divergent_overlap": 9,
-        "price_level_failed": 9,
-        "price_level_missing": 6,
+        "incomplete_prices": 8,
         "identity_unresolved": 5,
+        "price_level_missing": 5,
+        "price_level_failed": 5,
         "multiple_ciks_in_window": 3,
         "succession_inside_window": 3,
+        "sources_divergent_overlap": 3,
         "listing_starts_after_window": 2,
         "archive_unexplained_jump": 2,
         "sources_divergent_event": 1,
@@ -90,21 +106,25 @@
       "yahoo_complete": 357,
       "finsaber_complete": 463,
       "tier_a": 345,
-      "tier_b": 77,
-      "usable_full_window": 418,
+      "tier_b": 105,
+      "tier_b_by_source": {
+        "finsaber": 77,
+        "tiingo": 10,
+        "wiki": 18
+      },
+      "usable_full_window": 446,
       "usable_short_history": 4,
-      "excluded": 75,
+      "excluded": 47,
       "reasons": {
-        "incomplete_prices": 22,
-        "archive_dividend_mismatch": 15,
+        "archive_dividend_mismatch": 11,
         "archive_sec_dividends_unavailable": 8,
-        "price_level_failed": 7,
-        "price_level_missing": 6,
-        "sources_divergent_overlap": 5,
+        "incomplete_prices": 6,
         "identity_unresolved": 5,
+        "price_level_missing": 5,
+        "price_level_failed": 5,
         "multiple_ciks_in_window": 3,
         "archive_unexplained_jump": 2,
-        "archive_unexplained_adjustment": 1,
+        "sources_divergent_overlap": 1,
         "delisted_before_window_end": 1
       }
     },
@@ -115,22 +135,27 @@
       "yahoo_complete": 366,
       "finsaber_complete": 469,
       "tier_a": 350,
-      "tier_b": 69,
-      "usable_full_window": 418,
+      "tier_b": 94,
+      "tier_b_by_source": {
+        "finsaber": 69,
+        "tiingo": 12,
+        "wiki": 13
+      },
+      "usable_full_window": 443,
       "usable_short_history": 1,
-      "excluded": 80,
+      "excluded": 55,
       "reasons": {
-        "incomplete_prices": 21,
-        "archive_dividend_mismatch": 19,
+        "archive_dividend_mismatch": 12,
+        "incomplete_prices": 8,
         "archive_sec_dividends_unavailable": 7,
         "price_level_missing": 7,
-        "sources_divergent_overlap": 5,
         "identity_unresolved": 5,
-        "price_level_failed": 4,
         "delisted_before_window_end": 3,
         "multiple_ciks_in_window": 2,
+        "sources_divergent_overlap": 2,
         "succession_inside_window": 2,
         "archive_split_unverified": 2,
+        "price_level_failed": 2,
         "archive_unexplained_jump": 2,
         "listing_starts_after_window": 1
       }
@@ -142,22 +167,27 @@
       "yahoo_complete": 379,
       "finsaber_complete": 471,
       "tier_a": 356,
-      "tier_b": 67,
-      "usable_full_window": 419,
+      "tier_b": 85,
+      "tier_b_by_source": {
+        "finsaber": 67,
+        "tiingo": 7,
+        "wiki": 11
+      },
+      "usable_full_window": 437,
       "usable_short_history": 4,
-      "excluded": 79,
+      "excluded": 61,
       "reasons": {
-        "incomplete_prices": 16,
         "price_level_missing": 11,
         "identity_unresolved": 10,
-        "archive_dividend_mismatch": 9,
+        "archive_dividend_mismatch": 8,
         "archive_sec_dividends_unavailable": 7,
         "multiple_ciks_in_window": 5,
-        "sources_divergent_overlap": 5,
         "archive_unexplained_jump": 4,
-        "price_level_failed": 4,
+        "incomplete_prices": 4,
         "succession_inside_window": 4,
+        "price_level_failed": 3,
         "delisted_before_window_end": 2,
+        "sources_divergent_overlap": 1,
         "sources_divergent_event": 1,
         "listing_starts_after_window": 1
       }
@@ -168,10 +198,10 @@
       "as_of": "2010-12-31",
       "members": 497,
       "identity_accredited": 486,
-      "usable_full_window": 391,
-      "usable_including_short_history": 392,
-      "usable_pct": 78.87,
-      "usable_full_window_pct": 78.67,
+      "usable_full_window": 423,
+      "usable_including_short_history": 424,
+      "usable_pct": 85.31,
+      "usable_full_window_pct": 85.11,
       "forward": {
         "continues_to_next_rebalance": 484,
         "unknown": 11,
@@ -179,13 +209,13 @@
         "terminal_return_confirmed": 1
       },
       "excluded_reasons": {
-        "incomplete_prices": 27,
-        "archive_dividend_mismatch": 16,
-        "price_level_failed": 13,
         "archive_sec_dividends_unavailable": 13,
         "identity_unresolved": 10,
-        "price_level_missing": 10,
-        "sources_divergent_overlap": 8,
+        "incomplete_prices": 10,
+        "price_level_failed": 9,
+        "archive_dividend_mismatch": 9,
+        "price_level_missing": 8,
+        "sources_divergent_overlap": 6,
         "archive_unexplained_jump": 5,
         "multiple_ciks_in_window": 2,
         "sources_divergent_event": 1
@@ -195,27 +225,28 @@
       "as_of": "2011-12-31",
       "members": 497,
       "identity_accredited": 487,
-      "usable_full_window": 390,
-      "usable_including_short_history": 392,
-      "usable_pct": 78.87,
-      "usable_full_window_pct": 78.47,
+      "usable_full_window": 417,
+      "usable_including_short_history": 419,
+      "usable_pct": 84.31,
+      "usable_full_window_pct": 83.9,
       "forward": {
         "continues_to_next_rebalance": 486,
         "unknown": 10,
         "terminal_return_unknown": 1
       },
       "excluded_reasons": {
-        "incomplete_prices": 27,
-        "archive_dividend_mismatch": 24,
-        "price_level_failed": 12,
+        "archive_dividend_mismatch": 19,
+        "incomplete_prices": 10,
         "archive_sec_dividends_unavailable": 9,
         "identity_unresolved": 9,
-        "sources_divergent_overlap": 8,
         "price_level_missing": 8,
+        "price_level_failed": 8,
+        "sources_divergent_overlap": 6,
         "succession_inside_window": 2,
         "archive_unexplained_jump": 2,
         "multiple_ciks_in_window": 1,
         "archive_split_unverified": 1,
+        "wiki_fallback_accredited": 1,
         "sources_divergent_event": 1,
         "delisted_before_window_end": 1
       }
@@ -224,24 +255,24 @@
       "as_of": "2012-12-31",
       "members": 497,
       "identity_accredited": 491,
-      "usable_full_window": 405,
-      "usable_including_short_history": 406,
-      "usable_pct": 81.69,
-      "usable_full_window_pct": 81.49,
+      "usable_full_window": 437,
+      "usable_including_short_history": 438,
+      "usable_pct": 88.13,
+      "usable_full_window_pct": 87.93,
       "forward": {
         "continues_to_next_rebalance": 491,
         "unknown": 6
       },
       "excluded_reasons": {
-        "incomplete_prices": 24,
-        "archive_dividend_mismatch": 16,
+        "archive_dividend_mismatch": 11,
         "archive_sec_dividends_unavailable": 10,
-        "sources_divergent_overlap": 9,
-        "price_level_failed": 9,
-        "price_level_missing": 6,
+        "incomplete_prices": 8,
         "identity_unresolved": 5,
+        "price_level_missing": 5,
+        "price_level_failed": 5,
         "multiple_ciks_in_window": 3,
         "succession_inside_window": 3,
+        "sources_divergent_overlap": 3,
         "listing_starts_after_window": 2,
         "archive_unexplained_jump": 2,
         "sources_divergent_event": 1,
@@ -252,26 +283,25 @@
       "as_of": "2013-12-31",
       "members": 497,
       "identity_accredited": 491,
-      "usable_full_window": 418,
-      "usable_including_short_history": 422,
-      "usable_pct": 84.91,
-      "usable_full_window_pct": 84.1,
+      "usable_full_window": 446,
+      "usable_including_short_history": 450,
+      "usable_pct": 90.54,
+      "usable_full_window_pct": 89.74,
       "forward": {
         "continues_to_next_rebalance": 490,
         "unknown": 6,
         "terminal_return_unknown": 1
       },
       "excluded_reasons": {
-        "incomplete_prices": 22,
-        "archive_dividend_mismatch": 15,
+        "archive_dividend_mismatch": 11,
         "archive_sec_dividends_unavailable": 8,
-        "price_level_failed": 7,
-        "price_level_missing": 6,
-        "sources_divergent_overlap": 5,
+        "incomplete_prices": 6,
         "identity_unresolved": 5,
+        "price_level_missing": 5,
+        "price_level_failed": 5,
         "multiple_ciks_in_window": 3,
         "archive_unexplained_jump": 2,
-        "archive_unexplained_adjustment": 1,
+        "sources_divergent_overlap": 1,
         "delisted_before_window_end": 1
       }
     },
@@ -279,10 +309,10 @@
       "as_of": "2014-12-31",
       "members": 499,
       "identity_accredited": 493,
-      "usable_full_window": 418,
-      "usable_including_short_history": 419,
-      "usable_pct": 83.97,
-      "usable_full_window_pct": 83.77,
+      "usable_full_window": 443,
+      "usable_including_short_history": 444,
+      "usable_pct": 88.98,
+      "usable_full_window_pct": 88.78,
       "forward": {
         "continues_to_next_rebalance": 488,
         "unknown": 6,
@@ -290,17 +320,17 @@
         "terminal_return_confirmed": 1
       },
       "excluded_reasons": {
-        "incomplete_prices": 21,
-        "archive_dividend_mismatch": 19,
+        "archive_dividend_mismatch": 12,
+        "incomplete_prices": 8,
         "archive_sec_dividends_unavailable": 7,
         "price_level_missing": 7,
-        "sources_divergent_overlap": 5,
         "identity_unresolved": 5,
-        "price_level_failed": 4,
         "delisted_before_window_end": 3,
         "multiple_ciks_in_window": 2,
+        "sources_divergent_overlap": 2,
         "succession_inside_window": 2,
         "archive_split_unverified": 2,
+        "price_level_failed": 2,
         "archive_unexplained_jump": 2,
         "listing_starts_after_window": 1
       }
@@ -309,10 +339,10 @@
       "as_of": "2015-12-31",
       "members": 502,
       "identity_accredited": 489,
-      "usable_full_window": 419,
-      "usable_including_short_history": 423,
-      "usable_pct": 84.26,
-      "usable_full_window_pct": 83.47,
+      "usable_full_window": 437,
+      "usable_including_short_history": 441,
+      "usable_pct": 87.85,
+      "usable_full_window_pct": 87.05,
       "forward": {
         "continues_to_next_rebalance": 485,
         "unknown": 13,
@@ -320,17 +350,17 @@
         "terminal_return_confirmed": 1
       },
       "excluded_reasons": {
-        "incomplete_prices": 16,
         "price_level_missing": 11,
         "identity_unresolved": 10,
-        "archive_dividend_mismatch": 9,
+        "archive_dividend_mismatch": 8,
         "archive_sec_dividends_unavailable": 7,
         "multiple_ciks_in_window": 5,
-        "sources_divergent_overlap": 5,
         "archive_unexplained_jump": 4,
-        "price_level_failed": 4,
+        "incomplete_prices": 4,
         "succession_inside_window": 4,
+        "price_level_failed": 3,
         "delisted_before_window_end": 2,
+        "sources_divergent_overlap": 1,
         "sources_divergent_event": 1,
         "listing_starts_after_window": 1
       }
@@ -352,7 +382,7 @@
       {
         "sic_2digit": "13",
         "observations": 136,
-        "usable": 107
+        "usable": 117
       },
       {
         "sic_2digit": "14",
@@ -377,12 +407,12 @@
       {
         "sic_2digit": "20",
         "observations": 134,
-        "usable": 105
+        "usable": 113
       },
       {
         "sic_2digit": "21",
         "observations": 23,
-        "usable": 13
+        "usable": 14
       },
       {
         "sic_2digit": "22",
@@ -407,17 +437,17 @@
       {
         "sic_2digit": "26",
         "observations": 31,
-        "usable": 23
+        "usable": 29
       },
       {
         "sic_2digit": "27",
         "observations": 14,
-        "usable": 4
+        "usable": 9
       },
       {
         "sic_2digit": "28",
         "observations": 214,
-        "usable": 184
+        "usable": 192
       },
       {
         "sic_2digit": "29",
@@ -442,7 +472,7 @@
       {
         "sic_2digit": "33",
         "observations": 36,
-        "usable": 24
+        "usable": 30
       },
       {
         "sic_2digit": "34",
@@ -452,27 +482,27 @@
       {
         "sic_2digit": "35",
         "observations": 165,
-        "usable": 139
+        "usable": 157
       },
       {
         "sic_2digit": "36",
         "observations": 140,
-        "usable": 123
+        "usable": 128
       },
       {
         "sic_2digit": "37",
         "observations": 74,
-        "usable": 59
+        "usable": 70
       },
       {
         "sic_2digit": "38",
         "observations": 175,
-        "usable": 148
+        "usable": 157
       },
       {
         "sic_2digit": "39",
         "observations": 16,
-        "usable": 14
+        "usable": 15
       },
       {
         "sic_2digit": "40",
@@ -502,12 +532,12 @@
       {
         "sic_2digit": "48",
         "observations": 100,
-        "usable": 68
+        "usable": 78
       },
       {
         "sic_2digit": "49",
         "observations": 231,
-        "usable": 194
+        "usable": 210
       },
       {
         "sic_2digit": "50",
@@ -527,12 +557,12 @@
       {
         "sic_2digit": "53",
         "observations": 51,
-        "usable": 42
+        "usable": 45
       },
       {
         "sic_2digit": "54",
         "observations": 19,
-        "usable": 13
+        "usable": 15
       },
       {
         "sic_2digit": "55",
@@ -562,7 +592,7 @@
       {
         "sic_2digit": "60",
         "observations": 135,
-        "usable": 108
+        "usable": 119
       },
       {
         "sic_2digit": "61",
@@ -577,7 +607,7 @@
       {
         "sic_2digit": "63",
         "observations": 140,
-        "usable": 116
+        "usable": 121
       },
       {
         "sic_2digit": "64",
@@ -592,7 +622,7 @@
       {
         "sic_2digit": "67",
         "observations": 107,
-        "usable": 92
+        "usable": 96
       },
       {
         "sic_2digit": "70",
@@ -607,7 +637,7 @@
       {
         "sic_2digit": "73",
         "observations": 238,
-        "usable": 194
+        "usable": 216
       },
       {
         "sic_2digit": "75",
@@ -642,51 +672,51 @@
       {
         "sic_2digit": "un",
         "observations": 65,
-        "usable": 4
+        "usable": 5
       }
     ],
     "membership_exit_next_365d": [
       {
         "exit_next_year": false,
         "observations": 2894,
-        "usable": 2411
+        "usable": 2560
       },
       {
         "exit_next_year": true,
         "observations": 95,
-        "usable": 43
+        "usable": 56
       }
     ],
     "public_float_quintile": [
       {
         "quintile": 1,
         "observations": 583,
-        "usable": 446
+        "usable": 486
       },
       {
         "quintile": 2,
         "observations": 578,
-        "usable": 488
+        "usable": 521
       },
       {
         "quintile": 3,
         "observations": 578,
-        "usable": 496
+        "usable": 525
       },
       {
         "quintile": 4,
         "observations": 578,
-        "usable": 501
+        "usable": 531
       },
       {
         "quintile": 5,
         "observations": 583,
-        "usable": 509
+        "usable": 535
       }
     ],
     "public_float_missing": {
       "observations": 89,
-      "usable": 14
+      "usable": 18
     },
     "note": "SIC is an issuer-level proxy, not historical GICS; public float (SEC dei, latest before the rebalance) is a size proxy; repeated quarterly members are not independent"
   }

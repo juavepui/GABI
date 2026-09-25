@@ -146,12 +146,17 @@ def record_series(*, cik: str, symbol: str, valid_from: str, valid_to: str,
         if conflict:
             raise ValueError("Ticker interval belongs to another issuer")
         competing = conn.execute(
-            "SELECT 1 FROM historical_price_provenance WHERE symbol=? AND entity_id=? "
+            "SELECT source_id,valid_from,valid_to FROM historical_price_provenance WHERE symbol=? AND entity_id=? "
             "AND valid_from<? AND valid_to>? AND status!='excluded' "
-            "AND NOT (source_id=? AND valid_from=? AND valid_to=?) LIMIT 1",
-            (symbol, entity_id, valid_to, valid_from, source_id, valid_from, valid_to)).fetchone()
-        if competing:
-            raise ValueError("Overlapping accredited series require explicit reconciliation")
+            "AND NOT (source_id=? AND valid_from=? AND valid_to=?)",
+            (symbol, entity_id, valid_to, valid_from, source_id, valid_from, valid_to)).fetchall()
+        for other_source, other_from, other_to in competing:
+            # Consecutive trailing windows accredited from different sources
+            # overlap. That is allowed only when both sources demonstrably
+            # quote the same adjusted returns on the shared span.
+            if other_source == source_id or not _sources_agree(
+                    conn, symbol, source_id, other_source, max(valid_from, other_from), min(valid_to, other_to)):
+                raise ValueError("Overlapping accredited series require explicit reconciliation")
         conn.execute("INSERT INTO historical_price_provenance VALUES (?,?,?,?,?,?,?,?,?) "
                      "ON CONFLICT(entity_id,symbol,valid_from,valid_to,source_id) DO UPDATE SET "
                      "adjustment_basis=excluded.adjustment_basis,status=excluded.status,"
@@ -159,6 +164,26 @@ def record_series(*, cik: str, symbol: str, valid_from: str, valid_to: str,
                      (entity_id, cik, symbol, valid_from, valid_to, source_id,
                       adjustment_basis, status, refs))
         conn.commit()
+
+
+def _adjusted(conn, source_id: str, symbol: str, start: str, end: str) -> pd.DataFrame:
+    params: tuple[str, ...]
+    if source_id == YAHOO_SOURCE:
+        query, params = ("SELECT date,adj_close FROM prices WHERE symbol=? AND date>=? AND date<? ORDER BY date",
+                         (symbol, start, end))
+    else:
+        query, params = ("SELECT date,adj_close FROM historical_prices WHERE source_id=? AND symbol=? "
+                         "AND date>=? AND date<? ORDER BY date", (source_id, symbol, start, end))
+    frame = pd.read_sql_query(query, conn, params=params)
+    frame.index = pd.to_datetime(frame.pop("date"))
+    return frame
+
+
+def _sources_agree(conn, symbol: str, left: str, right: str, start: str, end: str) -> bool:
+    from .historical_price_audit import overlap_status
+    status, _count, _p99 = overlap_status(_adjusted(conn, left, symbol, start, end),
+                                          _adjusted(conn, right, symbol, start, end))
+    return status == "consistent_overlap"
 
 
 def terminal_event(*, cik: str, symbol: str, start: str, end: str) -> dict | None:
@@ -249,7 +274,10 @@ def price_history(*, cik: str, symbol: str, start: str, end: str,
             "FROM historical_price_provenance WHERE entity_id=? AND symbol=? "
             "AND valid_from<=? AND valid_to>=? AND status IN ('tier_a','tier_b')",
             (f"cik:{cik}", symbol, start, end)).fetchall()
-        if len(rows) != 1 or rows[0][1] != ADJUSTED:
+        # Overlapping intervals were only accredited when their sources agree;
+        # read the operational Yahoo cache first, then archives by source id.
+        rows = sorted(rows, key=lambda row: (row[0] != YAHOO_SOURCE, row[0]))
+        if not rows or rows[0][1] != ADJUSTED:
             raise ValueError("No unique accredited adjusted price interval")
         source_id, basis, status, refs, valid_from, valid_to = rows[0]
         event = conn.execute(

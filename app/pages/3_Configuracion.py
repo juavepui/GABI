@@ -174,3 +174,44 @@ if st.button("💾 Guardar API key de FRED"):
         st.success("Clave guardada. Ve al Panel Macro para descargar los datos.")
     else:
         st.error("Pega una clave antes de guardar.")
+
+st.divider()
+st.subheader("📈 API key de Tiingo (histórico de precios)")
+st.markdown(
+    "La auditoría histórica 2010–2015 usa Tiingo como tercera fuente de precios, con dividendos y "
+    "splits explícitos y empresas ya deslistadas. Basta el plan gratuito: "
+    "[tiingo.com/account/api/token](https://www.tiingo.com/account/api/token)."
+)
+current_tiingo = config.load_tiingo_key()
+new_tiingo = st.text_input(
+    "API key de Tiingo", value=current_tiingo or "", type="password",
+    help="Se guarda localmente en data/tiingo_api_key.txt (excluido del control de versiones). "
+         "La variable de entorno TIINGO_API_KEY, si existe, tiene prioridad.",
+)
+if st.button("💾 Guardar API key de Tiingo"):
+    if new_tiingo.strip():
+        config.save_tiingo_key(new_tiingo)
+        st.success("Clave de Tiingo guardada.")
+    else:
+        st.error("Pega una clave antes de guardar.")
+
+st.divider()
+st.subheader("🗄️ API key de Nasdaq Data Link (precios de empresas ya absorbidas)")
+st.markdown(
+    "La auditoría histórica 2010–2015 usa la tabla gratuita **WIKI Prices** (congelada en 2018, con los "
+    "tickers de entonces) para empresas absorbidas cuyo ticker se ha reutilizado. Cuenta gratuita en "
+    "[data.nasdaq.com](https://data.nasdaq.com/); la clave está en **Account Settings → API Key** "
+    "([data.nasdaq.com/account/profile](https://data.nasdaq.com/account/profile))."
+)
+current_ndl = config.load_nasdaq_data_link_key()
+new_ndl = st.text_input(
+    "API key de Nasdaq Data Link", value=current_ndl or "", type="password",
+    help="Se guarda localmente en data/nasdaq_data_link_api_key.txt (excluido del control de versiones). "
+         "La variable de entorno NASDAQ_DATA_LINK_API_KEY, si existe, tiene prioridad.",
+)
+if st.button("💾 Guardar API key de Nasdaq Data Link"):
+    if new_ndl.strip():
+        config.save_nasdaq_data_link_key(new_ndl)
+        st.success("Clave de Nasdaq Data Link guardada.")
+    else:
+        st.error("Pega una clave antes de guardar.")

@@ -100,14 +100,36 @@ SEC EDGAR y se ha incorporado:
 Todo se descarga con `sec_history.download` (URL + SHA-256 en
 `sec_archive_files`) y se reutiliza sin red.
 
-Queda un bloque que **sí** requiere otra fuente: 36 emisores con identidad
-acreditada y sin precios en ninguna de las dos (CA, EMC, DOW, SNDK, STI, MON,
-DTV, SE, TE, XL, CHK, DNB…; 575 observaciones, 4,8 %). Son sobre todo
-empresas absorbidas en 2016–2019, que el archivo FINSABER perdió y que Yahoo
-ya no publica. Las alternativas gratuitas con tickers deslistados (Tiingo,
-Nasdaq Data Link WIKI) requieren cuenta/API key; Stooq exige superar un reto
-anti-bot y no se usa. Añadirlas es una decisión del usuario, no un paso
-automático.
+Había un bloque que **sí** requería otra fuente: 36 emisores con identidad
+acreditada y sin precios en Yahoo ni en FINSABER (CA, EMC, DOW, SNDK, STI,
+MON, DTV, SE, TE, XL, CHK, DNB…; 575 observaciones, 4,8 %), sobre todo
+empresas absorbidas en 2016–2019. Se añadieron dos fuentes gratuitas con
+cuenta, cuyas claves se guardan localmente desde ⚙️ Configuración
+(`data/*_api_key.txt`, excluidos del control de versiones):
+
+- **Nasdaq Data Link, tabla WIKI Prices** (`historical_wiki.py`): congelada
+  el 2018-03-27 con los tickers de entonces, por lo que conserva a EMC, CA,
+  DOW, STI, MON… antes de que se reutilizaran sus símbolos. Trae cierre
+  negociado, dividendo por fecha ex y ratio de split. Se descargaron 213
+  símbolos excluidos (186 con datos).
+- **Tiingo, plan gratuito** (`historical_tiingo.py`): su API solo sirve el
+  valor que usa hoy cada ticker, así que únicamente se piden símbolos cuya
+  cotización actual ya cubría 2009–2015 (131); los reciclados (EMC → ETF,
+  STI → Solidion, SNDK → SanDisk 2025) se descartan antes de pedirlos. El
+  plan limita a ~50 peticiones/hora: la descarga está espaciada, reintenta
+  ante cortes de red y es reanudable.
+
+Ambas se tratan exactamente como FINSABER: filas candidatas en
+`historical_prices` con su `source_id` y SHA-256 de cada respuesta, y solo
+se atribuyen si pasan los controles SEC por CIK. Un ticker también reutilizado
+dentro de WIKI (NSM en 2012 ya es Nationstar, SUN en 2014 es Sunoco LP) falla
+esos controles y no se atribuye. Stooq exige superar un reto anti-bot y no se
+usa.
+
+Siguen sin precios en ninguna de las cuatro fuentes 31 símbolos en alguna de
+sus ventanas (204 observaciones, 1,7 %): parte son ventanas incompletas de
+emisores que sí se cubren en otros trimestres, y parte empresas que ninguna
+fuente gratuita conserva (ADT, BEAM, CEG, KG, LIFE, MI, PGN, SII…).
 
 ### Identidad
 
@@ -213,44 +235,76 @@ Google → Alphabet, sin evento económico registrado.
 
 ### Cobertura final
 
-Suma de las cuatro fechas trimestrales de cada año
+Suma de las cuatro fechas trimestrales de cada año, con las cuatro fuentes
 ([CSV](historical-prices-quarterly-2010-2015.csv),
 [JSON](historical-prices-quarterly-2010-2015.json)):
 
-| Año | Observaciones | Identidad acreditada | Tier A | Tier B | Ventana completa utilizable | Historia corta utilizable | Excluidas |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2010 | 1.992 | 1.941 | 1.210 | 307 | 1.515 | 2 | 475 |
-| 2011 | 1.988 | 1.943 | 1.262 | 324 | 1.583 | 3 | 402 |
-| 2012 | 1.988 | 1.957 | 1.308 | 276 | 1.573 | 11 | 404 |
-| 2013 | 1.988 | 1.964 | 1.359 | 299 | 1.647 | 11 | 330 |
-| 2014 | 1.993 | 1.969 | 1.392 | 284 | 1.669 | 7 | 317 |
-| 2015 | 2.004 | 1.969 | 1.421 | 263 | 1.674 | 10 | 320 |
+| Año | Observaciones | Identidad acreditada | Tier A (Yahoo) | Tier B (FINSABER / Tiingo / WIKI) | Ventana completa utilizable | Historia corta utilizable | Excluidas | Utilizable |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2010 | 1.992 | 1.941 | 1.210 | 427 (307 / 56 / 64) | 1.635 | 2 | 355 | 82,2 % |
+| 2011 | 1.988 | 1.943 | 1.262 | 452 (324 / 57 / 71) | 1.711 | 3 | 274 | 86,2 % |
+| 2012 | 1.988 | 1.957 | 1.308 | 379 (276 / 46 / 57) | 1.676 | 11 | 301 | 84,9 % |
+| 2013 | 1.988 | 1.964 | 1.359 | 409 (299 / 46 / 64) | 1.757 | 11 | 220 | 88,9 % |
+| 2014 | 1.993 | 1.969 | 1.392 | 402 (284 / 52 / 66) | 1.787 | 7 | 199 | 90,0 % |
+| 2015 | 2.004 | 1.969 | 1.421 | 343 (263 / 30 / 50) | 1.754 | 10 | 240 | 88,0 % |
 
-Por rebalanceo, la cobertura utilizable es **72,3–85,0 %** (ventana completa
-72,3–84,8 %; primera fase 60,3–69,5 %). Se promovieron 403 intervalos Tier A y
-140 Tier B, todos con CIK, fuente, base de ajuste y referencias SEC en
-`historical_price_provenance`. SPY está completo en los 24 cortes.
+Por rebalanceo, la cobertura utilizable es **77,6–90,7 %** (media 86,7 %;
+ventana completa 77,6–90,3 %). Con solo Yahoo y FINSABER era 72,3–85,0 %, y en
+la primera fase 60,3–69,5 %. Tres rebalanceos (2013-12-31, 2014-03-31 y
+2014-09-30) superan el 90 %; el peor es 2010-03-31 (77,6 %). Se promovieron
+403 intervalos Tier A y 211 Tier B, todos con CIK, fuente, base de ajuste y
+referencias SEC en `historical_price_provenance`. Cuatro intervalos no se
+promovieron (tres solapes entre fuentes que no coinciden en retornos y uno
+que diverge de Yahoo). SPY está completo en los 24 cortes.
 
-Exclusiones (11.953 observaciones): sin precios en ninguna fuente 575; FINSABER
-sin dividendos 435; dividendos SEC no disponibles 247; nivel de precio fallido
-234 o no disponible 189; identidad 184; fuentes divergentes 175; saltos o
-splits sin explicar 77; conflictos de CIK, sucesiones y bajas 132.
+Dos intervalos de fuentes distintas del mismo emisor pueden solaparse (las
+ventanas de 253 sesiones de trimestres consecutivos se pisan) solo si ambas
+fuentes dan los mismos retornos ajustados en el tramo común; la lectura
+estricta prefiere entonces la caché Yahoo.
 
-**No se alcanza el 90 %** y la exclusión **no es neutral**:
+Exclusiones (11.953 observaciones): FINSABER sin dividendos y sin otra fuente
+válida 313; dividendos SEC no disponibles 245; sin precios en ninguna fuente
+204; identidad 184; nivel de precio no disponible 169 o fallido 158; fuentes
+divergentes 102; saltos, splits o ajustes sin explicar 75; conflictos de CIK,
+sucesiones y bajas 132; siete ventanas acreditadas cuyo intervalo no se pudo
+promover.
 
-- Miembros que salen del índice en el año siguiente: 45,3 % utilizables
-  (183/404), frente a 82,4 % del resto. Salir del índice no implica un mal
-  desenlace, pero los ausentes se concentran en empresas que desaparecen.
-- Tamaño (quintil de *public float* SEC en cada fecha): 75,3 % en el quintil
-  inferior frente a 83,5–86,8 % en los demás; sin float conocido, 22,4 %.
-- Sector (SIC de dos dígitos, proxy): comercio minorista de ropa (56) y
-  comunicaciones (48) 67 %, metales primarios (33) 70 %, frente a 86–88 % en
-  química y refino; sin SIC SEC, 32 %.
+**No se alcanza el 90 % en todos los rebalanceos** y la exclusión **no es
+neutral**:
 
-Con estas cifras 2010–2015 sigue sin servir para afirmar superioridad frente
-al S&P 500 en un backtest estricto: cualquier resultado debe presentarse con
-la exclusión documentada y, preferiblemente, tras incorporar una fuente con
-precios de las empresas absorbidas en 2016–2019.
+- Miembros que salen del índice en el año siguiente: 57,4 % utilizables
+  (232/404), frente a 87,7 % del resto (antes de las fuentes nuevas, 45,3 %
+  frente a 82,4 %). Salir del índice no implica un mal desenlace, pero los
+  ausentes siguen concentrados en empresas que desaparecen.
+- Tamaño (quintil de *public float* SEC en cada fecha): 82,0 % en el quintil
+  inferior frente a 88,6–92,0 % en los demás; sin float conocido, 26,8 %.
+- Sector (SIC de dos dígitos, proxy): comercio minorista de ropa (56) 67 %,
+  comunicaciones (48) 79 %, frente a 91–96 % en software, transporte y
+  química; sin SIC SEC, 37 %.
+
+## Cierre del #28 y restricción para #32/#33
+
+El #28 se cierra **aceptando este déficit documentado**: todos los criterios
+de procedencia, bordes, ajustes, eventos terminales, idempotencia y tests se
+cumplen, y la cobertura queda medida, explicada por motivo y sesgada de forma
+conocida. Consecuencias obligatorias para la integración (#32) y la validación
+(#33):
+
+1. Solo se usan series con intervalo acreditado (`price_history`), nunca la
+   caché por ticker; `terminal_return_unknown` y las ventanas excluidas no
+   entran en silencio: se informan por rebalanceo.
+2. 2010–2015 no sirve para afirmar superioridad frente al S&P 500 sin
+   corregir el sesgo. Todo resultado debe acompañarse de:
+   - un benchmark construido sobre el **mismo universo cubierto** (además de
+     SPY);
+   - el **retorno implícito del grupo excluido**: SPY (ponderado por
+     capitalización) menos la contribución de los miembros cubiertos, con la
+     capitalización aproximada por *public float* SEC;
+   - un **análisis de sensibilidad** que acote el efecto suponiendo que los
+     excluidos rinden como el peor o el mejor decil del universo cubierto;
+   - la cobertura por rebalanceo, marcando como no concluyentes los cortes
+     por debajo del 85 %.
+3. No se reoptimizan pesos ni umbrales con este periodo.
 
 ### Reproducir
 
@@ -260,16 +314,18 @@ Sin red (con la base y las cachés SEC locales):
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
 .venv/Scripts/python.exe -m gabi.historical_price_audit --quarterly --terminal-events --promote
 .venv/Scripts/python.exe -m gabi.historical_price_audit
-.venv/Scripts/python.exe -m pytest tests/test_historical_issuer_evidence.py tests/test_historical_price_audit.py tests/test_historical_price_policy.py tests/test_historical_identity_audit.py -q
+.venv/Scripts/python.exe -m pytest tests/test_historical_issuer_evidence.py tests/test_historical_price_audit.py tests/test_historical_price_policy.py tests/test_historical_identity_audit.py tests/test_historical_tiingo.py -q
 ```
 
-Descarga de la evidencia (idempotente, ya cacheada):
+Descarga de la evidencia y de las fuentes con clave (idempotente, ya cacheada):
 
 ```powershell
 .venv/Scripts/python.exe -m gabi.historical_issuer_evidence --fetch-frames --fetch-submissions <fichero con CIK>
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --import-nominated-filings --fetch-candidate-instances 400
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 1500 --annual-report-symbols 200
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
+.venv/Scripts/python.exe -m gabi.historical_wiki --fetch <fichero con símbolos> --import-cached
+.venv/Scripts/python.exe -m gabi.historical_tiingo --fetch <fichero con símbolos> --import-cached
 ```
 
 Límites conocidos: la banda de nivel no distingue un error de split 2:1; las

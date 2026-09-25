@@ -11,6 +11,8 @@ data/*.bak
 data/*.csv
 data/weights.json
 data/fred_api_key.txt
+data/tiingo_api_key.txt
+data/nasdaq_data_link_api_key.txt
 data/app_mode.json
 data/overfitting_audit/
 data/full_universe_audit/

@@ -24,6 +24,8 @@ from .historical_identity_audit import QUARTERS
 from .historical_price_policy import ADJUSTED, YAHOO_SOURCE, qualify_fallback, record_series, record_terminal
 from .historical_price_policy import SCHEMA as PROVENANCE_SCHEMA
 from .historical_ticker_corrections import identity_nominations
+from .historical_tiingo import SOURCE_ID as TIINGO_SOURCE
+from .historical_wiki import SOURCE_ID as WIKI_SOURCE
 
 PRICE_SOURCE = json.loads((Path(__file__).with_name("resources") /
                            "historical_sources_1996_2015.json").read_text(encoding="utf-8"))["price_source_id"]
@@ -41,15 +43,17 @@ MAX_EVENT_RETURN_DIFFERENCE = 0.05
 # A one-day adjusted move this large in an archive-only window is treated as an
 # unexplained distribution unless another source corroborates it.
 MAX_UNCORROBORATED_ARCHIVE_RETURN = 0.25
+# Further archived sources tried, in order, when neither Yahoo nor FINSABER qualifies.
+EXTRA_SOURCES = {"tiingo": TIINGO_SOURCE, "wiki": WIKI_SOURCE}
 ACCEPTED_ADJUSTMENTS = {"dividends_reconciled", "no_dividends_consistent"}
 
 
 def _series(conn: sqlite3.Connection, symbol: str, start: str, end: str,
-            *, archive: bool) -> pd.DataFrame:
+            *, archive: bool, source_id: str = PRICE_SOURCE) -> pd.DataFrame:
     if archive:
         query = ("SELECT date,close,adj_close FROM historical_prices "
                  "WHERE source_id=? AND symbol=? AND date>=? AND date<=? ORDER BY date")
-        args: tuple[str, ...] = (PRICE_SOURCE, symbol, start, end)
+        args: tuple[str, ...] = (source_id, symbol, start, end)
     else:
         query = ("SELECT date,close,adj_close FROM prices "
                  "WHERE symbol=? AND date>=? AND date<=? ORDER BY date")
@@ -151,7 +155,7 @@ def archive_adjustment(window: pd.DataFrame, facts: dict[str, list[dict]], start
 
 def choose_source(identity_tier: str | None, recycled: bool, yahoo: dict,
                   archive: dict, overlap: str, *, issuer: dict | None = None,
-                  fallback_proof: dict | None = None) -> tuple[str | None, str]:
+                  fallback_proof: dict | None = None, archive_name: str = "finsaber") -> tuple[str | None, str]:
     """Select one full window with identity, SEC listing life and series identity.
 
     ``issuer`` holds the per-source SEC checks: ``listing`` (failure reason or
@@ -189,7 +193,7 @@ def choose_source(identity_tier: str | None, recycled: bool, yahoo: dict,
             return None, f"archive_{issuer['archive_adjustment']}"
         accepted, reason = qualify_fallback(identity_tier=identity_tier, recycled=recycled,
                                             archive=archive, overlap=overlap, proof=fallback_proof)
-        return ("finsaber" if accepted else None), reason
+        return (archive_name if accepted else None), reason
     return None, f"price_level_{issuer['yahoo_level']}"
 
 
@@ -280,7 +284,7 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
     calendar = xcals.get_calendar("XNYS", start="2008-01-01", end="2016-12-31")
     rows = []
     dates = dates or [f"{year}-12-31" for year in range(2010, 2016)]
-    series_cache: dict[tuple[str, bool], pd.DataFrame] = {}
+    series_cache: dict[tuple[str, bool | str], pd.DataFrame] = {}
     with connect_readonly(db) as conn:
         has_events = bool(conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_terminal_events'").fetchone())
         has_provenance = bool(conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_price_provenance'").fetchone())
@@ -297,8 +301,9 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                 label = member["symbol"]
                 cik = member.get("cik")
                 symbols = {"yahoo": _nominated_price_symbol(label, cik, as_of, "yahoo"),
-                           "finsaber": _nominated_price_symbol(label, cik, as_of, "finsaber")}
-                for name, symbol in symbols.items():
+                           "finsaber": _nominated_price_symbol(label, cik, as_of, "finsaber"),
+                           **{name: _nominated_price_symbol(label, cik, as_of, name) for name in EXTRA_SOURCES}}
+                for name, symbol in list(symbols.items())[:2]:
                     key = (symbol, name == "finsaber")
                     if key not in series_cache:
                         series_cache[key] = _series(conn, symbol, "2008-01-01", "2015-12-31",
@@ -371,14 +376,55 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                         source, status = short_source, short_status
                     elif status == "incomplete_prices":
                         status = short_status
-                source_id = YAHOO_SOURCE if source == "yahoo" else PRICE_SOURCE if source == "finsaber" else None
-                source_symbol = symbols["yahoo" if source == "yahoo" else "finsaber"] if source else None
+                extra_row: dict = {}
+                extra_stats: dict[str, dict] = {}
+                for name, extra_source in EXTRA_SOURCES.items():
+                    extra_key = (symbols[name], name)
+                    if extra_key not in series_cache:
+                        series_cache[extra_key] = _series(conn, symbols[name], "2008-01-01", "2015-12-31",
+                                                          archive=True, source_id=extra_source)
+                    extra = series_cache[extra_key].loc[start:end]
+                    stats = assess_series(extra, sessions)
+                    extra_stats[name] = stats
+                    extra_row.update({f"{name}_sessions": stats["sessions"], f"{name}_first": stats["first"],
+                                      f"{name}_last": stats["last"], f"{name}_level": None,
+                                      f"{name}_adjustment": None})
+                    if source is not None or not stats["complete"] or not cik or not issuer or \
+                            issuer["listing"] or not member.get("identity_tier") or conflicts > 1:
+                        continue
+                    # Extra archived source, same controls as FINSABER. An overlap
+                    # only counts against it when that other series is identified.
+                    identified = {"passed", "fingerprint"}
+                    e_overlap = overlap_status(yahoo, extra, sessions)[0] \
+                        if issuer["yahoo_level"] in identified else "insufficient_overlap"
+                    if e_overlap == "insufficient_overlap" and issuer["archive_level"] in identified and \
+                            issuer["archive_adjustment"] in ACCEPTED_ADJUSTMENTS:
+                        e_overlap = overlap_status(archive, extra, sessions)[0]
+                    until = issuer_evidence.level_horizon(life, end)
+                    full_extra = series_cache[extra_key].loc[start:until]
+                    e_checks = issuer_evidence.price_level_checks(
+                        facts, full_extra["close"].astype(float), start, end, until=until,
+                        splits=_split_ratios(full_extra))
+                    e_adjustment, e_refs = archive_adjustment(extra, facts, start, end, yahoo, sessions)
+                    e_issuer = {**issuer, "archive_level": series_identity(e_checks, e_adjustment, e_refs),
+                                "archive_adjustment": e_adjustment}
+                    e_source, e_status = choose_source(
+                        member.get("identity_tier"), False, {"complete": False}, stats, e_overlap, issuer=e_issuer,
+                        fallback_proof=_proof(listing_refs, e_refs, start, end), archive_name=name)
+                    extra_row.update({f"{name}_level": e_issuer["archive_level"], f"{name}_adjustment": e_adjustment})
+                    if e_source:
+                        source, status = e_source, f"{name}_{e_status}"
+                        archive_checks, adjustment_refs = e_checks, e_refs
+                        detail = {}
+                source_id = {"yahoo": YAHOO_SOURCE, "finsaber": PRICE_SOURCE, **EXTRA_SOURCES}.get(source or "")
+                source_symbol = symbols[source] if source else None
+                source_stats = {"yahoo": yc, "finsaber": ac, **extra_stats}.get(source or "", ac)
                 provenance = conn.execute(
                     "SELECT source_id,adjustment_basis,status FROM historical_price_provenance "
                     "WHERE entity_id=? AND symbol=? AND source_id=? AND valid_from<=? AND valid_to>=? "
                     "AND status IN ('tier_a','tier_b')",
                     (member.get("entity_id"), source_symbol, source_id,
-                     (yc if source == "yahoo" else ac)["first"] or start,
+                     source_stats["first"] or start,
                      (date.fromisoformat(end) + timedelta(days=1)).isoformat())
                 ).fetchall() if has_provenance and source_id else []
                 accredited = len(provenance) == 1 and provenance[0][1] == ADJUSTED
@@ -417,6 +463,7 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                              "finsaber_level": issuer["archive_level"] if issuer else None,
                              "finsaber_adjustment": issuer["archive_adjustment"] if issuer else None,
                              "yahoo_adjustment": issuer["yahoo_adjustment"] if issuer else None,
+                             **extra_row,
                              "level_ratio": json.dumps([round(check["ratio"], 4) for check in level_checks]),
                              "selected_source": source, "source_symbol": source_symbol,
                              "coverage_status": status,
@@ -458,7 +505,9 @@ def summarize(result: pd.DataFrame, db: Path) -> dict:
                                  "yahoo_complete": int(group.yahoo_sessions.eq(group.expected_sessions).sum()),
                                  "finsaber_complete": int(group.finsaber_sessions.eq(group.expected_sessions).sum()),
                                  "tier_a": int((group.usable & group.selected_source.eq("yahoo")).sum()),
-                                 "tier_b": int((group.usable & group.selected_source.eq("finsaber")).sum()),
+                                 "tier_b": int((group.usable & group.selected_source.isin(["finsaber", *EXTRA_SOURCES])).sum()),
+                                 "tier_b_by_source": {name: int((group.usable & group.selected_source.eq(name)).sum())
+                                                      for name in ("finsaber", *EXTRA_SOURCES)},
                                  "usable_full_window": int(group.usable_full.sum()),
                                  "usable_short_history": int((group.usable & ~group.usable_full).sum()),
                                  "excluded": int((~group.usable).sum()),
@@ -503,9 +552,8 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
         raise ValueError("Promotion only supports the configured local database")
     candidates = frame[(frame.symbol != "SPY") & frame.selected_source.notna() & frame.cik.notna()]
     intervals: list[dict] = []
-    ordered = candidates.assign(first=candidates.apply(
-        lambda row: row.yahoo_first if row.selected_source == "yahoo" else row.finsaber_first, axis=1),
-        last=candidates.apply(lambda row: row.yahoo_last if row.selected_source == "yahoo" else row.finsaber_last, axis=1))
+    ordered = candidates.assign(first=candidates.apply(lambda row: row[f"{row.selected_source}_first"], axis=1),
+                                last=candidates.apply(lambda row: row[f"{row.selected_source}_last"], axis=1))
     for (symbol, cik, source), group in ordered.groupby(["source_symbol", "cik", "selected_source"]):
         for row in group.sort_values("first").itertuples(index=False):
             end = (date.fromisoformat(row.last) + timedelta(days=1)).isoformat()
@@ -545,7 +593,7 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
             skipped["missing_sec_identity_reference"] = skipped.get("missing_sec_identity_reference", 0) + 1
             continue
         table = "prices" if item["source"] == "yahoo" else "historical_prices"
-        source_id = YAHOO_SOURCE if item["source"] == "yahoo" else PRICE_SOURCE
+        source_id = {"yahoo": YAHOO_SOURCE, "finsaber": PRICE_SOURCE, **EXTRA_SOURCES}[item["source"]]
         with connect_readonly(db) as conn:
             query = (f"SELECT date,close,adj_close FROM {table} WHERE symbol=? AND date>=? AND date<? "
                      + ("AND source_id=? " if table == "historical_prices" else "") + "ORDER BY date")
@@ -553,11 +601,16 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
             values = conn.execute(query, params).fetchall()
         digest = hashlib.sha256(json.dumps(values, separators=(",", ":")).encode()).hexdigest()
         refs.append({"kind": "source", "producer": PRODUCER, "local_rows_sha256": digest, "rows": len(values),
-                     "source_url": f"https://finance.yahoo.com/quote/{symbol}/history/" if item["source"] == "yahoo"
-                     else "https://huggingface.co/datasets/finsaber-team/FINSABER-reproduce",
+                     "source_url": {"yahoo": f"https://finance.yahoo.com/quote/{symbol}/history/",
+                                    "finsaber": "https://huggingface.co/datasets/finsaber-team/FINSABER-reproduce",
+                                    "tiingo": f"https://api.tiingo.com/tiingo/daily/{symbol.lower()}/prices",
+                                    "wiki": "https://data.nasdaq.com/databases/WIKIP"
+                                    }[item["source"]],
                      "index_labels": sorted({row.symbol for row in label_rows}),
-                     "note": "legacy Yahoo cache" if item["source"] == "yahoo" else "FINSABER archived snapshot"})
-        if item["source"] == "finsaber":
+                     "note": {"yahoo": "legacy Yahoo cache", "finsaber": "FINSABER archived snapshot",
+                              "tiingo": "Tiingo free-plan snapshot",
+                              "wiki": "Nasdaq Data Link WIKI Prices, frozen 2018"}[item["source"]]})
+        if item["source"] != "yahoo":
             refs.append({"kind": "corporate_actions", "valid_from": item["start"], "valid_to": item["end"],
                          "source_url": next(ref["source_url"] for ref in refs if ref["kind"] == "last_trade"),
                          "basis": "SEC listing life, successions and split/dividend reconciliation per window"})

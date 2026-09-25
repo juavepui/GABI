@@ -174,3 +174,38 @@ def test_divergent_archive_cannot_be_accredited_even_with_evidence(db):
         record_series(cik="1", symbol="OLD", valid_from=first, valid_to=end,
                       source_id="archive:test", adjustment_basis=ADJUSTED,
                       status="tier_b", evidence=refs)
+
+
+def test_overlapping_windows_from_two_sources_need_agreeing_returns(db):
+    dates = pd.bdate_range("2012-01-03", periods=120)
+    values = pd.Series([100 + i * 0.3 for i in range(120)], index=dates)
+    storage.upsert_prices("OLD", pd.DataFrame({"Open": values, "High": values, "Low": values, "Close": values,
+                                               "Adj Close": values, "Volume": 100.}, index=dates))
+    archive = pd.DataFrame({"symbol": "OLD", "date": dates.strftime("%Y-%m-%d"), "open": values.to_numpy() * 2,
+                            "high": values.to_numpy() * 2, "low": values.to_numpy() * 2,
+                            "close": values.to_numpy() * 2, "adjusted_close": values.to_numpy() * 2,
+                            "volume": 100.})
+    historical_archive.import_price_chunk("archive:test", archive, {"OLD"}, "2010-01-01", "2016-01-01")
+    record_series(cik="1", symbol="OLD", valid_from=dates[0].date().isoformat(),
+                  valid_to=dates[99].date().isoformat(), source_id=YAHOO_SOURCE, adjustment_basis=ADJUSTED,
+                  status="tier_a", evidence=_refs("identity", "source"))
+    refs = _refs("identity", "source", "first_trade", "last_trade", "adjustment", "corporate_actions")
+    start, end = dates[20].date().isoformat(), (dates[-1] + pd.Timedelta(days=1)).date().isoformat()
+    for ref in refs:
+        ref.update({"first_trade": {"date": "2001-01-01"}, "last_trade": {"date": "2020-01-01"},
+                    "adjustment": {"method": "split_dividend_reconciliation"},
+                    "corporate_actions": {"valid_from": start, "valid_to": end}}.get(ref["kind"], {}))
+    # Same returns on the shared span: consecutive windows may use either source.
+    record_series(cik="1", symbol="OLD", valid_from=start, valid_to=end, source_id="archive:test",
+                  adjustment_basis=ADJUSTED, status="tier_b", evidence=refs)
+    shared = price_history(cik="1", symbol="OLD", start=dates[30].date().isoformat(),
+                           end=dates[50].date().isoformat())
+    assert shared.attrs["source_id"] == YAHOO_SOURCE
+    with storage.get_connection() as conn:
+        conn.execute("UPDATE historical_prices SET adj_close=adj_close*0.5 WHERE source_id='archive:test' "
+                     "AND date>=?", (dates[60].date().isoformat(),))
+        conn.execute("DELETE FROM historical_price_provenance WHERE source_id='archive:test'")
+        conn.commit()
+    with pytest.raises(ValueError, match="diverge|Overlapping accredited"):
+        record_series(cik="1", symbol="OLD", valid_from=start, valid_to=end, source_id="archive:test",
+                      adjustment_basis=ADJUSTED, status="tier_b", evidence=refs)

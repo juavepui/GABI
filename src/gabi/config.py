@@ -1,5 +1,6 @@
 """Rutas y parámetros por defecto de GABI."""
 import json
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -25,6 +26,12 @@ SEC_USER_AGENT = "GABI-personal-investing-tool contact@example.com"
 EDGAR_CACHE_MAX_AGE_HOURS = 24 * 7
 
 FRED_KEY_PATH = DATA_DIR / "fred_api_key.txt"
+# Tiingo (plan gratuito): precios diarios con dividendos/splits explícitos y
+# tickers deslistados; fuente archivada para el histórico 2010-2015 (#28).
+TIINGO_KEY_PATH = DATA_DIR / "tiingo_api_key.txt"
+# Nasdaq Data Link (cuenta gratuita): tabla WIKI/PRICES, congelada en 2018 con
+# los tickers de entonces; fuente archivada para emisores absorbidos (#28).
+NASDAQ_DATA_LINK_KEY_PATH = DATA_DIR / "nasdaq_data_link_api_key.txt"
 
 # Tipo libre de riesgo usado en Sharpe/Sortino/Alpha cuando no hay una API key
 # de FRED configurada (si la hay, screener.py usa el Treasury 10 años en vivo).
@@ -83,3 +90,35 @@ def load_fred_key():
 def save_fred_key(key: str):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     FRED_KEY_PATH.write_text(key.strip())
+
+
+def load_tiingo_key():
+    """Clave local de Tiingo; la variable TIINGO_API_KEY tiene prioridad."""
+    env = os.environ.get("TIINGO_API_KEY", "").strip()
+    if env:
+        return env
+    if TIINGO_KEY_PATH.exists():
+        key = TIINGO_KEY_PATH.read_text().strip()
+        return key or None
+    return None
+
+
+def save_tiingo_key(key: str):
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    TIINGO_KEY_PATH.write_text(key.strip())
+
+
+def load_nasdaq_data_link_key():
+    """Clave local de Nasdaq Data Link; NASDAQ_DATA_LINK_API_KEY tiene prioridad."""
+    env = os.environ.get("NASDAQ_DATA_LINK_API_KEY", "").strip()
+    if env:
+        return env
+    if NASDAQ_DATA_LINK_KEY_PATH.exists():
+        key = NASDAQ_DATA_LINK_KEY_PATH.read_text().strip()
+        return key or None
+    return None
+
+
+def save_nasdaq_data_link_key(key: str):
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    NASDAQ_DATA_LINK_KEY_PATH.write_text(key.strip())

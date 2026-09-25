@@ -1567,14 +1567,17 @@ reconstruye el ranking completo tal y como se habría visto ese día:
 - La [auditoría de precios 2010–2015](docs/historical-prices-2010-2015.md)
   atribuye cada serie a un CIK solo con evidencia SEC gratuita: vida bursátil
   (primer informe, sucesiones, bajas), nivel de precio contra *public float* y
-  conciliación de splits/dividendos. Hay 403 intervalos Yahoo (Tier A) y 140
-  FINSABER (Tier B); la cobertura utilizable por rebalanceo trimestral es
-  72,3–85,0 % (antes 60,3–69,5 %) y SPY está completo. Los eventos terminales
-  se registran explícitamente (15 efectivos confirmados; el resto desconocido
-  y excluido en lectura estricta). No se alcanza el 90 %: 36 emisores
-  absorbidos en 2016–2019 no tienen precios en ninguna fuente local, y las
+  conciliación de splits/dividendos. Usa cuatro fuentes: caché Yahoo (Tier A)
+  y, como Tier B con los mismos controles, FINSABER, Nasdaq Data Link WIKI
+  (congelada en 2018, conserva empresas absorbidas como EMC, CA, DOW o STI) y
+  Tiingo (plan gratuito). Las claves de WIKI y Tiingo se guardan en
+  ⚙️ Configuración. La cobertura utilizable por rebalanceo trimestral es
+  77,6–90,7 % (media 86,7 %) y SPY está completo. Los eventos terminales se
+  registran explícitamente (15 efectivos confirmados; el resto desconocido y
+  excluido en lectura estricta). El #28 se cerró aceptando el déficit: las
   empresas que salen del índice al año siguiente siguen infrarrepresentadas
-  (45 % frente a 82 %). 2010–2015 no se usa para validar rendimiento.
+  (57 % frente a 88 %), así que 2010–2015 solo puede usarse con las
+  correcciones de sesgo exigidas en #32/#33.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 
