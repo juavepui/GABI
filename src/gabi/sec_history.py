@@ -84,7 +84,8 @@ def date8(value: str) -> str:
     return datetime.strptime(value, "%Y%m%d").date().isoformat()
 
 
-def import_quarter(path: Path, source_url: str, ciks: set[str]) -> dict:
+def import_quarter(path: Path, source_url: str, ciks: set[str], *, facts: bool = True) -> dict:
+    """Index 10-K/10-Q submissions of ``ciks``; with ``facts`` also their NUM rows."""
     result = {"submissions": 0, "facts": 0, "excluded_segment_or_coreg": 0, "invalid": 0}
     with zipfile.ZipFile(path) as z, storage.get_connection() as conn:
         ensure_schema(conn)
@@ -97,6 +98,9 @@ def import_quarter(path: Path, source_url: str, ciks: set[str]) -> dict:
         conn.executemany("INSERT OR REPLACE INTO sec_bulk_submissions VALUES (?,?,?,?,?,?,?,?,?,?,?)", records)
         result["submissions"] = len(records)
         accessions = set(sub.adsh)
+        if not facts:
+            conn.commit()
+            return result
         with z.open("num.txt") as f:
             for chunk in pd.read_csv(f, sep="\t", dtype=str, keep_default_na=False, chunksize=200000):
                 selected = chunk[chunk.adsh.isin(accessions) & chunk.tag.isin(TRACKED)

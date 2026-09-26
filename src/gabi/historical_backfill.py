@@ -176,5 +176,31 @@ def run() -> dict:
     return report
 
 
+def import_price_archive(start: str, end: str) -> dict:
+    """Import the pinned FINSABER file for ``[start, end)`` and every symbol (#34).
+
+    #26 imported it only up to 2016 and for 2010-2015 members. The rows stay
+    in the research archive (never the operational cache) and are attributed
+    to an issuer only by the price audit. Reruns are idempotent.
+    """
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    item = manifest["sources"]["prices"]
+    path = config.DATA_DIR / "history_refresh" / "1996_2015" / item["filename"]
+    with path.open("rb") as source:
+        if hashlib.file_digest(source, "sha256").hexdigest() != item["sha256"]:
+            raise ValueError(f"Source hash mismatch: {item['filename']}")
+    counts = {"accepted": 0, "rejected": 0}
+    for chunk in pd.read_csv(path, chunksize=200000, dtype={"symbol": str, "date": str}):
+        symbols = set(chunk["symbol"].dropna().str.replace(".", "-", regex=False))
+        result = historical_archive.import_price_chunk(manifest["price_source_id"], chunk, symbols, start, end)
+        for key, value in result.items():
+            counts[key] += value
+    return {"source_id": manifest["price_source_id"], "window": [start, end], **counts}
+
+
 if __name__ == "__main__":
-    run()
+    import sys
+    if sys.argv[1:2] == ["--import-prices"]:
+        print(json.dumps(import_price_archive(sys.argv[2], sys.argv[3])))
+    else:
+        run()

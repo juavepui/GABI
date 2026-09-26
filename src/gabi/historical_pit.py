@@ -1,4 +1,4 @@
-"""Adaptador point-in-time 2010-2015 para Ranking histórico y Backtest V1/V2 (#32).
+"""Adaptador point-in-time acreditado para Ranking histórico y Backtest V1/V2 (#32, #34).
 
 El motor existente (``universe`` → ``screener_asof`` → ``identity``) se usa tal
 cual; este módulo solo le da, para fechas cubiertas por la capa histórica
@@ -14,33 +14,69 @@ acreditada en #26-#28, lo que antes obtenía de la caché por ticker:
   efectivo) o, si no lo hay, el último precio marcado explícitamente como no
   estricto. Nunca se oculta.
 
-Fuera de ``[HISTORICAL_START, HISTORICAL_END)`` no cambia nada.
+Por defecto solo está activo 2010-2015 (``[HISTORICAL_START, HISTORICAL_END)``);
+fuera de él no cambia nada. La capa 2016-2025 (#34) se activa explícitamente con
+``accredited_periods("2010-2015", "2016-2025")`` para compararla con el camino
+operativo (#35); sin activarla, los rankings 2016+ son los de siempre.
 """
 
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import date, timedelta
 
 import pandas as pd
 
-from . import historical_archive, historical_membership, identity, storage
+from . import historical_archive, historical_membership, historical_period, identity, storage
 from .historical_price_policy import ADJUSTED, YAHOO_SOURCE
 from .historical_price_policy import SCHEMA as PROVENANCE_SCHEMA
 
-HISTORICAL_START = "2010-01-01"
-HISTORICAL_END = "2016-01-01"
+HISTORICAL_START = historical_period.P2010.start
+HISTORICAL_END = historical_period.P2010.end_exclusive
 TRAILING_DAYS = 365  # ~253 sesiones: la ventana que exigen momentum y riesgo
-# Fechas auditadas por la auditoría trimestral de precios (#28).
-QUARTER_ENDS = {date(year, month, day).isoformat() for year in range(2010, 2016)
-                for month, day in ((3, 31), (6, 30), (9, 30), (12, 31))}
+# Fechas auditadas por las auditorías trimestrales de precios (#28, #34). Cada
+# periodo solo tiene ventanas acreditadas si se ejecutó su auditoría.
+QUARTER_ENDS = {quarter for period in historical_period.PERIODS.values() for quarter in period.quarters}
+_active: tuple[historical_period.Period, ...] = (historical_period.P2010,)
+
+
+@contextmanager
+def accredited_periods(*keys: str) -> Iterator[None]:
+    """Activa temporalmente los periodos acreditados indicados (p. ej. 2016-2025)."""
+    global _active
+    previous = _active
+    _active = tuple(historical_period.get(key) for key in keys)
+    try:
+        yield
+    finally:
+        _active = previous
+
+
+def active_periods() -> tuple[str, ...]:
+    return tuple(period.key for period in _active)
+
+
+def period_for(as_of: str) -> historical_period.Period | None:
+    day = date.fromisoformat(as_of[:10]).isoformat()
+    return next((period for period in _active if period.covers(day)), None)
 
 
 def covers(as_of: str) -> bool:
-    return HISTORICAL_START <= date.fromisoformat(as_of[:10]).isoformat() < HISTORICAL_END
+    return period_for(as_of) is not None
+
+
+def _period(as_of: str) -> historical_period.Period:
+    period = period_for(as_of)
+    if period is None:
+        raise ValueError(f"{as_of[:10]} is outside the active accredited periods {active_periods()}")
+    return period
 
 
 def _constituents(as_of: str) -> dict:
+    period = _period(as_of)
     return historical_membership.constituents_as_of(
-        as_of, source_id=historical_membership.REFERENCE_SOURCE, compare_reference=False)
+        as_of, source_id=period.membership_source, compare_reference=False,
+        identity_source=period.identity_source)
 
 
 def universe(as_of: str) -> dict:
@@ -54,12 +90,13 @@ def universe(as_of: str) -> dict:
             "identity_accredited": accredited,
             "note": (f"Composición histórica de referencia ({data['source_id']}) del {data['source_date']}, "
                      f"aplicable a {as_of}; identidad acreditada {accredited}/{len(members)}. "
-                     "Capa 2010-2015: solo precios y entidades acreditados por SEC.")}
+                     f"Capa {_period(as_of).key}: solo precios y entidades acreditados por SEC.")}
 
 
 def resolve(symbol: str, as_of: str) -> dict:
     """Mismo contrato que ``identity.resolve`` con la identidad histórica acreditada."""
-    found = historical_membership._identities({identity.normalize_symbol(symbol)}, as_of)
+    found = historical_membership._identities({identity.normalize_symbol(symbol)}, as_of,
+                                              interval_source=_period(as_of).identity_source)
     row = found[identity.normalize_symbol(symbol)]
     # Solo los niveles acreditados por intervalo (#27/#28); una prueba SEC de
     # un solo día no activa identidad para un backtest.

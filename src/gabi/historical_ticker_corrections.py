@@ -10,6 +10,9 @@ from functools import cache
 from pathlib import Path
 
 NOMINATIONS_PATH = Path(__file__).with_name("resources") / "historical_identity_corrections_2010_2015.json"
+# #34: same ledger format for 2016-2025; entries are date-bounded, so both load together.
+NOMINATION_PATHS = (NOMINATIONS_PATH,
+                    Path(__file__).with_name("resources") / "historical_identity_corrections_2016_2025.json")
 WLP_START = "2009-12-01"  # SEC-filed contemporaneous NYSE: WLP announcement.
 WLP_END = "2014-12-03"  # MIAX effective trading date for WLP -> ANTM.
 WLP_SOURCES = [
@@ -37,9 +40,9 @@ def correct_symbols(symbols: set[str], as_of: str) -> tuple[set[str], list[dict]
 @cache
 def identity_nominations() -> tuple[dict, ...]:
     """Reviewed label -> CIK nominations; SEC evidence must still confirm them."""
-    payload = json.loads(NOMINATIONS_PATH.read_text(encoding="utf-8"))
+    rows = [row for path in NOMINATION_PATHS for row in json.loads(path.read_text(encoding="utf-8"))["entries"]]
     entries = []
-    for row in payload["entries"]:
+    for row in rows:
         start, end = date.fromisoformat(row["valid_from"]), date.fromisoformat(row["valid_to"])
         if start >= end or not row["sec_tickers"] or len(row["cik"]) != 10 or not row["cik"].isdigit():
             raise ValueError(f"Invalid identity nomination: {row}")

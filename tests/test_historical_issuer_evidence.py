@@ -51,7 +51,7 @@ def test_price_level_uses_unrestated_cover_shares_and_as_traded_close():
 @pytest.fixture
 def submissions(tmp_path, monkeypatch):
     monkeypatch.setattr(evidence, "SUBMISSIONS_DIR", tmp_path)
-    monkeypatch.setattr(evidence, "issuer_facts", lambda cik: _facts(
+    monkeypatch.setattr(evidence, "issuer_facts", lambda cik, frame_year_max=None: _facts(
         public_float=[_float("2011-06-30", 1e9), _float("2012-06-29", 1e9)] +
         ([_float("2013-06-28", 1e9)] if cik == "1" else [])))
     evidence.listing_life.cache_clear()

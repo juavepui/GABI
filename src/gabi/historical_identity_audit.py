@@ -1,4 +1,7 @@
-"""Offline identity coverage for the archived 2010-2015 S&P 500 universe.
+"""Offline identity coverage for the archived S&P 500 universe, per period.
+
+2010-2015 (#27) and 2016-2025 (#34) use the same rules; each period writes
+its own interval source (``historical_period``).
 
 Community ticker/CIK rows are candidates. Direct SEC ticker evidence and
 retrospective issuer corroboration have separate tiers; an issuer name alone
@@ -23,11 +26,11 @@ from lxml import etree
 
 from . import config, historical_archive, historical_membership, identity, sec_history, storage
 from . import historical_issuer_evidence as issuer_evidence
+from .historical_period import P2010, Period
+from .historical_period import get as get_period
 from .historical_ticker_corrections import apply_nominations, correct_symbols, identity_nominations
 
-QUARTERS = [date(year, month, day).isoformat()
-            for year in range(2010, 2016)
-            for month, day in ((3, 31), (6, 30), (9, 30), (12, 31))]
+QUARTERS = P2010.quarters
 TICKER_RE = re.compile(r"[A-Z][A-Z0-9-]{0,11}\Z")
 DEI_NAMESPACES = ("http://xbrl.sec.gov/dei/", "http://xbrl.us/dei/")
 CANDIDATE_SOURCE = "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b"
@@ -64,11 +67,49 @@ def _candidate_map(rows: list[tuple], as_of: str) -> dict[str, dict]:
             for symbol, data in candidates.items()}
 
 
-def extract_sec_instance(path: Path, *, cik: str) -> dict:
+COMMON_TITLE_RE = re.compile(r"common|capital stock|ordinary share|shares of beneficial interest", re.I)
+NON_COMMON_RE = re.compile(r"preferred|preference|depositary|note|debenture|bond|warrant|right|unit|%", re.I)
+
+
+def _common_stock_symbols(root, raw: list) -> set[str]:
+    """Symbols of the common stock among the 12(b) securities of a 2019+ cover.
+
+    Inline XBRL covers tag every listed security (notes, preferred) with its
+    own ``TradingSymbol`` in a class-of-stock context; the common stock is the
+    one without a dimension, in a common-stock member, or titled as common in
+    ``Security12bTitle`` for the same context.
+    """
+    contexts = {node.get("id"): node for node in root.iter()
+                if isinstance(node.tag, str) and node.tag.rsplit("}", 1)[-1] == "context"}
+    titles = {node.get("contextRef"): str(node.text or "") for node in root.iter()
+              if isinstance(node.tag, str) and node.tag.rsplit("}", 1)[-1] == "Security12bTitle"}
+    result = set()
+    for node in raw:
+        context = contexts.get(node.get("contextRef"))
+        members = [str(member.text or "") for member in context.iter()
+                   if isinstance(member.tag, str) and member.tag.rsplit("}", 1)[-1] == "explicitMember"
+                   ] if context is not None else []
+        classes = [member for member in members if "Exchange" not in member and not member.startswith("exch:")]
+        title = titles.get(node.get("contextRef"), "")
+        if title:
+            common = bool(COMMON_TITLE_RE.search(title)) and not NON_COMMON_RE.search(title)
+        else:
+            common = not classes or all(re.search(r"Common(Stock|Class)", member) for member in classes)
+        if common and str(node.text or "").strip():
+            result.add(identity.normalize_symbol(str(node.text).strip()))
+    return result
+
+
+def extract_sec_instance(path: Path, *, cik: str, common_stock_only: bool = False,
+                         multi_class: frozenset[str] = frozenset()) -> dict:
     """Read ticker and historical issuer name from an original SEC XBRL filing.
 
     A filing proves its symbol only on its filing date. It cannot by itself
     establish the complete ticker validity interval or index membership.
+    With ``common_stock_only`` (2016-2025, #34) a cover listing several 12(b)
+    securities proves the common stock's symbol if exactly one is common; if
+    several common classes are all in ``multi_class`` (a reviewed multi-class
+    nomination of this CIK), each class is proved (``symbols``).
     """
     expected = identity.normalize_cik(cik)
     parser = etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
@@ -77,10 +118,16 @@ def extract_sec_instance(path: Path, *, cik: str) -> dict:
                    for node in root.xpath("//*[local-name()='identifier']")}
     if identifiers != {expected}:
         raise ValueError(f"XBRL issuer CIK mismatch: {path.name}")
-    raw_symbols = {str(node.text or "").strip() for node in root.iter()
-                   if isinstance(node.tag, str) and node.tag.rsplit("}", 1)[-1] == "TradingSymbol"
-                   and node.tag.startswith(tuple("{" + ns for ns in DEI_NAMESPACES))}
+    raw = [node for node in root.iter()
+           if isinstance(node.tag, str) and node.tag.rsplit("}", 1)[-1] == "TradingSymbol"
+           and node.tag.startswith(tuple("{" + ns for ns in DEI_NAMESPACES))]
+    raw_symbols = {str(node.text or "").strip() for node in raw}
     symbols = {identity.normalize_symbol(value) for value in raw_symbols if value}
+    if common_stock_only and len(symbols) > 1:
+        symbols = _common_stock_symbols(root, raw)
+    classes = sorted(symbols) if len(symbols) > 1 and symbols <= multi_class else None
+    if classes:
+        symbols = {classes[0]}
     if len(symbols) != 1 or not TICKER_RE.fullmatch(next(iter(symbols))):
         raise ValueError(f"Missing or ambiguous SEC trading symbol: {path.name}")
     names = {str(node.text or "").strip() for node in root.iter()
@@ -91,11 +138,11 @@ def extract_sec_instance(path: Path, *, cik: str) -> dict:
         digest = hashlib.file_digest(source, "sha256").hexdigest()
     return {"symbol": next(iter(symbols)), "cik": expected,
             "historical_name": next(iter(names)) if len(names) == 1 else None,
-            "sha256": digest}
+            "sha256": digest, **({"symbols": classes} if classes else {})}
 
 
-def scan_local_sec_instances() -> tuple[list[dict], dict]:
-    """Inspect already downloaded 2010-15 XBRL instances; never fetch files."""
+def scan_local_sec_instances(period: Period = P2010) -> tuple[list[dict], dict]:
+    """Inspect already downloaded XBRL instances of the period; never fetch files."""
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "instances"
     with storage.get_connection() as conn:
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -103,14 +150,16 @@ def scan_local_sec_instances() -> tuple[list[dict], dict]:
             raise ValueError("SEC bulk submissions have not been imported")
         filings = {row[0]: row[1:] for row in conn.execute(
             "SELECT accn,cik,filed_date,instance,name FROM sec_bulk_submissions "
-            "WHERE filed_date>='2010-01-01' AND filed_date<'2016-01-01' AND instance IS NOT NULL")}
+            "WHERE filed_date>=? AND filed_date<? AND instance IS NOT NULL",
+            (period.start, period.end_exclusive))}
         candidates = conn.execute("SELECT symbol,cik,name,date_added,date_removed,observed_from "
                                   "FROM historical_issuer_candidates WHERE source_id=?",
                                   (CANDIDATE_SOURCE,)).fetchall() if "historical_issuer_candidates" in tables else []
         snapshots = historical_membership._snapshots(pd.read_sql_query(
             "SELECT date,tickers FROM historical_membership WHERE source_id=? ORDER BY date",
-            conn, params=(historical_membership.REFERENCE_SOURCE,))) if "historical_membership" in tables else []
+            conn, params=(period.membership_source,))) if "historical_membership" in tables else []
     snapshot_dates = [row[0] for row in snapshots]
+    multi_class_nominations = [row for row in identity_nominations() if row["reason"] == "multi_class_issuer"]
     records = []
     failures: dict[str, int] = {}
     for path in sorted(directory.glob("*.xml")):
@@ -118,8 +167,13 @@ def scan_local_sec_instances() -> tuple[list[dict], dict]:
         if metadata is None:
             continue
         cik, filed_date, instance, filing_name = metadata
+        multi_class = frozenset(ticker for row in multi_class_nominations
+                                if row["cik"] == identity.normalize_cik(cik)
+                                and row["valid_from"] <= filed_date < row["valid_to"]
+                                for ticker in row["sec_tickers"]) if period is not P2010 else frozenset()
         try:
-            proof = extract_sec_instance(path, cik=cik)
+            proof = extract_sec_instance(path, cik=cik, common_stock_only=period is not P2010,
+                                         multi_class=multi_class)
         except (OSError, ValueError, etree.XMLSyntaxError) as exc:
             reason = str(exc).split(":", 1)[0]
             failures[reason] = failures.get(reason, 0) + 1
@@ -139,8 +193,9 @@ def scan_local_sec_instances() -> tuple[list[dict], dict]:
         else:
             proof["candidate_status"] = "agrees" if candidate["cik"] == proof["cik"] else "conflicts"
         index = bisect_right(snapshot_dates, filed_date) - 1
-        proof["member_in_fja"] = index >= 0 and proof["symbol"] in correct_symbols(snapshots[index][1], filed_date)[0]
-        records.append(proof)
+        members = correct_symbols(snapshots[index][1], filed_date)[0] if index >= 0 else set()
+        for symbol in proof.pop("symbols", [proof["symbol"]]):
+            records.append({**proof, "symbol": symbol, "member_in_fja": symbol in members})
     statuses = {status: sum(row["candidate_status"] == status for row in records)
                 for status in ("agrees", "conflicts", "ambiguous", "missing")}
     return records, {"filings_with_local_instance": len(records) + sum(failures.values()),
@@ -155,7 +210,8 @@ def scan_local_sec_instances() -> tuple[list[dict], dict]:
                      "rejections": failures}
 
 
-def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False) -> dict:
+def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False,
+                              period: Period = P2010) -> dict:
     """Cache selected original SEC covers for historic CIK candidates.
 
     Three filings spread over each candidate's dated tenure give more useful
@@ -168,14 +224,14 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
     with storage.get_connection() as conn:
         candidates = conn.execute(
             "SELECT DISTINCT symbol,cik,date_added,date_removed FROM historical_issuer_candidates "
-            "WHERE source_id=? AND date_added<'2016-01-01' "
-            "AND (date_removed IS NULL OR date_removed='' OR date_removed>='2010-01-01')",
-            (CANDIDATE_SOURCE,)).fetchall()
+            "WHERE source_id=? AND date_added<? "
+            "AND (date_removed IS NULL OR date_removed='' OR date_removed>=?)",
+            (CANDIDATE_SOURCE, period.end_exclusive, period.start)).fetchall()
         filings = conn.execute(
             "SELECT accn,cik,filed_date,instance FROM sec_bulk_submissions "
-            "WHERE filed_date>='2010-01-01' AND filed_date<'2016-01-01' "
-            "AND form IN ('10-K','10-Q') AND instance IS NOT NULL ORDER BY filed_date,accn"
-        ).fetchall()
+            "WHERE filed_date>=? AND filed_date<? "
+            "AND form IN ('10-K','10-Q') AND instance IS NOT NULL ORDER BY filed_date,accn",
+            (period.start, period.end_exclusive)).fetchall()
         candidates += [(row["label"], row["cik"],
                         (date.fromisoformat(row["valid_from"]) - timedelta(days=row["evidence_window_days"])).isoformat(),
                         (date.fromisoformat(row["valid_to"]) + timedelta(days=row["evidence_window_days"])).isoformat())
@@ -183,15 +239,15 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
         unresolved = conn.execute(
             "SELECT cik,valid_from,valid_to FROM historical_identity_intervals "
             "WHERE source_id=? AND status='unresolved'",
-            (INTERVAL_SOURCE,)).fetchall() if prioritize_unresolved else []
+            (period.identity_source,)).fetchall() if prioritize_unresolved else []
     by_cik: dict[str, list[tuple]] = {}
     for row in filings:
         by_cik.setdefault(identity.normalize_cik(row[1]), []).append(row)
     selected: dict[str, tuple] = {}
     missing_candidates = 0
     for _symbol, cik, added, removed in candidates:
-        start = max(_date(added) or "2010-01-01", "2010-01-01")
-        end = min(_date(removed) or "2016-01-01", "2016-01-01")
+        start = max(_date(added) or period.start, period.start)
+        end = min(_date(removed) or period.end_exclusive, period.end_exclusive)
         eligible = [row for row in by_cik.get(identity.normalize_cik(cik), [])
                     if start <= row[2] < end]
         if len(eligible) < 2:
@@ -267,7 +323,7 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
             "prioritize_unresolved": prioritize_unresolved}
 
 
-def import_nominated_filings() -> dict:
+def import_nominated_filings(period: Period = P2010) -> dict:
     """Index SEC bulk 10-K/10-Q rows for nominated CIKs from the cached archive.
 
     The quarterly Financial Statement Data Sets are already archived with
@@ -276,22 +332,55 @@ def import_nominated_filings() -> dict:
     ciks = {row["cik"] for row in identity_nominations()}
     with storage.get_connection() as conn:
         sec_history.ensure_schema(conn)
-        present = {row[0] for row in conn.execute("SELECT DISTINCT cik FROM sec_bulk_submissions")}
+        # Present means indexed for this period's quarters, not for another period.
+        first_year = period.years.start - (1 if period is P2010 else 0)
+        present = {row[0] for row in conn.execute(
+            "SELECT DISTINCT cik FROM sec_bulk_submissions WHERE filed_date>=? AND filed_date<?",
+            (f"{first_year}-01-01", period.end_exclusive))}
     missing = ciks - present
     report: dict[str, object] = {"nominated_ciks": len(ciks), "missing_before": len(missing)}
     if not missing:
         return report
-    for year in range(2009, 2016):
+    for year in range(period.years.start - (1 if period is P2010 else 0), period.years.stop):
         for quarter in range(1, 5):
             key = f"{year}q{quarter}"
             url = f"https://www.sec.gov/files/dera/data/financial-statement-data-sets/{key}.zip"
             path = sec_history.download(url, sec_history.DIRECTORY / f"{key}.zip")
-            report[key] = sec_history.import_quarter(path, url, missing)
+            report[key] = sec_history.import_quarter(path, url, missing, facts=period is P2010)
             print(key, report[key], flush=True)
     return report
 
 
-def annual_report_symbol_evidence(limit: int) -> dict:
+def import_period_filings(period: Period) -> dict:
+    """Index SEC bulk 10-K/10-Q submissions of every candidate CIK of a period.
+
+    For 2010-2015 this was done by ``sec_history.run_bulk`` (#27). Only the
+    SUB table is read here (form, filing date, instance, issuer name); facts
+    for 2016+ come from Company Facts. Quarters already indexed are skipped.
+    """
+    with storage.get_connection() as conn:
+        sec_history.ensure_schema(conn)
+        ciks = {identity.normalize_cik(row[0]) for row in conn.execute(
+            "SELECT DISTINCT cik FROM historical_issuer_candidates WHERE source_id=? AND cik<>'' "
+            "AND replace(date_added,'*','')<? "
+            "AND (date_removed IS NULL OR date_removed='' OR replace(date_removed,'*','')>=?)",
+            (CANDIDATE_SOURCE, period.end_exclusive, period.start))}
+    ciks |= {row["cik"] for row in identity_nominations()
+             if row["valid_from"] < period.end_exclusive and row["valid_to"] > period.start}
+    report: dict[str, object] = {"ciks": len(ciks)}
+    # Only quarters inside the period: adding rows filed before it would
+    # change the evidence of the previous period's intervals.
+    for year in period.years:
+        for quarter in range(1, 5):
+            key = f"{year}q{quarter}"
+            url = f"https://www.sec.gov/files/dera/data/financial-statement-data-sets/{key}.zip"
+            path = sec_history.download(url, sec_history.DIRECTORY / f"{key}.zip")
+            report[key] = sec_history.import_quarter(path, url, ciks, facts=False)
+            print(key, report[key], flush=True)
+    return report
+
+
+def annual_report_symbol_evidence(limit: int, period: Period = P2010) -> dict:
     """Ticker proofs from 10-K text for intervals the XBRL covers left open.
 
     Early XBRL covers often omit ``dei:TradingSymbol``. The annual report's
@@ -304,7 +393,7 @@ def annual_report_symbol_evidence(limit: int) -> dict:
         rows = conn.execute(
             "SELECT symbol,cik,valid_from,valid_to,status FROM historical_identity_intervals "
             "WHERE source_id=? AND status IN ('unresolved','corroborated_candidate')",
-            (INTERVAL_SOURCE,)).fetchall()
+            (period.identity_source,)).fetchall()
     nominated = {(row["label"], row["cik"]) for row in identity_nominations()}
     # Unresolved intervals, plus nominations still resting on one SEC ticker
     # observation; community-name corroborations are left as they are.
@@ -321,7 +410,15 @@ def annual_report_symbol_evidence(limit: int) -> dict:
                 break
             url, path = issuer_evidence.fetch_annual_report(cik, report)
             downloads += 1
-            symbols = issuer_evidence.annual_report_symbols(path.read_text(encoding="utf-8", errors="ignore"))
+            extended = period is not P2010
+            symbols = issuer_evidence.annual_report_symbols(path.read_text(encoding="utf-8", errors="ignore"),
+                                                            extended=extended)
+            if extended and len(symbols) > 1:
+                # Other companies' symbols (investees, spin-offs) appear in the
+                # text; keep the one reviewed ticker of this CIK, if unique.
+                reviewed = {ticker for row in identity_nominations() if row["cik"] == cik
+                            and row["valid_from"] <= report["filed"] < row["valid_to"] for ticker in row["sec_tickers"]}
+                symbols &= reviewed
             if len(symbols) != 1:
                 continue
             with path.open("rb") as source:
@@ -371,7 +468,7 @@ def _name_matches(candidate: str | None, filed: str | None) -> bool:
     return bool(left[0] == right[0] and len(left[0]) >= 7 and left[0] not in generic)
 
 
-def fetch_issuer_name_histories(limit: int) -> dict:
+def fetch_issuer_name_histories(limit: int, period: Period = P2010) -> dict:
     """Cache SEC's official name chain for still-unresolved historical CIKs."""
     if limit < 0:
         raise ValueError("limit must be nonnegative")
@@ -380,7 +477,7 @@ def fetch_issuer_name_histories(limit: int) -> dict:
             "SELECT DISTINCT cik FROM historical_identity_intervals "
             "WHERE source_id=? AND status='unresolved' AND cik IN "
             "(SELECT cik FROM sec_bulk_submissions GROUP BY cik HAVING COUNT(*)>=2) ORDER BY cik",
-            (INTERVAL_SOURCE,))]
+            (period.identity_source,))]
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "identity_submissions"
     cached = fetched = failed = 0
     for cik in ciks:
@@ -418,7 +515,7 @@ def _official_name_chain(cik: str) -> dict | None:
             "sha256": digest}
 
 
-def build_evidence_intervals() -> list[dict]:
+def build_evidence_intervals(period: Period = P2010) -> list[dict]:
     """Corroborate candidate/member intervals with dated SEC primary evidence.
 
     The resulting tier is retrospective research evidence. Membership and
@@ -428,8 +525,8 @@ def build_evidence_intervals() -> list[dict]:
     with storage.get_connection() as conn:
         identity.ensure_schema(conn)
         history = pd.read_sql_query(
-            "SELECT date,tickers FROM historical_membership WHERE source_id=? AND date<'2016-01-01' ORDER BY date",
-            conn, params=(historical_membership.REFERENCE_SOURCE,))
+            "SELECT date,tickers FROM historical_membership WHERE source_id=? AND date<? ORDER BY date",
+            conn, params=(period.membership_source, period.end_exclusive))
         candidates = conn.execute(
             "SELECT symbol,cik,name,date_added,date_removed,observed_from "
             "FROM historical_issuer_candidates WHERE source_id=?",
@@ -440,11 +537,11 @@ def build_evidence_intervals() -> list[dict]:
         submissions = conn.execute(
             "SELECT s.cik,s.accn,s.filed_date,s.name,s.form,s.source_url,a.sha256 "
             "FROM sec_bulk_submissions s LEFT JOIN sec_archive_files a ON a.url=s.source_url "
-            "WHERE s.filed_date>='2010-01-01' AND s.filed_date<'2016-01-01' "
-            "AND s.form IN ('10-K','10-Q')"
+            "WHERE s.filed_date>=? AND s.filed_date<? "
+            "AND s.form IN ('10-K','10-Q')", (period.evidence_from, period.end_exclusive)
         ).fetchall() if {"sec_bulk_submissions", "sec_archive_files"} <= tables else []
     snapshots = historical_membership._snapshots(history)
-    if not snapshots or snapshots[0][0] > "2010-01-01":
+    if not snapshots or snapshots[0][0] > period.start:
         raise ValueError("Historical membership snapshots missing")
     corrected = [(day, correct_symbols(symbols, day)[0]) for day, symbols in snapshots]
     # The source often keeps the later ANTM label retroactively; insert the
@@ -456,7 +553,7 @@ def build_evidence_intervals() -> list[dict]:
     corrected.sort(key=lambda row: row[0])
     frame = pd.DataFrame([(day, ",".join(sorted(symbols))) for day, symbols in corrected],
                          columns=["date", "tickers"])
-    memberships = historical_membership.intervals(frame, "2016-01-01")
+    memberships = historical_membership.intervals(frame, period.end_exclusive)
     by_symbol: dict[str, list[dict]] = {}
     for symbol, cik, name, added, removed, _observed in candidates:
         if not cik or not (start := _date(added)):
@@ -471,7 +568,9 @@ def build_evidence_intervals() -> list[dict]:
     evidence_by_cik: dict[str, list[dict]] = {}
     for symbol, entity_id, payload_json in proofs:
         payload = json.loads(payload_json)
-        if "filed_date" in payload:
+        # Each period sees only proofs filed inside its own evidence window, so
+        # rebuilding one period is unaffected by evidence gathered for another.
+        if "filed_date" in payload and period.evidence_from <= payload["filed_date"] < period.end_exclusive:
             record = {**payload, "symbol": symbol, "cik": entity_id.removeprefix("cik:")}
             evidence.setdefault(symbol, []).append(record)
             evidence_by_cik.setdefault(record["cik"], []).append(record)
@@ -486,8 +585,8 @@ def build_evidence_intervals() -> list[dict]:
     result = []
     for member in memberships:
         symbol = member["symbol"]
-        start = max(member["valid_from"], "2010-01-01")
-        end = min(member["valid_to"], "2016-01-01")
+        start = max(member["valid_from"], period.start)
+        end = min(member["valid_to"], period.end_exclusive)
         if start >= end:
             continue
         candidates_for_symbol = by_symbol.get(symbol, [])
@@ -594,7 +693,7 @@ def build_evidence_intervals() -> list[dict]:
     return result
 
 
-def coverage_report() -> dict:
+def coverage_report(period: Period = P2010) -> dict:
     """Measure quarterly member observations, retaining candidate/verified tiers."""
     with storage.get_connection() as conn:
         required = {"historical_membership", "historical_issuer_candidates", "entity_aliases", "entities"}
@@ -602,8 +701,8 @@ def coverage_report() -> dict:
         missing = required - tables
         if missing:
             raise ValueError(f"Missing local identity tables: {sorted(missing)}")
-        history = pd.read_sql_query("SELECT date,tickers FROM historical_membership WHERE source_id=? ORDER BY date",
-                                    conn, params=(historical_membership.REFERENCE_SOURCE,))
+        history = pd.read_sql_query("SELECT date,tickers FROM historical_membership WHERE source_id=? AND date<? "
+                                    "ORDER BY date", conn, params=(period.membership_source, period.end_exclusive))
         candidates = conn.execute("SELECT symbol,cik,name,date_added,date_removed,observed_from "
                                   "FROM historical_issuer_candidates WHERE source_id=?",
                                   (CANDIDATE_SOURCE,)).fetchall()
@@ -611,11 +710,13 @@ def coverage_report() -> dict:
                                "FROM entity_aliases a JOIN entities e USING(entity_id)").fetchall()
         intervals = conn.execute(
             "SELECT symbol,cik,valid_from,valid_to,status FROM historical_identity_intervals "
-            "WHERE source_id=?", (INTERVAL_SOURCE,)).fetchall() if "historical_identity_intervals" in tables else []
+            "WHERE source_id=?", (period.identity_source,)).fetchall() if "historical_identity_intervals" in tables else []
         sec_names = conn.execute("SELECT cik,name,filed_date FROM sec_bulk_submissions "
-                                 "WHERE name IS NOT NULL AND name<>'' AND filed_date<='2015-12-31'").fetchall() if "sec_bulk_submissions" in tables else []
+                                 "WHERE name IS NOT NULL AND name<>'' AND filed_date<=?",
+                                 (period.last_day,)).fetchall() if "sec_bulk_submissions" in tables else []
     snapshots = historical_membership._snapshots(history)
-    if not snapshots or snapshots[0][0] > QUARTERS[0] or snapshots[-1][0] > "2015-12-31":
+    quarters = period.quarters
+    if not snapshots or snapshots[0][0] > quarters[0] or snapshots[-1][0] > period.last_day:
         raise ValueError("Archived fja05680 membership coverage is missing or invalid")
     snapshot_dates = [row[0] for row in snapshots]
     intervals_by_symbol: dict[str, list[tuple]] = {}
@@ -623,7 +724,7 @@ def coverage_report() -> dict:
         intervals_by_symbol.setdefault(row[0], []).append(row)
     by_year: dict[str, dict] = {}
     ambiguous_examples: set[str] = set()
-    for day in QUARTERS:
+    for day in quarters:
         index = bisect_right(snapshot_dates, day) - 1
         symbols, _ = correct_symbols(snapshots[index][1], day)
         candidates_by_symbol = _candidate_map(candidates, day)
@@ -697,21 +798,24 @@ def coverage_report() -> dict:
             "candidate_unique_cik", "candidate_row_created_by_date", "candidate_name",
             "confirmed_by_multiple_evidence", "confirmed_historical_ticker", "corroborated_candidate",
             "accredited_total", "ambiguous_identity")}
-    return {"membership_source_id": historical_membership.REFERENCE_SOURCE,
+    return {"membership_source_id": period.membership_source,
             "candidate_source_id": CANDIDATE_SOURCE,
-            "window": [QUARTERS[0], QUARTERS[-1]], "unit": "quarter-end member observation",
+            "window": [quarters[0], quarters[-1]], "unit": "quarter-end member observation",
             "candidate_warning": "lawcal CIK/name are reconstructed candidates, not verified ticker aliases; row creation date does not date the manually backfilled CIK",
             "by_year": by_year, "ambiguous_examples": sorted(ambiguous_examples)[:30]}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--period", default=P2010.key, help="Historical period (2010-2015 or 2016-2025)")
     parser.add_argument("--output", type=Path, help="Write the offline report as JSON")
     parser.add_argument("--scan-instances", action="store_true", help="Check locally cached original SEC XBRL files")
     parser.add_argument("--fetch-candidate-instances", type=int,
-                        help="Download up to N selected 2010-15 SEC XBRL covers for candidate checks")
+                        help="Download up to N selected SEC XBRL covers of the period for candidate checks")
     parser.add_argument("--fetch-unresolved-instances", type=int,
                         help="Download up to N extra SEC covers only for unresolved dated identity intervals")
+    parser.add_argument("--import-period-filings", action="store_true",
+                        help="Index SEC bulk 10-K/10-Q submissions of the period's candidate CIKs")
     parser.add_argument("--import-nominated-filings", action="store_true",
                         help="Index cached SEC bulk filings for reviewed CIK nominations")
     parser.add_argument("--annual-report-symbols", type=int,
@@ -726,20 +830,23 @@ def main() -> None:
     parser.add_argument("--intervals-csv", type=Path,
                         help="Write interval status, dates and SEC provenance for review")
     args = parser.parse_args()
+    period = get_period(args.period)
     fetch_summary = None
+    if args.import_period_filings:
+        print(json.dumps(import_period_filings(period)), flush=True)
     if args.import_nominated_filings:
-        print(json.dumps(import_nominated_filings()), flush=True)
+        print(json.dumps(import_nominated_filings(period)), flush=True)
     if args.annual_report_symbols is not None:
-        print(json.dumps(annual_report_symbol_evidence(args.annual_report_symbols)), flush=True)
+        print(json.dumps(annual_report_symbol_evidence(args.annual_report_symbols, period)), flush=True)
     if args.fetch_candidate_instances is not None and args.fetch_unresolved_instances is not None:
         parser.error("Choose only one SEC instance download mode")
     if args.fetch_candidate_instances is not None or args.fetch_unresolved_instances is not None:
         fetch_summary = fetch_candidate_instances(
             args.fetch_candidate_instances if args.fetch_candidate_instances is not None else args.fetch_unresolved_instances,
-            prioritize_unresolved=args.fetch_unresolved_instances is not None)
+            prioritize_unresolved=args.fetch_unresolved_instances is not None, period=period)
         print(json.dumps(fetch_summary), flush=True)
     if args.fetch_issuer_names is not None:
-        name_fetch = fetch_issuer_name_histories(args.fetch_issuer_names)
+        name_fetch = fetch_issuer_name_histories(args.fetch_issuer_names, period)
         print(json.dumps(name_fetch), flush=True)
     if (args.evidence_csv or args.import_evidence) and not args.scan_instances:
         parser.error("--evidence-csv and --import-evidence require --scan-instances")
@@ -747,7 +854,7 @@ def main() -> None:
         parser.error("--intervals-csv requires --build-intervals")
     evidence_summary = None
     if args.scan_instances:
-        records, summary = scan_local_sec_instances()
+        records, summary = scan_local_sec_instances(period)
         evidence_summary = summary
         if args.import_evidence:
             summary["imported_observations"] = historical_archive.import_filing_identity_evidence(records)
@@ -759,8 +866,8 @@ def main() -> None:
             args.evidence_csv.parent.mkdir(parents=True, exist_ok=True)
             pd.DataFrame(records).to_csv(args.evidence_csv, index=False)
     if args.build_intervals:
-        intervals = build_evidence_intervals()
-        historical_archive.replace_identity_intervals(INTERVAL_SOURCE, intervals)
+        intervals = build_evidence_intervals(period)
+        historical_archive.replace_identity_intervals(period.identity_source, intervals)
         counts = {status: sum(row["status"] == status for row in intervals)
                   for status in ("confirmed_by_multiple_evidence", "confirmed_historical_ticker",
                                  "corroborated_candidate",
@@ -769,7 +876,7 @@ def main() -> None:
             args.intervals_csv.parent.mkdir(parents=True, exist_ok=True)
             pd.DataFrame([{**row, "source_refs": json.dumps(row["source_refs"], sort_keys=True)}
                           for row in intervals]).to_csv(args.intervals_csv, index=False)
-    report = coverage_report()
+    report = coverage_report(period)
     if fetch_summary:
         report["sec_candidate_download"] = fetch_summary
     if args.fetch_issuer_names is not None:
@@ -777,7 +884,7 @@ def main() -> None:
     if evidence_summary:
         report["sec_instance_evidence"] = evidence_summary
     if args.build_intervals:
-        report["evidence_intervals"] = {"source_id": INTERVAL_SOURCE, "count": len(intervals),
+        report["evidence_intervals"] = {"source_id": period.identity_source, "count": len(intervals),
                                         "statuses": counts,
                                         "note": "Retrospective corroboration, not a reviewed operational alias"}
     payload = json.dumps(report, ensure_ascii=False, indent=2) + "\n"

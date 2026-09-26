@@ -1,4 +1,4 @@
-"""SEC issuer evidence for attributing 2010-2015 price series (issue #28).
+"""SEC issuer evidence for attributing historical price series (#28, #34).
 
 Three kinds of free, archived SEC evidence are used, each cached with its URL
 and SHA-256 through ``sec_history.download``:
@@ -42,8 +42,15 @@ FRAME_SPECS = {
     # Annual cash-flow payments: detects payers that never tag per-share values.
     "dividend_payments": ("us-gaap", "PaymentsOfDividendsCommonStock", "USD", False),
 }
-PERIODS = [f"CY{year}Q{quarter}" for year in range(2008, 2017) for quarter in range(1, 5)]
-ANNUAL_PERIODS = [f"CY{year}" for year in range(2008, 2017)]
+# Frames through 2025 (#34; 2008-2016 for #28). Floats are annual cover
+# facts, so the last year's frames are still filling in.
+FRAME_YEARS = range(2008, 2026)
+PERIODS = [f"CY{year}Q{quarter}" for year in FRAME_YEARS for quarter in range(1, 5)]
+ANNUAL_PERIODS = [f"CY{year}" for year in FRAME_YEARS]
+# SEC filing history read per CIK (submissions pages, 8-K and 10-K lists).
+FILINGS_FROM, FILINGS_TO = "2008-01-01", "2027-01-01"
+# A delisting counts as "no later public float" only with a year of frames after it.
+FLOATLESS_BEFORE = f"{FRAME_YEARS[-1]}-01-01"
 
 
 def _periods(kind: str) -> list[str]:
@@ -99,7 +106,7 @@ def fetch_frames() -> dict:
 
 
 def fetch_submissions(ciks: set[str]) -> dict:
-    """Cache SEC submissions, including older pages that overlap 2008-2016."""
+    """Cache SEC submissions, including older pages that overlap the filing window."""
     fetched = cached = failed = 0
     for cik in sorted(identity.normalize_cik(value) for value in ciks):
         path = SUBMISSIONS_DIR / f"CIK{cik}.json"
@@ -113,7 +120,7 @@ def fetch_submissions(ciks: set[str]) -> dict:
             if identity.normalize_cik(payload["cik"]) != cik:
                 raise ValueError("SEC submissions issuer CIK mismatch")
             for page in payload.get("filings", {}).get("files", []):
-                if page.get("filingFrom", "9999") > "2017-01-01" or page.get("filingTo", "0000") < "2008-01-01":
+                if page.get("filingFrom", "9999") > FILINGS_TO or page.get("filingTo", "0000") < FILINGS_FROM:
                     continue
                 extra = SUBMISSIONS_DIR / page["name"]
                 if not extra.exists():
@@ -143,14 +150,23 @@ def load_frames() -> dict[str, dict[str, list[dict]]]:
     return result
 
 
-def issuer_facts(cik: str) -> dict[str, list[dict]]:
+def issuer_facts(cik: str, frame_year_max: int | None = None) -> dict[str, list[dict]]:
+    """Frame facts of a CIK; ``frame_year_max`` keeps a period's evidence horizon
+    (2010-2015 was audited with frames through CY2016)."""
     facts = load_frames().get(identity.normalize_cik(cik), {})
-    return {kind: sorted(facts.get(kind, []), key=lambda row: row["end"]) for kind in FRAME_SPECS}
+    return {kind: sorted((row for row in facts.get(kind, [])
+                          if frame_year_max is None or int(str(row["frame"])[2:6]) <= frame_year_max),
+                         key=lambda row: row["end"]) for kind in FRAME_SPECS}
 
 
 @cache
-def listing_life(cik: str) -> dict | None:
-    """Summarise when a CIK's common equity can have traded, from SEC filings."""
+def listing_life(cik: str, floatless_before: str = FLOATLESS_BEFORE,
+                 frame_year_max: int | None = None) -> dict | None:
+    """Summarise when a CIK's common equity can have traded, from SEC filings.
+
+    ``floatless_before``/``frame_year_max`` fix the evidence horizon of a
+    period: a delisting counts as "no later public float" only before it.
+    """
     cik = identity.normalize_cik(cik)
     path = SUBMISSIONS_DIR / f"CIK{cik}.json"
     if not path.exists():
@@ -161,7 +177,7 @@ def listing_life(cik: str) -> dict | None:
         extra = SUBMISSIONS_DIR / page["name"]
         if extra.exists():
             pages.append(json.loads(extra.read_text(encoding="utf-8")))
-        elif page.get("filingFrom", "9999") <= "2017-01-01" and page.get("filingTo", "0000") >= "2008-01-01":
+        elif page.get("filingFrom", "9999") <= FILINGS_TO and page.get("filingTo", "0000") >= FILINGS_FROM:
             return None  # an overlapping page is missing: never judge on partial history
     filings = sorted({(form, filed, accn) for page in pages
                       for form, filed, accn in zip(page["form"], page["filingDate"],
@@ -171,7 +187,7 @@ def listing_life(cik: str) -> dict | None:
                               for form, filed, accn, items, primary in zip(
                                   page["form"], page["filingDate"], page["accessionNumber"],
                                   page["items"], page["primaryDocument"], strict=True)
-                              if form in {"8-K", "8-K/A"} and "2009-01-01" <= filed < "2017-01-01"})
+                              if form in {"8-K", "8-K/A"} and "2009-01-01" <= filed < FILINGS_TO})
     succession_reports = {accn: primary for page in pages
                           for form, accn, primary in zip(page["form"], page["accessionNumber"],
                                                          page["primaryDocument"], strict=True)
@@ -180,9 +196,9 @@ def listing_life(cik: str) -> dict | None:
                              for form, filed, accn, primary in zip(
                                  page["form"], page["filingDate"], page["accessionNumber"],
                                  page["primaryDocument"], strict=True)
-                             if form == "10-K" and "2009-01-01" <= filed < "2017-01-01"})
+                             if form == "10-K" and "2009-01-01" <= filed < FILINGS_TO})
     periodic = [filed for form, filed, _ in filings if form in PERIODIC_FORMS]
-    floats = [row["end"] for row in issuer_facts(cik)["public_float"] if row["val"] and row["val"] > 0]
+    floats = [row["end"] for row in issuer_facts(cik, frame_year_max)["public_float"] if row["val"] and row["val"] > 0]
     delisting = None
     for form, filed, accn in filings:
         if form not in DELISTING_FORMS or filed < "2008-01-01":
@@ -190,8 +206,8 @@ def listing_life(cik: str) -> dict | None:
         horizon = (date.fromisoformat(filed) + timedelta(days=SILENCE_DAYS)).isoformat()
         silent = not any(filed < later <= horizon for later in periodic)
         # Debt registrants keep filing after a buyout; their equity no longer
-        # has a public float. Frames end in 2016, so later events stay open.
-        floatless = filed < "2016-01-01" and not any(day > filed for day in floats)
+        # has a public float. Events in the last frame year stay open.
+        floatless = filed < floatless_before and not any(day > filed for day in floats)
         if silent or floatless:
             delisting = {"form": form, "filed": filed, "accession": accn,
                          "basis": "filing_silence" if silent else "no_later_public_float"}
@@ -491,10 +507,18 @@ SYMBOL_RE = re.compile(r"under\s+the\s+(?:ticker\s+|trading\s+|stock\s+)?symbols
                        r"[\"“”'‘’]?\s*([A-Z]{1,5}(?:[.\-][A-Z]{1,2})?)\b")
 
 
-def annual_report_symbols(document: str) -> set[str]:
+# "Xerox common stock (XRX) is listed on the New York Stock Exchange" (#34).
+LISTED_SYMBOL_RE = re.compile(r"common\s+(?:stock|shares)\s+\(([A-Z]{1,5}(?:[.\-][A-Z]{1,2})?)\)\s+(?:is|are)\s+"
+                              r"(?:listed|traded)")
+
+
+def annual_report_symbols(document: str, *, extended: bool = False) -> set[str]:
     """Trading symbols a 10-K states for its listed equity ("under the symbol X")."""
     text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", document)))
-    return {match.group(1) for match in SYMBOL_RE.finditer(text)}
+    symbols = {match.group(1) for match in SYMBOL_RE.finditer(text)}
+    if extended:
+        symbols |= {match.group(1) for match in LISTED_SYMBOL_RE.finditer(text)}
+    return symbols
 
 
 def fetch_annual_report(cik: str, report: dict) -> tuple[str, Path]:

@@ -452,3 +452,65 @@ def test_nominations_trim_community_rows_and_price_only_entries_leave_identity(m
         ("0000000007", "2010-01-01", "2014-12-31")]
     monkeypatch.setattr(corrections, "identity_nominations", lambda: (_nomination(price_only=True),))
     assert corrections.apply_nominations(community) == community
+
+
+def _ixbrl_cover(path, cik, securities):
+    """2019+ inline cover: one TradingSymbol and Security12bTitle per 12(b) security."""
+    contexts, facts = [], []
+    for index, (symbol, member, title) in enumerate(securities):
+        segment = (f'<xbrli:segment><xbrldi:explicitMember dimension="us-gaap:StatementClassOfStockAxis">{member}'
+                   '</xbrldi:explicitMember></xbrli:segment>') if member else ""
+        contexts.append(f'<xbrli:context id="c{index}"><xbrli:entity><xbrli:identifier '
+                        f'scheme="http://www.sec.gov/CIK">{cik}</xbrli:identifier>{segment}</xbrli:entity>'
+                        '</xbrli:context>')
+        facts.append(f'<dei:TradingSymbol contextRef="c{index}">{symbol}</dei:TradingSymbol>')
+        if title:
+            facts.append(f'<dei:Security12bTitle contextRef="c{index}">{title}</dei:Security12bTitle>')
+    path.write_text('<xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" '
+                    'xmlns:xbrldi="http://xbrl.org/2006/xbrldi" xmlns:dei="http://xbrl.sec.gov/dei/2019-01-31">'
+                    + "".join(contexts + facts) + "</xbrl>", encoding="utf-8")
+
+
+def test_2016_2025_cover_proves_the_common_stock_among_listed_securities(tmp_path):
+    path = tmp_path / "cover.xml"
+    _ixbrl_cover(path, "1", [("VNO", "us-gaap:CommonStockMember", "Common Shares of beneficial interest"),
+                             ("VNO/PK", "vno:SeriesKPreferredStockMember", "5.70% Series K"),
+                             ("VNO27", "vno:NotesMember", "Notes due 2027")])
+    with pytest.raises(ValueError, match="Missing or ambiguous"):
+        audit.extract_sec_instance(path, cik="1")  # 2010-2015 rule unchanged
+    assert audit.extract_sec_instance(path, cik="1", common_stock_only=True)["symbol"] == "VNO"
+    # Two common classes stay ambiguous unless a reviewed multi-class nomination names both.
+    _ixbrl_cover(path, "1", [("GOOGL", "us-gaap:CommonClassAMember", "Class A Common Stock"),
+                             ("GOOG", "us-gaap:CommonClassCMember", "Class C Capital Stock")])
+    with pytest.raises(ValueError, match="Missing or ambiguous"):
+        audit.extract_sec_instance(path, cik="1", common_stock_only=True)
+    proof = audit.extract_sec_instance(path, cik="1", common_stock_only=True,
+                                       multi_class=frozenset({"GOOG", "GOOGL"}))
+    assert proof["symbols"] == ["GOOG", "GOOGL"]
+
+
+def test_annual_report_listed_symbol_pattern_is_only_used_for_2016_2025():
+    from gabi import historical_issuer_evidence as evidence
+    text = "<p>Xerox common stock (XRX) is listed on the New York Stock Exchange</p>"
+    assert evidence.annual_report_symbols(text) == set()
+    assert evidence.annual_report_symbols(text, extended=True) == {"XRX"}
+
+
+def test_each_period_only_sees_proofs_filed_inside_its_evidence_window(monkeypatch):
+    from gabi.historical_period import P2010, P2016
+    storage.init_db()
+    historical_archive.register_source(REFERENCE_SOURCE, {"start": "2010-01-01", "end_exclusive": "2016-01-01"})
+    historical_archive.import_membership(REFERENCE_SOURCE, pd.DataFrame([("2009-12-31", "OTHER"), ("2015-09-01", "LATE")],
+                                         columns=["date", "tickers"]), "2009-01-01", "2016-01-01")
+    monkeypatch.setattr(audit, "apply_nominations", lambda rows: {"LATE": [{
+        "cik": "0000000001", "name": None, "start": "2015-09-01", "end": "2016-01-01",
+        "nomination": {"sec_tickers": ("LATE",), "evidence_window_days": 200}}]})
+    monkeypatch.setattr(audit.issuer_evidence, "listing_life", lambda cik: None)
+    rows = [{"symbol": "LATE", "cik": "1", "accession": f"a-{day}", "filed_date": day,
+             "sha256": "a" * 64, "source_url": f"https://www.sec.gov/Archives/edgar/data/1/{day}"}
+            for day in ("2015-11-05", "2016-02-05", "2016-05-05")]
+    historical_archive.import_filing_identity_evidence(rows)
+    interval = audit.build_evidence_intervals(P2010)[0]
+    # The 2016 covers were gathered for 2016-2025: the 2010-2015 rebuild ignores them.
+    assert interval["direct_ticker_proofs"] == 1 and interval["status"] == "unresolved"
+    assert P2016.evidence_from < P2016.start

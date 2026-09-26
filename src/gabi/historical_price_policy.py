@@ -146,11 +146,16 @@ def record_series(*, cik: str, symbol: str, valid_from: str, valid_to: str,
         if conflict:
             raise ValueError("Ticker interval belongs to another issuer")
         competing = conn.execute(
-            "SELECT source_id,valid_from,valid_to FROM historical_price_provenance WHERE symbol=? AND entity_id=? "
+            "SELECT source_id,valid_from,valid_to,evidence_json FROM historical_price_provenance "
+            "WHERE symbol=? AND entity_id=? "
             "AND valid_from<? AND valid_to>? AND status!='excluded' "
             "AND NOT (source_id=? AND valid_from=? AND valid_to=?)",
             (symbol, entity_id, valid_to, valid_from, source_id, valid_from, valid_to)).fetchall()
-        for other_source, other_from, other_to in competing:
+        for other_source, other_from, other_to, other_evidence in competing:
+            if other_source == source_id and _producer(other_evidence) not in {None, _producer(refs)}:
+                # The same rows accredited by the audit of another period
+                # (2010-2015 holding into 2016 vs the 2016-2025 trailing window).
+                continue
             # Consecutive trailing windows accredited from different sources
             # overlap. That is allowed only when both sources demonstrably
             # quote the same adjusted returns on the shared span.
@@ -164,6 +169,11 @@ def record_series(*, cik: str, symbol: str, valid_from: str, valid_to: str,
                      (entity_id, cik, symbol, valid_from, valid_to, source_id,
                       adjustment_basis, status, refs))
         conn.commit()
+
+
+def _producer(evidence_json: str) -> str | None:
+    return next((ref.get("producer") for ref in json.loads(evidence_json)
+                 if ref.get("kind") == "source" and ref.get("producer")), None)
 
 
 def _adjusted(conn, source_id: str, symbol: str, start: str, end: str) -> pd.DataFrame:

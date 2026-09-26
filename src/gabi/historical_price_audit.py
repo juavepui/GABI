@@ -1,6 +1,7 @@
-"""Offline, conservative price-source audit for the 2010-2015 index members.
+"""Offline, conservative price-source audit for historical index members.
 
-Run ``python -m gabi.historical_price_audit``. This never copies an archived
+Run ``python -m gabi.historical_price_audit [--period 2016-2025]``; the default
+period is 2010-2015 (#28), and 2016-2025 (#34) applies the same rules. This never copies an archived
 price into the operational cache. A series is attributed to a CIK only when
 SEC evidence covers its trading life and price level; a return overlap tests
 adjustments, not ownership, and never fixes a delisting return.
@@ -16,11 +17,13 @@ import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, historical_membership, storage
+from . import config, historical_membership, identity, storage
 from . import historical_issuer_evidence as issuer_evidence
-from .historical_archive import ACCREDITED_IDENTITY_TIERS, IDENTITY_INTERVAL_SOURCE
+from .historical_archive import ACCREDITED_IDENTITY_TIERS
 from .historical_data_audit import connect_readonly
 from .historical_identity_audit import QUARTERS
+from .historical_period import P2010, Period
+from .historical_period import get as get_period
 from .historical_price_policy import ADJUSTED, YAHOO_SOURCE, qualify_fallback, record_series, record_terminal
 from .historical_price_policy import SCHEMA as PROVENANCE_SCHEMA
 from .historical_ticker_corrections import identity_nominations
@@ -33,8 +36,19 @@ OUTPUT = config.BASE_DIR / "docs" / "historical-prices-2010-2015.csv"
 SUMMARY = config.BASE_DIR / "docs" / "historical-prices-2010-2015.json"
 QUARTERLY_OUTPUT = config.BASE_DIR / "docs" / "historical-prices-quarterly-2010-2015.csv"
 QUARTERLY_SUMMARY = config.BASE_DIR / "docs" / "historical-prices-quarterly-2010-2015.json"
-PRODUCER = "historical_price_audit:v2"
+PRODUCER = P2010.price_producer
 AUDIT_URL = "https://github.com/juavepui/GABI/blob/develop/docs/historical-prices-quarterly-2010-2015.csv"
+
+
+def outputs(period: Period) -> dict[str, Path | str]:
+    """Annual/quarterly CSV and JSON outputs and the audit URL cited as evidence."""
+    return {"csv": config.BASE_DIR / "docs" / f"historical-prices-{period.key}.csv",
+            "json": config.BASE_DIR / "docs" / f"historical-prices-{period.key}.json",
+            "quarterly_csv": config.BASE_DIR / "docs" / f"historical-prices-quarterly-{period.key}.csv",
+            "quarterly_json": config.BASE_DIR / "docs" / f"historical-prices-quarterly-{period.key}.json",
+            "url": ("https://github.com/juavepui/GABI/blob/develop/docs/"
+                    f"historical-prices-quarterly-{period.key}.csv")}
+
 MIN_OVERLAP = 60
 MAX_P99_RETURN_DIFFERENCE = 0.005
 # One day on which the sources disagree by more than this is an unreconciled
@@ -47,7 +61,7 @@ MAX_UNCORROBORATED_ARCHIVE_RETURN = 0.25
 # Further archived sources tried, in order, when neither Yahoo nor FINSABER qualifies.
 EXTRA_SOURCES = {"tiingo": TIINGO_SOURCE, "wiki": WIKI_SOURCE}
 # Holding period after the last 2015 rebalance runs into 2016.
-SERIES_END = "2016-06-30"
+SERIES_END = P2010.series_end
 # A holding bought at a rebalance needs prices until the first session on or
 # after the next rebalance date; a week of slack covers holidays/weekends.
 FORWARD_SLACK_DAYS = 7
@@ -219,6 +233,31 @@ def _nominated_price_symbol(label: str, cik: str | None, as_of: str, source: str
     return label
 
 
+def continued_price_symbols(label: str, symbols: dict[str, str], life: dict | None, complete) -> dict[str, str]:
+    """Price symbols that follow the issuer after a ticker change (#34).
+
+    Yahoo keeps an issuer's whole history under its *current* ticker, and a
+    label that is no longer the CIK's symbol may now be another company's
+    (FB -> META, PCLN -> BKNG). When SEC lists current tickers for the CIK and
+    the label is not one of them, Yahoo tries those first; archives try the
+    label first. ``complete(source, symbol)`` says whether that series covers
+    the window; the first complete one is used. Reviewed nominations win.
+    Choosing a symbol is not attribution: listing, level and adjustment
+    checks still decide.
+    """
+    current = [identity.normalize_symbol(ticker) for ticker in (life or {}).get("current_tickers", []) if ticker]
+    result = dict(symbols)
+    for name, symbol in symbols.items():
+        if symbol != label:
+            continue
+        if name == "yahoo":
+            order = [*[t for t in current if t != label], label] if current and label not in current else [label]
+        else:
+            order = [label, *[t for t in current if t != label]]
+        result[name] = next((ticker for ticker in order if complete(name, ticker)), order[0])
+    return result
+
+
 def _as_traded_yahoo(yahoo: pd.DataFrame, splits: pd.DataFrame) -> pd.Series:
     """Yahoo stores closes on today's split basis; known later splits undo it.
     Unknown splits leave the close too low, so the level check fails closed."""
@@ -339,30 +378,42 @@ def forward_coverage(series: pd.DataFrame, calendar, window_end: str, horizon: s
     return expected[-1].date().isoformat(), status
 
 
-def _next_rebalance(as_of: str) -> str:
-    index = QUARTERS.index(as_of) if as_of in QUARTERS else -1
-    if 0 <= index < len(QUARTERS) - 1:
-        return QUARTERS[index + 1]
+def _next_rebalance(as_of: str, quarters: list[str] = QUARTERS) -> str:
+    index = quarters.index(as_of) if as_of in quarters else -1
+    if 0 <= index < len(quarters) - 1:
+        return quarters[index + 1]
     day = date.fromisoformat(as_of)
     return (pd.Timestamp(day) + pd.offsets.QuarterEnd(1)).date().isoformat()
 
 
-def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, dict]:
-    calendar = xcals.get_calendar("XNYS", start="2008-01-01", end="2016-12-31")
+def audit(db: Path, *, dates: list[str] | None = None, period: Period = P2010) -> tuple[pd.DataFrame, dict]:
+    calendar = xcals.get_calendar("XNYS", start=period.series_start, end=f"{period.series_end[:4]}-12-31")
     rows = []
-    dates = dates or [f"{year}-12-31" for year in range(2010, 2016)]
+    dates = dates or [f"{year}-12-31" for year in period.years]
+    quarters = period.quarters
+    identity_source = period.identity_source
     series_cache: dict[tuple[str, bool | str], pd.DataFrame] = {}
     with connect_readonly(db) as conn:
         has_events = bool(conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_terminal_events'").fetchone())
         has_provenance = bool(conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_price_provenance'").fetchone())
         all_splits = pd.read_sql_query("SELECT symbol,date,ratio FROM splits", conn)
+
+        def load(name: str, symbol: str) -> pd.DataFrame:
+            key: tuple[str, bool | str] = (symbol, name if name in EXTRA_SOURCES else name == "finsaber")
+            if key not in series_cache:
+                series_cache[key] = _series(conn, symbol, period.series_start,
+                                            period.series_end if name == "yahoo" else period.archive_until(name),
+                                            archive=name != "yahoo",
+                                            source_id=EXTRA_SOURCES.get(name, PRICE_SOURCE))
+            return series_cache[key]
         for as_of in dates:
             year = int(as_of[:4])
             membership = historical_membership.constituents_as_of(
-                as_of, source_id=historical_membership.REFERENCE_SOURCE, compare_reference=False)
+                as_of, source_id=period.membership_source, compare_reference=False,
+                identity_source=identity_source)
             sessions = calendar.sessions[calendar.sessions <= pd.Timestamp(as_of)][-253:]
             start, end = sessions[0].date().isoformat(), sessions[-1].date().isoformat()
-            horizon = _next_rebalance(as_of)
+            horizon = _next_rebalance(as_of, quarters)
             for member in [*membership["members"], {"symbol": "SPY", "identity_tier": "benchmark",
                                                       "cik": None}]:
                 label = member["symbol"]
@@ -370,11 +421,12 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                 symbols = {"yahoo": _nominated_price_symbol(label, cik, as_of, "yahoo"),
                            "finsaber": _nominated_price_symbol(label, cik, as_of, "finsaber"),
                            **{name: _nominated_price_symbol(label, cik, as_of, name) for name in EXTRA_SOURCES}}
+                if period.price_symbol_fallback and cik:
+                    symbols = continued_price_symbols(
+                        label, symbols, issuer_evidence.listing_life(cik, *period.life_horizon),
+                        lambda name, symbol: assess_series(load(name, symbol).loc[start:end], sessions)["complete"])
                 for name, symbol in list(symbols.items())[:2]:
-                    key = (symbol, name == "finsaber")
-                    if key not in series_cache:
-                        series_cache[key] = _series(conn, symbol, "2008-01-01", SERIES_END,
-                                                    archive=name == "finsaber")
+                    load(name, symbol)
                 yahoo = series_cache[(symbols["yahoo"], False)].loc[start:end]
                 archive = series_cache[(symbols["finsaber"], True)].loc[start:end] if label != "SPY" else \
                     pd.DataFrame(columns=["close", "adj_close"])
@@ -389,10 +441,10 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                 conflicts = conn.execute(
                     "SELECT COUNT(DISTINCT cik) FROM historical_identity_intervals "
                     "WHERE source_id=? AND symbol=? AND valid_from<=? AND valid_to>?",
-                    (IDENTITY_INTERVAL_SOURCE, label, end, start)).fetchone()[0]
+                    (identity_source, label, end, start)).fetchone()[0]
                 issuer = None
-                life = issuer_evidence.listing_life(cik) if cik else None
-                facts = issuer_evidence.issuer_facts(cik) if cik else {}
+                life = issuer_evidence.listing_life(cik, *period.life_horizon) if cik else None
+                facts = issuer_evidence.issuer_facts(cik, period.frame_year_max) if cik else {}
                 listing_refs: list[dict] = []
                 yahoo_checks: list[dict] = []
                 archive_checks: list[dict] = []
@@ -447,10 +499,7 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                 extra_stats: dict[str, dict] = {}
                 for name, extra_source in EXTRA_SOURCES.items():
                     extra_key = (symbols[name], name)
-                    if extra_key not in series_cache:
-                        series_cache[extra_key] = _series(conn, symbols[name], "2008-01-01", SERIES_END,
-                                                          archive=True, source_id=extra_source)
-                    extra = series_cache[extra_key].loc[start:end]
+                    extra = load(name, symbols[name]).loc[start:end]
                     stats = assess_series(extra, sessions)
                     extra_stats[name] = stats
                     extra_row.update({f"{name}_sessions": stats["sessions"], f"{name}_first": stats["first"],
@@ -512,16 +561,16 @@ def audit(db: Path, *, dates: list[str] | None = None) -> tuple[pd.DataFrame, di
                     identity_end = conn.execute(
                         "SELECT MIN(valid_to) FROM historical_identity_intervals WHERE source_id=? AND symbol=? "
                         "AND cik=? AND valid_from<=? AND valid_to>?",
-                        (IDENTITY_INTERVAL_SOURCE, label, cik, as_of, as_of)).fetchone()[0]
+                        (identity_source, label, cik, as_of, as_of)).fetchone()[0]
                     other_owner = conn.execute(
                         "SELECT MIN(valid_from) FROM historical_identity_intervals WHERE source_id=? AND "
                         "symbol IN (?,?) AND cik<>? AND valid_from>?",
-                        (IDENTITY_INTERVAL_SOURCE, label, source_symbol, cik, as_of)).fetchone()[0]
+                        (identity_source, label, source_symbol, cik, as_of)).fetchone()[0]
                     boundary = min([day for day in (identity_end, other_owner) if day], default=None)
                     forward_until, forward_coverage_status = forward_coverage(
                         source_frame, calendar, source_stats["last"] or end, horizon, life,
                         archive=source != "yahoo",
-                        identity_end=boundary if boundary and boundary < "2016-01-01" else None)
+                        identity_end=boundary if boundary and boundary < period.end_exclusive else None)
                 sic_row = conn.execute(
                     "SELECT sic FROM sec_bulk_submissions WHERE cik=? AND filed_date<=? "
                     "AND sic IS NOT NULL AND sic!='' ORDER BY filed_date DESC LIMIT 1",
@@ -626,14 +675,16 @@ def summarize(result: pd.DataFrame, db: Path) -> dict:
     return summary
 
 
-def promote(db: Path, frame: pd.DataFrame) -> dict:
+def promote(db: Path, frame: pd.DataFrame, period: Period = P2010) -> dict:
     """Attribute accepted windows to CIK intervals without touching legacy rows.
 
     Overlapping quarterly windows for the same security and source are merged
     so a strict read has one unambiguous interval. Rows produced by earlier
-    runs of this audit are replaced, so a series that no longer qualifies (for
-    example a recycled Yahoo symbol) loses its attribution. Reruns are idempotent.
+    runs of this audit for the same period are replaced, so a series that no
+    longer qualifies (for example a recycled Yahoo symbol) loses its
+    attribution. Other periods' rows are kept. Reruns are idempotent.
     """
+    producer, audit_url = period.price_producer, outputs(period)["url"]
     if db != config.DB_PATH:
         raise ValueError("Promotion only supports the configured local database")
     candidates = frame[(frame.symbol != "SPY") & frame.selected_source.notna() & frame.cik.notna()]
@@ -656,12 +707,14 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
     with connect_readonly(db) as conn:
         identity_rows = conn.execute(
             "SELECT symbol,cik,valid_from,valid_to,status,source_refs_json FROM historical_identity_intervals "
-            "WHERE source_id=?", (IDENTITY_INTERVAL_SOURCE,)).fetchall()
+            "WHERE source_id=?", (period.identity_source,)).fetchall()
     with storage.get_connection() as conn:
         conn.executescript(PROVENANCE_SCHEMA)
+        # The closing quote keeps "historical_price_audit:v2" from matching the
+        # producer of another period ("historical_price_audit:v2:2016-2025").
         removed = conn.execute(
             "DELETE FROM historical_price_provenance WHERE evidence_json LIKE ? OR evidence_json LIKE ?",
-            (f'%"producer": "{PRODUCER}"%', '%legacy Yahoo cache; original per-row download metadata unavailable%')
+            (f'%"producer": "{producer}"%', '%legacy Yahoo cache; original per-row download metadata unavailable%')
         ).rowcount
         conn.commit()
     accepted = {"tier_a": 0, "tier_b": 0}
@@ -688,7 +741,7 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
             params = (symbol, item["start"], item["end"]) + ((source_id,) if table == "historical_prices" else ())
             values = conn.execute(query, params).fetchall()
         digest = hashlib.sha256(json.dumps(values, separators=(",", ":")).encode()).hexdigest()
-        refs.append({"kind": "source", "producer": PRODUCER, "local_rows_sha256": digest, "rows": len(values),
+        refs.append({"kind": "source", "producer": producer, "local_rows_sha256": digest, "rows": len(values),
                      "source_url": {"yahoo": f"https://finance.yahoo.com/quote/{symbol}/history/",
                                     "finsaber": "https://huggingface.co/datasets/finsaber-team/FINSABER-reproduce",
                                     "tiingo": f"https://api.tiingo.com/tiingo/daily/{symbol.lower()}/prices",
@@ -701,7 +754,7 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
         # Which audited windows this interval accredits and how far each one's
         # verified holding period reaches: a ranking on an audited date may
         # only use a series whose own window was accredited (#32).
-        refs.append({"kind": "accredited_windows", "source_url": AUDIT_URL,
+        refs.append({"kind": "accredited_windows", "source_url": audit_url,
                      "windows": [{"as_of": row.as_of, "window_last": row.last,
                                   "holding_until": row.holding_covered_until
                                   if isinstance(row.holding_covered_until, str) else row.last}
@@ -726,7 +779,7 @@ def promote(db: Path, frame: pd.DataFrame) -> dict:
     return {"removed_previous": removed, "intervals_promoted": accepted, "skipped": skipped}
 
 
-def record_terminal_events(frame: pd.DataFrame) -> dict:
+def record_terminal_events(frame: pd.DataFrame, period: Period = P2010) -> dict:
     """Record every member delisted before the next rebalance as an explicit event.
 
     The completion 8-K around the SEC delisting supplies the consideration;
@@ -735,10 +788,12 @@ def record_terminal_events(frame: pd.DataFrame) -> dict:
     excluded from a strict backtest instead of using the last traded price.
     """
     members = frame[(frame.symbol != "SPY") & frame.cik.notna() & frame.sec_delisting.notna()]
-    exits = members[members.apply(lambda row: row.as_of < row.sec_delisting <= _next_rebalance(row.as_of), axis=1)]
+    quarters = period.quarters
+    exits = members[members.apply(lambda row: row.as_of < row.sec_delisting <= _next_rebalance(row.as_of, quarters),
+                                  axis=1)]
     counts: dict[str, int] = {}
     for (label, cik), _group in exits.groupby(["symbol", "cik"]):
-        life = issuer_evidence.listing_life(cik)
+        life = issuer_evidence.listing_life(cik, *period.life_horizon)
         if life is None or life["delisting"] is None:
             continue
         delisting = life["delisting"]
@@ -762,7 +817,7 @@ def record_terminal_events(frame: pd.DataFrame) -> dict:
     return counts
 
 
-def record_succession_events(frame: pd.DataFrame) -> dict:
+def record_succession_events(frame: pd.DataFrame, period: Period = P2010) -> dict:
     """Holding-company successions (label moves to a new CIK) with a 1:1 exchange.
 
     The successor's 8-K12B must state the one-for-one exchange; then the
@@ -776,7 +831,7 @@ def record_succession_events(frame: pd.DataFrame) -> dict:
         intervals = conn.execute(
             "SELECT symbol,cik,valid_from FROM historical_identity_intervals WHERE source_id=? AND status IN "
             "('confirmed_by_multiple_evidence','confirmed_historical_ticker','corroborated_candidate')",
-            (IDENTITY_INTERVAL_SOURCE,)).fetchall()
+            (period.identity_source,)).fetchall()
     for (label, cik), group in rows.groupby(["symbol", "cik"]):
         boundary = group.holding_covered_until.max()
         successors = [(start, other) for symbol, other, start in intervals
@@ -785,7 +840,7 @@ def record_succession_events(frame: pd.DataFrame) -> dict:
         if not successors:
             continue
         start, successor = min(successors)
-        life = issuer_evidence.listing_life(successor)
+        life = issuer_evidence.listing_life(successor, *period.life_horizon)
         filings = [row for row in (life or {}).get("successions", []) if row.get("primary") and
                    abs((date.fromisoformat(row["filed"]) - date.fromisoformat(start)).days) <= 30]
         quote, url = None, None
@@ -795,7 +850,7 @@ def record_succession_events(frame: pd.DataFrame) -> dict:
             if quote:
                 break
         status = "terminal_return_confirmed" if quote else "terminal_return_unknown"
-        evidence = [{"kind": "succession", "source_url": url or (life or {}).get("source_url", AUDIT_URL),
+        evidence = [{"kind": "succession", "source_url": url or (life or {}).get("source_url", outputs(period)["url"]),
                      "successor_cik": successor, "successor_from": start, "quote": quote}]
         with storage.get_connection() as write:
             # Replace an unknown delisting recorded for the same succession.
@@ -814,29 +869,32 @@ def record_succession_events(frame: pd.DataFrame) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", type=Path, default=config.DB_PATH)
-    parser.add_argument("--csv", type=Path, default=OUTPUT)
-    parser.add_argument("--json", type=Path, default=SUMMARY)
-    parser.add_argument("--quarterly", action="store_true", help="Audit all 24 quarter ends")
+    parser.add_argument("--period", default=P2010.key, help="Historical period (2010-2015 or 2016-2025)")
+    parser.add_argument("--csv", type=Path)
+    parser.add_argument("--json", type=Path)
+    parser.add_argument("--quarterly", action="store_true", help="Audit every quarter end of the period")
     parser.add_argument("--promote", "--promote-tier-a", dest="promote", action="store_true",
                         help="Persist SEC-backed Tier A/B intervals (replaces earlier audit rows)")
     parser.add_argument("--terminal-events", action="store_true",
                         help="Record SEC-evidenced terminal events for members delisted before the next rebalance")
     args = parser.parse_args()
-    frame, summary = audit(args.db, dates=QUARTERS if args.quarterly else None)
-    terminal = record_terminal_events(frame) if args.terminal_events else None
+    period = get_period(args.period)
+    dates = period.quarters if args.quarterly else None
+    frame, summary = audit(args.db, dates=dates, period=period)
+    terminal = record_terminal_events(frame, period) if args.terminal_events else None
     if terminal is not None:
-        terminal.update({f"succession:{key}": value for key, value in record_succession_events(frame).items()})
-    promotion = promote(args.db, frame) if args.promote else None
+        terminal.update({f"succession:{key}": value
+                         for key, value in record_succession_events(frame, period).items()})
+    promotion = promote(args.db, frame, period) if args.promote else None
     if terminal is not None or promotion is not None:
-        frame, summary = audit(args.db, dates=QUARTERS if args.quarterly else None)
+        frame, summary = audit(args.db, dates=dates, period=period)
     if promotion is not None:
         summary["promotion"] = promotion
     if terminal is not None:
         summary["terminal_events"] = terminal
-    if args.quarterly and args.csv == OUTPUT:
-        args.csv = QUARTERLY_OUTPUT
-    if args.quarterly and args.json == SUMMARY:
-        args.json = QUARTERLY_SUMMARY
+    paths = outputs(period)
+    args.csv = Path(args.csv or paths["quarterly_csv" if args.quarterly else "csv"])
+    args.json = Path(args.json or paths["quarterly_json" if args.quarterly else "json"])
     args.csv.parent.mkdir(parents=True, exist_ok=True)
     frame.drop(columns=["evidence_refs"], errors="ignore").to_csv(args.csv, index=False)
     args.json.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

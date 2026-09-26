@@ -1,4 +1,4 @@
-"""Tiingo (free plan) as a third archived price source for 2010-2015 (issue #28).
+"""Tiingo (free plan) as a third archived price source (#28 for 2010-2015, #34 for 2016-2025).
 
 Tiingo's daily API only serves the security that *currently* uses a ticker,
 so only symbols whose present listing already covered 2009-2015 are fetched;
@@ -25,10 +25,18 @@ from . import config, historical_archive
 
 SOURCE_ID = "tiingo:daily-2026-09"
 DIRECTORY = config.DATA_DIR / "history_refresh" / "tiingo"
-PRICES_URL = "https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate=2008-01-01&endDate=2016-12-31"
+PRICES_URL = "https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate={start}&endDate={end}"
 TICKERS_URL = "https://apimedia.tiingo.com/docs/tiingo/daily/supported_tickers.zip"
 PACE_SECONDS = 80  # ~45 requests/hour, below the free hourly allocation
 START, END_EXCLUSIVE = "2008-01-01", "2016-07-01"
+# Download windows: (request start, request end, import end exclusive, cache subdirectory).
+WINDOWS = {"2010-2015": ("2008-01-01", "2016-12-31", END_EXCLUSIVE, ""),
+           "2016-2025": ("2014-01-01", "2026-06-30", "2026-07-01", "2016_2025")}
+
+
+def _window(window: str) -> tuple[str, str, str, Path]:
+    first, last, end_exclusive, subdirectory = WINDOWS[window]
+    return first, last, end_exclusive, DIRECTORY / subdirectory if subdirectory else DIRECTORY
 
 
 def _headers() -> dict:
@@ -56,12 +64,13 @@ def eligible(listings: pd.DataFrame, symbol: str, first_needed: str, last_needed
                 str(row.endDate) >= last_needed)
 
 
-def fetch(symbols: list[str], *, pace: float = PACE_SECONDS) -> dict:
+def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010-2015") -> dict:
     """Download missing symbols one by one; waits out the hourly allocation."""
-    DIRECTORY.mkdir(parents=True, exist_ok=True)
+    first, last, _end, directory = _window(window)
+    directory.mkdir(parents=True, exist_ok=True)
     fetched = cached = failed = 0
     for symbol in symbols:
-        path = DIRECTORY / f"{symbol}.json"
+        path = directory / f"{symbol}.json"
         if path.exists():
             cached += 1
             continue
@@ -69,7 +78,8 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS) -> dict:
         response = None
         for attempt in range(12):
             try:
-                response = requests.get(PRICES_URL.format(ticker=ticker), headers=_headers(), timeout=60)
+                response = requests.get(PRICES_URL.format(ticker=ticker, start=first, end=last),
+                                        headers=_headers(), timeout=60)
             except requests.RequestException as exc:
                 # Connectivity loss: wait and retry; cached files make reruns resume.
                 print(f"Tiingo {symbol}: network error ({type(exc).__name__}); retrying in 5 min", flush=True)
@@ -91,9 +101,10 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS) -> dict:
     return {"fetched": fetched, "cached": cached, "failed": failed}
 
 
-def import_cached() -> dict:
+def import_cached(window: str = "2010-2015") -> dict:
     """Idempotently import cached responses as an archived as-traded source."""
-    files = sorted(DIRECTORY.glob("*.json"))
+    first, _last, end_exclusive, directory = _window(window)
+    files = sorted(directory.glob("*.json"))
     digests = {}
     frames = []
     for path in files:
@@ -106,30 +117,53 @@ def import_cached() -> dict:
         frame["symbol"] = path.stem
         frames.append(frame.rename(columns={"adjClose": "adjusted_close"})[
             ["symbol", "date", "open", "high", "low", "close", "adjusted_close", "volume"]])
-    historical_archive.register_source(SOURCE_ID, {
+    metadata = {
         "name": "Tiingo end-of-day prices (free plan)", "url": "https://api.tiingo.com/tiingo/daily/<ticker>/prices",
         "start": START, "end_exclusive": END_EXCLUSIVE, "quality": "research_archive_unverified_identity",
         "adjustment": "adjClose adjusts splits and cash dividends (divCash/splitFactor kept in raw files)",
         "limitation": "only tickers whose current listing covers the period; recycled tickers are not served",
-        "files_sha256": digests})
+        "files_sha256": digests}
+    windows = _registered_windows()
+    windows[window] = {"start": first, "end_exclusive": end_exclusive, "files_sha256": digests}
+    if window != "2010-2015":
+        # Keep the 2010-2015 metadata cited by #28 as the top-level entry.
+        metadata.update({key: value for key, value in windows.get("2010-2015", {}).items()})
+    metadata["windows"] = windows
+    historical_archive.register_source(SOURCE_ID, metadata)
     if not frames:
         return {"files": len(files), "accepted": 0, "rejected": 0}
     data = pd.concat(frames, ignore_index=True)
-    result = historical_archive.import_price_chunk(SOURCE_ID, data, set(data.symbol), START, END_EXCLUSIVE)
+    result = historical_archive.import_price_chunk(SOURCE_ID, data, set(data.symbol), first, end_exclusive)
     return {"files": len(files), **result}
+
+
+def _registered_windows() -> dict:
+    from . import storage
+    with storage.get_connection() as conn:
+        conn.executescript(historical_archive.SCHEMA)
+        row = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?", (SOURCE_ID,)).fetchone()
+    if row is None:
+        return {}
+    metadata = json.loads(row[0])
+    windows = metadata.get("windows") or {}
+    if "2010-2015" not in windows and "files_sha256" in metadata:
+        windows["2010-2015"] = {"start": metadata["start"], "end_exclusive": metadata["end_exclusive"],
+                                "files_sha256": metadata["files_sha256"]}
+    return windows
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fetch", type=Path, help="Text file with one symbol per line")
     parser.add_argument("--import-cached", action="store_true")
+    parser.add_argument("--window", default="2010-2015", choices=sorted(WINDOWS))
     args = parser.parse_args()
     report = {}
     if args.fetch:
         symbols = [line.strip().upper() for line in args.fetch.read_text().splitlines() if line.strip()]
-        report["fetch"] = fetch(symbols)
+        report["fetch"] = fetch(symbols, window=args.window)
     if args.import_cached:
-        report["import"] = import_cached()
+        report["import"] = import_cached(args.window)
     print(json.dumps(report, indent=2))
 
 

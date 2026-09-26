@@ -8,15 +8,19 @@ import hashlib
 import json
 from bisect import bisect_right
 from datetime import date, timedelta
+from pathlib import Path
 
 import pandas as pd
 
-from . import historical_archive, identity, storage, universe
+from . import config, historical_archive, identity, storage, universe
+from .historical_period import REFERENCE_SOURCE, REFERENCE_SOURCE_FULL
 from .historical_ticker_corrections import WLP_END, correct_symbols
 from .membership_extension import apply_reviewed_extension
 
 OPERATIONAL_SOURCE = "hanshof:local+reviewed-extension"
-REFERENCE_SOURCE = "fja05680:a2430f2af0c79ddf0748e91de11bdeb1616ab5a7"
+REFERENCE_SOURCES = (REFERENCE_SOURCE, REFERENCE_SOURCE_FULL)
+# The pinned fja05680 file downloaded in #26 (see historical_sources_1996_2015.json).
+REFERENCE_FILE = config.DATA_DIR / "history_refresh" / "1996_2015" / "membership.csv"
 
 
 def _members(value: str) -> set[str]:
@@ -89,21 +93,49 @@ def _operational() -> tuple[pd.DataFrame, str]:
     return frame, end
 
 
-def _archive() -> tuple[pd.DataFrame, str]:
+def _archive(source_id: str = REFERENCE_SOURCE) -> tuple[pd.DataFrame, str]:
     with storage.get_connection() as conn:
         if not conn.execute("SELECT 1 FROM sqlite_master WHERE name='historical_sources'").fetchone():
             raise ValueError("The fja05680 reference archive has not been imported")
         source = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?",
-                              (REFERENCE_SOURCE,)).fetchone()
+                              (source_id,)).fetchone()
         if source is None:
-            raise ValueError("The fja05680 reference archive has not been imported")
+            raise ValueError(f"The fja05680 reference archive has not been imported: {source_id}")
         end = json.loads(source[0])["end_exclusive"]
         frame = pd.read_sql_query("SELECT date,tickers FROM historical_membership "
-                                  "WHERE source_id=? ORDER BY date", conn, params=(REFERENCE_SOURCE,))
+                                  "WHERE source_id=? ORDER BY date", conn, params=(source_id,))
     return frame, end
 
 
-def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
+def import_full_reference(path: Path = REFERENCE_FILE) -> dict:
+    """Import the pinned fja05680 file over its whole coverage (#34).
+
+    The 2010-2015 source keeps its own id and 2016 boundary; this one ends the
+    day after the file's last snapshot. Same file, same SHA-256 check.
+    """
+    manifest = json.loads(historical_backfill_manifest().read_text(encoding="utf-8"))
+    item = manifest["sources"]["membership"]
+    with path.open("rb") as source:
+        digest = hashlib.file_digest(source, "sha256").hexdigest()
+    if digest != item["sha256"]:
+        raise ValueError(f"fja05680 file hash mismatch: {digest}")
+    frame = pd.read_csv(path, dtype=str)
+    start = str(frame["date"].min())
+    end = (date.fromisoformat(str(frame["date"].max())) + timedelta(days=1)).isoformat()
+    historical_archive.register_source(REFERENCE_SOURCE_FULL, {
+        **item, "start": start, "end_exclusive": end, "quality": "community_reference",
+        "note": "same pinned file as the 2010-2015 source, imported over its full coverage (#34)"})
+    snapshots = historical_archive.import_membership(REFERENCE_SOURCE_FULL, frame, start, end)
+    return {"source_id": REFERENCE_SOURCE_FULL, "sha256": digest, "start": start,
+            "end_exclusive": end, "snapshots": snapshots}
+
+
+def historical_backfill_manifest() -> Path:
+    return Path(__file__).with_name("resources") / "historical_sources_1996_2015.json"
+
+
+def _identities(symbols: set[str], as_of: str, *,
+                interval_source: str = historical_archive.IDENTITY_INTERVAL_SOURCE) -> dict[str, dict]:
     """Keep reviewed aliases, SEC filing-day proof and research tiers distinct."""
     with storage.get_connection() as conn:
         identity.ensure_schema(conn)
@@ -117,7 +149,7 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
                                      "AND name='historical_identity_intervals'").fetchone()
         intervals = conn.execute("SELECT symbol,cik,status,source_id FROM historical_identity_intervals "
                                  "WHERE source_id=? AND valid_from<=? AND valid_to>?",
-                                 (historical_archive.IDENTITY_INTERVAL_SOURCE, as_of, as_of)
+                                 (interval_source, as_of, as_of)
                                  ).fetchall() if has_intervals else []
     candidates: dict[str, dict[str, float]] = {}
     ciks: dict[str, str | None] = {}
@@ -176,7 +208,8 @@ def _identities(symbols: set[str], as_of: str) -> dict[str, dict]:
 
 
 def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
-                       compare_reference: bool = True) -> dict:
+                       compare_reference: bool = True,
+                       identity_source: str = historical_archive.IDENTITY_INTERVAL_SOURCE) -> dict:
     """Return dated membership without a current-universe fallback.
 
     Secondary-source disagreement is disclosed and never silently merged into
@@ -185,8 +218,8 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
     day = date.fromisoformat(as_of).isoformat()
     if source_id == OPERATIONAL_SOURCE:
         frame, end = _operational()
-    elif source_id == REFERENCE_SOURCE:
-        frame, end = _archive()
+    elif source_id in REFERENCE_SOURCES:
+        frame, end = _archive(source_id)
     else:
         raise ValueError(f"Unknown membership source: {source_id}")
     source_end = end
@@ -214,7 +247,7 @@ def constituents_as_of(as_of: str, *, source_id: str = OPERATIONAL_SOURCE,
         elif symbol == "ANTM" and day >= WLP_END:
             interval["valid_from"] = max(interval["valid_from"], WLP_END)
         corrected_intervals[symbol] = interval
-    identities = _identities(symbols, day)
+    identities = _identities(symbols, day, interval_source=identity_source)
     members = [{**corrected_intervals[symbol], **identities[symbol], "source_id": source_id,
                 "membership_status": "community_unverified"} for symbol in sorted(symbols)]
     accredited_symbols = sorted(row["symbol"] for row in members if row["identity_status"] == "resolved")
@@ -287,8 +320,12 @@ def main() -> None:
     parser.add_argument("--start", default="2010-01-01")
     parser.add_argument("--end-exclusive", default="2016-01-01")
     parser.add_argument("--date", help="Inspect one membership date instead of the annual overlap report")
+    parser.add_argument("--import-full-reference", action="store_true",
+                        help="Import the pinned fja05680 file over its full coverage (#34)")
     args = parser.parse_args()
-    if args.date:
+    if args.import_full_reference:
+        output = import_full_reference()
+    elif args.date:
         result = constituents_as_of(args.date)
         output = {key: result[key] for key in ("as_of", "source_id", "source_date", "coverage_start",
                                                  "coverage_end_exclusive", "source_end_exclusive",
