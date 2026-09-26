@@ -26,7 +26,7 @@ from . import config, historical_archive
 SOURCE_ID = "nasdaq-wiki:frozen-2018-03-27"
 DIRECTORY = config.DATA_DIR / "history_refresh" / "nasdaq_wiki"
 URL = "https://data.nasdaq.com/api/v3/datatables/WIKI/PRICES.json"
-START, END_EXCLUSIVE = "2008-01-01", "2016-01-01"
+START, END_EXCLUSIVE = "2008-01-01", "2016-07-01"
 COLUMNS = "ticker,date,open,high,low,close,volume,ex-dividend,split_ratio,adj_close"
 
 

@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS historical_terminal_events (
 """
 
 EVENT_TYPES = {"cash_acquisition", "stock_acquisition", "merger", "bankruptcy_liquidation",
-               "delisting", "spin_off"}
+               "delisting", "spin_off", "succession"}
 
 
 def qualify_fallback(*, identity_tier: str | None, recycled: bool, archive: dict,

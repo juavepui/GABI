@@ -154,3 +154,26 @@ def test_divergence_is_resolved_by_sec_only_when_both_sources_quote_the_same_pri
     prices = _frame([100 + i for i in range(80)], dates)
     assert same_traded_prices(prices, prices, dates) is True
     assert same_traded_prices(prices, _frame([60 + (i % 7) for i in range(80)], dates), dates) is False
+
+
+def test_holding_period_is_verified_on_the_same_source_until_the_next_rebalance():
+    import exchange_calendars as xcals
+
+    from gabi.historical_price_audit import forward_coverage
+    calendar = xcals.get_calendar("XNYS", start="2012-01-01", end="2012-12-31")
+    sessions = calendar.sessions[(calendar.sessions >= "2012-01-03") & (calendar.sessions <= "2012-07-31")]
+    series = pd.DataFrame({"close": 10.0, "adj_close": 9.0}, index=sessions)
+    life = {"delisting": None, "successions": []}
+    assert forward_coverage(series, calendar, "2012-03-30", "2012-06-30", life, archive=False) == (
+        "2012-07-06", "covered")
+    # Trading stops at an SEC delisting: the end is terminal, not a gap.
+    stopped = series.loc[:"2012-05-10"]
+    delisted = {"delisting": {"filed": "2012-05-14"}, "successions": []}
+    assert forward_coverage(stopped, calendar, "2012-03-30", "2012-06-30", delisted, archive=False) == (
+        "2012-05-10", "terminal")
+    gap = series.drop(pd.Timestamp("2012-05-01"))
+    assert forward_coverage(gap, calendar, "2012-03-30", "2012-06-30", life, archive=False) == (
+        "2012-04-30", "gap")
+    # The label passes to another CIK: never extend this issuer's holding past it.
+    assert forward_coverage(series, calendar, "2012-03-30", "2012-06-30", life, archive=False,
+                            identity_end="2012-05-15") == ("2012-05-14", "identity_boundary")

@@ -12,21 +12,21 @@
       "yahoo_complete": 333,
       "finsaber_complete": 456,
       "tier_a": 308,
-      "tier_b": 116,
+      "tier_b": 117,
       "tier_b_by_source": {
-        "finsaber": 84,
+        "finsaber": 85,
         "tiingo": 13,
         "wiki": 19
       },
-      "usable_full_window": 423,
+      "usable_full_window": 424,
       "usable_short_history": 1,
-      "excluded": 73,
+      "excluded": 72,
       "reasons": {
         "archive_sec_dividends_unavailable": 13,
         "identity_unresolved": 10,
         "incomplete_prices": 10,
-        "price_level_failed": 9,
         "archive_dividend_mismatch": 9,
+        "price_level_failed": 8,
         "price_level_missing": 8,
         "sources_divergent_overlap": 6,
         "archive_unexplained_jump": 5,
@@ -40,16 +40,16 @@
       "identity_accredited": 487,
       "yahoo_complete": 341,
       "finsaber_complete": 455,
-      "tier_a": 321,
+      "tier_a": 322,
       "tier_b": 98,
       "tier_b_by_source": {
         "finsaber": 71,
         "tiingo": 11,
         "wiki": 16
       },
-      "usable_full_window": 417,
+      "usable_full_window": 418,
       "usable_short_history": 2,
-      "excluded": 78,
+      "excluded": 77,
       "reasons": {
         "archive_dividend_mismatch": 19,
         "incomplete_prices": 10,
@@ -62,7 +62,6 @@
         "archive_unexplained_jump": 2,
         "multiple_ciks_in_window": 1,
         "archive_split_unverified": 1,
-        "wiki_fallback_accredited": 1,
         "sources_divergent_event": 1,
         "delisted_before_window_end": 1
       }
@@ -73,23 +72,23 @@
       "identity_accredited": 491,
       "yahoo_complete": 353,
       "finsaber_complete": 463,
-      "tier_a": 329,
+      "tier_a": 330,
       "tier_b": 109,
       "tier_b_by_source": {
         "finsaber": 77,
         "tiingo": 16,
         "wiki": 16
       },
-      "usable_full_window": 437,
+      "usable_full_window": 438,
       "usable_short_history": 1,
-      "excluded": 59,
+      "excluded": 58,
       "reasons": {
         "archive_dividend_mismatch": 11,
         "archive_sec_dividends_unavailable": 10,
         "incomplete_prices": 8,
         "identity_unresolved": 5,
         "price_level_missing": 5,
-        "price_level_failed": 5,
+        "price_level_failed": 4,
         "multiple_ciks_in_window": 3,
         "succession_inside_window": 3,
         "sources_divergent_overlap": 3,
@@ -155,9 +154,10 @@
         "sources_divergent_overlap": 2,
         "succession_inside_window": 2,
         "archive_split_unverified": 2,
-        "price_level_failed": 2,
         "archive_unexplained_jump": 2,
-        "listing_starts_after_window": 1
+        "listing_starts_after_window": 1,
+        "price_level_failed": 1,
+        "complete": 1
       }
     },
     {
@@ -167,15 +167,15 @@
       "yahoo_complete": 379,
       "finsaber_complete": 471,
       "tier_a": 356,
-      "tier_b": 85,
+      "tier_b": 84,
       "tier_b_by_source": {
         "finsaber": 67,
-        "tiingo": 7,
+        "tiingo": 6,
         "wiki": 11
       },
-      "usable_full_window": 437,
+      "usable_full_window": 436,
       "usable_short_history": 4,
-      "excluded": 61,
+      "excluded": 62,
       "reasons": {
         "price_level_missing": 11,
         "identity_unresolved": 10,
@@ -188,6 +188,7 @@
         "price_level_failed": 3,
         "delisted_before_window_end": 2,
         "sources_divergent_overlap": 1,
+        "complete": 1,
         "sources_divergent_event": 1,
         "listing_starts_after_window": 1
       }
@@ -198,10 +199,10 @@
       "as_of": "2010-12-31",
       "members": 497,
       "identity_accredited": 486,
-      "usable_full_window": 423,
-      "usable_including_short_history": 424,
-      "usable_pct": 85.31,
-      "usable_full_window_pct": 85.11,
+      "usable_full_window": 424,
+      "usable_including_short_history": 425,
+      "usable_pct": 85.51,
+      "usable_full_window_pct": 85.31,
       "forward": {
         "continues_to_next_rebalance": 484,
         "unknown": 11,
@@ -212,8 +213,8 @@
         "archive_sec_dividends_unavailable": 13,
         "identity_unresolved": 10,
         "incomplete_prices": 10,
-        "price_level_failed": 9,
         "archive_dividend_mismatch": 9,
+        "price_level_failed": 8,
         "price_level_missing": 8,
         "sources_divergent_overlap": 6,
         "archive_unexplained_jump": 5,
@@ -225,10 +226,10 @@
       "as_of": "2011-12-31",
       "members": 497,
       "identity_accredited": 487,
-      "usable_full_window": 417,
-      "usable_including_short_history": 419,
-      "usable_pct": 84.31,
-      "usable_full_window_pct": 83.9,
+      "usable_full_window": 418,
+      "usable_including_short_history": 420,
+      "usable_pct": 84.51,
+      "usable_full_window_pct": 84.1,
       "forward": {
         "continues_to_next_rebalance": 486,
         "unknown": 10,
@@ -246,7 +247,6 @@
         "archive_unexplained_jump": 2,
         "multiple_ciks_in_window": 1,
         "archive_split_unverified": 1,
-        "wiki_fallback_accredited": 1,
         "sources_divergent_event": 1,
         "delisted_before_window_end": 1
       }
@@ -255,10 +255,10 @@
       "as_of": "2012-12-31",
       "members": 497,
       "identity_accredited": 491,
-      "usable_full_window": 437,
-      "usable_including_short_history": 438,
-      "usable_pct": 88.13,
-      "usable_full_window_pct": 87.93,
+      "usable_full_window": 438,
+      "usable_including_short_history": 439,
+      "usable_pct": 88.33,
+      "usable_full_window_pct": 88.13,
       "forward": {
         "continues_to_next_rebalance": 491,
         "unknown": 6
@@ -269,7 +269,7 @@
         "incomplete_prices": 8,
         "identity_unresolved": 5,
         "price_level_missing": 5,
-        "price_level_failed": 5,
+        "price_level_failed": 4,
         "multiple_ciks_in_window": 3,
         "succession_inside_window": 3,
         "sources_divergent_overlap": 3,
@@ -316,8 +316,8 @@
       "forward": {
         "continues_to_next_rebalance": 488,
         "unknown": 6,
-        "terminal_return_unknown": 4,
-        "terminal_return_confirmed": 1
+        "terminal_return_unknown": 3,
+        "terminal_return_confirmed": 2
       },
       "excluded_reasons": {
         "archive_dividend_mismatch": 12,
@@ -330,19 +330,20 @@
         "sources_divergent_overlap": 2,
         "succession_inside_window": 2,
         "archive_split_unverified": 2,
-        "price_level_failed": 2,
         "archive_unexplained_jump": 2,
-        "listing_starts_after_window": 1
+        "listing_starts_after_window": 1,
+        "price_level_failed": 1,
+        "complete": 1
       }
     },
     {
       "as_of": "2015-12-31",
       "members": 502,
       "identity_accredited": 489,
-      "usable_full_window": 437,
-      "usable_including_short_history": 441,
-      "usable_pct": 87.85,
-      "usable_full_window_pct": 87.05,
+      "usable_full_window": 436,
+      "usable_including_short_history": 440,
+      "usable_pct": 87.65,
+      "usable_full_window_pct": 86.85,
       "forward": {
         "continues_to_next_rebalance": 485,
         "unknown": 13,
@@ -361,6 +362,7 @@
         "price_level_failed": 3,
         "delisted_before_window_end": 2,
         "sources_divergent_overlap": 1,
+        "complete": 1,
         "sources_divergent_event": 1,
         "listing_starts_after_window": 1
       }
@@ -382,7 +384,7 @@
       {
         "sic_2digit": "13",
         "observations": 136,
-        "usable": 117
+        "usable": 118
       },
       {
         "sic_2digit": "14",
@@ -447,7 +449,7 @@
       {
         "sic_2digit": "28",
         "observations": 214,
-        "usable": 192
+        "usable": 193
       },
       {
         "sic_2digit": "29",
@@ -532,12 +534,12 @@
       {
         "sic_2digit": "48",
         "observations": 100,
-        "usable": 78
+        "usable": 79
       },
       {
         "sic_2digit": "49",
         "observations": 231,
-        "usable": 210
+        "usable": 208
       },
       {
         "sic_2digit": "50",
@@ -647,7 +649,7 @@
       {
         "sic_2digit": "78",
         "observations": 8,
-        "usable": 6
+        "usable": 7
       },
       {
         "sic_2digit": "79",
@@ -679,12 +681,12 @@
       {
         "exit_next_year": false,
         "observations": 2894,
-        "usable": 2560
+        "usable": 2561
       },
       {
         "exit_next_year": true,
         "observations": 95,
-        "usable": 56
+        "usable": 57
       }
     ],
     "public_float_quintile": [
@@ -706,12 +708,12 @@
       {
         "quintile": 4,
         "observations": 578,
-        "usable": 531
+        "usable": 532
       },
       {
         "quintile": 5,
         "observations": 583,
-        "usable": 535
+        "usable": 536
       }
     ],
     "public_float_missing": {

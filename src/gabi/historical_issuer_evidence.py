@@ -172,6 +172,10 @@ def listing_life(cik: str) -> dict | None:
                                   page["form"], page["filingDate"], page["accessionNumber"],
                                   page["items"], page["primaryDocument"], strict=True)
                               if form in {"8-K", "8-K/A"} and "2009-01-01" <= filed < "2017-01-01"})
+    succession_reports = {accn: primary for page in pages
+                          for form, accn, primary in zip(page["form"], page["accessionNumber"],
+                                                         page["primaryDocument"], strict=True)
+                          if form in SUCCESSION_FORMS}
     annual_reports = sorted({(filed, accn, primary) for page in pages
                              for form, filed, accn, primary in zip(
                                  page["form"], page["filingDate"], page["accessionNumber"],
@@ -199,7 +203,8 @@ def listing_life(cik: str) -> dict | None:
             "last_periodic": periodic[-1] if periodic else None,
             "registrations": [{"form": form, "filed": filed, "accession": accn}
                               for form, filed, accn in filings if form in REGISTRATION_FORMS],
-            "successions": [{"form": form, "filed": filed, "accession": accn}
+            "successions": [{"form": form, "filed": filed, "accession": accn,
+                             "primary": succession_reports.get(accn)}
                             for form, filed, accn in filings if form in SUCCESSION_FORMS],
             "delisting": delisting,
             "current_reports": [{"filed": filed, "accession": accn, "items": items, "primary": primary}
@@ -509,6 +514,18 @@ STOCK_RE = re.compile(r"\b(\d+\.\d+)\s+(?:of\s+a\s+|of\s+one\s+)?(?:validly\s+is
 MIXED_RE = re.compile(r"\bshares?\s+of\b|\bof\s+an?\s+[^.;]{0,50}?\b(?:share|stock)\b|ordinary\s+shares?"
                       r"|contingent\s+value|\bCVRs?\b|\belect", re.I)
 ELECTION_RE = re.compile(r"\belect(?:ion|ed|s)?\b[^.;]{0,120}\b(?:cash|stock)\b", re.I)
+
+
+ONE_FOR_ONE_RE = re.compile(
+    r"(?:converted\s+(?:automatically\s+)?into|exchanged\s+for|became)[^.;]{0,160}?\bone\b[^.;]{0,80}?\bshares?\b"
+    r"|one[-\s]for[-\s]one|\b1[-\s]for[-\s]1\b", re.I)
+
+
+def one_for_one_quote(document: str) -> str | None:
+    """Sentence of a succession 8-K12B stating a one-for-one share exchange."""
+    text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", document)))
+    match = ONE_FOR_ONE_RE.search(text)
+    return text[max(0, match.start() - 120):match.end() + 60] if match else None
 
 
 def completion_reports(life: dict, event_day: str) -> list[dict]:

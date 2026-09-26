@@ -1578,6 +1578,14 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   empresas que salen del índice al año siguiente siguen infrarrepresentadas
   (57 % frente a 88 %), así que 2010–2015 solo puede usarse con las
   correcciones de sesgo exigidas en #32/#33.
+- **Ranking histórico y Backtest V2 desde 2010** ([#32](docs/historical-integration-2010-2015.md)):
+  en 2010–2015 el motor existente usa la composición de referencia, la
+  identidad SEC acreditada y solo series de precios con procedencia (con su
+  periodo de tenencia verificado); nunca la caché por ticker. Las posiciones
+  que dejan de cotizar se liquidan por evento terminal (efectivo o sucesión
+  1:1 acreditada) o se marcan como no estrictas. El V2 en modo validación
+  recorre 2011-06 → 2015-12; los rebalanceos de 2010 se saltan por falta de
+  fundamentales de tres años. 2016 en adelante no cambia.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 

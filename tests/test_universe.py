@@ -82,11 +82,13 @@ def test_get_sp500_constituents_asof_blocks_conflicting_snapshot_until_next_date
 
 def test_reviewed_wlp_label_replaces_retrospective_antm_only_before_change(tmp_path, monkeypatch):
     cache = tmp_path / "hist.csv"
-    _write_history(cache, [("2009-12-01", "AAA,ANTM"), ("2014-12-03", "AAA,ANTM")])
+    _write_history(cache, [("2009-12-01", "AAA,ANTM"), ("2014-12-03", "AAA,ANTM"), ("2016-02-01", "AAA,ANTM")])
     monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", cache)
-    before = universe.get_sp500_constituents_asof("2010-06-30")
+    # 2010-2015 uses the accredited reference layer (#32); these dates test
+    # the operational source on both sides of that window.
+    before = universe.get_sp500_constituents_asof("2009-12-15")
     assert before["symbols"] == ["AAA", "WLP"]
     assert before["label_corrections"][0]["reported_symbol"] == "ANTM"
-    after = universe.get_sp500_constituents_asof("2014-12-03")
+    after = universe.get_sp500_constituents_asof("2016-01-15")
     assert after["symbols"] == ["AAA", "ANTM"]
     assert after["label_corrections"] == []

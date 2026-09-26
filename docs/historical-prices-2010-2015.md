@@ -248,6 +248,10 @@ Suma de las cuatro fechas trimestrales de cada año, con las cuatro fuentes
 | 2014 | 1.993 | 1.969 | 1.392 | 402 (284 / 52 / 66) | 1.787 | 7 | 199 | 90,0 % |
 | 2015 | 2.004 | 1.969 | 1.421 | 343 (263 / 30 / 50) | 1.754 | 10 | 240 | 88,0 % |
 
+> Actualización #32: con el periodo de tenencia verificado la auditoría queda en
+> **78,2–90,5 % por rebalanceo (media 86,8 %)**, 399 intervalos Tier A y 206
+> Tier B; ver [integración 2010–2015](historical-integration-2010-2015.md).
+
 Por rebalanceo, la cobertura utilizable es **77,6–90,7 %** (media 86,7 %;
 ventana completa 77,6–90,3 %). Con solo Yahoo y FINSABER era 72,3–85,0 %, y en
 la primera fase 60,3–69,5 %. Tres rebalanceos (2013-12-31, 2014-03-31 y

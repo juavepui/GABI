@@ -109,6 +109,11 @@ def get_sp500_constituents_asof(target_date: str) -> dict:
     introduciría sesgo de supervivencia. ``is_exact`` indica cobertura temporal,
     no certificación de la calidad de la fuente.
     """
+    from . import historical_pit
+    if historical_pit.covers(target_date):
+        # 2010-2015: la composición sobre la que se acreditaron identidad y
+        # precios (#26-#28); mezclar fuentes cambiaría las etiquetas.
+        return historical_pit.universe(target_date)
     history = get_historical_membership()
     if history.empty:
         raise RuntimeError("No se pudo obtener el histórico de composición del S&P 500.")

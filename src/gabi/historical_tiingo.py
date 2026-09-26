@@ -28,7 +28,7 @@ DIRECTORY = config.DATA_DIR / "history_refresh" / "tiingo"
 PRICES_URL = "https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate=2008-01-01&endDate=2016-12-31"
 TICKERS_URL = "https://apimedia.tiingo.com/docs/tiingo/daily/supported_tickers.zip"
 PACE_SECONDS = 80  # ~45 requests/hour, below the free hourly allocation
-START, END_EXCLUSIVE = "2008-01-01", "2016-01-01"
+START, END_EXCLUSIVE = "2008-01-01", "2016-07-01"
 
 
 def _headers() -> dict:

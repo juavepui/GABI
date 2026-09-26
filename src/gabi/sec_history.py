@@ -268,6 +268,30 @@ def recover_companyfacts_gaps() -> dict:
     return report
 
 
+def ingest_issuer_companyfacts(ciks: set[str]) -> dict:
+    """Company Facts for historical issuers, attributed by CIK only (#32).
+
+    Rows go to ``entity_observations`` under a ``CIK##########`` placeholder
+    symbol, never under a ticker, so the legacy ticker-keyed table cannot mix
+    a predecessor's facts with a later company reusing the symbol.
+    """
+    report = {}
+    for cik in sorted(str(value).zfill(10) for value in ciks):
+        url = edgar.COMPANYFACTS_URL.format(cik=cik)
+        try:
+            path = download(url, DIRECTORY / "companyfacts" / f"CIK{cik}.json")
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if str(payload["cik"]).zfill(10) != cik:
+                raise ValueError("Company Facts issuer mismatch")
+            rows = edgar._extract_raw_facts(payload, edgar.TRACKED_TAGS)
+            rows += edgar._extract_raw_facts(payload, edgar.SHARES_TAGS, unit="shares")
+            edgar.upsert_edgar_facts(f"CIK{cik}", rows, cik=cik)
+            report[cik] = {"status": "complete", "rows": len(rows)}
+        except (requests.RequestException, ValueError, KeyError) as exc:
+            report[cik] = {"status": "failed", "error": str(exc)[:180]}
+    return report
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--instances", type=int, default=0)

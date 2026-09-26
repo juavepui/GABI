@@ -18,7 +18,7 @@ from datetime import date
 import exchange_calendars as xcals
 import pandas as pd
 
-from . import broker_costs, data_quality, identity, rotation_policy, screener_asof, universe
+from . import broker_costs, data_quality, historical_pit, identity, rotation_policy, screener_asof, universe
 from . import multifactor_backtest as v1
 
 _CALENDAR = "XNYS"
@@ -126,8 +126,21 @@ def _daily_segment(cash: float, shares: dict, entry_session: pd.Timestamp,
     if not shares:
         return segment
     histories = identity.backtest_prices(list(shares.keys()), entry_session.date().isoformat(), owners)
+    exits = _historical_exits(histories, shares, owners, entry_session, exit_session)
     for symbol, qty in shares.items():
         h = histories.get(symbol, pd.DataFrame())
+        if symbol in exits:
+            # La serie acreditada termina antes de la salida: hasta su último
+            # día se valora a mercado y después al valor de salida (evento
+            # terminal o último precio marcado como no estricto).
+            exit_info = exits[symbol]
+            prices = h["adj_close"].reindex(sessions)
+            before = prices.index <= exit_info["date"]
+            if prices[before].isna().any():
+                raise ValueError(f"Missing attributed prices for held entity {(owners or {}).get(symbol)}")
+            prices[~before] = exit_info["value"]
+            segment = segment.add(qty * prices, fill_value=0.0)
+            continue
         if owners and owners.get(symbol):
             if h.empty or h["adj_close"].reindex(sessions).isna().any():
                 raise ValueError(f"Missing attributed prices for held entity {owners[symbol]}")
@@ -136,6 +149,31 @@ def _daily_segment(cash: float, shares: dict, entry_session: pd.Timestamp,
         price_series = h["adj_close"].reindex(sessions).ffill().bfill()
         segment = segment.add(qty * price_series.fillna(0.0), fill_value=0.0)
     return segment
+
+
+def _historical_exits(histories: dict, shares: dict, owners: dict | None,
+                      entry_session: pd.Timestamp, exit_session: pd.Timestamp) -> dict:
+    """Posiciones 2010-2015 cuya serie acreditada acaba antes de ``exit_session``."""
+    exits = {}
+    for symbol in shares:
+        owner = (owners or {}).get(symbol)
+        h = histories.get(symbol, pd.DataFrame())
+        if not owner or h.empty or h.attrs.get("entity_id") != owner or exit_session in h.index:
+            continue
+        info = historical_pit.exit_value(h, owner, entry_session, exit_session)
+        if info["value"] is not None and info["date"] is not None and info["date"] < exit_session:
+            exits[symbol] = info
+    return exits
+
+
+def _settle_exits(cash: float, shares: dict, owners: dict, exits: dict, warnings: list) -> float:
+    """Convierte en caja las posiciones que dejaron de cotizar en el periodo."""
+    for symbol, info in exits.items():
+        cash += shares.pop(symbol) * info["value"]
+        owners.pop(symbol, None)
+        warnings.append({"symbol": symbol, "fecha": info["date"].date().isoformat(), "estado": info["status"],
+                         "estricto": info["strict"]})
+    return cash
 
 
 VALID_MODES = ("validation", "fast_dev")
@@ -208,6 +246,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
     skipped = []
     quality_by_date = {}
     nav_pieces = []
+    exit_warnings: list[dict] = []
 
     for i in range(len(boundaries) - 1):
         as_of = boundaries[i]
@@ -279,6 +318,11 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
 
         sessions = calendar.sessions_in_range(entry_session, exit_session)
         nav_pieces.append(_daily_segment(cash, shares, entry_session, exit_session, sessions, owners=owners))
+        if shares and owners:
+            held_histories = identity.backtest_prices(list(shares), entry_session.date().isoformat(), owners)
+            cash = _settle_exits(cash, shares, owners,
+                                 _historical_exits(held_histories, shares, owners, entry_session, exit_session),
+                                 exit_warnings)
 
     if not rows:
         raise ValueError("Ningún periodo del rango tiene datos suficientes — "
@@ -295,6 +339,10 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
     return {
         "data_quality": quality_by_date,
         "mode": mode, "periods": periods, "skipped": skipped,
+        # 2010-2015: salidas por evento terminal; `estricto=False` = último
+        # precio sin evento confirmado, a revisar antes de citar el resultado.
+        "exit_events": exit_warnings,
+        "strict_result": all(item["estricto"] for item in exit_warnings),
         "rotation_hurdle_points": float(rotation_hurdle_points),
         "nav_curve": nav_curve, "nav_curve_spy": nav_curve_spy,
         "turnover_medio": float(periods["turnover_pct"].mean()),

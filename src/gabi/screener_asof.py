@@ -20,6 +20,7 @@ from . import (
     capital_allocation,
     edgar,
     entity_master,
+    historical_pit,
     identity,
     quality_persistence,
     risk,
@@ -36,6 +37,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     de FCF, márgenes, PER/P-VC/P-Ventas/EV-EBITDA) reconstruidos con lo que se
     conocía en as_of_date."""
     m = edgar.compute_edgar_metrics_as_of(symbol, as_of_date, entity_id=entity_id)
+    historical = historical_pit.covers(as_of_date)
     if entity_id:
         history = identity.price_history(symbol, as_of_date, entity_id=entity_id)
         history = history[history.index <= pd.Timestamp(as_of_date)] if not history.empty else history
@@ -52,7 +54,11 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     # sale mal por un factor entero (comprobado con datos reales: ~4 veces
     # por debajo en un caso con Apple, que tuvo un split 4:1 en 2020).
     price_asof_unadjusted = None
-    if price is not None:
+    if price is not None and historical:
+        # Cierre negociado de la serie acreditada (deshace splits solo si la
+        # fuente es la caché Yahoo).
+        price_asof_unadjusted = historical_pit.as_traded_close(history, as_of_date) if entity_id else None
+    elif price is not None:
         if entity_id:
             splits = identity.observations(entity_id, "splits")
             if not splits.empty:
@@ -156,6 +162,8 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
 
     as_of_ts = pd.Timestamp(as_of_date)
     bench_df = _price_history_as_of("SPY", as_of_ts)
+    # 2010-2015: solo entidades con identidad acreditada, sin caché por ticker.
+    historical = historical_pit.covers(as_of_date)
 
     rows = []
     for sym in symbols:
@@ -163,7 +171,7 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
         entity_id = resolved["entity_id"]
         # Explicit legacy mode is diagnostic only; a known conflicting/recycled
         # alias never falls back to ticker-indexed data.
-        allowed = entity_id or (not strict_identity and not identity.has_aliases(sym))
+        allowed = entity_id or (not strict_identity and not historical and not identity.has_aliases(sym))
         classic = _classic_metrics_as_of(sym, as_of_date, entity_id=entity_id) if allowed else {"pe": None, "roic": None, "market_cap": None, "price": None}
         price_df = _price_history_as_of(sym, as_of_ts, entity_id=entity_id) if allowed else pd.DataFrame()
 
@@ -176,7 +184,8 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
         # que debe quedar — la de technicals es el cierre tal cual, sin esa
         # corrección, pensado para el screener "en vivo" donde no aplica.
         row = {"symbol": sym, "entity_id": entity_id, "identity_status": resolved["status"],
-               "identity_source": resolved["source"]}
+               "identity_source": resolved["source"],
+               "price_source": price_df.attrs.get("source_id") if not price_df.empty else None}
         row.update(t)
         row.update(r)
         row.update(classic)
@@ -204,4 +213,19 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
 
     df = scoring.build_scores(df, weights=weights)
     df["confidence"] = scoring.compute_confidence(df, weights=weights)
+    if historical:
+        universe_info = {**universe_info, "historical_coverage": historical_coverage(df)}
     return {"table": df, "universe_info": universe_info}
+
+
+def historical_coverage(table: pd.DataFrame) -> dict:
+    """Cobertura y motivos de exclusión de un ranking 2010-2015."""
+    members = len(table)
+    identity_ok = table["entity_id"].notna()
+    priced = table["price_source"].notna()
+    return {"members": members, "identity_accredited": int(identity_ok.sum()),
+            "accredited_prices": int(priced.sum()),
+            "scored": int(table["composite_score"].notna().sum()) if "composite_score" in table else 0,
+            "excluded": {"identity_unresolved_or_ambiguous": int((~identity_ok).sum()),
+                         "no_accredited_price_series": int((identity_ok & ~priced).sum())},
+            "price_sources": table.loc[priced, "price_source"].value_counts().to_dict()}

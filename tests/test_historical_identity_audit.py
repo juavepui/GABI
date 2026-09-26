@@ -207,7 +207,12 @@ def test_multiple_sec_filings_corroborrate_bounded_interval_without_alias():
     assert members["AAA"]["identity_status"] == "resolved"
     assert members["AAA"]["identity_tier"] == "confirmed_by_multiple_evidence"
     assert members["ACT"]["identity_status"] == "ambiguous"
-    assert identity.resolve("AAA", "2010-06-30")["status"] == "unresolved"
+    # #32: in 2010-2015 the accredited interval resolves the issuer for the
+    # backtest, without ever creating an operational alias.
+    resolved = identity.resolve("AAA", "2010-06-30")
+    assert (resolved["status"], resolved["entity_id"]) == ("resolved", "cik:0000000001")
+    assert identity.resolve("ACT", "2010-06-30")["status"] == "ambiguous"
+    assert not identity.has_aliases("AAA")
     annual = audit.coverage_report()["by_year"]["2010"]
     assert annual["confirmed_by_multiple_evidence"] == 4
     assert annual["ambiguous_identity"] == 4

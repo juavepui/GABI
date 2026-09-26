@@ -127,7 +127,20 @@ st.divider()
 
 result = screener_asof.build_ranking_as_of(as_of_str, symbols=symbols)
 df = result["table"]
-if "identity_status" in df:
+historical_coverage = result["universe_info"].get("historical_coverage")
+if historical_coverage:
+    members = max(historical_coverage["members"], 1)
+    st.info(
+        f"**Capa histórica 2010–2015**: identidad SEC acreditada {historical_coverage['identity_accredited']}/"
+        f"{historical_coverage['members']} · precio acreditado {historical_coverage['accredited_prices']}/"
+        f"{historical_coverage['members']} ({100 * historical_coverage['accredited_prices'] / members:.0f} %) · "
+        f"con score {historical_coverage['scored']}. Solo se usan series con procedencia SEC; nunca la caché "
+        "por ticker. Las exclusiones están sesgadas hacia empresas que salen del índice y de menor tamaño "
+        "(ver docs/historical-prices-2010-2015.md): no uses este periodo para afirmar que se bate al S&P 500 "
+        "sin las correcciones del #33.")
+    st.caption("Excluidas: " + ", ".join(f"{reason.replace('_', ' ')}: {count}" for reason, count in
+                                         historical_coverage["excluded"].items()))
+if "identity_status" in df and not historical_coverage:
     ambiguous_identity = df["identity_status"].eq("ambiguous")
     unresolved_identity = df["identity_status"].eq("unresolved")
     if ambiguous_identity.any():
@@ -270,8 +283,10 @@ iguales entre **todas** las empresas elegibles de ese periodo (el "universo equi
 saber si elegir bien aporta algo por encima de simplemente estar invertido).
 
 **Pasos para probarlo tú mismo**:
-1. Deja fechas por defecto o elige un rango — **empieza en 2016-07-02 o después**: antes de eso apenas
-   hay empresas con fundamentales SEC EDGAR completos y la mayoría de periodos se saltarán.
+1. Deja fechas por defecto o elige un rango. Desde **2010** se usa la capa histórica acreditada
+   (identidad y precios con evidencia SEC; cobertura 77–91 % por rebalanceo trimestral). Entre 2010 y
+   2015 la exclusión no es neutral: úsalo como prueba de robustez, no como evidencia de que se bate
+   al S&P 500.
 2. Pulsa **"Preparar datos de todos los rebalanceos"** primero — descarga SEC EDGAR y precios para
    todas las empresas que hagan falta en ese rango. Con rangos largos (varios años) puede tardar varios
    minutos; con pocos meses es casi instantáneo si ya tienes datos cacheados.
@@ -312,8 +327,8 @@ estrecha mucho más de lo que parece a primera vista con solo 10pb.
     with st.form("multifactor_test"):
         a, b, c = st.columns(3)
         bt_start = a.date_input("Inicio", value=date(2019, 1, 2), key="bt_start",
-                                 help="Recomendado: 2016-07-02 o después. Antes de eso, la mayoría de "
-                                      "periodos se saltarán por falta de cobertura SEC EDGAR.")
+                                 help="Desde 2010 con la capa histórica acreditada (2010-2015: solo "
+                                      "series con procedencia SEC; cobertura 77-91 % por rebalanceo).")
         bt_end = b.date_input("Fin", value=date(2020, 1, 2), max_value=date.today(), key="bt_end")
         interval = c.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses",
                                help="Cada cuánto se recalcula el ranking y se cambia de cesta de empresas.")
@@ -609,7 +624,8 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
     with st.form("portfolio_v2_form"):
         va, vb, vc = st.columns(3)
         v2_start = va.date_input("Inicio", value=date(2019, 1, 2), key="v2_start",
-                                 help="Recomendado: 2016-07-02 o después.")
+                                 help="Desde 2010 con la capa histórica acreditada; los rebalanceos "
+                                      "trimestrales de 2010-2015 son los auditados en el #28.")
         v2_end = vb.date_input("Fin", value=date(2020, 1, 2), max_value=date.today(), key="v2_end")
         v2_interval = vc.selectbox("Rebalanceo", [1, 3, 6, 12], index=1, format_func=lambda n: f"Cada {n} meses",
                                    key="v2_interval")
@@ -683,6 +699,12 @@ aunque sea desde la pestaña V1), elige el modo, y pulsa "Ejecutar backtest V2".
         if v2_test["skipped"]:
             with st.expander(f"⚠️ {len(v2_test['skipped'])} periodo(s) saltado(s) por falta de cobertura"):
                 st.dataframe(pd.DataFrame(v2_test["skipped"]), hide_index=True, width="stretch")
+        if v2_test.get("exit_events"):
+            if not v2_test.get("strict_result", True):
+                st.warning("Alguna posición dejó de cotizar sin evento terminal confirmado y se valoró a su "
+                           "último precio: el resultado no es estricto (ver tabla).")
+            with st.expander(f"🏁 {len(v2_test['exit_events'])} posición(es) liquidada(s) por baja de cotización"):
+                st.dataframe(pd.DataFrame(v2_test["exit_events"]), hide_index=True, width="stretch")
 
         nav = v2_test["nav_curve"]
         nav_spy = v2_test["nav_curve_spy"]

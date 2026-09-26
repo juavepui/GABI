@@ -8,7 +8,7 @@ import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, data_quality, identity, rotation_policy, screener_asof, universe
+from . import config, data_quality, historical_pit, identity, rotation_policy, screener_asof, universe
 
 # Si una empresa lleva más de esto sin presentar NADA ante la SEC (ni un
 # 10-Q trimestral), lo normal es que haya dejado de ser una "reporting
@@ -76,8 +76,18 @@ def _period_returns(symbols: list[str], as_of: pd.Timestamp, months: int,
     returns = {}
     held_symbols = held_symbols or set()
     factor_traded = (1 - cost_bps / 10000) ** 2
+    exits = []
     for symbol in symbols + ["SPY"]:
         h = histories.get(symbol, pd.DataFrame())
+        if (symbol != "SPY" and not h.empty and h.attrs.get("entity_id") and entry in h.index
+                and exit_session not in h.index):
+            # 2010-2015: la serie acreditada acaba antes de la salida.
+            info = historical_pit.exit_value(h, h.attrs["entity_id"], entry, exit_session)
+            if info["value"] is not None and h.loc[entry, "adj_close"] > 0:
+                factor = 1.0 if symbol in (held_symbols or set()) else (1 - cost_bps / 10000) ** 2
+                returns[symbol] = float(info["value"] / h.loc[entry, "adj_close"] * factor - 1)
+                exits.append({"symbol": symbol, "estado": info["status"], "estricto": info["strict"]})
+                continue
         if (h.empty or entry not in h.index or exit_session not in h.index
                 or pd.isna(h.loc[entry, "adj_close"]) or pd.isna(h.loc[exit_session, "adj_close"])
                 or h.loc[entry, "adj_close"] <= 0):
@@ -109,7 +119,7 @@ def _period_returns(symbols: list[str], as_of: pd.Timestamp, months: int,
                          f"{exit_session.date()}: {', '.join(recycled)}")
     return {"end_date": exit_session.date().isoformat(),
             "portfolio_return": sum(returns[s] for s in symbols) / len(symbols),
-            "benchmark_return": returns["SPY"]}
+            "benchmark_return": returns["SPY"], "exit_events": exits}
 
 
 def _risk_metrics(returns: pd.Series, periods_per_year: float, years: float = None) -> dict:

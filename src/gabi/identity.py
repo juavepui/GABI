@@ -116,6 +116,11 @@ def resolve(symbol: str, as_of: str) -> dict:
             "AND (valid_to IS NULL OR valid_to>?)",
             (normalize_symbol(symbol), as_of, as_of),
         ).fetchall()
+    if not rows:
+        from . import historical_pit
+        if historical_pit.covers(as_of):
+            # Sin alias operativo: en 2010-2015 vale la identidad SEC acreditada.
+            return historical_pit.resolve(symbol, as_of)
     candidates = sorted({r[0] for r in rows})
     # Even a low-confidence contradictory claim must not silently win/lose.
     status = "ambiguous" if len(candidates) > 1 else "unresolved"
@@ -188,6 +193,9 @@ def price_history(symbol: str, as_of: str, *, entity_id: str | None = None) -> p
     owner = entity_id or resolved["entity_id"]
     if not owner or resolved["status"] == "ambiguous" or (resolved["entity_id"] and resolved["entity_id"] != owner):
         return pd.DataFrame()
+    from . import historical_pit
+    if historical_pit.covers(as_of):
+        return historical_pit.ranking_series(owner, as_of)
     frame = observations(owner, "prices")
     if frame.empty:
         return frame
@@ -271,10 +279,22 @@ def backtest_prices(symbols: list[str], as_of: str, owners: dict | None = None) 
     callers retain their API; they never bypass a registered/conflicting alias.
     SPY remains the explicitly configured benchmark security, not an issuer.
     """
-    from . import config
+    from . import config, historical_pit
+    historical = historical_pit.covers(as_of)
     result = {}
     for symbol in symbols:
         owner = owners.get(symbol) if owners else None
+        if symbol != config.BENCHMARK_SYMBOL:
+            if historical and not owner:
+                owner = resolve(symbol, as_of)["entity_id"]
+            if historical_pit.has_series(owner, as_of):
+                # Serie acreditada con su periodo de tenencia verificado.
+                result[symbol] = historical_pit.holding_series(owner, as_of)
+                continue
+            if historical:
+                # 2010-2015 nunca recurre a la caché por ticker.
+                result[symbol] = pd.DataFrame()
+                continue
         if symbol != config.BENCHMARK_SYMBOL and (owner or has_aliases(symbol)):
             result[symbol] = price_history(symbol, as_of, entity_id=owner)
         else:
