@@ -1593,6 +1593,17 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   Top-20 obtiene 18,1 % anual frente a 11,75 % del SPY, sin significación
   estadística (Sharpe 0,80 ± 0,54). No contradice la hipótesis, pero no
   permite afirmar que GABI supere al S&P 500 fuera de la muestra de diseño.
+- **Capa acreditada 2016–2025** ([#34](docs/historical-integration-2016-2025.md)):
+  misma infraestructura, parametrizada por periodo (`historical_period`).
+  - Composición: fja05680 completa, porque hanshof omitía hasta 32 miembros
+    reetiquetados.
+  - Identidad SEC acreditada: 99,6–100 % de las observaciones.
+  - Precio acreditado: 87,4–95,4 % por rebalanceo, con 590 intervalos Tier A y
+    128 Tier B.
+  - Eventos terminales explícitos.
+  - Se activa con `historical_pit.accredited_periods("2010-2015", "2016-2025")`.
+    Sin activarla, 2016+ sigue en el camino operativo. 2010–2015 se reproduce
+    byte a byte.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 

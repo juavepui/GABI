@@ -134,3 +134,18 @@ def test_2010_2015_price_audit_keeps_its_evidence_horizon(monkeypatch):
     assert [row["end"] for row in evidence.issuer_facts("1", P2010.frame_year_max)["public_float"]] == ["2016-06-30"]
     assert P2010.archive_until("finsaber") == "2015-12-31" and P2016.archive_until("finsaber") == P2016.series_end
     assert P2010.life_horizon == ("2016-01-01", 2016) and P2016.frame_year_max is None
+
+
+def test_price_intervals_of_an_inactive_period_are_invisible(db):
+    dates = pd.bdate_range("2015-03-02", periods=250)
+    values = pd.Series([50 + i * 0.1 for i in range(len(dates))], index=dates)
+    storage.upsert_prices("KEEP", pd.DataFrame({"Open": values, "High": values, "Low": values, "Close": values,
+                                                "Adj Close": values, "Volume": 100.}, index=dates))
+    record_series(cik="2", symbol="KEEP", valid_from="2015-03-02", valid_to="2016-02-20", source_id=YAHOO_SOURCE,
+                  adjustment_basis=ADJUSTED, status="tier_a",
+                  evidence=[{"kind": "identity", "source_url": "https://www.sec.gov/i"},
+                            {"kind": "source", "source_url": "https://finance.yahoo.com",
+                             "producer": P2016.price_producer}])
+    assert historical_pit._intervals("cik:0000000002") == []
+    with historical_pit.accredited_periods("2010-2015", "2016-2025"):
+        assert len(historical_pit._intervals("cik:0000000002")) == 1

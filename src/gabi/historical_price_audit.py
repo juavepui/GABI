@@ -28,6 +28,7 @@ from .historical_price_policy import ADJUSTED, YAHOO_SOURCE, qualify_fallback, r
 from .historical_price_policy import SCHEMA as PROVENANCE_SCHEMA
 from .historical_ticker_corrections import identity_nominations
 from .historical_tiingo import SOURCE_ID as TIINGO_SOURCE
+from .historical_tiingo import source_id as tiingo_source
 from .historical_wiki import SOURCE_ID as WIKI_SOURCE
 
 PRICE_SOURCE = json.loads((Path(__file__).with_name("resources") /
@@ -60,6 +61,12 @@ MAX_EVENT_RETURN_DIFFERENCE = 0.05
 MAX_UNCORROBORATED_ARCHIVE_RETURN = 0.25
 # Further archived sources tried, in order, when neither Yahoo nor FINSABER qualifies.
 EXTRA_SOURCES = {"tiingo": TIINGO_SOURCE, "wiki": WIKI_SOURCE}
+
+
+def source_ids(period: Period) -> dict[str, str]:
+    """Source id of each named price source for a period (Tiingo has one per window)."""
+    return {"yahoo": YAHOO_SOURCE, "finsaber": PRICE_SOURCE, "tiingo": tiingo_source(period.key),
+            "wiki": WIKI_SOURCE}
 # Holding period after the last 2015 rebalance runs into 2016.
 SERIES_END = P2010.series_end
 # A holding bought at a rebalance needs prices until the first session on or
@@ -404,7 +411,7 @@ def audit(db: Path, *, dates: list[str] | None = None, period: Period = P2010) -
                 series_cache[key] = _series(conn, symbol, period.series_start,
                                             period.series_end if name == "yahoo" else period.archive_until(name),
                                             archive=name != "yahoo",
-                                            source_id=EXTRA_SOURCES.get(name, PRICE_SOURCE))
+                                            source_id=source_ids(period)[name])
             return series_cache[key]
         for as_of in dates:
             year = int(as_of[:4])
@@ -532,16 +539,17 @@ def audit(db: Path, *, dates: list[str] | None = None, period: Period = P2010) -
                         source, status = e_source, f"{name}_{e_status}"
                         archive_checks, adjustment_refs = e_checks, e_refs
                         detail = {}
-                source_id = {"yahoo": YAHOO_SOURCE, "finsaber": PRICE_SOURCE, **EXTRA_SOURCES}.get(source or "")
+                source_id = source_ids(period).get(source or "")
                 source_symbol = symbols[source] if source else None
                 source_stats = {"yahoo": yc, "finsaber": ac, **extra_stats}.get(source or "", ac)
                 provenance = conn.execute(
                     "SELECT source_id,adjustment_basis,status FROM historical_price_provenance "
                     "WHERE entity_id=? AND symbol=? AND source_id=? AND valid_from<=? AND valid_to>=? "
-                    "AND status IN ('tier_a','tier_b')",
+                    "AND status IN ('tier_a','tier_b') AND evidence_json LIKE ?",
                     (member.get("entity_id"), source_symbol, source_id,
                      source_stats["first"] or start,
-                     (date.fromisoformat(end) + timedelta(days=1)).isoformat())
+                     (date.fromisoformat(end) + timedelta(days=1)).isoformat(),
+                     f'%"producer": "{period.price_producer}"%')
                 ).fetchall() if has_provenance and source_id else []
                 accredited = len(provenance) == 1 and provenance[0][1] == ADJUSTED
                 delisting = (life or {}).get("delisting")
@@ -719,6 +727,7 @@ def promote(db: Path, frame: pd.DataFrame, period: Period = P2010) -> dict:
         conn.commit()
     accepted = {"tier_a": 0, "tier_b": 0}
     skipped: dict[str, int] = {}
+    examples: dict[str, list[dict]] = {}
     for item in intervals:
         symbol, cik, label_rows = item["symbol"], item["cik"], item["rows"]
         refs: list[dict] = []
@@ -728,13 +737,17 @@ def promote(db: Path, frame: pd.DataFrame, period: Period = P2010) -> dict:
                         status in ACCREDITED_IDENTITY_TIERS:
                     refs.extend({**ref, "kind": "identity", "identity_tier": status, "index_label": label}
                                 for ref in json.loads(source_refs)[:3] if ref.get("source_url"))
-            refs.extend(row.evidence_refs["listing"] + row.evidence_refs["adjustment"])
+            # Findings computed by this audit itself (an unreconciled Yahoo
+            # adjustment noted on an accepted Tier A window) cite the audit row.
+            refs.extend(ref if ref.get("source_url") else {**ref, "source_url": audit_url, "window": row.as_of,
+                                                           "derived_from": "historical_price_audit"}
+                        for ref in row.evidence_refs["listing"] + row.evidence_refs["adjustment"])
             refs.extend({**check, "kind": "price_level"} for check in row.evidence_refs["level"])
         if not any(ref["kind"] == "identity" for ref in refs):
             skipped["missing_sec_identity_reference"] = skipped.get("missing_sec_identity_reference", 0) + 1
             continue
         table = "prices" if item["source"] == "yahoo" else "historical_prices"
-        source_id = {"yahoo": YAHOO_SOURCE, "finsaber": PRICE_SOURCE, **EXTRA_SOURCES}[item["source"]]
+        source_id = source_ids(period)[item["source"]]
         with connect_readonly(db) as conn:
             query = (f"SELECT date,close,adj_close FROM {table} WHERE symbol=? AND date>=? AND date<? "
                      + ("AND source_id=? " if table == "historical_prices" else "") + "ORDER BY date")
@@ -774,9 +787,13 @@ def promote(db: Path, frame: pd.DataFrame, period: Period = P2010) -> dict:
                           source_id=source_id, adjustment_basis=ADJUSTED, status=tier, evidence=refs)
         except ValueError as exc:
             skipped[str(exc)] = skipped.get(str(exc), 0) + 1
+            examples.setdefault(str(exc), []).append(
+                {"symbol": symbol, "cik": cik, "source": item["source"], "valid_from": item["start"],
+                 "missing_url_kinds": sorted({ref.get("kind") for ref in refs if not ref.get("source_url")})})
         else:
             accepted[tier] += 1
-    return {"removed_previous": removed, "intervals_promoted": accepted, "skipped": skipped}
+    return {"removed_previous": removed, "intervals_promoted": accepted, "skipped": skipped,
+            "skipped_examples": {reason: rows[:10] for reason, rows in examples.items()}}
 
 
 def record_terminal_events(frame: pd.DataFrame, period: Period = P2010) -> dict:

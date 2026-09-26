@@ -113,12 +113,22 @@ def resolve(symbol: str, as_of: str) -> dict:
 
 
 def _intervals(entity_id: str) -> list[tuple]:
+    """Accredited intervals of the active periods' audits (plus intervals
+    recorded outside an audit, without a producer)."""
+    producers = {period.price_producer for period in _active}
     with storage.get_connection() as conn:
         conn.executescript(historical_archive.SCHEMA + PROVENANCE_SCHEMA)
-        return conn.execute(
-            "SELECT source_id,symbol,valid_from,valid_to,status FROM historical_price_provenance "
+        rows = conn.execute(
+            "SELECT source_id,symbol,valid_from,valid_to,status,evidence_json FROM historical_price_provenance "
             "WHERE entity_id=? AND status IN ('tier_a','tier_b') AND adjustment_basis=?",
             (entity_id, ADJUSTED)).fetchall()
+    result = []
+    for *row, evidence in rows:
+        producer = next((ref.get("producer") for ref in json.loads(evidence)
+                         if ref.get("kind") == "source" and ref.get("producer")), None)
+        if producer is None or producer in producers:
+            result.append(tuple(row))
+    return result
 
 
 def _windows(entity_id: str, source_id: str, symbol: str, valid_from: str, valid_to: str) -> list[dict] | None:

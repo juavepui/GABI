@@ -29,13 +29,19 @@ PRICES_URL = "https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate={sta
 TICKERS_URL = "https://apimedia.tiingo.com/docs/tiingo/daily/supported_tickers.zip"
 PACE_SECONDS = 80  # ~45 requests/hour, below the free hourly allocation
 START, END_EXCLUSIVE = "2008-01-01", "2016-07-01"
-# Download windows: (request start, request end, import end exclusive, cache subdirectory).
-WINDOWS = {"2010-2015": ("2008-01-01", "2016-12-31", END_EXCLUSIVE, ""),
-           "2016-2025": ("2014-01-01", "2026-06-30", "2026-07-01", "2016_2025")}
+# Download windows: (request start, request end, import end exclusive, cache
+# subdirectory, source id). Each window is its own source, so the 2016-2025
+# download never adds rows to the source audited for 2010-2015.
+WINDOWS = {"2010-2015": ("2008-01-01", "2016-12-31", END_EXCLUSIVE, "", SOURCE_ID),
+           "2016-2025": ("2014-01-01", "2026-06-30", "2026-07-01", "2016_2025", SOURCE_ID + ":2016-2025")}
+
+
+def source_id(window: str) -> str:
+    return WINDOWS[window][4]
 
 
 def _window(window: str) -> tuple[str, str, str, Path]:
-    first, last, end_exclusive, subdirectory = WINDOWS[window]
+    first, last, end_exclusive, subdirectory, _source = WINDOWS[window]
     return first, last, end_exclusive, DIRECTORY / subdirectory if subdirectory else DIRECTORY
 
 
@@ -117,39 +123,17 @@ def import_cached(window: str = "2010-2015") -> dict:
         frame["symbol"] = path.stem
         frames.append(frame.rename(columns={"adjClose": "adjusted_close"})[
             ["symbol", "date", "open", "high", "low", "close", "adjusted_close", "volume"]])
-    metadata = {
+    historical_archive.register_source(source_id(window), {
         "name": "Tiingo end-of-day prices (free plan)", "url": "https://api.tiingo.com/tiingo/daily/<ticker>/prices",
-        "start": START, "end_exclusive": END_EXCLUSIVE, "quality": "research_archive_unverified_identity",
+        "start": first, "end_exclusive": end_exclusive, "quality": "research_archive_unverified_identity",
         "adjustment": "adjClose adjusts splits and cash dividends (divCash/splitFactor kept in raw files)",
         "limitation": "only tickers whose current listing covers the period; recycled tickers are not served",
-        "files_sha256": digests}
-    windows = _registered_windows()
-    windows[window] = {"start": first, "end_exclusive": end_exclusive, "files_sha256": digests}
-    if window != "2010-2015":
-        # Keep the 2010-2015 metadata cited by #28 as the top-level entry.
-        metadata.update({key: value for key, value in windows.get("2010-2015", {}).items()})
-    metadata["windows"] = windows
-    historical_archive.register_source(SOURCE_ID, metadata)
+        "files_sha256": digests})
     if not frames:
         return {"files": len(files), "accepted": 0, "rejected": 0}
     data = pd.concat(frames, ignore_index=True)
-    result = historical_archive.import_price_chunk(SOURCE_ID, data, set(data.symbol), first, end_exclusive)
+    result = historical_archive.import_price_chunk(source_id(window), data, set(data.symbol), first, end_exclusive)
     return {"files": len(files), **result}
-
-
-def _registered_windows() -> dict:
-    from . import storage
-    with storage.get_connection() as conn:
-        conn.executescript(historical_archive.SCHEMA)
-        row = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?", (SOURCE_ID,)).fetchone()
-    if row is None:
-        return {}
-    metadata = json.loads(row[0])
-    windows = metadata.get("windows") or {}
-    if "2010-2015" not in windows and "files_sha256" in metadata:
-        windows["2010-2015"] = {"start": metadata["start"], "end_exclusive": metadata["end_exclusive"],
-                                "files_sha256": metadata["files_sha256"]}
-    return windows
 
 
 def main() -> None:
