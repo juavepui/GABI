@@ -115,6 +115,40 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     }
 
 
+def fundamental_diagnostics(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
+    """Missing reason for each of the 7 SEC-based Composite metrics on a date.
+
+    Reuses the ranking's own inputs (point-in-time facts, price and shares)
+    so a blank metric in the ranking can always be explained; None means the
+    metric is computable. Never substitutes current fundamentals.
+    """
+    facts = edgar._facts_dict_from_stored(symbol, as_of_date=as_of_date, entity_id=entity_id)
+    reasons = edgar.fundamental_missing_reasons(facts)
+    classic = _classic_metrics_as_of(symbol, as_of_date, entity_id=entity_id)
+    market = None
+    if classic.get("price") is None:
+        market = "no_accredited_price" if historical_pit.covers(as_of_date) else "no_price"
+    elif classic.get("shares_outstanding") is None:
+        market = "no_shares_outstanding"
+    metrics = edgar.compute_edgar_metrics(facts)
+
+    def multiple(component: str, value_key: str) -> str | None:
+        if market:
+            return market
+        if reasons[component]:
+            return reasons[component]
+        value = metrics.get(value_key)
+        return None if value is not None and value > 0 else f"non_positive_{component}"
+
+    return {
+        "pe": multiple("net_income", "latest_net_income"),
+        "pb": multiple("equity", "latest_equity"),
+        "ev_ebitda": market or reasons["ebitda"],
+        "roic": reasons["roic"], "operating_margin": reasons["operating_margin"],
+        "revenue_cagr_3y": reasons["revenue_cagr_3y"], "fcf_cagr_3y": reasons["fcf_cagr_3y"],
+    }
+
+
 def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp, *, entity_id: str | None = None) -> pd.DataFrame:
     df = (identity.price_history(symbol, as_of_date.date().isoformat(), entity_id=entity_id)
           if entity_id else storage.get_prices(symbol))

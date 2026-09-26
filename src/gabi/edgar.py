@@ -290,16 +290,21 @@ def _extract_instant_values(facts: dict, tag_candidates: list, unit: str = "USD"
         entries = node.get("units", {}).get(unit)
         if not entries:
             continue
-        by_end = {}
+        by_end: dict[str, tuple[str, str, float]] = {}
         for e in entries:
             if e.get("form") not in {"10-K", "10-K/A"} or e.get("fp") != "FY":
                 continue
             end, val = e.get("end"), e.get("val")
             if not end or val is None:
                 continue
-            by_end[end] = val
+            # The same balance date appears as current year and as a later
+            # comparative: keep the latest filing (as the annual extractor
+            # does), independently of row order.
+            candidate = (str(e.get("filed") or ""), str(e.get("accn") or ""), val)
+            if end not in by_end or candidate[:2] >= by_end[end][:2]:
+                by_end[end] = candidate
         if by_end:
-            return sorted(by_end.items())
+            return sorted((end, row[2]) for end, row in by_end.items())
     return []
 
 
@@ -626,6 +631,64 @@ def compute_edgar_metrics(facts: dict) -> dict:
         "net_debt_to_ebitda": net_debt_to_ebitda,
         "revenue_growth_yoy": _yoy_growth(revenue_series),
         "earnings_growth_yoy": _yoy_growth(ni_series),
+    }
+
+
+def fundamental_missing_reasons(facts: dict) -> dict[str, str | None]:
+    """Why each SEC-derived Composite input is missing (None = computable).
+
+    Mirrors ``compute_edgar_metrics`` without changing it: same extractors,
+    same rules. Market multiples also need price and shares; see
+    ``screener_asof.fundamental_diagnostics``.
+    """
+    revenue = dict(_extract_annual_values(facts, REVENUE_TAGS))
+    net_income = dict(_extract_annual_values(facts, NET_INCOME_TAGS))
+    ocf = dict(_extract_annual_values(facts, OCF_TAGS))
+    capex = dict(_extract_annual_values(facts, CAPEX_TAGS))
+    equity = dict(_extract_instant_values(facts, EQUITY_TAGS))
+    debt = dict(_extract_instant_values(facts, LT_DEBT_TAGS))
+    operating_income = dict(_extract_annual_values(facts, OPERATING_INCOME_TAGS))
+    depreciation = dict(_extract_annual_values(facts, DEPRECIATION_TAGS))
+    fcf = {day: ocf[day] - abs(capex[day]) for day in set(ocf) & set(capex)}
+
+    def cagr_reason(series: dict, label: str) -> str | None:
+        if not series:
+            return f"no_annual_{label}"
+        values = sorted(series.items())
+        if len(values) < 4:
+            return f"fewer_than_4_annual_{label}_values"
+        if _cagr_from_series(values, 3) is None:
+            dates = [_annual_date(end) for end, _ in values[-4:]]
+            if any(not 340 <= (right - left).days <= 380 for left, right in zip(dates, dates[1:])):
+                return "non_consecutive_fiscal_years"
+            return "non_positive_start_or_end_value"
+        return None
+
+    common = sorted(set(net_income) & set(equity) & set(debt))
+    if common:
+        invested = equity[common[-1]] + debt[common[-1]]
+        roic_reason = None if invested > 0 else "non_positive_invested_capital"
+    else:
+        roic_reason = ("no_net_income" if not net_income else "no_equity" if not equity else
+                       "no_long_term_debt" if not debt else "no_common_fiscal_year_end")
+    if not revenue:
+        margin_reason = "no_annual_revenue"
+    elif not operating_income:
+        margin_reason = "no_operating_income"
+    else:
+        margin_reason = None
+    latest_ebitda = (operating_income[max(operating_income)] + depreciation[max(depreciation)]
+                     if operating_income and depreciation else None)
+    return {
+        "revenue_cagr_3y": cagr_reason(revenue, "revenue"),
+        "fcf_cagr_3y": cagr_reason(fcf, "fcf") if (ocf and capex) else
+        ("no_operating_cash_flow" if not ocf else "no_capex"),
+        "roic": roic_reason,
+        "operating_margin": margin_reason,
+        "net_income": None if net_income else "no_net_income",
+        "equity": None if equity else "no_equity",
+        "ebitda": ("no_operating_income" if not operating_income else "no_depreciation" if not depreciation
+                   else None if latest_ebitda and latest_ebitda > 0 else "non_positive_ebitda"),
     }
 
 
