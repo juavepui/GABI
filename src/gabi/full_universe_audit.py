@@ -102,10 +102,21 @@ def prepare(cache: Path, *, start: str = "2016-01-02", stop: str | None = None,
     return manifest
 
 
-def evaluate(cache: Path, output: Path) -> dict:
+def evaluate(cache: Path, output: Path, *, start: str | None = None) -> dict:
+    """Backtests V1/V2 sobre los rankings congelados.
+
+    ``start`` evalúa una vista que empieza en esa fecha de rebalanceo (cartera
+    nueva en caja), reutilizando los mismos rankings y el mismo snapshot.
+    """
     manifest = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
     if len(manifest["rankings"]) != len(manifest["dates"]):
         raise ValueError("Faltan rankings; ejecutar preparación completa.")
+    if start is not None:
+        if start not in manifest["dates"]:
+            raise ValueError(f"{start} no es una fecha de rebalanceo del manifiesto.")
+        dates = [date for date in manifest["dates"] if date >= start]
+        manifest = {**manifest, "start": start, "dates": dates, "view_of": manifest["start"],
+                    "rankings": {date: manifest["rankings"][date] for date in dates}}
     if oa.sha256(cache / "snapshot.db") != manifest["snapshot_sha256"]:
         raise ValueError("Cambió el snapshot.")
     for name, expected in manifest["sources_sha256"].items():

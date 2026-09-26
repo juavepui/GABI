@@ -110,3 +110,50 @@ def test_enterprise_value_treats_missing_debt_or_cash_as_zero_today(monkeypatch)
     assert no_cash["enterprise_value"] == 1200.0
     no_price = _classic(monkeypatch, {**base, "latest_debt": 200.0, "latest_cash": 50.0}, price=None)
     assert no_price["enterprise_value"] is None and no_price["pe"] is None
+
+
+def test_fiscal_alignment_leaves_stale_components_missing_not_older_or_zero():
+    """#38: with alignment every ratio component belongs to the anchor year."""
+    facts = _facts(_annual("Revenues", {2013: 200.0, 2014: 250.0}),
+                   _annual("OperatingIncomeLoss", {2012: 40.0}),
+                   _annual("NetIncomeLoss", {2013: 20.0, 2014: 25.0}),
+                   _instant("StockholdersEquity", [("2014-12-31", 100.0, "2015-02-20")]),
+                   _instant("LongTermDebt", [("2012-12-31", 80.0, "2013-02-20")]))
+    with edgar.fiscal_alignment():
+        metrics = edgar.compute_edgar_metrics(facts)
+        reasons = edgar.fundamental_missing_reasons(facts)
+    assert metrics["fiscal_anchor"] == "2014-12-31"
+    assert metrics["operating_margin"] is None and metrics["latest_debt"] is None
+    assert metrics["stale_components"] == ["debt", "operating_income"]
+    assert metrics["roic"] is None and reasons["roic"] == "stale_component"
+    assert reasons["operating_margin"] == "stale_component"
+    assert metrics["latest_net_income"] == 25.0 and metrics["latest_equity"] == 100.0
+    assert metrics["profit_margin"] == pytest.approx(0.1)
+    # Off by default: frozen audits keep today's semantics.
+    assert not edgar.fiscal_alignment_enabled()
+    assert edgar.compute_edgar_metrics(facts)["operating_margin"] == pytest.approx(40.0 / 250.0)
+
+
+def test_fiscal_alignment_accepts_the_same_year_and_anchors_on_income_without_revenue():
+    june = _facts(_annual("Revenues", {2014: 100.0}, month_day="06-30"),
+                  _annual("OperatingIncomeLoss", {2014: 10.0}, month_day="06-30"),
+                  _instant("LongTermDebt", [("2014-06-30", 30.0, "2014-08-20")]))
+    with edgar.fiscal_alignment():
+        metrics = edgar.compute_edgar_metrics(june)
+    assert metrics["operating_margin"] == pytest.approx(0.1) and metrics["latest_debt"] == 30.0
+    assert metrics["stale_components"] == []
+    bank = _facts(_annual("NetIncomeLoss", {2013: 5.0, 2014: 6.0}),
+                  _instant("StockholdersEquity", [("2013-12-31", 50.0, "2014-02-20")]))
+    with edgar.fiscal_alignment():
+        metrics = edgar.compute_edgar_metrics(bank)
+        reasons = edgar.fundamental_missing_reasons(bank)
+    assert metrics["fiscal_anchor"] == "2014-12-31" and metrics["latest_equity"] is None
+    assert reasons["equity"] == "stale_component"
+
+
+def test_stale_debt_or_cash_leaves_enterprise_value_missing(monkeypatch):
+    base = {"latest_net_income": 50.0, "latest_equity": 400.0, "latest_ebitda": 100.0, "latest_revenue": 500.0,
+            "latest_debt": None, "latest_cash": 50.0}
+    assert _classic(monkeypatch, {**base, "stale_components": ["debt"]})["enterprise_value"] is None
+    never_reported = _classic(monkeypatch, {**base, "stale_components": []})
+    assert never_reported["enterprise_value"] == 950.0

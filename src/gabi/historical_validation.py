@@ -36,6 +36,10 @@ CACHE = config.DATA_DIR / "historical_validation_2010_2015"
 OUTPUT = config.BASE_DIR / "docs" / "historical-validation-2010-2015"
 QUARTERLY_AUDIT = config.BASE_DIR / "docs" / "historical-prices-quarterly-2010-2015.csv"
 QUARTERLY_SUMMARY = config.BASE_DIR / "docs" / "historical-prices-quarterly-2010-2015.json"
+# Auditorías trimestrales de precios de todos los periodos acreditados (#28, #34).
+QUARTERLY_AUDITS = ((QUARTERLY_AUDIT, QUARTERLY_SUMMARY),
+                    (config.BASE_DIR / "docs" / "historical-prices-quarterly-2016-2025.csv",
+                     config.BASE_DIR / "docs" / "historical-prices-quarterly-2016-2025.json"))
 CONCLUSIVE_ACCREDITED = 0.85  # restricción heredada del #28
 # Pesos plausibles: fuera de este rango el dato XBRL es un error de unidad
 # (p. ej. un float de 1,2e16 USD); la mayor empresa de 2010-2015 rondaba 0,7e12.
@@ -53,10 +57,17 @@ def extra_sources() -> tuple[Path, ...]:
     return (*[root / name for name in names], QUARTERLY_AUDIT)
 
 
+def _audit_rebalances() -> list[dict]:
+    rows = []
+    for _csv, summary in QUARTERLY_AUDITS:
+        if summary.exists():
+            rows += json.loads(summary.read_text(encoding="utf-8"))["rebalances"]
+    return sorted(rows, key=lambda row: row["as_of"])
+
+
 def _audit_rebalance(date: str) -> dict | None:
     """Última fecha de la auditoría trimestral de precios anterior al ranking."""
-    summary = json.loads(QUARTERLY_SUMMARY.read_text(encoding="utf-8"))
-    prior = [row for row in summary["rebalances"] if row["as_of"] <= date]
+    prior = [row for row in _audit_rebalances() if row["as_of"] <= date]
     return prior[-1] if prior else None
 
 
@@ -110,8 +121,13 @@ def _returns(symbols: list[str], date: str, entry: pd.Timestamp, exit_session: p
     return result
 
 
+def _quarterly_audit() -> pd.DataFrame:
+    frames = [pd.read_csv(path, low_memory=False) for path, _summary in QUARTERLY_AUDITS if path.exists()]
+    return pd.concat(frames, ignore_index=True)
+
+
 def _floats(date: str) -> dict[str, float]:
-    audit = pd.read_csv(QUARTERLY_AUDIT)
+    audit = _quarterly_audit()
     prior = audit[audit.as_of <= date]
     if prior.empty:
         return {}
@@ -235,6 +251,17 @@ def run(cache: Path = CACHE, output: Path = OUTPUT, *, analysis_only: bool = Fal
     else:
         manifest = fua.prepare(cache, start=START, stop=STOP, extra_sources=extra_sources())
         report = fua.evaluate(cache, output)
+    config_record = {"start": START, "stop_exclusive": STOP, "weights": scoring.DEFAULT_WEIGHTS,
+                     "min_coverage": MIN_COVERAGE, "min_universe_coverage": MIN_UNIVERSE,
+                     "conclusive_accredited_price_coverage": CONCLUSIVE_ACCREDITED}
+    return analyze(cache, output, manifest, report, issue=33, config_record=config_record)
+
+
+def analyze(cache: Path, output: Path, manifest: dict, report: dict, *, issue: int, config_record: dict) -> dict:
+    """Cobertura por rebalanceo, benchmarks del universo cubierto y resumen.
+
+    ``manifest`` puede ser una vista (fechas desde un rebalanceo posterior).
+    """
     tables = {date: pd.read_csv(cache / f"ranking-{date}.csv", index_col=0) for date in manifest["dates"]}
     executed = set(pd.read_csv(output / "v2-top20-periods.csv").fecha)
     original_db = config.DB_PATH
@@ -247,9 +274,7 @@ def run(cache: Path = CACHE, output: Path = OUTPUT, *, analysis_only: bool = Fal
     coverage.to_csv(output / "coverage-by-rebalance.csv", index=False)
     benchmarks.to_csv(output / "benchmarks-by-period.csv", index=False)
     report["historical_validation"] = {
-        "issue": 33, "config": {"start": START, "stop_exclusive": STOP, "weights": scoring.DEFAULT_WEIGHTS,
-                                "min_coverage": MIN_COVERAGE, "min_universe_coverage": MIN_UNIVERSE,
-                                "conclusive_accredited_price_coverage": CONCLUSIVE_ACCREDITED},
+        "issue": issue, "config": config_record,
         "summary": summarize(report, coverage, benchmarks, output),
         "analysis_sha256": fs.content_hash(Path(__file__)),
         "artifacts": {p.name: fs.content_hash(p) for p in output.glob("*.csv")}}

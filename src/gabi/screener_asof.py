@@ -79,7 +79,10 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     pe = (market_cap / net_income) if market_cap and net_income and net_income > 0 else None
     pb = (market_cap / equity) if market_cap and equity and equity > 0 else None
     ps = (market_cap / revenue) if market_cap and revenue and revenue > 0 else None
-    enterprise_value = (market_cap + (debt or 0) - (cash or 0)) if market_cap is not None else None
+    # A debt or cash balance that stopped being reported is missing, never zero (#38).
+    stale = set(m.get("stale_components") or [])
+    enterprise_value = (market_cap + (debt or 0) - (cash or 0)) \
+        if market_cap is not None and not stale & {"debt", "cash"} else None
     ev_ebitda = (enterprise_value / ebitda) if enterprise_value and ebitda and ebitda > 0 else None
     debt_to_equity = (debt / equity * 100) if debt is not None and equity and equity > 0 else None
     expectations = expectations_metrics(

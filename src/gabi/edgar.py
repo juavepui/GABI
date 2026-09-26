@@ -11,6 +11,8 @@ Yahoo son poco fiables o directamente no existen:
 """
 import concurrent.futures as cf
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 
 import pandas as pd
@@ -548,6 +550,48 @@ def _yoy_growth(series: dict):
     return (last / prev) - 1
 
 
+# #38: fiscal-year alignment of ratio components. Off by default so frozen
+# audits reproduce; the #35 protocol enables it as a data correction.
+ALIGNMENT_TOLERANCE_DAYS = 45
+_fiscal_alignment = False
+
+
+@contextmanager
+def fiscal_alignment(enabled: bool = True) -> Iterator[None]:
+    """Require every ratio component to belong to the anchor fiscal year (#38).
+
+    The anchor is the latest annual revenue year-end (net income if the issuer
+    reports no revenue). A component reported for another year-end (more than
+    ``ALIGNMENT_TOLERANCE_DAYS`` apart) is *stale*: it is missing with reason
+    ``stale_component`` and never replaced by an older year or by zero.
+    """
+    global _fiscal_alignment
+    previous = _fiscal_alignment
+    _fiscal_alignment = enabled
+    try:
+        yield
+    finally:
+        _fiscal_alignment = previous
+
+
+def fiscal_alignment_enabled() -> bool:
+    return _fiscal_alignment
+
+
+def _anchor(revenue_series: dict, ni_series: dict) -> str | None:
+    if revenue_series:
+        return max(revenue_series)
+    return max(ni_series) if ni_series else None
+
+
+def _at_anchor(series: dict, anchor: str):
+    """Value of ``series`` for the anchor fiscal year, or None."""
+    day = _annual_date(anchor)
+    close = [(abs((_annual_date(end) - day).days), end) for end in series
+             if abs((_annual_date(end) - day).days) <= ALIGNMENT_TOLERANCE_DAYS]
+    return series[min(close)[1]] if close else None
+
+
 def compute_edgar_metrics(facts: dict) -> dict:
     """Métricas EDGAR a partir de una estructura de 'company facts' (la que
     devuelve fetch_company_facts, o la reconstruida por _facts_dict_from_stored
@@ -574,9 +618,17 @@ def compute_edgar_metrics(facts: dict) -> dict:
         for d in (set(ocf_series) & set(capex_series))
     ))
 
+    anchor = _anchor(revenue_series, ni_series) if _fiscal_alignment else None
+    stale: list[str] = []
+
     roic = None
     common_dates = sorted(set(ni_series) & set(equity_series) & set(debt_series))
     latest_roic_date = common_dates[-1] if common_dates else None
+    if anchor:
+        latest_roic_date = None
+        parts = [_at_anchor(series, anchor) for series in (ni_series, equity_series, debt_series)]
+        if all(part is not None for part in parts) and parts[1] + parts[2] > 0:
+            roic = parts[0] / (parts[1] + parts[2])
     if latest_roic_date:
         # Aproximación: NOPAT ~ NetIncomeLoss (sin ajuste fiscal) sobre
         # capital invertido ~ patrimonio neto + deuda a largo plazo.
@@ -584,18 +636,25 @@ def compute_edgar_metrics(facts: dict) -> dict:
         if invested_capital > 0:
             roic = ni_series[latest_roic_date] / invested_capital
 
-    def _latest(series):
-        return series[max(series)] if series else None
+    def _latest(series, name=None):
+        if not series:
+            return None
+        if anchor is None:
+            return series[max(series)]
+        value = _at_anchor(series, anchor)
+        if value is None and name:
+            stale.append(name)
+        return value
 
-    latest_revenue = _latest(revenue_series)
-    latest_ni = _latest(ni_series)
-    latest_equity = _latest(equity_series)
-    latest_debt = _latest(debt_series)
-    latest_cash = _latest(cash_series)
-    latest_gross_profit = _latest(gross_profit_series)
-    latest_operating_income = _latest(operating_income_series)
-    latest_da = _latest(da_series)
-    latest_fcf = _latest(fcf_series)
+    latest_revenue = _latest(revenue_series, "revenue")
+    latest_ni = _latest(ni_series, "net_income")
+    latest_equity = _latest(equity_series, "equity")
+    latest_debt = _latest(debt_series, "debt")
+    latest_cash = _latest(cash_series, "cash")
+    latest_gross_profit = _latest(gross_profit_series, "gross_profit")
+    latest_operating_income = _latest(operating_income_series, "operating_income")
+    latest_da = _latest(da_series, "depreciation")
+    latest_fcf = _latest(fcf_series, "fcf")
 
     gross_margin = (latest_gross_profit / latest_revenue) if latest_gross_profit and latest_revenue else None
     operating_margin = (latest_operating_income / latest_revenue) if latest_operating_income and latest_revenue else None
@@ -605,14 +664,16 @@ def compute_edgar_metrics(facts: dict) -> dict:
     if latest_operating_income is not None and latest_da is not None:
         ebitda = latest_operating_income + latest_da
     net_debt = None
-    if latest_debt is not None:
+    if latest_debt is not None and "cash" not in stale:
         net_debt = latest_debt - (latest_cash or 0)
     net_debt_to_ebitda = (net_debt / ebitda) if net_debt is not None and ebitda else None
+    fcf_cagr = _cagr_from_series(sorted(fcf_series.items()), 3) if "fcf" not in stale else None
+    earnings_growth = _yoy_growth(ni_series) if "net_income" not in stale else None
 
     return {
         # Derivados ya existentes (usados hoy en el screener "en vivo").
         "revenue_cagr_3y": _cagr_from_series(sorted(revenue_series.items()), 3),
-        "fcf_cagr_3y": _cagr_from_series(sorted(fcf_series.items()), 3),
+        "fcf_cagr_3y": fcf_cagr,
         "roic": roic,
         # Valores anuales más recientes en bruto — base para reconstruir
         # múltiplos combinándolos con precio y nº de acciones de una fecha.
@@ -630,7 +691,10 @@ def compute_edgar_metrics(facts: dict) -> dict:
         "profit_margin": profit_margin,
         "net_debt_to_ebitda": net_debt_to_ebitda,
         "revenue_growth_yoy": _yoy_growth(revenue_series),
-        "earnings_growth_yoy": _yoy_growth(ni_series),
+        "earnings_growth_yoy": earnings_growth,
+        # #38: components reported for another fiscal year (alignment only).
+        "fiscal_anchor": anchor,
+        "stale_components": sorted(stale),
     }
 
 
@@ -664,8 +728,22 @@ def fundamental_missing_reasons(facts: dict) -> dict[str, str | None]:
             return "non_positive_start_or_end_value"
         return None
 
+    anchor = _anchor(revenue, net_income) if _fiscal_alignment else None
+
+    def stale(series: dict) -> bool:
+        return bool(anchor and series and _at_anchor(series, anchor) is None)
+
+    def latest(series: dict):
+        return _at_anchor(series, anchor) if anchor else series[max(series)]
+
     common = sorted(set(net_income) & set(equity) & set(debt))
-    if common:
+    if anchor and net_income and equity and debt:
+        if any(stale(series) for series in (net_income, equity, debt)):
+            roic_reason = "stale_component"
+        else:
+            invested = latest(equity) + latest(debt)
+            roic_reason = None if invested > 0 else "non_positive_invested_capital"
+    elif common and not anchor:
         invested = equity[common[-1]] + debt[common[-1]]
         roic_reason = None if invested > 0 else "non_positive_invested_capital"
     else:
@@ -675,20 +753,30 @@ def fundamental_missing_reasons(facts: dict) -> dict[str, str | None]:
         margin_reason = "no_annual_revenue"
     elif not operating_income:
         margin_reason = "no_operating_income"
+    elif stale(operating_income):
+        margin_reason = "stale_component"
     else:
         margin_reason = None
-    latest_ebitda = (operating_income[max(operating_income)] + depreciation[max(depreciation)]
-                     if operating_income and depreciation else None)
+    if not operating_income:
+        ebitda_reason = "no_operating_income"
+    elif not depreciation:
+        ebitda_reason = "no_depreciation"
+    elif stale(operating_income) or stale(depreciation):
+        ebitda_reason = "stale_component"
+    else:
+        ebitda = latest(operating_income) + latest(depreciation)
+        ebitda_reason = None if ebitda > 0 else "non_positive_ebitda"
+    fcf_reason = cagr_reason(fcf, "fcf") if (ocf and capex) else ("no_operating_cash_flow" if not ocf else "no_capex")
+    if fcf_reason is None and stale(fcf):
+        fcf_reason = "stale_component"
     return {
         "revenue_cagr_3y": cagr_reason(revenue, "revenue"),
-        "fcf_cagr_3y": cagr_reason(fcf, "fcf") if (ocf and capex) else
-        ("no_operating_cash_flow" if not ocf else "no_capex"),
+        "fcf_cagr_3y": fcf_reason,
         "roic": roic_reason,
         "operating_margin": margin_reason,
-        "net_income": None if net_income else "no_net_income",
-        "equity": None if equity else "no_equity",
-        "ebitda": ("no_operating_income" if not operating_income else "no_depreciation" if not depreciation
-                   else None if latest_ebitda and latest_ebitda > 0 else "non_positive_ebitda"),
+        "net_income": ("no_net_income" if not net_income else "stale_component" if stale(net_income) else None),
+        "equity": ("no_equity" if not equity else "stale_component" if stale(equity) else None),
+        "ebitda": ebitda_reason,
     }
 
 
