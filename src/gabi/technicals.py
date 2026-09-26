@@ -31,6 +31,13 @@ def _pct_change_n(series: pd.Series, n: int):
     return float(now / past - 1)
 
 
+def _same_window(series: pd.Series, benchmark: pd.Series, n: int) -> bool:
+    """The last ``n`` returns of both series start and end on the same dates."""
+    if len(series) <= n or len(benchmark) <= n:
+        return False
+    return bool(series.index[-n - 1] == benchmark.index[-n - 1] and series.index[-1] == benchmark.index[-1])
+
+
 def _return_price(price_df: pd.DataFrame) -> pd.Series:
     """Prioriza `adj_close` (ajustado por splits Y dividendos) sobre `close`
     (solo splits, vía yfinance) para que momentum/medias/RSI midan lo mismo
@@ -97,7 +104,11 @@ def compute_technicals(price_df: pd.DataFrame, benchmark_df: pd.DataFrame = None
     if benchmark_df is not None and not benchmark_df.empty and "close" in benchmark_df:
         bench_close = _return_price(benchmark_df).dropna()
         bench_mom_6m = _pct_change_n(bench_close, config.MOMENTUM_SHORT_DAYS)
-        if result["momentum_6m"] is not None and bench_mom_6m is not None:
+        # Both windows are positional (126 observations); a gap in either
+        # series would compare different periods, so require the same start
+        # and end dates and leave the metric missing otherwise.
+        aligned = _same_window(close, bench_close, config.MOMENTUM_SHORT_DAYS)
+        if result["momentum_6m"] is not None and bench_mom_6m is not None and aligned:
             result["rel_strength_6m"] = result["momentum_6m"] - bench_mom_6m
 
     return result

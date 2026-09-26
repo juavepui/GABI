@@ -101,3 +101,47 @@ def test_falls_back_to_close_when_adj_close_incomplete():
 
     assert result["price"] == close[-1]
     assert result["momentum_12m"] == pytest.approx(close[-1] / close[-1 - 252] - 1)
+
+
+# --- #31: price-based metrics on historical (2010-2015) series --------------
+
+def test_twelve_month_momentum_needs_252_returns_and_sma200_needs_200_sessions():
+    short = technicals.compute_technicals(_price_df(np.linspace(100, 150, 252)))
+    assert short["momentum_12m"] is None  # 252 closes = 251 returns
+    assert technicals.compute_technicals(_price_df(np.linspace(100, 150, 253)))["momentum_12m"] is not None
+    assert technicals.compute_technicals(_price_df(np.linspace(100, 150, 199)))["price_vs_sma200"] is None
+    assert technicals.compute_technicals(_price_df(np.linspace(100, 150, 200)))["price_vs_sma200"] is not None
+
+
+def test_relative_strength_is_missing_when_the_benchmark_has_a_gap():
+    n = 300
+    stock = _price_df(np.linspace(100, 200, n))
+    bench = _price_df(np.linspace(100, 120, n)).drop(pd.bdate_range("2022-01-03", periods=n)[-50])
+    result = technicals.compute_technicals(stock, benchmark_df=bench)
+    assert result["momentum_6m"] is not None
+    assert result["rel_strength_6m"] is None  # windows would cover different dates
+
+
+def test_split_inside_the_window_does_not_move_adjusted_momentum_or_sma():
+    adjusted = np.linspace(100, 130, 300)
+    nominal = adjusted.copy()
+    nominal[150:] = nominal[150:] / 2  # 2:1 split: only the nominal close halves
+    result = technicals.compute_technicals(_price_df(nominal, adj_close=adjusted))
+    assert result["momentum_12m"] == pytest.approx(adjusted[-1] / adjusted[-253] - 1)
+    assert result["price_vs_sma200"] > 0  # would be deeply negative on nominal closes
+    assert result["price"] == pytest.approx(nominal[-1])  # displayed price stays nominal
+
+
+def test_metrics_only_see_observations_up_to_the_ranking_date(monkeypatch):
+    from gabi import risk, screener_asof, storage
+    dates = pd.bdate_range("2012-01-02", periods=400)
+    values = np.linspace(100, 200, 400)
+    values[350:] = 50  # a crash after the ranking date
+    frame = pd.DataFrame({"close": values, "adj_close": values}, index=dates)
+    monkeypatch.setattr(storage, "get_prices", lambda symbol: frame)
+    as_of = dates[300]
+    seen = screener_asof._price_history_as_of("AAA", as_of)
+    assert seen.index.max() == as_of
+    assert risk.compute_risk_metrics(seen)["max_drawdown"] == 0.0
+    assert risk.compute_risk_metrics(frame)["max_drawdown"] < -0.5  # the future crash is not visible
+    assert technicals.compute_technicals(seen)["momentum_12m"] > 0
