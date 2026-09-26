@@ -1586,6 +1586,13 @@ reconstruye el ranking completo tal y como se habría visto ese día:
   1:1 acreditada) o se marcan como no estrictas. El V2 en modo validación
   recorre 2011-06 → 2015-12; los rebalanceos de 2010 se saltan por falta de
   fundamentales de tres años. 2016 en adelante no cambia.
+- **Validación 2010–2015 sin reoptimizar** ([#33](docs/historical-validation-2010-2015/README.md)):
+  mismo arnés y configuración que la auditoría 2016+. De 24 rebalanceos se
+  ejecutan 18 y 15 son concluyentes (2010 no es evaluable por falta de
+  fundamentales de tres años). En el tramo invertido (2011-07 → 2016-01) el V2
+  Top-20 obtiene 18,1 % anual frente a 11,75 % del SPY, sin significación
+  estadística (Sharpe 0,80 ± 0,54). No contradice la hipótesis, pero no
+  permite afirmar que GABI supere al S&P 500 fuera de la muestra de diseño.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 

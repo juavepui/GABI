@@ -53,10 +53,13 @@ tramo nunca se había auditado.
   hay baja ni sucesión SEC por medio ni un ajuste inexplicado, y la etiqueta
   no pasa a otro CIK. Si la empresa deja de cotizar, termina en su último día
   y se aplica su evento terminal.
-- **Coherencia con la auditoría**: en una fecha auditada (fin de trimestre) una
-  serie solo entra en el ranking si **su** ventana fue acreditada; entre fechas
-  auditadas, solo si la fecha cae en el periodo de tenencia verificado de la
-  última ventana acreditada anterior. Nunca se usa una acreditación posterior.
+- **Coherencia con la auditoría**: una serie solo entra en el ranking si la
+  ventana de la **última fecha auditada** (fin de trimestre) igual o anterior
+  al ranking fue acreditada y el ranking cae dentro de su periodo de tenencia
+  verificado. Una ventana rechazada nunca se sustituye por otra más antigua y
+  nunca se usa una acreditación posterior. (Regla afinada en el #33: la
+  primera versión permitía, entre fechas auditadas, recurrir a una ventana
+  anterior aunque la última hubiera sido rechazada.)
 - **Backtest V2/V1**: una posición cuya serie termina dentro del periodo se
   liquida en caja a su valor de salida; el resultado expone `exit_events` y
   `strict_result`. Los periodos sin cobertura suficiente se saltan con su
@@ -70,6 +73,11 @@ tramo nunca se había auditado.
   resultado no es estricto. Las ayudas ya no recomiendan empezar en 2016.
 
 ## Resultados
+
+> Las cifras del Backtest V2 de esta sección se obtuvieron con la primera
+> versión de la regla de coherencia y con rebalanceos que derivan al día 30.
+> La validación definitiva, con la regla afinada y la configuración de la
+> auditoría 2016+, está en [historical-validation-2010-2015](historical-validation-2010-2015/README.md) (#33).
 
 Tras la integración se regeneró la auditoría del #28 con el periodo de
 tenencia verificado: cobertura acreditada **78,2–90,5 % por rebalanceo (media

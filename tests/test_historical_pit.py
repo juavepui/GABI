@@ -182,6 +182,10 @@ def test_ranking_on_an_audited_date_needs_that_window_accredited():
     # Between audited dates only the verified holding of an earlier window counts.
     assert historical_pit.rankable(windows, "2015-05-15") is True
     assert historical_pit.rankable(windows, "2015-08-03") is False
+    # A rebalance on 2015-07-02 cannot fall back on the March window: the latest
+    # audited window (2015-06-30) was rejected.
+    assert historical_pit.rankable(windows, "2015-07-02") is False
+    assert historical_pit.rankable(windows, "2010-01-02") is False  # before the first audited window
     assert historical_pit.rankable(None, "2015-06-30") is True  # manual/test intervals
 
 

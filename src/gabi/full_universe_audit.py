@@ -25,11 +25,19 @@ def _save(path: Path, data: dict) -> None:
                     encoding="utf-8")
 
 
-def prepare(cache: Path) -> dict:
+def prepare(cache: Path, *, start: str = "2016-01-02", stop: str | None = None,
+            extra_sources: tuple[Path, ...] = ()) -> dict:
+    """Congela la base y precalcula los rankings completos del intervalo.
+
+    ``start``/``stop`` acotan las fechas de ranking (``stop`` exclusivo; por
+    defecto hasta el final de la composición histórica). ``extra_sources``
+    añade ficheros al fingerprint sin cambiar el de la auditoría 2016+.
+    """
     cache.mkdir(parents=True, exist_ok=True)
     manifest_path = cache / "manifest.json"
     source_files = [Path(str(module.__file__)) for module in (v1, v2, screener_asof, scoring, identity)]
     source_files += [config.DATA_DIR / "sp500_historical_membership.csv", config.DATA_DIR / "sec_cik_map.csv"]
+    source_files += list(extra_sources)
     hashes = {str(p.relative_to(config.BASE_DIR)).replace("\\", "/"): oa.sha256(p) for p in source_files}
     snapshot = cache / "snapshot.db"
     if manifest_path.exists():
@@ -48,15 +56,15 @@ def prepare(cache: Path) -> dict:
             last_spy = pd.Timestamp(connection.execute("SELECT max(date) FROM prices WHERE symbol='SPY' AND adj_close IS NOT NULL").fetchone()[0])
         calendar = xcals.get_calendar("XNYS")
         starts = []
-        current = pd.Timestamp("2016-01-02")
-        while current <= last_membership:
+        current = pd.Timestamp(start)
+        while current <= last_membership and (stop is None or current < pd.Timestamp(stop)):
             end = calendar.date_to_session(current + pd.DateOffset(months=3), direction="next")
             if end > last_spy or end > pd.Timestamp(datetime.now(UTC).date()):
                 break
             starts.append(current.date().isoformat())
             current += pd.DateOffset(months=3)
         if not starts:
-            raise ValueError("No hay trimestres completos desde 2016.")
+            raise ValueError(f"No hay trimestres completos desde {start}.")
         manifest = {"created_at": datetime.now(UTC).isoformat(), "start": starts[0],
                     "end": current.date().isoformat(), "dates": starts,
                     "membership_last": last_membership.date().isoformat(), "spy_last": last_spy.date().isoformat(),
@@ -169,7 +177,10 @@ def evaluate(cache: Path, output: Path) -> dict:
                 report["results"][f"v2_top{top_n}"] = {"metrics": metrics, "n_periods": len(result["periods"]),
                     "start": str(nav.index[0].date()), "end": str(nav.index[-1].date()), "n_nav": len(nav),
                     "skipped": result["skipped"], "turnover_medio": result["turnover_medio"],
-                    "comision_total": result["comision_total"], "capital_final": result["capital_final"]}
+                    "comision_total": result["comision_total"], "coste_total": result.get("coste_total"),
+                    "capital_final": result["capital_final"],
+                    "exit_events": result.get("exit_events", []),
+                    "strict_result": result.get("strict_result", True)}
                 _save(output / "audit.json", report)
                 print(f"Top-{top_n}: net CAGR {metrics['strategy']['cagr_from_initial_cash']:.6%}", flush=True)
     finally:

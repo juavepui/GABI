@@ -99,14 +99,17 @@ def _windows(entity_id: str, source_id: str, symbol: str, valid_from: str, valid
 
 def rankable(windows: list[dict] | None, day: str) -> bool:
     """A ranking on ``day`` may use the interval only if the audit accredited
-    the window ending on that audited quarter end, or, between quarter ends,
-    if ``day`` lies within the verified holding period of the last accredited
-    window before it. Never relies on a later accreditation."""
+    the window of the latest audited quarter end on or before ``day`` and
+    ``day`` lies within that window's verified holding period. A rejected
+    latest window is never bypassed with an older one, and a later
+    accreditation is never used."""
     if windows is None:
         return True  # intervals recorded outside the quarterly audit (tests, manual)
-    if day in QUARTER_ENDS:
-        return any(window["as_of"] == day for window in windows)
-    return any(window["as_of"] <= day <= window["holding_until"] for window in windows)
+    prior = [quarter for quarter in QUARTER_ENDS if quarter <= day]
+    if not prior:
+        return False
+    latest = max(prior)
+    return any(window["as_of"] == latest and day <= window["holding_until"] for window in windows)
 
 
 def has_series(entity_id: str | None, day: str) -> bool:

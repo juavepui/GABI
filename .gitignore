@@ -16,6 +16,7 @@ data/nasdaq_data_link_api_key.txt
 data/app_mode.json
 data/overfitting_audit/
 data/full_universe_audit/
+data/historical_validation_2010_2015/
 data/history_refresh/
 
 .streamlit/secrets.toml
