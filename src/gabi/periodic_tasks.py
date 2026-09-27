@@ -46,13 +46,17 @@ def latest_price(symbol: str) -> str | None:
     return row[0] if row else None
 
 
+def live_symbols() -> list[str]:
+    """Universo vigente según la caché (sin red); los que ya salieron del índice no cuentan."""
+    from . import screener
+    return screener.get_universe()["symbol"].tolist()
+
+
 def stale_share(now: datetime | None = None) -> float:
-    """Fracción de los símbolos con precio en los últimos 30 días cuyo último precio es anterior a la última sesión."""
+    """Fracción del universo vigente cuyo último precio es anterior a la última sesión (o no tiene)."""
     session = last_session(now)
-    with storage.get_connection() as conn:
-        rows = conn.execute("SELECT MAX(date) FROM prices WHERE adj_close IS NOT NULL GROUP BY symbol "
-                            "HAVING MAX(date) >= date(?, '-30 day')", (session,)).fetchall()
-    return sum(row[0] < session for row in rows) / len(rows) if rows else 1.0
+    symbols = live_symbols()
+    return sum((latest_price(s) or "") < session for s in symbols) / len(symbols) if symbols else 1.0
 
 
 def prices_fresh(now: datetime | None = None) -> bool:

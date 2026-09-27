@@ -1,6 +1,7 @@
 from datetime import UTC, date, datetime
 
 import pandas as pd
+import pytest
 
 from gabi import blind_validation as bv
 from gabi import config, storage
@@ -16,6 +17,11 @@ def _seed(last_day: str, symbols=("SPY", "RSP", "A")):
     for symbol in symbols:
         storage.upsert_prices(symbol, pd.DataFrame({"Open": closes, "High": closes, "Low": closes, "Close": closes,
                                                     "Adj Close": closes, "Volume": [1] * len(dates)}, index=dates))
+
+
+@pytest.fixture(autouse=True)
+def _universe(monkeypatch):
+    monkeypatch.setattr(pt, "live_symbols", lambda: ["A"])
 
 
 def _calls(monkeypatch) -> list:
@@ -54,6 +60,12 @@ def test_fresh_prices_record_only_due_rebalances(monkeypatch):
     outcome = pt.record_due(AFTER_CLOSE)
     assert calls == [due]
     assert outcome == [{"id": due, "registrado": True, "fecha": "2024-01-10", "hash": "h", "posiciones": 1}]
+
+
+def test_symbols_outside_the_live_universe_do_not_count():
+    _seed("2024-01-10")
+    _seed("2024-01-08", symbols=("OLD",))
+    assert pt.stale_share(AFTER_CLOSE) == 0 and pt.prices_fresh(AFTER_CLOSE)
 
 
 def test_before_the_close_the_previous_session_is_required(monkeypatch):
