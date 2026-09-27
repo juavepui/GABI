@@ -32,6 +32,9 @@ TIINGO_KEY_PATH = DATA_DIR / "tiingo_api_key.txt"
 # Nasdaq Data Link (cuenta gratuita): tabla WIKI/PRICES, congelada en 2018 con
 # los tickers de entonces; fuente archivada para emisores absorbidos (#28).
 NASDAQ_DATA_LINK_KEY_PATH = DATA_DIR / "nasdaq_data_link_api_key.txt"
+# Financial Modeling Prep (plan gratuito, 250 consultas/día): lista de empresas
+# deslistadas y, si el plan lo permite, sus precios (#44).
+FMP_KEY_PATH = DATA_DIR / "fmp_api_key.txt"
 
 # Tipo libre de riesgo usado en Sharpe/Sortino/Alpha cuando no hay una API key
 # de FRED configurada (si la hay, screener.py usa el Treasury 10 años en vivo).
@@ -122,3 +125,19 @@ def load_nasdaq_data_link_key():
 def save_nasdaq_data_link_key(key: str):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     NASDAQ_DATA_LINK_KEY_PATH.write_text(key.strip())
+
+
+def load_fmp_key():
+    """Clave local de Financial Modeling Prep; FMP_API_KEY tiene prioridad."""
+    env = os.environ.get("FMP_API_KEY", "").strip()
+    if env:
+        return env
+    if FMP_KEY_PATH.exists():
+        key = FMP_KEY_PATH.read_text().strip()
+        return key or None
+    return None
+
+
+def save_fmp_key(key: str):
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    FMP_KEY_PATH.write_text(key.strip())

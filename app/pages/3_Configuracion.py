@@ -215,3 +215,24 @@ if st.button("💾 Guardar API key de Nasdaq Data Link"):
         st.success("Clave de Nasdaq Data Link guardada.")
     else:
         st.error("Pega una clave antes de guardar.")
+
+st.divider()
+st.subheader("🔎 API key de Financial Modeling Prep (empresas desaparecidas)")
+st.markdown(
+    "Plan gratuito con 250 consultas al día: lista de empresas deslistadas con su fecha de salida y, si el "
+    "plan lo permite, sus precios históricos, para rellenar huecos del #44. Cuenta gratuita en "
+    "[financialmodelingprep.com](https://site.financialmodelingprep.com/); la clave está en "
+    "**Dashboard → API Keys**."
+)
+current_fmp = config.load_fmp_key()
+new_fmp = st.text_input(
+    "API key de Financial Modeling Prep", value=current_fmp or "", type="password",
+    help="Se guarda localmente en data/fmp_api_key.txt (excluido del control de versiones). "
+         "La variable de entorno FMP_API_KEY, si existe, tiene prioridad.",
+)
+if st.button("💾 Guardar API key de Financial Modeling Prep"):
+    if new_fmp.strip():
+        config.save_fmp_key(new_fmp)
+        st.success("Clave de Financial Modeling Prep guardada.")
+    else:
+        st.error("Pega una clave antes de guardar.")
