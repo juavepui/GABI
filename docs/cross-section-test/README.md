@@ -1,5 +1,10 @@
 # Capacidad predictiva en sección cruzada: resultado (#40)
 
+**Seguimiento (#47):** la [prueba de cola preregistrada](../tail-effect-test/README.md)
+encuentra un patrón retrospectivo concentrado en el Top 5 %, aunque la
+ventaja previa del Top-20 impide tratarlo como confirmación independiente.
+Las conclusiones de abajo corresponden a la prueba global de #40.
+
 Preregistro: [PREREGISTRO.md](PREREGISTRO.md) (sha256
 `07df8d57fcd1c30f651331a70514e9567184a3641d3a602fba14ab9ff78aee1f`, commit
 `44c0e2e`), escrito antes de calcular ningún retorno. Resultados en
