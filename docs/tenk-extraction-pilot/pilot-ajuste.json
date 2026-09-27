@@ -1,0 +1,68 @@
+{
+  "empresas": 15,
+  "tolerancia": 0.005,
+  "por_partida": {
+    "capex": {
+      "con_xbrl": 14,
+      "extraidas": 11,
+      "coinciden": 9,
+      "precision_sobre_extraidas": 0.8181818181818182,
+      "cobertura": 0.7857142857142857
+    },
+    "depreciation": {
+      "con_xbrl": 7,
+      "extraidas": 7,
+      "coinciden": 5,
+      "precision_sobre_extraidas": 0.7142857142857143,
+      "cobertura": 1.0
+    },
+    "equity": {
+      "con_xbrl": 14,
+      "extraidas": 14,
+      "coinciden": 9,
+      "precision_sobre_extraidas": 0.6428571428571429,
+      "cobertura": 1.0
+    },
+    "long_term_debt": {
+      "con_xbrl": 9,
+      "extraidas": 8,
+      "coinciden": 5,
+      "precision_sobre_extraidas": 0.625,
+      "cobertura": 0.8888888888888888
+    },
+    "net_income": {
+      "con_xbrl": 15,
+      "extraidas": 15,
+      "coinciden": 10,
+      "precision_sobre_extraidas": 0.6666666666666666,
+      "cobertura": 1.0
+    },
+    "operating_cash_flow": {
+      "con_xbrl": 15,
+      "extraidas": 13,
+      "coinciden": 10,
+      "precision_sobre_extraidas": 0.7692307692307693,
+      "cobertura": 0.8666666666666667
+    },
+    "operating_income": {
+      "con_xbrl": 9,
+      "extraidas": 6,
+      "coinciden": 3,
+      "precision_sobre_extraidas": 0.5,
+      "cobertura": 0.6666666666666666
+    },
+    "revenue": {
+      "con_xbrl": 15,
+      "extraidas": 15,
+      "coinciden": 8,
+      "precision_sobre_extraidas": 0.5333333333333333,
+      "cobertura": 1.0
+    }
+  },
+  "global": {
+    "comparables": 98,
+    "extraidas": 89,
+    "coinciden": 59,
+    "error_mediano": 0.0
+  }
+}
