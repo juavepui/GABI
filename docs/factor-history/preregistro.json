@@ -1,0 +1,47 @@
+{
+  "sha256": "d86e513845b9872c91f23caacfebbdf36e6bdca82eee1a335fde5ffb94779c99",
+  "spec": {
+    "issue": 45,
+    "stage": "RESEARCH",
+    "hypothesis": "Una mezcla long-short de valor, rentabilidad, momentum y bajo riesgo con los pesos de GABI (30/35/25/10) tiene una prima mensual media positiva.",
+    "weights": {
+      "value": 0.3,
+      "quality": 0.35,
+      "momentum": 0.25,
+      "risk": 0.1
+    },
+    "weights_match_scoring_default": true,
+    "factors": {
+      "value": "HML (Fama-French 5 factores 2x3)",
+      "quality": "RMW (Fama-French 5 factores 2x3)",
+      "momentum": "Mom (EE. UU.) / WML (regiones)",
+      "risk": "EE. UU.: 'Lo 20' menos 'Hi 20' de Portfolios Formed on Variance (ponderados por valor); regiones: sin factor, pesos reescalados sobre 0,9"
+    },
+    "primary": {
+      "sample": "EE. UU. 1963-07 → 2015-12 (antes del diseño de GABI)",
+      "test": "media mensual de la mezcla > 0, t Newey-West (retardos automáticos), unilateral",
+      "alpha": 0.05
+    },
+    "replications": {
+      "samples": {
+        "europa": "Europe, 1990-11 → último mes publicado",
+        "japon": "Japan, 1990-11 → último mes publicado",
+        "asia_pacifico": "Asia_Pacific_ex_Japan, 1990-11 → último mes publicado"
+      },
+      "correction": "Holm sobre las 3, unilateral, alpha 0,05"
+    },
+    "descriptive": [
+      "EE. UU. 2016-2025 (muestra de diseño de GABI; no confirmatorio)",
+      "cada factor aislado",
+      "décadas",
+      "peor racha acumulada (drawdown) de la mezcla"
+    ],
+    "decision": {
+      "idea_respaldada": "principal significativa y al menos 2 de 3 réplicas significativas tras Holm",
+      "respaldo_parcial": "solo una de las dos condiciones",
+      "sin_respaldo": "ninguna"
+    },
+    "caveat": "Las primas de estos factores son conocidas en la literatura: la prueba no es ciega respecto a su existencia; lo nuevo es la mezcla con los pesos de GABI y la regla fijada de antemano."
+  },
+  "experiment_id": 44
+}

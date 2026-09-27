@@ -20,6 +20,7 @@ data/historical_validation_2010_2015/
 data/revalidation_2011_2025/
 data/r3_e6/
 data/cross_section_test/
+data/factor_history/
 data/history_refresh/
 
 .streamlit/secrets.toml
