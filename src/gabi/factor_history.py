@@ -91,6 +91,8 @@ def _first_monthly_table(text: str) -> pd.DataFrame:
     rows: list[list[str]] = []
     started = False
     for line in text.splitlines():
+        if not line.strip():
+            continue  # los CSV de French usan saltos de línea dobles: hay líneas vacías entre filas
         parts = [p.strip() for p in line.split(",")]
         token = parts[0] if parts else ""
         if len(token) == 6 and token.isdigit():
@@ -98,7 +100,7 @@ def _first_monthly_table(text: str) -> pd.DataFrame:
             rows.append(parts)
         elif started:
             break
-        elif len(parts) > 2 and token == "" and any(parts[1:]):
+        elif len(parts) >= 2 and token == "" and any(parts[1:]):
             header = parts[1:]
     frame = pd.DataFrame([r[1:] for r in rows], columns=header[:len(rows[0]) - 1],
                          index=pd.to_datetime([r[0] for r in rows], format="%Y%m"))

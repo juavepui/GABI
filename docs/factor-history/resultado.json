@@ -1,0 +1,261 @@
+{
+  "spec_sha256": "d86e513845b9872c91f23caacfebbdf36e6bdca82eee1a335fde5ffb94779c99",
+  "datos_sha256": {
+    "us_5f": "50a1b336971eebb348a0bbbb11fb1613432d8f7d7febda5dfbf498b092dd0b28",
+    "us_mom": "8d45a3005205ab4814ae95d33ef42710fce38776a586eb9175d1585e725cde2d",
+    "us_var": "d3ad627e1697e5df8c0e4be13abef046ab44e9778f970d8e0b879828e563614e",
+    "europa_5f": "1f374e15fb516968eb34e2f4582dbf44cb363140236c33ecb7c0929fb258f611",
+    "europa_mom": "06383ae538a8cf30cda2216d1eb89e89cb768ef47d31393444ce26be772c3eeb",
+    "japon_5f": "6e493a31a525aa09368b6121ec8026aeecd7346bb79e17805d7c467bae76fbd9",
+    "japon_mom": "758c5306037f97c05eb3f1702fe26c194e5af349a331b5ec22a26613b1b717c5",
+    "asia_pacifico_5f": "ace76de3535c386c20326e907cee6f9a02c9d5edc52863d3ea45a55acacdafec",
+    "asia_pacifico_mom": "d8ffb6d46d4c3e51c099673aa1cb8ab0fd8b06c9dab2065661eb1e4569824026"
+  },
+  "principal": {
+    "meses": 630,
+    "desde": "1963-07-01",
+    "hasta": "2015-12-01",
+    "media_mensual": 0.0039617460317460315,
+    "media_anualizada": 0.048590653475043544,
+    "volatilidad_anual": 0.06854656761095955,
+    "sharpe_anual": 0.6935570085839179,
+    "t_nw": 4.598675859151853,
+    "hac_lags": 6,
+    "p_unilateral": 2.571069210088872e-06,
+    "peor_racha": -0.2822914866866423
+  },
+  "replicas": {
+    "europa": {
+      "meses": 430,
+      "desde": "1990-11-01",
+      "hasta": "2026-08-01",
+      "media_mensual": 0.004758165374677002,
+      "media_anualizada": 0.05861618886819575,
+      "volatilidad_anual": 0.04318721309845155,
+      "sharpe_anual": 1.3221039377086186,
+      "t_nw": 6.834069925434922,
+      "hac_lags": 5,
+      "p_unilateral": 1.4218404231769455e-11,
+      "peor_racha": -0.10304340133874001,
+      "p_holm": 2.843680846353891e-11
+    },
+    "japon": {
+      "meses": 430,
+      "desde": "1990-11-01",
+      "hasta": "2026-08-01",
+      "media_mensual": 0.0016950516795865636,
+      "media_anualizada": 0.02053132691449422,
+      "volatilidad_anual": 0.05221863428847959,
+      "sharpe_anual": 0.3895279995770836,
+      "t_nw": 2.3543437087919723,
+      "hac_lags": 5,
+      "p_unilateral": 0.00950267887896894,
+      "peor_racha": -0.1481402049413052,
+      "p_holm": 0.00950267887896894
+    },
+    "asia_pacifico": {
+      "meses": 430,
+      "desde": "1990-11-01",
+      "hasta": "2026-08-01",
+      "media_mensual": 0.0055946899224806204,
+      "media_anualizada": 0.06924113077316862,
+      "volatilidad_anual": 0.04849884359153695,
+      "sharpe_anual": 1.3842861828871054,
+      "t_nw": 7.011217104647901,
+      "hac_lags": 5,
+      "p_unilateral": 4.615419157971701e-12,
+      "peor_racha": -0.18686082380878455,
+      "p_holm": 1.3846257473915102e-11
+    }
+  },
+  "descriptivas": {
+    "eeuu_2016_2025_diseno": {
+      "meses": 128,
+      "desde": "2016-01-01",
+      "hasta": "2026-08-01",
+      "media_mensual": 0.00047210937499999966,
+      "media_anualizada": 0.005680046233875302,
+      "volatilidad_anual": 0.07584153350541996,
+      "sharpe_anual": 0.07469934003371818,
+      "t_nw": 0.22963219757015899,
+      "hac_lags": 4,
+      "p_unilateral": 0.409373505709548,
+      "peor_racha": -0.1757382463710414
+    },
+    "eeuu_completo": {
+      "meses": 758,
+      "desde": "1963-07-01",
+      "hasta": "2026-08-01",
+      "media_mensual": 0.003372467018469657,
+      "media_anualizada": 0.04122876034141454,
+      "volatilidad_anual": 0.06992619048142495,
+      "sharpe_anual": 0.5787474470296811,
+      "t_nw": 4.182883331491214,
+      "hac_lags": 6,
+      "p_unilateral": 1.607754645138737e-05,
+      "peor_racha": -0.2822914866866423
+    },
+    "factores_aislados_eeuu_1963_2015": {
+      "HML": {
+        "meses": 630,
+        "desde": "1963-07-01",
+        "hasta": "2015-12-01",
+        "media_mensual": 0.003482222222222222,
+        "media_anualizada": 0.04259633687846187,
+        "volatilidad_anual": 0.09602220141619267,
+        "sharpe_anual": 0.43517713664519236,
+        "t_nw": 2.6457689513046887,
+        "hac_lags": 6,
+        "p_unilateral": 0.004177158962214156,
+        "peor_racha": -0.3977131461436548
+      },
+      "RMW": {
+        "meses": 630,
+        "desde": "1963-07-01",
+        "hasta": "2015-12-01",
+        "media_mensual": 0.0026012698412698414,
+        "media_anualizada": 0.031665729158631084,
+        "volatilidad_anual": 0.07714536057265384,
+        "sharpe_anual": 0.40462884434690344,
+        "t_nw": 2.5850583042943946,
+        "hac_lags": 6,
+        "p_unilateral": 0.004980100317244829,
+        "peor_racha": -0.4178744871762301
+      },
+      "MOM": {
+        "meses": 630,
+        "desde": "1963-07-01",
+        "hasta": "2015-12-01",
+        "media_mensual": 0.0070320634920634905,
+        "media_anualizada": 0.08772618226602913,
+        "volatilidad_anual": 0.14661159045037045,
+        "sharpe_anual": 0.5755667859924554,
+        "t_nw": 4.062833751025031,
+        "hac_lags": 6,
+        "p_unilateral": 2.730688822349947e-05,
+        "peor_racha": -0.577764828808089
+      },
+      "RISK": {
+        "meses": 630,
+        "desde": "1963-07-01",
+        "hasta": "2015-12-01",
+        "media_mensual": 0.0024861904761904747,
+        "media_anualizada": 0.030245640995298473,
+        "volatilidad_anual": 0.2200207680553201,
+        "sharpe_anual": 0.1355975891638758,
+        "t_nw": 0.9248517976586795,
+        "hac_lags": 6,
+        "p_unilateral": 0.177698837575213,
+        "peor_racha": -0.7539645428144991
+      }
+    },
+    "decadas_eeuu": {
+      "1970s": {
+        "meses": 120,
+        "desde": "1970-01-01",
+        "hasta": "1979-12-01",
+        "media_mensual": 0.004000999999999999,
+        "media_anualizada": 0.04908274629123244,
+        "volatilidad_anual": 0.05231870814070818,
+        "sharpe_anual": 0.9176832094338884,
+        "t_nw": 2.8954808647034276,
+        "hac_lags": 4,
+        "p_unilateral": 0.002252837521345419,
+        "peor_racha": -0.0956835434963087
+      },
+      "1980s": {
+        "meses": 120,
+        "desde": "1980-01-01",
+        "hasta": "1989-12-01",
+        "media_mensual": 0.005940291666666667,
+        "media_anualizada": 0.07365918395812177,
+        "volatilidad_anual": 0.044150617740522584,
+        "sharpe_anual": 1.6145527208461716,
+        "t_nw": 5.655818932333241,
+        "hac_lags": 4,
+        "p_unilateral": 5.428149885133848e-08,
+        "peor_racha": -0.04378499999999996
+      },
+      "1990s": {
+        "meses": 120,
+        "desde": "1990-01-01",
+        "hasta": "1999-12-01",
+        "media_mensual": 0.003067791666666667,
+        "media_anualizada": 0.03744104472723597,
+        "volatilidad_anual": 0.05453311138772526,
+        "sharpe_anual": 0.6750669283888737,
+        "t_nw": 1.8368343644221354,
+        "hac_lags": 4,
+        "p_unilateral": 0.03436489485051786,
+        "peor_racha": -0.20205197764495508
+      },
+      "2000s": {
+        "meses": 120,
+        "desde": "2000-01-01",
+        "hasta": "2009-12-01",
+        "media_mensual": 0.005269125,
+        "media_anualizada": 0.0650944714230286,
+        "volatilidad_anual": 0.12458902781577448,
+        "sharpe_anual": 0.5075045620670168,
+        "t_nw": 1.5449113969517603,
+        "hac_lags": 4,
+        "p_unilateral": 0.06251147605372198,
+        "peor_racha": -0.22265979026404858
+      },
+      "2010s": {
+        "meses": 120,
+        "desde": "2010-01-01",
+        "hasta": "2019-12-01",
+        "media_mensual": 0.0008090416666666668,
+        "media_anualizada": 0.009751816910491096,
+        "volatilidad_anual": 0.04383150192675882,
+        "sharpe_anual": 0.2214959463680397,
+        "t_nw": 0.8239688486510104,
+        "hac_lags": 4,
+        "p_unilateral": 0.20580282256665672,
+        "peor_racha": -0.06766859705761408
+      },
+      "2020s": {
+        "meses": 80,
+        "desde": "2020-01-01",
+        "hasta": "2026-08-01",
+        "media_mensual": 0.0008758124999999996,
+        "media_anualizada": 0.010560523222727047,
+        "volatilidad_anual": 0.08949986926418921,
+        "sharpe_anual": 0.11742754583223922,
+        "t_nw": 0.2776794397171522,
+        "hac_lags": 3,
+        "p_unilateral": 0.39099191815594825,
+        "peor_racha": -0.17332192252389145
+      }
+    },
+    "correlaciones_eeuu": {
+      "HML": {
+        "HML": 1.0,
+        "RMW": 0.095,
+        "MOM": -0.19,
+        "RISK": 0.353
+      },
+      "RMW": {
+        "HML": 0.095,
+        "RMW": 1.0,
+        "MOM": 0.056,
+        "RISK": 0.538
+      },
+      "MOM": {
+        "HML": -0.19,
+        "RMW": 0.056,
+        "MOM": 1.0,
+        "RISK": 0.163
+      },
+      "RISK": {
+        "HML": 0.353,
+        "RMW": 0.538,
+        "MOM": 0.163,
+        "RISK": 1.0
+      }
+    }
+  },
+  "decision": "idea_respaldada",
+  "code_sha256": "c762e14817b0b086c502e52937a6c40f98654fb4ae8067ce4badee828a6a8783"
+}

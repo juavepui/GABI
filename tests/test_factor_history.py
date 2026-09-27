@@ -9,6 +9,7 @@ SAMPLE = """This file was created by CMPT_ME_BEME_RETS using the 202607 CRSP dat
   Value Weight Returns -- Monthly
 ,Lo 20,Qnt 2,Hi 20
 196307,  1.00,  2.00, -3.00
+
 196308,  0.50,  0.40,  0.30
 
   Equal Weight Returns -- Monthly
