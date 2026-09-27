@@ -1,0 +1,27 @@
+{
+  "sha256": "2fd302ec4004550ec4080c46e8e7f0fd319ce6e3bb9c0f688134c2cae8ba29fa",
+  "spec": {
+    "issue": 49,
+    "stage": "RESEARCH_RETROSPECTIVE",
+    "target": "Composite vigente Top-20 equiponderado trimestral, 57 periodos de #40, retornos brutos",
+    "inputs": "rankings acreditado-38 y forward returns de #40; solo elegibles con retorno observado; sectores faltantes en categoría unknown",
+    "seed": 490047,
+    "n_simulations": 2048,
+    "top_n": 20,
+    "inferential_nulls": {
+      "random_ranking": "permutar orden de todas las elegibles dentro de cada trimestre y elegir Top-N; preserva retornos y shocks de cada trimestre",
+      "random_top_n": "muestra uniforme Top-N sin reemplazo en cada trimestre; equivalente en distribución a ranking aleatorio, seed independiente",
+      "sector_neutral_top_n": "muestra uniforme por sector dentro de cada trimestre conservando los conteos sectoriales del Top-N observado"
+    },
+    "diagnostic_null": "permutar retornos entre empresas del mismo sector y trimestre, manteniendo fija la selección; no preserva autocorrelación idiosincrática",
+    "perturbations": {
+      "date_lag": "usar el ranking del rebalanceo anterior para el trimestre actual; se comparan 56 periodos, sin lookahead",
+      "weights": "256 vectores generados antes de ver retornos; delta uniforme +/-0,025 por bloque, centrado a suma cero y reescalado a máximo absoluto 0,025; no se optimizan",
+      "inverse_sign": "últimas N empresas del Composite; sanity check único"
+    },
+    "metrics": "CAGR geométrico trimestral, Sharpe anualizado sqrt(4), drawdown de NAV trimestral, ES5 de retornos trimestrales, exceso medio vs universo y número de 3 ventanas con exceso positivo",
+    "empirical_p": "(1 + número de simulaciones con métrica >= observada)/(n_simulations+1); cola favorable para las seis métricas; sin elegir la métrica ganadora",
+    "selection_risk": "PBO CSCV de 6 bloques y DSR de la familia fija de 257 pesos, usando stats_rigor; diagnóstico porque no reconstruye todas las configuraciones históricas",
+    "interpretation": "cada nulo plantea una hipótesis condicional distinta; ninguna comparación retrospectiva confirma ventaja futura; no usar percentiles para optimizar pesos"
+  }
+}
