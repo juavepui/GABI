@@ -295,8 +295,20 @@ def fetch_wiki(requests_list: list[tuple[str, str, str]]) -> dict:
         if not path.exists():
             params = {"ticker": wiki._wiki_ticker(symbol), "date.gte": first, "date.lt": min(last, "2018-03-28"),
                       "qopts.columns": "ticker,date,open,high,low,close,volume,adj_close", "api_key": key}
-            response = requests.get(wiki.URL, params=params, timeout=90)
-            response.raise_for_status()
+            response = None
+            for attempt in range(5):
+                try:
+                    response = requests.get(wiki.URL, params=params, timeout=120)
+                except requests.RequestException:
+                    time.sleep(30 * (attempt + 1))  # corte o tiempo agotado: reintentar
+                    continue
+                if response.status_code in (429, 500, 502, 503, 504):
+                    time.sleep(60 * (attempt + 1))
+                    continue
+                break
+            if response is None or response.status_code != 200:
+                counts["failed"] = counts.get("failed", 0) + 1
+                continue
             payload = response.json()["datatable"]
             path.write_text(json.dumps({"columns": [c["name"] for c in payload["columns"]], "data": payload["data"]}),
                             encoding="utf-8")
