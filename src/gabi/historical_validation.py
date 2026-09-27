@@ -227,7 +227,10 @@ def summarize(report: dict, coverage: pd.DataFrame, benchmarks: pd.DataFrame, ou
         "periodos_previstos": len(benchmarks), "periodos_ejecutados_v1_top20": len(executed),
         "periodos_concluyentes": len(conclusive),
         "compuesto_periodos_ejecutados": {c: _compound(executed[c]) for c in columns},
-        "anualizado_periodos_ejecutados": {c: (1 + _compound(executed[c])) ** (1 / years) - 1 if years else None
+        # Un compuesto por debajo de -100 % (p. ej. el retorno implícito de los
+        # excluidos, amplificado) no tiene tasa anual real.
+        "anualizado_periodos_ejecutados": {c: (1 + _compound(executed[c])) ** (1 / years) - 1
+                                           if years and 1 + _compound(executed[c]) > 0 else None
                                            for c in columns},
         "compuesto_periodos_concluyentes": {c: _compound(conclusive[c]) for c in columns},
         "exceso_medio_trimestral_top20_vs_spy": float((executed.v1_top20 - executed.spy).mean()),

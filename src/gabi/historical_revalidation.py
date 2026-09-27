@@ -98,18 +98,49 @@ def _context(variant: Variant) -> ExitStack:
     return stack
 
 
+def stale_issuer_facts(max_gap_days: int = 200) -> list[tuple[str, str | None, str]]:
+    """Accredited 2016-2025 CIKs whose SEC facts stop well before their interval ends.
+
+    The accredited path reads fundamentals by CIK; facts imported only up to
+    2015 (#29) would freeze a company's fundamentals and trip the recycling
+    guard. Found during #35 and fixed by re-ingesting Company Facts.
+    """
+    from datetime import date
+
+    from . import historical_archive, historical_period, storage
+    with storage.get_connection() as conn:
+        intervals = conn.execute(
+            "SELECT cik,MAX(valid_to) FROM historical_identity_intervals WHERE source_id=? AND status IN "
+            f"({','.join('?' * len(historical_archive.ACCREDITED_IDENTITY_TIERS))}) GROUP BY cik",
+            (historical_period.P2016.identity_source, *historical_archive.ACCREDITED_IDENTITY_TIERS)).fetchall()
+        latest = dict(conn.execute(
+            "SELECT substr(entity_id,5),MAX(json_extract(payload_json,'$.filed_date')) FROM entity_observations "
+            "WHERE dataset='edgar_facts' GROUP BY entity_id").fetchall())
+    horizon = historical_period.P2016.last_day
+    return [(cik, latest.get(cik), end) for cik, end in intervals
+            if latest.get(cik) is None or
+            (date.fromisoformat(min(end, horizon)) - date.fromisoformat(latest[cik])).days > max_gap_days]
+
+
 def prepare(key: str) -> dict:
     variant = VARIANTS[key]
+    if "2016-2025" in variant.periods and (stale := stale_issuer_facts()):
+        raise ValueError(f"{len(stale)} CIK acreditados con hechos SEC desactualizados, p. ej. {stale[:3]}")
     with _context(variant):
         return fua.prepare(variant.cache, start=variant.start, stop=STOP, extra_sources=extra_sources())
 
 
-def evaluate(view: str) -> dict:
+def evaluate(view: str, *, analysis_only: bool = False) -> dict:
     key, start = VIEWS[view]
     variant = VARIANTS[key]
     output = OUTPUT / view
     with _context(variant):
-        report = fua.evaluate(variant.cache, output, start=start)
+        if analysis_only:
+            # Rehace solo el análisis sobre los backtests ya congelados.
+            report = json.loads((output / "audit.json").read_text(encoding="utf-8"))
+            report.pop("historical_validation", None)
+        else:
+            report = fua.evaluate(variant.cache, output, start=start)
         if variant.periods:
             manifest = report["inputs"]
             config_record = {"variant": key, "view": view, "start": start, "stop_exclusive": STOP,
@@ -299,6 +330,19 @@ def regimes(view: str) -> dict:
     """Estabilidad temporal (#13): FF5 + Momentum sobre los mismos 36 trimestres 2016-07 → 2025-07."""
     factors = pd.read_csv(FACTORS)
     periods = pd.read_csv(OUTPUT / view / f"v1-top{PRIMARY_TOP}-periods.csv")
+    source = "v1"
+    if not set(factors.fecha) <= set(periods.fecha):
+        # Desviación técnica registrada: el V1 descarta un trimestre sin precio
+        # (fail-closed) y el #13 exige trimestres consecutivos. Se usan los
+        # retornos trimestrales del V2 (NAV entre salidas consecutivas).
+        source = "v2"
+        v2 = pd.read_csv(OUTPUT / view / f"v2-top{PRIMARY_TOP}-periods.csv")
+        nav = pd.read_csv(OUTPUT / view / f"v2-top{PRIMARY_TOP}-nav.csv", index_col=0, parse_dates=True)["strategy"]
+        exits = [pd.Timestamp(day) for day in v2.hasta]
+        starts = [nav.index[0], *exits[:-1]]
+        periods = pd.DataFrame({"fecha": v2.fecha, "hasta": v2.hasta,
+                                "retorno": [float(nav.asof(end) / nav.asof(start) - 1)
+                                            for start, end in zip(starts, exits, strict=True)]})
     merged = factors.drop(columns=["retorno", "excess_return"]).merge(
         periods[["fecha", "hasta", "retorno"]], on="fecha", how="left", suffixes=("", "_variante"))
     if merged.retorno.isna().any() or (merged.hasta != merged.hasta_variante).any():
@@ -308,7 +352,7 @@ def regimes(view: str) -> dict:
                      if c not in {"fecha", "hasta", "retorno", "RF", "excess_return"}]]]
     inputs.to_csv(OUTPUT / view / "regimes-inputs.csv", index=False)
     audit = fs.analyze(inputs)
-    return {"completa": audit["full"], "mitades": audit["halves"], "rolling": audit["rolling"],
+    return {"fuente_retornos": source, "completa": audit["full"], "mitades": audit["halves"], "rolling": audit["rolling"],
             "episodios": audit["events"], "anios": audit["calendar_years"]}
 
 
@@ -379,8 +423,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prepare", choices=sorted(VARIANTS))
     parser.add_argument("--evaluate", choices=sorted(VIEWS))
+    parser.add_argument("--analyze", choices=sorted(VIEWS), help="Solo el análisis, sin repetir backtests")
     parser.add_argument("--summarize", action="store_true")
     args = parser.parse_args()
+    if args.analyze:
+        report = evaluate(args.analyze, analysis_only=True)
+        print(json.dumps(fs._json_safe(report.get("historical_validation", {}).get("summary", {})),
+                         ensure_ascii=False, indent=2))
     if args.prepare:
         manifest = prepare(args.prepare)
         print(json.dumps({"variant": args.prepare, "dates": len(manifest["dates"])}))
