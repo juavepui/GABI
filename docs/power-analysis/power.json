@@ -1,0 +1,157 @@
+{
+  "issue": 39,
+  "alpha_unilateral": 0.05,
+  "potencia_objetivo": 0.8,
+  "cartera": [
+    {
+      "prueba": "vs_spy_2011_2025",
+      "trimestres": 55,
+      "exceso_medio": 0.010643999620091516,
+      "desviacion": 0.03620774300210402,
+      "ir_anual": 0.5879405197652334,
+      "t": 2.180141796592581,
+      "potencia_actual": 0.7037746971616136,
+      "trimestres_80": 71.54204542105023,
+      "anios_80": 17.885511355262558,
+      "efecto_minimo_detectable_por_anios": {
+        "10": 0.014234936398068485,
+        "14.25": 0.011924717489229391,
+        "20": 0.010065620056833433,
+        "25": 0.009002964273105941
+      }
+    },
+    {
+      "prueba": "vs_universo_2011_2025",
+      "trimestres": 55,
+      "exceso_medio": 0.0121259688689067,
+      "desviacion": 0.03326833973167188,
+      "ir_anual": 0.7289795022360328,
+      "t": 2.7031283408033078,
+      "potencia_actual": 0.8550348912490671,
+      "trimestres_80": 46.53690569298157,
+      "anios_80": 11.634226423245392,
+      "efecto_minimo_detectable_por_anios": {
+        "10": 0.013079321186138687,
+        "14.25": 0.010956649593233128,
+        "20": 0.009248476704035545,
+        "25": 0.008272089039418673
+      }
+    },
+    {
+      "prueba": "vs_spy_2016_2025",
+      "trimestres": 37,
+      "exceso_medio": 0.0090955205871189,
+      "desviacion": 0.03924473753546266,
+      "ir_anual": 0.4635281649622413,
+      "t": 1.4097658767851067,
+      "potencia_actual": 0.4070703131241312,
+      "trimestres_80": 115.10014765579781,
+      "anios_80": 28.775036913949453,
+      "efecto_minimo_detectable_por_anios": {
+        "10": 0.015428919243702629,
+        "14.25": 0.012924926251883594,
+        "20": 0.010909893423601748,
+        "25": 0.009758105328980566
+      }
+    },
+    {
+      "prueba": "vs_universo_2016_2025",
+      "trimestres": 37,
+      "exceso_medio": 0.011639067866244062,
+      "desviacion": 0.03678533259902511,
+      "ir_anual": 0.6328102558220459,
+      "t": 1.9246172564513855,
+      "potencia_actual": 0.6101705713449166,
+      "trimestres_80": 61.75627870719492,
+      "anios_80": 15.43906967679873,
+      "efecto_minimo_detectable_por_anios": {
+        "10": 0.014462013550485302,
+        "14.25": 0.012114941794776457,
+        "20": 0.010226187851159895,
+        "25": 0.009146580474350411
+      }
+    }
+  ],
+  "seccion_cruzada": [
+    {
+      "ic_medio": 0.02,
+      "desviacion_ic": 0.1,
+      "ir_del_ic_anual": 0.39999999999999997,
+      "trimestres_80": 154.56393080049418,
+      "anios_80": 38.640982700123544,
+      "potencia_con_57_trimestres": 0.44635071188035896
+    },
+    {
+      "ic_medio": 0.03,
+      "desviacion_ic": 0.1,
+      "ir_del_ic_anual": 0.6,
+      "trimestres_80": 68.69508035577519,
+      "anios_80": 17.173770088943797,
+      "potencia_con_57_trimestres": 0.7324029388605472
+    },
+    {
+      "ic_medio": 0.05,
+      "desviacion_ic": 0.1,
+      "ir_del_ic_anual": 1.0,
+      "trimestres_80": 24.730228928079065,
+      "anios_80": 6.182557232019766,
+      "potencia_con_57_trimestres": 0.983416818132197
+    },
+    {
+      "ic_medio": 0.08,
+      "desviacion_ic": 0.1,
+      "ir_del_ic_anual": 1.5999999999999999,
+      "trimestres_80": 9.660245675030886,
+      "anios_80": 2.4150614187577215,
+      "potencia_con_57_trimestres": 0.9999944617172517
+    },
+    {
+      "ic_medio": 0.02,
+      "desviacion_ic": 0.15,
+      "ir_del_ic_anual": 0.26666666666666666,
+      "trimestres_80": 347.7688443011118,
+      "anios_80": 86.94221107527795,
+      "potencia_con_57_trimestres": 0.2616688081069568
+    },
+    {
+      "ic_medio": 0.03,
+      "desviacion_ic": 0.15,
+      "ir_del_ic_anual": 0.4,
+      "trimestres_80": 154.56393080049418,
+      "anios_80": 38.640982700123544,
+      "potencia_con_57_trimestres": 0.446350711880359
+    },
+    {
+      "ic_medio": 0.05,
+      "desviacion_ic": 0.15,
+      "ir_del_ic_anual": 0.6666666666666667,
+      "trimestres_80": 55.64301508817788,
+      "anios_80": 13.91075377204447,
+      "potencia_con_57_trimestres": 0.8083297536749653
+    },
+    {
+      "ic_medio": 0.08,
+      "desviacion_ic": 0.15,
+      "ir_del_ic_anual": 1.0666666666666667,
+      "trimestres_80": 21.73555276881949,
+      "anios_80": 5.433888192204872,
+      "potencia_con_57_trimestres": 0.9913841137193733
+    }
+  ],
+  "multiples_pruebas": {
+    "n_trials": 29,
+    "sharpe_maximo_esperado_por_azar_anual": 0.19177974999144942,
+    "nota": "El DSR compara el Sharpe elegido con este listón, no con 0: con más configuraciones probadas, más alto el listón. Cada prueba nueva lo sube."
+  },
+  "prospectiva": {
+    "supuesto": "el efecto futuro igual al observado 2011-2025 (optimista si hubo sobreajuste)",
+    "anios_prospectivos_solos_80": 17.885511355262558,
+    "anios_prospectivos_si_se_combinan_con_2011_2025_80": 4.135511355262558,
+    "advertencia": "Combinar exige una regla fijada de antemano y tratar 2016-2025 como muestra de diseño (#42)."
+  },
+  "code_sha256": "a15b4ee1dae058fef8cf2d1fc90ae79cb135b25e6f609ff27781bc57e4921f37",
+  "inputs_sha256": {
+    "v1-top20-periods.csv": "8b0a283f6ee70e757936b12726ee5f4c4567c1f6531db65be92ab3065fc52e8d",
+    "benchmarks-by-period.csv": "237c1d176c8675626a0d9886c31056233c21b24c802623f857a7c34341c6c186"
+  }
+}
