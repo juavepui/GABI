@@ -1440,6 +1440,30 @@ rebalanceo real (10 símbolos reales del ranking de hoy, precios reales), confir
 bloqueado no expone ninguna clave de rendimiento y que la integridad verifica correctamente — y limpiado
 después de la prueba.
 
+### Mantenimiento periódico: que las pruebas ciegas no dependan de acordarse (#46)
+
+Las pruebas ciegas (id 1, GABI; id 3, hipótesis de valor) solo valen si cada rebalanceo se registra
+**el día que toca y con los precios de ese día**. Registrarlo tarde o con precios viejos haría que el
+trimestre empezara con información ya conocida. Hay una sola orden para todo:
+
+| Orden | Qué hace | ¿Modifica algo? |
+| --- | --- | --- |
+| `python -m gabi.periodic_tasks --status` | Cuándo toca el próximo rebalanceo de cada prueba, si su cadena de hashes está intacta, si los precios están al día y cómo va la descarga de Tiingo del #44 | No |
+| `python -m gabi.periodic_tasks --run` | Actualiza el universo y sus datos (incluidos SPY y RSP) y registra los rebalanceos vencidos | Sí |
+| `python -m gabi.periodic_tasks --tiingo` | Reanuda la descarga de precios de empresas desaparecidas del #44 (tarda horas; se para sola si se agota el cupo mensual) | Sí |
+
+`--run` **se niega a registrar** si todavía no ha llegado la fecha, si SPY o RSP no tienen el último
+cierre, si más de un 5 % del universo no lo tiene o si la cadena de hashes está rota, y explica por qué.
+La página 🔒 Blind Forward Validation aplica la misma regla a su botón, y la portada muestra un aviso
+cuando falta una semana o menos para un rebalanceo. Lo hecho queda en `data/periodic_tasks/log.jsonl`.
+
+**Cuándo ejecutarlo**: el día del rebalanceo (el primero es el **21 de diciembre de 2026**), después
+de las 22:00 hora española, que es cuando cierra la bolsa de Nueva York. Para no tener que acordarse,
+`scripts/programar_tareas.ps1` lo programa en el Programador de tareas de Windows (de martes a sábado a
+las 23:30, y Tiingo una vez al mes). Es opcional y no se instala solo: hay que ejecutarlo a propósito
+desde PowerShell. El ordenador tiene que estar encendido a esa hora; si no, la tarea se ejecuta al
+encenderlo.
+
 ## 🧮 Portfolio Lab: comparar esquemas de ponderación + stress tests
 
 Cuarta propuesta del usuario, la más grande de las cuatro. Hasta ahora todo el backtesting asumía

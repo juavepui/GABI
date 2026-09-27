@@ -23,6 +23,19 @@ st.set_page_config(page_title="GABI — Screener", page_icon="📈", layout="wid
 inject_custom_css()
 
 
+def _aviso_rebalanceos():
+    """Aviso de pruebas ciegas con un rebalanceo en 7 días o vencido (#46)."""
+    from gabi import periodic_tasks
+    try:
+        pending = periodic_tasks.due_soon()
+    except Exception:  # la portada no debe fallar por esto
+        return
+    for row in pending:
+        when = "vencido" if row["dias"] <= 0 else f"en {row['dias']} día(s)"
+        st.info(f"🗓️ Rebalanceo de la prueba ciega #{row['id']} ({row['nombre']}) {when}, el {row['proximo']}. "
+                "Ejecuta `python -m gabi.periodic_tasks --run` después del cierre del mercado.", icon="🗓️")
+
+
 def inicio():
     st.title("📈 GABI — Screener de acciones (S&P 500)")
 
@@ -32,6 +45,8 @@ def inicio():
         "tener retraso o errores. Verifica siempre antes de invertir.",
         icon="⚠️",
     )
+
+    _aviso_rebalanceos()
 
     st.markdown(
         """

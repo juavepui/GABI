@@ -8,6 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from gabi import blind_validation as bv
+from gabi import periodic_tasks
 
 st.title("🔒 Blind Forward Validation")
 st.caption(
@@ -100,8 +101,14 @@ else:
             "después de crearse.")
 
 can_record = status["next_rebalance_due"] is not None and date.today().isoformat() >= status["next_rebalance_due"]
-if st.button("📋 Registrar rebalanceo de hoy", disabled=not can_record,
-            help=None if can_record else "Todavía no toca el siguiente rebalanceo."):
+# #46: con precios viejos el primer trimestre empezaría con información ya conocida.
+fresh = not can_record or periodic_tasks.prices_fresh()
+if can_record and not fresh:
+    st.warning("Los precios no son del último cierre del mercado (o falta RSP). Actualiza los datos o "
+               "ejecuta `python -m gabi.periodic_tasks --run` antes de registrar.")
+if st.button("📋 Registrar rebalanceo de hoy", disabled=not (can_record and fresh),
+            help=None if can_record and fresh else "Todavía no toca el siguiente rebalanceo o los precios "
+                                                    "no están al día."):
     try:
         with st.spinner("Reconstruyendo el ranking de hoy y fijando precios de entrada..."):
             result = bv.record_rebalance(vid)
