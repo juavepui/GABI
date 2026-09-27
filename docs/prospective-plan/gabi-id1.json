@@ -1,0 +1,22 @@
+{
+  "sha256": "3ed739b2370d76a9a4c84ab4fea20ea7ed420904e19c4d6a98a7fa66f0902132",
+  "plan": {
+    "issue": 42,
+    "blind_validation_id": 1,
+    "look": "2029-09-21",
+    "trimestres": 12,
+    "alpha_unilateral": 0.05,
+    "umbral_z": 1.6448536269514722,
+    "primary": "exceso trimestral equiponderado del Top-20 ciego frente al SPY; z = media / (desv. / raíz(n))",
+    "secondary": "exceso frente a RSP (S&P 500 equiponderado); Holm sobre ambas",
+    "combination": {
+      "rule": "Stouffer ponderado por raíz del número de trimestres con el retrospectivo acreditado fuera de la muestra de diseño (2011-07 → 2015-10, 18 trimestres)",
+      "excluded": "2016-2025 (muestra de diseño)"
+    },
+    "potencia_si_efecto_observado": {
+      "sola": 0.26418262959867755,
+      "combinada": 0.4836379254996348
+    },
+    "lectura": "Con 12 trimestres, no cruzar el umbral NO demuestra que GABI no funcione: la prueba tiene poca potencia. Cruzarlo sería evidencia a favor."
+  }
+}

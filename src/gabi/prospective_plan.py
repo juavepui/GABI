@@ -119,3 +119,37 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def gabi_blind_plan() -> dict:
+    """Plan fijo para la prueba ciega de GABI (id 1): una única revisión en su desbloqueo (#42).
+
+    El propietario decidió no prolongarla (2026-09-27). Se deja escrita la
+    potencia esperable para que el resultado de 2029 se lea con esa cautela.
+    """
+    quarters = 12
+    drift = OBSERVED_QUARTERLY_SHARPE
+    bound = float(norm.ppf(1 - ALPHA))
+    return {
+        "issue": 42, "blind_validation_id": 1, "look": "2029-09-21", "trimestres": quarters,
+        "alpha_unilateral": ALPHA, "umbral_z": bound,
+        "primary": "exceso trimestral equiponderado del Top-20 ciego frente al SPY; z = media / (desv. / raíz(n))",
+        "secondary": "exceso frente a RSP (S&P 500 equiponderado); Holm sobre ambas",
+        "combination": {"rule": "Stouffer ponderado por raíz del número de trimestres con el retrospectivo "
+                                "acreditado fuera de la muestra de diseño (2011-07 → 2015-10, 18 trimestres)",
+                        "excluded": "2016-2025 (muestra de diseño)"},
+        "potencia_si_efecto_observado": {"sola": float(norm.cdf(drift * np.sqrt(quarters) - bound)),
+                                         "combinada": float(norm.cdf(drift * np.sqrt(quarters + RETRO_NON_DESIGN_QUARTERS)
+                                                                     - bound))},
+        "lectura": "Con 12 trimestres, no cruzar el umbral NO demuestra que GABI no funcione: la prueba tiene poca "
+                   "potencia. Cruzarlo sería evidencia a favor.",
+    }
+
+
+def write_gabi_blind_plan() -> dict:
+    record = gabi_blind_plan()
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    payload = {"sha256": plan_hash(record), "plan": record}
+    (OUTPUT / "gabi-id1.json").write_text(json.dumps(fs._json_safe(payload), ensure_ascii=False, indent=2) + "\n",
+                                          encoding="utf-8")
+    return payload
