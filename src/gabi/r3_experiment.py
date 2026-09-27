@@ -166,7 +166,8 @@ def risk_window_metrics(date: str, table: pd.DataFrame) -> pd.DataFrame:
         rows.append({"symbol": symbol, "sessions": len(prices),
                      "volatility_full": full["volatility"], "max_drawdown_full": full["max_drawdown"],
                      "volatility": window["volatility"], "max_drawdown": window["max_drawdown"]})
-    return pd.DataFrame(rows).set_index("symbol")
+    columns = ["sessions", "volatility_full", "max_drawdown_full", "volatility", "max_drawdown"]
+    return pd.DataFrame(rows).set_index("symbol").reindex(columns=columns)
 
 
 def prepare_risk_window() -> dict:
@@ -179,7 +180,7 @@ def prepare_risk_window() -> dict:
             if not path.exists():
                 risk_window_metrics(date, _table(date)).to_csv(path)
             frame = pd.read_csv(path, index_col=0)
-            table = _table(date)
+            table = _table(date).reindex(columns=["volatility", "max_drawdown"])
             common = frame.index.intersection(table.index)
             mismatch = int(sum(not np.isclose(frame.loc[s, f"{m}_full"], table.loc[s, m], equal_nan=True, rtol=1e-9)
                                for s in common for m in ("volatility", "max_drawdown")))

@@ -1,0 +1,384 @@
+{
+  "top20": {
+    "windows": {
+      "completa_2011_2025": {
+        "cagr_net": 0.18821433252038733,
+        "es_95": 0.028961241170058973,
+        "es_99": 0.04928837504473047,
+        "drawdown": -0.3281482021700648,
+        "turnover": 69.55558479336166,
+        "commissions": 1502.0,
+        "spread_cost": 8454.350984871286,
+        "cost_total": 9956.350984871286,
+        "initial_value": 100000.0,
+        "final_value": 1168689.8118427368,
+        "n_periods": 57,
+        "beta_spy": 1.0040701086873074,
+        "n_obs": 3584
+      },
+      "2011_2015": {
+        "cagr_net": 0.18024664919689615,
+        "es_95": 0.0267220011137511,
+        "es_99": 0.041562360166817,
+        "drawdown": -0.21563140862055685,
+        "turnover": 70.12068861841425,
+        "commissions": 470.0,
+        "spread_cost": 856.4024452884769,
+        "cost_total": 1326.4024452884769,
+        "initial_value": 100000.0,
+        "final_value": 210839.2130354432,
+        "n_periods": 18,
+        "beta_spy": 1.0539735236351748,
+        "n_obs": 1132
+      },
+      "2016_2020": {
+        "cagr_net": 0.2154161039558049,
+        "es_95": 0.033472631876585515,
+        "es_99": 0.06034200739046303,
+        "drawdown": -0.3281482021700648,
+        "turnover": 67.47883072223979,
+        "commissions": 526.0,
+        "spread_cost": 2152.9334223948244,
+        "cost_total": 2678.9334223948244,
+        "initial_value": 210839.2130354432,
+        "final_value": 559435.8473536713,
+        "n_periods": 20,
+        "beta_spy": 1.0776480652263773,
+        "n_obs": 1259
+      },
+      "2021_2025": {
+        "cagr_net": 0.1676601306590122,
+        "es_95": 0.026216677592494107,
+        "es_99": 0.041721509072121285,
+        "drawdown": -0.23129563644335915,
+        "turnover": 71.20628019186115,
+        "commissions": 506.0,
+        "spread_cost": 5445.015117187984,
+        "cost_total": 5951.015117187984,
+        "initial_value": 559435.8473536713,
+        "final_value": 1168689.8118427368,
+        "n_periods": 19,
+        "beta_spy": 0.8721345321871291,
+        "n_obs": 1193
+      }
+    },
+    "skipped": [
+      {
+        "fecha": "2010-01-02",
+        "motivo": "cobertura insuficiente del universo (0/499)"
+      },
+      {
+        "fecha": "2010-04-02",
+        "motivo": "cobertura insuficiente del universo (75/499)"
+      },
+      {
+        "fecha": "2010-07-02",
+        "motivo": "cobertura insuficiente del universo (78/499)"
+      },
+      {
+        "fecha": "2010-10-02",
+        "motivo": "cobertura insuficiente del universo (86/497)"
+      },
+      {
+        "fecha": "2011-01-02",
+        "motivo": "cobertura insuficiente del universo (102/497)"
+      },
+      {
+        "fecha": "2011-04-02",
+        "motivo": "cobertura insuficiente del universo (240/497)"
+      }
+    ],
+    "exit_events": [
+      {
+        "symbol": "NVLS",
+        "fecha": "2012-06-04",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      },
+      {
+        "symbol": "PNR",
+        "fecha": "2014-06-02",
+        "estado": "series_ended_without_event",
+        "estricto": false
+      },
+      {
+        "symbol": "GOOG",
+        "fecha": "2015-10-01",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      },
+      {
+        "symbol": "GOOGL",
+        "fecha": "2015-10-01",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      },
+      {
+        "symbol": "AVGO",
+        "fecha": "2016-01-29",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      },
+      {
+        "symbol": "RAI",
+        "fecha": "2017-07-24",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      },
+      {
+        "symbol": "DIS",
+        "fecha": "2019-03-19",
+        "estado": "succession_one_for_one",
+        "estricto": true
+      },
+      {
+        "symbol": "ALXN",
+        "fecha": "2020-12-11",
+        "estado": "series_ended_without_event",
+        "estricto": false
+      },
+      {
+        "symbol": "BG",
+        "fecha": "2023-10-31",
+        "estado": "succession_one_for_one",
+        "estricto": true
+      },
+      {
+        "symbol": "ZION",
+        "fecha": "2024-03-15",
+        "estado": "series_ended_without_event",
+        "estricto": false
+      },
+      {
+        "symbol": "MRO",
+        "fecha": "2024-11-21",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      }
+    ],
+    "strict_result": false,
+    "executed": [
+      "2011-07-02",
+      "2011-10-02",
+      "2012-01-02",
+      "2012-04-02",
+      "2012-07-02",
+      "2012-10-02",
+      "2013-01-02",
+      "2013-04-02",
+      "2013-07-02",
+      "2013-10-02",
+      "2014-01-02",
+      "2014-04-02",
+      "2014-07-02",
+      "2014-10-02",
+      "2015-01-02",
+      "2015-04-02",
+      "2015-07-02",
+      "2015-10-02",
+      "2016-01-02",
+      "2016-04-02",
+      "2016-07-02",
+      "2016-10-02",
+      "2017-01-02",
+      "2017-04-02",
+      "2017-07-02",
+      "2017-10-02",
+      "2018-01-02",
+      "2018-04-02",
+      "2018-07-02",
+      "2018-10-02",
+      "2019-01-02",
+      "2019-04-02",
+      "2019-07-02",
+      "2019-10-02",
+      "2020-01-02",
+      "2020-04-02",
+      "2020-07-02",
+      "2020-10-02",
+      "2021-01-02",
+      "2021-04-02",
+      "2021-07-02",
+      "2021-10-02",
+      "2022-01-02",
+      "2022-04-02",
+      "2022-07-02",
+      "2022-10-02",
+      "2023-01-02",
+      "2023-04-02",
+      "2023-07-02",
+      "2023-10-02",
+      "2024-01-02",
+      "2024-04-02",
+      "2024-07-02",
+      "2024-10-02",
+      "2025-01-02",
+      "2025-04-02",
+      "2025-07-02"
+    ]
+  },
+  "top10": {
+    "windows": {
+      "completa_2011_2025": {
+        "cagr_net": 0.20224554700994335,
+        "es_95": 0.03111578390254513,
+        "es_99": 0.05371998720680939,
+        "drawdown": -0.35072248656977856,
+        "turnover": 79.09128972955943,
+        "commissions": 782.0,
+        "spread_cost": 11238.869327909924,
+        "cost_total": 12020.869327909924,
+        "initial_value": 100000.0,
+        "final_value": 1381598.5147111253,
+        "n_periods": 57,
+        "beta_spy": 1.033196213795757,
+        "n_obs": 3584
+      },
+      "2011_2015": {
+        "cagr_net": 0.1904720132709281,
+        "es_95": 0.028409811702713388,
+        "es_99": 0.04446124360867489,
+        "drawdown": -0.2401027562841157,
+        "turnover": 79.81765953724232,
+        "commissions": 245.0,
+        "spread_cost": 991.332198419841,
+        "cost_total": 1236.332198419841,
+        "initial_value": 100000.0,
+        "final_value": 219186.64831737036,
+        "n_periods": 18,
+        "beta_spy": 1.0840245290539134,
+        "n_obs": 1132
+      },
+      "2016_2020": {
+        "cagr_net": 0.2610872816837426,
+        "es_95": 0.03617696190766909,
+        "es_99": 0.06809686168748942,
+        "drawdown": -0.35072248656977856,
+        "turnover": 68.76521660529544,
+        "commissions": 265.0,
+        "spread_cost": 2385.911611352378,
+        "cost_total": 2650.911611352378,
+        "initial_value": 219186.64831737036,
+        "final_value": 699433.9252134734,
+        "n_periods": 20,
+        "beta_spy": 1.1455279303587762,
+        "n_obs": 1259
+      },
+      "2021_2025": {
+        "cagr_net": 0.15398692788141388,
+        "es_95": 0.028219003904441833,
+        "es_99": 0.044751711937881807,
+        "drawdown": -0.25247852202191223,
+        "turnover": 89.27270056887453,
+        "commissions": 272.0,
+        "spread_cost": 7861.6255181377055,
+        "cost_total": 8133.6255181377055,
+        "initial_value": 699433.9252134734,
+        "final_value": 1381598.5147111253,
+        "n_periods": 19,
+        "beta_spy": 0.8524669260848717,
+        "n_obs": 1193
+      }
+    },
+    "skipped": [
+      {
+        "fecha": "2010-01-02",
+        "motivo": "cobertura insuficiente del universo (0/499)"
+      },
+      {
+        "fecha": "2010-04-02",
+        "motivo": "cobertura insuficiente del universo (75/499)"
+      },
+      {
+        "fecha": "2010-07-02",
+        "motivo": "cobertura insuficiente del universo (78/499)"
+      },
+      {
+        "fecha": "2010-10-02",
+        "motivo": "cobertura insuficiente del universo (86/497)"
+      },
+      {
+        "fecha": "2011-01-02",
+        "motivo": "cobertura insuficiente del universo (102/497)"
+      },
+      {
+        "fecha": "2011-04-02",
+        "motivo": "cobertura insuficiente del universo (240/497)"
+      }
+    ],
+    "exit_events": [
+      {
+        "symbol": "AVGO",
+        "fecha": "2016-01-29",
+        "estado": "terminal_return_unknown",
+        "estricto": false
+      },
+      {
+        "symbol": "BG",
+        "fecha": "2023-10-31",
+        "estado": "succession_one_for_one",
+        "estricto": true
+      }
+    ],
+    "strict_result": false,
+    "executed": [
+      "2011-07-02",
+      "2011-10-02",
+      "2012-01-02",
+      "2012-04-02",
+      "2012-07-02",
+      "2012-10-02",
+      "2013-01-02",
+      "2013-04-02",
+      "2013-07-02",
+      "2013-10-02",
+      "2014-01-02",
+      "2014-04-02",
+      "2014-07-02",
+      "2014-10-02",
+      "2015-01-02",
+      "2015-04-02",
+      "2015-07-02",
+      "2015-10-02",
+      "2016-01-02",
+      "2016-04-02",
+      "2016-07-02",
+      "2016-10-02",
+      "2017-01-02",
+      "2017-04-02",
+      "2017-07-02",
+      "2017-10-02",
+      "2018-01-02",
+      "2018-04-02",
+      "2018-07-02",
+      "2018-10-02",
+      "2019-01-02",
+      "2019-04-02",
+      "2019-07-02",
+      "2019-10-02",
+      "2020-01-02",
+      "2020-04-02",
+      "2020-07-02",
+      "2020-10-02",
+      "2021-01-02",
+      "2021-04-02",
+      "2021-07-02",
+      "2021-10-02",
+      "2022-01-02",
+      "2022-04-02",
+      "2022-07-02",
+      "2022-10-02",
+      "2023-01-02",
+      "2023-04-02",
+      "2023-07-02",
+      "2023-10-02",
+      "2024-01-02",
+      "2024-04-02",
+      "2024-07-02",
+      "2024-10-02",
+      "2025-01-02",
+      "2025-04-02",
+      "2025-07-02"
+    ]
+  }
+}

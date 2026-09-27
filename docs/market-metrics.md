@@ -74,3 +74,21 @@ Cambiarlo es una decisión de modelo que altera los resultados de 2016+, y el
 #31 prohíbe decidirlo en silencio. Queda planteado en el #37: fijar una ventana
 común (por ejemplo, 3 años) y revalidarla con protocolo preregistrado, o
 mantener la semántica actual documentando la diferencia entre periodos.
+
+### Decisión (#37, resuelto en el experimento preregistrado del #36)
+
+Se probó una ventana común de **756 sesiones (≈ 3 años)** para `volatility` y
+`max_drawdown` como variante `e6b_riesgo_756`, sobre la serie acreditada
+2011-07 → 2025-10 y con el Composite vigente como control
+([informe](r3-e6-experiment/README.md)). El resultado del V2 Top-20 fue:
+
+- CAGR neto del 19,2 % frente al 18,8 % del control (+0,4 pp);
+- mejor en 2016–2020 y en 2021–2025, peor en 2011–2015;
+- riesgo equivalente;
+- diferencia trimestral no significativa (p con Holm de 0,59).
+
+No alcanza la mejora mínima preregistrada de +1 pp, así que **se descarta y se
+mantiene la semántica actual** (toda la serie recibida). En la capa acreditada
+esa serie es el intervalo acreditado de cada fuente (≈ 1–11 años). En el camino
+operativo es toda la historia de la caché por ticker, con la diferencia entre
+periodos documentada arriba.
