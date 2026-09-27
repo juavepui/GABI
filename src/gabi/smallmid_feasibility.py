@@ -37,6 +37,8 @@ SEED = 44
 def _sp500_ciks(day: str) -> set[str]:
     """CIK de los miembros del S&P 500 en ``day`` según la identidad acreditada (#27, #34)."""
     period = historical_period.for_date(day)
+    if period is None:
+        raise ValueError(f"{day} fuera de los periodos acreditados")
     data = historical_membership.constituents_as_of(day, source_id=historical_period.REFERENCE_SOURCE_FULL,
                                                     compare_reference=False, identity_source=period.identity_source)
     return {identity.normalize_cik(m["cik"]) for m in data["members"] if m.get("cik")}
