@@ -1,0 +1,49 @@
+{
+  "sha256": "2608251cefe5d82cd822c14c726a97a9af5cd8d84b2b50c4a12712de925f5e3e",
+  "amends_sha256": "99d36edfcc0637b217be97706ba2c03edc6645a389b2d0b907e909d5cfd974c1",
+  "addendum": {
+    "issue": 47,
+    "amends": 44,
+    "stage": "RESEARCH",
+    "motivation": "En el S&P 500 (#40) el Composite no ordena el universo (IC 0,009, t 0,66) pero el Top-20 superó al universo elegible en +1,36 pp/trimestre (t 3,93). Ese resultado ya se vio y no es evidencia; la hipótesis de que la señal vive solo en la parte alta se contrasta aquí, con datos no usados.",
+    "hypothesis": "Las empresas de la parte alta del ranking de GABI superan, en el trimestre siguiente, a la media equiponderada de las elegibles de ese trimestre, fuera del S&P 500.",
+    "tests": {
+      "t1_top20": "retorno medio equiponderado de las 20 elegibles con mayor composite menos la media de todas las elegibles; serie trimestral; media con t Newey-West unilateral",
+      "t2_top5pct": "igual con el 5 % superior de las elegibles (redondeo hacia arriba); 20 de unas 450 elegibles del S&P 500 es el 4,4 %: la versión proporcional de T1"
+    },
+    "multiplicity": "Holm sobre T1 y T2 con alfa de familia 0.05; familia separada de la prueba principal del #44, que no cambia",
+    "bounds": "las mismas cotas del preregistro del #44 (adversa, favorable y casos completos) aplicadas a las elegibles sin retorno siguiente antes de calcular T1 y T2",
+    "decision": {
+      "cola_robusta": "T1 o T2 con media > 0 y p Holm < 0,05 con la cota adversa y con casos completos",
+      "cola_condicionada_a_los_datos": "T1 o T2 con p Holm < 0,05 en casos completos, no con la adversa",
+      "cola_no_concluyente": "medias de T1 y T2 > 0 en casos completos sin p Holm < 0,05",
+      "sin_efecto_de_cola": "media de T1 o T2 <= 0 en casos completos, sin ninguna significativa"
+    },
+    "descriptive": {
+      "bands": [
+        "0%-1%",
+        "1%-5%",
+        "5%-10%",
+        "10%-20%",
+        "20%-40%",
+        "40%-60%",
+        "60%-80%",
+        "80%-100%"
+      ],
+      "band_metric": "exceso medio trimestral de cada banda frente a la media de elegibles",
+      "convexity": "banda 0-5 % menos banda 5-20 %, con t Newey-West, solo descriptiva",
+      "windows": [
+        "2011-15",
+        "2016-20",
+        "2021-25"
+      ],
+      "top20_turnover": true
+    },
+    "gross_returns": "retornos brutos sin costes: una cola significativa no implica que sea invertible",
+    "model_changes": "ninguno; no se cambian pesos ni el modelo Investor por esta prueba",
+    "data_state_rule": "se preregistra solo si no existe ningún ranking del #44"
+  },
+  "analysis_code_sha256": "3e7848f800151578648926ccd78e90ef56c6a0e57e4af21a7579463d585940df",
+  "experiment_id": 47,
+  "rankings_at_registration": 0
+}
