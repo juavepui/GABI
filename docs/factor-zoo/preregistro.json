@@ -1,0 +1,113 @@
+{
+  "sha256": "fdf6e429282e7c70ed9ae5c8ac7997bbdbb39b55d8675324eaef9586f6017e59",
+  "spec": {
+    "issue": 48,
+    "stage": "RESEARCH_RETROSPECTIVE",
+    "signals": [
+      {
+        "family": "value",
+        "metric": "pe",
+        "raw_expected": "lower",
+        "tested_column": "pe_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "value",
+        "metric": "pb",
+        "raw_expected": "lower",
+        "tested_column": "pb_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "value",
+        "metric": "ev_ebitda",
+        "raw_expected": "lower",
+        "tested_column": "ev_ebitda_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "quality",
+        "metric": "roic",
+        "raw_expected": "higher",
+        "tested_column": "roic_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "quality",
+        "metric": "operating_margin",
+        "raw_expected": "higher",
+        "tested_column": "operating_margin_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "quality",
+        "metric": "revenue_cagr_3y",
+        "raw_expected": "higher",
+        "tested_column": "revenue_cagr_3y_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "quality",
+        "metric": "fcf_cagr_3y",
+        "raw_expected": "higher",
+        "tested_column": "fcf_cagr_3y_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "momentum",
+        "metric": "momentum_12m",
+        "raw_expected": "higher",
+        "tested_column": "momentum_12m_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "momentum",
+        "metric": "rel_strength_6m",
+        "raw_expected": "higher",
+        "tested_column": "rel_strength_6m_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "momentum",
+        "metric": "price_vs_sma200",
+        "raw_expected": "higher",
+        "tested_column": "price_vs_sma200_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "risk",
+        "metric": "debt_to_equity",
+        "raw_expected": "lower",
+        "tested_column": "debt_to_equity_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "risk",
+        "metric": "volatility",
+        "raw_expected": "lower",
+        "tested_column": "volatility_pct",
+        "tested_expected": "higher"
+      },
+      {
+        "family": "risk",
+        "metric": "max_drawdown",
+        "raw_expected": "higher",
+        "tested_column": "max_drawdown_pct",
+        "tested_expected": "higher"
+      }
+    ],
+    "selection": "exactamente las 13 métricas representativas de scoring.SCORE_METRICS; otras métricas correlacionadas excluidas antes del run",
+    "data": "57 fechas, elegibles y retornos futuros congelados de #40; columna _pct orientada y sector-normalizada existente en ranking",
+    "missing": "filas sin señal o retorno se excluyen; mínimo 30 pares por trimestre y 30 trimestres para inferencia; sin imputación",
+    "primary": "IC Spearman trimestral por señal; media > 0 con t HAC Bartlett 3 retardos fijos sobre calendario trimestral (huecos conservan su posición) y p unilateral; Holm de 13 señales, alpha 0,05",
+    "secondary": "ICIR=media/desviación temporal; proporción IC positivo; quintiles y deciles equiponderados, spreads extremos; Fama-MacBeth con sector y log-capitalización; ventanas fijas, sectores y terciles de tamaño descriptivos",
+    "correlation": "media temporal de Spearman entre señales en elegibles con datos pareados, mínimo 30 por trimestre",
+    "classification": {
+      "sin_evidencia": "IC medio <= 0 o señal no evaluable",
+      "indicio": "IC medio > 0 y p Holm >= 0,05",
+      "requiere_OOS": "p Holm < 0,05 pero menos de 2/3 ventanas con IC positivo o menos de 2/3 terciles de tamaño positivos",
+      "robusta_retrospectivamente": "p Holm < 0,05 y al menos 2/3 ventanas y 2/3 terciles positivos; siempre requiere validación OOS independiente"
+    },
+    "model_changes": "ninguno; no seleccionar pesos por CAGR Top-N ni añadir automáticamente factores al Composite"
+  }
+}
