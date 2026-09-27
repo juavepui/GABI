@@ -1,0 +1,48 @@
+{
+  "sha256": "07df8d57fcd1c30f651331a70514e9567184a3641d3a602fba14ab9ff78aee1f",
+  "spec": {
+    "issue": 40,
+    "stage": "RESEARCH",
+    "hypothesis": "El Composite vigente predice la rentabilidad relativa del trimestre siguiente entre los miembros elegibles del S&P 500 (IC medio > 0).",
+    "data": {
+      "rankings": "data/revalidation_2011_2025/acreditado-38",
+      "first": "2011-07-02",
+      "last": "2025-07-02",
+      "eligible": "composite_score no vacío y score_coverage >= 0,70 (el mismo que el backtest)",
+      "forward_return": "de la sesión siguiente a la señal a la primera sesión tras +3 meses; serie acreditada; salida por evento terminal o último precio no estricto (como el backtest)",
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      }
+    },
+    "primary": {
+      "test": "IC de Spearman trimestral (composite_score vs retorno siguiente); media de los trimestres; error estándar Newey-West (retardos automáticos de academic_factors._ols)",
+      "hypothesis": "unilateral, IC medio > 0",
+      "alpha": 0.05
+    },
+    "secondary": {
+      "tests": [
+        "Fama-MacBeth: pendiente del percentil del composite (0-1) con dummies de sector y log(capitalización); t Newey-West de la pendiente media",
+        "Diferencia de quintiles Q5 - Q1 equiponderada por trimestre; t Newey-West"
+      ],
+      "correction": "Holm sobre las 2 secundarias, unilateral, alpha 0,05"
+    },
+    "descriptive": [
+      "Top-20 frente al universo elegible (ya visto en #39, no confirmatorio)",
+      "IC de cada bloque (valor, calidad, momentum, riesgo)",
+      "IC por ventana 2011-15, 2016-20, 2021-25",
+      "medias de los cinco quintiles",
+      "proporción de trimestres con IC > 0"
+    ],
+    "decision": {
+      "capacidad_predictiva_confirmada": "principal p < 0,05 y las dos secundarias con estimación > 0",
+      "capacidad_predictiva_robusta": "lo anterior y las dos secundarias significativas tras Holm",
+      "indicio_no_concluyente": "IC medio > 0 con p >= 0,05",
+      "sin_capacidad_predictiva": "IC medio <= 0"
+    },
+    "model_changes": "ninguno; la prueba ciega no se lee ni se modifica"
+  },
+  "experiment_id": 41
+}
