@@ -22,7 +22,7 @@ def _seed_prices(dates, symbol_closes):
 
 
 def _fake_ranking(monkeypatch, scores: dict):
-    def _rank(day, symbols=None):
+    def _rank(day, symbols=None, weights=None):
         syms = list(scores)
         table = pd.DataFrame({"composite_score": [scores[s] for s in syms],
                               "score_coverage": [.9] * len(syms)}, index=syms)

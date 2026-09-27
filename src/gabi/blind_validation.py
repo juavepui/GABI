@@ -54,6 +54,20 @@ CREATE TABLE IF NOT EXISTS blind_validation_periods (
     record_hash TEXT NOT NULL,
     UNIQUE(validation_id, rebalance_date)
 );
+-- Opcional por validación (#43): puntuación completa del universo en cada
+-- rebalanceo, para medir el IC de sección cruzada de forma prospectiva. Tabla
+-- aparte: no altera los periodos ni la cadena de hashes existentes.
+CREATE TABLE IF NOT EXISTS blind_validation_options (
+    validation_id INTEGER PRIMARY KEY,
+    store_ranking INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS blind_validation_rankings (
+    validation_id INTEGER NOT NULL,
+    rebalance_date TEXT NOT NULL,
+    ranking_json TEXT NOT NULL,
+    ranking_hash TEXT NOT NULL,
+    PRIMARY KEY(validation_id, rebalance_date)
+);
 """
 
 
@@ -124,7 +138,9 @@ def record_rebalance(validation_id: int, as_of: str = None) -> dict:
 
     as_of = as_of or date.today().isoformat()
     as_of_ts = pd.Timestamp(as_of)
-    ranked = screener_asof.build_ranking_as_of(as_of)["table"]
+    # Los pesos registrados en la validación (antes se usaban siempre los
+    # pesos por defecto, que son los de la validación #1).
+    ranked = screener_asof.build_ranking_as_of(as_of, weights=json.loads(validation["weights_json"]))["table"]
     eligible = ranked[ranked["composite_score"].notna() & (ranked["score_coverage"] >= .7)]
     n_positions = validation["n_positions"]
     if len(eligible) < n_positions:
@@ -158,6 +174,13 @@ def record_rebalance(validation_id: int, as_of: str = None) -> dict:
                 (validation_id, as_of, pd.Timestamp.now().isoformat(), json.dumps(picks),
                  json.dumps(weights), json.dumps(entry_prices), _current_git_commit(), prev_hash, record_hash),
             )
+            if _stores_ranking(conn, validation_id):
+                snapshot = json.dumps({symbol: {"composite_score": _finite(row["composite_score"]),
+                                                "score_coverage": _finite(row["score_coverage"]),
+                                                "eligible": symbol in set(eligible.index)}
+                                       for symbol, row in ranked.iterrows()}, sort_keys=True)
+                conn.execute("INSERT INTO blind_validation_rankings VALUES (?,?,?,?)",
+                             (validation_id, as_of, snapshot, hashlib.sha256(snapshot.encode()).hexdigest()))
             conn.commit()
         except Exception as exc:
             if "UNIQUE" in str(exc):
@@ -166,6 +189,26 @@ def record_rebalance(validation_id: int, as_of: str = None) -> dict:
             raise
     return {"rebalance_date": as_of, "symbols": picks, "entry_prices": entry_prices,
            "record_hash": record_hash, "as_of_is_today": as_of == date.today().isoformat()}
+
+
+def _finite(value) -> float | None:
+    return float(value) if value is not None and pd.notna(value) else None
+
+
+def _stores_ranking(conn, validation_id: int) -> bool:
+    row = conn.execute("SELECT store_ranking FROM blind_validation_options WHERE validation_id=?",
+                       (validation_id,)).fetchone()
+    return bool(row and row[0])
+
+
+def enable_ranking_snapshots(validation_id: int) -> None:
+    """Guarda la puntuación completa del universo en los rebalanceos futuros de esta validación."""
+    with storage.get_connection() as conn:
+        _ensure_schema(conn)
+        if not _get_validation_row(conn, validation_id):
+            raise ValueError(f"No existe la validación #{validation_id}.")
+        conn.execute("INSERT OR REPLACE INTO blind_validation_options VALUES (?,1)", (validation_id,))
+        conn.commit()
 
 
 def verify_integrity(validation_id: int) -> dict:

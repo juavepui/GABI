@@ -1,0 +1,81 @@
+{
+  "sha256": "72360fe95bdfa3c0585d76aa49e7f0680e114e1845725ec5a3ed87d52bb6b1e0",
+  "spec": {
+    "issue": 43,
+    "model_id": "GABI-VALUE-v1",
+    "stage": "LIVE_FORWARD",
+    "hypothesis": "Entre los miembros del S&P 500 con datos suficientes, un composite de valor (E/P, B/P y EBITDA/EV, percentiles dentro del sector) predice la rentabilidad relativa del trimestre siguiente, y su Top-20 equiponderado supera al SPY y al S&P 500 equiponderado.",
+    "rationale": "Composite de valor clásico (Fama-French 1992; Lakonishok-Shleifer-Vishny 1994; Loughran-Wellman 2011, EBITDA/EV; Asness-Moskowitz-Pedersen 2013). Se reutiliza el bloque de valor existente de GABI para no añadir grados de libertad. Elegido tras ver el IC por bloques de 2011-2025 (#40): ese periodo NO cuenta como evidencia.",
+    "score": {
+      "weights": {
+        "value": 1.0,
+        "quality": 0.0,
+        "momentum": 0.0,
+        "risk": 0.0
+      },
+      "value_metrics": [
+        "pe",
+        "pb",
+        "ev_ebitda"
+      ],
+      "percentiles": "dentro del sector (scoring.build_scores, sin cambios)"
+    },
+    "universe": "S&P 500 vigente en cada fecha (camino operativo), mismo filtro de datos que GABI: composite no vacío y cobertura >= 70 % de las 13 métricas",
+    "portfolio": {
+      "n_positions": 20,
+      "weighting": "equiponderada",
+      "rebalance_months": 3,
+      "start": "2026-12-21",
+      "entry": "último cierre ajustado disponible al registrar (blind_validation)"
+    },
+    "tests": {
+      "primary": "IC de Spearman trimestral entre la puntuación registrada y el retorno del trimestre siguiente, media con t unilateral; umbrales O'Brien-Fleming en 12, 24 y 40 trimestres",
+      "secondary": [
+        "exceso trimestral del Top-20 frente al SPY",
+        "exceso frente a RSP (S&P 500 equiponderado)"
+      ],
+      "secondary_correction": "Holm sobre las 2, con los mismos umbrales secuenciales",
+      "looks": {
+        "2029-12-21": 12,
+        "2032-12-21": 24,
+        "2036-12-21": 40
+      }
+    },
+    "decision": {
+      "cruza_umbral_principal": "evidencia de capacidad predictiva del valor (fin del estudio)",
+      "no_cruza": "continuar sin cambios hasta la siguiente revisión",
+      "ultima_revision_sin_cruzar": "sin evidencia"
+    },
+    "rules": [
+      "El modelo no cambia hasta la última revisión; si cambia, el registro termina en esa fecha.",
+      "Cada rebalanceo se registra a tiempo; la cadena de hashes y la de puntuaciones deben estar íntegras.",
+      "Solo se miran resultados en las revisiones fijadas.",
+      "Cuenta como la configuración 30 del recuento de múltiples pruebas."
+    ],
+    "blind_validation_gabi": "id 1, sin cambios"
+  },
+  "plan_secuencial": {
+    "looks": [
+      {
+        "fecha": "2029-12-21",
+        "trimestres": 12,
+        "umbral_z": 3.392951354673476,
+        "alfa_acumulado": 0.000345719580169046
+      },
+      {
+        "fecha": "2032-12-21",
+        "trimestres": 24,
+        "umbral_z": 2.280851868965602,
+        "alfa_acumulado": 0.011396418465313252
+      },
+      {
+        "fecha": "2036-12-21",
+        "trimestres": 40,
+        "umbral_z": 1.6797656304688429,
+        "alfa_acumulado": 0.050000000000000044
+      }
+    ]
+  },
+  "blind_validation_id": 3,
+  "experiment_id": 43
+}

@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -21,7 +22,7 @@ def _seed_prices(dates, symbol_closes):
 
 
 def _fake_ranking(monkeypatch, scores: dict):
-    def _rank(day, symbols=None):
+    def _rank(day, symbols=None, weights=None):
         syms = list(scores)
         table = pd.DataFrame({"composite_score": [scores[s] for s in syms],
                               "score_coverage": [.9] * len(syms)}, index=syms)
@@ -245,3 +246,30 @@ def test_current_model_status_still_detects_research_lab_signal_without_blind_va
     assert result["status"] == "LIVE_FORWARD"
     assert result["live_forward_source"] == "research_lab"
     assert result["blind_validation_id"] is None
+
+
+def test_record_rebalance_uses_the_validation_weights_and_optional_ranking_snapshot(tmp_path, monkeypatch):
+    _isolate_db(tmp_path, monkeypatch)
+    dates = pd.date_range("2024-01-01", periods=10, freq="D")
+    _seed_prices(dates, [("A", [100.0] * 10), ("B", [50.0] * 10), ("C", [20.0] * 10)])
+    seen = []
+
+    def _rank(day, symbols=None, weights=None):
+        seen.append(weights)
+        table = pd.DataFrame({"composite_score": [90, 80, None], "score_coverage": [.9, .9, .4]},
+                             index=["A", "B", "C"])
+        return {"table": table}
+    monkeypatch.setattr(blind_validation.screener_asof, "build_ranking_as_of", _rank)
+    value_only = {"value": 1.0, "quality": 0.0, "momentum": 0.0, "risk": 0.0}
+    vid = blind_validation.create_validation("Valor", value_only, 2, 3, "2024-01-10", "2099-01-01",
+                                             model_id="GABI-VALUE-v1")
+    blind_validation.enable_ranking_snapshots(vid)
+    blind_validation.record_rebalance(vid, as_of="2024-01-10")
+    assert seen == [value_only]
+    with blind_validation.storage.get_connection() as conn:
+        snapshot, digest = conn.execute("SELECT ranking_json, ranking_hash FROM blind_validation_rankings "
+                                        "WHERE validation_id=?", (vid,)).fetchone()
+    ranking = json.loads(snapshot)
+    assert ranking["A"]["eligible"] and not ranking["C"]["eligible"] and ranking["C"]["composite_score"] is None
+    assert len(digest) == 64
+    assert blind_validation.verify_integrity(vid)["ok"]
