@@ -33,7 +33,9 @@ START, END_EXCLUSIVE = "2008-01-01", "2016-07-01"
 # subdirectory, source id). Each window is its own source, so the 2016-2025
 # download never adds rows to the source audited for 2010-2015.
 WINDOWS = {"2010-2015": ("2008-01-01", "2016-12-31", END_EXCLUSIVE, "", SOURCE_ID),
-           "2016-2025": ("2014-01-01", "2026-06-30", "2026-07-01", "2016_2025", SOURCE_ID + ":2016-2025")}
+           "2016-2025": ("2014-01-01", "2026-06-30", "2026-07-01", "2016_2025", SOURCE_ID + ":2016-2025"),
+           # #44: empresas de EE. UU. fuera del S&P 500 que dejaron de cotizar.
+           "smallmid": ("2009-01-01", "2026-06-30", "2026-07-01", "smallmid", SOURCE_ID + ":smallmid")}
 
 
 def source_id(window: str) -> str:
@@ -96,6 +98,11 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010
                 time.sleep(900)
                 continue
             break
+        if response is not None and response.status_code == 429:
+            # Límite persistente tras ~3 horas de espera: cupo mensual agotado.
+            # Se detiene sin marcar nada; los ficheros ya guardados permiten reanudar.
+            print(f"Tiingo: cupo agotado en {symbol}; reanudar más adelante", flush=True)
+            return {"fetched": fetched, "cached": cached, "failed": failed, "stopped_at": symbol}
         if response is None or response.status_code != 200:
             failed += 1
             print(f"Tiingo {symbol}: HTTP {response.status_code if response is not None else 'no response'}", flush=True)
