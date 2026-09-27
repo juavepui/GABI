@@ -21,6 +21,7 @@ data/revalidation_2011_2025/
 data/r3_e6/
 data/cross_section_test/
 data/factor_history/
+data/smallmid_test/
 data/history_refresh/
 
 .streamlit/secrets.toml
