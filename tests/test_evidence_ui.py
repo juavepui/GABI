@@ -25,6 +25,8 @@ evidence_ui.render(pd.DataFrame(), scoring.DEFAULT_WEIGHTS, mode=mode)
     assert any("no es probabilidad" in c.value for c in app.caption)
     assert any("Capacidad predictiva" in m.value for m in app.markdown)
     assert any("#44" in m.value for m in app.markdown)
+    assert any("GICS" in c.value for c in app.caption)
+    assert any("Soporte temporal" in table.value.columns for table in app.dataframe)
     app.selectbox[1].set_value("F02").run()
     assert not app.exception and app.metric[0].value == "BAJA"
     app.selectbox[0].set_value("RESEARCH").run()

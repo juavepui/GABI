@@ -24,6 +24,7 @@ data/cross_section_test/
 data/factor_history/
 data/smallmid_test/
 data/history_refresh/
+data/research_reproductions/
 
 .streamlit/secrets.toml
 data/periodic_tasks/

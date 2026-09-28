@@ -37,6 +37,8 @@ def factor_components(row: pd.Series, weights: dict, catalogue: dict) -> list[di
                                "mean_ic": mean, "p_holm": p, "classification": evidence.get("classification"),
                                "windows": evidence.get("windows", {}), "sector_stability": evidence.get("sector_stability", {}),
                                "size_stability": evidence.get("size_stability", {}),
+                               "sic_division_stability": evidence.get("sic_division_stability", {}),
+                               "sic_experiment_id": "factor-zoo-sector" if evidence.get("sic_division_stability") else None,
                                "evidence_stage": "RETROSPECTIVE", "experiment_id": "factor-zoo"})
     return components
 

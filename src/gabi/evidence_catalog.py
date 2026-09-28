@@ -3,10 +3,10 @@
 import hashlib
 import json
 
-from . import config, live_ledger
+from . import config, factor_sector_stability, live_ledger
 
 RULE_SHA256 = "2a0776de996c8044e4997da925e0b603da03c0721a883810bfd9cdfe541064ab"
-SOURCES_SHA256 = "312e51e6d6cb90291b90c28ab4ff48f775c6b4d78e35055fde607651529db1a2"
+SOURCES_SHA256 = "2d1f928a2bc87f5ce77c051fbc1885f57507f028d8b313d903c3354e3c55e684"
 
 
 def load() -> dict:
@@ -27,16 +27,21 @@ def load() -> dict:
                 result = json.loads((config.BASE_DIR / source["path"]).read_text(encoding="utf-8"))
                 if live_ledger.fingerprint(result) != source["sha256"]:
                     raise ValueError("huella distinta")
+                if name == "factor-zoo-sector":
+                    result = factor_sector_stability.load_saved(source["sha256"])
                 artifacts[name] = result
-                catalogue["sources"][name] = {**source, "stage": "RETROSPECTIVE", "verified": True,
+                catalogue["sources"][name] = {**source, "stage": "RETROSPECTIVE_DESCRIPTIVE" if name == "factor-zoo-sector" else "RETROSPECTIVE", "verified": True,
                                                "experiment_id": name, "spec_sha256": result.get("spec_sha256"),
                                                "code_sha256": result.get("code_sha256"),
                                                "inputs_fingerprint": live_ledger.fingerprint(result["inputs_sha256"]) if result.get("inputs_sha256") else None}
-            except (OSError, ValueError, TypeError):
+            except (OSError, ValueError, TypeError, KeyError):
                 catalogue["errors"].append(f"{name}: resultado ausente, ilegible o modificado")
         catalogue["available"] = not catalogue["errors"]
         if "factor-zoo" in artifacts:
-            catalogue["factors"] = artifacts["factor-zoo"]["factors"]
+            catalogue["factors"] = {metric: dict(data) for metric, data in artifacts["factor-zoo"]["factors"].items()}
+            if "factor-zoo-sector" in artifacts:
+                for metric, data in catalogue["factors"].items():
+                    data["sic_division_stability"] = artifacts["factor-zoo-sector"]["factors"].get(metric, {})
         if "cross-section-test" in artifacts:
             result = artifacts["cross-section-test"]
             principal = result["principal_ic"]

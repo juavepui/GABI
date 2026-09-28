@@ -33,11 +33,15 @@
     "rank-stability": {
       "path": "docs/rank-stability/resultado.json",
       "sha256": "b8da24a057b5594805e527cb31ece352808e50644d0e7a22c96afdef871a9a19"
+    },
+    "factor-zoo-sector": {
+      "path": "docs/factor-zoo-sector/resultado.json",
+      "sha256": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d"
     }
   },
   "limitations": [
     "#44: observaciones independientes pendientes; no se lee la prueba ciega.",
-    "#48: sectores históricos ausentes; estabilidad sectorial no estimable.",
+    "#48: sectores GICS históricos ausentes; SIC fechado es un diagnóstico retrospectivo por industrias amplias, sin reestimar scores, regresiones ni placebos.",
     "Reconstrucción retrospectiva del S&P 500 superviviente; no acredita el universo actual point-in-time.",
     "Bootstrap neto V1 no estimable sin unir huecos; V2 es un diagnóstico de otra variante."
   ]

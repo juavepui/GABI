@@ -1,0 +1,172 @@
+fecha,stratum,n_eligible,n_identity,n_selected_filing,n_classified,classified_fraction,reasons
+2011-07-02,all,258,258,258,258,1.0,"{""classified"": 258}"
+2011-07-02,return_available,258,258,258,258,1.0,"{""classified"": 258}"
+2011-07-02,return_missing,0,0,0,0,,{}
+2011-10-02,all,270,270,270,270,1.0,"{""classified"": 270}"
+2011-10-02,return_available,270,270,270,270,1.0,"{""classified"": 270}"
+2011-10-02,return_missing,0,0,0,0,,{}
+2012-01-02,all,269,269,269,269,1.0,"{""classified"": 269}"
+2012-01-02,return_available,269,269,269,269,1.0,"{""classified"": 269}"
+2012-01-02,return_missing,0,0,0,0,,{}
+2012-04-02,all,285,285,285,285,1.0,"{""classified"": 285}"
+2012-04-02,return_available,285,285,285,285,1.0,"{""classified"": 285}"
+2012-04-02,return_missing,0,0,0,0,,{}
+2012-07-02,all,293,293,293,293,1.0,"{""classified"": 293}"
+2012-07-02,return_available,293,293,293,293,1.0,"{""classified"": 293}"
+2012-07-02,return_missing,0,0,0,0,,{}
+2012-10-02,all,317,317,317,317,1.0,"{""classified"": 317}"
+2012-10-02,return_available,317,317,317,317,1.0,"{""classified"": 317}"
+2012-10-02,return_missing,0,0,0,0,,{}
+2013-01-02,all,320,320,320,320,1.0,"{""classified"": 320}"
+2013-01-02,return_available,320,320,320,320,1.0,"{""classified"": 320}"
+2013-01-02,return_missing,0,0,0,0,,{}
+2013-04-02,all,310,310,310,310,1.0,"{""classified"": 310}"
+2013-04-02,return_available,310,310,310,310,1.0,"{""classified"": 310}"
+2013-04-02,return_missing,0,0,0,0,,{}
+2013-07-02,all,316,316,316,316,1.0,"{""classified"": 316}"
+2013-07-02,return_available,316,316,316,316,1.0,"{""classified"": 316}"
+2013-07-02,return_missing,0,0,0,0,,{}
+2013-10-02,all,320,320,320,320,1.0,"{""classified"": 320}"
+2013-10-02,return_available,320,320,320,320,1.0,"{""classified"": 320}"
+2013-10-02,return_missing,0,0,0,0,,{}
+2014-01-02,all,318,318,318,318,1.0,"{""classified"": 318}"
+2014-01-02,return_available,318,318,318,318,1.0,"{""classified"": 318}"
+2014-01-02,return_missing,0,0,0,0,,{}
+2014-04-02,all,316,316,316,316,1.0,"{""classified"": 316}"
+2014-04-02,return_available,316,316,316,316,1.0,"{""classified"": 316}"
+2014-04-02,return_missing,0,0,0,0,,{}
+2014-07-02,all,316,316,316,316,1.0,"{""classified"": 316}"
+2014-07-02,return_available,316,316,316,316,1.0,"{""classified"": 316}"
+2014-07-02,return_missing,0,0,0,0,,{}
+2014-10-02,all,318,318,318,318,1.0,"{""classified"": 318}"
+2014-10-02,return_available,318,318,318,318,1.0,"{""classified"": 318}"
+2014-10-02,return_missing,0,0,0,0,,{}
+2015-01-02,all,311,311,311,311,1.0,"{""classified"": 311}"
+2015-01-02,return_available,311,311,311,311,1.0,"{""classified"": 311}"
+2015-01-02,return_missing,0,0,0,0,,{}
+2015-04-02,all,312,312,312,312,1.0,"{""classified"": 312}"
+2015-04-02,return_available,312,312,312,312,1.0,"{""classified"": 312}"
+2015-04-02,return_missing,0,0,0,0,,{}
+2015-07-02,all,310,310,310,310,1.0,"{""classified"": 310}"
+2015-07-02,return_available,310,310,310,310,1.0,"{""classified"": 310}"
+2015-07-02,return_missing,0,0,0,0,,{}
+2015-10-02,all,301,301,301,301,1.0,"{""classified"": 301}"
+2015-10-02,return_available,301,301,301,301,1.0,"{""classified"": 301}"
+2015-10-02,return_missing,0,0,0,0,,{}
+2016-01-02,all,261,261,261,261,1.0,"{""classified"": 261}"
+2016-01-02,return_available,261,261,261,261,1.0,"{""classified"": 261}"
+2016-01-02,return_missing,0,0,0,0,,{}
+2016-04-02,all,318,318,318,318,1.0,"{""classified"": 318}"
+2016-04-02,return_available,318,318,318,318,1.0,"{""classified"": 318}"
+2016-04-02,return_missing,0,0,0,0,,{}
+2016-07-02,all,317,317,317,317,1.0,"{""classified"": 317}"
+2016-07-02,return_available,317,317,317,317,1.0,"{""classified"": 317}"
+2016-07-02,return_missing,0,0,0,0,,{}
+2016-10-02,all,321,321,321,321,1.0,"{""classified"": 321}"
+2016-10-02,return_available,321,321,321,321,1.0,"{""classified"": 321}"
+2016-10-02,return_missing,0,0,0,0,,{}
+2017-01-02,all,321,321,321,321,1.0,"{""classified"": 321}"
+2017-01-02,return_available,321,321,321,321,1.0,"{""classified"": 321}"
+2017-01-02,return_missing,0,0,0,0,,{}
+2017-04-02,all,310,310,310,310,1.0,"{""classified"": 310}"
+2017-04-02,return_available,310,310,310,310,1.0,"{""classified"": 310}"
+2017-04-02,return_missing,0,0,0,0,,{}
+2017-07-02,all,315,315,315,315,1.0,"{""classified"": 315}"
+2017-07-02,return_available,315,315,315,315,1.0,"{""classified"": 315}"
+2017-07-02,return_missing,0,0,0,0,,{}
+2017-10-02,all,317,317,317,317,1.0,"{""classified"": 317}"
+2017-10-02,return_available,317,317,317,317,1.0,"{""classified"": 317}"
+2017-10-02,return_missing,0,0,0,0,,{}
+2018-01-02,all,317,317,317,317,1.0,"{""classified"": 317}"
+2018-01-02,return_available,317,317,317,317,1.0,"{""classified"": 317}"
+2018-01-02,return_missing,0,0,0,0,,{}
+2018-04-02,all,318,318,318,318,1.0,"{""classified"": 318}"
+2018-04-02,return_available,318,318,318,318,1.0,"{""classified"": 318}"
+2018-04-02,return_missing,0,0,0,0,,{}
+2018-07-02,all,317,317,317,317,1.0,"{""classified"": 317}"
+2018-07-02,return_available,317,317,317,317,1.0,"{""classified"": 317}"
+2018-07-02,return_missing,0,0,0,0,,{}
+2018-10-02,all,318,318,318,318,1.0,"{""classified"": 318}"
+2018-10-02,return_available,318,318,318,318,1.0,"{""classified"": 318}"
+2018-10-02,return_missing,0,0,0,0,,{}
+2019-01-02,all,324,324,324,324,1.0,"{""classified"": 324}"
+2019-01-02,return_available,324,324,324,324,1.0,"{""classified"": 324}"
+2019-01-02,return_missing,0,0,0,0,,{}
+2019-04-02,all,315,315,315,315,1.0,"{""classified"": 315}"
+2019-04-02,return_available,315,315,315,315,1.0,"{""classified"": 315}"
+2019-04-02,return_missing,0,0,0,0,,{}
+2019-07-02,all,318,318,318,318,1.0,"{""classified"": 318}"
+2019-07-02,return_available,318,318,318,318,1.0,"{""classified"": 318}"
+2019-07-02,return_missing,0,0,0,0,,{}
+2019-10-02,all,320,320,320,320,1.0,"{""classified"": 320}"
+2019-10-02,return_available,319,319,319,319,1.0,"{""classified"": 319}"
+2019-10-02,return_missing,1,1,1,1,1.0,"{""classified"": 1}"
+2020-01-02,all,321,321,321,321,1.0,"{""classified"": 321}"
+2020-01-02,return_available,321,321,321,321,1.0,"{""classified"": 321}"
+2020-01-02,return_missing,0,0,0,0,,{}
+2020-04-02,all,333,333,333,333,1.0,"{""classified"": 333}"
+2020-04-02,return_available,333,333,333,333,1.0,"{""classified"": 333}"
+2020-04-02,return_missing,0,0,0,0,,{}
+2020-07-02,all,340,340,340,340,1.0,"{""classified"": 340}"
+2020-07-02,return_available,340,340,340,340,1.0,"{""classified"": 340}"
+2020-07-02,return_missing,0,0,0,0,,{}
+2020-10-02,all,344,344,344,344,1.0,"{""classified"": 344}"
+2020-10-02,return_available,344,344,344,344,1.0,"{""classified"": 344}"
+2020-10-02,return_missing,0,0,0,0,,{}
+2021-01-02,all,343,343,343,343,1.0,"{""classified"": 343}"
+2021-01-02,return_available,343,343,343,343,1.0,"{""classified"": 343}"
+2021-01-02,return_missing,0,0,0,0,,{}
+2021-04-02,all,337,337,337,337,1.0,"{""classified"": 337}"
+2021-04-02,return_available,337,337,337,337,1.0,"{""classified"": 337}"
+2021-04-02,return_missing,0,0,0,0,,{}
+2021-07-02,all,334,334,334,334,1.0,"{""classified"": 334}"
+2021-07-02,return_available,334,334,334,334,1.0,"{""classified"": 334}"
+2021-07-02,return_missing,0,0,0,0,,{}
+2021-10-02,all,331,331,331,331,1.0,"{""classified"": 331}"
+2021-10-02,return_available,331,331,331,331,1.0,"{""classified"": 331}"
+2021-10-02,return_missing,0,0,0,0,,{}
+2022-01-02,all,330,330,330,330,1.0,"{""classified"": 330}"
+2022-01-02,return_available,330,330,330,330,1.0,"{""classified"": 330}"
+2022-01-02,return_missing,0,0,0,0,,{}
+2022-04-02,all,349,349,349,349,1.0,"{""classified"": 349}"
+2022-04-02,return_available,349,349,349,349,1.0,"{""classified"": 349}"
+2022-04-02,return_missing,0,0,0,0,,{}
+2022-07-02,all,353,353,353,353,1.0,"{""classified"": 353}"
+2022-07-02,return_available,353,353,353,353,1.0,"{""classified"": 353}"
+2022-07-02,return_missing,0,0,0,0,,{}
+2022-10-02,all,345,345,345,345,1.0,"{""classified"": 345}"
+2022-10-02,return_available,345,345,345,345,1.0,"{""classified"": 345}"
+2022-10-02,return_missing,0,0,0,0,,{}
+2023-01-02,all,345,345,345,345,1.0,"{""classified"": 345}"
+2023-01-02,return_available,345,345,345,345,1.0,"{""classified"": 345}"
+2023-01-02,return_missing,0,0,0,0,,{}
+2023-04-02,all,342,342,342,342,1.0,"{""classified"": 342}"
+2023-04-02,return_available,342,342,342,342,1.0,"{""classified"": 342}"
+2023-04-02,return_missing,0,0,0,0,,{}
+2023-07-02,all,343,343,343,343,1.0,"{""classified"": 343}"
+2023-07-02,return_available,343,343,343,343,1.0,"{""classified"": 343}"
+2023-07-02,return_missing,0,0,0,0,,{}
+2023-10-02,all,341,341,341,341,1.0,"{""classified"": 341}"
+2023-10-02,return_available,341,341,341,341,1.0,"{""classified"": 341}"
+2023-10-02,return_missing,0,0,0,0,,{}
+2024-01-02,all,340,340,340,340,1.0,"{""classified"": 340}"
+2024-01-02,return_available,340,340,340,340,1.0,"{""classified"": 340}"
+2024-01-02,return_missing,0,0,0,0,,{}
+2024-04-02,all,341,341,341,341,1.0,"{""classified"": 341}"
+2024-04-02,return_available,341,341,341,341,1.0,"{""classified"": 341}"
+2024-04-02,return_missing,0,0,0,0,,{}
+2024-07-02,all,343,343,343,343,1.0,"{""classified"": 343}"
+2024-07-02,return_available,343,343,343,343,1.0,"{""classified"": 343}"
+2024-07-02,return_missing,0,0,0,0,,{}
+2024-10-02,all,341,341,341,341,1.0,"{""classified"": 341}"
+2024-10-02,return_available,341,341,341,341,1.0,"{""classified"": 341}"
+2024-10-02,return_missing,0,0,0,0,,{}
+2025-01-02,all,336,336,336,336,1.0,"{""classified"": 336}"
+2025-01-02,return_available,336,336,336,336,1.0,"{""classified"": 336}"
+2025-01-02,return_missing,0,0,0,0,,{}
+2025-04-02,all,337,337,337,337,1.0,"{""classified"": 337}"
+2025-04-02,return_available,337,337,337,337,1.0,"{""classified"": 337}"
+2025-04-02,return_missing,0,0,0,0,,{}
+2025-07-02,all,333,333,333,333,1.0,"{""classified"": 333}"
+2025-07-02,return_available,332,332,332,332,1.0,"{""classified"": 332}"
+2025-07-02,return_missing,1,1,1,1,1.0,"{""classified"": 1}"

@@ -52,10 +52,18 @@ auxiliar solo tiene fotografías sectoriales de **2026-09-18**, posteriores a
 todos los retornos evaluados. Usarlas como si fueran sectores de 2011–2025
 introduciría información futura y sesgo de supervivencia. Por ello
 `stability.csv` contiene el análisis por tamaño, pero **la estabilidad por
-sector no es estimable con estos datos**. Las pendientes Fama-MacBeth incluyen
+sector GICS no es estimable con estos datos**. Las pendientes Fama-MacBeth incluyen
 el control de capitalización; la categoría de sector ausente es única y no
-equivale a un control sectorial efectivo. Este criterio del issue queda
-pendiente de una fuente histórica de sectores fechada.
+equivale a un control sectorial efectivo.
+
+El [suplemento SIC fechado](../factor-zoo-sector/README.md) completa el diagnóstico
+por industrias amplias usando SUB archivados de la SEC y el CIK de cada ranking
+congelado. Publica cobertura, IC/ICIR y ventanas para todas las divisiones,
+incluidas las no estimables, con umbrales fijados antes del cálculo. Es una
+ampliación descriptiva retrospectiva: no reconstruye GICS, no modifica este
+resultado ni reestima sus percentiles o regresiones. Factor Lab y los componentes
+de evidencia muestran ambos resultados y sus límites; ninguna señal pasa a
+estar validada por añadir este diagnóstico.
 
 ## Reproducción
 

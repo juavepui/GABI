@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import estimates, factor_lab
+from gabi import estimates, factor_lab, factor_sector_ui
 
 st.title("📐 Factor Lab")
 st.caption(
@@ -34,6 +34,9 @@ with st.expander("ℹ️ Qué es Rank IC / ICIR (léelo si no los conoces)"):
   anterior — un quintil con mucho turnover es más caro de replicar en la práctica.
         """
     )
+
+factor_sector_ui.render()
+st.divider()
 
 with st.form("factor_lab_form"):
     a, b, c = st.columns(3)

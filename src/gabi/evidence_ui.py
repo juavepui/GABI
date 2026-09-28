@@ -50,6 +50,17 @@ def render(frame: pd.DataFrame, weights: dict, *, mode="INVESTOR", symbol: str |
             st.dataframe(factors, hide_index=True, width="stretch")
         st.caption("Un percentil alto apoya la puntuación descriptiva; la columna de Holm muestra su evidencia estadística. "
                    "La falta de confirmación no demuestra ausencia de efecto. La confianza no cambia el ranking ni sus pesos.")
+        industry_factors = {f["metric"]: f["sic_division_stability"] for f in e["factors"] if f.get("sic_division_stability")}
+        if industry_factors:
+            with st.expander("Estabilidad descriptiva de los factores por industria"):
+                metric = st.selectbox("Factor · diagnóstico SIC", list(industry_factors), key="evidence_sic_factor",
+                                      format_func=lambda m: METRIC_INFO.get(m, {}).get("label", m))
+                st.dataframe(pd.DataFrame([{"División SIC": group, "Industria": values["name"],
+                                            "IC medio": values["ic_mean"], "Trimestres": values["n_periods"],
+                                            "Soporte temporal": "Suficiente" if values["status"] == "sufficient_periods" else "Insuficiente"}
+                                           for group, values in industry_factors[metric].items()]), hide_index=True, width="stretch")
+                st.caption("SIC fechado es una clasificación distinta de GICS. Este diagnóstico retrospectivo "
+                           "no aporta confirmación independiente ni eleva la confianza de evidencia.")
         st.write(f"Fase del registro: {e['collection_stage']} · evidencia: {e['evidence_stage']} · reglas: {e['rules']['version']}")
         if mode == "RESEARCH":
             st.json({k: e[k] for k in ("predictive_test", "placebos", "bootstrap", "tail", "stability", "quality", "rules", "trace")})

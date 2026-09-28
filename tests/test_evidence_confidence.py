@@ -41,7 +41,7 @@ def assess(cat=None, row=None, **overrides):
 
 def test_real_pinned_studies_high_score_complete_data_still_low():
     cat = catalogue.load()
-    assert cat["available"] and len(cat["sources"]) == 6
+    assert cat["available"] and len(cat["sources"]) == 7
     assert cat["independent_confirmations"] == []
     assert not cat["model"]["pass"]
     assert cat["placebos"]["conditional_pass"]
@@ -55,6 +55,8 @@ def test_real_pinned_studies_high_score_complete_data_still_low():
     assert any("sectores" in r for r in result["reasons_against"])
     assert result["trace"]["data_fingerprint"].startswith("signal-inputs-v1:")
     assert "future_probability" not in result
+    assert all(len(f["sic_division_stability"]) == 10 for f in result["factors"])
+    assert all(f["sic_experiment_id"] == "factor-zoo-sector" for f in result["factors"])
 
 
 def test_higher_categories_require_all_gates_and_independent_provenance():
@@ -88,6 +90,34 @@ def test_raw_p_and_descriptive_classification_cannot_validate_a_factor():
     result = assess(cat)
     assert result["validated_factor_weight"] == 0
     assert result["confidence_level"] == "BAJA"
+
+
+def test_positive_sic_diagnostics_never_replace_primary_holm():
+    cat = synthetic_catalogue()
+    for values in cat["factors"].values():
+        values.update(p_holm=.20, sic_division_stability={"D": {"ic_mean": .8, "n_periods": 57,
+                                                               "status": "sufficient_periods"}})
+    result = assess(cat)
+    assert result["validated_factor_weight"] == 0
+    assert result["confidence_level"] == "BAJA"
+    assert all(f["sic_division_stability"]["D"]["ic_mean"] == .8 for f in result["factors"])
+
+
+def test_changed_sector_metadata_is_named_and_fails_conservatively(monkeypatch):
+    from pathlib import Path
+
+    path = config.BASE_DIR / "docs" / "factor-zoo-sector" / "assignments.csv"
+    original = Path.read_text
+
+    def changed(self, *args, **kwargs):
+        value = original(self, *args, **kwargs)
+        return value + "modified" if self == path else value
+
+    monkeypatch.setattr(Path, "read_text", changed)
+    cat = catalogue.load()
+    assert not cat["available"]
+    assert any("factor-zoo-sector" in error for error in cat["errors"])
+    assert assess(cat)["confidence_level"] == "BAJA"
 
 
 def test_available_block_renormalization_reproduces_score_without_reweighting():
