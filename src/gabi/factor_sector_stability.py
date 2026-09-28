@@ -120,8 +120,6 @@ def assign(frame: pd.DataFrame, date: str, filings: pd.DataFrame, spec: dict) ->
             row["reason"] = "ambiguous_latest_sic"
         elif (signal - chosen._filed).days > spec["max_age_days"]:
             row["reason"] = "stale_filing"
-        elif chosen._accepted.normalize() < chosen._filed:
-            row["reason"] = "inconsistent_dates"
         else:
             division = sic_division(chosen.sic, spec["divisions"])
             row["reason"] = "classified" if division else "invalid_or_unclassified_sic"

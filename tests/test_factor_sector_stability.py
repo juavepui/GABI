@@ -57,7 +57,8 @@ def test_ambiguity_missing_dates_and_stale_filings(spec):
     assert assigned(spec, filings({}, {"sic": "6021", "filed_date": "2020-02-10", "accepted": ""})).reason == "unknown_acceptance_date"
     assert assigned(spec, filings({"filed_date": ""})).reason == "unknown_filing_date"
     assert assigned(spec, filings({}), "2021-02-15").reason == "stale_filing"
-    assert assigned(spec, filings({"filed_date": "2020-02-11", "accepted": "2020-02-10 17:00:00"})).reason == "inconsistent_dates"
+    # EDGAR legitimately assigns next-business-day filed_date to after-hours submissions.
+    assert assigned(spec, filings({"filed_date": "2020-02-11", "accepted": "2020-02-10 18:00:00"})).reason == "classified"
 
 
 @pytest.mark.parametrize("value, expected", [("0100", "A"), ("999", "A"), ("1000", "B"), ("1799", "C"),
