@@ -1,0 +1,39 @@
+{
+  "method": "offline provider fixture: 20 symbols, 503 XNYS sessions, 4 new sessions; independent databases",
+  "limitations": "No network: timings measure local processing only. Payload bytes are per-ticker CSV estimates. yfinance invocations are not underlying HTTP requests; its internal traffic is not observed.",
+  "results": [
+    {
+      "variant": "previous_full_window",
+      "yfinance_invocations": 1,
+      "returned_rows": 10060,
+      "payload_bytes": 433360,
+      "seconds": 0.3950106999836862,
+      "cpu_seconds": 0.171875,
+      "rows_written": 10060,
+      "actually_new_rows": 80,
+      "failed": {}
+    },
+    {
+      "variant": "incremental",
+      "yfinance_invocations": 1,
+      "returned_rows": 260,
+      "payload_bytes": 11960,
+      "seconds": 0.7798536000773311,
+      "cpu_seconds": 0.3125,
+      "rows_written": 80,
+      "actually_new_rows": 80,
+      "failed": {}
+    },
+    {
+      "variant": "repeat_same_session",
+      "yfinance_invocations": 0,
+      "returned_rows": 0,
+      "payload_bytes": 0,
+      "seconds": 0.2806568000232801,
+      "cpu_seconds": 0.171875,
+      "rows_written": 0,
+      "actually_new_rows": 0,
+      "failed": {}
+    }
+  ]
+}

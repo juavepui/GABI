@@ -123,18 +123,38 @@ def _headers():
 def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
     """DataFrame[symbol, cik, title]. cik en formato de 10 dígitos con ceros
     a la izquierda, tal y como lo requieren las URLs de companyfacts/submissions."""
-    if not force_refresh and CIK_CACHE.exists():
+    if (not force_refresh and CIK_CACHE.exists()
+            and datetime.now(UTC).timestamp() - CIK_CACHE.stat().st_mtime < 7 * 86400):
         return pd.read_csv(CIK_CACHE, dtype={"cik": str})
-    resp = requests.get(TICKER_CIK_URL, headers=_headers(), timeout=20)
-    resp.raise_for_status()
-    data = resp.json()
+    from . import sync_state
+    attempt = sync_state.Attempt("sec", "all", "ticker-map")
+
+    def fetch():
+        resp = requests.get(TICKER_CIK_URL, headers=_headers(), timeout=20)
+        resp.raise_for_status()
+        return resp.json()
+
+    try:
+        data = sync_state.retry(fetch, attempt)
+        attempt.payload(data)
+    except Exception as exc:
+        attempt.finish("failed", reason=str(exc))
+        if CIK_CACHE.exists():
+            return pd.read_csv(CIK_CACHE, dtype={"cik": str})
+        raise
     rows = [
         {"symbol": v["ticker"], "cik": str(v["cik_str"]).zfill(10), "title": v.get("title", "")}
         for v in data.values()
     ]
     df = pd.DataFrame(rows)
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    df.to_csv(CIK_CACHE, index=False)
+    pending = CIK_CACHE.with_suffix(".csv.tmp")
+    df.to_csv(pending, index=False)
+    pending.replace(CIK_CACHE)
+    cp = sync_state.get("sec", "all", "ticker-map")
+    digest = sync_state.fingerprint(rows)
+    status = "new" if not cp else "unchanged" if cp.get("fingerprint") == digest else "revised"
+    attempt.finish(status, state={"fingerprint": digest}, reason="revisión semanal del mapeo ticker/CIK")
     return df
 
 
@@ -884,7 +904,8 @@ def get_edgar_fetched_at(symbols: list) -> dict:
     return result
 
 
-def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None) -> dict:
+def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,
+                      *, full_refresh: bool = False, incremental: bool = True) -> dict:
     """Descarga y cachea métricas EDGAR en paralelo (pool conservador: la SEC
     es más estricta que Yahoo con el rate limiting). Devuelve dict[symbol] =
     motivo de error en español para los símbolos que fallaron."""
@@ -902,15 +923,22 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
                     "resoluciones anteriores) — posible ticker deslistado hace tiempo, o nunca resuelto antes"
                 )
                 continue
-            futures[ex.submit(_fetch_one, s, cik)] = (s, cik)
+            if incremental:
+                from . import edgar_sync
+                futures[ex.submit(edgar_sync.run_one, s, cik, full_refresh=full_refresh)] = (s, cik)
+            else:
+                futures[ex.submit(_fetch_one, s, cik)] = (s, cik)
         done = 0
         for fut in cf.as_completed(futures):
             sym, cik = futures[fut]
             done += 1
             try:
-                metrics, raw_facts = fut.result()
-                upsert_edgar_metrics(sym, cik, metrics)
-                upsert_edgar_facts(sym, raw_facts, cik=cik)  # atribución explícita al CIK descargado
+                if incremental:
+                    fut.result()  # checkpoint after the adapter's successful writes
+                else:
+                    metrics, raw_facts = fut.result()
+                    upsert_edgar_metrics(sym, cik, metrics)
+                    upsert_edgar_facts(sym, raw_facts, cik=cik)
             except Exception as exc:
                 _, reason = _classify_error(exc, service="SEC EDGAR")
                 failed[sym] = reason
@@ -920,21 +948,21 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
 
 
 def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
-                      *, as_of: str | None = None) -> dict:
+                      *, as_of: str | None = None, full_refresh: bool = False) -> dict:
     if as_of:
         from . import identity
         resolved = {s: identity.resolve(s, as_of) for s in symbols}
         ciks = {s: r["cik"] for s, r in resolved.items() if r["cik"]}
         failed = {s: "Identidad/CIK histórico sin acreditar para esta fecha" for s in symbols if s not in ciks}
         needed = [s for s in ciks if force or identity.observations(resolved[s]["entity_id"], "edgar_facts").empty]
-        failed.update(fetch_edgar_batch(needed, ciks, progress_cb=progress_cb))
+        failed.update(fetch_edgar_batch(needed, ciks, progress_cb=progress_cb, incremental=False))
         storage.record_update_errors("sec_edgar", failed)
         return {"edgar_refreshed": len(needed) - sum(s in failed for s in needed), "failed": failed}
     max_age_hours = max_age_hours or config.EDGAR_CACHE_MAX_AGE_HOURS
     symbols = list(dict.fromkeys(symbols))
 
     try:
-        cik_map = get_cik_map()
+        cik_map = get_cik_map(force_refresh=True) if full_refresh else get_cik_map()
     except Exception as exc:
         _, reason = _classify_error(exc, service="SEC EDGAR")
         cik_map = None
@@ -944,10 +972,20 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
 
     fetched_at = get_edgar_fetched_at(symbols)
     with_facts = get_symbols_with_facts(symbols)
+    from . import sync_state
+    live_ciks = dict(zip(cik_map["symbol"], cik_map["cik"])) if cik_map is not None else {}
+    failed_symbols = set()
+    for entity, dataset in sync_state.failed_datasets("sec"):
+        if not dataset.startswith("facts:"):
+            continue
+        symbol = dataset.removeprefix("facts:")
+        cik = live_ciks.get(symbol) or _get_cached_cik_resolution(symbol)[0]
+        if cik and entity == f"cik:{str(cik).zfill(10)}":
+            failed_symbols.add(symbol)
     now = datetime.now(UTC)
     stale = [
         s for s in symbols
-        if force or fetched_at.get(s) is None
+        if force or full_refresh or s in failed_symbols or fetched_at.get(s) is None
         or (now - fetched_at[s]).total_seconds() > max_age_hours * 3600
         or s not in with_facts  # "fresco" pero sin histórico fechado real: hay que rellenarlo igualmente
     ]
@@ -969,6 +1007,7 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
         storage.record_update_errors("sec_edgar", failed)
         return {"edgar_refreshed": 0, "failed": failed}
 
-    failed = fetch_edgar_batch(stale, cik_by_symbol, progress_cb=progress_cb) if stale else {}
+    extra = {"full_refresh": True} if full_refresh else {}
+    failed = fetch_edgar_batch(stale, cik_by_symbol, progress_cb=progress_cb, **extra) if stale else {}
     storage.record_update_errors("sec_edgar", failed)
     return {"edgar_refreshed": len(stale) - len(failed), "failed": failed}

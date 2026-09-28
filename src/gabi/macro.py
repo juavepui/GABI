@@ -85,20 +85,24 @@ CREATE TABLE IF NOT EXISTS macro_meta (
 """
 
 
-def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 260) -> list:
+def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 260,
+                 *, observation_start: str | None = None, include_missing: bool = False) -> list:
     """[(fecha, valor), ...] más reciente primero. Descarta observaciones sin
     dato ('.' es como FRED marca los huecos)."""
     params = {
         "series_id": series_id, "api_key": api_key, "file_type": "json",
         "sort_order": "desc", "limit": limit, "units": units,
     }
+    if observation_start:
+        params["observation_start"] = observation_start
     resp = requests.get(FRED_BASE_URL, params=params, timeout=20)
     if resp.status_code in (400, 401, 403):
         raise ValueError("FRED ha rechazado la petición (revisa que la API key sea correcta)")
     resp.raise_for_status()
     data = resp.json()
     observations = data.get("observations", [])
-    return [(o["date"], float(o["value"])) for o in observations if o.get("value") not in (None, ".")]
+    return [(o["date"], None if o.get("value") in (None, ".") else float(o["value"]))
+            for o in observations if include_missing or o.get("value") not in (None, ".")]
 
 
 def upsert_series(series_id: str, observations: list):
@@ -142,26 +146,54 @@ def get_all_fetched_at() -> dict:
     return result
 
 
-def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=None) -> dict:
+def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=None,
+                      *, full_refresh: bool = False) -> dict:
     api_key = config.load_fred_key()
     if not api_key:
         return {"ok": False, "reason": "no_api_key", "refreshed": 0, "failed": {}}
 
     fetched_at = get_all_fetched_at()
     now = datetime.now(UTC)
+    from . import sync_state as sync
+    failed_series = {entity for entity, _ in sync.failed_datasets("fred")}
     stale = [
         sid for sid in SERIES
-        if force or fetched_at.get(sid) is None
+        if force or full_refresh or sid in failed_series or fetched_at.get(sid) is None
         or (now - fetched_at[sid]).total_seconds() > max_age_hours * 3600
     ]
     failed = {}
     for i, sid in enumerate(stale):
+        dataset = f"observations:{SERIES[sid]['units_param']}"
+        attempt = sync.Attempt("fred", sid, dataset)
+        cp = sync.get("fred", sid, dataset)
         try:
-            obs = fetch_series(sid, api_key, units=SERIES[sid]["units_param"])
-            upsert_series(sid, obs)
+            old = get_series_history(sid)
+            audit_due = not cp.get("full_audited_at") or (
+                now - datetime.fromisoformat(cp["full_audited_at"])).total_seconds() >= 30 * 86400
+            audit = full_refresh or audit_due
+            start = "1776-07-04" if audit else (old.index.max() - pd.Timedelta(days=400)).date().isoformat() if not old.empty else None
+            obs = sync.retry(lambda: fetch_series(sid, api_key, units=SERIES[sid]["units_param"],
+                                                   limit=100000, observation_start=start, include_missing=True), attempt)
+            attempt.payload(obs)
+            if not obs:
+                raise ValueError("FRED devolvió una ventana vacía; checkpoint conservado.")
+            incoming = pd.DataFrame(obs, columns=["date", "value"]).set_index("date")
+            incoming.index = pd.to_datetime(incoming.index)
+            changed, new, revised = sync.delta_rows(old, incoming)
+            upsert_series(sid, [(d.date().isoformat(), None if pd.isna(v) else float(v)) for d, v in changed.value.items()])
+            state = {}
+            valid_dates = incoming.loc[incoming.value.notna()].index
+            if len(valid_dates):
+                state["watermark"] = max(cp.get("watermark", ""), valid_dates.max().date().isoformat())
+            if audit:
+                state["full_audited_at"] = now.isoformat()
+            attempt.finish(sync.change_status(new, revised), state=state, new=new, revised=revised,
+                           unchanged=len(incoming) - new - revised,
+                           reason="auditoría mensual de revisiones antiguas" if audit else "solape de 400 días para revisiones; incluye valores retirados")
         except Exception as exc:
             _, reason = _classify_error(exc, service="FRED")
             failed[sid] = reason
+            attempt.finish("failed", reason=reason)
         if progress_cb:
             progress_cb(i + 1, len(stale), sid)
     storage.record_update_errors("fred_macro", failed)

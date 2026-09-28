@@ -192,7 +192,7 @@ def run() -> dict:
     report["edgar"] = {"requested": len(ciks)}
     save()
     # One downloader limits traffic to SEC and avoids large concurrent responses.
-    failures = edgar.fetch_edgar_batch(sorted(ciks), ciks, max_workers=1, progress_cb=progress)
+    failures = edgar.fetch_edgar_batch(sorted(ciks), ciks, max_workers=1, progress_cb=progress, incremental=False)
     report["edgar"].update(refreshed=len(ciks) - len(failures), failed=failures)
     save()
 

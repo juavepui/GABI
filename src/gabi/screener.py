@@ -19,7 +19,7 @@ from . import (
 
 def get_universe(limit: int = None, force_refresh: bool = False) -> pd.DataFrame:
     uni = universe.get_sp500_constituents(force_refresh=force_refresh)
-    if force_refresh:
+    if force_refresh and not uni.attrs.get("cache_after_error"):
         # Guarda una foto con fecha de sector/industria/nombre (entity_master)
         # cada vez que se confirma la composición actual del índice contra la
         # fuente en vivo -- así se acumula historial point-in-time real para
@@ -31,12 +31,14 @@ def get_universe(limit: int = None, force_refresh: bool = False) -> pd.DataFrame
     return uni
 
 
-def refresh_data(symbols: list, force: bool = False, progress_cb=None, edgar_progress_cb=None) -> dict:
+def refresh_data(symbols: list, force: bool = False, progress_cb=None, edgar_progress_cb=None,
+                 *, full_refresh: bool = False) -> dict:
     """Actualiza yfinance (precios + fundamentales) y SEC EDGAR (ROIC, CAGR de
     3 años, enlaces a 10-K/10-Q). Los fallos de ambas fuentes se combinan en
     un único dict[symbol] = {"precio":.., "fundamentales":.., "edgar":..}."""
-    result = data_fetch.ensure_universe_data(symbols, force=force, progress_cb=progress_cb)
-    edgar_result = edgar.ensure_edgar_data(symbols, force=force, progress_cb=edgar_progress_cb or progress_cb)
+    result = data_fetch.ensure_universe_data(symbols, force=force, progress_cb=progress_cb, full_refresh=full_refresh)
+    edgar_result = edgar.ensure_edgar_data(symbols, force=force, progress_cb=edgar_progress_cb or progress_cb,
+                                         full_refresh=full_refresh)
 
     for sym, reason in edgar_result["failed"].items():
         result["failed"].setdefault(sym, {})["edgar"] = reason

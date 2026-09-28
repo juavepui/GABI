@@ -1729,3 +1729,5 @@ adicional y deja a criterio del usuario qué asistente usar.
   costes reales de ejecución e histórico completo. Solo después, modelos
   de Machine Learning interpretables (regresión, Random Forest, XGBoost) con
   walk-forward validation — nunca mezclando aleatoriamente pasado y futuro.
+
+Actualizaciones locales incrementales: [políticas de revisión, checkpoints y medición reproducible](docs/incremental-updates/README.md). La tarea periódica conserva `--run` y admite `--full-refresh` para una auditoría deliberada; las ejecuciones normales evitan descargar/reinsertar históricos completos.

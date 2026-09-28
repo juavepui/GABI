@@ -21,7 +21,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from . import config, historical_archive
+from . import config, historical_archive, storage, sync_state
 
 SOURCE_ID = "tiingo:daily-2026-09"
 DIRECTORY = config.DATA_DIR / "history_refresh" / "tiingo"
@@ -82,10 +82,12 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010
         if path.exists():
             cached += 1
             continue
+        attempt_metrics = sync_state.Attempt("tiingo", symbol, f"download:{window}")
         ticker = symbol.replace(".", "-").lower()
         response = None
         for attempt in range(12):
             try:
+                attempt_metrics.calls += 1
                 response = requests.get(PRICES_URL.format(ticker=ticker, start=first, end=last),
                                         headers=_headers(), timeout=60)
             except requests.RequestException as exc:
@@ -102,6 +104,7 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010
             # Límite persistente tras ~3 horas de espera: cupo mensual agotado.
             # Se detiene sin marcar nada; los ficheros ya guardados permiten reanudar.
             print(f"Tiingo: cupo agotado en {symbol}; reanudar más adelante", flush=True)
+            attempt_metrics.finish("failed", reason="cupo Tiingo agotado; cola reanudable sin marcar el símbolo")
             return {"fetched": fetched, "cached": cached, "failed": failed, "stopped_at": symbol}
         payload = response.json() if response is not None and response.status_code == 200 else None
         if isinstance(payload, dict):
@@ -109,12 +112,24 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010
             # agotar el cupo mensual: no es una serie; no se guarda y se detiene para reanudar más adelante.
             print(f"Tiingo: respuesta sin precios en {symbol} ({str(payload.get('detail'))[:80]}); detenido",
                   flush=True)
+            attempt_metrics.finish("failed", reason="respuesta de cupo/error en vez de serie; no se guarda como dato")
             return {"fetched": fetched, "cached": cached, "failed": failed, "stopped_at": symbol}
         if response is None or response.status_code != 200:
             failed += 1
             print(f"Tiingo {symbol}: HTTP {response.status_code if response is not None else 'no response'}", flush=True)
+            attempt_metrics.finish("failed", reason=f"HTTP {response.status_code if response is not None else 'no response'}")
         else:
-            path.write_bytes(response.content)
+            if not isinstance(payload, list):
+                attempt_metrics.finish("failed", reason="JSON sin lista de precios")
+                failed += 1
+                continue
+            pending = path.with_suffix(".json.tmp")
+            pending.write_bytes(response.content)
+            pending.replace(path)
+            attempt_metrics.payload_bytes = len(response.content)
+            attempt_metrics.finish("new", state={"fingerprint": hashlib.sha256(response.content).hexdigest(),
+                                                 "watermark": max((r.get("date", "")[:10] for r in payload), default="")},
+                                   new=len(payload), reason="snapshot de ventana histórica fija; escritura atómica")
             fetched += 1
             print(f"Tiingo {symbol}: {len(response.json())} rows", flush=True)
         time.sleep(pace)
@@ -127,10 +142,24 @@ def import_cached(window: str = "2010-2015") -> dict:
     files = sorted(directory.glob("*.json"))
     digests = {}
     frames = []
+    with storage.get_connection() as conn:
+        conn.executescript(historical_archive.SCHEMA)
+        existing_source = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?",
+                                       (source_id(window),)).fetchone()
+    pinned = json.loads(existing_source[0]).get("files_sha256", {}) if existing_source else {}
     for path in files:
         digests[path.stem] = hashlib.sha256(path.read_bytes()).hexdigest()
+        if path.stem in pinned and pinned[path.stem] != digests[path.stem]:
+            raise ValueError(f"Snapshot Tiingo archivado alterado: {path.stem}; requiere una fuente con ID nuevo.")
+        cp = sync_state.get("tiingo", path.stem, f"import:{window}")
+        if cp.get("fingerprint") == digests[path.stem]:
+            continue
+        if cp.get("fingerprint"):
+            raise ValueError(f"Snapshot Tiingo archivado alterado: {path.stem}; requiere una fuente con ID nuevo.")
         rows = json.loads(path.read_text(encoding="utf-8"))
         if not rows:
+            sync_state.Attempt("tiingo", path.stem, f"import:{window}").finish(
+                "unchanged", state={"fingerprint": digests[path.stem]}, reason="snapshot válido sin observaciones")
             continue
         frame = pd.DataFrame(rows)
         frame["date"] = frame["date"].str[:10]
@@ -145,9 +174,28 @@ def import_cached(window: str = "2010-2015") -> dict:
         "files_sha256": digests})
     if not frames:
         return {"files": len(files), "accepted": 0, "rejected": 0}
-    data = pd.concat(frames, ignore_index=True)
-    result = historical_archive.import_price_chunk(source_id(window), data, set(data.symbol), first, end_exclusive)
-    return {"files": len(files), **result}
+    accepted = rejected = 0
+    for frame in frames:
+        symbol = str(frame.symbol.iloc[0])
+        attempt_metrics = sync_state.Attempt("tiingo", symbol, f"import:{window}")
+        try:
+            before = historical_archive.get_prices(source_id(window), symbol, first, end_exclusive)
+            result = historical_archive.import_price_chunk(source_id(window), frame, {symbol}, first, end_exclusive)
+            accepted += result["accepted"]
+            rejected += result["rejected"]
+            if result["rejected"]:
+                attempt_metrics.finish("failed", reason=f"{result['rejected']} observaciones inválidas; revisión pendiente")
+                continue
+            new_count = int((~pd.to_datetime(frame.date).isin(before.index) & (frame.date >= first)
+                             & (frame.date < end_exclusive)).sum())
+            attempt_metrics.finish("new" if new_count else "unchanged",
+                                   state={"fingerprint": digests[symbol], "watermark": str(frame.date.max())},
+                                   new=new_count, unchanged=result["accepted"] - new_count,
+                                   reason="sólo fichero no importado; fuente histórica fijada")
+        except Exception as exc:
+            attempt_metrics.finish("failed", reason=str(exc))
+            raise
+    return {"files": len(files), "accepted": accepted, "rejected": rejected}
 
 
 def main() -> None:

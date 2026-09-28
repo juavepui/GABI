@@ -63,7 +63,9 @@ def get_sp500_constituents(force_refresh: bool = False) -> pd.DataFrame:
             errors.append(f"{fetch.__name__}: {exc}")
 
     if cache_path.exists():
-        return pd.read_csv(cache_path)
+        df = pd.read_csv(cache_path)
+        df.attrs["cache_after_error"] = True
+        return df
     raise RuntimeError(
         "No se pudo obtener la lista de constituyentes del S&P 500 de ninguna "
         "fuente y no hay caché local. Errores: " + " | ".join(errors)

@@ -12,6 +12,7 @@ viejos metería en el primer trimestre información ya conocida.
 
 import argparse
 import json
+import time
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -130,13 +131,36 @@ def _log(event: dict) -> None:
         stream.write(json.dumps(fs._json_safe({"at": datetime.now(UTC).isoformat(), **event}), ensure_ascii=False) + "\n")
 
 
-def refresh_data() -> dict:
+def refresh_data(*, full_refresh: bool = False) -> dict:
     """Universo vivo y sus datos (precios, fundamentales, SEC) más los benchmarks."""
-    from . import screener
-    universe = screener.get_universe(force_refresh=True)
+    from . import macro, screener, sync_state
+    wall_started, cpu_started = time.perf_counter(), time.process_time()
+    event_id = sync_state.latest_event_id()
+    cp = sync_state.get("universe", "SP500", "members")
+    refresh_universe = full_refresh or sync_state.due(cp, 24)
+    attempt = sync_state.Attempt("universe", "SP500", "members")
+    attempt.calls = int(refresh_universe)
+    try:
+        universe = screener.get_universe(force_refresh=refresh_universe)
+    except Exception as exc:
+        attempt.finish("failed", reason=str(exc))
+        raise
+    if refresh_universe:
+        attempt.payload(universe.to_dict("records"))
+        digest = sync_state.fingerprint(universe.sort_values("symbol").to_dict("records"))
+        status = "new" if not cp else "revised" if cp.get("fingerprint") != digest else "unchanged"
+        if universe.attrs.get("cache_after_error"):
+            attempt.finish("failed", reason="fuentes de universo fallidas; se conserva la caché previa")
+        else:
+            attempt.finish(status, state={"fingerprint": digest}, new=int(not cp), revised=int(status == "revised"),
+                           reason="revisión diaria de composición/sectores actuales")
     symbols = [*universe["symbol"].tolist(), *BENCHMARKS]
-    result = screener.refresh_data(symbols)
-    return {"simbolos": len(symbols), "fallos": len(result.get("failed", {}))}
+    result = screener.refresh_data(symbols, **({"full_refresh": True} if full_refresh else {}))
+    macro_result = macro.ensure_macro_data(full_refresh=full_refresh)
+    events = sync_state.events_since(event_id)
+    return {"simbolos": len(symbols), "fallos": len(result.get("failed", {})), "macro": macro_result,
+            "sync": sync_state.totals(events), "cambios": events, "full_refresh": full_refresh,
+            "seconds_total": time.perf_counter() - wall_started, "cpu_seconds_total": time.process_time() - cpu_started}
 
 
 def record_due(now: datetime | None = None) -> list[dict]:
@@ -161,10 +185,10 @@ def record_due(now: datetime | None = None) -> list[dict]:
     return outcomes
 
 
-def run(*, refresh: bool = True) -> dict:
+def run(*, refresh: bool = True, full_refresh: bool = False) -> dict:
     report: dict = {"antes": status()}
     if refresh:
-        report["refresco"] = refresh_data()
+        report["refresco"] = refresh_data(**({"full_refresh": True} if full_refresh else {}))
     report["rebalanceos"] = record_due()
     report["prueba_44"] = smallmid_step()
     report["despues"] = status()
@@ -197,9 +221,10 @@ def main() -> None:
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--no-refresh", action="store_true", help="Con --run: no refrescar datos antes")
     parser.add_argument("--tiingo", action="store_true")
+    parser.add_argument("--full-refresh", action="store_true", help="Con --run: auditoría completa deliberada de las fuentes")
     args = parser.parse_args()
     if args.run:
-        print(json.dumps(fs._json_safe(run(refresh=not args.no_refresh)), ensure_ascii=False, indent=2))
+        print(json.dumps(fs._json_safe(run(refresh=not args.no_refresh, full_refresh=args.full_refresh)), ensure_ascii=False, indent=2))
     elif args.tiingo:
         print(json.dumps(fs._json_safe(resume_tiingo()), ensure_ascii=False, indent=2))
     else:

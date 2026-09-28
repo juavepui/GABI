@@ -5,6 +5,7 @@ Además de descargar, clasifica los fallos por motivo (rate limit, ticker sin
 datos, timeout, red, respuesta inválida...) para poder explicarle al usuario
 por qué ha fallado cada empresa, en vez de solo decir "ha fallado"."""
 import concurrent.futures as cf
+import json
 import time
 from datetime import UTC, datetime
 
@@ -235,16 +236,38 @@ def fetch_fundamentals_batch(symbols: list, max_workers: int = 6, progress_cb=No
     total = len(symbols)
     if total == 0:
         return failed
+    from . import sync_state as sync
+    previous = storage.get_fundamentals(symbols)
+
+    def sync_one(sym):
+        owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
+        attempt = sync.Attempt("yahoo", owner or f"ticker:{sym}", f"fundamentals:{sym}")
+        try:
+            info, qi, qcf = sync.retry(lambda: _fetch_fundamentals_attempt(sym), attempt)
+            payload = {"info": info, "quarterly_income": json.loads(storage._df_to_json(qi)),
+                       "quarterly_cashflow": json.loads(storage._df_to_json(qcf))}
+            attempt.payload(payload)
+            digest = sync.fingerprint(payload)
+            old = previous.get(sym)
+            status = "new" if not old else "unchanged" if digest == sync.fingerprint(
+                {k: v for k, v in old.items() if k != "fetched_at"}) else "revised"
+            # Refresh the snapshot timestamp even when values agree; no historical reprocessing.
+            storage.upsert_fundamentals(sym, info, qi, qcf, entity_id=owner)
+            attempt.finish(status, state={"fingerprint": digest, "watermark": datetime.now(UTC).isoformat()},
+                           new=int(status == "new"), revised=int(status == "revised"), unchanged=int(status == "unchanged"),
+                           reason="snapshot Yahoo: proveedor sin endpoint incremental para fundamentales")
+        except Exception as exc:
+            attempt.finish("failed", reason=str(exc))
+            raise
+
     with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = {ex.submit(fetch_fundamentals_one, s): s for s in symbols}
+        futures = {ex.submit(sync_one, s): s for s in symbols}
         done = 0
         for fut in cf.as_completed(futures):
             sym = futures[fut]
             done += 1
             try:
-                info, qi, qcf = fut.result()
-                owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
-                storage.upsert_fundamentals(sym, info, qi, qcf, entity_id=owner)
+                fut.result()
             except Exception as exc:
                 _, reason = _classify_error(exc)
                 failed[sym] = reason
@@ -257,7 +280,8 @@ def _is_stale_trading_day(latest_date) -> bool:
     return (datetime.now(UTC).date() - latest_date).days >= 1
 
 
-def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None):
+def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
+                         *, full_refresh: bool = False):
     """Se asegura de que precios y fundamentales estén frescos en la caché local,
     descargando solo lo que falte o esté caducado.
 
@@ -268,17 +292,19 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     symbols = list(dict.fromkeys(symbols))  # dedup preservando orden
     price_symbols = symbols if config.BENCHMARK_SYMBOL in symbols else symbols + [config.BENCHMARK_SYMBOL]
 
-    latest_price_date = storage.get_latest_price_date()
-    needs_price_refresh = (force or latest_price_date is None or _is_stale_trading_day(latest_price_date)
-                           or (latest_price_date is not None and
-                               not storage.has_verified_price_as_of(config.BENCHMARK_SYMBOL, latest_price_date.isoformat())))
-    price_failed = fetch_prices_batch(price_symbols) if needs_price_refresh else {}
+    from . import price_sync
+    price_result = price_sync.run(price_symbols, force=force, full_refresh=full_refresh)
+    needs_price_refresh = any(not e["skipped"] for e in price_result["events"])
+    price_failed = price_result["failed"]
 
     fetched_at = storage.get_fundamentals_fetched_at(symbols)
     now = datetime.now(UTC)
+    from . import sync_state
+    failed_fundamentals = {dataset.removeprefix("fundamentals:") for _, dataset in sync_state.failed_datasets("yahoo")
+                           if dataset.startswith("fundamentals:")}
     stale = [
         s for s in symbols
-        if force or fetched_at.get(s) is None
+        if force or full_refresh or s in failed_fundamentals or fetched_at.get(s) is None
         or (now - fetched_at[s]).total_seconds() > max_age_hours * 3600
     ]
     fundamentals_failed = fetch_fundamentals_batch(stale, progress_cb=progress_cb) if stale else {}
@@ -298,5 +324,6 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     return {
         "price_refreshed": needs_price_refresh,
         "fundamentals_refreshed": len(stale) - len(fundamentals_failed),
+        "price_sync": price_result,
         "failed": failed,
     }
