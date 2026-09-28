@@ -70,6 +70,14 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progre
     edgar_metrics = edgar.get_edgar_metrics(symbols)
     risk_free_rate = _get_risk_free_rate()
 
+    def price_metadata(p):
+        if p is None or p.empty:
+            return {"price_date": None, "close": None, "adj_close": None}
+        last = p.iloc[-1]
+        return {"price_date": p.index[-1].date().isoformat(), "close": last.get("close"), "adj_close": last.get("adj_close")}
+
+    sources = {config.BENCHMARK_SYMBOL: price_metadata(bench_df)}
+
     rows = []
     total = len(universe_df)
     for i, (_, u) in enumerate(universe_df.iterrows()):
@@ -80,6 +88,8 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progre
         t = technicals.compute_technicals(p, bench_df) if p is not None else {}
         r = risk.compute_risk_metrics(p, bench_df, risk_free_rate=risk_free_rate) if p is not None else {}
         edg = edgar_metrics.get(sym, {})
+        sources[sym] = {**price_metadata(p), "fundamentals_fetched_at": record.get("fetched_at") if record else None,
+                        "sec_fetched_at": edg.get("fetched_at")}
 
         row = {"symbol": sym, "name": u.get("name"), "sector": u.get("sector")}
         row.update(m)
@@ -106,9 +116,11 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progre
         if progress_cb and (i % 25 == 0 or i == total - 1):
             progress_cb(i + 1, total)
 
-    df = pd.DataFrame(rows).set_index("symbol")
+    df = pd.DataFrame(rows, columns=None if rows else ["symbol"]).set_index("symbol")
     if df.empty:
         return df
     df = scoring.build_scores(df, weights=weights)
     df["confidence"] = scoring.compute_confidence(df, weights=weights)
+    df.attrs["sources"] = sources
+    df.attrs["risk_free_rate"] = risk_free_rate
     return df

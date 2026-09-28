@@ -11,7 +11,7 @@ from gabi import evaluation, events_calendar, filing_tracker, signal_monitor
 st.title("📡 Signal Monitor")
 st.caption(
     "Compara el ranking en vivo con el último snapshot guardado en 📊 Screener y detecta qué cambió "
-    "-- entradas/salidas del Top-N, cambios de rank/score/confidence por encima de un umbral, y cambios "
+    "-- entradas/salidas del Top-N, cambios de rank/score/cobertura ponderada por encima de un umbral, y cambios "
     "de sector. Solo lee datos ya cacheados, sin red."
 )
 st.warning(
@@ -24,7 +24,7 @@ SEVERITY_ICON = {"MATERIAL": "🔴", "WATCH": "🟡", "INFO": "⚪"}
 EVENT_LABEL = {
     "top_n_entry": "Entra en el Top-N", "top_n_exit": "Sale del Top-N",
     "score_change": "Cambio de Composite Score", "rank_change": "Cambio de rank",
-    "confidence_drop": "Caída de Confidence", "sector_change": "Cambio de sector",
+    "confidence_drop": "Caída de cobertura ponderada", "sector_change": "Cambio de sector",
     "eligibility_change": "Deja de tener score calculable",
 }
 
@@ -76,9 +76,9 @@ with st.expander("⚙️ Umbrales (evitan avisos por ruido diario)"):
         value=signal_monitor.DEFAULT_THRESHOLDS["score_change"], step=0.5,
         help="Escala 0-100. Genera un evento MATERIAL si se supera.")
     confidence_threshold = c3.number_input(
-        "Caída de Confidence (puntos)", min_value=0.1,
+        "Caída de cobertura ponderada (puntos)", min_value=0.1,
         value=signal_monitor.DEFAULT_THRESHOLDS["confidence_drop"], step=0.5,
-        help="Escala 0-100. Solo caídas -- una subida de confidence nunca genera aviso.")
+        help="Escala 0-100. Solo caídas de disponibilidad de datos; no mide confianza de evidencia.")
 
 if st.button("🔍 Comparar con el ranking en vivo", type="primary"):
     with st.spinner("Calculando el ranking en vivo y comparando..."):

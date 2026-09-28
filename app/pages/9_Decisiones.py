@@ -176,11 +176,11 @@ if "decision_plan" in st.session_state:
     quality_warnings = st.session_state.get("decision_quality_warnings") or []
     if quality_warnings:
         st.warning(
-            f"**{len(quality_warnings)} candidata(s) del plan con confidence por debajo de "
+            f"**{len(quality_warnings)} candidata(s) del plan con cobertura ponderada por debajo de "
             f"{data_quality.DEFAULT_CONFIDENCE_THRESHOLD:.0f}** (ver 🩺 Calidad de los datos) -- entran en "
             "el plan por cumplir el score mínimo, pero con menos métricas detrás de lo habitual:\n\n"
             + "\n".join(
-                f"- **{w['symbol']}**: confidence {w['confidence']:.0f}"
+                f"- **{w['symbol']}**: cobertura ponderada {w['confidence']:.0f}"
                 + (f", cobertura del score {w['score_coverage']:.0%}" if w["score_coverage"] is not None else "")
                 for w in quality_warnings
             ),

@@ -377,17 +377,17 @@ Universo histórico          SEC EDGAR                    Precios
     )
 
     st.divider()
-    st.subheader("4. Score vs Confidence: un número alto no siempre significa lo mismo")
+    st.subheader("4. Score, cobertura y confianza de evidencia")
     st.markdown(
-        "**Score** = cuán atractiva parece la empresa. **Confidence** = cuánto te puedes fiar de ese "
-        "score. Son cosas distintas: si a una empresa solo le falta un dato de Quality y el que tiene es "
-        "excelente, puede sacar el mismo Quality Score que otra con los 4 datos completos — Confidence es "
-        "lo que te avisa de la diferencia."
+        "**Score** resume la posición relativa según las métricas. **Cobertura ponderada** (antes Confidence) "
+        "mide cuántos datos hay disponibles y cuánto pesan. **Confianza de evidencia** (BAJA/MEDIA/ALTA) "
+        "evalúa el respaldo estadístico, estabilidad y calidad con reglas conservadoras. Una empresa puede "
+        "tener score alto, datos completos y confianza BAJA si sus factores no están confirmados. "
+        "Ninguno de estos valores es una probabilidad de subir en el futuro."
     )
     st.caption(
-        "Ejemplo real (S&P 500, 2024-01-02): AAPL confidence=100 (13/13 métricas disponibles), "
-        "XOM confidence=32 (mucho dato ausente) — mira siempre los dos números juntos en 📊 Screener o "
-        "🔎 Ficha de Empresa, no solo el Composite."
+        "En Screener, Mi cartera y Ficha de Empresa puedes consultar la confianza, la persistencia del "
+        "Top-20 y las razones a favor/en contra. Los niveles no se ajustan para maximizar retornos históricos."
     )
 
     st.divider()

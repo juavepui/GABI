@@ -6,13 +6,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import app_mode, screener, simple_portfolio
+from gabi import app_mode, evidence_ui, screener, simple_portfolio
 from gabi.ui_helpers import translate_sector
 
 st.title("🎯 Mi cartera")
 st.caption(
-    "La respuesta directa a \"¿qué compro?\": aplica exactamente la hipótesis ya validada con backtest "
-    f"histórico ({app_mode.FROZEN_LABEL}) — Top-N equiponderado, pesos Value 30% · Quality 35% · "
+    "Aplica la hipótesis congelada, estudiada retrospectivamente, al ranking actual "
+    f"({app_mode.FROZEN_LABEL}) — Top-N equiponderado, pesos Value 30% · Quality 35% · "
     "Momentum 25% · Risk 10%. Sin configuración que ajustar. Si quieres experimentar con otros pesos, "
     "reglas de riesgo u optimización de cartera, esa es la función de 🧭 Decisiones de cartera y del modo "
     "Research."
@@ -44,11 +44,13 @@ if simple_portfolio.eligible_candidates(df).empty:
 
 n_positions = st.slider(
     "Número de posiciones", min_value=5, max_value=30, value=20,
-    help="La hipótesis validada usa 20 — es la única cifra con un backtest histórico real detrás. Puedes "
+    help="La hipótesis congelada usa 20 y tiene un backtest retrospectivo. Puedes "
          "ver menos si prefieres una cartera más concentrada; siguen siendo las mejores por Composite Score.",
 )
 if n_positions != 20:
-    st.caption(f"ℹ️ Estás viendo el Top-{n_positions}, no el Top-20 validado.")
+    st.caption(f"ℹ️ Estás viendo el Top-{n_positions}; el diagnóstico de evidencia sigue referido al Top-20 congelado.")
+
+evidence_ui.render(df, app_mode.FROZEN_WEIGHTS, mode=app_mode.get_mode())
 
 ranked = simple_portfolio.target_portfolio(df, n_positions)
 capital = st.number_input("Capital a invertir (€)", min_value=0.0, value=1000.0, step=100.0)
@@ -59,18 +61,18 @@ target["Importe (€)"] = capital * target["weight_pct"] / 100
 target["Acciones aprox."] = (target["Importe (€)"] / target["price"]).where(target["price"] > 0)
 target = target.reset_index().rename(columns={
     "symbol": "Símbolo", "name": "Empresa", "sector": "Sector",
-    "composite_score": "Composite Score", "confidence": "Confidence", "price": "Precio",
+    "composite_score": "Composite Score", "confidence": "Cobertura ponderada", "price": "Precio",
     "weight_pct": "Peso (%)",
 })
 
 st.subheader(f"Tu cartera objetivo — {len(ranked)} posiciones, {ranked['weight_pct'].iloc[0]:.1f}% cada una")
 st.dataframe(
-    target[["Símbolo", "Empresa", "Sector", "Composite Score", "Confidence", "Precio",
+    target[["Símbolo", "Empresa", "Sector", "Composite Score", "Cobertura ponderada", "Precio",
            "Peso (%)", "Importe (€)", "Acciones aprox."]],
     hide_index=True, width="stretch",
     column_config={
         "Composite Score": st.column_config.NumberColumn(format="%.1f"),
-        "Confidence": st.column_config.NumberColumn(format="%.0f"),
+        "Cobertura ponderada": st.column_config.NumberColumn(format="%.0f"),
         "Precio": st.column_config.NumberColumn(format="%.2f"),
         "Peso (%)": st.column_config.NumberColumn(format="%.1f%%"),
         "Importe (€)": st.column_config.NumberColumn(format="%.2f €"),

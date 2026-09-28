@@ -309,12 +309,10 @@ METRIC_INFO = {
                 "Composite Score.",
     },
     "confidence": {
-        "label": "Confidence",
-        "help": "Cuánto fiarse del Composite — NO cuánto de atractiva es la empresa (eso ya lo dice el "
-                "Composite). Una empresa con solo 1 de las 4 métricas de Quality disponible puede sacar el "
-                "mismo Quality score que otra con las 4, si esa única métrica es muy buena — Confidence baja "
-                "en ese caso para avisar de que ese score se apoya en poco dato. 100 = las 13 métricas "
-                "presentes; baja más cuanto más pesan (según tus sliders) los bloques con datos ausentes.",
+        "label": "Cobertura ponderada",
+        "help": "Disponibilidad de las 13 métricas puntuables, ponderada por los pesos de sus bloques, "
+                "en escala 0–100. 100 = todas presentes. No mide apoyo estadístico ni probabilidad futura; "
+                "esa dimensión se muestra aparte como Confianza de evidencia (BAJA/MEDIA/ALTA).",
     },
 }
 

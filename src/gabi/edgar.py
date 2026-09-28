@@ -861,10 +861,10 @@ def get_edgar_metrics(symbols: list) -> dict:
         conn.executescript(SCHEMA)
         rows = conn.execute(
             f"SELECT symbol, revenue_cagr_3y, fcf_cagr_3y, roic, "
-            f"latest_10k_date, latest_10k_url, latest_10q_date, latest_10q_url "
+            f"latest_10k_date, latest_10k_url, latest_10q_date, latest_10q_url, fetched_at "
             f"FROM edgar_metrics WHERE symbol IN ({placeholders})", symbols,
         ).fetchall()
-    cols = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url", "latest_10q_date", "latest_10q_url"]
+    cols = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url", "latest_10q_date", "latest_10q_url", "fetched_at"]
     return {r[0]: dict(zip(cols, r[1:])) for r in rows}
 
 

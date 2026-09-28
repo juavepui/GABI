@@ -16,6 +16,7 @@ from gabi import (
     factor_benchmark_ui,
     factor_stability,
     factor_stability_ui,
+    live_ledger_ui,
     overfitting_audit,
     rank_stability_ui,
     research_lab,
@@ -361,3 +362,4 @@ else:
             block_bootstrap_ui.render(cached[1], cached[2], key="bb_calculated")
 
 rank_stability_ui.render_saved()
+live_ledger_ui.render()

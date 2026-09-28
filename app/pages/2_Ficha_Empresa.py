@@ -7,13 +7,26 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from gabi import ai_prompt, config, estimates, events_calendar, filing_tracker, insider, scoring, screener, storage
+from gabi import (
+    ai_prompt,
+    app_mode,
+    config,
+    estimates,
+    events_calendar,
+    evidence_ui,
+    filing_tracker,
+    insider,
+    scoring,
+    screener,
+    storage,
+)
 from gabi.ui_helpers import METRIC_INFO, format_metric_value, gradient_style, translate_sector
 
 st.title("🔍 Ficha de empresa")
 
 uni = screener.get_universe(limit=None)
-weights = config.load_weights()
+mode = app_mode.get_mode()
+weights = app_mode.FROZEN_WEIGHTS if mode == "INVESTOR" else config.load_weights()
 with st.spinner(f"Cargando {len(uni)} empresas del universo..."):
     load_bar = st.progress(0.0)
 
@@ -50,7 +63,8 @@ col_b.metric("Value", f"{row['value_score']:.1f}" if pd.notna(row["value_score"]
 col_c.metric("Quality", f"{row['quality_score']:.1f}" if pd.notna(row["quality_score"]) else "—", help=METRIC_INFO["quality_score"]["help"])
 col_d.metric("Momentum", f"{row['momentum_score']:.1f}" if pd.notna(row["momentum_score"]) else "—", help=METRIC_INFO["momentum_score"]["help"])
 col_e.metric("Risk", f"{row['risk_score']:.1f}" if pd.notna(row["risk_score"]) else "—", help=METRIC_INFO["risk_score"]["help"])
-col_f.metric("Confidence", f"{row['confidence']:.0f}" if pd.notna(row.get("confidence")) else "—", help=METRIC_INFO["confidence"]["help"])
+col_f.metric("Cobertura ponderada", f"{row['confidence']:.0f}" if pd.notna(row.get("confidence")) else "—", help=METRIC_INFO["confidence"]["help"])
+evidence_ui.render(df, weights, mode=mode, symbol=symbol)
 
 sector_es = translate_sector(row.get("sector")) or "Sector desconocido"
 title_col, action_col = st.columns([4, 1])

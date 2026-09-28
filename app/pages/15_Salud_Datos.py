@@ -288,7 +288,7 @@ st.caption(
     "nuevo desde entonces (columna Detalle)."
 )
 
-with st.expander("📊 Ver también su score y confidence actuales"):
+with st.expander("📊 Ver también su score y cobertura ponderada actuales"):
     st.caption(
         "Calcula el ranking completo del universo (solo con datos ya cacheados, sin red) para poder "
         "mostrar el score de esta empresa en su contexto -- puede tardar unos segundos."
@@ -305,7 +305,7 @@ with st.expander("📊 Ver también su score y confidence actuales"):
             for col, key, label in (
                 (m1, "composite_score", "Composite"), (m2, "value_score", "Value"),
                 (m3, "quality_score", "Quality"), (m4, "momentum_score", "Momentum"),
-                (m5, "risk_score", "Risk"), (m6, "confidence", "Confidence"),
+                (m5, "risk_score", "Risk"), (m6, "confidence", "Cobertura ponderada"),
             ):
                 value = row.get(key)
                 col.metric(label, f"{value:.0f}" if pd.notna(value) else "—", help=METRIC_INFO[key]["help"])

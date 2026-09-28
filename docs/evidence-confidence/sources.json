@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "model_id": "GABI-MF-v1",
+  "universe_id": "SP500_CURRENT",
+  "weights": {
+    "value": 0.3,
+    "quality": 0.35,
+    "momentum": 0.25,
+    "risk": 0.1
+  },
+  "scoring_sha256": "b51a1b4929cf9f243c6c512b62e250e84f1081197320d8fae16a193d6a20d341",
+  "artifacts": {
+    "cross-section-test": {
+      "path": "docs/cross-section-test/resultado.json",
+      "sha256": "822b5781f8ede494ee819261c2219f0b64038ee674e967537e80c9984a9a0831"
+    },
+    "factor-zoo": {
+      "path": "docs/factor-zoo/resultado.json",
+      "sha256": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0"
+    },
+    "tail-effect-test": {
+      "path": "docs/tail-effect-test/resultado.json",
+      "sha256": "e4f71298e12a00c03e027d874171de31f3e2de19ac669d7da72e820a059ed65d"
+    },
+    "placebo-engine": {
+      "path": "docs/placebo-engine/resultado.json",
+      "sha256": "2dc0654987b6191ed82137b5ef5f25c0731b076b6e2002a63c22c681a30168f5"
+    },
+    "block-bootstrap": {
+      "path": "docs/block-bootstrap/resultado.json",
+      "sha256": "46e32ea0e4f03ae185284f79cd1469676bcab943fd7e511abd1a8ea82053b306"
+    },
+    "rank-stability": {
+      "path": "docs/rank-stability/resultado.json",
+      "sha256": "b8da24a057b5594805e527cb31ece352808e50644d0e7a22c96afdef871a9a19"
+    }
+  },
+  "limitations": [
+    "#44: observaciones independientes pendientes; no se lee la prueba ciega.",
+    "#48: sectores históricos ausentes; estabilidad sectorial no estimable.",
+    "Reconstrucción retrospectiva del S&P 500 superviviente; no acredita el universo actual point-in-time.",
+    "Bootstrap neto V1 no estimable sin unir huecos; V2 es un diagnóstico de otra variante."
+  ]
+}

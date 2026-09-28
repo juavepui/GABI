@@ -158,7 +158,9 @@ def refresh_data(*, full_refresh: bool = False) -> dict:
     result = screener.refresh_data(symbols, **({"full_refresh": True} if full_refresh else {}))
     macro_result = macro.ensure_macro_data(full_refresh=full_refresh)
     events = sync_state.events_since(event_id)
-    return {"simbolos": len(symbols), "fallos": len(result.get("failed", {})), "macro": macro_result,
+    failed_events = [{k: e.get(k) for k in ("source", "entity", "dataset", "reason")} for e in events if e["status"] == "failed"]
+    return {"simbolos": len(symbols), "fallos": len(result.get("failed", {})), "failed": result.get("failed", {}),
+            "failed_events": failed_events, "macro": macro_result,
             "sync": sync_state.totals(events), "cambios": events, "full_refresh": full_refresh,
             "seconds_total": time.perf_counter() - wall_started, "cpu_seconds_total": time.process_time() - cpu_started}
 
@@ -186,12 +188,23 @@ def record_due(now: datetime | None = None) -> list[dict]:
 
 
 def run(*, refresh: bool = True, full_refresh: bool = False) -> dict:
-    report: dict = {"antes": status()}
-    if refresh:
-        report["refresco"] = refresh_data(**({"full_refresh": True} if full_refresh else {}))
-    report["rebalanceos"] = record_due()
-    report["prueba_44"] = smallmid_step()
-    report["despues"] = status()
+    from . import live_ledger
+    integrity = live_ledger.verify_integrity()
+    if not integrity["ok"]:
+        raise ValueError(f"Ledger no íntegro antes del mantenimiento: {integrity['reason']}")
+    report: dict = {}
+    try:
+        report["antes"] = status()
+        if refresh:
+            report["refresco"] = refresh_data(**({"full_refresh": True} if full_refresh else {}))
+        report["rebalanceos"] = record_due()
+        report["prueba_44"] = smallmid_step()
+        report["despues"] = status()
+    except Exception as exc:
+        report["error"] = f"{type(exc).__name__}: {exc}"
+    maintenance = {k: v for k, v in report.get("refresco", {}).items() if k != "cambios"}
+    event = live_ledger.capture_current(run_error=report.get("error"), maintenance=maintenance)
+    report["ledger"] = {"seq": event["seq"], "record_hash": event["record_hash"], "status": event["payload"]["status"]}
     _log({"accion": "run", **report})
     return report
 
@@ -224,7 +237,10 @@ def main() -> None:
     parser.add_argument("--full-refresh", action="store_true", help="Con --run: auditoría completa deliberada de las fuentes")
     args = parser.parse_args()
     if args.run:
-        print(json.dumps(fs._json_safe(run(refresh=not args.no_refresh, full_refresh=args.full_refresh)), ensure_ascii=False, indent=2))
+        report = run(refresh=not args.no_refresh, full_refresh=args.full_refresh)
+        print(json.dumps(fs._json_safe(report), ensure_ascii=False, indent=2))
+        if report.get("error") or report.get("ledger", {}).get("status") == "ERROR":
+            raise SystemExit(1)
     elif args.tiingo:
         print(json.dumps(fs._json_safe(resume_tiingo()), ensure_ascii=False, indent=2))
     else:
