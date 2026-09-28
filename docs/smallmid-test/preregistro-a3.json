@@ -1,0 +1,21 @@
+{
+  "sha256": "c6d92d38da0dafbeb5b83342771a69bc369675d197d1f2ac7cc910e850bc3e29",
+  "amends_sha256": [
+    "99d36edfcc0637b217be97706ba2c03edc6645a389b2d0b907e909d5cfd974c1",
+    "2608251cefe5d82cd822c14c726a97a9af5cd8d84b2b50c4a12712de925f5e3e",
+    "39c274a0be955536f7fc5f132b7e3cb5cf5585aa6fcdcba18a712a5ad5f40428"
+  ],
+  "addendum": {
+    "issue": 44,
+    "amends": "preregistro #44 y ampliaciones A1 y A2",
+    "stage": "RESEARCH",
+    "motivation": "Sin una fecha fijada de antemano, esperar a 'un poco más de datos' puede acabar decidiéndose por cómo pintan los resultados. Se fija ahora, sin rankings ni resultados.",
+    "freeze_rule": "los datos se congelan cuando una ejecución de Tiingo recorre la cola entera sin detenerse por el cupo, o el 2027-01-15, lo que ocurra antes; se analiza con la cobertura que haya entonces, con las cotas preregistradas",
+    "order": "congelación, rankings de las 57 fechas, retornos siguientes y análisis, una sola vez",
+    "no_further_sources": "tras la congelación no se añaden fuentes ni se repite el análisis con más datos",
+    "data_state_rule": "se preregistra solo si no existe ningún ranking del #44"
+  },
+  "code_sha256": "96d388bbc0642bc28f6342ee1c11167de6c6093c229b97d5541ae340e7fbac2a",
+  "experiment_id": 49,
+  "rankings_at_registration": 0
+}

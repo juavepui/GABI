@@ -151,7 +151,7 @@ def run(*, refresh: bool = True) -> dict:
 
 
 def resume_tiingo() -> dict:
-    from . import historical_tiingo
+    from . import historical_tiingo, smallmid_test
     lock = tiingo_lock_path()
     if lock.exists():
         return {"omitido": f"ya hay una descarga en curso (borrar {lock} si no es así)"}
@@ -161,6 +161,7 @@ def resume_tiingo() -> dict:
         queue = [symbol.upper() for symbol in tiingo_queue_path().read_text().split()]
         fetched = historical_tiingo.fetch(queue, window="smallmid")
         imported = historical_tiingo.import_cached("smallmid")
+        smallmid_test.mark_tiingo_complete(fetched)  # A3: cola recorrida sin tope -> datos congelados
     finally:
         lock.unlink(missing_ok=True)
     report = {"descarga": fetched, "importacion": imported, "cola": tiingo_queue()}

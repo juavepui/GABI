@@ -153,6 +153,7 @@ def main() -> None:
     parser.add_argument("--preregister-a1", action="store_true", help="Ampliación A1 (#47), antes de los rankings")
     parser.add_argument("--kaggle", action="store_true",
                         help="Ampliación A2: importa Kaggle, recalcula comprobaciones, valida y poda la cola")
+    parser.add_argument("--preregister-a3", action="store_true", help="Ampliación A3: regla de congelación de datos")
     parser.add_argument("--analyze", action="store_true", help="Solo con los 57 rankings calculados")
     args = parser.parse_args()
     if args.preregister:
@@ -183,6 +184,8 @@ def main() -> None:
         if agreement["aceptado"]:
             report["cola_tiingo"] = prune_tiingo_queue(checks)
         print(json.dumps(fs._json_safe(report), ensure_ascii=False, indent=2, default=str))
+    if args.preregister_a3:
+        print(json.dumps({"sha256": preregister_addendum_a3()["sha256"]}))
     if args.analyze:
         print(json.dumps(fs._json_safe(analyze()), ensure_ascii=False, indent=2))
 
@@ -525,6 +528,75 @@ def prune_tiingo_queue(checks: pd.DataFrame) -> dict:
             "pendientes_nuevos": sum(s not in done for s in kept)}
 
 
+# --- Ampliación A3: cuándo se da por cerrada la recogida de datos ---------------------------------
+
+DATA_FREEZE_DEADLINE = "2027-01-15"
+
+ADDENDUM_A3 = {
+    "issue": 44, "amends": "preregistro #44 y ampliaciones A1 y A2", "stage": "RESEARCH",
+    "motivation": "Sin una fecha fijada de antemano, esperar a 'un poco más de datos' puede acabar decidiéndose por "
+                  "cómo pintan los resultados. Se fija ahora, sin rankings ni resultados.",
+    "freeze_rule": f"los datos se congelan cuando una ejecución de Tiingo recorre la cola entera sin detenerse por el "
+                   f"cupo, o el {DATA_FREEZE_DEADLINE}, lo que ocurra antes; se analiza con la cobertura que haya "
+                   "entonces, con las cotas preregistradas",
+    "order": "congelación, rankings de las 57 fechas, retornos siguientes y análisis, una sola vez",
+    "no_further_sources": "tras la congelación no se añaden fuentes ni se repite el análisis con más datos",
+    "data_state_rule": "se preregistra solo si no existe ningún ranking del #44",
+}
+
+
+def addendum_a3_hash() -> str:
+    return hashlib.sha256(json.dumps(ADDENDUM_A3, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def preregister_addendum_a3() -> dict:
+    """Ampliación A3 con hash; se niega si ya hay algún ranking del #44 calculado."""
+    path = OUTPUT / "preregistro-a3.json"
+    digest = addendum_a3_hash()
+    if path.exists():
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if record["sha256"] != digest:
+            raise ValueError("La ampliación A3 cambió después de preregistrarse.")
+        return record
+    computed = sorted((WORK / "rankings").glob("ranking-*.csv"))
+    if computed:
+        raise ValueError(f"Ya hay {len(computed)} rankings del #44: la ampliación no sería previa a los datos.")
+    amended = [preregister()["sha256"], preregister_addendum()["sha256"], preregister_addendum_a2()["sha256"]]
+    experiment = research_lab.log_experiment(
+        "gabi_smallmid_data_freeze", "RESEARCH", True, family="stat_4", universe="EE. UU. fuera del S&P 500 (SEC)",
+        weights=scoring.DEFAULT_WEIGHTS, rebalance="trimestral día 2", is_start=FIRST, is_end=LAST,
+        notes=f"Ampliación A3 (congelación de datos) de {amended}; sha256 {digest}; sin rankings ni resultados")
+    record = {"sha256": digest, "amends_sha256": amended, "addendum": ADDENDUM_A3,
+              "code_sha256": fs.content_hash(Path(__file__)), "experiment_id": experiment,
+              "rankings_at_registration": 0}
+    path.write_text(json.dumps(fs._json_safe(record), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
+def tiingo_complete_path() -> Path:
+    return WORK / "tiingo_completa.json"
+
+
+def mark_tiingo_complete(report: dict) -> None:
+    """Lo llama la tarea de Tiingo cuando recorre la cola sin detenerse por el cupo (regla A3)."""
+    if "stopped_at" in report:
+        return
+    path = tiingo_complete_path()
+    if not path.exists():
+        path.write_text(json.dumps({"fecha": date.today().isoformat(), "descarga": report}, indent=1))
+
+
+def data_frozen(today: date | None = None) -> bool:
+    return tiingo_complete_path().exists() or (today or date.today()).isoformat() >= DATA_FREEZE_DEADLINE
+
+
+def _require_frozen() -> None:
+    preregister_addendum_a3()
+    if not data_frozen():
+        raise ValueError(f"Datos sin congelar (A3): falta completar la cola de Tiingo o llegar al "
+                         f"{DATA_FREEZE_DEADLINE}.")
+
+
 # --- Etapa 4: series aceptadas (comprobación de nivel de precio SEC, #28) ------------------------
 
 def _tiingo_source() -> str:
@@ -620,6 +692,7 @@ def rankings() -> None:
     from . import edgar, entity_master, historical_pit, identity, screener_asof
     from . import historical_issuer_evidence as ie
 
+    _require_frozen()
     universe = build_universe()
     checks = accepted_series()
     sources = _sources()
@@ -868,6 +941,7 @@ def analyze_panels(panels: dict[str, pd.DataFrame]) -> dict:
 
 def analyze() -> dict:
     """Análisis final. Solo con los 57 rankings calculados (tras completar la cola de Tiingo)."""
+    _require_frozen()
     base, addendum = preregister(), preregister_addendum()
     directory = WORK / "rankings"
     missing = [d for d in rebalance_dates() if not (directory / f"ranking-{d}.csv").exists()]

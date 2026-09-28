@@ -98,8 +98,9 @@ def test_tiingo_resume_skips_when_already_running():
     assert "en curso" in pt.resume_tiingo()["omitido"]
 
 
-def test_tiingo_resume_releases_the_lock(monkeypatch):
-    from gabi import historical_tiingo
+def test_tiingo_resume_releases_the_lock(monkeypatch, tmp_path):
+    from gabi import historical_tiingo, smallmid_test
+    monkeypatch.setattr(smallmid_test, "WORK", tmp_path)
     pt.tiingo_queue_path().parent.mkdir(parents=True)
     pt.tiingo_queue_path().write_text("abc xyz")
     seen = {}
@@ -108,3 +109,4 @@ def test_tiingo_resume_releases_the_lock(monkeypatch):
     pt.resume_tiingo()
     assert seen["symbols"] == ["ABC", "XYZ"] and not pt.tiingo_lock_path().exists()
     assert pt.log_path().exists() and pt.log_path().is_relative_to(config.DATA_DIR)
+    assert (tmp_path / "tiingo_completa.json").exists()  # cola recorrida sin tope: A3 congela los datos

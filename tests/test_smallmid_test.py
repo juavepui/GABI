@@ -103,6 +103,7 @@ def test_analysis_waits_for_all_rankings(monkeypatch, tmp_path):
     monkeypatch.setattr(sm, "WORK", tmp_path)
     monkeypatch.setattr(sm, "preregister", lambda: {"sha256": "base"})
     monkeypatch.setattr(sm, "preregister_addendum", lambda: {"sha256": "a1"})
+    monkeypatch.setattr(sm, "_require_frozen", lambda: None)
     with pytest.raises(ValueError, match="Faltan 57 rankings"):
         sm.analyze()
 
@@ -144,3 +145,24 @@ def test_addendum_a2_refuses_once_rankings_exist(monkeypatch, tmp_path):
     (tmp_path / "work" / "rankings" / "ranking-2011-07-02.csv").write_text("x")
     with pytest.raises(ValueError, match="previa a los datos"):
         sm.preregister_addendum_a2()
+
+
+def test_data_freeze_by_complete_tiingo_run_or_deadline(monkeypatch, tmp_path):
+    from datetime import date
+    monkeypatch.setattr(sm, "WORK", tmp_path)
+    assert not sm.data_frozen(date(2026, 10, 1))
+    assert sm.data_frozen(date(2027, 1, 15))
+    sm.mark_tiingo_complete({"fetched": 3, "stopped_at": "X"})  # detenida por el cupo: no cuenta
+    assert not sm.data_frozen(date(2026, 10, 1))
+    sm.mark_tiingo_complete({"fetched": 3, "cached": 800, "failed": 2})
+    assert sm.data_frozen(date(2026, 10, 1))
+
+
+def test_rankings_and_analysis_refuse_before_the_freeze(monkeypatch, tmp_path):
+    monkeypatch.setattr(sm, "WORK", tmp_path)
+    monkeypatch.setattr(sm, "preregister_addendum_a3", lambda: {"sha256": "a3"})
+    monkeypatch.setattr(sm, "data_frozen", lambda today=None: False)
+    with pytest.raises(ValueError, match="sin congelar"):
+        sm.rankings()
+    with pytest.raises(ValueError, match="sin congelar"):
+        sm.analyze()
