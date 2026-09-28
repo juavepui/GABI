@@ -1,0 +1,16 @@
+{
+  "issue": 51,
+  "stage": "RESEARCH_RETROSPECTIVE",
+  "weights": {"value": 0.30, "quality": 0.35, "momentum": 0.25, "risk": 0.10},
+  "perturbations": "Each ordered pair of the four blocks transfers 0.01 and 0.02 from donor to receiver: 24 fixed configurations. Sum stays one; no random search or parameter/return optimization. At live simplex boundaries omit infeasible transfers and report count.",
+  "rankings": "data/revalidation_2011_2025/acreditado-38/ranking-YYYY-MM-DD.csv; the 57 manifest dates from 2011-07-02 to 2025-07-02, inclusive",
+  "eligible": "finite composite, score_coverage >= 0.70 and finite Value, Quality and Momentum; retain firms with missing future returns, which are never read",
+  "scoring": "Existing available-block weighted mean; missing Risk renormalizes available weights. Scores rounded to 12 decimals only for deterministic rank comparison; descending score then ascending ticker breaks ties.",
+  "metrics": ["Spearman and Kendall of full ordinal ranks", "Top-10/20/30 overlap and Jaccard", "entries, exits and turnover fraction", "per-firm rank min/max/std, inclusion fractions", "equal-weight sector HHI and maximum sector-weight change when all selected sectors are known"],
+  "stability_score": "100 * mean overlap fraction of Top-20 under all feasible perturbations; unavailable if universe <= 20",
+  "company_labels": "Baseline Top-20 included under every perturbation: persistent; some: fragile. Outside baseline Top-20 but sometimes included: near boundary; never included: outside. Inclusion fractions describe this fixed neighborhood, never future probabilities.",
+  "aggregation": "Each date has equal weight; report mean, min and max for every metric; do not choose weights, dates or firms from observed performance.",
+  "sectors": "No imputation of historical sectors from present-day information. Missing sector diagnostics explicitly unavailable; concentration of an equal-weight Top-N by company is mechanically 1/N.",
+  "ui": "Investor: Top-20 membership persistence and position range, frozen weights. Research: all metrics, perturbation weights and firms, current experimental weights explicitly labeled. Eligibility computed before display filters.",
+  "interpretation": "Descriptive structural fragility only, neither predictive evidence nor a recommendation to change weights. No backtest or blind/prospective experiment read or modified."
+}
