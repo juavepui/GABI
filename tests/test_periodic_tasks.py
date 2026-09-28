@@ -110,3 +110,23 @@ def test_tiingo_resume_releases_the_lock(monkeypatch, tmp_path):
     assert seen["symbols"] == ["ABC", "XYZ"] and not pt.tiingo_lock_path().exists()
     assert pt.log_path().exists() and pt.log_path().is_relative_to(config.DATA_DIR)
     assert (tmp_path / "tiingo_completa.json").exists()  # cola recorrida sin tope: A3 congela los datos
+
+
+def test_smallmid_final_step_runs_once_when_frozen(monkeypatch):
+    from gabi import smallmid_test as sm
+    calls = []
+    monkeypatch.setattr(sm, "final_run", lambda: calls.append(1) or {"decision_a1": "x"})
+    assert not pt.smallmid_step(date(2026, 10, 1))["lanzado"] and calls == []  # aún sin congelar
+    assert pt.smallmid_step(date(2027, 1, 15))["lanzado"] and calls == [1]
+    sm.result_path().parent.mkdir(parents=True)
+    sm.result_path().write_text("{}")
+    assert not pt.smallmid_step(date(2027, 2, 1))["lanzado"] and calls == [1]  # ya analizado: nunca se repite
+
+
+def test_smallmid_failure_does_not_break_maintenance(monkeypatch):
+    from gabi import smallmid_test as sm
+
+    def boom():
+        raise RuntimeError("sin red")
+    monkeypatch.setattr(sm, "final_run", boom)
+    assert pt.smallmid_step(date(2027, 1, 15))["error"] == "RuntimeError: sin red"

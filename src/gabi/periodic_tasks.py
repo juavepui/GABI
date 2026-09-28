@@ -1,7 +1,8 @@
 """Tareas periódicas que protegen la evidencia prospectiva de GABI (issue #46).
 
     python -m gabi.periodic_tasks --status   # qué vence; no modifica nada
-    python -m gabi.periodic_tasks --run      # refresca datos y registra rebalanceos vencidos
+    python -m gabi.periodic_tasks --run      # refresca datos, registra rebalanceos vencidos y, cuando
+                                             # los datos del #44 se congelan (A3), lanza su análisis una vez
     python -m gabi.periodic_tasks --tiingo   # reanuda la cola de Tiingo del #44 (lenta)
 
 Un rebalanceo de una prueba ciega solo se registra si ha llegado su fecha y
@@ -99,7 +100,27 @@ def status(now: datetime | None = None) -> dict:
     return {"fecha": (now or datetime.now(UTC)).date().isoformat(), "ultima_sesion": last_session(now),
             "precios": {s: latest_price(s) for s in BENCHMARKS}, "universo_sin_ultimo_cierre": stale_share(now),
             "precios_al_dia": prices_fresh(now),
-            "pruebas_ciegas": blind_status((now or datetime.now(UTC)).date()), "tiingo_44": tiingo_queue()}
+            "pruebas_ciegas": blind_status((now or datetime.now(UTC)).date()), "tiingo_44": tiingo_queue(),
+            "prueba_44": smallmid_state((now or datetime.now(UTC)).date())}
+
+
+def smallmid_state(today: date | None = None) -> dict:
+    """Estado de la prueba fuera del S&P 500 (#44): congelación de datos (A3) y análisis."""
+    from . import smallmid_test as sm
+    return {"datos_congelados": sm.data_frozen(today), "tiingo_completa": sm.tiingo_complete_path().exists(),
+            "fecha_limite": sm.DATA_FREEZE_DEADLINE, "analizada": sm.result_path().exists()}
+
+
+def smallmid_step(today: date | None = None) -> dict:
+    """Lanza el paso final del #44 una sola vez en cuanto los datos se congelan (A3); si falla, lo registra."""
+    from . import smallmid_test as sm
+    state = smallmid_state(today)
+    if state["analizada"] or not state["datos_congelados"]:
+        return {"lanzado": False, **state}
+    try:
+        return {"lanzado": True, **sm.final_run()}
+    except Exception as exc:  # que un fallo aquí no impida el resto del mantenimiento
+        return {"lanzado": True, "error": f"{type(exc).__name__}: {exc}"}
 
 
 def _log(event: dict) -> None:
@@ -145,6 +166,7 @@ def run(*, refresh: bool = True) -> dict:
     if refresh:
         report["refresco"] = refresh_data()
     report["rebalanceos"] = record_due()
+    report["prueba_44"] = smallmid_step()
     report["despues"] = status()
     _log({"accion": "run", **report})
     return report

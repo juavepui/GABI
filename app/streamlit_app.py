@@ -30,6 +30,17 @@ def _aviso_rebalanceos():
         pending = periodic_tasks.due_soon()
     except Exception:  # la portada no debe fallar por esto
         return
+    try:
+        prueba_44 = periodic_tasks.smallmid_state()
+    except Exception:
+        prueba_44 = None
+    if prueba_44 and prueba_44["analizada"]:
+        st.info("🔬 El análisis preregistrado de GABI fuera del S&P 500 (#44) ya está hecho: "
+                "docs/smallmid-test/resultado.json.", icon="🔬")
+    elif prueba_44 and prueba_44["datos_congelados"]:
+        st.warning("🔬 Los datos del #44 ya están congelados y falta su análisis: ejecuta "
+                   "`python -m gabi.periodic_tasks --run` (lo hace solo si las tareas programadas están "
+                   "instaladas).", icon="🔬")
     for row in pending:
         when = "vencido" if row["dias"] <= 0 else f"en {row['dias']} día(s)"
         st.info(f"🗓️ Rebalanceo de la prueba ciega #{row['id']} ({row['nombre']}) {when}, el {row['proximo']}. "

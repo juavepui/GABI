@@ -590,6 +590,31 @@ def data_frozen(today: date | None = None) -> bool:
     return tiingo_complete_path().exists() or (today or date.today()).isoformat() >= DATA_FREEZE_DEADLINE
 
 
+def result_path() -> Path:
+    return OUTPUT / "resultado.json"
+
+
+def final_run() -> dict:
+    """Paso final de A3, una sola vez: importa lo descargado, recalcula las comprobaciones, rankings y análisis.
+
+    Lo lanza ``periodic_tasks --run`` en cuanto los datos se congelan; si se interrumpe, se reanuda donde quedó.
+    """
+    from . import historical_tiingo
+    _require_frozen()
+    if result_path().exists():
+        return {"omitido": "el #44 ya está analizado"}
+    report: dict = {"tiingo": historical_tiingo.import_cached("smallmid")}
+    if not any((WORK / "rankings").glob("ranking-*.csv")):
+        (WORK / "level_checks.csv").unlink(missing_ok=True)  # comprobaciones con todos los datos congelados
+    checks = accepted_series()
+    agreement = kaggle_agreement(checks)
+    report["kaggle_aceptado"] = agreement["aceptado"]
+    rankings()
+    result = analyze()
+    report.update(decision_principal=result["decision_principal"], decision_a1=result["decision_a1"])
+    return report
+
+
 def _require_frozen() -> None:
     preregister_addendum_a3()
     if not data_frozen():
