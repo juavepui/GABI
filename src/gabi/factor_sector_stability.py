@@ -33,6 +33,7 @@ DIVISION_NAMES = {
 WINDOWS = {"2011-15": ("2011-01-01", "2016-01-01"),
            "2016-20": ("2016-01-01", "2021-01-01"), "2021-25": ("2021-01-01", "2026-01-01")}
 FILING_COLUMNS = ["accn", "cik", "sic", "form", "filed_date", "accepted", "source_url"]
+ARCHIVE_NAMES = tuple(f"{year}q{quarter}.zip" for year in range(2009, 2026) for quarter in range(1, 5))
 
 
 def fingerprint(value: dict) -> str:
@@ -128,14 +129,22 @@ def assign(frame: pd.DataFrame, date: str, filings: pd.DataFrame, spec: dict) ->
     return pd.DataFrame(rows).set_index("symbol")
 
 
-def verify_archive(path: Path, expected: dict, indexed: pd.DataFrame) -> dict:
-    """Validate primary registrant metadata against original SUB and the full ZIP hash."""
+def _read_archive(path: Path, expected: dict) -> tuple[pd.DataFrame, dict]:
     if path.stat().st_size != expected["bytes"] or file_hash(path) != expected["sha256"]:
         raise ValueError(f"Archivo SEC modificado: {path.name}")
     with zipfile.ZipFile(path) as archive:
         raw = archive.read("sub.txt")
     sub = pd.read_csv(io.BytesIO(raw), sep="\t", dtype=str, keep_default_na=False)
-    if sub.adsh.duplicated().any() or indexed.accn.duplicated().any():
+    if sub.adsh.duplicated().any():
+        raise ValueError(f"Accession duplicado: {path.name}")
+    return sub, {"sha256": expected["sha256"], "bytes": expected["bytes"],
+                 "sub_sha256": hashlib.sha256(raw).hexdigest(), "fetched_at": expected["fetched_at"]}
+
+
+def verify_archive(path: Path, expected: dict, indexed: pd.DataFrame) -> dict:
+    """Validate primary registrant metadata against original SUB and the full ZIP hash."""
+    sub, provenance = _read_archive(path, expected)
+    if indexed.accn.duplicated().any():
         raise ValueError(f"Accession duplicado: {path.name}")
     sub = sub.set_index("adsh")
     for filing in indexed.to_dict("records"):
@@ -148,9 +157,7 @@ def verify_archive(path: Path, expected: dict, indexed: pd.DataFrame) -> dict:
                   "form": str(original["form"]), "filed_date": filed, "accepted": str(original["accepted"])}
         if any(str(filing[key]) != value for key, value in values.items()):
             raise ValueError(f"Metadatos SEC distintos de SUB: {filing['accn']}")
-    return {"sha256": expected["sha256"], "bytes": expected["bytes"],
-            "sub_sha256": hashlib.sha256(raw).hexdigest(), "verified_filings": len(indexed),
-            "fetched_at": expected["fetched_at"]}
+    return {**provenance, "verified_filings": len(indexed)}
 
 
 def archived_filings(ciks: set[str], snapshot: dict | None = None) -> tuple[pd.DataFrame, dict]:
@@ -158,20 +165,36 @@ def archived_filings(ciks: set[str], snapshot: dict | None = None) -> tuple[pd.D
         uri = config.DB_PATH.resolve().as_uri() + "?mode=ro"
         with sqlite3.connect(uri, uri=True) as connection:
             connection.execute("BEGIN")
-            filings = pd.read_sql_query("SELECT " + ",".join(FILING_COLUMNS) + " FROM sec_bulk_submissions", connection)
             archive_rows = pd.read_sql_query("SELECT * FROM sec_archive_files", connection).to_dict("records")
         archives = {r["url"]: r for r in archive_rows}
     else:
-        filings = pd.read_csv(OUTPUT / "filings.csv", dtype=str, keep_default_na=False)
         archives = snapshot["sources"]
-    filings = filings.loc[filings.cik.isin(ciks)].fillna("").sort_values(["cik", "filed_date", "accepted", "accn"])
+    urls = {str(url).rsplit("/", 1)[-1]: url for url in archives
+            if str(url).startswith("https://www.sec.gov/files/dera/data/financial-statement-data-sets/")}
+    if not set(ARCHIVE_NAMES).issubset(urls):
+        raise ValueError("Faltan archivos trimestrales SEC de 2009–2025.")
     hashes = {}
-    for url, group in filings.groupby("source_url", sort=True):
-        name = str(url).rsplit("/", 1)[-1]
-        if not re.fullmatch(r"20\d{2}q[1-4]\.zip", name) or url not in archives:
-            raise ValueError(f"Fuente SEC sin archivo registrado: {url}")
+    tables = []
+    forms = specification()["forms"]
+    for name in ARCHIVE_NAMES:
+        url = urls[name]
         path = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / name
-        hashes[str(url)] = verify_archive(path, archives[url], group)
+        sub, provenance = _read_archive(path, archives[url])
+        sub["cik"] = sub.cik.str.zfill(10)
+        sub = sub.loc[sub.cik.isin(ciks) & sub.form.isin(forms)].copy()
+        sub["filed_date"] = sub.filed.map(lambda d: f"{d[:4]}-{d[4:6]}-{d[6:]}" if re.fullmatch(r"\d{8}", d) else "")
+        sub["source_url"] = url
+        tables.append(sub.rename(columns={"adsh": "accn"})[FILING_COLUMNS])
+        hashes[str(url)] = {**provenance, "verified_filings": len(sub)}
+    filings = pd.concat(tables, ignore_index=True).fillna("")
+    for _, duplicate in filings.loc[filings.accn.duplicated(keep=False)].groupby("accn"):
+        if len(duplicate[FILING_COLUMNS[:-1]].drop_duplicates()) > 1:
+            raise ValueError("Accession con metadatos distintos entre archivos SEC.")
+    filings = filings.sort_values(["cik", "filed_date", "accepted", "accn", "source_url"]).drop_duplicates("accn").reset_index(drop=True)
+    if snapshot is not None:
+        saved = pd.read_csv(OUTPUT / "filings.csv", dtype=str, keep_default_na=False)
+        if not saved.equals(filings):
+            raise ValueError("Los SUB completos difieren del snapshot publicado.")
     return filings.reset_index(drop=True), hashes
 
 

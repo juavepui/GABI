@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sqlite3
 import zipfile
 
 import numpy as np
@@ -157,3 +158,25 @@ def test_saved_view_detects_artifact_tampering(tmp_path, monkeypatch, spec):
     data.write_text("fecha,n_eligible\n2020-01-01,101\n", encoding="utf-8")
     with pytest.raises(ValueError, match="Artefacto SIC modificado"):
         sector.load_saved(expected)
+
+
+def test_complete_sub_metadata_does_not_depend_on_partial_index(tmp_path, monkeypatch):
+    archive_dir = sector.config.DATA_DIR / "history_refresh" / "validation_1996_2015"
+    archive_dir.mkdir(parents=True)
+    path = archive_dir / "2020q1.zip"
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("sub.txt", "adsh\tcik\tsic\tform\tfiled\taccepted\taciks\n"
+                         "0\t1\t3571\t10-Q\t20200110\t2020-01-10 17:00:00.0\t2\n"
+                         "1\t1\t6021\t10-Q\t20200210\t2020-02-10 17:00:00.0\t2\n")
+    url = "https://www.sec.gov/files/dera/data/financial-statement-data-sets/2020q1.zip"
+    with sqlite3.connect(sector.config.DB_PATH) as connection:
+        connection.execute("CREATE TABLE sec_archive_files(url,sha256,bytes,fetched_at)")
+        connection.execute("INSERT INTO sec_archive_files VALUES(?,?,?,?)", (url, sector.file_hash(path), path.stat().st_size, "2026-09-28"))
+    monkeypatch.setattr(sector, "ARCHIVE_NAMES", ("2020q1.zip",))
+    records, sources = sector.archived_filings({"0000000001", "0000000002"})
+    assert len(records) == 2 and set(records.accn) == {"0", "1"}
+    assert set(records.cik) == {"0000000001"}  # No inherited co-registrant SIC.
+    assert sources[url]["verified_filings"] == 2
+    monkeypatch.setattr(sector, "ARCHIVE_NAMES", ("2020q1.zip", "2020q2.zip"))
+    with pytest.raises(ValueError, match="Faltan archivos"):
+        sector.archived_filings({"0000000001"})
