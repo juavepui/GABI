@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from datetime import date
 from pathlib import Path
@@ -8,6 +9,8 @@ import pandas as pd
 import streamlit as st
 
 from gabi import (
+    block_bootstrap,
+    block_bootstrap_ui,
     config,
     factor_benchmark,
     factor_benchmark_ui,
@@ -296,22 +299,60 @@ else:
             st.caption(f"{pbo_result['n_combinations']} combinaciones IS/OOS evaluadas.")
 
 st.divider()
-st.subheader("🎲 Bootstrap del Sharpe")
-st.caption("Intervalo de confianza del Sharpe por remuestreo por bloques (preserva autocorrelación) — más "
-          "robusto que la aproximación normal, a costa de no dar una fórmula cerrada. Requiere serie de "
-          "retornos real.")
+st.subheader("🎲 Incertidumbre por bloques temporales")
+st.caption("Distribuciones de rentabilidad, riesgo y exceso frente a un benchmark sobre las mismas fechas. "
+           "Método y sensibilidad fijados de antemano; no se optimizan pesos ni se repiten backtests.")
+if (block_bootstrap.OUTPUT / "resultado.json").exists():
+    with st.expander("Diagnóstico guardado · validación retrospectiva", expanded=True):
+        try:
+            saved_bootstrap = block_bootstrap.load_saved()
+            dataset_labels = {"v2_daily_net": "V2 neto diario frente al SPY",
+                              "v1_quarterly_net": "V1 neto trimestral frente al SPY y al universo",
+                              "cross_section_means": "IC y spread trimestrales"}
+            dataset = st.selectbox("Series del diagnóstico", list(saved_bootstrap["datasets"]),
+                                   format_func=lambda name: dataset_labels[name], key="bb_saved_dataset")
+            saved_distribution = pd.read_csv(block_bootstrap.OUTPUT / f"{dataset}-distributions.csv")
+            block_bootstrap_ui.render(saved_bootstrap["datasets"][dataset], saved_distribution, key="bb_saved")
+        except (OSError, ValueError, KeyError) as exc:
+            st.warning(f"No se pudo cargar el diagnóstico de bloques: {exc}")
 if with_returns.empty:
     st.info("Hacen falta experimentos con serie de retornos guardada.")
 else:
     boot_options = {f"#{row.id} · {row.model_id}": row.id for row in with_returns.itertuples()}
-    boot_label = st.selectbox("Experimento", list(boot_options), key="boot_pick")
+    boot_label = st.selectbox("Experimento para calcular incertidumbre", list(boot_options), key="boot_pick")
     boot_exp = research_lab.get_experiment(boot_options[boot_label])
-    if len(boot_exp["returns"].dropna()) < 30:
+    if len(boot_exp["returns"]) < 30:
         st.warning("Esta serie tiene menos de 30 observaciones — no es suficiente para un bootstrap razonable.")
-    elif st.button("Calcular intervalo de confianza"):
-        boot_result = stats_rigor.bootstrap_sharpe_ci(
-            boot_exp["returns"], periods_per_year=float(boot_exp["periods_per_year"] or 252))
-        b1, b2, b3 = st.columns(3)
-        b1.metric("Estimación (bootstrap)", f"{boot_result['point_estimate']:.2f}")
-        b2.metric("Límite inferior (95%)", f"{boot_result['lower']:.2f}")
-        b3.metric("Límite superior (95%)", f"{boot_result['upper']:.2f}")
+    elif boot_exp.get("periods_per_year") not in block_bootstrap.BLOCK_LENGTHS:
+        st.warning("Falta una frecuencia válida declarada en el experimento; no se presume que sea diaria.")
+    else:
+        frequency = boot_exp["periods_per_year"]
+        comparable = with_returns.loc[(with_returns.periods_per_year == frequency)
+                                      & (with_returns.id != boot_options[boot_label])]
+        bench_options = {"Sin benchmark": None, **{f"#{row.id} · {row.model_id}": row.id
+                                                  for row in comparable.itertuples()}}
+        benchmark_label = st.selectbox("Serie de comparación (misma frecuencia y fechas)", list(bench_options), key="bb_benchmark")
+        boot_matrix = boot_exp["returns"].to_frame("strategy")
+        benchmark = None
+        if bench_options[benchmark_label] is not None:
+            benchmark = research_lab.get_experiment(bench_options[benchmark_label])
+            if not benchmark["returns"].index.equals(boot_matrix.index):
+                st.warning("Las fechas no coinciden exactamente: no se recortan ni rellenan las series.")
+            else:
+                boot_matrix["benchmark"] = benchmark["returns"]
+        signature = hashlib.sha256((boot_matrix.to_csv() + str(frequency) + boot_label + benchmark_label).encode()).hexdigest()
+        if st.button("Calcular distribuciones e intervalos", key="bb_calculate"):
+            try:
+                if benchmark is not None and "benchmark" not in boot_matrix:
+                    raise ValueError("El benchmark no está alineado.")
+                with st.spinner("Remuestreando bloques y comparando las longitudes preregistradas..."):
+                    audit, distribution = block_bootstrap.analyze_sensitivity(boot_matrix, periods_per_year=frequency, strategy="strategy")
+                audit["experiments"] = {"strategy": {k: boot_exp.get(k) for k in ("id", "model_id", "git_commit", "data_fingerprint")}}
+                if benchmark is not None:
+                    audit["experiments"]["benchmark"] = {k: benchmark.get(k) for k in ("id", "model_id", "git_commit", "data_fingerprint")}
+                st.session_state["bb_calculated"] = (signature, audit, distribution)
+            except ValueError as exc:
+                st.warning(str(exc))
+        cached = st.session_state.get("bb_calculated")
+        if cached is not None and cached[0] == signature:
+            block_bootstrap_ui.render(cached[1], cached[2], key="bb_calculated")
