@@ -17,6 +17,7 @@ from gabi import (
     factor_stability,
     factor_stability_ui,
     overfitting_audit,
+    rank_stability_ui,
     research_lab,
     stats_rigor,
     tail_risk_ui,
@@ -358,3 +359,5 @@ else:
         cached = st.session_state.get("bb_calculated")
         if cached is not None and cached[0] == signature:
             block_bootstrap_ui.render(cached[1], cached[2], key="bb_calculated")
+
+rank_stability_ui.render_saved()

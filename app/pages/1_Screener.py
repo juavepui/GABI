@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 import streamlit as st
 
-from gabi import app_mode, config, data_quality, evaluation, screener
+from gabi import app_mode, config, data_quality, evaluation, rank_stability_ui, screener
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("📊 Screener")
@@ -96,6 +96,8 @@ if mode == "RESEARCH":
     experimental_banner = app_mode.experimental_banner_message(weights)
     if experimental_banner:
         st.warning(experimental_banner, icon="🧪")
+
+rank_stability_ui.render(df, weights, mode=mode)
 
 filtered = df.copy()
 if search_query.strip():
