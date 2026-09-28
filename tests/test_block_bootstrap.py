@@ -1,12 +1,13 @@
 """Statistical invariants: pairing, dependency, metric conventions and failed inputs."""
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from gabi import academic_factors, portfolio_metrics
+from gabi import academic_factors, config, portfolio_metrics
 from gabi import block_bootstrap as bb
 
 
@@ -167,3 +168,31 @@ def test_saved_load_detects_changed_distribution(tmp_path, monkeypatch):
     path.write_text("x\n2\n")
     with pytest.raises(ValueError, match="ha cambiado"):
         bb.load_saved()
+
+
+def test_saved_analysis_reports_gapped_v1_and_preserves_other_complete_series(tmp_path, monkeypatch):
+    import exchange_calendars as xcals
+
+    spec = json.loads((Path(__file__).resolve().parents[1] / "docs/block-bootstrap/preregistro.json").read_text())
+    monkeypatch.setattr(config, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(bb, "OUTPUT", tmp_path / "docs/block-bootstrap")
+    bb.OUTPUT.mkdir(parents=True)
+    (bb.OUTPUT / "preregistro.json").write_text(json.dumps(spec))
+    for name in ("daily_nav", "daily_periods", "quarterly_returns", "cross_section"):
+        (tmp_path / spec[name]).parent.mkdir(parents=True, exist_ok=True)
+    dates = xcals.get_calendar("XNYS").sessions_in_range("2024-01-02", "2024-12-31").tz_localize(None)
+    values = np.random.default_rng(8).normal(.0004, .01, len(dates))
+    nav = pd.DataFrame({"strategy": np.cumprod(1 + values), "spy": np.cumprod(1 + values * .8)}, index=dates)
+    nav.to_csv(tmp_path / spec["daily_nav"])
+    pd.DataFrame({"fecha": ["2024-01-03"]}).to_csv(tmp_path / spec["daily_periods"], index=False)
+    quarters = pd.date_range("2010-01-01", periods=40, freq="QS")
+    quarterly = pd.DataFrame({"fecha": quarters, "hasta": quarters + pd.DateOffset(months=3),
+                              "retorno": .01, "spy": .007, "universo_ew": .008})
+    quarterly.drop(index=5).to_csv(tmp_path / spec["quarterly_returns"], index=False)
+    pd.DataFrame({"ic": np.linspace(-.1, .1, 40), "q5_menos_q1": values[:40]}, index=quarters).rename_axis("fecha").to_csv(
+        tmp_path / spec["cross_section"])
+    result = bb.analyze_saved()
+    assert "huecos" in result["unavailable_datasets"]["v1_quarterly_net"]
+    assert set(result["datasets"]) == {"v2_daily_net", "cross_section_means"}
+    assert result["datasets"]["v2_daily_net"]["runs"]["20"]["n_obs"] == len(dates) - 1
+    assert len(bb.load_saved()["artifacts_sha256"]) == 2

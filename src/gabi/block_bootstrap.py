@@ -295,10 +295,11 @@ def analyze_saved() -> dict:
     daily = nav.pct_change(fill_method=None).loc[pd.Timestamp(periods.fecha.iloc[0]):]
     quarterly = pd.read_csv(paths["quarterly_returns"], float_precision="round_trip")
     starts, ends = pd.to_datetime(quarterly.fecha), pd.to_datetime(quarterly.hasta)
+    unavailable = {}
     if not np.all(ends.dt.to_period("M").array.asi8 - starts.dt.to_period("M").array.asi8 == 3):
-        raise ValueError("Las ventanas V1 no son trimestrales.")
-    if not np.array_equal(ends.dt.to_period("M").array.asi8[:-1], starts.dt.to_period("M").array.asi8[1:]):
-        raise ValueError("Las ventanas V1 tienen huecos o solapamientos.")
+        unavailable["v1_quarterly_net"] = "Las ventanas V1 no son trimestrales. No se realiza inferencia temporal."
+    elif not np.array_equal(ends.dt.to_period("M").array.asi8[:-1], starts.dt.to_period("M").array.asi8[1:]):
+        unavailable["v1_quarterly_net"] = "Las ventanas V1 tienen huecos o solapamientos. No se unen periodos separados ni se imputan retornos."
     quarterly.index = pd.DatetimeIndex(starts)
     quarterly = quarterly[list(spec["quarterly_columns"])].rename(columns=spec["quarterly_columns"])
     panel = pd.read_csv(paths["cross_section"], index_col="fecha", parse_dates=True, float_precision="round_trip")[spec["mean_columns"]]
@@ -306,9 +307,11 @@ def analyze_saved() -> dict:
     financial = {key: spec[key] for key in ("risk_free_rate", "drawdown_threshold")}
     report: dict = {"spec_sha256": digest, "inputs_sha256": hashes, "git_commit": research_lab._current_git_commit(),
               "dependencies": research_lab._dependency_versions(), "environment_sha256": research_lab._env_fingerprint(),
-              "datasets": {}}
-    for name, frame, frequency, means in (("v2_daily_net", daily, 252, False),
-                                         ("v1_quarterly_net", quarterly, 4, False), ("cross_section_means", panel, 4, True)):
+              "unavailable_datasets": unavailable, "datasets": {}}
+    datasets = [("v2_daily_net", daily, 252, False), ("cross_section_means", panel, 4, True)]
+    if "v1_quarterly_net" not in unavailable:
+        datasets.append(("v1_quarterly_net", quarterly, 4, False))
+    for name, frame, frequency, means in datasets:
         audit, distribution = analyze_sensitivity(frame, periods_per_year=frequency, means=means,
                                                   **settings, **({} if means else {"strategy": "strategy", **financial}))
         report["datasets"][name] = audit
@@ -316,7 +319,8 @@ def analyze_saved() -> dict:
         interval_table(audit).to_csv(OUTPUT / f"{name}-intervals.csv", index=False, lineterminator="\n")
     if hashes != {str(p.relative_to(config.BASE_DIR)): _hash(p) for p in paths.values()}:
         raise ValueError("Las entradas han cambiado durante el análisis.")
-    report["artifacts_sha256"] = {p.name: _hash(p) for p in sorted(OUTPUT.glob("*-distributions.csv"))}
+    report["artifacts_sha256"] = {f"{name}-distributions.csv": _hash(OUTPUT / f"{name}-distributions.csv")
+                                for name in report["datasets"]}
     _save(OUTPUT / "resultado.json", report)
     return report
 

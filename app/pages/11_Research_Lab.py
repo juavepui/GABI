@@ -306,6 +306,8 @@ if (block_bootstrap.OUTPUT / "resultado.json").exists():
     with st.expander("Diagnóstico guardado · validación retrospectiva", expanded=True):
         try:
             saved_bootstrap = block_bootstrap.load_saved()
+            for reason in saved_bootstrap.get("unavailable_datasets", {}).values():
+                st.info(f"V1 trimestral no estimable: {reason}")
             dataset_labels = {"v2_daily_net": "V2 neto diario frente al SPY",
                               "v1_quarterly_net": "V1 neto trimestral frente al SPY y al universo",
                               "cross_section_means": "IC y spread trimestrales"}
