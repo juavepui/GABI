@@ -1,0 +1,20 @@
+{
+  "issue": 50,
+  "stage": "RESEARCH_RETROSPECTIVE",
+  "method": "paired circular block bootstrap, fixed length, percentile intervals",
+  "n_boot": 4096,
+  "seed": 500050,
+  "ci": 0.95,
+  "risk_free_rate": 0.0,
+  "drawdown_threshold": 0.2,
+  "block_lengths": {"252": [20, 10, 40], "12": [3, 2, 6], "4": [4, 2, 8], "2": [2, 4], "1": [2, 4]},
+  "daily_nav": "docs/historical-revalidation-2011-2025/acreditado-38-continua/v2-top20-nav.csv",
+  "daily_periods": "docs/historical-revalidation-2011-2025/acreditado-38-continua/v2-top20-periods.csv",
+  "quarterly_returns": "docs/historical-revalidation-2011-2025/acreditado-38-continua/v1-top20-periods.csv",
+  "quarterly_columns": {"retorno": "strategy", "spy": "SPY", "universo_ew": "eligible_universe"},
+  "cross_section": "docs/cross-section-test/por-trimestre.csv",
+  "mean_columns": ["ic", "q5_menos_q1"],
+  "min_obs": 30,
+  "comparison": "existing HAC/Newey-West mean, automatic lags, normal interval",
+  "interpretation": "bootstrap fractions are neither null p-values nor probabilities of future success; no new OOS evidence"
+}
