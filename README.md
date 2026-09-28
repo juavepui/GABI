@@ -1366,6 +1366,16 @@ experimentos filtrable por familia/fase, formulario de registro manual, y las tr
 cálculo (PSR/DSR, PBO/CSCV, bootstrap) — estas dos últimas solo ofrecen experimentos con serie de
 retornos guardada.
 
+**Incertidumbre por bloques (#50):** Research Lab muestra intervalos y
+distribuciones de CAGR, volatilidad, Sharpe, drawdown, ES y exceso frente a
+benchmarks emparejados. Incluye sensibilidad de longitudes fijadas antes del
+análisis, comparación de medias con HAC y exportación reproducible. El
+[diagnóstico guardado](docs/block-bootstrap/README.md) conserva la
+incertidumbre: el intervalo principal de la diferencia de CAGR frente al
+SPY incluye cero, al igual que el IC. Los huecos de V1 se declaran no
+estimables, sin imputar retornos ni unir periodos separados. El remuestreo
+no añade evidencia fuera de muestra.
+
 ## 📐 Factor Lab: ¿el score predice de forma gradual y consistente?
 
 Segunda propuesta del usuario tras el Research Lab. En vez de seguir preguntando "¿el Top-20 ganó al

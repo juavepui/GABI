@@ -66,6 +66,9 @@ def render(audit: dict, distribution: pd.DataFrame, *, key: str) -> None:
     st.caption("Retornos, volatilidad, drawdown y ES en fracción (0,10 = 10 %); Sharpe e IC sin unidades. "
                "ES tiene el horizonte de una observación original. Drawdown negativo incluye capital inicial. "
                "Los rangos de drawdown/ES son descriptivos y no tienen cobertura garantizada.")
+    if primary.get("series"):
+        st.caption("El drawdown es el máximo durante toda la trayectoria remuestreada, "
+                   "de la misma duración que el histórico; su fracción no describe el riesgo de un solo año.")
     st.dataframe(shown.rename(columns={"series": "Serie", "metric": "Métrica", "observed": "Observado",
                                       "lower": "Inferior", "median": "Mediana bootstrap", "upper": "Superior",
                                       "bootstrap_mean": "Media bootstrap", "valid_draws": "Réplicas válidas",

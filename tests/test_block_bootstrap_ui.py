@@ -43,6 +43,23 @@ ui.render(audit, draws, key="constant")
     assert "no es estimable" in app.info[0].value
 
 
+def test_render_temporal_ic_and_spread_without_annualizing_them():
+    app = AppTest.from_string('''
+import numpy as np
+import pandas as pd
+from gabi import block_bootstrap as bb, block_bootstrap_ui as ui
+frame = pd.DataFrame({"ic": np.linspace(-.1, .15, 57), "q5_menos_q1": np.linspace(-.03, .04, 57)})
+audit, draws = bb.analyze_sensitivity(frame, periods_per_year=4, means=True, n_boot=128)
+ui.render(audit, draws, key="means")
+''').run(timeout=20)
+    assert not app.exception
+    assert len(app.get("plotly_chart")) == 1
+    assert not set(app.dataframe[0].value["Métrica"]) - {"Media temporal"}
+    app.selectbox(key="means_metric").set_value("q5_menos_q1").run()
+    assert not app.exception
+    assert len(app.get("plotly_chart")) == 1
+
+
 def test_research_lab_runs_paired_diagnostic_and_rejects_misaligned_benchmark(tmp_path, monkeypatch):
     # Keep all saved audit panels out of this integration test.
     monkeypatch.setattr(config, "BASE_DIR", tmp_path)
