@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import platform
 from pathlib import Path
 
 import numpy as np
@@ -153,6 +154,8 @@ def _metadata(frame: pd.DataFrame, frequency: int, block_size: int, n_boot: int,
             "start": str(frame.index[0]), "end": str(frame.index[-1]), "periods_per_year": frequency,
             "block_size": block_size, "n_boot": n_boot, "ci": ci, "seed": seed,
             "input_sha256": fingerprint, "limitations": LIMITATIONS,
+            "python_version": platform.python_version(), "dependencies": research_lab._dependency_versions(),
+            "environment_fingerprint": research_lab._env_fingerprint(),
             "code_sha256": {p.name: _hash(p) for p in (Path(__file__), Path(academic_factors.__file__))}}
 
 
@@ -306,7 +309,8 @@ def analyze_saved() -> dict:
     settings = {key: spec[key] for key in ("n_boot", "seed", "ci")}
     financial = {key: spec[key] for key in ("risk_free_rate", "drawdown_threshold")}
     report: dict = {"spec_sha256": digest, "inputs_sha256": hashes, "git_commit": research_lab._current_git_commit(),
-              "dependencies": research_lab._dependency_versions(), "environment_sha256": research_lab._env_fingerprint(),
+              "python_version": platform.python_version(), "dependencies": research_lab._dependency_versions(),
+              "environment_fingerprint": research_lab._env_fingerprint(),
               "unavailable_datasets": unavailable, "datasets": {}}
     datasets = [("v2_daily_net", daily, 252, False), ("cross_section_means", panel, 4, True)]
     if "v1_quarterly_net" not in unavailable:
