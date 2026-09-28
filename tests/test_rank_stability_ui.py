@@ -1,8 +1,7 @@
 from streamlit.testing.v1 import AppTest
 
-from gabi import config
+from gabi import config, rank_stability_ui
 from gabi import rank_stability as rs
-from gabi import rank_stability_ui
 
 
 def test_investor_and_research_show_different_details():
@@ -59,9 +58,9 @@ rank_stability_ui.render_saved()
 def test_real_screener_reports_eligibility_before_search_filters(monkeypatch):
     from pathlib import Path
 
-    from gabi import app_mode, evaluation, screener
-
     from test_rank_stability import stable_panel
+
+    from gabi import app_mode, evaluation, screener
 
     frame = stable_panel().assign(name="Firm", price=10., pe=10.)
     monkeypatch.setattr(app_mode, "get_mode", lambda: "INVESTOR")
