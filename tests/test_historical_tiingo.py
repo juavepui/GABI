@@ -70,3 +70,18 @@ def test_wiki_cache_imports_as_traded_rows_without_storing_the_key(db, monkeypat
     prices = historical_archive.get_prices(historical_wiki.SOURCE_ID, "EMC", "2012-01-01", "2013-01-01")
     assert prices.iloc[0].close == 24.54 and prices.iloc[0].adj_close == 23.23
     assert historical_wiki._wiki_ticker("BRK-B") == "BRK_B"
+
+
+def test_monthly_cap_answer_is_not_saved_as_a_series(db, monkeypatch, tmp_path):
+    class Response:
+        status_code = 200
+        content = b'{"detail": "You have run over your 500 symbol look up for this month."}'
+
+        def json(self):
+            return json.loads(self.content)
+
+    monkeypatch.setattr(historical_tiingo, "_headers", lambda: {})
+    monkeypatch.setattr(historical_tiingo.requests, "get", lambda *a, **k: Response())
+    result = historical_tiingo.fetch(["AAA", "BBB"], pace=0, window="smallmid")
+    assert result["stopped_at"] == "AAA" and result["fetched"] == 0
+    assert not list((tmp_path / "tiingo" / "smallmid").glob("*.json"))

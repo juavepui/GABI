@@ -27,3 +27,4 @@ data/history_refresh/
 
 .streamlit/secrets.toml
 data/periodic_tasks/
+data/kaggle/

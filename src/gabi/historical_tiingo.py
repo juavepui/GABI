@@ -103,6 +103,13 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010
             # Se detiene sin marcar nada; los ficheros ya guardados permiten reanudar.
             print(f"Tiingo: cupo agotado en {symbol}; reanudar más adelante", flush=True)
             return {"fetched": fetched, "cached": cached, "failed": failed, "stopped_at": symbol}
+        payload = response.json() if response is not None and response.status_code == 200 else None
+        if isinstance(payload, dict):
+            # Tiingo responde 200 con {"detail": "You have run over your 500 symbol look up..."} al
+            # agotar el cupo mensual: no es una serie; no se guarda y se detiene para reanudar más adelante.
+            print(f"Tiingo: respuesta sin precios en {symbol} ({str(payload.get('detail'))[:80]}); detenido",
+                  flush=True)
+            return {"fetched": fetched, "cached": cached, "failed": failed, "stopped_at": symbol}
         if response is None or response.status_code != 200:
             failed += 1
             print(f"Tiingo {symbol}: HTTP {response.status_code if response is not None else 'no response'}", flush=True)

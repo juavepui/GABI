@@ -105,3 +105,42 @@ def test_analysis_waits_for_all_rankings(monkeypatch, tmp_path):
     monkeypatch.setattr(sm, "preregister_addendum", lambda: {"sha256": "a1"})
     with pytest.raises(ValueError, match="Faltan 57 rankings"):
         sm.analyze()
+
+
+def test_kaggle_cleaning_drops_one_day_reverting_spikes_only():
+    prices = [10, 10, 30, 10, 10, 4, 4, 4]  # pico que se deshace (día 2) y caída real que se mantiene (día 5)
+    frame = pd.DataFrame({"symbol": "X", "date": [f"2019-01-{d:02d}" for d in range(1, 9)],
+                          "close_adjusted": prices})
+    assert sm.clean_kaggle(frame).close_adjusted.tolist() == [10, 10, 10, 10, 4, 4, 4]
+
+
+def test_series_agreement():
+    days = pd.bdate_range("2019-01-01", periods=100)
+    base = pd.DataFrame({"close": np.linspace(10, 20, 100), "adj_close": np.linspace(9, 18, 100)}, index=days)
+    assert sm.series_agree(base, base.copy())["coincide"]
+    other = base.assign(close=base.close * 3)  # otra empresa con el mismo ticker
+    assert not sm.series_agree(base, other)["coincide"]
+    assert sm.series_agree(base.iloc[:30], base.iloc[:30]) is None
+
+
+def test_kaggle_is_last_priority_and_stops_at_the_cutoff(monkeypatch):
+    checks = pd.DataFrame([{"cik": "1", "fuente": "kaggle", "simbolo": "OLD", "desde": "2009-01-02",
+                            "hasta": "2021-06-01", "float_date": d, "outcome": "passed"}
+                           for d in ("2016-06-30", "2017-06-30", "2018-06-30", "2019-06-30", "2020-06-30",
+                                     "2021-01-01")])
+    monkeypatch.setattr(sm, "kaggle_accepted", lambda: True)
+    assert sm.usable(checks, "1", "2020-10-02") == ("kaggle", "OLD")
+    assert sm.usable(checks, "1", "2021-04-02") is None  # el trimestre siguiente pasaría del corte
+    yahoo = checks.assign(fuente="yahoo", simbolo="NEW")
+    assert sm.usable(pd.concat([checks, yahoo]), "1", "2020-10-02") == ("yahoo", "NEW")
+    monkeypatch.setattr(sm, "kaggle_accepted", lambda: False)
+    assert sm.usable(checks, "1", "2020-10-02") is None
+
+
+def test_addendum_a2_refuses_once_rankings_exist(monkeypatch, tmp_path):
+    monkeypatch.setattr(sm, "OUTPUT", tmp_path / "docs")
+    monkeypatch.setattr(sm, "WORK", tmp_path / "work")
+    (tmp_path / "work" / "rankings").mkdir(parents=True)
+    (tmp_path / "work" / "rankings" / "ranking-2011-07-02.csv").write_text("x")
+    with pytest.raises(ValueError, match="previa a los datos"):
+        sm.preregister_addendum_a2()

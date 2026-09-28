@@ -15,6 +15,7 @@ cambiar la especificación.
 """
 
 import argparse
+import functools
 import hashlib
 import json
 from datetime import date, timedelta
@@ -150,6 +151,8 @@ def main() -> None:
     parser.add_argument("--levels", action="store_true")
     parser.add_argument("--rankings", action="store_true")
     parser.add_argument("--preregister-a1", action="store_true", help="Ampliación A1 (#47), antes de los rankings")
+    parser.add_argument("--kaggle", action="store_true",
+                        help="Ampliación A2: importa Kaggle, recalcula comprobaciones, valida y poda la cola")
     parser.add_argument("--analyze", action="store_true", help="Solo con los 57 rankings calculados")
     args = parser.parse_args()
     if args.preregister:
@@ -167,6 +170,19 @@ def main() -> None:
         rankings()
     if args.preregister_a1:
         print(json.dumps({"sha256": preregister_addendum()["sha256"]}))
+    if args.kaggle:
+        tickers = ticker_map()
+        symbols = set(tickers.ticker_vigente.dropna()) | set(tickers.ticker_10k.dropna())
+        report: dict = {"a2": preregister_addendum_a2()["sha256"], "importacion": import_kaggle(symbols)}
+        (WORK / "level_checks.csv").unlink(missing_ok=True)  # se recalculan con las cuatro fuentes
+        checks = accepted_series()
+        report["comprobaciones"] = {f"{source}:{outcome}": int(count) for (source, outcome), count
+                                    in checks.groupby("fuente").outcome.value_counts().items()}
+        agreement = kaggle_agreement(checks)
+        report["concordancia"] = {k: v for k, v in agreement.items() if k != "no_coinciden"}
+        if agreement["aceptado"]:
+            report["cola_tiingo"] = prune_tiingo_queue(checks)
+        print(json.dumps(fs._json_safe(report), ensure_ascii=False, indent=2, default=str))
     if args.analyze:
         print(json.dumps(fs._json_safe(analyze()), ensure_ascii=False, indent=2))
 
@@ -333,11 +349,191 @@ def fetch_wiki(requests_list: list[tuple[str, str, str]]) -> dict:
     return counts
 
 
+# --- Etapa 3b (ampliación A2): precios de Kaggle para las desaparecidas hasta 2021 ---------------
+
+KAGGLE_SOURCE = "kaggle:tsaustin-us-prices-2021-06:smallmid"
+KAGGLE_ZIP = config.DATA_DIR / "kaggle" / "archive (3).zip"
+KAGGLE_MEMBER = "stocks_latest/stock_prices_latest.csv"
+KAGGLE_CUTOFF = "2021-06-01"  # el conjunto se corta aquí; una serie que acaba ahí no es una empresa desaparecida
+KAGGLE_LAST_REBALANCE = "2021-01-02"  # último rebalanceo cuyo trimestre siguiente termina antes del corte
+AGREEMENT_MIN = 0.90
+KAGGLE_URL = "https://www.kaggle.com/datasets/tsaustin/us-historical-stock-prices-with-earnings-data"
+
+ADDENDUM_A2 = {
+    "issue": 44, "amends": "preregistro #44 y ampliación A1", "stage": "RESEARCH",
+    "motivation": "Tiingo gratuito tarda meses y FMP gratuito no sirve deslistadas; un conjunto público de Kaggle "
+                  "(US historical stock prices with earnings data, tsaustin, NASDAQ/NYSE/AMEX 1998-2021-06) cubre "
+                  "muchas empresas desaparecidas entre 2018 y 2021. Se añade antes de calcular ningún ranking.",
+    "source": {"id": KAGGLE_SOURCE, "url": KAGGLE_URL,
+               "file": KAGGLE_MEMBER,
+               "fields": "close negociado (as traded), close_adjusted (splits y dividendos), split_coefficient"},
+    "cleaning": ["filas con algún precio <= 0 o OHLC incoherente: rechazadas por el importador (igual que el resto)",
+                 "picos de un día que se deshacen: |r_t| > 50 % y |r_t+1| > 33 % de signo contrario; se elimina el "
+                 "día t"],
+    "validation": {"level_check": "cada serie solo se acepta con la comprobación de nivel de precio SEC (#28), la "
+                                  "misma regla de 400 días que las demás fuentes",
+                   "dataset_agreement": f"entre las empresas (CIK) con serie de Kaggle y de otra fuente que pasan "
+                                        f"ambas la comprobación SEC, al menos el {AGREEMENT_MIN:.0%} deben coincidir "
+                                        "(cierre con diferencia mediana < 1 % y menos del 2 % de días con retornos "
+                                        "distintos en más de 1 punto); si no, Kaggle no se usa en absoluto"},
+    "priority": "Yahoo, Tiingo, WIKI y por último Kaggle",
+    "cutoff": f"solo rebalanceos hasta {KAGGLE_LAST_REBALANCE}: el trimestre siguiente debe terminar antes de "
+              f"{KAGGLE_CUTOFF}, donde se corta el conjunto",
+    "analysis": "sin cambios: las funciones del análisis de A1 conservan su huella "
+                "69efba582a6ca0f9b09fde77a7d710225a577bfd814512030238ea94f9af4538",
+    "tiingo_queue": "se retiran de la cola de Tiingo los símbolos cuyas empresas quedan cubiertas en todas sus "
+                    "fechas del universo; la cola original se conserva",
+    "data_state_rule": "se preregistra solo si no existe ningún ranking del #44",
+}
+
+
+def addendum_a2_hash() -> str:
+    return hashlib.sha256(json.dumps(ADDENDUM_A2, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def preregister_addendum_a2() -> dict:
+    """Ampliación A2 con hash; se niega si ya hay algún ranking del #44 calculado."""
+    path = OUTPUT / "preregistro-a2.json"
+    digest = addendum_a2_hash()
+    if path.exists():
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if record["sha256"] != digest:
+            raise ValueError("La ampliación A2 cambió después de preregistrarse.")
+        return record
+    computed = sorted((WORK / "rankings").glob("ranking-*.csv"))
+    if computed:
+        raise ValueError(f"Ya hay {len(computed)} rankings del #44: la ampliación no sería previa a los datos.")
+    base, first = preregister(), preregister_addendum()
+    experiment = research_lab.log_experiment(
+        "gabi_smallmid_kaggle_source", "RESEARCH", True, family="stat_4",
+        universe="EE. UU. fuera del S&P 500 (SEC)", weights=scoring.DEFAULT_WEIGHTS, rebalance="trimestral día 2",
+        is_start=FIRST, is_end=LAST,
+        notes=f"Ampliación A2 (fuente Kaggle) de {base['sha256']} y A1 {first['sha256']}; sha256 {digest}; sin "
+              "rankings ni resultados")
+    record = {"sha256": digest, "amends_sha256": [base["sha256"], first["sha256"]], "addendum": ADDENDUM_A2,
+              "code_sha256": fs.content_hash(Path(__file__)), "experiment_id": experiment,
+              "rankings_at_registration": 0}
+    path.write_text(json.dumps(fs._json_safe(record), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
+def clean_kaggle(frame: pd.DataFrame) -> pd.DataFrame:
+    """Quita los picos de un día que se deshacen (regla A2); el importador rechaza el resto."""
+    frame = frame.sort_values(["symbol", "date"])
+    grouped = frame.groupby("symbol").close_adjusted
+    change = grouped.pct_change()
+    following = change.groupby(frame.symbol).shift(-1)
+    spike = (change.abs() > 0.5) & (following.abs() > 1 / 3) & ((change > 0) != (following > 0))
+    return frame[~spike]
+
+
+def import_kaggle(symbols: set[str]) -> dict:
+    """Importa del zip de Kaggle solo los símbolos del universo, como fuente archivada propia."""
+    import zipfile
+
+    from . import historical_archive
+
+    preregister_addendum_a2()
+    historical_archive.register_source(KAGGLE_SOURCE, {
+        "name": "Kaggle: US historical stock prices with earnings data (tsaustin), fuera del S&P 500 (#44)",
+        "url": KAGGLE_URL, "start": "2009-01-01", "end_exclusive": KAGGLE_CUTOFF,
+        "quality": "research_archive_unverified_identity",
+        "files_sha256": {KAGGLE_ZIP.name: hashlib.sha256(KAGGLE_ZIP.read_bytes()).hexdigest()}})
+    parts = []
+    with zipfile.ZipFile(KAGGLE_ZIP) as archive, archive.open(KAGGLE_MEMBER) as stream:
+        for chunk in pd.read_csv(stream, chunksize=2_000_000, dtype={"symbol": str}):
+            parts.append(chunk[chunk.symbol.isin(symbols)])
+    raw = pd.concat(parts)
+    cleaned = clean_kaggle(raw)
+    counts = {"filas": len(raw), "picos_eliminados": len(raw) - len(cleaned), "accepted": 0, "rejected": 0}
+    for symbol, frame in cleaned.groupby("symbol"):
+        chunk = frame.rename(columns={"close_adjusted": "adjusted_close"})[
+            ["symbol", "date", "open", "high", "low", "close", "adjusted_close", "volume"]]
+        result = historical_archive.import_price_chunk(KAGGLE_SOURCE, chunk, {symbol}, "2009-01-01", KAGGLE_CUTOFF)
+        counts["accepted"] += result["accepted"]
+        counts["rejected"] += result["rejected"]
+    return counts
+
+
+def series_agree(reference: pd.DataFrame, candidate: pd.DataFrame) -> dict | None:
+    """Concordancia de dos series de la misma empresa en sus días comunes (None si hay menos de 60)."""
+    common = reference.index.intersection(candidate.index)
+    if len(common) < 60:
+        return None
+    a, b = reference.loc[common], candidate.loc[common]
+    close_diff = float((b.close / a.close - 1).abs().median())
+    mismatch = float(((a.adj_close.pct_change() - b.adj_close.pct_change()).abs().dropna() > 0.01).mean())
+    return {"dias": len(common), "dif_cierre_mediana": close_diff, "dias_retorno_distinto": mismatch,
+            "coincide": close_diff < 0.01 and mismatch < 0.02}
+
+
+def kaggle_agreement(checks: pd.DataFrame) -> dict:
+    """Validación del conjunto (A2): concordancia con otras fuentes cuando ambas pasan la comprobación SEC."""
+    passed = checks[checks.outcome == "passed"][["cik", "fuente", "simbolo"]].drop_duplicates()
+    sources = _sources()
+    rows = []
+    for cik, group in passed.groupby("cik"):
+        kaggle = group[group.fuente == "kaggle"]
+        others = group[group.fuente != "kaggle"]
+        if kaggle.empty or others.empty:
+            continue
+        candidate = _series(KAGGLE_SOURCE, kaggle.simbolo.iloc[0])
+        for other in others.itertuples():
+            result = series_agree(_series(sources[other.fuente], other.simbolo), candidate)
+            if result:
+                rows.append({"cik": cik, "fuente": other.fuente, **result})
+    frame = pd.DataFrame(rows)
+    share = float(frame.coincide.mean()) if len(frame) else 0.0
+    report = {"comparaciones": len(frame), "empresas": int(frame.cik.nunique()) if len(frame) else 0,
+              "coinciden": share, "minimo": AGREEMENT_MIN, "aceptado": bool(len(frame) >= 30 and share >= AGREEMENT_MIN),
+              "no_coinciden": frame[~frame.coincide].to_dict("records") if len(frame) else []}
+    (WORK / "kaggle_agreement.json").write_text(json.dumps(fs._json_safe(report), ensure_ascii=False, indent=1))
+    kaggle_accepted.cache_clear()
+    return report
+
+
+@functools.cache
+def kaggle_accepted() -> bool:
+    path = WORK / "kaggle_agreement.json"
+    return path.exists() and bool(json.loads(path.read_text(encoding="utf-8"))["aceptado"])
+
+
+def prune_tiingo_queue(checks: pd.DataFrame) -> dict:
+    """Retira de la cola de Tiingo los símbolos pendientes cuyas empresas ya tienen serie aceptada en todas sus
+    fechas del universo. La cola original se guarda en ``tiingo_symbols.before_a2.txt``."""
+    from . import historical_tiingo
+
+    queue_path = WORK / "tiingo_symbols.txt"
+    backup = WORK / "tiingo_symbols.before_a2.txt"
+    if not backup.exists():
+        backup.write_text(queue_path.read_text())
+    queue = [s.strip().upper() for s in backup.read_text().split() if s.strip()]
+    done = {p.stem for p in historical_tiingo._window("smallmid")[3].glob("*.json")}
+    tickers = ticker_map()
+    symbol_of = tickers.ticker_vigente.where(tickers.ticker_vigente.notna(), tickers.ticker_10k)
+    ciks_of = tickers.groupby(symbol_of).cik.apply(list).to_dict()
+    universe = build_universe()
+    dates_of = universe.groupby("cik").fecha.apply(list).to_dict()
+    kept: list[str] = []
+    removed: list[str] = []
+    for symbol in queue:
+        covered = symbol not in done and all(usable(checks, cik, day) for cik in ciks_of.get(symbol, [])
+                                             for day in dates_of.get(cik, []))
+        (removed if covered and ciks_of.get(symbol) else kept).append(symbol)
+    queue_path.write_text("\n".join(kept) + "\n")
+    return {"cola_original": len(queue), "retirados": len(removed), "cola_nueva": len(kept),
+            "pendientes_nuevos": sum(s not in done for s in kept)}
+
+
 # --- Etapa 4: series aceptadas (comprobación de nivel de precio SEC, #28) ------------------------
 
 def _tiingo_source() -> str:
     from . import historical_tiingo
     return historical_tiingo.source_id("smallmid")
+
+
+def _sources() -> dict[str, str]:
+    return {"yahoo": YAHOO_SOURCE, "wiki": WIKI_SOURCE, "tiingo": _tiingo_source(), "kaggle": KAGGLE_SOURCE}
 
 
 def _series(source_id: str, symbol: str) -> pd.DataFrame:
@@ -362,14 +558,14 @@ def accepted_series() -> pd.DataFrame:
     if path.exists():
         return pd.read_csv(path, dtype={"cik": str})
     tickers = ticker_map()
-    sources = {"yahoo": YAHOO_SOURCE, "wiki": WIKI_SOURCE, "tiingo": _tiingo_source()}
+    sources = _sources()
     rows = []
     for number, row in enumerate(tickers.itertuples(index=False), 1):
         symbol = row.ticker_vigente if isinstance(row.ticker_vigente, str) else row.ticker_10k
         if not isinstance(symbol, str):
             continue
         facts = ie.issuer_facts(row.cik)
-        for name in ("yahoo", "wiki", "tiingo"):
+        for name in sources:
             frame = _series(sources[name], symbol)
             if len(frame) < 60:
                 continue
@@ -390,10 +586,17 @@ def accepted_series() -> pd.DataFrame:
 
 
 def usable(checks: pd.DataFrame, cik: str, day: str) -> tuple[str, str] | None:
-    """(fuente, símbolo) aceptado para ``day`` o None."""
+    """(fuente, símbolo) aceptado para ``day`` o None.
+
+    Prioridad Yahoo, Tiingo, WIKI y, por la ampliación A2, Kaggle: solo si el
+    conjunto superó la validación de concordancia y hasta KAGGLE_LAST_REBALANCE.
+    """
     low = (date.fromisoformat(day) - timedelta(days=400)).isoformat()
     candidates = checks[(checks.cik == cik) & (checks.desde <= low) & (checks.hasta >= day)]
-    for name in ("yahoo", "tiingo", "wiki"):
+    names = ["yahoo", "tiingo", "wiki"]
+    if day <= KAGGLE_LAST_REBALANCE and kaggle_accepted():
+        names.append("kaggle")
+    for name in names:
         own = candidates[candidates.fuente == name]
         window = own[(own.float_date >= low) & (own.float_date <= day)]
         if len(window) and (window.outcome == "passed").any() and not (window.outcome == "failed").any():
@@ -419,7 +622,7 @@ def rankings() -> None:
 
     universe = build_universe()
     checks = accepted_series()
-    sources = {"yahoo": YAHOO_SOURCE, "wiki": WIKI_SOURCE, "tiingo": _tiingo_source()}
+    sources = _sources()
     sics: dict[str, str | None] = {}
     for cik in universe.cik.unique():
         path = ie.SUBMISSIONS_DIR / f"CIK{cik}.json"
@@ -559,7 +762,7 @@ def forward_return(frame: pd.DataFrame, day: str) -> tuple[float | None, bool]:
 def forward_returns() -> dict:
     """Retorno siguiente de cada elegible de cada ranking (datos, no resultados)."""
     checks = accepted_series()
-    sources = {"yahoo": YAHOO_SOURCE, "wiki": WIKI_SOURCE, "tiingo": _tiingo_source()}
+    sources = _sources()
     directory = WORK / "rankings"
     report = {}
     for day in rebalance_dates():
