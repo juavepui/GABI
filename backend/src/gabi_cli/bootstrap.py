@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("action", choices=["worker", "schedule"])
     parser.add_argument("kind", nargs="?", choices=["daily", "tiingo"])
     parser.add_argument("--once", action="store_true", help="Procesa un trabajo y termina")
+    parser.add_argument("--force", action="store_true", help="Permite encolar Tiingo fuera del día 2")
     args = parser.parse_args()
     settings = Settings.from_environment()
     store = SqliteJobs(settings.data_dir)
@@ -27,6 +28,8 @@ def main() -> None:
         if args.kind is None:
             parser.error("schedule necesita daily o tiingo")
         today = date.today()
+        if args.kind == "tiingo" and today.day != 2 and not args.force:
+            return
         jobs = Jobs(store)
         commands: tuple[tuple[JobCommand, str], ...]
         if args.kind == "daily":

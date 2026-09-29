@@ -5,7 +5,7 @@ import sqlite3
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,6 +16,7 @@ from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
+from gabi_cli import bootstrap as cli
 
 
 def client(tmp_path):
@@ -163,6 +164,22 @@ def test_separate_worker_process_and_scheduler_share_persistent_queue(tmp_path):
     for _ in range(2):
         subprocess.run([sys.executable, "-m", "gabi_cli", "schedule", "daily"], env=settings, check=True)
     assert sorted(job["kind"] for job in SqliteJobs(tmp_path).list()) == ["maintenance", "quality", "refresh"]
+
+
+@pytest.mark.parametrize(("day", "force", "expected"), [(3, False, 0), (2, False, 1), (3, True, 1)])
+def test_tiingo_scheduler_uses_calendar_day_two(tmp_path, monkeypatch, day, force, expected):
+    class ScheduleDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 10, day)
+
+    monkeypatch.setenv("GABI_DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(cli, "date", ScheduleDate)
+    monkeypatch.setattr(sys, "argv", ["gabi_cli", "schedule", "tiingo"] + (["--force"] if force else []))
+    cli.main()
+    assert len(SqliteJobs(tmp_path).list()) == expected
+    if expected:
+        assert SqliteJobs(tmp_path).list()[0]["kind"] == "tiingo"
 
 
 def test_legacy_writer_refuses_an_alternate_data_directory(tmp_path):

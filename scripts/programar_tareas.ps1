@@ -30,11 +30,10 @@ $dailyTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Tuesday, Wednesday,
 Register-ScheduledTask -TaskName "GABI - tareas diarias" -Action $daily -Trigger $dailyTrigger `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable) -Description "GABI #46: datos y pruebas ciegas" -Force
 
-# El día 2 de cada mes: reanuda la cola de Tiingo del #44 (se detiene sola al agotar el cupo).
+# Comprueba cada día a las 10:00 si es día 2. El CLI solo encola Tiingo ese día;
+# una repetición cada 30 días no coincide con los meses del calendario.
 $tiingo = New-ScheduledTaskAction -Execute $python -Argument "-m gabi_cli schedule tiingo" -WorkingDirectory $repo
-$monthly = New-ScheduledTaskTrigger -Once -At "2026-10-02 10:00"
-$monthly.Repetition = (New-ScheduledTaskTrigger -Once -At "2026-10-02 10:00" `
-    -RepetitionInterval (New-TimeSpan -Days 30) -RepetitionDuration (New-TimeSpan -Days 900)).Repetition
+$monthly = New-ScheduledTaskTrigger -Daily -At 10:00
 Register-ScheduledTask -TaskName "GABI - Tiingo mensual" -Action $tiingo -Trigger $monthly `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Days 3)) `
     -Description "GABI #44: precios de empresas desaparecidas" -Force

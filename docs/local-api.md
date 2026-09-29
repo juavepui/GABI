@@ -64,7 +64,10 @@ de modelo y mercado tras un guardado correcto.
 
 Arranca `uv run --project backend python -m gabi_cli worker` en otra terminal.
 `python -m gabi_cli worker --once` procesa un job y sale; `python -m gabi_cli
-schedule daily|tiingo` encola las tareas programadas con claves estables. El
+schedule daily|tiingo` encola las tareas programadas con claves estables. Tiingo
+solo se encola el día 2 de cada mes; `schedule tiingo --force` permite recuperarlo
+manualmente otro día. El Programador comprueba la fecha a diario a las 10:00.
+El
 worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban
 que coincide con su configuración inmutable antes de tocar datos.
 Solo el scheduler puede encolar mantenimiento #43/#44 y Tiingo histórico. Las
