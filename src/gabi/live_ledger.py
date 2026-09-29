@@ -6,6 +6,7 @@ import json
 import math
 import os
 import subprocess
+import sys
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
@@ -70,7 +71,7 @@ def _locked():
             lock.write(b"0")
             lock.flush()
         lock.seek(0)
-        if os.name == "nt":
+        if sys.platform == "win32":
             import msvcrt
             msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
         else:
@@ -80,7 +81,7 @@ def _locked():
             yield
         finally:
             lock.seek(0)
-            if os.name == "nt":
+            if sys.platform == "win32":
                 msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
             else:
                 getattr(fcntl, "flock")(lock.fileno(), getattr(fcntl, "LOCK_UN"))
