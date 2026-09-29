@@ -20,11 +20,14 @@ jobs:
       - name: Install dependencies (locked)
         run: uv sync --locked --all-groups
 
+      - name: Verify frozen research engines
+        run: uv run python -m gabi.frozen_research_ci --check-frozen
+
       - name: Lint (ruff)
         run: uv run ruff check .
 
       - name: Type check (mypy)
-        run: uv run mypy src/gabi
+        run: uv run python -m gabi.frozen_research_ci --typecheck
 
       # Importa gabi.* de verdad (no solo compila) -- src/gabi es librería
       # pura, sin dependencia de datos ni de un runtime de Streamlit, así

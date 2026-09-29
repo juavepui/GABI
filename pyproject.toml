@@ -40,6 +40,13 @@ extend-exclude = ["data"]
 select = ["E", "F", "I", "W", "UP"]
 ignore = ["E501"]  # el estilo existente usa líneas largas (docstrings, literales); ruff format ya se encarga del resto
 
+[tool.ruff.lint.per-file-ignores]
+# Imports ya publicados en motores congelados (#47/#48/#49). CI comprueba sus
+# SHA-256 antes del lint; cualquier modificación obliga a revisar esta excepción.
+"src/gabi/tail_effect_test.py" = ["I001"]
+"src/gabi/factor_zoo.py" = ["I001"]
+"src/gabi/placebo_engine.py" = ["I001"]
+
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true

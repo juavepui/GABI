@@ -277,11 +277,20 @@ data/           caché SQLite + CSVs + claves locales (todo gitignored)
 ```bash
 uv run pytest
 uv run ruff check .     # linting
-uv run mypy src/gabi    # type checking
+uv run python -m gabi.frozen_research_ci --check-frozen
+uv run python -m gabi.frozen_research_ci --typecheck  # mypy global + baseline exacto
 ```
 
-Los tres se ejecutan también en CI (GitHub Actions) en cada push/PR a
+Estos checks se ejecutan también en CI (GitHub Actions) en cada push/PR a
 `main`/`develop`, contra las versiones exactas fijadas en `uv.lock`.
+
+CI conserva las huellas de los motores publicados de #47/#48/#49. Solo esos
+tres archivos tienen excepción de orden de imports (`I001`). El check de tipos
+ejecuta Mypy sobre todo `src/gabi` y compara los 25 diagnósticos históricos con
+`.github/mypy-baseline.json`, incluyendo archivo, posición, código y mensaje.
+Un diagnóstico nuevo, uno modificado/ausente o un cambio en esos motores hace
+fallar CI. No se desactivan categorías de errores de Mypy para estos módulos;
+su deuda se mantiene visible sin modificar resultados de investigación sellados.
 
 ## Limitaciones conocidas
 
