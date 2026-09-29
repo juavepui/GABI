@@ -16,7 +16,8 @@ casos de uso y adaptadores Python; frontend React por capacidades. Las reglas
 para modificar código están en [AGENTS.md](AGENTS.md), con controles de
 arquitectura en CI para ambas partes y [migración del código existente](docs/architecture/legacy-migration.md).
 La [API local FastAPI](docs/local-api.md) ya ofrece Screener, ficha y estado de datos/modelo.
-React sigue pendiente de F3; Streamlit continúa operativo.
+El [frontend React local](frontend/README.md) incorpora Screener y ficha de empresa.
+Streamlit continúa operativo para los flujos pendientes de migración.
 
 ## Calidad y trazabilidad de datos
 
@@ -278,7 +279,7 @@ misma ejecución rompe `set_page_config()`).
 backend/src/gabi/  lógica Python (datos, métricas, scoring y motores de investigación)
 backend/tests/     tests unitarios y de compatibilidad de artefactos
 backend/uv.lock    dependencias Python bloqueadas
-frontend/          proyecto del futuro cliente React (fase #65)
+frontend/          cliente React local: Screener y ficha (fase #65)
 app/               interfaz Streamlit durante la transición
 data/              misma caché SQLite + CSVs + claves locales
 ```
@@ -1753,6 +1754,7 @@ adicional y deja a criterio del usuario qué asistente usar.
 Actualizaciones locales incrementales: [políticas de revisión, checkpoints y medición reproducible](docs/incremental-updates/README.md). La tarea periódica conserva `--run` y admite `--full-refresh` para una auditoría deliberada; las ejecuciones normales evitan descargar/reinsertar históricos completos.
 
 Separación local de backend y frontend: [inventario de los 17 flujos, stack y fases #62–#68](docs/frontend-backend-migration.md).
-La aplicación actual sigue usando Streamlit; FastAPI y React se introducirán por fases.
+FastAPI y React ya ofrecen Screener y ficha; el resto de flujos sigue en Streamlit
+hasta completar su migración por fases.
 El [registro reconciliado de búsquedas](docs/search-ledger/README.md) conserva los resultados fallidos y los huecos del historial.
 No hay todavía una estrategia demostrada que cumpla el objetivo de superar claramente al S&P 500 (#60).

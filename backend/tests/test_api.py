@@ -373,3 +373,26 @@ def test_search_preserves_legacy_unicode_lowercase_semantics():
     table = pd.DataFrame({"name": ["Straße", "MISSING"], "sector": ["Financials"] * 2,
                           "price": [1., 2.]}, index=["A", "B"])
     assert list(filter_ranking(table, RankingFilter(search="ß")).index) == ["A"]
+
+
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_sort_is_applied_to_full_filtered_universe_before_pagination(api, direction):
+    client, repository, _ = api
+    table = repository.ranking(app_mode.FROZEN_WEIGHTS, TODAY).table
+    expected = table.sort_values("market_cap", ascending=direction == "asc", kind="stable", na_position="last")
+    payload = client.get(f"/api/v1/ranking?order_by=market_cap&direction={direction}&hide_no_data=false&limit=3&offset=2").json()
+    assert [row["symbol"] for row in payload["items"]] == list(expected.iloc[2:5].index)
+    assert [row["rank"] for row in payload["items"]] == [int(table.index.get_loc(symbol)) + 1 for symbol in expected.iloc[2:5].index]
+    assert client.get("/api/v1/ranking?order_by=unknown").status_code == 422
+
+
+@pytest.mark.parametrize("direction,expected", [("asc", ["C", "A", "D", "B"]),
+                                                ("desc", ["A", "D", "C", "B"])])
+def test_sort_stable_ties_missing_last_and_scores_unchanged(direction, expected):
+    from gabi.domain.market.selection import RankingSort, sort_ranking
+    table = pd.DataFrame({"market_cap": [2., None, 1., 2.], "composite_score": [80., 70., 60., 50.]},
+                         index=["A", "B", "C", "D"])
+    result = sort_ranking(table, RankingSort("market_cap", direction))
+    assert list(result.index) == expected
+    pd.testing.assert_series_equal(result["composite_score"].reindex(table.index), table["composite_score"])
+    assert sort_ranking(table, RankingSort()) is table

@@ -1,0 +1,1406 @@
+{
+  "components": {
+    "schemas": {
+      "CompanyResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRow"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataResponse"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelResponse"
+          },
+          "price_unit": {
+            "const": "USD",
+            "default": "USD",
+            "title": "Price Unit",
+            "type": "string"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/PricePoint"
+            },
+            "title": "Prices",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "model",
+          "data",
+          "prices",
+          "generated_at",
+          "revision"
+        ],
+        "title": "CompanyResponse",
+        "type": "object"
+      },
+      "CompanyRow": {
+        "additionalProperties": false,
+        "properties": {
+          "filings": {
+            "items": {
+              "$ref": "#/components/schemas/Filing"
+            },
+            "title": "Filings",
+            "type": "array"
+          },
+          "golden_cross_recent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Golden Cross Recent"
+          },
+          "identity": {
+            "$ref": "#/components/schemas/Identity"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "next_earnings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Earnings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "sector",
+          "rank",
+          "metrics",
+          "golden_cross_recent",
+          "identity",
+          "provenance",
+          "filings",
+          "next_earnings"
+        ],
+        "title": "CompanyRow",
+        "type": "object"
+      },
+      "DataResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "fundamentals_available": {
+            "title": "Fundamentals Available",
+            "type": "integer"
+          },
+          "latest_price_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Price Date"
+          },
+          "prices_available": {
+            "title": "Prices Available",
+            "type": "integer"
+          },
+          "scored_count": {
+            "title": "Scored Count",
+            "type": "integer"
+          },
+          "sec_available": {
+            "title": "Sec Available",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "empty",
+              "stale"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "universe_count": {
+            "title": "Universe Count",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "universe_count",
+          "prices_available",
+          "fundamentals_available",
+          "sec_available",
+          "scored_count",
+          "latest_price_date",
+          "warnings"
+        ],
+        "title": "DataResponse",
+        "type": "object"
+      },
+      "Earnings": {
+        "additionalProperties": false,
+        "properties": {
+          "days_until": {
+            "title": "Days Until",
+            "type": "integer"
+          },
+          "event_date": {
+            "format": "date",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "is_estimate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Estimate"
+          },
+          "source": {
+            "const": "Yahoo Finance (info)",
+            "default": "Yahoo Finance (info)",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_date",
+          "days_until",
+          "is_estimate"
+        ],
+        "title": "Earnings",
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          },
+          "status": {
+            "default": "error",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "Filing": {
+        "additionalProperties": false,
+        "properties": {
+          "filed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed Date"
+          },
+          "form": {
+            "enum": [
+              "10-K",
+              "10-Q"
+            ],
+            "title": "Form",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "form",
+          "filed_date",
+          "url"
+        ],
+        "title": "Filing",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "api_version": {
+            "default": "v1",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "service": {
+            "default": "GABI",
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "Identity": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "cik": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cik"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "enum": [
+              "resolved",
+              "ambiguous",
+              "unresolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "entity_id",
+          "cik",
+          "candidates",
+          "source",
+          "confidence",
+          "as_of"
+        ],
+        "title": "Identity",
+        "type": "object"
+      },
+      "Metric": {
+        "additionalProperties": false,
+        "properties": {
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "title": "Metric",
+        "type": "object"
+      },
+      "ModelResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "blind_validation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blind Validation Id"
+          },
+          "evidence_note": {
+            "default": "Congelar pesos o iniciar seguimiento no acredita una ventaja independiente sobre SPY.",
+            "title": "Evidence Note",
+            "type": "string"
+          },
+          "independent_advantage_demonstrated": {
+            "const": false,
+            "default": false,
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "live_forward_source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "blind_validation",
+                  "research_lab"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Forward Source"
+          },
+          "matches_frozen": {
+            "title": "Matches Frozen",
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "INVESTOR",
+              "RESEARCH"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "FROZEN",
+              "EXPERIMENTAL",
+              "LIVE_FORWARD"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Weights",
+            "type": "object"
+          },
+          "weights_unit": {
+            "const": "fraction",
+            "default": "fraction",
+            "title": "Weights Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "model_id",
+          "status",
+          "weights",
+          "matches_frozen",
+          "live_forward_source",
+          "blind_validation_id"
+        ],
+        "title": "ModelResponse",
+        "type": "object"
+      },
+      "PricePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "adj_close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adj Close"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "close",
+          "adj_close"
+        ],
+        "title": "PricePoint",
+        "type": "object"
+      },
+      "Provenance": {
+        "additionalProperties": false,
+        "properties": {
+          "fundamentals_fetched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fundamentals Fetched At"
+          },
+          "fundamentals_source": {
+            "const": "local_cache_yahoo",
+            "default": "local_cache_yahoo",
+            "title": "Fundamentals Source",
+            "type": "string"
+          },
+          "historical_point_in_time": {
+            "const": false,
+            "default": false,
+            "title": "Historical Point In Time",
+            "type": "boolean"
+          },
+          "metrics_history": {
+            "const": "full_cached_history",
+            "default": "full_cached_history",
+            "title": "Metrics History",
+            "type": "string"
+          },
+          "price_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Date"
+          },
+          "prices_source": {
+            "const": "local_cache_yahoo",
+            "default": "local_cache_yahoo",
+            "title": "Prices Source",
+            "type": "string"
+          },
+          "sec_fetched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sec Fetched At"
+          },
+          "sec_source": {
+            "const": "local_cache_sec",
+            "default": "local_cache_sec",
+            "title": "Sec Source",
+            "type": "string"
+          },
+          "universe_source": {
+            "const": "local_sp500_cache",
+            "default": "local_sp500_cache",
+            "title": "Universe Source",
+            "type": "string"
+          }
+        },
+        "title": "Provenance",
+        "type": "object"
+      },
+      "RankingResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cache_hit": {
+            "title": "Cache Hit",
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataResponse"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelResponse"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "risk_free_rate": {
+            "$ref": "#/components/schemas/Metric"
+          },
+          "sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "universe_cached_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe Cached At"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit",
+          "sectors",
+          "model",
+          "data",
+          "generated_at",
+          "universe_cached_at",
+          "revision",
+          "cache_hit",
+          "risk_free_rate"
+        ],
+        "title": "RankingResponse",
+        "type": "object"
+      },
+      "Unit": {
+        "enum": [
+          "fraction",
+          "percent",
+          "points_0_100",
+          "USD",
+          "ratio",
+          "count"
+        ],
+        "title": "Unit",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "GABI local API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/companies/{symbol}": {
+      "get": {
+        "operationId": "company_api_v1_companies__symbol__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bars",
+            "required": false,
+            "schema": {
+              "default": 252,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Bars",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Company",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/data/status": {
+      "get": {
+        "operationId": "data_status_api_v1_data_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Data Status",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/model": {
+      "get": {
+        "operationId": "model_api_v1_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Model",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/ranking": {
+      "get": {
+        "operationId": "ranking_api_v1_ranking_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 100,
+              "title": "Search",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectors",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 11,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sectors"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_market_cap",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000000000000.0,
+              "minimum": 0,
+              "title": "Min Market Cap",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "golden_cross_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Golden Cross Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hide_no_data",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Hide No Data",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order_by",
+            "required": false,
+            "schema": {
+              "default": "composite_score",
+              "enum": [
+                "composite_score",
+                "market_cap",
+                "pe",
+                "price",
+                "confidence",
+                "name"
+              ],
+              "title": "Order By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "INVESTOR",
+                    "RESEARCH"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mode"
+            }
+          },
+          {
+            "in": "query",
+            "name": "value",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Value"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Quality"
+            }
+          },
+          {
+            "in": "query",
+            "name": "momentum",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Momentum"
+            }
+          },
+          {
+            "in": "query",
+            "name": "risk",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Ranking",
+        "tags": [
+          "market"
+        ]
+      }
+    }
+  }
+}

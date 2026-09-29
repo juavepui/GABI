@@ -1,8 +1,9 @@
 # API local de GABI — F2 / #64
 
 La API FastAPI comparte el cálculo y los filtros del Screener con Streamlit.
-Es una entrega de consulta para Mercado y estado local del modelo. React llega
-en #65; las acciones de actualización y los jobs persistentes, en #66.
+Es una entrega de consulta para Mercado y estado local del modelo. El
+[cliente React de F3](../frontend/README.md) consume este contrato; las acciones de actualización y los jobs persistentes,
+en #66.
 Los datos y las fórmulas publicados permanecen en su ubicación y versión.
 
 ## Arranque
@@ -42,7 +43,11 @@ uv run --project backend streamlit run app/streamlit_app.py
 
 Filtros: `search` literal sin regex (hasta 100 caracteres), `sectors` repetible
 (hasta 11), `min_market_cap` en **USD**, `golden_cross_only`, `hide_no_data`
-(por defecto true), `offset` 0..1000 y `limit` 1..500. Se calcula el ranking de
+(por defecto true), `offset` 0..1000 y `limit` 1..500. F3 añade `order_by`
+(`composite_score`, `market_cap`, `pe`, `price`, `confidence`, `name`) y
+`direction` (`asc`/`desc`). La ordenación es estable y coloca ausencias al final,
+antecede a la paginación y no recalcula scores. Por defecto conserva el orden
+publicado (`composite_score`, `desc`). Se calcula el ranking de
 todo el universo antes de filtrar/paginar para conservar los percentiles por
 sector y el orden publicado, incluidos empates. `rank` indica su posición en
 ese universo antes del filtro. La ficha conserva ese score: no vuelve a puntuar

@@ -14,8 +14,8 @@ con los mismos modelos y servicios. No requieren despliegues independientes.
 El backend conserva 111 módulos planos como compatibilidad. F2 ha migrado el cálculo
 y los filtros del Screener a casos de uso/dominio compartidos y añadido la
 [API local de consulta](local-api.md), con SQL de solo lectura y caché por lotes.
-Streamlit continúa operativo; el cliente React aún no está implementado y llega en
-[#65](https://github.com/juavepui/GABI/issues/65) y los jobs en
+Streamlit continúa operativo. F3 incorpora el [cliente React local](../frontend/README.md)
+con Screener, ficha y tipos generados desde OpenAPI; los jobs llegan en
 [#66](https://github.com/juavepui/GABI/issues/66). No se presenta el destino como
 una refactorización ya completada ni se atribuye una mejora de velocidad sin medirla.
 
@@ -91,7 +91,7 @@ No añadir interfaces a funciones puras nuevas. Evitar reexports masivos en
 Los DTO internos usan dataclasses/estructuras tipadas. Los schemas HTTP transforman
 esas salidas a JSON finito y publican unidades, fechas, identidad, procedencia y
 estado de evidencia. DataFrames y objetos de framework no cruzan HTTP. El frontend
-genera sus tipos de OpenAPI en F3; no mantiene una segunda definición manual del
+genera sus tipos de OpenAPI; no mantiene una segunda definición manual del
 modelo financiero. [FastAPI documenta routers separados y dependencias](https://fastapi.tiangolo.com/tutorial/bigger-applications/).
 
 Un ejemplo de frontera: `GetRanking` recibe una consulta y un puerto de lectura;
@@ -216,8 +216,9 @@ holdouts ni generar ensayos para comprobar imports, rutas o rendimiento de UI.
 | Tests de cada fase | Resultados, null/unidades, GET sin efectos, persistencia y recuperación | Medición con datos acotados y revisión de cambios |
 
 La guarda frontend usa [la API del compilador TypeScript](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API),
-con una versión fijada y pruebas de sus reglas; actualmente comprueba el scaffolding,
-porque todavía no hay pantallas React. No usa búsquedas por texto que interpreten
+con una versión fijada y pruebas de sus reglas; comprueba las pantallas React,
+sus índices públicos y el transporte compartido. La CI verifica además contrato,
+lint, tipos, build y flujos de navegador contra una API temporal. No usa búsquedas por texto que interpreten
 comentarios como imports. Las guardas no prueban toda la semántica: callbacks,
 efectos ocultos o fórmulas duplicadas requieren pruebas de comportamiento y revisión.
 

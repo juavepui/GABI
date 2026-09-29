@@ -7,7 +7,7 @@ import pandas as pd
 
 from gabi.application.administration.model import ModelQueries, ModelState
 from gabi.application.errors import QueryError
-from gabi.domain.market.selection import RankingFilter, filter_ranking
+from gabi.domain.market.selection import RankingFilter, RankingSort, filter_ranking, sort_ranking
 
 
 @dataclass
@@ -86,13 +86,14 @@ class MarketQueries:
         return self.models.model(override)
 
     def ranking(self, filters: RankingFilter, offset: int = 0, limit: int = 100,
-                override: dict[str, float] | None = None, requested_mode: str | None = None) -> RankingResult:
+                override: dict[str, float] | None = None, requested_mode: str | None = None,
+                order: RankingSort = RankingSort()) -> RankingResult:
         model = self.model(override)
         if requested_mode is not None and requested_mode != model.mode:
             raise QueryError("mode_mismatch", "La URL no puede cambiar el modo configurado localmente.", 403)
         today = self.today()
         snapshot = self.repository.ranking(model.weights, today)
-        filtered = filter_ranking(snapshot.table, filters)
+        filtered = sort_ranking(filter_ranking(snapshot.table, filters), order)
         return RankingResult(snapshot, model, describe_data(snapshot, today), filtered.iloc[offset:offset + limit],
                              len(filtered), offset, limit)
 

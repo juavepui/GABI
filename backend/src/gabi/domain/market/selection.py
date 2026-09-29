@@ -1,6 +1,24 @@
 from dataclasses import dataclass
+from typing import Literal
 
 import pandas as pd
+
+SortKey = Literal["composite_score", "market_cap", "pe", "price", "confidence", "name"]
+
+
+@dataclass(frozen=True)
+class RankingSort:
+    key: SortKey = "composite_score"
+    direction: Literal["asc", "desc"] = "desc"
+
+
+def sort_ranking(table: pd.DataFrame, order: RankingSort) -> pd.DataFrame:
+    # Preserve the published ordering, including ties, for the default ranking.
+    if table.empty or order == RankingSort():
+        return table
+    if order.key not in table.columns:
+        return table
+    return table.sort_values(order.key, ascending=order.direction == "asc", kind="stable", na_position="last")
 
 
 @dataclass(frozen=True)

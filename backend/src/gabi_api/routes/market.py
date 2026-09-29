@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import MarketQueries
-from gabi.domain.market.selection import RankingFilter
+from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
 from gabi_api.schemas.market import (
     CompanyResponse,
     DataResponse,
@@ -45,6 +45,7 @@ def ranking(market: Service, search: Annotated[str, Query(max_length=100)] = "",
             golden_cross_only: bool = False, hide_no_data: bool = True,
             offset: Annotated[int, Query(ge=0, le=1000)] = 0,
             limit: Annotated[int, Query(ge=1, le=500)] = 100,
+            order_by: SortKey = "composite_score", direction: Literal["asc", "desc"] = "desc",
             mode: Literal["INVESTOR", "RESEARCH"] | None = None,
             value: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
             quality: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
@@ -57,7 +58,7 @@ def ranking(market: Service, search: Annotated[str, Query(max_length=100)] = "",
             raise QueryError("invalid_weights", "Indica los cuatro pesos para experimentar.", 422)
         weights = {key: float(weight) for key, weight in overrides.items() if weight is not None}
     result = market.ranking(RankingFilter(search, tuple(sectors or ()), min_market_cap, golden_cross_only, hide_no_data),
-                            offset, limit, weights, mode)
+                            offset, limit, weights, mode, RankingSort(order_by, direction))
     return ranking_response(result)
 
 

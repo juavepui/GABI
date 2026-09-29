@@ -69,7 +69,7 @@ jobs:
       - name: Tests (pytest)
         run: uv run pytest -q
 
-  frontend-architecture:
+  frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -81,9 +81,37 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Install architecture tooling (locked)
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install test backend (locked, isolated at runtime)
+        run: uv sync --project ../backend --locked --all-groups
+      - name: Install frontend dependencies (locked)
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Check frontend architecture
-        run: npm run lint:architecture
+      - name: Check OpenAPI snapshot and generated types
+        run: npm run check:api
+      - name: Lint and architecture
+        run: npm run lint
+      - name: Formatting
+        run: npm run format:check
       - name: Test architecture rules
         run: npm run test:architecture
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser flows against temporary test backend
+        run: npm run test:e2e
+      - name: Keep browser report, screenshots and measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-browser-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 7
