@@ -1,0 +1,89 @@
+{
+  "spec": {
+    "version": 1,
+    "stage": "RESEARCH_RETROSPECTIVE",
+    "demonstrated": false,
+    "model": "RCF",
+    "new_configurations": 1,
+    "hypothesis": "cash-converting nonfinancial issuers allocating a higher fraction of positive FCF to gross common repurchases may outperform SPY",
+    "eligibility": "current admitted annual filing; buybacks/OCF/capex reported for identical annual start/end/accession; OCF>0; FCF=OCF-capex>0; 0<buybacks<=FCF; exclude SIC H",
+    "normalization": {
+      "repurchase_fraction": "gross common repurchases / positive matched FCF",
+      "cash_conversion": "matched FCF / positive matched OCF"
+    },
+    "interpretation": "cash allocation ratios, not valuation yields, net payout, net share retirement or proof of debt-free funding",
+    "identity": "one security per dated CIK; alphabetical ticker before eligibility, score or return; no replacement if its return is missing",
+    "score": "equal mean of two higher-is-better percentiles on eligible unique issuers",
+    "percentiles": {
+      "sector": "dated SIC division",
+      "minimum_sector_observations": 8,
+      "fallback": "global eligible finite observations",
+      "ties": "average"
+    },
+    "portfolio": {
+      "slots": 20,
+      "maximum_per_division": 6,
+      "empty_slots": "zero-interest cash",
+      "ties": "score descending, symbol ascending",
+      "missing_selected_return": "invalidate period"
+    },
+    "costs": {
+      "bps_per_side": {
+        "base": 10,
+        "stress": 25
+      },
+      "commission_per_trade_usd": 1,
+      "initial_capital_usd": 100000,
+      "funding": "each slot funds purchase plus both commissions; exit commission reserved in cash",
+      "round_trip": "every independent period; SPY has one funded position"
+    },
+    "calendar": "57 frozen independent holding periods, exact same sessions as parent SPY; no continuous CAGR",
+    "ic": {
+      "minimum_pairs": 30,
+      "minimum_quarters": 30,
+      "hac_bartlett_lags": 3,
+      "alternative": "positive mean",
+      "alpha": 0.0014705882352941176
+    },
+    "bootstrap": {
+      "replicas": 5000,
+      "blocks": 4,
+      "seed": 20260929,
+      "lower_tail": 0.0014705882352941176,
+      "resampling": "joint circular full-calendar blocks across both costs",
+      "missing": "any missing quarter prevents bound; never compress calendar"
+    },
+    "multiplicity": {
+      "new_family_size": 1,
+      "search_count_lower_bound": 34,
+      "decision_guard": "Bonferroni over known lower bound of 34 configurations; incomplete prior ledger, no global error-control claim"
+    },
+    "windows": {
+      "2011-15": [
+        "2011-01-01",
+        "2016-01-01"
+      ],
+      "2016-20": [
+        "2016-01-01",
+        "2021-01-01"
+      ],
+      "2021-25": [
+        "2021-01-01",
+        "2026-01-01"
+      ]
+    },
+    "daily_gate": "positive IC with p<alpha; >=30 eligible issuers on >=30 dates and >=8 per window; positive mean SPY excess in every window; positive lower bound for both costs, >=30 valid periods and >=8 per window",
+    "secondary_control": "funded equal-weight all eligible unique issuers, same costs; descriptive only, no additional candidate or hypothesis test",
+    "inputs": {
+      "audit_result": "a75cb5d24429d44a8696155a839c30d61ef22ecb4c0b420abd1b716e9b1e419e",
+      "audit_code": "fc3d8da588aab1694440eebb2fd50ff8e8ad4389e6ca0e71147dceb9fdfecd87",
+      "parent_code": "2eeeb8298a30d15d61fc36e63ba353d94147bbb3280f0a61babdac23c4332e35",
+      "original_result": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+      "sic_result": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d"
+    },
+    "preservation": "frozen originals, operational DB, Investor, #43/#44 and #53 untouched"
+  },
+  "sha256": "ba8cddcae48ce672402a41401f6be1a841f1ed3ff26931bf27142a6f47eec594",
+  "code_sha256": "116d0a49559f3ab1cf29b5af3401aed210b3f746d2644336c8f01b17b37e554f",
+  "protocol_sha256": "1ff153efac76ba9c4d65a75002bce3feadf2c92caa0724c24d79b609e087ae07"
+}
