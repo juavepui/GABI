@@ -80,7 +80,8 @@ externa comprueba esas referencias y CI construye también el wheel del backend.
 El backend se usa desde la raíz con `uv ... --project backend` o directamente
 desde `backend`. La configuración raíz permite ejecutar pytest y Ruff sobre
 todo el repositorio. Mypy usa explícitamente la configuración y el paquete del
-backend; solo traduce el prefijo físico de ese paquete a `src/gabi` para comparar
+backend (ampliado a todo `backend/src` por las reglas de arquitectura); solo
+traduce el prefijo físico de `gabi` a `src/gabi` para comparar
 el baseline de 25 diagnósticos. Líneas, mensajes, severidad y códigos deben
 seguir coincidiendo exactamente; no se amplía la deuda tolerada.
 

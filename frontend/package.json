@@ -3,5 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Cliente local de GABI; implementación React programada en la fase F3"
+  "description": "Cliente local de GABI; implementación React programada en la fase F3",
+  "scripts": {
+    "lint:architecture": "node scripts/check-architecture.mjs",
+    "test:architecture": "node --test scripts/check-architecture.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
 }

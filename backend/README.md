@@ -4,6 +4,11 @@ El paquete `gabi` y sus tests residen aquí. Las dependencias siguen fijadas en
 `uv.lock`. Streamlit se conserva en `../app/` durante la transición; FastAPI
 se añade en la fase [#64](https://github.com/juavepui/GABI/issues/64).
 
+La [arquitectura vigente](../docs/architecture.md) fija dominio, aplicación,
+infraestructura y adaptadores HTTP/CLI. El [plan legacy](../docs/architecture/legacy-migration.md)
+describe cómo migrar los módulos actuales sin alterar evidencia publicada.
+Comprobar los límites desde aquí con `uv run python ../scripts/check_architecture.py`.
+
 Desde la raíz del repositorio:
 
 ```powershell

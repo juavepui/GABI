@@ -14,6 +14,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -25,6 +27,9 @@ jobs:
 
       - name: Build backend wheel
         run: uv build --wheel
+
+      - name: Check backend architecture and legacy debt
+        run: uv run python ../scripts/check_architecture.py --baseline-base HEAD^
 
       - name: Verify frozen research engines
         run: uv run python -m gabi.frozen_research_ci --check-frozen
@@ -38,20 +43,21 @@ jobs:
       - name: Type check (mypy)
         run: uv run python -m gabi.frozen_research_ci --typecheck
 
-      # Importa gabi.* de verdad (no solo compila) -- backend/src/gabi es librería
-      # pura, sin dependencia de datos ni de un runtime de Streamlit, así
-      # que hacerlo con seguridad no tiene coste. app/pages/*.py SÍ depende
-      # de datos cacheados y de ScriptRunContext (st.stop() no frena la
-      # ejecución fuera de `streamlit run`), así que ahí solo se comprueba
-      # sintaxis (compile), no import -- importarlas de verdad daría falsos
-      # positivos por falta de caché, no por bugs reales.
-      - name: Import smoke test (gabi package)
+      # Los módulos del backend no abren bases ni arrancan workers al importar.
+      # Streamlit se compila aquí y se ejecuta con AppTest y datos aislados en pytest.
+      - name: Import smoke test (backend packages)
         run: |
           uv run python -c "
-          import pkgutil, importlib, gabi
-          for m in pkgutil.iter_modules(gabi.__path__):
-              importlib.import_module(f'gabi.{m.name}')
-          print(f'{sum(1 for _ in pkgutil.iter_modules(gabi.__path__))} módulos importados OK')
+          import pkgutil, importlib, importlib.util
+          count = 0
+          for name in ('gabi', 'gabi_api', 'gabi_cli'):
+              if importlib.util.find_spec(name) is None:
+                  continue
+              package = importlib.import_module(name)
+              for m in pkgutil.walk_packages(package.__path__, prefix=name + '.'):
+                  importlib.import_module(m.name)
+                  count += 1
+          print(f'{count} módulos importados OK')
           "
 
       - name: Compile smoke test (Streamlit app)
@@ -59,3 +65,22 @@ jobs:
 
       - name: Tests (pytest)
         run: uv run pytest -q
+
+  frontend-architecture:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install architecture tooling (locked)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check frontend architecture
+        run: npm run lint:architecture
+      - name: Test architecture rules
+        run: npm run test:architecture

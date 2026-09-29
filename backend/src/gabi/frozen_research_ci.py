@@ -66,7 +66,7 @@ def typecheck() -> int:
     verify_frozen()
     baseline = load_baseline()
     output, errors, status = api.run([
-        "--config-file", str(BACKEND / "pyproject.toml"), "--output=json", str(BACKEND / "src" / "gabi"),
+        "--config-file", str(BACKEND / "pyproject.toml"), "--output=json", str(BACKEND / "src"),
     ])
     if errors:
         print(errors, file=sys.stderr, end="")
@@ -82,7 +82,7 @@ def typecheck() -> int:
                 for diagnostic, count in diagnostics.items():
                     print(f"{count} x {diagnostic}", file=sys.stderr)
         return 1
-    print(f"mypy checked backend/src/gabi: no new diagnostics; {len(baseline)} exact historical diagnostics in unchanged frozen engines.")
+    print(f"mypy checked backend/src: no new diagnostics; {len(baseline)} exact historical diagnostics in unchanged frozen engines.")
     return 0
 
 

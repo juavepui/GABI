@@ -9,6 +9,14 @@ alcista en un horizonte de 6-12 meses, y sobre todo **entender por qué**.
 > (Yahoo Finance, SEC EDGAR, FRED) y pueden tener errores, retraso o estar
 > incompletos. Verifica siempre por tu cuenta antes de invertir.
 
+## Arquitectura y desarrollo
+
+GABI evoluciona como [monolito modular local](docs/architecture.md): dominio,
+casos de uso y adaptadores Python; frontend React por capacidades. Las reglas
+para modificar código están en [AGENTS.md](AGENTS.md), con controles de
+arquitectura en CI para ambas partes y [migración del código existente](docs/architecture/legacy-migration.md).
+La API y React siguen pendientes de sus fases; Streamlit continúa operativo.
+
 ## Calidad y trazabilidad de datos
 
 La identidad persistente por CIK, los alias con vigencia, la migración aditiva

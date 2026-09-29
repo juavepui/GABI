@@ -6,6 +6,10 @@
 describe en [su entrega y compatibilidad](backend-layout-compatibility.md).
 La API y el cliente React se implementan después; Streamlit sigue operativo.
 
+Las decisiones vigentes de capas, dependencias, datos, rendimiento y evolución
+del código antiguo están en [arquitectura](architecture.md). Cada fase aplica
+esas reglas y conserva las guardas de arquitectura en CI.
+
 El destino es Python + FastAPI y React + TypeScript + Vite + React Router +
 shadcn/ui. GABI seguirá siendo local y gratuito, con SQLite y el directorio
 `data/` compartido en la raíz. Se migrará por flujos comprobables, conservando
