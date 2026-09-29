@@ -69,6 +69,32 @@ export type CompanyRow = {
 };
 
 /**
+ * CreateJobRequest
+ */
+export type CreateJobRequest = {
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Idempotency Key
+     */
+    idempotency_key: string;
+    /**
+     * Kind
+     */
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest';
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Symbols
+     */
+    symbols?: Array<string>;
+};
+
+/**
  * DataResponse
  */
 export type DataResponse = {
@@ -221,6 +247,120 @@ export type Identity = {
      * Status
      */
     status: 'resolved' | 'ambiguous' | 'unresolved';
+};
+
+/**
+ * JobEvent
+ */
+export type JobEvent = {
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
+ * JobListResponse
+ */
+export type JobListResponse = {
+    /**
+     * Jobs
+     */
+    jobs: Array<JobResponse>;
+};
+
+/**
+ * JobResponse
+ */
+export type JobResponse = {
+    /**
+     * Cancel Requested
+     */
+    cancel_requested: boolean;
+    /**
+     * Checkpoint
+     */
+    checkpoint: {
+        [key: string]: unknown;
+    };
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Error Code
+     */
+    error_code: string | null;
+    /**
+     * Events
+     */
+    events?: Array<JobEvent> | null;
+    /**
+     * Finished At
+     */
+    finished_at: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Origin
+     */
+    origin: string;
+    /**
+     * Parameters
+     */
+    parameters: {
+        [key: string]: unknown;
+    };
+    /**
+     * Phase
+     */
+    phase: string;
+    /**
+     * Progress
+     */
+    progress: number;
+    /**
+     * Result Ref
+     */
+    result_ref: string | null;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string | null;
+    /**
+     * Started At
+     */
+    started_at: string | null;
+    /**
+     * Status
+     */
+    status: string;
+};
+
+/**
+ * LocalSettingsResponse
+ */
+export type LocalSettingsResponse = {
+    /**
+     * Keys
+     */
+    keys: {
+        [key: string]: boolean;
+    };
+    /**
+     * Scheduler
+     */
+    scheduler?: string;
 };
 
 /**
@@ -392,6 +532,118 @@ export type RankingResponse = {
  */
 export type Unit = 'fraction' | 'percent' | 'points_0_100' | 'USD' | 'ratio' | 'count';
 
+/**
+ * WeightsRequest
+ */
+export type WeightsRequest = {
+    /**
+     * Momentum
+     */
+    momentum: number;
+    /**
+     * Quality
+     */
+    quality: number;
+    /**
+     * Risk
+     */
+    risk: number;
+    /**
+     * Value
+     */
+    value: number;
+};
+
+export type LocalSettingsApiV1AdministrationSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/administration/settings';
+};
+
+export type LocalSettingsApiV1AdministrationSettingsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type LocalSettingsApiV1AdministrationSettingsGetError = LocalSettingsApiV1AdministrationSettingsGetErrors[keyof LocalSettingsApiV1AdministrationSettingsGetErrors];
+
+export type LocalSettingsApiV1AdministrationSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LocalSettingsResponse;
+};
+
+export type LocalSettingsApiV1AdministrationSettingsGetResponse = LocalSettingsApiV1AdministrationSettingsGetResponses[keyof LocalSettingsApiV1AdministrationSettingsGetResponses];
+
+export type SaveWeightsApiV1AdministrationWeightsPostData = {
+    body: WeightsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/administration/weights';
+};
+
+export type SaveWeightsApiV1AdministrationWeightsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveWeightsApiV1AdministrationWeightsPostError = SaveWeightsApiV1AdministrationWeightsPostErrors[keyof SaveWeightsApiV1AdministrationWeightsPostErrors];
+
+export type SaveWeightsApiV1AdministrationWeightsPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ModelResponse;
+};
+
+export type SaveWeightsApiV1AdministrationWeightsPostResponse = SaveWeightsApiV1AdministrationWeightsPostResponses[keyof SaveWeightsApiV1AdministrationWeightsPostResponses];
+
 export type CompanyApiV1CompaniesSymbolGetData = {
     body?: never;
     path: {
@@ -536,6 +788,250 @@ export type HealthApiV1HealthGetResponses = {
 };
 
 export type HealthApiV1HealthGetResponse = HealthApiV1HealthGetResponses[keyof HealthApiV1HealthGetResponses];
+
+export type ListJobsApiV1JobsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/jobs';
+};
+
+export type ListJobsApiV1JobsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ListJobsApiV1JobsGetError = ListJobsApiV1JobsGetErrors[keyof ListJobsApiV1JobsGetErrors];
+
+export type ListJobsApiV1JobsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobListResponse;
+};
+
+export type ListJobsApiV1JobsGetResponse = ListJobsApiV1JobsGetResponses[keyof ListJobsApiV1JobsGetResponses];
+
+export type CreateJobApiV1JobsPostData = {
+    body: CreateJobRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/jobs';
+};
+
+export type CreateJobApiV1JobsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CreateJobApiV1JobsPostError = CreateJobApiV1JobsPostErrors[keyof CreateJobApiV1JobsPostErrors];
+
+export type CreateJobApiV1JobsPostResponses = {
+    /**
+     * Successful Response
+     */
+    202: JobResponse;
+};
+
+export type CreateJobApiV1JobsPostResponse = CreateJobApiV1JobsPostResponses[keyof CreateJobApiV1JobsPostResponses];
+
+export type GetJobApiV1JobsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/jobs/{job_id}';
+};
+
+export type GetJobApiV1JobsJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type GetJobApiV1JobsJobIdGetError = GetJobApiV1JobsJobIdGetErrors[keyof GetJobApiV1JobsJobIdGetErrors];
+
+export type GetJobApiV1JobsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobResponse;
+};
+
+export type GetJobApiV1JobsJobIdGetResponse = GetJobApiV1JobsJobIdGetResponses[keyof GetJobApiV1JobsJobIdGetResponses];
+
+export type CancelJobApiV1JobsJobIdCancelPostData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/jobs/{job_id}/cancel';
+};
+
+export type CancelJobApiV1JobsJobIdCancelPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CancelJobApiV1JobsJobIdCancelPostError = CancelJobApiV1JobsJobIdCancelPostErrors[keyof CancelJobApiV1JobsJobIdCancelPostErrors];
+
+export type CancelJobApiV1JobsJobIdCancelPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobResponse;
+};
+
+export type CancelJobApiV1JobsJobIdCancelPostResponse = CancelJobApiV1JobsJobIdCancelPostResponses[keyof CancelJobApiV1JobsJobIdCancelPostResponses];
+
+export type JobResultApiV1JobsJobIdResultGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/jobs/{job_id}/result';
+};
+
+export type JobResultApiV1JobsJobIdResultGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type JobResultApiV1JobsJobIdResultGetError = JobResultApiV1JobsJobIdResultGetErrors[keyof JobResultApiV1JobsJobIdResultGetErrors];
+
+export type JobResultApiV1JobsJobIdResultGetResponses = {
+    /**
+     * Response Job Result Api V1 Jobs  Job Id  Result Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type JobResultApiV1JobsJobIdResultGetResponse = JobResultApiV1JobsJobIdResultGetResponses[keyof JobResultApiV1JobsJobIdResultGetResponses];
 
 export type ModelApiV1ModelGetData = {
     body?: never;

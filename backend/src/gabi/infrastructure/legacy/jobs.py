@@ -1,0 +1,91 @@
+"""Allowlisted legacy operations called only by the worker process."""
+
+import sqlite3
+from contextlib import closing
+from pathlib import Path
+
+import pandas as pd
+
+from gabi.application.administration.jobs import JobCommand
+from gabi.infrastructure.settings import Settings
+
+
+class LegacyExecutor:
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
+    def __call__(self, command: JobCommand) -> dict:
+        if command.kind == "quality":
+            return quality_snapshot(self.settings.data_dir)
+        # Published legacy engines keep their immutable project-root config.
+        from gabi import config
+
+        if config.DATA_DIR.resolve() != self.settings.data_dir.resolve():
+            raise RuntimeError("El worker y la API no usan el mismo directorio de datos.")
+        if command.kind == "symbols":
+            from gabi import screener
+
+            result = screener.refresh_data(list(command.symbols))
+            if result.get("failed"):
+                raise RuntimeError("Una o más fuentes fallaron.")
+            return {"symbols": list(command.symbols), "updated": len(command.symbols)}
+        if command.kind == "refresh":
+            from gabi import periodic_tasks
+
+            result = periodic_tasks.refresh_data()
+            if result["fallos"] or result["failed_events"]:
+                raise RuntimeError("Una o más fuentes fallaron.")
+            return {"symbols": result["simbolos"], "sync": result["sync"]}
+        if command.kind == "backtest":
+            from gabi import multifactor_backtest
+
+            result = multifactor_backtest.run(command.start or "", command.end or "")
+            return {"kind": "exploratory", "start": command.start, "end": command.end,
+                    "periods": result["periods"].to_dict(orient="records"),
+                    "skipped": result["skipped"], "metrics": result["metrics"],
+                    "return": result["return"], "spy_return": result["spy_return"]}
+        if command.kind == "maintenance":
+            from gabi import periodic_tasks
+
+            result = periodic_tasks.run(refresh=False)
+            if result.get("error") or result.get("ledger", {}).get("status") == "ERROR":
+                raise RuntimeError("El mantenimiento terminó con errores.")
+            # Never surface pending #43/#44 results through jobs.
+            return {"maintenance": "completed"}
+        if command.kind == "tiingo":
+            from gabi import periodic_tasks
+
+            result = periodic_tasks.resume_tiingo()
+            if result.get("omitido"):
+                raise RuntimeError("La cola Tiingo ya está en curso.")
+            return {"download": "completed"}
+        raise ValueError("Unsupported job")
+
+
+def quality_snapshot(data_dir: Path) -> dict:
+    """Small, read-only coverage audit; no schema initialization or network."""
+    universe = data_dir / "sp500_constituents.csv"
+    db_path = data_dir / "gabi.db"
+    if not universe.is_file() or not db_path.is_file():
+        raise RuntimeError("Faltan datos cacheados para la auditoría.")
+    if universe.stat().st_size > 1_000_000:
+        raise RuntimeError("El universo supera el límite de lectura.")
+    symbols = pd.read_csv(universe, usecols=["symbol"], nrows=1001)["symbol"].dropna().astype(str).tolist()
+    if len(symbols) > 1000:
+        raise RuntimeError("El universo supera el límite de auditoría.")
+    with closing(sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True, timeout=5)) as db:
+        db.execute("PRAGMA query_only=ON")
+        tables = {name for (name,) in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")}
+        result: dict = {"universe": len(symbols), "sources": {}}
+        for table in ("prices", "fundamentals", "edgar_metrics"):
+            if table not in tables:
+                result["sources"][table] = {"covered": 0, "total": len(symbols)}
+                continue
+            covered = 0
+            for start in range(0, len(symbols), 200):
+                chunk = symbols[start:start + 200]
+                marks = ",".join("?" for _ in chunk)
+                covered += db.execute(f"SELECT COUNT(DISTINCT symbol) FROM {table} WHERE symbol IN ({marks})",
+                                      chunk).fetchone()[0]
+            result["sources"][table] = {"covered": covered, "total": len(symbols)}
+        return result

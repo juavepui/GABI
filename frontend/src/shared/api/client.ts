@@ -2,6 +2,12 @@ import type {
   CompanyResponse,
   RankingResponse,
   RankingApiV1RankingGetData,
+  CreateJobRequest,
+  JobListResponse,
+  JobResponse,
+  LocalSettingsResponse,
+  ModelResponse,
+  WeightsRequest,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -15,7 +21,10 @@ export class ApiError extends Error {
   }
 }
 async function get<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+  return request<T>(url, { signal, headers: { Accept: 'application/json' } });
+}
+async function request<T>(url: string, options: RequestInit): Promise<T> {
+  const response = await fetch(url, options);
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => null);
     const detail = body && typeof body === 'object' && 'error' in body ? body.error : null;
@@ -34,6 +43,42 @@ async function get<T>(url: string, signal?: AbortSignal): Promise<T> {
     throw new ApiError(response.status, code, message);
   }
   return response.json() as Promise<T>;
+}
+export function getJobs(signal?: AbortSignal): Promise<JobListResponse> {
+  return get('/api/v1/jobs', signal);
+}
+export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
+  return get('/api/v1/jobs/' + encodeURIComponent(id), signal);
+}
+export function getLocalSettings(signal?: AbortSignal): Promise<LocalSettingsResponse> {
+  return get('/api/v1/administration/settings', signal);
+}
+export function getModel(signal?: AbortSignal): Promise<ModelResponse> {
+  return get('/api/v1/model', signal);
+}
+export function saveWeights(body: WeightsRequest): Promise<ModelResponse> {
+  return request('/api/v1/administration/weights', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function createJob(body: CreateJobRequest): Promise<JobResponse> {
+  return request('/api/v1/jobs', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function cancelJob(id: string): Promise<JobResponse> {
+  return request('/api/v1/jobs/' + encodeURIComponent(id) + '/cancel', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+}
+export function getJobResult(id: string, signal?: AbortSignal): Promise<unknown> {
+  return get('/api/v1/jobs/' + encodeURIComponent(id) + '/result', signal);
 }
 export function getRanking(query: RankingQuery, signal?: AbortSignal): Promise<RankingResponse> {
   const params = new URLSearchParams();

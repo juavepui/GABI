@@ -15,8 +15,9 @@ El backend conserva 111 módulos planos como compatibilidad. F2 ha migrado el c�
 y los filtros del Screener a casos de uso/dominio compartidos y añadido la
 [API local de consulta](local-api.md), con SQL de solo lectura y caché por lotes.
 Streamlit continúa operativo. F3 incorpora el [cliente React local](../frontend/README.md)
-con Screener, ficha y tipos generados desde OpenAPI; los jobs llegan en
-[#66](https://github.com/juavepui/GABI/issues/66). No se presenta el destino como
+con Screener, ficha y tipos generados desde OpenAPI. F4 añade la cola SQLite,
+worker local y Administración en [#66](https://github.com/juavepui/GABI/issues/66).
+No se presenta el destino como
 una refactorización ya completada ni se atribuye una mejora de velocidad sin medirla.
 
 La elección permite reutilizar cálculos, estudiar estrategias reproducibles y
@@ -157,13 +158,14 @@ arranque se conserva. El cálculo publicado se invoca con sus inputs declarados.
 
 Las escrituras cortas son comandos explícitos con transacciones y validación de
 evidencia. Las descargas, reconstrucciones, auditorías o backtests largos crean un
-job persistente. F4 empezará con un worker local y concurrencia de cálculo limitada;
+job persistente. F4 usa un worker local y concurrencia de cálculo limitada;
 ni una tarea de fondo HTTP ni un navegador abierto garantizan su continuidad.
 
 SQLite guarda metadatos, parámetros, progreso, checkpoints y referencias al
 resultado. Estados previstos: `queued`, `running`, `succeeded`, `failed`,
-`cancelled`. Tras reiniciar se detectan jobs interrumpidos; se reanudan solo si
-su operación/checkpoint es idempotente, o se marcan para reintento explícito.
+`cancelled`. El worker usa bloqueo de proceso y lease renovable. Tras reiniciar,
+un job interrumpido queda `failed` con `worker_interrupted`, sin resultado publicado;
+el usuario puede reencolar un refresco incremental con otra clave.
 Los cálculos pesados se aíslan del proceso HTTP; los reintentos de fuentes respetan
 sus límites. Los resultados grandes permanecen en archivos con referencias y
 hashes, no en respuestas HTTP completas ni en el estado de React.
@@ -189,9 +191,14 @@ invalidan resultados aunque la última fecha no cambie. TTL por sí solo no acre
 integridad; no sustituir hashes de evidencia por mtime o última fecha.
 
 Los hashes completos se calculan al producir/verificar un snapshot o resultado,
-no en cada render. F4 debe definir la revisión transaccional de caché y cómo se
-invalidan las escrituras legacy mientras convivan. Los artefactos publicados se
-leen por referencias exactas; no se sobrescriben para limpiar caché. La retención
+no en cada render. La revisión de la caché de mercado combina la conexión SQLite
+persistente (`PRAGMA data_version`), identidad y marcas de DB/WAL, contenido del
+universo y pesos. Cada commit en `gabi.db` de un writer legacy o del worker
+cambia esa revisión; la lectura la comprueba de nuevo antes de entregar el
+ranking. Las transiciones de la cola en `gabi_jobs.db` no invalidan rankings.
+Esta revisión no es un hash probatorio. Cada resultado de job se publica mediante
+reemplazo atómico de archivo y SHA-256 almacenado con el cambio de estado. Los
+artefactos publicados se leen por referencias exactas; no se sobrescriben para limpiar caché. La retención
 solo afecta a resultados regenerables mediante una política explícita y probada.
 
 Cada optimización registra fixture/input, tiempo frío/caliente, máximo de memoria,
@@ -199,6 +206,15 @@ volumen de filas y consultas. Se comparan condiciones iguales y selección,
 métricas, costes, fechas y unidades idénticos. Los umbrales iniciales se fijan al
 medir F2/F3; no se inventan cifras ni se ponen cronómetros frágiles en tests unitarios.
 F4 incluye reinicio/concurrencia y F5/F6 ventanas históricas y archivos grandes.
+
+Medición F4 reproducible con `backend/.venv/Scripts/python.exe scripts/measure_jobs.py`
+en Windows/Python 3.12: 1000 símbolos sintéticos, tres tablas de 1000 filas,
+60 lecturas de lista en tres hilos y una auditoría ejecutada por worker:
+0,086 s; working set del proceso 79,1 → 82,3 MiB (pico observado), pico de
+asignaciones Python 0,5 MiB. Esta medida acota el flujo de auditoría y cola
+de la fixture, no la RAM de un refresco de 500 empresas ni de un backtest sobre
+los 83 GB locales. Esas operaciones requieren mediciones propias antes de
+fijar presupuestos de memoria o aumentar la concurrencia.
 
 ## Conservación de evidencia y reglas de cumplimiento
 

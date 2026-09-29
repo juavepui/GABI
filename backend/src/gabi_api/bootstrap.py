@@ -11,12 +11,16 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
-from gabi.application.administration.model import ModelQueries
+from gabi.application.administration.jobs import Jobs
+from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import MarketQueries
 from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.weights import FileWeights
+from gabi_api.routes.jobs import router as jobs_router
 from gabi_api.routes.market import router
 
 
@@ -41,7 +45,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     benchmark, risk_free_rate = defaults()
     policy = model_policy()
     repository = ReadOnlyMarket(settings, calculators(), policy, benchmark, risk_free_rate)
-    market = MarketQueries(repository, ModelQueries(repository, policy), today)
+    model_queries = ModelQueries(repository, policy)
+    market = MarketQueries(repository, model_queries, today)
+    model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir))
+    jobs = Jobs(SqliteJobs(settings.data_dir))
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -59,7 +66,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
-    app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET"],
+    app.state.jobs = jobs
+    app.state.settings = settings
+    app.state.model_commands = model_commands
+    app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],
                        allow_headers=["Accept", "Content-Type"], allow_credentials=False)
 
     def error(code: str, message: str, status: int) -> JSONResponse:
@@ -86,6 +96,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         return HealthResponse()
 
     app.include_router(router)
+    app.include_router(jobs_router)
     return app
 
 

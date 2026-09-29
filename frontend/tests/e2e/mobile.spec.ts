@@ -43,5 +43,5 @@ test('responsive navigation, filters, table and company on narrow screens', asyn
   await page.getByRole('link', { name: 'Volver al Screener' }).click();
   await expect(page).toHaveURL(/search=BRK/);
   await page.getByRole('link', { name: 'Administración', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Disponible en Streamlit' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
 });

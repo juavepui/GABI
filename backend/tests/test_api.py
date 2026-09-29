@@ -37,7 +37,11 @@ def test_health_and_openapi_without_creating_data(tmp_path):
         assert client.get("/api/v1/health").json()["status"] == "ok"
         contract = client.get("/openapi.json").json()
         assert set(contract["paths"]) == {"/api/v1/health", "/api/v1/model", "/api/v1/data/status",
-                                          "/api/v1/ranking", "/api/v1/companies/{symbol}"}
+                                         "/api/v1/ranking", "/api/v1/companies/{symbol}",
+                                         "/api/v1/administration/settings", "/api/v1/administration/weights",
+                                         "/api/v1/jobs",
+                                         "/api/v1/jobs/{job_id}", "/api/v1/jobs/{job_id}/cancel",
+                                         "/api/v1/jobs/{job_id}/result"}
         assert contract["components"]["schemas"]["Metric"]["required"] == ["value", "unit"]
         assert client.get("/api/v1/ranking").json()["data"]["status"] == "empty"
         assert client.get("/api/v1/companies/TEST").status_code == 404

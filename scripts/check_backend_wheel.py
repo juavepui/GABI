@@ -27,13 +27,16 @@ from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 import gabi
 import gabi_api
+import gabi_cli
 from gabi_api.bootstrap import create_app
 from fastapi.testclient import TestClient
 assert Path(gabi.__file__).is_relative_to(Path(sys.argv[1]))
 assert Path(gabi_api.__file__).is_relative_to(Path(sys.argv[1]))
+assert Path(gabi_cli.__file__).is_relative_to(Path(sys.argv[1]))
 with TestClient(create_app()) as client:
     assert client.get('/api/v1/health').status_code == 200
     assert client.get('/api/v1/ranking').json()['data']['status'] == 'empty'
+    assert client.get('/api/v1/jobs').json() == {'jobs': []}
 assert not Path(sys.argv[2]).exists()
 print('Wheel imports and empty-cache HTTP contract OK outside the checkout')
 """

@@ -38,6 +38,10 @@ class ModelReader(Protocol):
     def local_model(self) -> LocalModel: ...
 
 
+class WeightWriter(Protocol):
+    def save_weights(self, weights: dict[str, float]) -> None: ...
+
+
 class ModelQueries:
     def __init__(self, reader: ModelReader, policy: ModelPolicy):
         self.reader, self.policy = reader, policy
@@ -58,3 +62,13 @@ class ModelQueries:
         return ModelState(local.mode, self.policy.frozen_id if matches else "EXPERIMENTAL",
                           self.policy.status(weights, live_forward_active=source is not None), dict(weights), matches,
                           source, local.blind_id if matches else None)
+
+
+class ModelCommands:
+    def __init__(self, queries: ModelQueries, writer: WeightWriter):
+        self.queries, self.writer = queries, writer
+
+    def save_weights(self, weights: dict[str, float]) -> ModelState:
+        self.queries.model(weights)  # validates four finite fractions and Research mode before any write
+        self.writer.save_weights(weights)
+        return self.queries.model()

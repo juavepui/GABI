@@ -1,9 +1,9 @@
-# API local de GABI — F2 / #64
+# API local de GABI — F2–F4 / #64–#66
 
 La API FastAPI comparte el cálculo y los filtros del Screener con Streamlit.
 Es una entrega de consulta para Mercado y estado local del modelo. El
-[cliente React de F3](../frontend/README.md) consume este contrato; las acciones de actualización y los jobs persistentes,
-en #66.
+[cliente React](../frontend/README.md) consume este contrato; F4 añade la cola
+persistente para actualizaciones y trabajos largos.
 Los datos y las fórmulas publicados permanecen en su ubicación y versión.
 
 ## Arranque
@@ -18,9 +18,12 @@ uv run --project backend python -m gabi_api.bootstrap
 Escucha en `127.0.0.1:8000`. Este lanzador no acepta opciones ni variables para
 abrir una interfaz pública. Documentación interactiva: <http://127.0.0.1:8000/docs>;
 contrato generable: <http://127.0.0.1:8000/openapi.json>. CORS permite exclusivamente
-`http://localhost:5173` y `http://127.0.0.1:5173`, con GET y sin credenciales.
+`http://localhost:5173` y `http://127.0.0.1:5173`, con GET/POST y sin credenciales.
 
-`GABI_DATA_DIR` permite indicar otra carpeta **absoluta**. Un wheel instalado fuera
+`GABI_DATA_DIR` permite indicar otra carpeta **absoluta** para la API, la cola y
+la auditoría de cobertura. Los motores legacy publicados mantienen `GABI/data`
+inmutable: el worker rechaza refrescos y backtests si se arranca con otra carpeta
+para no mezclar inputs. Un wheel instalado fuera
 del checkout requiere también `GABI_PROJECT_ROOT` absoluto, por la compatibilidad
 de rutas F1 de los motores publicados. La CI extrae el wheel y verifica sus imports
 y respuestas con una carpeta de datos temporal ausente, fuera del checkout.
@@ -40,6 +43,34 @@ uv run --project backend streamlit run app/streamlit_app.py
 | `/api/v1/data/status` | Cobertura/frescura del universo local; reutiliza la caché del ranking |
 | `/api/v1/ranking` | Ranking, métricas, filtros/paginación, sectores y procedencia |
 | `/api/v1/companies/{symbol}?bars=252` | La misma fila/score calculada sobre todo el universo, más cierres recientes |
+| `/api/v1/administration/settings` | Presencia de claves locales, nunca valores ni rutas |
+| `/api/v1/jobs`, `/api/v1/jobs/{id}` | Lista acotada y detalle de estado/eventos; no crean la base de jobs en GET |
+| `/api/v1/jobs/{id}/result` | Artefacto por identificador y SHA-256, solo tras éxito; se restringe el mantenimiento ciego |
+
+`POST /api/v1/jobs` acepta `kind` (`refresh`, `symbols`, `quality` o `backtest`),
+`idempotency_key` y únicamente sus parámetros permitidos: hasta diez símbolos
+normalizados o fechas ISO de un intervalo de hasta un año. Devuelve 202 y el job
+persistido. La misma clave devuelve el mismo job; parámetros distintos con esa
+clave dan 409. `POST /api/v1/jobs/{id}/cancel` cancela la espera inmediatamente o
+marca la ejecución para cancelarla en el próximo punto cooperativo. Un fallo o
+una cancelación no publican resultados incompletos. El worker serializa los
+trabajos, y un nuevo job del mismo tipo espera hasta que acabe el anterior.
+
+`POST /api/v1/administration/weights` guarda los cuatro pesos por defecto como
+fracciones finitas cuya suma es uno. El caso de uso comprueba el modo **Research**
+antes de escribir y la infraestructura reemplaza `weights.json` atómicamente.
+En Investor responde 403 sin tocar el archivo. El cliente invalida sus consultas
+de modelo y mercado tras un guardado correcto.
+
+Arranca `uv run --project backend python -m gabi_cli worker` en otra terminal.
+`python -m gabi_cli worker --once` procesa un job y sale; `python -m gabi_cli
+schedule daily|tiingo` encola las tareas programadas con claves estables. El
+worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban
+que coincide con su configuración inmutable antes de tocar datos.
+Solo el scheduler puede encolar mantenimiento #43/#44 y Tiingo histórico. Las
+instalaciones existentes del Programador de Windows no se cambian hasta ejecutar
+de nuevo `scripts/programar_tareas.ps1`. La cola usa `data/gabi_jobs.db` (WAL)
+separada de `data/gabi.db`; no migra ni copia los datos de mercado.
 
 Filtros: `search` literal sin regex (hasta 100 caracteres), `sectors` repetible
 (hasta 11), `min_market_cap` en **USD**, `golden_cross_only`, `hide_no_data`
@@ -105,9 +136,11 @@ entrada, picks, rankings sellados, retornos ni resultados de reservas ciegas.
 - `infrastructure/storage/market.py`: SQL de solo lectura, lotes y caché.
 - `gabi_api`: traducción HTTP/JSON; únicamente `bootstrap.py` compone adaptadores.
 
-La API abre SQLite con URI `mode=ro` y `query_only=ON`. No inicializa esquemas,
-migra tablas, cambia el journal, descarga fuentes ni usa los getters legacy que
-ejecutan DDL. Una base/tabla ausente deja ausentes sus datos. SQLite conserva su
+Las consultas de mercado abren SQLite con URI `mode=ro` y `query_only=ON`. No
+inicializan esquemas, migran tablas, cambian el journal, descargan fuentes ni usan
+los getters legacy que ejecutan DDL. Un `POST /jobs` sí inicializa la base separada
+de la cola; el worker ejecuta después el comando solicitado. Una base/tabla
+ausente deja ausentes sus datos. SQLite conserva su
 coordinación normal de lectores/WAL; las consultas no modifican registros,
 configuración ni artefactos. El adaptador Streamlit antiguo conserva sus getters
 mientras se migra su administración. Los 18 motores/config congelados y los
@@ -136,8 +169,9 @@ Ficha y gráfico también comprueban que comparten revisión.
 
 `revision` es un identificador efímero para invalidar esta caché, **no** un hash de
 evidencia reproducible ni sustituto de los fingerprints publicados. El TTL no
-acredita integridad. F4 añadirá la revisión transaccional de los comandos/jobs;
-la conexión persistente cubre entretanto los commits de los escritores legacy.
+acredita integridad. Los commits de los comandos/jobs y escritores legacy se
+detectan por esa conexión persistente y DB/WAL; los resultados de jobs usan
+un SHA-256 propio antes de abrir el artefacto.
 Un candado local serializa el cálculo frío y evita duplicarlo en peticiones
 simultáneas; no se arrancan workers desde GET. Es un cálculo de pantalla, no un
 backtest, y su primer acceso aún puede tardar segundos con históricos grandes.

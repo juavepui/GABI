@@ -1,4 +1,4 @@
-# Frontend local de GABI — F3 / #65
+# Frontend local de GABI — F4 / #66
 
 React + TypeScript + Vite, React Router, shadcn/ui y TanStack Query.
 El Screener y la ficha consultan el backend FastAPI. Los cálculos financieros,
@@ -29,6 +29,18 @@ no hace falta habilitar CORS. Para otra dirección local, configura
 `GABI_API_TARGET` antes de arrancar Vite. El frontend no acepta una carpeta
 de datos: ese ajuste pertenece al [backend](../docs/local-api.md).
 
+Para procesar solicitudes desde Administración, arranca un **tercer proceso**:
+
+```powershell
+uv run --project backend python -m gabi_cli worker
+```
+
+El worker conserva la cola en `data/gabi_jobs.db` y continúa después de cerrar
+el navegador. Puedes instalar las tareas locales mediante
+`scripts/programar_tareas.ps1` si quieres que arranque al iniciar sesión y que
+el refresco diario/Tiingo se encolen sin abrir la app. El script no se ejecuta
+al instalar GABI; las tareas ya registradas se actualizan solo al ejecutarlo.
+
 Si ya utilizas el entorno raíz de Windows:
 
 ```powershell
@@ -52,8 +64,15 @@ disponibles, no a probabilidad de éxito. Se distinguen caché vacía, selecció
 vacía, errores y datos obsoletos. Un modelo congelado o en seguimiento **no**
 acredita ventaja frente a SPY.
 
-Cartera, Investigación y Administración indican la fase pendiente y enlazan
-con Streamlit; no ejecutan escrituras, descargas ni experimentos desde React.
+Cartera e Investigación indican la fase pendiente y enlazan con Streamlit.
+Administración permite encolar refrescos incrementales, hasta diez símbolos,
+auditoría de cobertura y un backtest exploratorio de hasta un año. Muestra el
+estado persistente, cancelación cooperativa y resultados verificados por hash.
+El mantenimiento #43/#44 solo lo encola el programador; nunca publica resultados
+ciegos en el cliente. Las claves se configuran localmente y el cliente solo ve
+si están presentes. Los pesos por defecto se editan en Administración cuando el
+modo local ya es Research; Investor los mantiene bloqueados. El cambio de modo
+sigue temporalmente en Streamlit.
 Para esos flujos, conserva esta vía de vuelta desde la raíz:
 
 ```powershell
