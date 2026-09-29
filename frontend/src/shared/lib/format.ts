@@ -10,13 +10,16 @@ export function metric(value: Metric | undefined, compact = false): string {
   if (value.unit === 'fraction') return number(value.value * 100, 1) + ' %';
   if (value.unit === 'percent') return number(value.value, 1) + ' %';
   if (value.unit === 'count') return number(value.value, 0);
-  if (value.unit === 'USD')
-    return new Intl.NumberFormat('es-ES', {
+  if (value.unit === 'USD') {
+    const formatted = new Intl.NumberFormat('es-ES', {
       style: 'currency',
       currency: 'USD',
       notation: compact ? 'compact' : 'standard',
       maximumFractionDigits: 2,
     }).format(value.value);
+    // Compact currency labels must wrap in narrow cards; Intl uses no-break spaces.
+    return compact ? formatted.replace(/[\u00a0\u202f]/g, ' ') : formatted;
+  }
   return number(value.value, 1);
 }
 export function dateLabel(value: string | null | undefined): string {

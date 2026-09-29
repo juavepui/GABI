@@ -22,12 +22,18 @@ test('responsive navigation, filters, table and company on narrow screens', asyn
     oversized: Array.from(document.querySelectorAll('body *'))
       .filter(
         (element) =>
-          !element.closest('nav') && element.getBoundingClientRect().right > window.innerWidth + 1,
+          !element.closest('nav') &&
+          (element.getBoundingClientRect().right > window.innerWidth + 1 ||
+            (element.clientWidth > 0 &&
+              element.scrollWidth > element.clientWidth + 1 &&
+              getComputedStyle(element).overflowX === 'visible')),
       )
       .map((element) => ({
         tag: element.tagName.toLowerCase(),
         className: typeof element.className === 'string' ? element.className.slice(0, 100) : '',
         right: Math.round(element.getBoundingClientRect().right),
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
       }))
       .sort((a, b) => b.right - a.right)
       .slice(0, 16),

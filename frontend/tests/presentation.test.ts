@@ -11,6 +11,7 @@ describe('units and absence from the contract', () => {
     expect(metric({ value: null, unit: 'USD' })).toBe('—');
     expect(metric(undefined)).toBe('—');
     expect(metric({ value: 0, unit: 'count' })).toBe('0');
+    expect(metric({ value: 14e9, unit: 'USD' }, true)).not.toMatch(/[\u00a0\u202f]/);
     expect(dateLabel('invalid')).toBe('Sin fecha');
     expect(dateLabel('2026-09-29')).toContain('29');
   });
