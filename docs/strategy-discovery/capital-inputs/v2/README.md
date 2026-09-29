@@ -70,3 +70,5 @@ La dilución ajustada permanece bloqueada y la emisión neta total no está acre
 Resultado canónico: `a75cb5d24429d44a8696155a839c30d61ef22ecb4c0b420abd1b716e9b1e419e`. Especificación v2: `bba90b70b2ebf991396296c147d3149e8dee3d6136aa5667b64dba100a73d7a3`. Motor v2: `fc3d8da588aab1694440eebb2fd50ff8e8ad4389e6ca0e71147dceb9fdfecd87`. Motor anual v1: `6ee1bd74ab9415f2501137a5e1cc052aaee62b9c74e8f69e4b1e201c3a9dcd6a`.
 
 La suite completa pasa: **1.022 tests**, con los ocho avisos preexistentes de correlación constante. Los 15 tests nuevos comprueban integridad temporal, mismo periodo/filing, tratamiento de cero/ausencia y signos, cuarentena, deduplicación de clases, ausencia de falsas declaraciones de rendimiento, hashes/solo lectura, mutaciones y reproducción con fuentes sintéticas. Ruff y mypy pasan para ambos motores nuevos.
+
+La verificación real pasa. La reproducción completa en `data/research_reproductions/capital_input_audit_v2_20260929` coincide exactamente en el resultado canónico y en las cinco huellas de CSV. Los motores y sus protocolos permanecen iguales a los fijados antes del cálculo.
