@@ -86,7 +86,10 @@ seguir coincidiendo exactamente; no se amplía la deuda tolerada.
 
 La CI trabaja en `backend`, instala con lockfile, verifica motores y registro,
 ejecuta lint sobre el repositorio, tipos, imports, compilación de las 17 páginas
-y tests. Los tests usan bases temporales aisladas.
+y tests. Los tests usan bases temporales aisladas. Una prueba de arranque
+ejecuta también la portada y las 17 páginas con AppTest: caché vacía aislada,
+sin pulsar botones y con conexiones externas bloqueadas. Comprueba el arranque,
+no sustituye las pruebas de cada flujo con datos completos.
 
 La fixture ahora aísla también los pesos, claves, cachés y modo: cambiar solo
 `DATA_DIR` y `DB_PATH` dejaba constantes calculadas al importar apuntando al

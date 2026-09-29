@@ -122,6 +122,38 @@ def test_streamlit_home_runs_after_relocation_with_isolated_state(tmp_path, monk
     assert any("Todavía no hay una estrategia demostrada" in box.value for box in app.info)
 
 
+@pytest.mark.parametrize("page", sorted((workspace.ROOT / "app/pages").glob("*.py")), ids=lambda path: path.stem)
+def test_all_transition_pages_start_with_isolated_empty_cache(page, monkeypatch):
+    import socket
+
+    import pandas as pd
+    from streamlit.testing.v1 import AppTest
+
+    from gabi import screener, screener_asof, storage, universe
+
+    connect = socket.socket.connect
+
+    def connect_local_only(sock, address):
+        # Windows asyncio creates its internal socketpair over loopback.
+        if isinstance(address, tuple) and address[0] in {"127.0.0.1", "::1", "localhost"}:
+            return connect(sock, address)
+        pytest.fail("Startup smoke tests must not access the network")
+
+    monkeypatch.setattr(socket.socket, "connect", connect_local_only)
+    storage.init_db()
+    empty = pd.DataFrame(columns=["symbol", "name", "sector", "industry"])
+    monkeypatch.setattr(screener, "get_universe", lambda *args, **kwargs: empty)
+    monkeypatch.setattr(screener, "build_screener_table", lambda *args, **kwargs: pd.DataFrame())
+    info = {"symbols": [], "is_exact": False, "note": "Isolated startup smoke test"}
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof", lambda *args, **kwargs: info)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", lambda *args, **kwargs: {
+        "table": pd.DataFrame(), "universe_info": info,
+    })
+    app = AppTest.from_file(str(page), default_timeout=30).run()
+    assert not app.exception
+    assert app.title
+
+
 def test_default_fixture_isolates_weights_keys_and_cache_together():
     for name in ("DB_PATH", "WEIGHTS_PATH", "SP500_CACHE", "FRED_KEY_PATH", "TIINGO_KEY_PATH",
                  "NASDAQ_DATA_LINK_KEY_PATH", "FMP_KEY_PATH"):
