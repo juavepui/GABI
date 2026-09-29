@@ -806,7 +806,7 @@
                 }
               }
             },
-            "description": "Forbidden"
+            "description": "Modo no permitido"
           },
           "404": {
             "content": {
@@ -816,7 +816,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Empresa no encontrada"
           },
           "409": {
             "content": {
@@ -826,7 +826,7 @@
                 }
               }
             },
-            "description": "Conflict"
+            "description": "Datos cambiados"
           },
           "422": {
             "content": {
@@ -836,7 +836,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Consulta no válida"
           },
           "500": {
             "content": {
@@ -846,7 +846,7 @@
                 }
               }
             },
-            "description": "Internal Server Error"
+            "description": "Error interno"
           },
           "503": {
             "content": {
@@ -856,7 +856,7 @@
                 }
               }
             },
-            "description": "Service Unavailable"
+            "description": "Datos no disponibles"
           }
         },
         "summary": "Company",
@@ -887,7 +887,7 @@
                 }
               }
             },
-            "description": "Forbidden"
+            "description": "Modo no permitido"
           },
           "404": {
             "content": {
@@ -897,7 +897,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Empresa no encontrada"
           },
           "409": {
             "content": {
@@ -907,7 +907,7 @@
                 }
               }
             },
-            "description": "Conflict"
+            "description": "Datos cambiados"
           },
           "422": {
             "content": {
@@ -917,7 +917,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Consulta no válida"
           },
           "500": {
             "content": {
@@ -927,7 +927,7 @@
                 }
               }
             },
-            "description": "Internal Server Error"
+            "description": "Error interno"
           },
           "503": {
             "content": {
@@ -937,7 +937,7 @@
                 }
               }
             },
-            "description": "Service Unavailable"
+            "description": "Datos no disponibles"
           }
         },
         "summary": "Data Status",
@@ -968,7 +968,7 @@
                 }
               }
             },
-            "description": "Forbidden"
+            "description": "Modo no permitido"
           },
           "404": {
             "content": {
@@ -978,7 +978,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Empresa no encontrada"
           },
           "409": {
             "content": {
@@ -988,7 +988,7 @@
                 }
               }
             },
-            "description": "Conflict"
+            "description": "Datos cambiados"
           },
           "422": {
             "content": {
@@ -998,7 +998,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Consulta no válida"
           },
           "500": {
             "content": {
@@ -1008,7 +1008,7 @@
                 }
               }
             },
-            "description": "Internal Server Error"
+            "description": "Error interno"
           },
           "503": {
             "content": {
@@ -1018,7 +1018,7 @@
                 }
               }
             },
-            "description": "Service Unavailable"
+            "description": "Datos no disponibles"
           }
         },
         "summary": "Health",
@@ -1049,7 +1049,7 @@
                 }
               }
             },
-            "description": "Forbidden"
+            "description": "Modo no permitido"
           },
           "404": {
             "content": {
@@ -1059,7 +1059,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Empresa no encontrada"
           },
           "409": {
             "content": {
@@ -1069,7 +1069,7 @@
                 }
               }
             },
-            "description": "Conflict"
+            "description": "Datos cambiados"
           },
           "422": {
             "content": {
@@ -1079,7 +1079,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Consulta no válida"
           },
           "500": {
             "content": {
@@ -1089,7 +1089,7 @@
                 }
               }
             },
-            "description": "Internal Server Error"
+            "description": "Error interno"
           },
           "503": {
             "content": {
@@ -1099,7 +1099,7 @@
                 }
               }
             },
-            "description": "Service Unavailable"
+            "description": "Datos no disponibles"
           }
         },
         "summary": "Model",
@@ -1343,7 +1343,7 @@
                 }
               }
             },
-            "description": "Forbidden"
+            "description": "Modo no permitido"
           },
           "404": {
             "content": {
@@ -1353,7 +1353,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Empresa no encontrada"
           },
           "409": {
             "content": {
@@ -1363,7 +1363,7 @@
                 }
               }
             },
-            "description": "Conflict"
+            "description": "Datos cambiados"
           },
           "422": {
             "content": {
@@ -1373,7 +1373,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Consulta no válida"
           },
           "500": {
             "content": {
@@ -1383,7 +1383,7 @@
                 }
               }
             },
-            "description": "Internal Server Error"
+            "description": "Error interno"
           },
           "503": {
             "content": {
@@ -1393,7 +1393,7 @@
                 }
               }
             },
-            "description": "Service Unavailable"
+            "description": "Datos no disponibles"
           }
         },
         "summary": "Ranking",

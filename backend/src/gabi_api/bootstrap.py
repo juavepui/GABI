@@ -50,7 +50,13 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         finally:
             market.close()
 
-    errors: dict[int | str, dict[str, Any]] = {status: {"model": ErrorResponse} for status in (403, 404, 409, 422, 500, 503)}
+    # Python 3.12 and 3.13 name HTTP 422 differently. Keep the public schema stable.
+    descriptions = {403: "Modo no permitido", 404: "Empresa no encontrada", 409: "Datos cambiados",
+                    422: "Consulta no válida", 500: "Error interno", 503: "Datos no disponibles"}
+    errors: dict[int | str, dict[str, Any]] = {
+        status: {"model": ErrorResponse, "description": description}
+        for status, description in descriptions.items()
+    }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET"],

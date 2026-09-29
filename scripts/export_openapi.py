@@ -1,6 +1,7 @@
 """Export/check API schemas without opening application data or running a server."""
 import argparse
 import json
+from difflib import unified_diff
 from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
 
@@ -21,6 +22,9 @@ def main() -> None:
         app.state.market.close()
     if args.check:
         if not args.output.is_file() or args.output.read_text(encoding="utf-8") != rendered:
+            previous = args.output.read_text(encoding="utf-8") if args.output.is_file() else ""
+            difference = unified_diff(previous.splitlines(), rendered.splitlines(), fromfile="committed", tofile="backend")
+            print("\n".join(list(difference)[:100]))
             raise SystemExit("OpenAPI snapshot changed. Run npm run generate:api in frontend and review the contract.")
         print("OpenAPI snapshot matches the backend")
     else:

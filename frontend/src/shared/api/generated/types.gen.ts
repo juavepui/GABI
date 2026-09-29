@@ -411,27 +411,27 @@ export type CompanyApiV1CompaniesSymbolGetData = {
 
 export type CompanyApiV1CompaniesSymbolGetErrors = {
     /**
-     * Forbidden
+     * Modo no permitido
      */
     403: ErrorResponse;
     /**
-     * Not Found
+     * Empresa no encontrada
      */
     404: ErrorResponse;
     /**
-     * Conflict
+     * Datos cambiados
      */
     409: ErrorResponse;
     /**
-     * Unprocessable Content
+     * Consulta no válida
      */
     422: ErrorResponse;
     /**
-     * Internal Server Error
+     * Error interno
      */
     500: ErrorResponse;
     /**
-     * Service Unavailable
+     * Datos no disponibles
      */
     503: ErrorResponse;
 };
@@ -456,27 +456,27 @@ export type DataStatusApiV1DataStatusGetData = {
 
 export type DataStatusApiV1DataStatusGetErrors = {
     /**
-     * Forbidden
+     * Modo no permitido
      */
     403: ErrorResponse;
     /**
-     * Not Found
+     * Empresa no encontrada
      */
     404: ErrorResponse;
     /**
-     * Conflict
+     * Datos cambiados
      */
     409: ErrorResponse;
     /**
-     * Unprocessable Content
+     * Consulta no válida
      */
     422: ErrorResponse;
     /**
-     * Internal Server Error
+     * Error interno
      */
     500: ErrorResponse;
     /**
-     * Service Unavailable
+     * Datos no disponibles
      */
     503: ErrorResponse;
 };
@@ -501,27 +501,27 @@ export type HealthApiV1HealthGetData = {
 
 export type HealthApiV1HealthGetErrors = {
     /**
-     * Forbidden
+     * Modo no permitido
      */
     403: ErrorResponse;
     /**
-     * Not Found
+     * Empresa no encontrada
      */
     404: ErrorResponse;
     /**
-     * Conflict
+     * Datos cambiados
      */
     409: ErrorResponse;
     /**
-     * Unprocessable Content
+     * Consulta no válida
      */
     422: ErrorResponse;
     /**
-     * Internal Server Error
+     * Error interno
      */
     500: ErrorResponse;
     /**
-     * Service Unavailable
+     * Datos no disponibles
      */
     503: ErrorResponse;
 };
@@ -546,27 +546,27 @@ export type ModelApiV1ModelGetData = {
 
 export type ModelApiV1ModelGetErrors = {
     /**
-     * Forbidden
+     * Modo no permitido
      */
     403: ErrorResponse;
     /**
-     * Not Found
+     * Empresa no encontrada
      */
     404: ErrorResponse;
     /**
-     * Conflict
+     * Datos cambiados
      */
     409: ErrorResponse;
     /**
-     * Unprocessable Content
+     * Consulta no válida
      */
     422: ErrorResponse;
     /**
-     * Internal Server Error
+     * Error interno
      */
     500: ErrorResponse;
     /**
-     * Service Unavailable
+     * Datos no disponibles
      */
     503: ErrorResponse;
 };
@@ -648,27 +648,27 @@ export type RankingApiV1RankingGetData = {
 
 export type RankingApiV1RankingGetErrors = {
     /**
-     * Forbidden
+     * Modo no permitido
      */
     403: ErrorResponse;
     /**
-     * Not Found
+     * Empresa no encontrada
      */
     404: ErrorResponse;
     /**
-     * Conflict
+     * Datos cambiados
      */
     409: ErrorResponse;
     /**
-     * Unprocessable Content
+     * Consulta no válida
      */
     422: ErrorResponse;
     /**
-     * Internal Server Error
+     * Error interno
      */
     500: ErrorResponse;
     /**
-     * Service Unavailable
+     * Datos no disponibles
      */
     503: ErrorResponse;
 };
