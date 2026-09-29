@@ -64,6 +64,16 @@ test("external HTTP access belongs to shared/api", (t) => {
   assert.equal(check(root).filter((error) => error.includes("HTTP transport belongs")).length, 2);
 });
 
+test("aliases without deprecated baseUrl resolve and missing configured aliases fail", (t) => {
+  const root = fixture(t, {
+    "shared/lib/example.ts": "import '@market/value'; import '@market/missing';",
+    "features/market/value.ts": "export const value = 1;",
+  }, { compilerOptions: { paths: { "@market/*": ["./src/features/market/*"] } } });
+  const errors = check(root);
+  assert.ok(errors.some((error) => error.includes("shared cannot depend")));
+  assert.ok(errors.some((error) => error.includes("unresolved local import @market/missing")));
+});
+
 test("cycles, computed imports, and imports outside src are rejected", (t) => {
   const root = fixture(t, {
     "shared/lib/a.ts": "import './b'; const unknown = import(variable);",

@@ -46,7 +46,7 @@ export function check(root) {
   const graph = new Map(files.map((file) => [file, new Set()]));
   let options = {
     module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler,
-    jsx: ts.JsxEmit.Preserve, allowJs: true, baseUrl: source, paths: { "@/*": ["*"] },
+    jsx: ts.JsxEmit.Preserve, allowJs: true, paths: { "@/*": [path.join(source, "*")] },
   };
   const config = ["tsconfig.app.json", "tsconfig.json"].map((name) => path.join(root, name)).find(fs.existsSync);
   if (config) {
@@ -84,7 +84,12 @@ export function check(root) {
         target = path.resolve(source, name.slice(2));
       }
       if (!target) {
-        if (name.startsWith(".") || name.startsWith("@/")) report(node, `unresolved local import ${name}`);
+        const configuredAlias = Object.keys(options.paths ?? {}).some((pattern) => {
+          if (!pattern.includes("*")) return name === pattern;
+          const [prefix, suffix] = pattern.split("*");
+          return name.startsWith(prefix) && name.endsWith(suffix);
+        });
+        if (name.startsWith(".") || name.startsWith("@/") || configuredAlias) report(node, `unresolved local import ${name}`);
         return;
       }
       target = path.resolve(target);
