@@ -23,6 +23,9 @@ jobs:
       - name: Verify frozen research engines
         run: uv run python -m gabi.frozen_research_ci --check-frozen
 
+      - name: Verify published search ledger
+        run: uv run python -m gabi.search_ledger --verify
+
       - name: Lint (ruff)
         run: uv run ruff check .
 

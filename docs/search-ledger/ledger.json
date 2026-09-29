@@ -1,0 +1,3246 @@
+{
+  "version": 1,
+  "as_of": "2026-09-29",
+  "scope": "explicit_published_repository_artifacts_only",
+  "exhaustive_search_history": false,
+  "global_error_control_established": false,
+  "hash_convention": "UTF-8 text, canonical LF; does not replace original binary/canonical result hashes",
+  "counts": {
+    "legacy_guard_entries": 34,
+    "legacy_observed_entries": 33,
+    "legacy_pending_entries": 1,
+    "additional_observed_records": 4,
+    "diagnostic_groups": 14
+  },
+  "legacy_entries": [
+    {
+      "id": "v1/top10_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top10_q",
+          "top_n": 10,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Resultado corregido"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "5f8e5175c1db5fbd9e4314d1afe9349c7be628752d5391652f5bfbf6529fdc9d",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/0",
+      "result_ref": "docs/overfitting-audit/returns.csv#top10_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_q",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Resultado corregido"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "dcefd3c674da50dd2a0e138bebfca127236da85473a99f36048be18256237772",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/1",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "historically_selected",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top30_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top30_q",
+          "top_n": 30,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Resultado corregido"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "9fcfc2c2052e31babe97ffb2fe077d9299be5f867f285592c0ace001331380a0",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/2",
+      "result_ref": "docs/overfitting-audit/returns.csv#top30_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top10_sma200_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top10_sma200_q",
+          "top_n": 10,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 10.0,
+          "sma_filter": true,
+          "role": "strategy",
+          "evidence": "README: Experimento de posiciones y filtro SMA200 del SPY, exposición 50% en bajista"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "070625f7d6e50f051e87bb8dd81f5bc7434340d9644b1bdad871db76b9bc2ffa",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/3",
+      "result_ref": "docs/overfitting-audit/returns.csv#top10_sma200_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer13_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer13_q",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.3,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "e9ed6644ab7b0c4d85a47f590c883c0f126592822a7decaccb0b92f9305c038f",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/4",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer13_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer15_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer15_q",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.5,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "7c2c41fde25644d9614e400f98f4807480dc55446fa7b9ca3a796fca75346842",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/5",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer15_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer20_q",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer20_q",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 2.0,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "ec293e080f3e3a25e1634b5d816fa6b02a4436eb4f2165d8bfe6e5ac5047d4ea",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/6",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer20_q",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_semestral",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_semestral",
+          "top_n": 20,
+          "months": 6,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "b612d9589ca61deefbbdd7155db129e6d4dd2c1d7ec739723e29d5b3d63f4e7d",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/7",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_semestral",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_anual",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_anual",
+          "top_n": 20,
+          "months": 12,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 10.0,
+          "sma_filter": false,
+          "role": "strategy",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "cf93e204053935b625073e6fa8e0196f81d89e18acea4bad88cb8a654729a5ec",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/8",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_anual",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top10_q_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top10_q_cost25",
+          "top_n": 10,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Costes de fricción, Top-10 con 10/25/50/100pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "efa3f82cd371f8fef9552a057102e9349e0d8194cf4ff0ba53cf2c67da755a1e",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/9",
+      "result_ref": "docs/overfitting-audit/returns.csv#top10_q_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top10_q_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top10_q_cost50",
+          "top_n": 10,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Costes de fricción, Top-10 con 10/25/50/100pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "deb3f3e9b5d191446789bbf0598444255a1491e7a6a0c11c19a07f3f679eed4e",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/10",
+      "result_ref": "docs/overfitting-audit/returns.csv#top10_q_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top10_q_cost100",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top10_q_cost100",
+          "top_n": 10,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 100,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Costes de fricción, Top-10 con 10/25/50/100pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "9ac8e079919de8cc900de8dd7724d1a6a38a7acbe563bfbb95bbbd9bc1abd677",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/11",
+      "result_ref": "docs/overfitting-audit/returns.csv#top10_q_cost100",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_q_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_q_cost25",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "14a253d5f944a8ad55fbf55df0670551d91c2a30c6d10ae5f82fc20a95796a2a",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/12",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_q_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_q_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_q_cost50",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "ca3f4b2a164b830419851b05447f47a905fd187faab5001eb31ee891fd0ab781",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/13",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_q_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer13_q_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer13_q_cost25",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.3,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "fa48043e76564f1105a8896d9a59d7782b3d4a78545c1e7c2ee49075fc657f5c",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/14",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer13_q_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer13_q_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer13_q_cost50",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.3,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "54ed50ee4ead8a86446c14514f8e1f7c6aee4968f6c74b902711b94b910a1393",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/15",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer13_q_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer15_q_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer15_q_cost25",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.5,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "f34b86f8068cd1286d94196e42f3f62cb265df6459c44adf78aa7eaa8f345913",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/16",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer15_q_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer15_q_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer15_q_cost50",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 1.5,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "b77b37f4022b734ec80f813eb76d9776d76aebd97e6404db546aa0ff0f514ab0",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/17",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer15_q_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer20_q_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer20_q_cost25",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 2.0,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "6eb47b16f00417d041e9a02cefb3e4b8584d907fc396ec81ca6f79ebab6ead07",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/18",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer20_q_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/buffer20_q_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "buffer20_q_cost50",
+          "top_n": 20,
+          "months": 3,
+          "buffer_multiplier": 2.0,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, bandas 1.3/1.5/2.0 y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "2724af61dc9111bd2c55169004250eaeed6bc43f1300596d3f9603956a51d288",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/19",
+      "result_ref": "docs/overfitting-audit/returns.csv#buffer20_q_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_semestral_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_semestral_cost25",
+          "top_n": 20,
+          "months": 6,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "3f920bfa0302a14e9ba3aaf03a4b747dc0e7a5f01a87a99ab777e8085707ea45",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/20",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_semestral_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_semestral_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_semestral_cost50",
+          "top_n": 20,
+          "months": 6,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "5f7025cdc25451f2929a59ff5497b621b3876a5264f8e5b900e27b1f3b516989",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/21",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_semestral_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_anual_cost25",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_anual_cost25",
+          "top_n": 20,
+          "months": 12,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 25,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "e138be765acffb2ab07fde72fdd9b19b8a649b7ab43db271d2a9d867e2215ed9",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/22",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_anual_cost25",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "v1/top20_anual_cost50",
+      "family": "v1_reconstructed",
+      "configuration": {
+        "trial": {
+          "trial_id": "top20_anual_cost50",
+          "top_n": 20,
+          "months": 12,
+          "buffer_multiplier": 1.0,
+          "cost_bps": 50,
+          "sma_filter": false,
+          "role": "cost_sensitivity",
+          "evidence": "README: Hipótesis descongelada, frecuencias trimestral/semestral/anual y costes 10/25/50pb"
+        },
+        "common_configuration": {
+          "start": "2016-07-02",
+          "end": "2025-07-02",
+          "max_symbols": 200,
+          "seed": 42,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          }
+        },
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": "docs/overfitting-audit/audit.json#/inputs"
+      },
+      "configuration_sha256": "4d6a443288e033d90e030d0ddfe171d2e2bd597c23bf430a3f78e28332c6f5c8",
+      "specification_ref": "docs/overfitting-audit/audit.json#/catalog/23",
+      "result_ref": "docs/overfitting-audit/returns.csv#top20_anual_cost50",
+      "observed_sample": {
+        "start": "2016-07-02",
+        "end": "2025-07-02",
+        "periods": 36,
+        "universe": "historical S&P 500, sample 200/date, seed 42"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "retained_for_audit",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "rotation/hurdle_5",
+      "family": "rotation_v2",
+      "configuration": {
+        "rotation_hurdle_points": 5,
+        "common_protocol": {
+          "declared_at": "2026-09-23T10:21:28.060232+00:00",
+          "stage": "retrospective_research",
+          "variants": {
+            "control_composite": 0,
+            "hurdle_5": 5,
+            "hurdle_10": 10
+          },
+          "start": "2016-01-02",
+          "end": "2025-10-02",
+          "top_n": 20,
+          "months": 3,
+          "initial_capital": 100000.0,
+          "commission_usd": 1.0,
+          "spread_bps": 10.0,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "max_symbols": null,
+          "windows": {
+            "full_history": [
+              "2016-01-02",
+              "2025-10-02"
+            ],
+            "development_retrospective": [
+              "2016-01-02",
+              "2021-01-02"
+            ],
+            "validation_retrospective": [
+              "2021-01-02",
+              "2025-10-02"
+            ]
+          },
+          "future": "not_evaluated",
+          "snapshot_sha256": "e501612fb2524253b5c99d04031801d47ea619faefd9145d252e0642b3c9dc68",
+          "source_manifest_sha256": "de1ab7dd0ff0ab44103f5cd0d306fffb306f1bacb8a21931a828d2b373de1612",
+          "rankings_sha256": {
+            "2016-01-02": "24ae11b40f30ed2faadada08d9e7bb69fc01f25a8e63f08cedca34d18ff3df6a",
+            "2016-04-02": "28e926e15c210411ab27072bbf74c2e53f2ec433686da1aeb95207d53120c812",
+            "2016-07-02": "988d14fe4d20c42b777c1c4c33445aea6eacc89e01d08886ac0e80b3c0d3714e",
+            "2016-10-02": "fb1d33ba12c754355621ce1d286a34e467c626c38114bbcf59fc2294f6d534f7",
+            "2017-01-02": "d08f8d6bc86a5d067bd132da2d1a4dc132cc07348b8f34d2f8368486d6f49908",
+            "2017-04-02": "2b0c857588613b204b3705ad5a35e8cb3f69fd90e898fbe093c8ac091fa148cd",
+            "2017-07-02": "bbf662876d5e0f4008ea3cb1838a783b1661c614bec34e1a508ad2699611fe81",
+            "2017-10-02": "3883d6b3a107b73558c1e8d44bfcc767d217b875d8995bc4fdd7ede55ac277c3",
+            "2018-01-02": "9cacf8e3903229d16122e3b406767c3146220036c70197f1d9f760642b008f96",
+            "2018-04-02": "0a7aef26f7c7affe4cccae15d245307edce68df3c7c82f46d42053f2bbd9fe42",
+            "2018-07-02": "86e58a140af3300fc02eb4a6f74b9b72b1c919ce59ef8ae80c59a92f31303696",
+            "2018-10-02": "6de958e6a7c84466221b7e4a990c5cb15270162e50b074332841dbba0517aa3e",
+            "2019-01-02": "700b5005208b2e7fec227ac61400fbdc7eecf697cac61157d1eb6d5620063c0a",
+            "2019-04-02": "83737f0f456a6468f94486bd5f16e87b063d835c916615e590122cabd6a31bb1",
+            "2019-07-02": "54ea5cad69519ee4050b4134b4dc29d4ce7612adf5276b7b7eff8327c3bb5fa2",
+            "2019-10-02": "577a9d166867315ab323f0330fbed67f512bf4f875b536ea6b39fb3629a18449",
+            "2020-01-02": "cb9d1529357923263cca8c23a479a0bfdeb3743aa087f95ee81524073db8c692",
+            "2020-04-02": "c06a963220428e2f3e66592dab94a80816633aa57438bd4b27ca3bc1550ecef1",
+            "2020-07-02": "94441adbc1285fc8728da779da837e3430664bced3bc1263f5ef765523dd02fc",
+            "2020-10-02": "f3474f7e4f5085d25fdb9e3f7e25d5a2d2f9cbc46b9080930f67f8912980be17",
+            "2021-01-02": "31a55837b962d572269e6fc4d748ab362a0367fc00dc9b83e5171ceb466e82e1",
+            "2021-04-02": "ac1fc077ac9b83dc616d0286ef047dfc28d745dee6bf08fb854b346203a5d8f6",
+            "2021-07-02": "c06aa06e15c2200631b0e7f399189aa0c8c894caf8ea838adc8da44fbf6f63fa",
+            "2021-10-02": "dc4bdd1ec864549da2acc9142690c809c89e929c5d2289357fcc3e83748c88ac",
+            "2022-01-02": "cc6e0b0ebe6e6ca45f0ca9bd2a8cfc7ee49c56edd5d72afb0be3792fa89a0371",
+            "2022-04-02": "25c1b3fc1d3b47c85f987b3e494deecc947a0d2c8ec4cfbcdb184d63b6299576",
+            "2022-07-02": "926442efade174a911d1be5f3dce72cf51d560a83ab946d4565a36c47fb3b399",
+            "2022-10-02": "14e0b08fbb0457933f3c489b3cf175dee1a952be771da97f11c8e9f6164c92b8",
+            "2023-01-02": "fca1613f1fca1f77ea1d42c072026df5aa6c0c6e99b8dbf2c445a145a98391a1",
+            "2023-04-02": "1dc463c2d887ccd90fd6c1edc5286f8d98a09069df1accfb2f335d9a245b7aa1",
+            "2023-07-02": "2c934a48118437bb68528d29f6798e4349ce602705a4db743fd823c17c86e64e",
+            "2023-10-02": "2b0a274a905d2c0bfc26fde92d8eb00691d550724ac2e2d84597f1b4e82a4968",
+            "2024-01-02": "889d41b7c75beebe2bae8744861f2d337bb61bef82a746da271309f7ae454073",
+            "2024-04-02": "4055a0d1c3b630b025d4edb1b11f2d47e779d535e7e200d08ce0b2547a01c8f0",
+            "2024-07-02": "5dcef9475037b053431781ea89c289e665e58f1bf3ed320e4e16a1d53596c330",
+            "2024-10-02": "90b469b9372f309db0a9456b55befc8ae694f6487becda2ee90d688f1d3fa0ca",
+            "2025-01-02": "773f7c2f0fb82a7bb13de6f301524ca7b9d1dd9fa90ad645c3def8852f5bc034",
+            "2025-04-02": "c1164f48c5991b2d4bcecfb3e3cc5841b80d460535fafe92f37d0c497da061fb",
+            "2025-07-02": "4b690c0926131946966bc20609e5ded134dece9f6f59c0f544ac3091b467a920"
+          },
+          "code_sha256": {
+            "portfolio_backtest.py": "1ca57882b4ad4dceb299464d92af9f7414365b00b311fcd6d628d3b1ebff6772",
+            "rotation_policy.py": "898c57eca5f61fb795e8e09e75b5ffc6100ab45cc7e269385648f6b9fb57baf3",
+            "variant_validation.py": "cac4f8cc6da8c011a21056e10847578e2a86619ae7e220c906ea150393905e32",
+            "identity.py": "1d3333e27bd9b0b5819856c0911404154a5472c2f22899e15b4cd57e9150a98f"
+          },
+          "limitations": [
+            "Frozen rankings and source coverage from the previous full-universe audit.",
+            "Historical identity and sector approximations remain.",
+            "Development/validation split is retrospective, not an untouched holdout.",
+            "Only the rotation change is tested; descriptive metrics do not change selection.",
+            "USD returns net of commissions/spread, before tax/FX, without final liquidation.",
+            "Turnover is gross buys plus sells divided by NAV, including weight adjustments.",
+            "V2 retains its small negative cash balances after costs; no funding charge."
+          ]
+        }
+      },
+      "configuration_sha256": "7c9d850b1e6b5f755d325b020f7c0a9b9208008c92758b8e3e8297d9d55d948d",
+      "specification_ref": "docs/rotation-experiment/protocol.json#/variants/hurdle_5",
+      "result_ref": "docs/rotation-experiment/audit.json#/metrics/3",
+      "observed_sample": {
+        "start": "2016-01-02",
+        "end": "2025-10-02",
+        "universe": "historical S&P 500, full eligible universe"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "not_promoted",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "rotation/hurdle_10",
+      "family": "rotation_v2",
+      "configuration": {
+        "rotation_hurdle_points": 10,
+        "common_protocol": {
+          "declared_at": "2026-09-23T10:21:28.060232+00:00",
+          "stage": "retrospective_research",
+          "variants": {
+            "control_composite": 0,
+            "hurdle_5": 5,
+            "hurdle_10": 10
+          },
+          "start": "2016-01-02",
+          "end": "2025-10-02",
+          "top_n": 20,
+          "months": 3,
+          "initial_capital": 100000.0,
+          "commission_usd": 1.0,
+          "spread_bps": 10.0,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "max_symbols": null,
+          "windows": {
+            "full_history": [
+              "2016-01-02",
+              "2025-10-02"
+            ],
+            "development_retrospective": [
+              "2016-01-02",
+              "2021-01-02"
+            ],
+            "validation_retrospective": [
+              "2021-01-02",
+              "2025-10-02"
+            ]
+          },
+          "future": "not_evaluated",
+          "snapshot_sha256": "e501612fb2524253b5c99d04031801d47ea619faefd9145d252e0642b3c9dc68",
+          "source_manifest_sha256": "de1ab7dd0ff0ab44103f5cd0d306fffb306f1bacb8a21931a828d2b373de1612",
+          "rankings_sha256": {
+            "2016-01-02": "24ae11b40f30ed2faadada08d9e7bb69fc01f25a8e63f08cedca34d18ff3df6a",
+            "2016-04-02": "28e926e15c210411ab27072bbf74c2e53f2ec433686da1aeb95207d53120c812",
+            "2016-07-02": "988d14fe4d20c42b777c1c4c33445aea6eacc89e01d08886ac0e80b3c0d3714e",
+            "2016-10-02": "fb1d33ba12c754355621ce1d286a34e467c626c38114bbcf59fc2294f6d534f7",
+            "2017-01-02": "d08f8d6bc86a5d067bd132da2d1a4dc132cc07348b8f34d2f8368486d6f49908",
+            "2017-04-02": "2b0c857588613b204b3705ad5a35e8cb3f69fd90e898fbe093c8ac091fa148cd",
+            "2017-07-02": "bbf662876d5e0f4008ea3cb1838a783b1661c614bec34e1a508ad2699611fe81",
+            "2017-10-02": "3883d6b3a107b73558c1e8d44bfcc767d217b875d8995bc4fdd7ede55ac277c3",
+            "2018-01-02": "9cacf8e3903229d16122e3b406767c3146220036c70197f1d9f760642b008f96",
+            "2018-04-02": "0a7aef26f7c7affe4cccae15d245307edce68df3c7c82f46d42053f2bbd9fe42",
+            "2018-07-02": "86e58a140af3300fc02eb4a6f74b9b72b1c919ce59ef8ae80c59a92f31303696",
+            "2018-10-02": "6de958e6a7c84466221b7e4a990c5cb15270162e50b074332841dbba0517aa3e",
+            "2019-01-02": "700b5005208b2e7fec227ac61400fbdc7eecf697cac61157d1eb6d5620063c0a",
+            "2019-04-02": "83737f0f456a6468f94486bd5f16e87b063d835c916615e590122cabd6a31bb1",
+            "2019-07-02": "54ea5cad69519ee4050b4134b4dc29d4ce7612adf5276b7b7eff8327c3bb5fa2",
+            "2019-10-02": "577a9d166867315ab323f0330fbed67f512bf4f875b536ea6b39fb3629a18449",
+            "2020-01-02": "cb9d1529357923263cca8c23a479a0bfdeb3743aa087f95ee81524073db8c692",
+            "2020-04-02": "c06a963220428e2f3e66592dab94a80816633aa57438bd4b27ca3bc1550ecef1",
+            "2020-07-02": "94441adbc1285fc8728da779da837e3430664bced3bc1263f5ef765523dd02fc",
+            "2020-10-02": "f3474f7e4f5085d25fdb9e3f7e25d5a2d2f9cbc46b9080930f67f8912980be17",
+            "2021-01-02": "31a55837b962d572269e6fc4d748ab362a0367fc00dc9b83e5171ceb466e82e1",
+            "2021-04-02": "ac1fc077ac9b83dc616d0286ef047dfc28d745dee6bf08fb854b346203a5d8f6",
+            "2021-07-02": "c06aa06e15c2200631b0e7f399189aa0c8c894caf8ea838adc8da44fbf6f63fa",
+            "2021-10-02": "dc4bdd1ec864549da2acc9142690c809c89e929c5d2289357fcc3e83748c88ac",
+            "2022-01-02": "cc6e0b0ebe6e6ca45f0ca9bd2a8cfc7ee49c56edd5d72afb0be3792fa89a0371",
+            "2022-04-02": "25c1b3fc1d3b47c85f987b3e494deecc947a0d2c8ec4cfbcdb184d63b6299576",
+            "2022-07-02": "926442efade174a911d1be5f3dce72cf51d560a83ab946d4565a36c47fb3b399",
+            "2022-10-02": "14e0b08fbb0457933f3c489b3cf175dee1a952be771da97f11c8e9f6164c92b8",
+            "2023-01-02": "fca1613f1fca1f77ea1d42c072026df5aa6c0c6e99b8dbf2c445a145a98391a1",
+            "2023-04-02": "1dc463c2d887ccd90fd6c1edc5286f8d98a09069df1accfb2f335d9a245b7aa1",
+            "2023-07-02": "2c934a48118437bb68528d29f6798e4349ce602705a4db743fd823c17c86e64e",
+            "2023-10-02": "2b0a274a905d2c0bfc26fde92d8eb00691d550724ac2e2d84597f1b4e82a4968",
+            "2024-01-02": "889d41b7c75beebe2bae8744861f2d337bb61bef82a746da271309f7ae454073",
+            "2024-04-02": "4055a0d1c3b630b025d4edb1b11f2d47e779d535e7e200d08ce0b2547a01c8f0",
+            "2024-07-02": "5dcef9475037b053431781ea89c289e665e58f1bf3ed320e4e16a1d53596c330",
+            "2024-10-02": "90b469b9372f309db0a9456b55befc8ae694f6487becda2ee90d688f1d3fa0ca",
+            "2025-01-02": "773f7c2f0fb82a7bb13de6f301524ca7b9d1dd9fa90ad645c3def8852f5bc034",
+            "2025-04-02": "c1164f48c5991b2d4bcecfb3e3cc5841b80d460535fafe92f37d0c497da061fb",
+            "2025-07-02": "4b690c0926131946966bc20609e5ded134dece9f6f59c0f544ac3091b467a920"
+          },
+          "code_sha256": {
+            "portfolio_backtest.py": "1ca57882b4ad4dceb299464d92af9f7414365b00b311fcd6d628d3b1ebff6772",
+            "rotation_policy.py": "898c57eca5f61fb795e8e09e75b5ffc6100ab45cc7e269385648f6b9fb57baf3",
+            "variant_validation.py": "cac4f8cc6da8c011a21056e10847578e2a86619ae7e220c906ea150393905e32",
+            "identity.py": "1d3333e27bd9b0b5819856c0911404154a5472c2f22899e15b4cd57e9150a98f"
+          },
+          "limitations": [
+            "Frozen rankings and source coverage from the previous full-universe audit.",
+            "Historical identity and sector approximations remain.",
+            "Development/validation split is retrospective, not an untouched holdout.",
+            "Only the rotation change is tested; descriptive metrics do not change selection.",
+            "USD returns net of commissions/spread, before tax/FX, without final liquidation.",
+            "Turnover is gross buys plus sells divided by NAV, including weight adjustments.",
+            "V2 retains its small negative cash balances after costs; no funding charge."
+          ]
+        }
+      },
+      "configuration_sha256": "807b4e7f2f66fff5a4e862445ee7a03d8a3b685615e47fecb1b8369028fb025c",
+      "specification_ref": "docs/rotation-experiment/protocol.json#/variants/hurdle_10",
+      "result_ref": "docs/rotation-experiment/audit.json#/metrics/6",
+      "observed_sample": {
+        "start": "2016-01-02",
+        "end": "2025-10-02",
+        "universe": "historical S&P 500, full eligible universe"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "not_promoted",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "r3/control_composite/top20",
+      "family": "r3_v2",
+      "configuration": {
+        "variant": {
+          "name": "control_composite",
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "score_metrics": {
+            "value": [
+              "pe",
+              "pb",
+              "ev_ebitda"
+            ],
+            "quality": [
+              "roic",
+              "operating_margin",
+              "revenue_cagr_3y",
+              "fcf_cagr_3y"
+            ],
+            "momentum": [
+              "momentum_12m",
+              "rel_strength_6m",
+              "price_vs_sma200"
+            ],
+            "risk": [
+              "debt_to_equity",
+              "volatility",
+              "max_drawdown"
+            ]
+          }
+        },
+        "top_n": 20,
+        "common_spec": {
+          "issue": 36,
+          "linked_issue": 37,
+          "stage": "RESEARCH",
+          "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+          "control": {
+            "name": "control_composite",
+            "weights": {
+              "value": 0.3,
+              "quality": 0.35,
+              "momentum": 0.25,
+              "risk": 0.1
+            },
+            "score_metrics": {
+              "value": [
+                "pe",
+                "pb",
+                "ev_ebitda"
+              ],
+              "quality": [
+                "roic",
+                "operating_margin",
+                "revenue_cagr_3y",
+                "fcf_cagr_3y"
+              ],
+              "momentum": [
+                "momentum_12m",
+                "rel_strength_6m",
+                "price_vs_sma200"
+              ],
+              "risk": [
+                "debt_to_equity",
+                "volatility",
+                "max_drawdown"
+              ]
+            }
+          },
+          "variants": {
+            "e6a_calidad_persistente": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "added_to_quality": {
+                "quality_persistence_score": "higher_is_better",
+                "roic_persistence_std": "lower_is_better"
+              },
+              "added_to_value": {
+                "expectations_gap": "higher_is_better"
+              },
+              "validity": "métricas de persistencia solo con roic_years >= 3",
+              "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+            },
+            "e6b_riesgo_756": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "risk_window_sessions": 756,
+              "recomputed": [
+                "volatility",
+                "max_drawdown"
+              ],
+              "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+            }
+          },
+          "sample": {
+            "rankings": "data/revalidation_2011_2025/acreditado-38",
+            "start": "2010-01-02",
+            "end": "2025-10-02",
+            "months": 3,
+            "invested_from": "2011-07-02",
+            "windows": {
+              "completa_2011_2025": [
+                "2011-07-02",
+                "2025-10-02"
+              ],
+              "2011_2015": [
+                "2011-07-02",
+                "2016-01-02"
+              ],
+              "2016_2020": [
+                "2016-01-02",
+                "2021-01-02"
+              ],
+              "2021_2025": [
+                "2021-01-02",
+                "2025-10-02"
+              ]
+            }
+          },
+          "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+          "engine": {
+            "motor": "V2",
+            "mode": "validation",
+            "top_n": [
+              20,
+              10
+            ],
+            "initial_capital": 100000.0,
+            "commission_usd": 1.0,
+            "spread_bps": 10.0,
+            "max_symbols": null
+          },
+          "metrics": [
+            "CAGR neto",
+            "ES 95/99 diario",
+            "drawdown máximo",
+            "rotación",
+            "costes",
+            "beta SPY",
+            "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+            "PBO (CSCV, 8 bloques, 56 trimestres)",
+            "DSR con todas las configuraciones documentadas"
+          ],
+          "decision_rule": {
+            "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+            "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+            "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+            "descartar": "no cumple (a), (b) o (c)",
+            "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+          },
+          "multiple_testing": {
+            "holm_over": 2,
+            "dsr_trials": 29,
+            "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+          },
+          "blind_validation": "no se lee ni se modifica"
+        }
+      },
+      "configuration_sha256": "fc0d902a8f349562ca83eca36e3c52005989e5a0d6a16fef1b69aa43a8a59211",
+      "specification_ref": "docs/r3-e6-experiment/preregistro.json#/spec/control",
+      "result_ref": "docs/r3-e6-experiment/control_composite/result.json#/top20",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-10-02",
+        "periods": 57,
+        "universe": "acreditado-38, same eligible issuers as control"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "reference",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "r3/e6a_calidad_persistente/top20",
+      "family": "r3_v2",
+      "configuration": {
+        "variant": {
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "added_to_quality": {
+            "quality_persistence_score": "higher_is_better",
+            "roic_persistence_std": "lower_is_better"
+          },
+          "added_to_value": {
+            "expectations_gap": "higher_is_better"
+          },
+          "validity": "métricas de persistencia solo con roic_years >= 3",
+          "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+        },
+        "top_n": 20,
+        "common_spec": {
+          "issue": 36,
+          "linked_issue": 37,
+          "stage": "RESEARCH",
+          "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+          "control": {
+            "name": "control_composite",
+            "weights": {
+              "value": 0.3,
+              "quality": 0.35,
+              "momentum": 0.25,
+              "risk": 0.1
+            },
+            "score_metrics": {
+              "value": [
+                "pe",
+                "pb",
+                "ev_ebitda"
+              ],
+              "quality": [
+                "roic",
+                "operating_margin",
+                "revenue_cagr_3y",
+                "fcf_cagr_3y"
+              ],
+              "momentum": [
+                "momentum_12m",
+                "rel_strength_6m",
+                "price_vs_sma200"
+              ],
+              "risk": [
+                "debt_to_equity",
+                "volatility",
+                "max_drawdown"
+              ]
+            }
+          },
+          "variants": {
+            "e6a_calidad_persistente": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "added_to_quality": {
+                "quality_persistence_score": "higher_is_better",
+                "roic_persistence_std": "lower_is_better"
+              },
+              "added_to_value": {
+                "expectations_gap": "higher_is_better"
+              },
+              "validity": "métricas de persistencia solo con roic_years >= 3",
+              "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+            },
+            "e6b_riesgo_756": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "risk_window_sessions": 756,
+              "recomputed": [
+                "volatility",
+                "max_drawdown"
+              ],
+              "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+            }
+          },
+          "sample": {
+            "rankings": "data/revalidation_2011_2025/acreditado-38",
+            "start": "2010-01-02",
+            "end": "2025-10-02",
+            "months": 3,
+            "invested_from": "2011-07-02",
+            "windows": {
+              "completa_2011_2025": [
+                "2011-07-02",
+                "2025-10-02"
+              ],
+              "2011_2015": [
+                "2011-07-02",
+                "2016-01-02"
+              ],
+              "2016_2020": [
+                "2016-01-02",
+                "2021-01-02"
+              ],
+              "2021_2025": [
+                "2021-01-02",
+                "2025-10-02"
+              ]
+            }
+          },
+          "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+          "engine": {
+            "motor": "V2",
+            "mode": "validation",
+            "top_n": [
+              20,
+              10
+            ],
+            "initial_capital": 100000.0,
+            "commission_usd": 1.0,
+            "spread_bps": 10.0,
+            "max_symbols": null
+          },
+          "metrics": [
+            "CAGR neto",
+            "ES 95/99 diario",
+            "drawdown máximo",
+            "rotación",
+            "costes",
+            "beta SPY",
+            "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+            "PBO (CSCV, 8 bloques, 56 trimestres)",
+            "DSR con todas las configuraciones documentadas"
+          ],
+          "decision_rule": {
+            "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+            "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+            "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+            "descartar": "no cumple (a), (b) o (c)",
+            "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+          },
+          "multiple_testing": {
+            "holm_over": 2,
+            "dsr_trials": 29,
+            "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+          },
+          "blind_validation": "no se lee ni se modifica"
+        }
+      },
+      "configuration_sha256": "baae3b8666ebbf45f026c83154fb2b279173311257070095f7260caf5c6e8d05",
+      "specification_ref": "docs/r3-e6-experiment/preregistro.json#/spec/variants/e6a_calidad_persistente",
+      "result_ref": "docs/r3-e6-experiment/e6a_calidad_persistente/result.json#/top20",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-10-02",
+        "periods": 57,
+        "universe": "acreditado-38, same eligible issuers as control"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "descartar",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "r3/e6b_riesgo_756/top20",
+      "family": "r3_v2",
+      "configuration": {
+        "variant": {
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "risk_window_sessions": 756,
+          "recomputed": [
+            "volatility",
+            "max_drawdown"
+          ],
+          "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+        },
+        "top_n": 20,
+        "common_spec": {
+          "issue": 36,
+          "linked_issue": 37,
+          "stage": "RESEARCH",
+          "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+          "control": {
+            "name": "control_composite",
+            "weights": {
+              "value": 0.3,
+              "quality": 0.35,
+              "momentum": 0.25,
+              "risk": 0.1
+            },
+            "score_metrics": {
+              "value": [
+                "pe",
+                "pb",
+                "ev_ebitda"
+              ],
+              "quality": [
+                "roic",
+                "operating_margin",
+                "revenue_cagr_3y",
+                "fcf_cagr_3y"
+              ],
+              "momentum": [
+                "momentum_12m",
+                "rel_strength_6m",
+                "price_vs_sma200"
+              ],
+              "risk": [
+                "debt_to_equity",
+                "volatility",
+                "max_drawdown"
+              ]
+            }
+          },
+          "variants": {
+            "e6a_calidad_persistente": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "added_to_quality": {
+                "quality_persistence_score": "higher_is_better",
+                "roic_persistence_std": "lower_is_better"
+              },
+              "added_to_value": {
+                "expectations_gap": "higher_is_better"
+              },
+              "validity": "métricas de persistencia solo con roic_years >= 3",
+              "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+            },
+            "e6b_riesgo_756": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "risk_window_sessions": 756,
+              "recomputed": [
+                "volatility",
+                "max_drawdown"
+              ],
+              "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+            }
+          },
+          "sample": {
+            "rankings": "data/revalidation_2011_2025/acreditado-38",
+            "start": "2010-01-02",
+            "end": "2025-10-02",
+            "months": 3,
+            "invested_from": "2011-07-02",
+            "windows": {
+              "completa_2011_2025": [
+                "2011-07-02",
+                "2025-10-02"
+              ],
+              "2011_2015": [
+                "2011-07-02",
+                "2016-01-02"
+              ],
+              "2016_2020": [
+                "2016-01-02",
+                "2021-01-02"
+              ],
+              "2021_2025": [
+                "2021-01-02",
+                "2025-10-02"
+              ]
+            }
+          },
+          "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+          "engine": {
+            "motor": "V2",
+            "mode": "validation",
+            "top_n": [
+              20,
+              10
+            ],
+            "initial_capital": 100000.0,
+            "commission_usd": 1.0,
+            "spread_bps": 10.0,
+            "max_symbols": null
+          },
+          "metrics": [
+            "CAGR neto",
+            "ES 95/99 diario",
+            "drawdown máximo",
+            "rotación",
+            "costes",
+            "beta SPY",
+            "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+            "PBO (CSCV, 8 bloques, 56 trimestres)",
+            "DSR con todas las configuraciones documentadas"
+          ],
+          "decision_rule": {
+            "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+            "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+            "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+            "descartar": "no cumple (a), (b) o (c)",
+            "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+          },
+          "multiple_testing": {
+            "holm_over": 2,
+            "dsr_trials": 29,
+            "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+          },
+          "blind_validation": "no se lee ni se modifica"
+        }
+      },
+      "configuration_sha256": "3ee9a9532117e9f5e84d2586585e746ee0cd9c6cb6202f8ef439452d0975ce7e",
+      "specification_ref": "docs/r3-e6-experiment/preregistro.json#/spec/variants/e6b_riesgo_756",
+      "result_ref": "docs/r3-e6-experiment/e6b_riesgo_756/result.json#/top20",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-10-02",
+        "periods": 57,
+        "universe": "acreditado-38, same eligible issuers as control"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "descartar",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "value/prospective",
+      "family": "value_forward",
+      "configuration": {
+        "issue": 43,
+        "model_id": "GABI-VALUE-v1",
+        "stage": "LIVE_FORWARD",
+        "hypothesis": "Entre los miembros del S&P 500 con datos suficientes, un composite de valor (E/P, B/P y EBITDA/EV, percentiles dentro del sector) predice la rentabilidad relativa del trimestre siguiente, y su Top-20 equiponderado supera al SPY y al S&P 500 equiponderado.",
+        "rationale": "Composite de valor clásico (Fama-French 1992; Lakonishok-Shleifer-Vishny 1994; Loughran-Wellman 2011, EBITDA/EV; Asness-Moskowitz-Pedersen 2013). Se reutiliza el bloque de valor existente de GABI para no añadir grados de libertad. Elegido tras ver el IC por bloques de 2011-2025 (#40): ese periodo NO cuenta como evidencia.",
+        "score": {
+          "weights": {
+            "value": 1.0,
+            "quality": 0.0,
+            "momentum": 0.0,
+            "risk": 0.0
+          },
+          "value_metrics": [
+            "pe",
+            "pb",
+            "ev_ebitda"
+          ],
+          "percentiles": "dentro del sector (scoring.build_scores, sin cambios)"
+        },
+        "universe": "S&P 500 vigente en cada fecha (camino operativo), mismo filtro de datos que GABI: composite no vacío y cobertura >= 70 % de las 13 métricas",
+        "portfolio": {
+          "n_positions": 20,
+          "weighting": "equiponderada",
+          "rebalance_months": 3,
+          "start": "2026-12-21",
+          "entry": "último cierre ajustado disponible al registrar (blind_validation)"
+        },
+        "tests": {
+          "primary": "IC de Spearman trimestral entre la puntuación registrada y el retorno del trimestre siguiente, media con t unilateral; umbrales O'Brien-Fleming en 12, 24 y 40 trimestres",
+          "secondary": [
+            "exceso trimestral del Top-20 frente al SPY",
+            "exceso frente a RSP (S&P 500 equiponderado)"
+          ],
+          "secondary_correction": "Holm sobre las 2, con los mismos umbrales secuenciales",
+          "looks": {
+            "2029-12-21": 12,
+            "2032-12-21": 24,
+            "2036-12-21": 40
+          }
+        },
+        "decision": {
+          "cruza_umbral_principal": "evidencia de capacidad predictiva del valor (fin del estudio)",
+          "no_cruza": "continuar sin cambios hasta la siguiente revisión",
+          "ultima_revision_sin_cruzar": "sin evidencia"
+        },
+        "rules": [
+          "El modelo no cambia hasta la última revisión; si cambia, el registro termina en esa fecha.",
+          "Cada rebalanceo se registra a tiempo; la cadena de hashes y la de puntuaciones deben estar íntegras.",
+          "Solo se miran resultados en las revisiones fijadas.",
+          "Cuenta como la configuración 30 del recuento de múltiples pruebas."
+        ],
+        "blind_validation_gabi": "id 1, sin cambios"
+      },
+      "configuration_sha256": "63dd91ce5664adaf41b5bc37ee4b7c26abf8bd38d6e64e02befbf20eb8100c02",
+      "specification_ref": "docs/value-hypothesis/preregistro.json#/spec",
+      "result_ref": null,
+      "observed_sample": null,
+      "planned_sample": {
+        "start": "2026-12-21",
+        "looks": {
+          "2029-12-21": 12,
+          "2032-12-21": 24,
+          "2036-12-21": 40
+        },
+        "universe": "S&P 500 vigente en cada fecha (camino operativo), mismo filtro de datos que GABI: composite no vacío y cobertura >= 70 % de las 13 métricas"
+      },
+      "state": "pending_prospective",
+      "decision": "await_preregistered_looks",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "discovery/QV",
+      "family": "discovery_three_models",
+      "configuration": {
+        "blocks": [
+          "value",
+          "quality"
+        ],
+        "common_spec": {
+          "version": 1,
+          "stage": "RESEARCH_RETROSPECTIVE",
+          "demonstrated": false,
+          "models": {
+            "QV": [
+              "value",
+              "quality"
+            ],
+            "QVM": [
+              "value",
+              "quality",
+              "momentum"
+            ],
+            "QE": [
+              "quality",
+              "expectations"
+            ]
+          },
+          "value": {
+            "metrics": [
+              "pe",
+              "pb",
+              "ev_ebitda"
+            ],
+            "positive_only": true,
+            "minimum": 2
+          },
+          "quality": {
+            "metrics": [
+              "roic_persistence_mean",
+              "operating_margin_persistence_mean",
+              "fcf_positive_fraction"
+            ],
+            "minimum": 2,
+            "minimum_annual_observations": 3
+          },
+          "momentum": {
+            "metrics": [
+              "momentum_12m",
+              "rel_strength_6m",
+              "price_vs_sma200"
+            ],
+            "minimum": 2
+          },
+          "expectations": {
+            "metric": "historical_fcf_cagr-implied_fcf_growth",
+            "discount_rate": 0.09,
+            "terminal_growth": 0.025,
+            "forecast_years": 5
+          },
+          "scores": "equal means of available oriented percentiles; all model blocks required; no imputation",
+          "percentiles": {
+            "sector": "dated SIC division",
+            "minimum_sector_observations": 8,
+            "fallback": "global eligible finite observations",
+            "ties": "average"
+          },
+          "portfolio": {
+            "slots": 20,
+            "maximum_per_division": 6,
+            "empty_slots": "zero-interest cash",
+            "ties": "score descending, symbol ascending",
+            "missing_selected_return": "invalidate period"
+          },
+          "costs": {
+            "bps_per_side": {
+              "base": 10,
+              "stress": 25
+            },
+            "commission_per_trade_usd": 1,
+            "initial_capital_usd": 100000,
+            "funding": "each slot funds purchase plus both commissions; exit commission reserved in cash",
+            "round_trip": "every independent period; SPY has one funded position"
+          },
+          "ic": {
+            "minimum_pairs": 30,
+            "minimum_quarters": 30,
+            "hac_bartlett_lags": 3,
+            "alternative": "positive mean",
+            "multiplicity": "Holm exactly 3",
+            "alpha": 0.05
+          },
+          "bootstrap": {
+            "blocks": 4,
+            "replicas": 5000,
+            "seed": 20260928,
+            "lower_tail": 0.016666666666666666,
+            "resampling": "joint circular calendar blocks across models and costs",
+            "missing": "no bound for a column with any missing quarter; never compress calendar"
+          },
+          "windows": {
+            "2011-15": [
+              "2011-01-01",
+              "2016-01-01"
+            ],
+            "2016-20": [
+              "2016-01-01",
+              "2021-01-01"
+            ],
+            "2021-25": [
+              "2021-01-01",
+              "2026-01-01"
+            ]
+          },
+          "daily_audit_gate": "positive Holm IC; positive excess in all windows; positive family lower bound in both costs; >=30 periods and >=8 per window",
+          "inputs": {
+            "original_result": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+            "sic_result": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d",
+            "snapshot": "hash recorded in frozen original manifest; SQLite read-only"
+          },
+          "preservation": "#43/#44 and all original models, rankings and evidence are untouched"
+        }
+      },
+      "configuration_sha256": "bf77635bfff280f2ebe79d78e7f087b5b8014ce180af91201538fda9aa4a29ca",
+      "specification_ref": "docs/strategy-discovery/preregistro.json#/spec/models/QV",
+      "result_ref": "docs/strategy-discovery/resultado.json#/models/QV",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-07-02",
+        "periods": 57,
+        "universe": "acreditado-38, dated SIC and declared model eligibility",
+        "continuous": false
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "failed_daily_gate",
+      "failures": [
+        "ic_not_positive_after_holm",
+        "base_2011-15_insufficient_or_nonpositive",
+        "base_insufficient_or_lower_bound_nonpositive",
+        "stress_2011-15_insufficient_or_nonpositive",
+        "stress_insufficient_or_lower_bound_nonpositive"
+      ],
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "discovery/QVM",
+      "family": "discovery_three_models",
+      "configuration": {
+        "blocks": [
+          "value",
+          "quality",
+          "momentum"
+        ],
+        "common_spec": {
+          "version": 1,
+          "stage": "RESEARCH_RETROSPECTIVE",
+          "demonstrated": false,
+          "models": {
+            "QV": [
+              "value",
+              "quality"
+            ],
+            "QVM": [
+              "value",
+              "quality",
+              "momentum"
+            ],
+            "QE": [
+              "quality",
+              "expectations"
+            ]
+          },
+          "value": {
+            "metrics": [
+              "pe",
+              "pb",
+              "ev_ebitda"
+            ],
+            "positive_only": true,
+            "minimum": 2
+          },
+          "quality": {
+            "metrics": [
+              "roic_persistence_mean",
+              "operating_margin_persistence_mean",
+              "fcf_positive_fraction"
+            ],
+            "minimum": 2,
+            "minimum_annual_observations": 3
+          },
+          "momentum": {
+            "metrics": [
+              "momentum_12m",
+              "rel_strength_6m",
+              "price_vs_sma200"
+            ],
+            "minimum": 2
+          },
+          "expectations": {
+            "metric": "historical_fcf_cagr-implied_fcf_growth",
+            "discount_rate": 0.09,
+            "terminal_growth": 0.025,
+            "forecast_years": 5
+          },
+          "scores": "equal means of available oriented percentiles; all model blocks required; no imputation",
+          "percentiles": {
+            "sector": "dated SIC division",
+            "minimum_sector_observations": 8,
+            "fallback": "global eligible finite observations",
+            "ties": "average"
+          },
+          "portfolio": {
+            "slots": 20,
+            "maximum_per_division": 6,
+            "empty_slots": "zero-interest cash",
+            "ties": "score descending, symbol ascending",
+            "missing_selected_return": "invalidate period"
+          },
+          "costs": {
+            "bps_per_side": {
+              "base": 10,
+              "stress": 25
+            },
+            "commission_per_trade_usd": 1,
+            "initial_capital_usd": 100000,
+            "funding": "each slot funds purchase plus both commissions; exit commission reserved in cash",
+            "round_trip": "every independent period; SPY has one funded position"
+          },
+          "ic": {
+            "minimum_pairs": 30,
+            "minimum_quarters": 30,
+            "hac_bartlett_lags": 3,
+            "alternative": "positive mean",
+            "multiplicity": "Holm exactly 3",
+            "alpha": 0.05
+          },
+          "bootstrap": {
+            "blocks": 4,
+            "replicas": 5000,
+            "seed": 20260928,
+            "lower_tail": 0.016666666666666666,
+            "resampling": "joint circular calendar blocks across models and costs",
+            "missing": "no bound for a column with any missing quarter; never compress calendar"
+          },
+          "windows": {
+            "2011-15": [
+              "2011-01-01",
+              "2016-01-01"
+            ],
+            "2016-20": [
+              "2016-01-01",
+              "2021-01-01"
+            ],
+            "2021-25": [
+              "2021-01-01",
+              "2026-01-01"
+            ]
+          },
+          "daily_audit_gate": "positive Holm IC; positive excess in all windows; positive family lower bound in both costs; >=30 periods and >=8 per window",
+          "inputs": {
+            "original_result": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+            "sic_result": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d",
+            "snapshot": "hash recorded in frozen original manifest; SQLite read-only"
+          },
+          "preservation": "#43/#44 and all original models, rankings and evidence are untouched"
+        }
+      },
+      "configuration_sha256": "89e2c88ac2de77a989b49fd1589b0dbf7434108c0eba00a6173e6ac3d8167667",
+      "specification_ref": "docs/strategy-discovery/preregistro.json#/spec/models/QVM",
+      "result_ref": "docs/strategy-discovery/resultado.json#/models/QVM",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-07-02",
+        "periods": 57,
+        "universe": "acreditado-38, dated SIC and declared model eligibility",
+        "continuous": false
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "failed_daily_gate",
+      "failures": [
+        "ic_not_positive_after_holm",
+        "base_2011-15_insufficient_or_nonpositive",
+        "base_insufficient_or_lower_bound_nonpositive",
+        "stress_2011-15_insufficient_or_nonpositive",
+        "stress_insufficient_or_lower_bound_nonpositive"
+      ],
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "discovery/QE",
+      "family": "discovery_three_models",
+      "configuration": {
+        "blocks": [
+          "quality",
+          "expectations"
+        ],
+        "common_spec": {
+          "version": 1,
+          "stage": "RESEARCH_RETROSPECTIVE",
+          "demonstrated": false,
+          "models": {
+            "QV": [
+              "value",
+              "quality"
+            ],
+            "QVM": [
+              "value",
+              "quality",
+              "momentum"
+            ],
+            "QE": [
+              "quality",
+              "expectations"
+            ]
+          },
+          "value": {
+            "metrics": [
+              "pe",
+              "pb",
+              "ev_ebitda"
+            ],
+            "positive_only": true,
+            "minimum": 2
+          },
+          "quality": {
+            "metrics": [
+              "roic_persistence_mean",
+              "operating_margin_persistence_mean",
+              "fcf_positive_fraction"
+            ],
+            "minimum": 2,
+            "minimum_annual_observations": 3
+          },
+          "momentum": {
+            "metrics": [
+              "momentum_12m",
+              "rel_strength_6m",
+              "price_vs_sma200"
+            ],
+            "minimum": 2
+          },
+          "expectations": {
+            "metric": "historical_fcf_cagr-implied_fcf_growth",
+            "discount_rate": 0.09,
+            "terminal_growth": 0.025,
+            "forecast_years": 5
+          },
+          "scores": "equal means of available oriented percentiles; all model blocks required; no imputation",
+          "percentiles": {
+            "sector": "dated SIC division",
+            "minimum_sector_observations": 8,
+            "fallback": "global eligible finite observations",
+            "ties": "average"
+          },
+          "portfolio": {
+            "slots": 20,
+            "maximum_per_division": 6,
+            "empty_slots": "zero-interest cash",
+            "ties": "score descending, symbol ascending",
+            "missing_selected_return": "invalidate period"
+          },
+          "costs": {
+            "bps_per_side": {
+              "base": 10,
+              "stress": 25
+            },
+            "commission_per_trade_usd": 1,
+            "initial_capital_usd": 100000,
+            "funding": "each slot funds purchase plus both commissions; exit commission reserved in cash",
+            "round_trip": "every independent period; SPY has one funded position"
+          },
+          "ic": {
+            "minimum_pairs": 30,
+            "minimum_quarters": 30,
+            "hac_bartlett_lags": 3,
+            "alternative": "positive mean",
+            "multiplicity": "Holm exactly 3",
+            "alpha": 0.05
+          },
+          "bootstrap": {
+            "blocks": 4,
+            "replicas": 5000,
+            "seed": 20260928,
+            "lower_tail": 0.016666666666666666,
+            "resampling": "joint circular calendar blocks across models and costs",
+            "missing": "no bound for a column with any missing quarter; never compress calendar"
+          },
+          "windows": {
+            "2011-15": [
+              "2011-01-01",
+              "2016-01-01"
+            ],
+            "2016-20": [
+              "2016-01-01",
+              "2021-01-01"
+            ],
+            "2021-25": [
+              "2021-01-01",
+              "2026-01-01"
+            ]
+          },
+          "daily_audit_gate": "positive Holm IC; positive excess in all windows; positive family lower bound in both costs; >=30 periods and >=8 per window",
+          "inputs": {
+            "original_result": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+            "sic_result": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d",
+            "snapshot": "hash recorded in frozen original manifest; SQLite read-only"
+          },
+          "preservation": "#43/#44 and all original models, rankings and evidence are untouched"
+        }
+      },
+      "configuration_sha256": "9de5dd19c195ebe983c65042f2fa362fd4fd8f0736e01e2225f169da877ec4f1",
+      "specification_ref": "docs/strategy-discovery/preregistro.json#/spec/models/QE",
+      "result_ref": "docs/strategy-discovery/resultado.json#/models/QE",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-07-02",
+        "periods": 57,
+        "universe": "acreditado-38, dated SIC and declared model eligibility",
+        "continuous": false
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "failed_daily_gate",
+      "failures": [
+        "base_2011-15_insufficient_or_nonpositive",
+        "base_2021-25_insufficient_or_nonpositive",
+        "base_insufficient_or_lower_bound_nonpositive",
+        "stress_2011-15_insufficient_or_nonpositive",
+        "stress_2021-25_insufficient_or_nonpositive",
+        "stress_insufficient_or_lower_bound_nonpositive"
+      ],
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "repurchase/RCF",
+      "family": "repurchase_cash_v1",
+      "configuration": {
+        "version": 1,
+        "stage": "RESEARCH_RETROSPECTIVE",
+        "demonstrated": false,
+        "model": "RCF",
+        "new_configurations": 1,
+        "hypothesis": "cash-converting nonfinancial issuers allocating a higher fraction of positive FCF to gross common repurchases may outperform SPY",
+        "eligibility": "current admitted annual filing; buybacks/OCF/capex reported for identical annual start/end/accession; OCF>0; FCF=OCF-capex>0; 0<buybacks<=FCF; exclude SIC H",
+        "normalization": {
+          "repurchase_fraction": "gross common repurchases / positive matched FCF",
+          "cash_conversion": "matched FCF / positive matched OCF"
+        },
+        "interpretation": "cash allocation ratios, not valuation yields, net payout, net share retirement or proof of debt-free funding",
+        "identity": "one security per dated CIK; alphabetical ticker before eligibility, score or return; no replacement if its return is missing",
+        "score": "equal mean of two higher-is-better percentiles on eligible unique issuers",
+        "percentiles": {
+          "sector": "dated SIC division",
+          "minimum_sector_observations": 8,
+          "fallback": "global eligible finite observations",
+          "ties": "average"
+        },
+        "portfolio": {
+          "slots": 20,
+          "maximum_per_division": 6,
+          "empty_slots": "zero-interest cash",
+          "ties": "score descending, symbol ascending",
+          "missing_selected_return": "invalidate period"
+        },
+        "costs": {
+          "bps_per_side": {
+            "base": 10,
+            "stress": 25
+          },
+          "commission_per_trade_usd": 1,
+          "initial_capital_usd": 100000,
+          "funding": "each slot funds purchase plus both commissions; exit commission reserved in cash",
+          "round_trip": "every independent period; SPY has one funded position"
+        },
+        "calendar": "57 frozen independent holding periods, exact same sessions as parent SPY; no continuous CAGR",
+        "ic": {
+          "minimum_pairs": 30,
+          "minimum_quarters": 30,
+          "hac_bartlett_lags": 3,
+          "alternative": "positive mean",
+          "alpha": 0.0014705882352941176
+        },
+        "bootstrap": {
+          "replicas": 5000,
+          "blocks": 4,
+          "seed": 20260929,
+          "lower_tail": 0.0014705882352941176,
+          "resampling": "joint circular full-calendar blocks across both costs",
+          "missing": "any missing quarter prevents bound; never compress calendar"
+        },
+        "multiplicity": {
+          "new_family_size": 1,
+          "search_count_lower_bound": 34,
+          "decision_guard": "Bonferroni over known lower bound of 34 configurations; incomplete prior ledger, no global error-control claim"
+        },
+        "windows": {
+          "2011-15": [
+            "2011-01-01",
+            "2016-01-01"
+          ],
+          "2016-20": [
+            "2016-01-01",
+            "2021-01-01"
+          ],
+          "2021-25": [
+            "2021-01-01",
+            "2026-01-01"
+          ]
+        },
+        "daily_gate": "positive IC with p<alpha; >=30 eligible issuers on >=30 dates and >=8 per window; positive mean SPY excess in every window; positive lower bound for both costs, >=30 valid periods and >=8 per window",
+        "secondary_control": "funded equal-weight all eligible unique issuers, same costs; descriptive only, no additional candidate or hypothesis test",
+        "inputs": {
+          "audit_result": "a75cb5d24429d44a8696155a839c30d61ef22ecb4c0b420abd1b716e9b1e419e",
+          "audit_code": "fc3d8da588aab1694440eebb2fd50ff8e8ad4389e6ca0e71147dceb9fdfecd87",
+          "parent_code": "2eeeb8298a30d15d61fc36e63ba353d94147bbb3280f0a61babdac23c4332e35",
+          "original_result": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+          "sic_result": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d"
+        },
+        "preservation": "frozen originals, operational DB, Investor, #43/#44 and #53 untouched"
+      },
+      "configuration_sha256": "ba8cddcae48ce672402a41401f6be1a841f1ed3ff26931bf27142a6f47eec594",
+      "specification_ref": "docs/strategy-discovery/repurchase-cash-v1/preregistro.json#/spec",
+      "result_ref": "docs/strategy-discovery/repurchase-cash-v1/resultado.json#/summary",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-07-02",
+        "periods": 57,
+        "universe": "acreditado-38, dated SIC and declared model eligibility",
+        "continuous": false
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "failed_daily_gate",
+      "failures": [
+        "ic_not_positive_after_known_search_guard",
+        "base_2011-15_insufficient_or_nonpositive",
+        "base_2021-25_insufficient_or_nonpositive",
+        "base_insufficient_or_lower_bound_nonpositive",
+        "stress_2011-15_insufficient_or_nonpositive",
+        "stress_2021-25_insufficient_or_nonpositive",
+        "stress_insufficient_or_lower_bound_nonpositive"
+      ],
+      "demonstrated_superiority": false
+    }
+  ],
+  "additional_observed_records": [
+    {
+      "id": "rotation/control_composite",
+      "family": "rotation_v2",
+      "configuration": {
+        "rotation_hurdle_points": 0,
+        "common_protocol": {
+          "declared_at": "2026-09-23T10:21:28.060232+00:00",
+          "stage": "retrospective_research",
+          "variants": {
+            "control_composite": 0,
+            "hurdle_5": 5,
+            "hurdle_10": 10
+          },
+          "start": "2016-01-02",
+          "end": "2025-10-02",
+          "top_n": 20,
+          "months": 3,
+          "initial_capital": 100000.0,
+          "commission_usd": 1.0,
+          "spread_bps": 10.0,
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "max_symbols": null,
+          "windows": {
+            "full_history": [
+              "2016-01-02",
+              "2025-10-02"
+            ],
+            "development_retrospective": [
+              "2016-01-02",
+              "2021-01-02"
+            ],
+            "validation_retrospective": [
+              "2021-01-02",
+              "2025-10-02"
+            ]
+          },
+          "future": "not_evaluated",
+          "snapshot_sha256": "e501612fb2524253b5c99d04031801d47ea619faefd9145d252e0642b3c9dc68",
+          "source_manifest_sha256": "de1ab7dd0ff0ab44103f5cd0d306fffb306f1bacb8a21931a828d2b373de1612",
+          "rankings_sha256": {
+            "2016-01-02": "24ae11b40f30ed2faadada08d9e7bb69fc01f25a8e63f08cedca34d18ff3df6a",
+            "2016-04-02": "28e926e15c210411ab27072bbf74c2e53f2ec433686da1aeb95207d53120c812",
+            "2016-07-02": "988d14fe4d20c42b777c1c4c33445aea6eacc89e01d08886ac0e80b3c0d3714e",
+            "2016-10-02": "fb1d33ba12c754355621ce1d286a34e467c626c38114bbcf59fc2294f6d534f7",
+            "2017-01-02": "d08f8d6bc86a5d067bd132da2d1a4dc132cc07348b8f34d2f8368486d6f49908",
+            "2017-04-02": "2b0c857588613b204b3705ad5a35e8cb3f69fd90e898fbe093c8ac091fa148cd",
+            "2017-07-02": "bbf662876d5e0f4008ea3cb1838a783b1661c614bec34e1a508ad2699611fe81",
+            "2017-10-02": "3883d6b3a107b73558c1e8d44bfcc767d217b875d8995bc4fdd7ede55ac277c3",
+            "2018-01-02": "9cacf8e3903229d16122e3b406767c3146220036c70197f1d9f760642b008f96",
+            "2018-04-02": "0a7aef26f7c7affe4cccae15d245307edce68df3c7c82f46d42053f2bbd9fe42",
+            "2018-07-02": "86e58a140af3300fc02eb4a6f74b9b72b1c919ce59ef8ae80c59a92f31303696",
+            "2018-10-02": "6de958e6a7c84466221b7e4a990c5cb15270162e50b074332841dbba0517aa3e",
+            "2019-01-02": "700b5005208b2e7fec227ac61400fbdc7eecf697cac61157d1eb6d5620063c0a",
+            "2019-04-02": "83737f0f456a6468f94486bd5f16e87b063d835c916615e590122cabd6a31bb1",
+            "2019-07-02": "54ea5cad69519ee4050b4134b4dc29d4ce7612adf5276b7b7eff8327c3bb5fa2",
+            "2019-10-02": "577a9d166867315ab323f0330fbed67f512bf4f875b536ea6b39fb3629a18449",
+            "2020-01-02": "cb9d1529357923263cca8c23a479a0bfdeb3743aa087f95ee81524073db8c692",
+            "2020-04-02": "c06a963220428e2f3e66592dab94a80816633aa57438bd4b27ca3bc1550ecef1",
+            "2020-07-02": "94441adbc1285fc8728da779da837e3430664bced3bc1263f5ef765523dd02fc",
+            "2020-10-02": "f3474f7e4f5085d25fdb9e3f7e25d5a2d2f9cbc46b9080930f67f8912980be17",
+            "2021-01-02": "31a55837b962d572269e6fc4d748ab362a0367fc00dc9b83e5171ceb466e82e1",
+            "2021-04-02": "ac1fc077ac9b83dc616d0286ef047dfc28d745dee6bf08fb854b346203a5d8f6",
+            "2021-07-02": "c06aa06e15c2200631b0e7f399189aa0c8c894caf8ea838adc8da44fbf6f63fa",
+            "2021-10-02": "dc4bdd1ec864549da2acc9142690c809c89e929c5d2289357fcc3e83748c88ac",
+            "2022-01-02": "cc6e0b0ebe6e6ca45f0ca9bd2a8cfc7ee49c56edd5d72afb0be3792fa89a0371",
+            "2022-04-02": "25c1b3fc1d3b47c85f987b3e494deecc947a0d2c8ec4cfbcdb184d63b6299576",
+            "2022-07-02": "926442efade174a911d1be5f3dce72cf51d560a83ab946d4565a36c47fb3b399",
+            "2022-10-02": "14e0b08fbb0457933f3c489b3cf175dee1a952be771da97f11c8e9f6164c92b8",
+            "2023-01-02": "fca1613f1fca1f77ea1d42c072026df5aa6c0c6e99b8dbf2c445a145a98391a1",
+            "2023-04-02": "1dc463c2d887ccd90fd6c1edc5286f8d98a09069df1accfb2f335d9a245b7aa1",
+            "2023-07-02": "2c934a48118437bb68528d29f6798e4349ce602705a4db743fd823c17c86e64e",
+            "2023-10-02": "2b0a274a905d2c0bfc26fde92d8eb00691d550724ac2e2d84597f1b4e82a4968",
+            "2024-01-02": "889d41b7c75beebe2bae8744861f2d337bb61bef82a746da271309f7ae454073",
+            "2024-04-02": "4055a0d1c3b630b025d4edb1b11f2d47e779d535e7e200d08ce0b2547a01c8f0",
+            "2024-07-02": "5dcef9475037b053431781ea89c289e665e58f1bf3ed320e4e16a1d53596c330",
+            "2024-10-02": "90b469b9372f309db0a9456b55befc8ae694f6487becda2ee90d688f1d3fa0ca",
+            "2025-01-02": "773f7c2f0fb82a7bb13de6f301524ca7b9d1dd9fa90ad645c3def8852f5bc034",
+            "2025-04-02": "c1164f48c5991b2d4bcecfb3e3cc5841b80d460535fafe92f37d0c497da061fb",
+            "2025-07-02": "4b690c0926131946966bc20609e5ded134dece9f6f59c0f544ac3091b467a920"
+          },
+          "code_sha256": {
+            "portfolio_backtest.py": "1ca57882b4ad4dceb299464d92af9f7414365b00b311fcd6d628d3b1ebff6772",
+            "rotation_policy.py": "898c57eca5f61fb795e8e09e75b5ffc6100ab45cc7e269385648f6b9fb57baf3",
+            "variant_validation.py": "cac4f8cc6da8c011a21056e10847578e2a86619ae7e220c906ea150393905e32",
+            "identity.py": "1d3333e27bd9b0b5819856c0911404154a5472c2f22899e15b4cd57e9150a98f"
+          },
+          "limitations": [
+            "Frozen rankings and source coverage from the previous full-universe audit.",
+            "Historical identity and sector approximations remain.",
+            "Development/validation split is retrospective, not an untouched holdout.",
+            "Only the rotation change is tested; descriptive metrics do not change selection.",
+            "USD returns net of commissions/spread, before tax/FX, without final liquidation.",
+            "Turnover is gross buys plus sells divided by NAV, including weight adjustments.",
+            "V2 retains its small negative cash balances after costs; no funding charge."
+          ]
+        }
+      },
+      "configuration_sha256": "c508a5232a5c0e954790d70450f92a1b8e2eee0d0f67bb9012e7e8fb2a7fe8e3",
+      "specification_ref": "docs/rotation-experiment/protocol.json#/variants/control_composite",
+      "result_ref": "docs/rotation-experiment/audit.json#/metrics/0",
+      "observed_sample": {
+        "start": "2016-01-02",
+        "end": "2025-10-02",
+        "universe": "historical S&P 500, full eligible universe"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "reference",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "r3/control_composite/top10",
+      "family": "r3_v2",
+      "configuration": {
+        "variant": {
+          "name": "control_composite",
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "score_metrics": {
+            "value": [
+              "pe",
+              "pb",
+              "ev_ebitda"
+            ],
+            "quality": [
+              "roic",
+              "operating_margin",
+              "revenue_cagr_3y",
+              "fcf_cagr_3y"
+            ],
+            "momentum": [
+              "momentum_12m",
+              "rel_strength_6m",
+              "price_vs_sma200"
+            ],
+            "risk": [
+              "debt_to_equity",
+              "volatility",
+              "max_drawdown"
+            ]
+          }
+        },
+        "top_n": 10,
+        "common_spec": {
+          "issue": 36,
+          "linked_issue": 37,
+          "stage": "RESEARCH",
+          "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+          "control": {
+            "name": "control_composite",
+            "weights": {
+              "value": 0.3,
+              "quality": 0.35,
+              "momentum": 0.25,
+              "risk": 0.1
+            },
+            "score_metrics": {
+              "value": [
+                "pe",
+                "pb",
+                "ev_ebitda"
+              ],
+              "quality": [
+                "roic",
+                "operating_margin",
+                "revenue_cagr_3y",
+                "fcf_cagr_3y"
+              ],
+              "momentum": [
+                "momentum_12m",
+                "rel_strength_6m",
+                "price_vs_sma200"
+              ],
+              "risk": [
+                "debt_to_equity",
+                "volatility",
+                "max_drawdown"
+              ]
+            }
+          },
+          "variants": {
+            "e6a_calidad_persistente": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "added_to_quality": {
+                "quality_persistence_score": "higher_is_better",
+                "roic_persistence_std": "lower_is_better"
+              },
+              "added_to_value": {
+                "expectations_gap": "higher_is_better"
+              },
+              "validity": "métricas de persistencia solo con roic_years >= 3",
+              "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+            },
+            "e6b_riesgo_756": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "risk_window_sessions": 756,
+              "recomputed": [
+                "volatility",
+                "max_drawdown"
+              ],
+              "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+            }
+          },
+          "sample": {
+            "rankings": "data/revalidation_2011_2025/acreditado-38",
+            "start": "2010-01-02",
+            "end": "2025-10-02",
+            "months": 3,
+            "invested_from": "2011-07-02",
+            "windows": {
+              "completa_2011_2025": [
+                "2011-07-02",
+                "2025-10-02"
+              ],
+              "2011_2015": [
+                "2011-07-02",
+                "2016-01-02"
+              ],
+              "2016_2020": [
+                "2016-01-02",
+                "2021-01-02"
+              ],
+              "2021_2025": [
+                "2021-01-02",
+                "2025-10-02"
+              ]
+            }
+          },
+          "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+          "engine": {
+            "motor": "V2",
+            "mode": "validation",
+            "top_n": [
+              20,
+              10
+            ],
+            "initial_capital": 100000.0,
+            "commission_usd": 1.0,
+            "spread_bps": 10.0,
+            "max_symbols": null
+          },
+          "metrics": [
+            "CAGR neto",
+            "ES 95/99 diario",
+            "drawdown máximo",
+            "rotación",
+            "costes",
+            "beta SPY",
+            "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+            "PBO (CSCV, 8 bloques, 56 trimestres)",
+            "DSR con todas las configuraciones documentadas"
+          ],
+          "decision_rule": {
+            "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+            "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+            "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+            "descartar": "no cumple (a), (b) o (c)",
+            "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+          },
+          "multiple_testing": {
+            "holm_over": 2,
+            "dsr_trials": 29,
+            "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+          },
+          "blind_validation": "no se lee ni se modifica"
+        }
+      },
+      "configuration_sha256": "dde67020e021a286eb031082d33b52f89a63f9812c6c97b15fdc35dd03d3cf62",
+      "specification_ref": "docs/r3-e6-experiment/preregistro.json#/spec/control",
+      "result_ref": "docs/r3-e6-experiment/control_composite/result.json#/top10",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-10-02",
+        "periods": 57,
+        "universe": "acreditado-38, same eligible issuers as control"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "reference",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "r3/e6a_calidad_persistente/top10",
+      "family": "r3_v2",
+      "configuration": {
+        "variant": {
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "added_to_quality": {
+            "quality_persistence_score": "higher_is_better",
+            "roic_persistence_std": "lower_is_better"
+          },
+          "added_to_value": {
+            "expectations_gap": "higher_is_better"
+          },
+          "validity": "métricas de persistencia solo con roic_years >= 3",
+          "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+        },
+        "top_n": 10,
+        "common_spec": {
+          "issue": 36,
+          "linked_issue": 37,
+          "stage": "RESEARCH",
+          "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+          "control": {
+            "name": "control_composite",
+            "weights": {
+              "value": 0.3,
+              "quality": 0.35,
+              "momentum": 0.25,
+              "risk": 0.1
+            },
+            "score_metrics": {
+              "value": [
+                "pe",
+                "pb",
+                "ev_ebitda"
+              ],
+              "quality": [
+                "roic",
+                "operating_margin",
+                "revenue_cagr_3y",
+                "fcf_cagr_3y"
+              ],
+              "momentum": [
+                "momentum_12m",
+                "rel_strength_6m",
+                "price_vs_sma200"
+              ],
+              "risk": [
+                "debt_to_equity",
+                "volatility",
+                "max_drawdown"
+              ]
+            }
+          },
+          "variants": {
+            "e6a_calidad_persistente": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "added_to_quality": {
+                "quality_persistence_score": "higher_is_better",
+                "roic_persistence_std": "lower_is_better"
+              },
+              "added_to_value": {
+                "expectations_gap": "higher_is_better"
+              },
+              "validity": "métricas de persistencia solo con roic_years >= 3",
+              "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+            },
+            "e6b_riesgo_756": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "risk_window_sessions": 756,
+              "recomputed": [
+                "volatility",
+                "max_drawdown"
+              ],
+              "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+            }
+          },
+          "sample": {
+            "rankings": "data/revalidation_2011_2025/acreditado-38",
+            "start": "2010-01-02",
+            "end": "2025-10-02",
+            "months": 3,
+            "invested_from": "2011-07-02",
+            "windows": {
+              "completa_2011_2025": [
+                "2011-07-02",
+                "2025-10-02"
+              ],
+              "2011_2015": [
+                "2011-07-02",
+                "2016-01-02"
+              ],
+              "2016_2020": [
+                "2016-01-02",
+                "2021-01-02"
+              ],
+              "2021_2025": [
+                "2021-01-02",
+                "2025-10-02"
+              ]
+            }
+          },
+          "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+          "engine": {
+            "motor": "V2",
+            "mode": "validation",
+            "top_n": [
+              20,
+              10
+            ],
+            "initial_capital": 100000.0,
+            "commission_usd": 1.0,
+            "spread_bps": 10.0,
+            "max_symbols": null
+          },
+          "metrics": [
+            "CAGR neto",
+            "ES 95/99 diario",
+            "drawdown máximo",
+            "rotación",
+            "costes",
+            "beta SPY",
+            "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+            "PBO (CSCV, 8 bloques, 56 trimestres)",
+            "DSR con todas las configuraciones documentadas"
+          ],
+          "decision_rule": {
+            "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+            "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+            "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+            "descartar": "no cumple (a), (b) o (c)",
+            "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+          },
+          "multiple_testing": {
+            "holm_over": 2,
+            "dsr_trials": 29,
+            "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+          },
+          "blind_validation": "no se lee ni se modifica"
+        }
+      },
+      "configuration_sha256": "41340ff4207c1e2fc518d4bb62e912a1dc4bd4d86098978009944789a82d82fe",
+      "specification_ref": "docs/r3-e6-experiment/preregistro.json#/spec/variants/e6a_calidad_persistente",
+      "result_ref": "docs/r3-e6-experiment/e6a_calidad_persistente/result.json#/top10",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-10-02",
+        "periods": 57,
+        "universe": "acreditado-38, same eligible issuers as control"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "secondary_not_promoted",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "r3/e6b_riesgo_756/top10",
+      "family": "r3_v2",
+      "configuration": {
+        "variant": {
+          "weights": {
+            "value": 0.3,
+            "quality": 0.35,
+            "momentum": 0.25,
+            "risk": 0.1
+          },
+          "risk_window_sessions": 756,
+          "recomputed": [
+            "volatility",
+            "max_drawdown"
+          ],
+          "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+        },
+        "top_n": 10,
+        "common_spec": {
+          "issue": 36,
+          "linked_issue": 37,
+          "stage": "RESEARCH",
+          "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+          "control": {
+            "name": "control_composite",
+            "weights": {
+              "value": 0.3,
+              "quality": 0.35,
+              "momentum": 0.25,
+              "risk": 0.1
+            },
+            "score_metrics": {
+              "value": [
+                "pe",
+                "pb",
+                "ev_ebitda"
+              ],
+              "quality": [
+                "roic",
+                "operating_margin",
+                "revenue_cagr_3y",
+                "fcf_cagr_3y"
+              ],
+              "momentum": [
+                "momentum_12m",
+                "rel_strength_6m",
+                "price_vs_sma200"
+              ],
+              "risk": [
+                "debt_to_equity",
+                "volatility",
+                "max_drawdown"
+              ]
+            }
+          },
+          "variants": {
+            "e6a_calidad_persistente": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "added_to_quality": {
+                "quality_persistence_score": "higher_is_better",
+                "roic_persistence_std": "lower_is_better"
+              },
+              "added_to_value": {
+                "expectations_gap": "higher_is_better"
+              },
+              "validity": "métricas de persistencia solo con roic_years >= 3",
+              "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+            },
+            "e6b_riesgo_756": {
+              "weights": {
+                "value": 0.3,
+                "quality": 0.35,
+                "momentum": 0.25,
+                "risk": 0.1
+              },
+              "risk_window_sessions": 756,
+              "recomputed": [
+                "volatility",
+                "max_drawdown"
+              ],
+              "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+            }
+          },
+          "sample": {
+            "rankings": "data/revalidation_2011_2025/acreditado-38",
+            "start": "2010-01-02",
+            "end": "2025-10-02",
+            "months": 3,
+            "invested_from": "2011-07-02",
+            "windows": {
+              "completa_2011_2025": [
+                "2011-07-02",
+                "2025-10-02"
+              ],
+              "2011_2015": [
+                "2011-07-02",
+                "2016-01-02"
+              ],
+              "2016_2020": [
+                "2016-01-02",
+                "2021-01-02"
+              ],
+              "2021_2025": [
+                "2021-01-02",
+                "2025-10-02"
+              ]
+            }
+          },
+          "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+          "engine": {
+            "motor": "V2",
+            "mode": "validation",
+            "top_n": [
+              20,
+              10
+            ],
+            "initial_capital": 100000.0,
+            "commission_usd": 1.0,
+            "spread_bps": 10.0,
+            "max_symbols": null
+          },
+          "metrics": [
+            "CAGR neto",
+            "ES 95/99 diario",
+            "drawdown máximo",
+            "rotación",
+            "costes",
+            "beta SPY",
+            "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+            "PBO (CSCV, 8 bloques, 56 trimestres)",
+            "DSR con todas las configuraciones documentadas"
+          ],
+          "decision_rule": {
+            "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+            "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+            "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+            "descartar": "no cumple (a), (b) o (c)",
+            "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+          },
+          "multiple_testing": {
+            "holm_over": 2,
+            "dsr_trials": 29,
+            "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+          },
+          "blind_validation": "no se lee ni se modifica"
+        }
+      },
+      "configuration_sha256": "b97f5654e426b27bf8e841f9d2493b6c5b39349f1f5f660a525d4e54db297d08",
+      "specification_ref": "docs/r3-e6-experiment/preregistro.json#/spec/variants/e6b_riesgo_756",
+      "result_ref": "docs/r3-e6-experiment/e6b_riesgo_756/result.json#/top10",
+      "observed_sample": {
+        "start": "2011-07-02",
+        "end": "2025-10-02",
+        "periods": 57,
+        "universe": "acreditado-38, same eligible issuers as control"
+      },
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "secondary_not_promoted",
+      "failures": null,
+      "demonstrated_superiority": false
+    }
+  ],
+  "diagnostics": [
+    {
+      "family": "factor-history",
+      "specification_ref": "docs/factor-history/preregistro.json",
+      "result_ref": "docs/factor-history/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "tail-effect-test",
+      "specification_ref": "docs/tail-effect-test/preregistro.json",
+      "result_ref": "docs/tail-effect-test/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "factor-zoo",
+      "specification_ref": "docs/factor-zoo/preregistro.json",
+      "result_ref": "docs/factor-zoo/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "placebo-engine",
+      "specification_ref": "docs/placebo-engine/preregistro.json",
+      "result_ref": "docs/placebo-engine/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "cross-section-test",
+      "specification_ref": "docs/cross-section-test/preregistro.json",
+      "result_ref": "docs/cross-section-test/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "block-bootstrap",
+      "specification_ref": "docs/block-bootstrap/preregistro.json",
+      "result_ref": "docs/block-bootstrap/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "rank-stability",
+      "specification_ref": "docs/rank-stability/preregistro.json",
+      "result_ref": "docs/rank-stability/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "evidence-confidence",
+      "specification_ref": "docs/evidence-confidence/preregistro.json",
+      "result_ref": "docs/evidence-confidence/sources.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "factor-zoo-sector",
+      "specification_ref": "docs/factor-zoo-sector/preregistro.json",
+      "result_ref": "docs/factor-zoo-sector/resultado.json",
+      "classification": "published_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "full-universe-audit",
+      "result_ref": "docs/full-universe-audit/audit.json",
+      "classification": "reconstruction_or_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "factor-stability",
+      "result_ref": "docs/factor-stability/audit.json",
+      "classification": "reconstruction_or_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "factor-benchmark",
+      "result_ref": "docs/factor-benchmark/audit.json",
+      "classification": "reconstruction_or_diagnostic_not_added_to_legacy_34"
+    },
+    {
+      "family": "capital_inputs",
+      "specification_ref": "docs/strategy-discovery/capital-inputs/preregistro.json",
+      "classification": "input_audit_zero_strategy_configurations"
+    },
+    {
+      "family": "capital_inputs/v2",
+      "specification_ref": "docs/strategy-discovery/capital-inputs/v2/preregistro.json",
+      "classification": "input_audit_zero_strategy_configurations"
+    }
+  ],
+  "unresolved_groups": [
+    {
+      "trial": "Tres perturbaciones de pesos",
+      "reason": "HIPOTESIS_CONGELADA solo indica pesos parciales y solapamiento de posiciones, no vectores completos ni series."
+    },
+    {
+      "trial": "Factores individuales vs multifactor",
+      "reason": "Mencionado en HIPOTESIS_CONGELADA, sin especificación completa de selección/periodos/umbrales."
+    },
+    {
+      "trial": "Versiones previas con bugs y distintas coberturas/universos",
+      "reason": "Se reconstruyen reglas con código actual, no se recrean bugs ni se conocen todos los intentos originales."
+    },
+    {
+      "trial": "V2, optimización de carteras y ensayos de otros rangos",
+      "reason": "Motor/contabilidad o periodo diferentes; no se mezclan con esta familia V1."
+    }
+  ],
+  "limitations": [
+    "34 is the inherited bookkeeping convention, not an exhaustive count of observed searches.",
+    "VALUE is specified but its prospective outcomes have not been observed.",
+    "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
+    "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",
+    "13 Factor Zoo tests, 256 weight perturbations and 8192 null paths also exposed retrospective information.",
+    "Diagnostics and replications must not be summed as independent strategy trials.",
+    "Private/manual/optimization sessions are not exhaustively recoverable from published artifacts.",
+    "No operational DB, blind outcome, raw price snapshot or reserved smallmid dataset was opened.",
+    "No old result, guard alpha, model or decision is recalculated or silently changed."
+  ],
+  "sources_sha256_lf": {
+    "HIPOTESIS_CONGELADA.md": "76bbf8f36ef66ec082f46c9e18b34698d33b81d17252a7103d90335c8266992f",
+    "docs/block-bootstrap/preregistro.json": "17566e3e943667442b26252998133914b4aa0130f9e250c4ecd009860e2957ec",
+    "docs/block-bootstrap/resultado.json": "19bd7d85a0c8da00ec8efcd9d9a635aa387fec1004c6914fb930dfa0a63018c4",
+    "docs/cross-section-test/preregistro.json": "6b7cca47a92b242a0be28db009b4be57181be291b78b3550006f97e053123ffc",
+    "docs/cross-section-test/resultado.json": "19b4f0281d7e7d1b473622f1ccabc56c5ef1526649e6b0ff42fca1180aae5242",
+    "docs/evidence-confidence/preregistro.json": "facc5fcffa2fb08c05ad4bc3387595ac23abc18186a710ad091c871eaf6fb3bd",
+    "docs/evidence-confidence/sources.json": "b2a34696edf22108c364f60f1c6bea2fb9fb57f9b731d95a53aa09c364bec058",
+    "docs/factor-benchmark/audit.json": "8290234e878fa270ce1ccbf8a4b61a77bc10d951bd82e2f1c46a303ecf5de28c",
+    "docs/factor-history/preregistro.json": "86c5ba9c7035c8137140a642a05c296b9062fcff4674e4cdb62d77bc3c201643",
+    "docs/factor-history/resultado.json": "a5bbbcf8a34feee4e8096797507e393cf482732b4d87952b053a0d96c5f574f6",
+    "docs/factor-stability/audit.json": "40a52cc8fe7e5278f7966fcdee7f54a2e0dc7889ff820aba2eb405264c770f03",
+    "docs/factor-zoo-sector/preregistro.json": "349edcac3f8eb2f641c68a4d1654e3def92be1dc0fc446b05bd2037107e753e5",
+    "docs/factor-zoo-sector/resultado.json": "a7c01fae89c36247c7385c555a632d680c8e325f3f75a693dab7580736ac5835",
+    "docs/factor-zoo/preregistro.json": "3a7dd1f3177eca30c963ea8879592368671dd78c35059ee9b1bcb781f28aa50f",
+    "docs/factor-zoo/resultado.json": "ddf1f78a8ab8341a07a794a1486ac1131e551caea38cb484f187268cfb1917a6",
+    "docs/full-universe-audit/audit.json": "70ab1922d461c62b426d8ffe471f5cc17d91762d1f75b641285c377dfa3f61be",
+    "docs/overfitting-audit/audit.json": "d8a01dd83b44d33bd189208bba29cfa4ac37da6f598edc2d7abdfbba146604bd",
+    "docs/overfitting-audit/returns.csv": "9b8c23744b39688f983af69e319521e7fcd555b735ccecd738c631d3f153597e",
+    "docs/placebo-engine/null_distributions.csv": "7c9b12065db2fbbc7f1968df4654df6054bb95c7a468535eba5a33dd7d1a9fae",
+    "docs/placebo-engine/preregistro.json": "466c2c40988ccdf763294e10ae7a0e920a5b8c7a0c2e4535722a00e521ab13f1",
+    "docs/placebo-engine/resultado.json": "f8551975a0be7d423173fd9ae46cbb6cf1095c85dbf995b18513fd4bff76bd6f",
+    "docs/placebo-engine/weight_perturbations.csv": "9dcedc38d5496f0de842b5425fb412d849bddc36deb9b0175b1c1740c1f9a6be",
+    "docs/r3-e6-experiment/analysis.json": "25391c2616c505af8210bd67ceb5d4fb4d231b8a21a91decc928d38789183a2e",
+    "docs/r3-e6-experiment/control_composite/result.json": "d97b99adf250049b7dea802af7505a1cb87f47459bb586303a89c85191f75dc3",
+    "docs/r3-e6-experiment/e6a_calidad_persistente/result.json": "fe84fdbd84b4bb3d772d3cd9a067768e0dc7d7e0cf1e88c3ae7914c820056014",
+    "docs/r3-e6-experiment/e6b_riesgo_756/result.json": "d3a32860bda16b2cb98da7f829c90ead9ce045e760d5222ec24900f8c134a527",
+    "docs/r3-e6-experiment/preregistro.json": "3156d67401780b2ca5c3411d7cf4037b500e7332ede32986316314a219f9c5a5",
+    "docs/rank-stability/preregistro.json": "d22bd76d5dafbe4eac642b85d85dadcaa0da3c4c2b4e045d68c3977f0faf2098",
+    "docs/rank-stability/resultado.json": "80a5c1d4546c4cf16342643ddbd6ca25ffa920faca3742da20808f90b01120a3",
+    "docs/rotation-experiment/audit.json": "5704891b7e6fb3f5655dd69573b508e6f85a50bec1fa23e1c9050f3072f2f9c9",
+    "docs/rotation-experiment/protocol.json": "2dcfc3f511a5121901322a14a4cd907315e395ea40c5cff484e53581b7ecf265",
+    "docs/strategy-discovery/capital-inputs/preregistro.json": "e7ef4f6591c7806fe0a71fe32a9f75ba71cf48c5f5867b7a92a47d5c5c8aeb28",
+    "docs/strategy-discovery/capital-inputs/v2/preregistro.json": "7eb1bb7135d3cfb55746bc99642d2e7873230769cc6fea324a28a9d16f172d17",
+    "docs/strategy-discovery/capital-inputs/v2/resultado.json": "ca9d3d9fa35fb5161b9815e05a3f0595f52d6a42d5f63c949204e785c49a8b21",
+    "docs/strategy-discovery/preregistro.json": "d8496aa1ace967a337ad6414204a94dd70c4b4bb9b3347ea1714a09983539d29",
+    "docs/strategy-discovery/repurchase-cash-v1/preregistro.json": "dfb7e4d4cf04395d99147f07ad88747306f3232de41c404602388d350e2237be",
+    "docs/strategy-discovery/repurchase-cash-v1/resultado.json": "e0ec3e952df8608c2779ba0a3806613a17bf9ad2a295cc16afacb4d37179d8f8",
+    "docs/strategy-discovery/resultado.json": "731a4e6d9a18c2c0cb70c8b0e54c36aa0cbb8befd224eb3ed860aea9f3d1c03b",
+    "docs/tail-effect-test/preregistro.json": "2ae426d985bb4f3b30963e54fcc24d66cbd33a1a493293ac3b9525dcc58aea10",
+    "docs/tail-effect-test/resultado.json": "edcdea486b94476c89eaf57042f4ab3c155fa08fd115cfea65c05b59936827cc",
+    "docs/value-hypothesis/preregistro.json": "72b783e7af5b4822b46f1eb576329ed92e98c950c6b57bd6531484e0bca4c055"
+  }
+}
