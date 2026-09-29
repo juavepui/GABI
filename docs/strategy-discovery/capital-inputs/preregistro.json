@@ -1,0 +1,60 @@
+{
+  "spec": {
+    "stage": "INPUT_COVERAGE_ONLY",
+    "version": 1,
+    "tags": {
+      "buybacks": "PaymentsForRepurchaseOfCommonStock",
+      "issuance": "ProceedsFromIssuanceOfCommonStock",
+      "options": "ProceedsFromStockOptionsExercised",
+      "ocf": "NetCashProvidedByUsedInOperatingActivities",
+      "capex": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "shares": "CommonStockSharesOutstanding"
+    },
+    "forms": [
+      "10-K",
+      "10-K/A"
+    ],
+    "cutoff": "filing and acceptance dates strictly before signal",
+    "anchor": "latest annual filing, no older filing or period fallback; exact SUB.period",
+    "maximum_age_days": 550,
+    "annual_duration_days": [
+      330,
+      400
+    ],
+    "cash": "same issuer, accession, filing date, form, FP=FY, exact start/end, USD; no absent zeros",
+    "duplicates": "exact identical facts deduplicated; contradictory values or dates rejected",
+    "proxy": "common repurchases minus disclosed common issuance; not total net payout",
+    "options": "separate, no aggregation without non-overlap evidence",
+    "fcf": "same period OCF minus nonnegative capex; no substitutes",
+    "shares": "positive same-filing common balance instants 330-400 days apart; raw ratio only",
+    "split_adjusted_dilution": "not accredited; no entity-attributed split evidence in snapshot",
+    "viability": {
+      "minimum_issuers_per_date": 30,
+      "minimum_dates": 30,
+      "minimum_dates_per_window": 8
+    },
+    "windows": {
+      "2011-15": [
+        "2011-01-01",
+        "2016-01-01"
+      ],
+      "2016-20": [
+        "2016-01-01",
+        "2021-01-01"
+      ],
+      "2021-25": [
+        "2021-01-01",
+        "2026-01-01"
+      ]
+    },
+    "source_pins": {
+      "rankings": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+      "sic": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d"
+    },
+    "performance_analysis": false,
+    "new_strategy_configurations": 0
+  },
+  "sha256": "467c8b6980c5d3bbcc14b490a0adbeb75acf1a531aa61cf8dd5077cdd908ab37",
+  "code_sha256": "6ee1bd74ab9415f2501137a5e1cc052aaee62b9c74e8f69e4b1e201c3a9dcd6a",
+  "protocol_sha256": "a3c06ed78075ff41df22f6f9fd412f3110e218f60b4195a46ab19431417b2d42"
+}
