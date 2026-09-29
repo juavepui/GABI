@@ -1,5 +1,7 @@
 # Primera búsqueda de una estrategia superior al S&P 500
 
+Actualización 2026-09-29: el siguiente candidato, [RCF v1 (recompras y generación de caja)](repurchase-cash-v1/README.md), también falla su puerta fijada antes del cálculo: exceso neto medio base −0,358 pp por periodo, cota inferior con guard de búsquedas −1,747 pp; dos ventanas negativas y p del IC 0,1505. Una configuración adicional, mínimo conocido acumulado 34. El objetivo de #60 sigue pendiente; el candidato se archiva sin ajustes ni promoción.
+
 **Estado: objetivo pendiente. Ninguno de los tres candidatos supera la puerta de auditoría diaria fijada antes de calcular resultados.** No se propone sustituir SPY, modificar Investor ni invertir capital real con estos modelos.
 
 Seguimiento del objetivo y siguiente tarea: [issue #60](https://github.com/juavepui/GABI/issues/60). Permanece abierta; completar este diagnóstico no equivale a encontrar una estrategia demostrada.
