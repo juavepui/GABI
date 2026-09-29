@@ -28,7 +28,7 @@ def process_lock(data_dir: Path) -> Iterator[bool]:
             if os.name == "nt":
                 import msvcrt
 
-                msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)  # type: ignore[attr-defined]
             else:
                 import fcntl
 
@@ -41,7 +41,7 @@ def process_lock(data_dir: Path) -> Iterator[bool]:
         finally:
             stream.seek(0)
             if os.name == "nt":
-                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore[attr-defined]
             else:
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)  # type: ignore[attr-defined]
 
