@@ -41,3 +41,11 @@ Un candidato con IC positivo tras Holm, exceso neto medio positivo en todas las 
 2011–2025 ha sido observado en estudios anteriores: ninguna partición retrospectiva, walk-forward o nuevo bootstrap lo vuelve una muestra intacta. La advertencia sobre selección por backtests está desarrollada por los autores de [The Probability of Backtest Overfitting](https://escholarship.org/uc/item/4w1110bb).
 
 Las pruebas ciegas #43 (GABI/Value) y #44 (GABI sin cambios fuera del S&P 500) conservan modelos, fechas y reservas originales. No se abren, reparten, renombran ni convierten sus datos en validación del nuevo diseño. El seguimiento nuevo necesita un registro separado. La primera familia suma tres configuraciones al recuento, cuyo historial previo documentado contiene al menos 30; el total acumulado debe reconciliarse antes de una prueba confirmatoria.
+
+## Detalles contables y de reproducibilidad, fijados antes del primer cálculo
+
+Cada slot tiene un presupuesto de 5.000 USD que paga la compra y reserva las dos comisiones de 1 USD. El nominal inicial es `(5.000 - 2)/(1 + coste_por_lado)`; se mantiene 1 USD en cash para la comisión de salida. Su valor final, tras liquidar y pagarla, es `nominal × (1 + retorno) × (1 - coste_por_lado)`. SPY sigue la misma fórmula con un único slot de 100.000 USD. Así se financia incluso una pérdida total sin introducir deuda. No se renormalizan slots ni se cobra comisión al cash vacío.
+
+El bootstrap comparte índices de calendario entre los tres candidatos y ambos escenarios de costes. Si falta cualquier periodo de una columna, su cota se declara no estimable: no se comprime el calendario ni se permite que un resultado parcial supere la puerta de auditoría. La media de los periodos disponibles se conserva solo como descripción, con fechas inválidas publicadas.
+
+La especificación ejecutable, el protocolo y el código se fijan con SHA-256 antes de leer los resultados nuevos. Los artefactos incluyen scores y uso de fallback, decisión para cada empresa/fecha/modelo, panel trimestral y extracción de precios SPY. El motor verifica fuentes originales y SIC y abre el snapshot de precios con `mode=ro`; no escribe en la base operativa. Un resultado publicado no se sobrescribe. La verificación y reproducción se ejecutan con `python -m gabi.strategy_discovery --verify` y `--reproduce DIRECTORIO`.

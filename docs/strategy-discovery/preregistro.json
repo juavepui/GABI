@@ -1,0 +1,118 @@
+{
+  "spec": {
+    "version": 1,
+    "stage": "RESEARCH_RETROSPECTIVE",
+    "demonstrated": false,
+    "models": {
+      "QV": [
+        "value",
+        "quality"
+      ],
+      "QVM": [
+        "value",
+        "quality",
+        "momentum"
+      ],
+      "QE": [
+        "quality",
+        "expectations"
+      ]
+    },
+    "value": {
+      "metrics": [
+        "pe",
+        "pb",
+        "ev_ebitda"
+      ],
+      "positive_only": true,
+      "minimum": 2
+    },
+    "quality": {
+      "metrics": [
+        "roic_persistence_mean",
+        "operating_margin_persistence_mean",
+        "fcf_positive_fraction"
+      ],
+      "minimum": 2,
+      "minimum_annual_observations": 3
+    },
+    "momentum": {
+      "metrics": [
+        "momentum_12m",
+        "rel_strength_6m",
+        "price_vs_sma200"
+      ],
+      "minimum": 2
+    },
+    "expectations": {
+      "metric": "historical_fcf_cagr-implied_fcf_growth",
+      "discount_rate": 0.09,
+      "terminal_growth": 0.025,
+      "forecast_years": 5
+    },
+    "scores": "equal means of available oriented percentiles; all model blocks required; no imputation",
+    "percentiles": {
+      "sector": "dated SIC division",
+      "minimum_sector_observations": 8,
+      "fallback": "global eligible finite observations",
+      "ties": "average"
+    },
+    "portfolio": {
+      "slots": 20,
+      "maximum_per_division": 6,
+      "empty_slots": "zero-interest cash",
+      "ties": "score descending, symbol ascending",
+      "missing_selected_return": "invalidate period"
+    },
+    "costs": {
+      "bps_per_side": {
+        "base": 10,
+        "stress": 25
+      },
+      "commission_per_trade_usd": 1,
+      "initial_capital_usd": 100000,
+      "funding": "each slot funds purchase plus both commissions; exit commission reserved in cash",
+      "round_trip": "every independent period; SPY has one funded position"
+    },
+    "ic": {
+      "minimum_pairs": 30,
+      "minimum_quarters": 30,
+      "hac_bartlett_lags": 3,
+      "alternative": "positive mean",
+      "multiplicity": "Holm exactly 3",
+      "alpha": 0.05
+    },
+    "bootstrap": {
+      "blocks": 4,
+      "replicas": 5000,
+      "seed": 20260928,
+      "lower_tail": 0.016666666666666666,
+      "resampling": "joint circular calendar blocks across models and costs",
+      "missing": "no bound for a column with any missing quarter; never compress calendar"
+    },
+    "windows": {
+      "2011-15": [
+        "2011-01-01",
+        "2016-01-01"
+      ],
+      "2016-20": [
+        "2016-01-01",
+        "2021-01-01"
+      ],
+      "2021-25": [
+        "2021-01-01",
+        "2026-01-01"
+      ]
+    },
+    "daily_audit_gate": "positive Holm IC; positive excess in all windows; positive family lower bound in both costs; >=30 periods and >=8 per window",
+    "inputs": {
+      "original_result": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+      "sic_result": "1f48950f7215a23e4d3fe3a05ed051c5d203b480adb6a2857da96c17de69da2d",
+      "snapshot": "hash recorded in frozen original manifest; SQLite read-only"
+    },
+    "preservation": "#43/#44 and all original models, rankings and evidence are untouched"
+  },
+  "sha256": "bf6fd97c170a62f4ace184b5649451c42b2673f742515cd7bf053c986fd87682",
+  "code_sha256": "2eeeb8298a30d15d61fc36e63ba353d94147bbb3280f0a61babdac23c4332e35",
+  "protocol_sha256": "cc10479e2c392b42a4fef0571721f8b5def0d0d51838b2ef2eeaf5a8ec4708a3"
+}
