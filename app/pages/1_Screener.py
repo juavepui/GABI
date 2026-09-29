@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend" / "src"))
 import streamlit as st
 
 from gabi import app_mode, config, data_quality, evaluation, evidence_ui, live_ledger_ui, rank_stability_ui, screener
+from gabi.domain.market.selection import RankingFilter, filter_ranking
 from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO, build_color_basis, gradient_style, translate_sector
 
 st.title("📊 Screener")
@@ -101,18 +102,8 @@ rank_stability_ui.render(df, weights, mode=mode)
 evidence_ui.render(df, weights, mode=mode)
 live_ledger_ui.render()
 
-filtered = df.copy()
-if search_query.strip():
-    q = search_query.strip().lower()
-    name_match = filtered["name"].fillna("").str.lower().str.contains(q, regex=False)
-    symbol_match = filtered.index.to_series().str.lower().str.contains(q, regex=False)
-    filtered = filtered[name_match | symbol_match]
-if hide_no_data:
-    filtered = filtered[filtered["price"].notna() | filtered["pe"].notna()]
-if min_market_cap_b > 0:
-    filtered = filtered[filtered["market_cap"].fillna(0) >= min_market_cap_b * 1e9]
-if only_golden_cross:
-    filtered = filtered[filtered["golden_cross_recent"] == True]  # noqa: E712
+filtered = filter_ranking(df, RankingFilter(search=search_query, min_market_cap=min_market_cap_b * 1e9,
+                                             golden_cross_only=only_golden_cross, hide_no_data=hide_no_data))
 
 if "sector" in filtered.columns:
     sectors = sorted([s for s in filtered["sector"].dropna().unique()])
@@ -122,7 +113,7 @@ if "sector" in filtered.columns:
             help="Sector GICS de la empresa (nombres traducidos al español).",
         )
     if selected_sectors:
-        filtered = filtered[filtered["sector"].isin(selected_sectors)]
+        filtered = filter_ranking(filtered, RankingFilter(sectors=tuple(selected_sectors), hide_no_data=False))
 
 st.caption(f"{len(filtered)} empresas (de {len(df)} en el universo analizado)")
 st.caption("Cobertura = métricas puntuables disponibles / 13. El score compuesto requiere al menos el 50 % y datos en Value, Quality y Momentum.")

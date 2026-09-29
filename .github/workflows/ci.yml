@@ -28,6 +28,9 @@ jobs:
       - name: Build backend wheel
         run: uv build --wheel
 
+      - name: Verify wheel API outside checkout with isolated data
+        run: uv run python ../scripts/check_backend_wheel.py dist/gabi-0.1.0-py3-none-any.whl
+
       - name: Check backend architecture and legacy debt
         run: uv run python ../scripts/check_architecture.py --baseline-base HEAD^
 

@@ -1,0 +1,1 @@
+"""Explicit I/O adapters."""

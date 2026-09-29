@@ -11,9 +11,10 @@ casos de uso y adaptadores separados; un cliente React por capacidades; SQLite
 y archivos compartidos en `data/`. API y worker son procesos del mismo backend,
 con los mismos modelos y servicios. No requieren despliegues independientes.
 
-Esta entrega establece reglas y controles. Hoy el backend conserva 111 módulos
-planos y Streamlit; el cliente React aún no está implementado. La API llega en
-[#64](https://github.com/juavepui/GABI/issues/64), React en
+El backend conserva 111 módulos planos como compatibilidad. F2 ha migrado el cálculo
+y los filtros del Screener a casos de uso/dominio compartidos y añadido la
+[API local de consulta](local-api.md), con SQL de solo lectura y caché por lotes.
+Streamlit continúa operativo; el cliente React aún no está implementado y llega en
 [#65](https://github.com/juavepui/GABI/issues/65) y los jobs en
 [#66](https://github.com/juavepui/GABI/issues/66). No se presenta el destino como
 una refactorización ya completada ni se atribuye una mejora de velocidad sin medirla.

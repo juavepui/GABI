@@ -1,0 +1,32 @@
+{
+  "python": "3.13.7",
+  "platform": "Windows",
+  "fixture_seed": 64,
+  "companies": 504,
+  "sessions": 1250,
+  "price_rows_including_benchmark": 628755,
+  "rows_and_all_metrics_equal": true,
+  "memory_scope": "tracemalloc Python allocations; excludes native allocations and total process RSS",
+  "cold_scope": "empty process ranking cache; OS file cache not controlled; no HTTP serialization",
+  "legacy_streamlit": {
+    "seconds": 20.1064,
+    "peak_python_mib": 307.45,
+    "sql_statements": 30,
+    "select_queries": 5,
+    "adapter_rows_returned": null
+  },
+  "api_cold": {
+    "seconds": 21.003,
+    "peak_python_mib": 12.678,
+    "sql_statements": 141,
+    "select_queries": 103,
+    "adapter_rows_returned": 630063
+  },
+  "api_warm": {
+    "seconds": 0.0476,
+    "peak_python_mib": 0.968,
+    "sql_statements": 4,
+    "select_queries": 3,
+    "adapter_rows_returned": 18
+  }
+}

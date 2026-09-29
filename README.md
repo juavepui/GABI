@@ -15,7 +15,8 @@ GABI evoluciona como [monolito modular local](docs/architecture.md): dominio,
 casos de uso y adaptadores Python; frontend React por capacidades. Las reglas
 para modificar código están en [AGENTS.md](AGENTS.md), con controles de
 arquitectura en CI para ambas partes y [migración del código existente](docs/architecture/legacy-migration.md).
-La API y React siguen pendientes de sus fases; Streamlit continúa operativo.
+La [API local FastAPI](docs/local-api.md) ya ofrece Screener, ficha y estado de datos/modelo.
+React sigue pendiente de F3; Streamlit continúa operativo.
 
 ## Calidad y trazabilidad de datos
 

@@ -4,7 +4,8 @@
 `7821a795e9e44e0ae5b775584dee70b4a17ad995` y preparación de
 [#62](https://github.com/juavepui/GABI/issues/62). La separación física de F1 se
 describe en [su entrega y compatibilidad](backend-layout-compatibility.md).
-La API y el cliente React se implementan después; Streamlit sigue operativo.
+La [API de consulta F2](local-api.md) está implementada; el cliente React llega
+en F3. Streamlit sigue operativo.
 
 Las decisiones vigentes de capas, dependencias, datos, rendimiento y evolución
 del código antiguo están en [arquitectura](architecture.md). Cada fase aplica

@@ -1,5 +1,9 @@
 """Orquesta universo -> datos -> métricas -> técnicos -> riesgo -> scoring en una sola tabla."""
+from datetime import date
+
 import pandas as pd
+
+from gabi.application.market.ranking import Calculators, MarketBatch, MemoryInputs, build_ranking
 
 from . import (
     config,
@@ -59,68 +63,18 @@ def _get_risk_free_rate() -> float:
 
 
 def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progress_cb=None) -> pd.DataFrame:
-    """progress_cb(done, total), si se pasa, se llama cada ~25 empresas —
-    todo el cálculo es sobre datos ya cacheados (sin red), pero con el
-    universo completo (~500 empresas) puede tardar unos segundos y una
-    barra de progreso evita que la pantalla parezca congelada."""
+    """Compatibility facade: Streamlit and HTTP use the same ranking use case.
+
+    This existing adapter retains its storage behaviour. The HTTP adapter uses
+    explicitly read-only, bounded SQL instead of these schema-initializing getters.
+    """
     symbols = universe_df["symbol"].tolist()
-    fundamentals = storage.get_fundamentals(symbols)
-    prices = storage.get_prices_multi(symbols)
-    bench_df = storage.get_prices(config.BENCHMARK_SYMBOL)
-    edgar_metrics = edgar.get_edgar_metrics(symbols)
-    risk_free_rate = _get_risk_free_rate()
-
-    def price_metadata(p):
-        if p is None or p.empty:
-            return {"price_date": None, "close": None, "adj_close": None}
-        last = p.iloc[-1]
-        return {"price_date": p.index[-1].date().isoformat(), "close": last.get("close"), "adj_close": last.get("adj_close")}
-
-    sources = {config.BENCHMARK_SYMBOL: price_metadata(bench_df)}
-
-    rows = []
-    total = len(universe_df)
-    for i, (_, u) in enumerate(universe_df.iterrows()):
-        sym = u["symbol"]
-        record = fundamentals.get(sym)
-        m = metrics.compute_fundamental_metrics(record) if record else {}
-        p = prices.get(sym)
-        t = technicals.compute_technicals(p, bench_df) if p is not None else {}
-        r = risk.compute_risk_metrics(p, bench_df, risk_free_rate=risk_free_rate) if p is not None else {}
-        edg = edgar_metrics.get(sym, {})
-        sources[sym] = {**price_metadata(p), "fundamentals_fetched_at": record.get("fetched_at") if record else None,
-                        "sec_fetched_at": edg.get("fetched_at")}
-
-        row = {"symbol": sym, "name": u.get("name"), "sector": u.get("sector")}
-        row.update(m)
-        row.update(t)
-        row.update(r)
-        row["roic"] = edg.get("roic")
-        row["revenue_cagr_3y"] = edg.get("revenue_cagr_3y")
-        row["fcf_cagr_3y"] = edg.get("fcf_cagr_3y")
-        row["latest_10k_url"] = edg.get("latest_10k_url")
-        row["latest_10k_date"] = edg.get("latest_10k_date")
-        row["latest_10q_url"] = edg.get("latest_10q_url")
-        row["latest_10q_date"] = edg.get("latest_10q_date")
-        next_earnings = None
-        if record:
-            future_earnings = [
-                e for e in events_calendar.parse_corporate_events(sym, record.get("info", {}), record.get("fetched_at", ""))
-                if e["event_type"] == "earnings" and e["days_until"] >= 0
-            ]
-            next_earnings = future_earnings[0] if future_earnings else None
-        row["next_earnings_date"] = next_earnings["event_date"] if next_earnings else None
-        row["next_earnings_days"] = next_earnings["days_until"] if next_earnings else None
-        row["next_earnings_is_estimate"] = next_earnings["is_estimate"] if next_earnings else None
-        rows.append(row)
-        if progress_cb and (i % 25 == 0 or i == total - 1):
-            progress_cb(i + 1, total)
-
-    df = pd.DataFrame(rows, columns=None if rows else ["symbol"]).set_index("symbol")
-    if df.empty:
-        return df
-    df = scoring.build_scores(df, weights=weights)
-    df["confidence"] = scoring.compute_confidence(df, weights=weights)
-    df.attrs["sources"] = sources
-    df.attrs["risk_free_rate"] = risk_free_rate
-    return df
+    inputs = MemoryInputs(
+        MarketBatch(universe_df, storage.get_fundamentals(symbols), storage.get_prices_multi(symbols),
+                    edgar.get_edgar_metrics(symbols)),
+        storage.get_prices(config.BENCHMARK_SYMBOL), config.BENCHMARK_SYMBOL, _get_risk_free_rate(),
+    )
+    calculators = Calculators(metrics.compute_fundamental_metrics, technicals.compute_technicals,
+                              risk.compute_risk_metrics, events_calendar.parse_corporate_events,
+                              scoring.build_scores, scoring.compute_confidence)
+    return build_ranking(inputs, calculators, weights, today=date.today(), total=len(universe_df), progress_cb=progress_cb)
