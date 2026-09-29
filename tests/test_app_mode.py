@@ -89,8 +89,8 @@ def test_weights_match_frozen_false_for_empty_or_missing_key():
     assert app_mode.weights_match_frozen(partial) is False  # "risk" ausente cuenta como 0.0, no coincide
 
 
-def test_model_status_frozen_weights_without_live_forward_is_validated():
-    assert app_mode.model_status(dict(app_mode.FROZEN_WEIGHTS)) == "VALIDATED"
+def test_matching_frozen_weights_does_not_claim_validation():
+    assert app_mode.model_status(dict(app_mode.FROZEN_WEIGHTS)) == "FROZEN"
 
 
 def test_model_status_frozen_weights_with_live_forward_is_live_forward():
@@ -106,7 +106,7 @@ def test_current_model_status_reads_saved_weights_and_defaults_safely(tmp_path, 
     _isolate_db(tmp_path, monkeypatch)
     config.save_weights(dict(app_mode.FROZEN_WEIGHTS))
     result = app_mode.current_model_status()
-    assert result["status"] == "VALIDATED"
+    assert result["status"] == "FROZEN"
     assert result["matches_frozen"] is True
     assert result["model_id"] == app_mode.FROZEN_MODEL_ID
 
@@ -196,7 +196,7 @@ def test_current_model_status_ignores_blind_validation_without_recorded_periods(
                                        "2024-01-10", "2099-01-01")
 
     result = app_mode.current_model_status()
-    assert result["status"] == "VALIDATED"
+    assert result["status"] == "FROZEN"
     assert result["live_forward_source"] is None
     assert result["blind_validation_id"] is None
 
@@ -208,7 +208,7 @@ def test_current_model_status_ignores_blind_validation_with_different_weights(tm
     _create_and_record_validation(monkeypatch, other_weights)
 
     result = app_mode.current_model_status()
-    assert result["status"] == "VALIDATED"
+    assert result["status"] == "FROZEN"
     assert result["blind_validation_id"] is None
 
 
@@ -219,7 +219,7 @@ def test_current_model_status_ignores_broken_early_blind_validation(tmp_path, mo
     blind_validation.break_seal_early(vid, "prueba de que no cuenta")
 
     result = app_mode.current_model_status()
-    assert result["status"] == "VALIDATED"
+    assert result["status"] == "FROZEN"
     assert result["blind_validation_id"] is None
 
 

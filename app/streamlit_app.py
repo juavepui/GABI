@@ -59,6 +59,12 @@ def inicio():
 
     _aviso_rebalanceos()
 
+    st.info(
+        "La hipótesis de GABI está congelada y estudiada retrospectivamente. "
+        "Todavía no hay una estrategia demostrada que cumpla el objetivo de superar claramente "
+        "al S&P 500 después de costes (#60). El seguimiento prospectivo sigue pendiente de resultados."
+    )
+
     st.markdown(
         """
 ### Cómo funciona
@@ -79,9 +85,9 @@ que puedas ver **por qué** una empresa puntúa bien, empresa a empresa.
 
 1. Ve a **⚙️ Configuración** y pulsa "Actualizar datos" (empieza con un
    subconjunto pequeño para probar rápido).
-2. Ve directamente a **🎯 Mi cartera** — es la respuesta corta a "¿qué compro?": aplica la hipótesis ya
-   validada con backtest histórico y te da la lista de empresas, el peso de cada una y cuánto invertir con
-   tu capital. Sin nada que configurar.
+2. Ve a **🎯 Mi cartera** para ver cómo se aplica la hipótesis congelada al ranking actual: empresas,
+   pesos y reparto de tu capital según esas reglas. Su estudio histórico no demuestra todavía una
+   ventaja frente al S&P 500. Sin nada que configurar.
 3. Haz clic en una empresa (o búscala en **📊 Screener**) para ver su **🔍 Ficha**: desglose completo del
    score y enlaces directos a su último 10-K/10-Q oficial (SEC EDGAR).
 4. Antes de invertir, escribe tu tesis en el **📓 Diario de inversión**: precio de
@@ -94,7 +100,7 @@ que puedas ver **por qué** una empresa puntúa bien, empresa a empresa.
 6. Usa **⚖️ Comparar empresas** para ver 2-5 empresas lado a lado, tabla y gráfico, y el **🌐 Panel Macro**
    (tipos, inflación, curva, crédito) para tener contexto — requiere una API key gratuita de FRED.
 7. **🧭 Decisiones de cartera** y **🧪 Carteras simuladas** son para quien quiera ir más allá de la
-   hipótesis validada: reglas de riesgo propias, optimización de cartera, y simulacros con operaciones
+   hipótesis congelada: reglas de riesgo propias, optimización de cartera, y simulacros con operaciones
    reales — no hace falta pasar por ahí para invertir con GABI.
         """
     )
@@ -128,7 +134,7 @@ with st.sidebar:
     mode = st.radio(
         "Modo", app_mode.MODES, index=app_mode.MODES.index(app_mode.get_mode()),
         format_func=lambda m: "🧭 Investor" if m == "INVESTOR" else "🔬 Research",
-        help="**Investor**: solo lo necesario para usar el modelo ya validado -- los pesos del "
+        help="**Investor**: aplica la hipótesis congelada -- los pesos del "
              "score quedan bloqueados a la hipótesis congelada, sin sliders que tocar por accidente. "
              "**Research**: acceso completo (Ranking histórico, Research Lab, Factor Lab, Blind "
              "Forward Validation, Portfolio Lab) -- cualquier desviación de la hipótesis congelada "
@@ -147,6 +153,8 @@ with st.sidebar:
     if _model["live_forward_source"] == "blind_validation":
         _badge_text += f" (validación ciega #{_model['blind_validation_id']})"
     _render(_badge_text, icon=_icon if _model["status"] != "EXPERIMENTAL" else "⚠️")
+    st.caption("FROZEN: reglas fijadas. LIVE_FORWARD: seguimiento en curso. "
+               "Ninguno de esos estados demuestra una ventaja frente al S&P 500.")
     st.divider()
 
 _visible_paths = set(app_mode.visible_pages(mode, [path for path, _, _ in PAGE_SPECS]))

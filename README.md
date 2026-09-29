@@ -1740,3 +1740,8 @@ adicional y deja a criterio del usuario qué asistente usar.
   walk-forward validation — nunca mezclando aleatoriamente pasado y futuro.
 
 Actualizaciones locales incrementales: [políticas de revisión, checkpoints y medición reproducible](docs/incremental-updates/README.md). La tarea periódica conserva `--run` y admite `--full-refresh` para una auditoría deliberada; las ejecuciones normales evitan descargar/reinsertar históricos completos.
+
+Separación local de backend y frontend: [inventario de los 17 flujos, stack y fases #62–#68](docs/frontend-backend-migration.md).
+La aplicación actual sigue usando Streamlit; FastAPI y React se introducirán por fases.
+El [registro reconciliado de búsquedas](docs/search-ledger/README.md) conserva los resultados fallidos y los huecos del historial.
+No hay todavía una estrategia demostrada que cumpla el objetivo de superar claramente al S&P 500 (#60).

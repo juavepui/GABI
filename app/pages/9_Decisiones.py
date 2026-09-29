@@ -16,9 +16,9 @@ st.markdown(
 )
 st.info(
     "ℹ️ Esta página deja tocar las reglas del modelo, así que su resultado **es una estrategia distinta** "
-    "de la única que tiene un backtest histórico real detrás (hipótesis congelada: 20 posiciones "
-    "equiponderadas, sin filtro de tendencia). Si solo quieres la respuesta directa \"qué compro\" con la "
-    "estrategia ya validada, sin tocar nada, ve a **🎯 Mi cartera** en su lugar.",
+    "de la hipótesis congelada (20 posiciones equiponderadas, sin filtro de tendencia). "
+    "Para ver cómo se aplica esa hipótesis sin cambiar reglas, ve a **🎯 Mi cartera**. "
+    "El estudio retrospectivo aún no demuestra una ventaja frente al S&P 500.",
     icon="ℹ️",
 )
 

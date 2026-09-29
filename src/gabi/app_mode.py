@@ -6,7 +6,7 @@ testeable sin navegador (criterio de aceptación explícito de este objetivo)
 y para que decidir qué es INVESTOR/RESEARCH o qué cuenta como desviación
 experimental no dependa de "ocultar un widget" en cada página por separado.
 
-INVESTOR: navegación reducida a USAR el modelo ya validado -- oportunidades
+INVESTOR: navegación reducida a USAR la hipótesis congelada -- oportunidades
 (Screener), ficha, cambios materiales (Signal Monitor), cartera, diario y
 calidad/confianza de los datos. Los pesos del score quedan bloqueados a la
 hipótesis congelada: no hay sliders que tocar por accidente.
@@ -96,11 +96,13 @@ def model_status(weights: dict, *, live_forward_active: bool = False) -> str:
     - LIVE_FORWARD: coincide con la hipótesis congelada Y hay seguimiento
       en vivo activo (una validación ciega bloqueada con rebalanceos reales,
       o al menos un experimento en fase LIVE_FORWARD).
-    - VALIDATED: coincide con la hipótesis congelada pero sin seguimiento
-      en vivo activado todavía."""
+    - FROZEN: coincide con la hipótesis congelada pero sin seguimiento
+      en vivo activado todavía. Coincidir en pesos no acredita una ventaja
+      independiente; VALIDATED queda reservado para una acreditación explícita.
+      LIVE_FORWARD indica seguimiento, no éxito del estudio."""
     if not weights_match_frozen(weights):
         return "EXPERIMENTAL"
-    return "LIVE_FORWARD" if live_forward_active else "VALIDATED"
+    return "LIVE_FORWARD" if live_forward_active else "FROZEN"
 
 
 def _research_lab_live_forward_active() -> bool:

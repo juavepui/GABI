@@ -490,6 +490,6 @@ Universo histórico          SEC EDGAR                    Precios
         )
     st.caption(
         "Todo esto vive en modo Research (barra lateral, arriba) — en modo Investor queda fuera de la "
-        "navegación a propósito, no porque esté oculto, sino porque no hace falta para usar el modelo ya "
-        "validado."
+        "navegación para aplicar las reglas de la hipótesis congelada. Su validación independiente "
+        "y el objetivo de superar claramente al S&P 500 siguen pendientes."
     )

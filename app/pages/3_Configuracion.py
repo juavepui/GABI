@@ -128,7 +128,7 @@ if app_mode.get_mode() == "INVESTOR":
     st.caption(
         f"🔒 Bloqueados a la {app_mode.FROZEN_LABEL} -- Value 30% · Quality 35% · Momentum 25% · "
         "Risk 10%. Cambia a modo Research (menú lateral, arriba del todo) para poder editarlos: en "
-        "Investor no hay forma de tocar por accidente los pesos por defecto del modelo ya validado."
+        "Investor no hay forma de tocar por accidente los pesos por defecto de la hipótesis congelada."
     )
 else:
     st.caption("Se guardan como valores por defecto para el Screener (puedes seguir ajustándolos allí).")
