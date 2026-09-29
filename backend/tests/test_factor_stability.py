@@ -191,7 +191,7 @@ def test_artifacts_reproducible_strict_json_and_tampering_detected(tmp_path):
 
 
 def test_committed_audit_reproduces_frozen_hac_baseline():
-    docs = Path(__file__).resolve().parents[1] / "docs"
+    docs = Path(__file__).resolve().parents[2] / "docs"
     audit = fs.load_audit(docs / "factor-stability")
     original = json.loads((docs / "academic-factors-hac-audit.json").read_text(encoding="utf-8"))
     recomputed = fs.analyze(pd.read_csv(docs / "factor-stability" / "inputs.csv"))

@@ -1,0 +1,7 @@
+{
+  "name": "gabi-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cliente local de GABI; implementación React programada en la fase F3"
+}

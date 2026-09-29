@@ -167,7 +167,7 @@ def test_audit_reproducible_and_tampered_curves_rejected(tmp_path):
 
 
 def test_frozen_results_preserve_hac_inputs_and_reproduce_all_curves():
-    docs = Path(__file__).resolve().parents[1] / "docs"
+    docs = Path(__file__).resolve().parents[2] / "docs"
     original = pd.read_csv(docs / "academic-factors-hac-inputs.csv")
     inputs = pd.read_csv(docs / "factor-benchmark" / "inputs.csv")
     np.testing.assert_allclose(inputs[original.columns[2:]], original[original.columns[2:]], rtol=1e-12, atol=1e-14)

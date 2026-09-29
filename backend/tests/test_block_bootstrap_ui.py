@@ -70,7 +70,7 @@ def test_research_lab_runs_paired_diagnostic_and_rejects_misaligned_benchmark(tm
     for name, index in (("bad_benchmark", dates + pd.DateOffset(months=3)), ("benchmark", dates), ("strategy", dates)):
         ids.append(research_lab.log_experiment(name, "RESEARCH", False, git_commit="test", family="test",
                                                returns=pd.Series(values, index=index), periods_per_year=4))
-    app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app/pages/11_Research_Lab.py"))
+    app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / "app/pages/11_Research_Lab.py"))
     app.run(timeout=30)
     assert not app.exception
     app.selectbox(key="bb_benchmark").set_value(f"#{ids[1]} · benchmark").run()

@@ -62,7 +62,8 @@ def test_typecheck_exit_code_requires_full_check_and_only_exact_debt(monkeypatch
         records = []
 
     def run(arguments):
-        assert arguments == ["--output=json", "src/gabi"]
+        assert arguments == ["--config-file", str(ci.BACKEND / "pyproject.toml"),
+                             "--output=json", str(ci.BACKEND / "src" / "gabi")]
         return "\n".join(json.dumps(record) for record in records), "", 1 if records else 0
 
     monkeypatch.setattr(api, "run", run)

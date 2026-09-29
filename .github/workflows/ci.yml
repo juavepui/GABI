@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +23,9 @@ jobs:
       - name: Install dependencies (locked)
         run: uv sync --locked --all-groups
 
+      - name: Build backend wheel
+        run: uv build --wheel
+
       - name: Verify frozen research engines
         run: uv run python -m gabi.frozen_research_ci --check-frozen
 
@@ -27,12 +33,12 @@ jobs:
         run: uv run python -m gabi.search_ledger --verify
 
       - name: Lint (ruff)
-        run: uv run ruff check .
+        run: uv run ruff check ..
 
       - name: Type check (mypy)
         run: uv run python -m gabi.frozen_research_ci --typecheck
 
-      # Importa gabi.* de verdad (no solo compila) -- src/gabi es librería
+      # Importa gabi.* de verdad (no solo compila) -- backend/src/gabi es librería
       # pura, sin dependencia de datos ni de un runtime de Streamlit, así
       # que hacerlo con seguridad no tiene coste. app/pages/*.py SÍ depende
       # de datos cacheados y de ScriptRunContext (st.stop() no frena la
@@ -49,7 +55,7 @@ jobs:
           "
 
       - name: Compile smoke test (Streamlit app)
-        run: uv run python -m py_compile app/streamlit_app.py app/pages/*.py
+        run: uv run python -m py_compile ../app/streamlit_app.py ../app/pages/*.py
 
       - name: Tests (pytest)
         run: uv run pytest -q

@@ -11,7 +11,10 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from . import config
+
+ROOT = config.BASE_DIR
+BACKEND = Path(ROOT) / "backend"
 FROZEN = {
     "src/gabi/tail_effect_test.py": "2c1216b53b7f45d4d57ef5e5cf8252771891fd816523ad917396079f5fc6fda3",
     "src/gabi/factor_zoo.py": "7783e6885410c6c89d374e3ce9251f565b5d1b810c9fff387b768f82e454ee07",
@@ -27,8 +30,20 @@ def verify_frozen(root: Path = ROOT) -> None:
             raise ValueError(f"Frozen research engine changed: {relative}; review its archived evidence and CI baseline.")
 
 
+def verify_relocated_engines(root: Path = ROOT) -> None:
+    manifest = json.loads((root / "backend" / "legacy-engine-hashes.json").read_text(encoding="utf-8"))
+    for name, expected in manifest.items():
+        actual = hashlib.sha256((root / "src" / "gabi" / name).read_text(encoding="utf-8").encode()).hexdigest()
+        if actual != expected:
+            raise ValueError(f"Relocated published engine changed: {name}; preserve/version its archived evidence.")
+
+
 def normalized(record: dict) -> str:
     value = {**record, "file": record["file"].replace("\\", "/")}
+    for prefix in (BACKEND.as_posix() + "/", "backend/"):
+        if value["file"].startswith(prefix + "src/gabi/"):
+            value["file"] = value["file"][len(prefix):]
+            break
     return json.dumps(value, sort_keys=True, ensure_ascii=False)
 
 
@@ -50,7 +65,9 @@ def typecheck() -> int:
 
     verify_frozen()
     baseline = load_baseline()
-    output, errors, status = api.run(["--output=json", "src/gabi"])
+    output, errors, status = api.run([
+        "--config-file", str(BACKEND / "pyproject.toml"), "--output=json", str(BACKEND / "src" / "gabi"),
+    ])
     if errors:
         print(errors, file=sys.stderr, end="")
     if status not in (0, 1):
@@ -65,7 +82,7 @@ def typecheck() -> int:
                 for diagnostic, count in diagnostics.items():
                     print(f"{count} x {diagnostic}", file=sys.stderr)
         return 1
-    print(f"mypy checked src/gabi: no new diagnostics; {len(baseline)} exact historical diagnostics in unchanged frozen engines.")
+    print(f"mypy checked backend/src/gabi: no new diagnostics; {len(baseline)} exact historical diagnostics in unchanged frozen engines.")
     return 0
 
 
@@ -78,7 +95,8 @@ if __name__ == "__main__":
     try:
         if args.check_frozen:
             verify_frozen()
-            print(f"{len(FROZEN)} frozen research engines verified.")
+            verify_relocated_engines()
+            print(f"{len(FROZEN)} frozen CI engines and 18 relocated published engines/config verified.")
         else:
             sys.exit(typecheck())
     except (OSError, ValueError, KeyError) as exc:

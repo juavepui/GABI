@@ -173,7 +173,7 @@ def test_saved_load_detects_changed_distribution(tmp_path, monkeypatch):
 def test_saved_analysis_reports_gapped_v1_and_preserves_other_complete_series(tmp_path, monkeypatch):
     import exchange_calendars as xcals
 
-    spec = json.loads((Path(__file__).resolve().parents[1] / "docs/block-bootstrap/preregistro.json").read_text())
+    spec = json.loads((Path(__file__).resolve().parents[2] / "docs/block-bootstrap/preregistro.json").read_text())
     monkeypatch.setattr(config, "BASE_DIR", tmp_path)
     monkeypatch.setattr(bb, "OUTPUT", tmp_path / "docs/block-bootstrap")
     bb.OUTPUT.mkdir(parents=True)

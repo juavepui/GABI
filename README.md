@@ -56,7 +56,7 @@ su caché y configuración. No se equiparan las huellas antiguas con las v2.
 ## Instalación
 
 Requiere [uv](https://docs.astral.sh/uv/) (gestor de paquetes/entornos). Las
-versiones exactas de cada dependencia quedan fijadas en `uv.lock`, así que dos
+versiones exactas de cada dependencia quedan fijadas en `backend/uv.lock`, así que dos
 instalaciones en fechas distintas usan siempre las mismas versiones de
 pandas, numpy, yfinance, etc.
 
@@ -70,16 +70,16 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 Y luego, en el proyecto:
 
 ```bash
-uv sync
+uv sync --project backend --locked --all-groups
 ```
 
-Esto crea `.venv/` e instala dependencias + dependencias de desarrollo
-(pytest, ruff, mypy). Para actualizar versiones deliberadamente: `uv lock --upgrade`.
+Esto crea `backend/.venv/` e instala dependencias + dependencias de desarrollo
+(pytest, ruff, mypy). Para actualizar versiones deliberadamente: `uv lock --project backend --upgrade`.
 
 ## Uso
 
 ```bash
-uv run streamlit run app/streamlit_app.py
+uv run --project backend streamlit run app/streamlit_app.py
 ```
 
 0. Si vienes sin experiencia previa, empieza por **🎓 Aprender** (términos, estrategias, psicología).
@@ -266,27 +266,29 @@ misma ejecución rompe `set_page_config()`).
 ## Estructura
 
 ```
-src/gabi/       lógica pura (fetch, edgar, macro, storage, métricas, scoring) — testeada con pytest
-app/            frontend Streamlit (multipágina, navegación centralizada en streamlit_app.py)
-tests/          pytest, sin red, con datos sintéticos/mockeados
-data/           caché SQLite + CSVs + claves locales (todo gitignored)
+backend/src/gabi/  lógica Python (datos, métricas, scoring y motores de investigación)
+backend/tests/     tests unitarios y de compatibilidad de artefactos
+backend/uv.lock    dependencias Python bloqueadas
+frontend/          proyecto del futuro cliente React (fase #65)
+app/               interfaz Streamlit durante la transición
+data/              misma caché SQLite + CSVs + claves locales
 ```
 
 ## Ejecutar los tests
 
 ```bash
-uv run pytest
-uv run ruff check .     # linting
-uv run python -m gabi.frozen_research_ci --check-frozen
-uv run python -m gabi.frozen_research_ci --typecheck  # mypy global + baseline exacto
+uv run --project backend pytest
+uv run --project backend ruff check .     # linting
+uv run --project backend python -m gabi.frozen_research_ci --check-frozen
+uv run --project backend python -m gabi.frozen_research_ci --typecheck  # mypy global + baseline exacto
 ```
 
 Estos checks se ejecutan también en CI (GitHub Actions) en cada push/PR a
-`main`/`develop`, contra las versiones exactas fijadas en `uv.lock`.
+`main`/`develop`, contra las versiones exactas fijadas en `backend/uv.lock`.
 
 CI conserva las huellas de los motores publicados de #47/#48/#49. Solo esos
 tres archivos tienen excepción de orden de imports (`I001`). El check de tipos
-ejecuta Mypy sobre todo `src/gabi` y compara los 25 diagnósticos históricos con
+ejecuta Mypy sobre todo `backend/src/gabi` y compara los 25 diagnósticos históricos con
 `.github/mypy-baseline.json`, incluyendo archivo, posición, código y mensaje.
 Un diagnóstico nuevo, uno modificado/ausente o un cambio en esos motores hace
 fallar CI. No se desactivan categorías de errores de Mypy para estos módulos;
@@ -594,12 +596,12 @@ esos periodos, aunque sí cuentan en el universo — un sesgo más sutil hacia
 "lo que todavía es resoluble", no hacia "lo que sobrevivió en el índice".
 
 **Look-ahead bias** — comprobado línea a línea. `get_value_as_of()`
-(`src/gabi/edgar.py:349-361`) filtra `df["filed_date"] <= as_of_date`, donde
-`filed_date` es el campo `filed` que devuelve la propia SEC (`src/gabi/edgar.py:308`):
+(`backend/src/gabi/edgar.py:349-361`) filtra `df["filed_date"] <= as_of_date`, donde
+`filed_date` es el campo `filed` que devuelve la propia SEC (`backend/src/gabi/edgar.py:308`):
 la fecha real en que el 10-K/10-Q se hizo público, no la fecha de cierre del
 ejercicio. Si el FY2020 se publicó en febrero de 2021, un `as_of_date` de
 enero de 2020 no lo ve. Los precios se truncan igual
-(`_price_history_as_of`, `src/gabi/screener_asof.py:81`: `df[df.index <= as_of_date]`),
+(`_price_history_as_of`, `backend/src/gabi/screener_asof.py:81`: `df[df.index <= as_of_date]`),
 así que momentum, RSI, SMA, Sharpe y beta reconstruidos para una fecha
 pasada tampoco ven precios futuros.
 
@@ -663,7 +665,7 @@ es puramente accidental, pero afecta a **todos** los resultados numéricos de
 esta sección calculados con `max_symbols` fijado (200, 100 o 50, incluido el
 primer resultado de 2019).
 
-**Corregido** en `src/gabi/multifactor_backtest.py`: se sustituyó el
+**Corregido** en `backend/src/gabi/multifactor_backtest.py`: se sustituyó el
 recorte `[:max_symbols]` por un muestreo aleatorio con semilla fija
 (`random.Random(42).sample(...)`, función `_sample_symbols`) — reproducible
 entre llamadas, pero sin sesgo hacia ninguna parte del alfabeto. Afecta
@@ -696,7 +698,7 @@ días sin presentar nada ante la SEC (una empresa viva presenta un 10-Q como
 mínimo cada trimestre) pero el precio de salida cae después de ese hueco, se
 trata como no verificable y se descarta ese periodo (`ValueError`, con
 mensaje explícito) en vez de usar en silencio lo que devuelva yfinance. Dos
-tests nuevos en `tests/test_multifactor_backtest.py` cubren ambos casos
+tests nuevos en `backend/tests/test_multifactor_backtest.py` cubren ambos casos
 (empresa con filing reciente: se acepta; empresa con hueco largo: se
 rechaza).
 
@@ -752,7 +754,7 @@ reservado. Ver **[`HIPOTESIS_CONGELADA.md`](HIPOTESIS_CONGELADA.md)**: la config
 concreta que se cree buena, congelada por escrito antes de tener ningún dato nuevo con
 el que validarla — es la única forma honesta de comprobar si de verdad funciona, en vez
 de seguir ajustando sobre el mismo pasado. También incluye un contraste externo con las
-series académicas de factores de Kenneth French (`src/gabi/academic_factors.py`,
+series académicas de factores de Kenneth French (`backend/src/gabi/academic_factors.py`,
 disponible en 🕰️ Ranking histórico): el 91.5% de la varianza del retorno de la estrategia ya lo explican
 seis factores de mercado conocidos, y el alfa restante, aunque positivo, no llega al
 umbral de significancia estadística habitual.
@@ -969,7 +971,7 @@ in-sample, no alfas locales ni retornos compuestos.
 [Informe, metodología y datos](docs/factor-stability/README.md). Research Lab
 muestra gráficos interactivos e intervalos HAC; Ranking histórico permite
 repetir el diagnóstico del backtest trimestral actual. Se reproduce sin red
-con `uv run python -m gabi.factor_stability`. Sigue pendiente la estabilidad
+con `uv run --project backend python -m gabi.factor_stability`. Sigue pendiente la estabilidad
 por régimen de las permutaciones y perturbaciones de pesos originales, cuyos
 inputs completos no se conservaron. El turnover agregado no demuestra decay.
 
@@ -1014,7 +1016,7 @@ Sharpe y muestra comparable. El experimento antiguo se conserva como registro.
 Las 24 series quedan registradas en Research Lab como RESEARCH; la app
 muestra el informe verificado y permite descargar los artefactos.
 Para repetir solo el cálculo estadístico:
-`uv run python -m gabi.overfitting_audit --analyze-only`.
+`uv run --project backend python -m gabi.overfitting_audit --analyze-only`.
 
 ### Costes reales del bróker (eToro): calibración y por qué el backtest NO incluye la conversión de divisa
 
@@ -1024,7 +1026,7 @@ contra dos fuentes reales: el extracto oficial de cuenta (`Posiciones cerradas`,
 movimientos bancarios, para poder separar depósitos hechos con tarjeta de los hechos con
 transferencia. Cada cifra de abajo se verificó transacción a transacción contra esas
 fuentes (no se tomó de memoria ni de un análisis externo sin comprobar) — módulo
-`src/gabi/broker_costs.py`, tests en `tests/test_broker_costs.py`.
+`backend/src/gabi/broker_costs.py`, tests en `backend/tests/test_broker_costs.py`.
 
 **Costes de operar (abrir/cerrar una posición), verificados sobre 61 cargos reales:**
 
@@ -1086,9 +1088,9 @@ mantuviera o no — y también sobre el SPY (que debería comprarse una vez y ma
 rotarse cada trimestre). El usuario, revisando este documento, señaló ambos fallos con
 precisión y pidió un motor nuevo, más riguroso, como primer paso de una "V2" — manteniendo
 V1/`HIPOTESIS_CONGELADA.md` intactos y reproducibles tal cual (quedan como versión
-archivada). Ese motor nuevo es **`src/gabi/portfolio_backtest.py`** +
-**`src/gabi/portfolio_metrics.py`** (tests en `tests/test_portfolio_backtest.py` y
-`tests/test_portfolio_metrics.py`).
+archivada). Ese motor nuevo es **`backend/src/gabi/portfolio_backtest.py`** +
+**`backend/src/gabi/portfolio_metrics.py`** (tests en `backend/tests/test_portfolio_backtest.py` y
+`backend/tests/test_portfolio_metrics.py`).
 
 **Qué hace distinto**, reutilizando la misma convención de coste ya validada en
 `sim_portfolios.py` (Carteras Simuladas — comisión fija en dólares + spread proporcional,
@@ -1216,8 +1218,8 @@ el fallback ya existente en `scoring.py`), pero las que siguen cotizando hoy sí
 esta contaminación.
 
 **No existe una fuente gratuita de sector histórico** — lo único honesto es empezar a
-guardarlo desde ahora. Nuevo módulo **`src/gabi/entity_master.py`** (tests en
-`tests/test_entity_master.py`, más un test dedicado en `test_screener_asof.py` que confirma
+guardarlo desde ahora. Nuevo módulo **`backend/src/gabi/entity_master.py`** (tests en
+`backend/tests/test_entity_master.py`, más un test dedicado en `test_screener_asof.py` que confirma
 que `universe.get_sp500_constituents()` ya NO se llama en absoluto desde el ranking
 histórico):
 
@@ -1332,9 +1334,9 @@ Propuesta del usuario, motivada por algo que esta misma sesión ya hacía a mano
 configuraciones sobre el mismo rango 2016-2025 (top-10/20/30, filtro SMA200, banda de turnover,
 3 frecuencias de rebalanceo, universo 200 vs 500, V1 vs V2), documentando cada vez si el resultado
 era ruido o señal. El Research Lab formaliza esa disciplina: un registro de experimentos
-(`src/gabi/research_lab.py`, tabla `experiments`, página 🔬 Research Lab) con metodología, commit
+(`backend/src/gabi/research_lab.py`, tabla `experiments`, página 🔬 Research Lab) con metodología, commit
 de código exacto y resultado, etiquetado por fase (**RESEARCH** / **IN_SAMPLE** / **OUT_OF_SAMPLE**
-/ **LIVE_FORWARD**), y un módulo de rigor estadístico (`src/gabi/stats_rigor.py`) que implementa
+/ **LIVE_FORWARD**), y un módulo de rigor estadístico (`backend/src/gabi/stats_rigor.py`) que implementa
 Probabilistic Sharpe Ratio → Deflated Sharpe Ratio → PBO/CSCV → intervalos de confianza bootstrap
 (Bailey & López de Prado; umbral t>3 de Harvey, Liu & Zhu ya citado en `HIPOTESIS_CONGELADA.md`).
 
@@ -1395,7 +1397,7 @@ FUTURO real a 1/3/6/12 meses de cada quintil — si el score funciona, se espera
 razonablemente monotónica (no necesariamente perfecta ni todos los periodos), no solo que una cesta
 concreta ganara al índice.
 
-**`src/gabi/factor_lab.py`** (página 📐 Factor Lab) reutiliza tal cual la reconstrucción point-in-time
+**`backend/src/gabi/factor_lab.py`** (página 📐 Factor Lab) reutiliza tal cual la reconstrucción point-in-time
 ya existente (`universe.get_sp500_constituents_asof` + `screener_asof.build_ranking_as_of`, mismo
 contrato `mode="validation"`/`"fast_dev"` de `portfolio_backtest.py`) y el mismo patrón de sesión de
 entrada de `multifactor_backtest._period_returns` — el retorno futuro que mide **nunca lleva coste**
@@ -1415,7 +1417,7 @@ factor, horizonte) calcula:
   sector, comprobado con datos reales (una prueba pequeña pasó de 0 filas sector-neutral calculables a
   las 15 esperadas tras el arreglo).
 
-Verificado con casos de referencia sintéticos, no solo "no rompe" (`tests/test_factor_lab.py`): un score
+Verificado con casos de referencia sintéticos, no solo "no rompe" (`backend/tests/test_factor_lab.py`): un score
 que ordena perfectamente el retorno futuro da IC≈1 y spread claramente positivo; un score sin relación
 da IC≈0; turnover exactamente 0% con quintiles idénticos y 100% cuando cambian por completo; y el caso
 clave del sector-neutral — un score correlacionado solo con el sector (sin ninguna relación específica
@@ -1435,7 +1437,7 @@ resultado a medias y "ajustar un poco" la estrategia**, la tentación exacta que
 ("llevamos seis meses perdiendo, quizá Momentum debería pasar de 25 a 35%..." — en cuanto se hace eso,
 la prueba prospectiva ha muerto, sin que nadie necesite hacer trampa conscientemente).
 
-**`src/gabi/blind_validation.py`** (página 🔒 Blind Forward Validation) convierte esa promesa en algo
+**`backend/src/gabi/blind_validation.py`** (página 🔒 Blind Forward Validation) convierte esa promesa en algo
 real: cada rebalanceo se registra de forma **inmutable** (`UNIQUE(validation_id, rebalance_date)` —
 reintentar el mismo periodo lanza, no sobrescribe) con picks, precios de entrada reales, commit de
 código (`git rev-parse --short HEAD`, reutilizado de `research_lab.py`), y un **hash encadenado con el
@@ -1487,7 +1489,7 @@ encenderlo.
 
 Cuarta propuesta del usuario, la más grande de las cuatro. Hasta ahora todo el backtesting asumía
 implícitamente que repartir el capital a partes iguales entre las candidatas del ranking ("Equal Weight")
-era "la" forma de construir la cartera. **`src/gabi/portfolio_lab.py`** (página 🧮 Portfolio Lab) compara,
+era "la" forma de construir la cartera. **`backend/src/gabi/portfolio_lab.py`** (página 🧮 Portfolio Lab) compara,
 sin declarar ganador de antemano, seis esquemas sobre las MISMAS candidatas de cada rebalanceo: **Equal
 Weight, Inverse Volatility, Minimum Variance, Score-weighted, Score + risk constrained y Risk Parity** —
 con rentabilidad, volatilidad, drawdown, turnover, coste, concentración (HHI), contribution-to-risk y
@@ -1553,7 +1555,7 @@ diversificada".
 
 ## Insiders (SEC Form 4)
 
-`src/gabi/insider.py` descarga y guarda las operaciones de directivos,
+`backend/src/gabi/insider.py` descarga y guarda las operaciones de directivos,
 consejeros y accionistas >10% desde los Form 4 de SEC EDGAR (Section 16) —
 gratis, sin API key. Es la señal de "qué sabe la dirección que el mercado no
 sabe todavía" que faltaba (ninguna otra fuente integrada la da). Se muestra
@@ -1719,7 +1721,7 @@ anterior a 2016**.
 ## Capa de IA: generador de prompt (no llamada a API)
 
 En 🔍 Ficha de empresa hay una sección "🤖 Prompt para analizar con IA"
-(`src/gabi/ai_prompt.py`) que construye un prompt listo para pegar en el
+(`backend/src/gabi/ai_prompt.py`) que construye un prompt listo para pegar en el
 asistente que prefieras (Claude, ChatGPT...). Regla de diseño explícita:
 **la IA nunca calcula métricas financieras** — los números del prompt salen
 siempre de `scoring.py`/`metrics.py`/`edgar.py` (código determinista sobre

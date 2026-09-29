@@ -76,7 +76,7 @@ def test_real_screener_reports_eligibility_before_search_filters(monkeypatch):
         original(data, weights, mode=mode)
 
     monkeypatch.setattr(rank_stability_ui, "render", record)
-    app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app/pages/1_Screener.py")).run()
+    app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / "app/pages/1_Screener.py")).run()
     assert not app.exception
     app.sidebar.text_input[0].set_value("F000").run()
     assert not app.exception

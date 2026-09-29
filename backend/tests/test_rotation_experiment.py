@@ -8,7 +8,7 @@ import pytest
 
 from gabi.factor_stability import content_hash
 
-REPORT = Path(__file__).resolve().parents[1] / "docs/rotation-experiment"
+REPORT = Path(__file__).resolve().parents[2] / "docs/rotation-experiment"
 
 
 def test_saved_trials_reconcile_returns_costs_and_all_39_quarters():

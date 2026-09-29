@@ -2,8 +2,9 @@
 
 Épica [#61](https://github.com/juavepui/GABI/issues/61). Inventario realizado sobre
 `7821a795e9e44e0ae5b775584dee70b4a17ad995` y preparación de
-[#62](https://github.com/juavepui/GABI/issues/62). La separación física y la API
-todavía no están implementadas. Streamlit sigue siendo el cliente operativo.
+[#62](https://github.com/juavepui/GABI/issues/62). La separación física de F1 se
+describe en [su entrega y compatibilidad](backend-layout-compatibility.md).
+La API y el cliente React se implementan después; Streamlit sigue operativo.
 
 El destino es Python + FastAPI y React + TypeScript + Vite + React Router +
 shadcn/ui. GABI seguirá siendo local y gratuito, con SQLite y el directorio

@@ -1,0 +1,20 @@
+{
+  "config.py": "32ac12b8e5b03fa3e32aac850060fb48d5a16d7a25fa867b66ba9dc2d0f2811b",
+  "overfitting_audit.py": "fe934497c9abcf7579888fe9994217b7d74f298f0d89cc565d2f848105375dff",
+  "full_universe_audit.py": "93b645abb4f1bd9edad0c5d2122e6b6cf38d2f1147abd6d65edb6f8933cc6e4b",
+  "r3_experiment.py": "ca0cbc754214b41c8fac53e5893120fccf9cc169b3ab37c39565977887516f7a",
+  "tail_effect_test.py": "2c1216b53b7f45d4d57ef5e5cf8252771891fd816523ad917396079f5fc6fda3",
+  "factor_zoo.py": "7783e6885410c6c89d374e3ce9251f565b5d1b810c9fff387b768f82e454ee07",
+  "placebo_engine.py": "6cfe4f7ead369005a9fdf4c51ea1a984171bee895d179bf75a14d459b15493fc",
+  "factor_sector_stability.py": "2c13a7450231e352c4a428447b99ad9b2d10908fe890ac95ed64bec822311659",
+  "strategy_discovery.py": "2eeeb8298a30d15d61fc36e63ba353d94147bbb3280f0a61babdac23c4332e35",
+  "capital_input_audit.py": "6ee1bd74ab9415f2501137a5e1cc052aaee62b9c74e8f69e4b1e201c3a9dcd6a",
+  "capital_input_audit_v2.py": "fc3d8da588aab1694440eebb2fd50ff8e8ad4389e6ca0e71147dceb9fdfecd87",
+  "repurchase_cash_strategy.py": "116d0a49559f3ab1cf29b5af3401aed210b3f746d2644336c8f01b17b37e554f",
+  "factor_history.py": "c762e14817b0b086c502e52937a6c40f98654fb4ae8067ce4badee828a6a8783",
+  "factor_stability.py": "b1d5329f68cb1f6e916f91019c48288ecce60c09fb98e21e156e3a30ca3bd32c",
+  "factor_benchmark.py": "e3e65fe0394b955cdf18f553653ac491c8c0922c90963c48fdba8b93966c9172",
+  "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+  "cross_section_test.py": "d03268927f325e1eb18981d331890aae035d1fec18a47dc875ee5c7e0fd8c900",
+  "rank_stability.py": "de4a52cd24819ea1949b975b61fc741de94b6a477213f938e8abadf59d822301"
+}

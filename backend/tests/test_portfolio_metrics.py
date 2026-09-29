@@ -228,7 +228,7 @@ def test_published_tail_audit_matches_all_24_saved_trial_series():
     import json
     from pathlib import Path
 
-    docs = Path(__file__).resolve().parents[1] / "docs"
+    docs = Path(__file__).resolve().parents[2] / "docs"
     audit = json.loads((docs / "tail-risk-audit.json").read_text(encoding="utf-8"))
     source = docs / audit["source"]
     assert hashlib.sha256(source.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == audit["source_sha256"]

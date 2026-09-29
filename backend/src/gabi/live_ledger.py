@@ -216,13 +216,14 @@ def provenance(symbols: list[str]) -> dict:
 
 def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") -> dict:
     names = ("scoring.py", "metrics.py", "technicals.py", "risk.py", "screener.py", "edgar.py",
-             "live_ledger.py", "live_performance.py", "evidence_confidence.py", "evidence_catalog.py")
+             "live_ledger.py", "live_performance.py", "evidence_confidence.py", "evidence_catalog.py",
+             "workspace.py", "__init__.py")
     hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
     specification = {"weights": weights if weights is not None else app_mode.FROZEN_WEIGHTS,
                      "universe_id": universe_id, "top_n": 20, "coverage": .70,
                      "ranking": "descending composite, ascending ticker", "report_cost_per_side": .001}
     try:
-        dirty = bool(subprocess.run(["git", "diff", "HEAD", "--", "src/gabi"], cwd=config.BASE_DIR,
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--", "backend/src/gabi"], cwd=config.BASE_DIR,
                                     capture_output=True, text=True, timeout=5).stdout)
     except OSError:
         dirty = None

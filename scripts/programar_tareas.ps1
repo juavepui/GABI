@@ -3,7 +3,15 @@
 #   Unregister-ScheduledTask -TaskName "GABI - tareas diarias" -Confirm:$false
 #   Unregister-ScheduledTask -TaskName "GABI - Tiingo mensual" -Confirm:$false
 $repo = Split-Path -Parent $PSScriptRoot
-$python = Join-Path $repo ".venv\Scripts\python.exe"
+$python = Join-Path $repo "backend\.venv\Scripts\python.exe"
+# Las tareas ya instaladas con la antigua .venv conservan ese intérprete;
+# puede reinstalarse GABI editable allí sin volver a registrar tareas.
+if (-not (Test-Path -LiteralPath $python)) {
+    $python = Join-Path $repo ".venv\Scripts\python.exe"
+}
+if (-not (Test-Path -LiteralPath $python)) {
+    throw "Instala primero el backend: uv sync --project backend --locked --all-groups"
+}
 
 # De martes a sábado a las 23:30 (hora española), después del cierre de Nueva York:
 # refresca datos y registra los rebalanceos vencidos si los precios son del día.
