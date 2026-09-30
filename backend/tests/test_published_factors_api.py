@@ -5,8 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from gabi import config, evidence_catalog, factor_sector_stability, factor_sector_ui
-from gabi.application.research.published_factors import PublishedFactorQueries
+from gabi import config, evidence_catalog, factor_sector_stability
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi_api.bootstrap import create_app
@@ -65,7 +64,6 @@ def test_published_factors_match_streamlit_artifacts_and_are_cached(tmp_path, mo
         assert result["n_classified"] == sum(row["n_classified"] for row in sector["coverage"]
                                              if row["stratum"] == "all")
         assert len(result["coverage"]) == len(sector["coverage"])
-        assert PublishedFactorQueries(factor_sector_ui.LegacyPublishedFactorSource()).overview() == result
         assert client.get("/api/v1/research/published-factors").status_code == 200
         assert calls == 1  # Stamps only; no repeated full hashes on render.
         export = client.get("/api/v1/research/published-factors/exports/coverage.csv")

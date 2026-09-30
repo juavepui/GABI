@@ -238,13 +238,6 @@
     "scipy",
     "sqlite3"
   ],
-  "backend/src/gabi/factor_sector_ui.py": [
-    "gabi.evidence_catalog",
-    "gabi.factor_sector_stability",
-    "gabi.ui_helpers.METRIC_INFO",
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/factor_stability.py": [
     "gabi.academic_factors",
     "numpy",
@@ -1010,14 +1003,6 @@
     "gabi.research_lab",
     "gabi.stats_rigor",
     "gabi.tail_risk_ui",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/12_Factor_Lab.py": [
-    "gabi.factor_lab",
-    "gabi.factor_sector_ui",
     "pandas",
     "pathlib",
     "streamlit",

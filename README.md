@@ -1411,7 +1411,7 @@ FUTURO real a 1/3/6/12 meses de cada quintil — si el score funciona, se espera
 razonablemente monotónica (no necesariamente perfecta ni todos los periodos), no solo que una cesta
 concreta ganara al índice.
 
-**`backend/src/gabi/factor_lab.py`** (página 📐 Factor Lab) reutiliza tal cual la reconstrucción point-in-time
+**`backend/src/gabi/factor_lab.py`** (Factor Lab en Investigación, interfaz React) reutiliza tal cual la reconstrucción point-in-time
 ya existente (`universe.get_sp500_constituents_asof` + `screener_asof.build_ranking_as_of`, mismo
 contrato `mode="validation"`/`"fast_dev"` de `portfolio_backtest.py`) y el mismo patrón de sesión de
 entrada de `multifactor_backtest._period_returns` — el retorno futuro que mide **nunca lleva coste**

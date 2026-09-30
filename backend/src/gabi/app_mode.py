@@ -11,8 +11,8 @@ INVESTOR: navegación reducida a USAR la hipótesis congelada -- oportunidades
 calidad/confianza de los datos. Los pesos del score quedan bloqueados a la
 hipótesis congelada: no hay sliders que tocar por accidente.
 
-RESEARCH: acceso completo, incluida la experimentación (Ranking histórico en
-React, Research Lab, Factor Lab, Blind Forward Validation, Portfolio Lab). Calidad
+RESEARCH: acceso completo, incluida la experimentación (Ranking histórico y
+Factor Lab en React, Research Lab, Blind Forward Validation, Portfolio Lab). Calidad
 sigue permitiendo experimentar, pero cualquier desviación de los pesos
 congelados queda marcada EXPERIMENTAL de forma visible, nunca silenciosa."""
 import json

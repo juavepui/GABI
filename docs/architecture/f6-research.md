@@ -225,11 +225,24 @@ entrada de navegación y su excepción de arquitectura; los módulos que usaba
 siguen en uso por otras páginas o por los adaptadores legacy nuevos, y la
 historia publicada no se modifica.
 
+La página Streamlit `12_Factor_Lab.py` y su adaptador `factor_sector_ui.py`
+también se han retirado tras comprobar la equivalencia con la base local. El
+mapa Factor Zoo/SIC del verificador antiguo y el lector de React coincidieron en
+las 13 señales. `factor_lab.run_factor_analysis` directo (historial completo) y el
+job con el lector acotado coincidieron exactamente en resumen, series IC,
+quintiles, rotación, periodos saltados y medias por quintil, en `fast_dev` con 100
+empresas (2011-07 a 2013-07, 259 s frente a 261 s) y en `validation` con el
+universo completo (primer semestre de 2012, 346 s frente a 332 s), con `gabi.db`
+sin cambios y red bloqueada. La prueba de la API sigue comparando el mapa con las
+fuentes selladas (`evidence_catalog` y `factor_sector_stability.load_saved`). La
+evaluación de estimaciones no se comparó con datos locales: no hay capturas en el
+periodo observado y su paridad con la fórmula está probada con datos temporales.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
-| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
+| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 
