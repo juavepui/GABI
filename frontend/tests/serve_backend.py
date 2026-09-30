@@ -134,6 +134,14 @@ def synthetic_job(command, app):
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)
+    if command.kind == "prepare_history":
+        from gabi.application.research.preparation import preparation_result
+
+        limit = command.preparation.get("universe_limit") or 500
+        return preparation_result(command.start, command.end, command.preparation, {
+            "symbols": limit, "universe_note": "Composición registrada (fixture).", "universe_is_exact": True,
+            "edgar_refreshed": 2, "prices_deep_fetched": 1, "prices_already_covered": limit - 1,
+        }, {"T009": {"precio": "sin histórico en la fuente"}})
     if command.kind == "backtest_factors":
         from gabi.application.research.backtest_factors import build_factor_contrast
         from gabi.infrastructure.storage.jobs import SqliteJobs as Jobs

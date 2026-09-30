@@ -8,9 +8,10 @@ from typing import Literal, Protocol
 from gabi.application.errors import QueryError
 from gabi.application.research.backtest_factors import normalize_factor_contrast
 from gabi.application.research.backtests import normalize_backtest, normalize_registration
+from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
                   "backtest_factors"}
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
@@ -32,6 +33,7 @@ class JobCommand:
     backtest_options: dict | None = None
     research_log: dict | None = None
     factor_contrast: dict | None = None
+    preparation: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -65,6 +67,8 @@ class JobCommand:
         elif self.kind in {"backtest_v1", "backtest_v2"}:
             object.__setattr__(self, "backtest_options",
                                normalize_backtest(self.kind, self.start, self.end, self.backtest_options))
+        elif self.kind == "prepare_history":
+            object.__setattr__(self, "preparation", normalize_preparation(self.start, self.end, self.preparation))
         elif self.start is not None or self.end is not None:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
         if self.kind not in {"backtest_v1", "backtest_v2"} and self.backtest_options is not None:
@@ -77,6 +81,8 @@ class JobCommand:
             object.__setattr__(self, "factor_contrast", normalize_factor_contrast(self.factor_contrast))
         elif self.factor_contrast is not None:
             raise QueryError("invalid_job", "Este trabajo no admite contraste Fama-French.", 422)
+        if self.kind != "prepare_history" and self.preparation is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite preparación de datos.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
@@ -138,7 +144,8 @@ class Jobs:
             self._require_research()
         if job["kind"] in {"maintenance", "tiingo"}:
             raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
-        if job["kind"] in {"backtest", "historical_ranking", "factor_analysis", "backtest_v1", "backtest_v2"}:
+        if job["kind"] in {"backtest", "historical_ranking", "factor_analysis", "backtest_v1", "backtest_v2",
+                           "prepare_history"}:
             parameters = job["parameters"]
             if job["kind"] == "historical_ranking" and parameters.get("end") is not None:
                 raise QueryError("reserved_period", "Este resultado no corresponde a una sola fecha observada.", 403)

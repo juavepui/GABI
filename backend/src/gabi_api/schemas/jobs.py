@@ -43,8 +43,19 @@ class FactorContrastRequest(BaseModel):
     hac_lags: int | None = Field(default=None, ge=0, le=400)
 
 
+class PreparationRequest(BaseModel):
+    """Download what a reconstruction date or a backtest range needs; exact keys are checked later."""
+
+    model_config = {"extra": "forbid"}
+
+    scope: Literal["date", "backtest"]
+    universe_limit: Literal[15, 50] | None = None
+    months: Literal[1, 3, 6, 12] | None = None
+    max_symbols: Literal[50, 100, 200, 500] | None = None
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -59,6 +70,7 @@ class CreateJobRequest(BaseModel):
     backtest_options: BacktestOptions | None = None
     research_log: ResearchLogRequest | None = None
     factor_contrast: FactorContrastRequest | None = None
+    preparation: PreparationRequest | None = None
 
 
 class JobEvent(BaseModel):

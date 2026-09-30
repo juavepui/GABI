@@ -771,11 +771,12 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history';
     /**
      * Portfolio Id
      */
     portfolio_id?: number | null;
+    preparation?: PreparationRequest | null;
     research_log?: ResearchLogRequest | null;
     /**
      * Snapshot Id
@@ -2261,6 +2262,106 @@ export type PlanResponse = {
      * Target
      */
     target: Array<TargetPosition>;
+};
+
+/**
+ * PreparationFailure
+ */
+export type PreparationFailure = {
+    /**
+     * Etapa
+     */
+    etapa: 'edgar' | 'precio';
+    /**
+     * Motivo
+     */
+    motivo: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * PreparationRequest
+ *
+ * Download what a reconstruction date or a backtest range needs; exact keys are checked later.
+ */
+export type PreparationRequest = {
+    /**
+     * Max Symbols
+     */
+    max_symbols?: 50 | 100 | 200 | 500 | null;
+    /**
+     * Months
+     */
+    months?: 1 | 3 | 6 | 12 | null;
+    /**
+     * Scope
+     */
+    scope: 'date' | 'backtest';
+    /**
+     * Universe Limit
+     */
+    universe_limit?: 15 | 50 | null;
+};
+
+/**
+ * PreparationResult
+ */
+export type PreparationResult = {
+    /**
+     * Edgar Refreshed
+     */
+    edgar_refreshed: number | null;
+    /**
+     * End
+     */
+    end: string | null;
+    /**
+     * Failed Symbols
+     */
+    failed_symbols: number;
+    /**
+     * Failures
+     */
+    failures: Array<PreparationFailure>;
+    /**
+     * Failures Truncated
+     */
+    failures_truncated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Prices Already Covered
+     */
+    prices_already_covered: number | null;
+    /**
+     * Prices Deep Fetched
+     */
+    prices_deep_fetched: number | null;
+    /**
+     * Scope
+     */
+    scope: 'date' | 'backtest';
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Symbols
+     */
+    symbols: number;
+    /**
+     * Universe Is Exact
+     */
+    universe_is_exact: boolean;
+    /**
+     * Universe Note
+     */
+    universe_note: string | null;
 };
 
 /**
@@ -5833,6 +5934,56 @@ export type OverviewApiV1ResearchOverviewGetResponses = {
 };
 
 export type OverviewApiV1ResearchOverviewGetResponse = OverviewApiV1ResearchOverviewGetResponses[keyof OverviewApiV1ResearchOverviewGetResponses];
+
+export type PreparationApiV1ResearchPreparationsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/preparations/{job_id}';
+};
+
+export type PreparationApiV1ResearchPreparationsJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PreparationApiV1ResearchPreparationsJobIdGetError = PreparationApiV1ResearchPreparationsJobIdGetErrors[keyof PreparationApiV1ResearchPreparationsJobIdGetErrors];
+
+export type PreparationApiV1ResearchPreparationsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PreparationResult;
+};
+
+export type PreparationApiV1ResearchPreparationsJobIdGetResponse = PreparationApiV1ResearchPreparationsJobIdGetResponses[keyof PreparationApiV1ResearchPreparationsJobIdGetResponses];
 
 export type PublishedFactorsApiV1ResearchPublishedFactorsGetData = {
     body?: never;

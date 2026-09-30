@@ -108,3 +108,14 @@ test('backtest V1 se ejecuta como job Research y conserva el resultado completo'
     });
   }
 });
+
+test('preparar datos de una fecha es un job explícito que lista los fallos', async ({ page }) => {
+  await page.goto('/investigacion/historico');
+  const section = page.getByRole('region', { name: 'Preparar datos de la fecha' });
+  await section.getByLabel(/Empresas a preparar/).selectOption('50');
+  await section.getByRole('button', { name: 'Preparar datos que falten para esta fecha' }).click();
+  const result = section.getByRole('region', { name: 'Resultado de la preparación' });
+  await expect(result.getByText('Preparación terminada · 50 símbolos')).toBeVisible();
+  await result.getByText('Ver los 1 símbolos con algún fallo').click();
+  await expect(result.getByText('T009 · precio · sin histórico en la fuente')).toBeVisible();
+});

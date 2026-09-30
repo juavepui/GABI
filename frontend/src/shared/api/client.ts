@@ -48,6 +48,7 @@ import type {
   BacktestPreview,
   BacktestDiagnosticsResponse,
   BacktestFactorsPreview,
+  PreparationResult,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -139,6 +140,9 @@ export function getBacktestFactors(
   signal?: AbortSignal,
 ): Promise<BacktestFactorsPreview> {
   return get('/api/v1/research/backtest-factors/' + encodeURIComponent(id), signal);
+}
+export function getPreparation(id: string, signal?: AbortSignal): Promise<PreparationResult> {
+  return get('/api/v1/research/preparations/' + encodeURIComponent(id), signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

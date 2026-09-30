@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BacktestPanel } from './backtest-panel';
+import { PrepareData } from './prepare-data';
 
 const number = (value: number | null | undefined) =>
   value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);
@@ -13,6 +14,7 @@ const number = (value: number | null | undefined) =>
 export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
   const [asOf, setAsOf] = useState('2019-01-02');
+  const [prepareLimit, setPrepareLimit] = useState<15 | 50 | null>(15);
   const [jobId, setJobId] = useState<string | null>(null);
   const start = useMutation({
     mutationFn: () =>
@@ -76,6 +78,33 @@ export function HistoricalPage() {
           Calcular ranking
         </Button>
       </form>
+      <section
+        className="space-y-3 rounded-xl border bg-card p-5"
+        aria-label="Preparar datos de la fecha"
+      >
+        <label className="text-xs font-medium">
+          Empresas a preparar para {asOf}
+          <select
+            className="mt-1.5 block h-10 rounded-md border bg-background px-2 text-sm"
+            value={prepareLimit ?? 'all'}
+            onChange={(event) =>
+              setPrepareLimit(
+                event.target.value === 'all' ? null : (Number(event.target.value) as 15 | 50),
+              )
+            }
+          >
+            <option value={15}>Prueba rápida (15 empresas)</option>
+            <option value={50}>Medio (50 empresas)</option>
+            <option value="all">Completo</option>
+          </select>
+        </label>
+        <PrepareData
+          label="Preparar datos que falten para esta fecha"
+          start={asOf}
+          end={null}
+          preparation={{ scope: 'date', universe_limit: prepareLimit }}
+        />
+      </section>
       {start.isError && <ErrorState error={start.error} retry={() => start.mutate()} />}
       {job.isError && <ErrorState error={job.error} retry={() => void job.refetch()} />}
       {job.data && (

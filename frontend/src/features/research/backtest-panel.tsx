@@ -8,6 +8,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BacktestDiagnostics } from './backtest-diagnostics';
 import { BacktestFactors } from './backtest-factors';
 import { BacktestRegister } from './backtest-register';
+import { PrepareData } from './prepare-data';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
@@ -309,6 +310,16 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
           Ejecutar backtest
         </Button>
       </form>
+      <PrepareData
+        label="Preparar datos de todos los rebalanceos"
+        start={start}
+        end={end}
+        preparation={{
+          scope: 'backtest',
+          months,
+          max_symbols: engine === 'backtest_v1' ? universe : mode === 'fast_dev' ? sample : null,
+        }}
+      />
       {run.isError && <ErrorState error={run.error} retry={() => run.mutate()} />}
       {job.isError && <ErrorState error={job.error} retry={() => void job.refetch()} />}
       {job.data && (

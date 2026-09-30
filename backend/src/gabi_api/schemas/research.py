@@ -325,6 +325,28 @@ class BacktestFactorsPreview(BaseModel):
     result_sha256: str
 
 
+class PreparationFailure(BaseModel):
+    symbol: str
+    etapa: Literal["edgar", "precio"]
+    motivo: str
+
+
+class PreparationResult(BaseModel):
+    job_id: str
+    start: str
+    end: str | None
+    scope: Literal["date", "backtest"]
+    symbols: int
+    universe_note: str | None
+    universe_is_exact: bool
+    edgar_refreshed: int | None
+    prices_deep_fetched: int | None
+    prices_already_covered: int | None
+    failed_symbols: int
+    failures: list[PreparationFailure]
+    failures_truncated: bool
+
+
 class FactorSummaryRow(BaseModel):
     factor: str
     horizonte: int

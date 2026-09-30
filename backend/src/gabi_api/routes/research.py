@@ -23,6 +23,7 @@ from gabi_api.schemas.research import (
     EstimateCaptureStatus,
     FactorPreview,
     HistoricalPreview,
+    PreparationResult,
     PublishedFactors,
     ResearchOverview,
     SearchTrials,
@@ -162,6 +163,15 @@ def backtest_factors(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], qu
     if job["kind"] != "backtest_factors":
         raise QueryError("job_not_found", "El contraste Fama-French no existe.", 404)
     return queue.result(job_id) | {"job_id": job_id, "result_sha256": job["result_sha256"]}
+
+
+@router.get("/preparations/{job_id}", response_model=PreparationResult)
+def preparation(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job = queue.get(job_id)
+    if job["kind"] != "prepare_history":
+        raise QueryError("job_not_found", "La preparación de datos no existe.", 404)
+    result = queue.result(job_id)
+    return result | {"job_id": job_id, "scope": result["options"]["scope"]}
 
 
 @router.get("/factors/{job_id}", response_model=FactorPreview)
