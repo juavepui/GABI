@@ -7,6 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { PublishedFactorMap } from './published-factor-map';
 import { EstimateCaptures } from './estimate-captures';
+import { FactorGlossary, FactorQuantiles, SkippedPeriods } from './factor-details';
 
 const format = (value: number | null | undefined, digits = 3) =>
   value == null
@@ -69,6 +70,7 @@ export function FactorPage() {
           500.
         </p>
       </header>
+      <FactorGlossary />
       <PublishedFactorMap />
       <EstimateCaptures researchAllowed={model.data?.mode === 'RESEARCH'} />
       {model.data?.mode === 'INVESTOR' && (
@@ -198,6 +200,7 @@ export function FactorPage() {
             {' · '}
             {preview.data.skipped_count} periodos saltados.
           </p>
+          <SkippedPeriods skipped={preview.data.skipped} />
           <label className="mt-4 flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -238,6 +241,7 @@ export function FactorPage() {
               </table>
             </div>
           )}
+          <FactorQuantiles preview={preview.data} neutral={neutral} />
           {preview.data.turnover.length > 0 && (
             <div className="mt-7">
               <h3 className="font-semibold">Rotación media por quintil</h3>

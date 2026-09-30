@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.errors import QueryError
-from gabi.application.research.factors import build_factor_analysis
+from gabi.application.research.factors import build_factor_analysis, quantile_means
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.factor_prices import SqliteFactorPrices
@@ -89,6 +89,9 @@ def test_factor_job_publishes_original_metrics_with_hash_and_no_reserved_read(tm
         assert result["status"] == "RETROSPECTIVE_EXPLORATORY"
         assert result["independent_advantage_demonstrated"] is False
         assert result["skipped_count"] == 1
+        assert result["skipped"] == [{"fecha": "2019-04-02", "motivo": "sin cobertura"}]
+        assert result["quantile_means"] == [{"factor": "value_score", "horizonte": 3, "quantil": 5,
+                                             "retorno_medio": 0.04, "retorno_medio_neutral": None}]
         full = api.get(f"/api/v1/jobs/{job_id}/result").json()
         assert full["ic_series"][0]["ic_raw"] == 0.12
         assert full["quantile_returns"][0]["retorno_medio"] == 0.04
@@ -126,3 +129,25 @@ def test_factor_job_requires_research_mode_on_submit_and_result(tmp_path):
     with TestClient(create_app(Settings(tmp_path))) as api:
         assert api.get(f"/api/v1/jobs/{job_id}/result").status_code == 403
         assert api.get(f"/api/v1/research/factors/{job_id}").status_code == 403
+
+
+def test_quantile_means_match_streamlit_quintile_chart():
+    rows = pd.DataFrame([
+        {"fecha": f"2019-{month:02d}-02", "factor": factor, "horizonte": horizon, "quantil": quantile,
+         "retorno_medio": 0.01 * quantile + 0.003 * month - 0.002 * horizon,
+         "retorno_medio_neutral": float("nan") if month == 1 else 0.001 * quantile * month}
+        for month in range(1, 5) for factor in ("value_score", "quality_score")
+        for horizon in (1, 3) for quantile in range(1, 6)
+    ])
+    artifact = build_factor_analysis("2019-01-02", "2020-01-02", 3, "fast_dev", 50, lambda *_, **__: {
+        "summary": pd.DataFrame(), "ic_series": pd.DataFrame(), "quantile_returns": rows,
+        "turnover": pd.DataFrame(), "skipped": []})
+    means = {(row["factor"], row["horizonte"], row["quantil"]): row
+             for row in quantile_means(artifact["quantile_returns"])}
+    assert len(means) == 2 * 2 * 5
+    for (factor, horizon), _ in rows.groupby(["factor", "horizonte"]):
+        q_view = rows[(rows["factor"] == factor) & (rows["horizonte"] == horizon)]
+        for column in ("retorno_medio", "retorno_medio_neutral"):
+            for quantile, value in q_view.groupby("quantil")[column].mean().items():
+                assert means[(factor, horizon, quantile)][column] == value
+    assert quantile_means([]) == []

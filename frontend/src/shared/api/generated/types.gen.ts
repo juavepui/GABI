@@ -774,9 +774,17 @@ export type FactorPreview = {
      */
     months: number;
     /**
+     * Quantile Means
+     */
+    quantile_means: Array<FactorQuantileMean>;
+    /**
      * Result Sha256
      */
     result_sha256: string;
+    /**
+     * Skipped
+     */
+    skipped: Array<FactorSkippedPeriod>;
     /**
      * Skipped Count
      */
@@ -797,6 +805,46 @@ export type FactorPreview = {
      * Turnover
      */
     turnover: Array<FactorTurnoverRow>;
+};
+
+/**
+ * FactorQuantileMean
+ */
+export type FactorQuantileMean = {
+    /**
+     * Factor
+     */
+    factor: string;
+    /**
+     * Horizonte
+     */
+    horizonte: number;
+    /**
+     * Quantil
+     */
+    quantil: number;
+    /**
+     * Retorno Medio
+     */
+    retorno_medio?: number | null;
+    /**
+     * Retorno Medio Neutral
+     */
+    retorno_medio_neutral?: number | null;
+};
+
+/**
+ * FactorSkippedPeriod
+ */
+export type FactorSkippedPeriod = {
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Motivo
+     */
+    motivo: string;
 };
 
 /**

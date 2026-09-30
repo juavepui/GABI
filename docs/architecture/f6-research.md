@@ -76,6 +76,13 @@ Una captura con hora se normaliza al día para el calendario bursátil, conserva
 su `captured_at` real. La comparación con la fórmula heredada y la ausencia de
 escrituras del nuevo lector se prueban con datos temporales. Streamlit ya no
 ejecuta esa evaluación automáticamente al renderizar; remite al job de React.
+El resumen del job incluye además el retorno medio por quintil de cada factor y
+horizonte, bruto y sector-neutral, y la lista de periodos saltados con su motivo.
+El backend agrega las filas `quantile_returns` del artefacto con la misma media
+por quintil que el gráfico de Streamlit (una prueba compara ambos valores
+exactos); React solo elige factor/horizonte y formatea porcentajes. El decay del
+IC se lee en la tabla por horizonte y la rotación se muestra por quintil en vez
+de su media por factor; los valores de origen son los mismos del artefacto.
 El mapa Factor Zoo publicado y el diagnóstico SIC fechado se consultan ahora
 también en React. La API verifica los preregistros, el manifiesto, los siete
 resultados publicados, el código congelado del suplemento y sus cinco CSV antes
@@ -117,7 +124,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
-| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Comprobar paridad de las restantes vistas. |
+| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 

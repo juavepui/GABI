@@ -148,6 +148,19 @@ class FactorTurnoverRow(BaseModel):
     turnover: float | None = None
 
 
+class FactorQuantileMean(BaseModel):
+    factor: str
+    horizonte: int
+    quantil: int
+    retorno_medio: float | None = None
+    retorno_medio_neutral: float | None = None
+
+
+class FactorSkippedPeriod(BaseModel):
+    fecha: str
+    motivo: str
+
+
 class FactorPreview(BaseModel):
     job_id: str
     start: str
@@ -159,6 +172,8 @@ class FactorPreview(BaseModel):
     independent_advantage_demonstrated: bool
     summary: list[FactorSummaryRow]
     turnover: list[FactorTurnoverRow]
+    quantile_means: list[FactorQuantileMean]
+    skipped: list[FactorSkippedPeriod]
     skipped_count: int
     result_sha256: str
 

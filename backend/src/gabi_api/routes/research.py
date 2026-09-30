@@ -10,6 +10,7 @@ from gabi.application.errors import QueryError
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.factors import quantile_means
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi_api.schemas.research import (
     BlindStatuses,
@@ -141,5 +142,7 @@ def factor_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queu
         "max_symbols": result["max_symbols"], "status": result["status"],
         "independent_advantage_demonstrated": result["independent_advantage_demonstrated"],
         "summary": result["summary"], "turnover": result["turnover"],
-        "skipped_count": len(result["skipped"]), "result_sha256": job["result_sha256"],
+        "quantile_means": quantile_means(result["quantile_returns"]),
+        "skipped": result["skipped"], "skipped_count": len(result["skipped"]),
+        "result_sha256": job["result_sha256"],
     }

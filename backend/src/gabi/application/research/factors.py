@@ -30,3 +30,17 @@ def build_factor_analysis(start: str, end: str, months: int, mode: str,
         **tables,
         "skipped": _json_value(result["skipped"]),
     }
+
+
+def quantile_means(rows: list[dict]) -> list[dict]:
+    """Average each quintile over rebalances, as Factor Lab's quintile chart does."""
+    columns = ["factor", "horizonte", "quantil", "retorno_medio", "retorno_medio_neutral"]
+    if not rows:
+        return []
+    table = pd.DataFrame(rows).reindex(columns=columns)
+    for column in ("retorno_medio", "retorno_medio_neutral"):
+        table[column] = pd.to_numeric(table[column], errors="coerce")
+    means = table.groupby(["factor", "horizonte", "quantil"], sort=True)[
+        ["retorno_medio", "retorno_medio_neutral"]].mean().reset_index()
+    return [{str(key): _json_value(value) for key, value in row.items()}
+            for row in means.to_dict(orient="records")]

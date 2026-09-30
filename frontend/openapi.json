@@ -1354,9 +1354,23 @@
             "title": "Months",
             "type": "integer"
           },
+          "quantile_means": {
+            "items": {
+              "$ref": "#/components/schemas/FactorQuantileMean"
+            },
+            "title": "Quantile Means",
+            "type": "array"
+          },
           "result_sha256": {
             "title": "Result Sha256",
             "type": "string"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/FactorSkippedPeriod"
+            },
+            "title": "Skipped",
+            "type": "array"
           },
           "skipped_count": {
             "title": "Skipped Count",
@@ -1396,10 +1410,75 @@
           "independent_advantage_demonstrated",
           "summary",
           "turnover",
+          "quantile_means",
+          "skipped",
           "skipped_count",
           "result_sha256"
         ],
         "title": "FactorPreview",
+        "type": "object"
+      },
+      "FactorQuantileMean": {
+        "properties": {
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "horizonte": {
+            "title": "Horizonte",
+            "type": "integer"
+          },
+          "quantil": {
+            "title": "Quantil",
+            "type": "integer"
+          },
+          "retorno_medio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retorno Medio"
+          },
+          "retorno_medio_neutral": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retorno Medio Neutral"
+          }
+        },
+        "required": [
+          "factor",
+          "horizonte",
+          "quantil"
+        ],
+        "title": "FactorQuantileMean",
+        "type": "object"
+      },
+      "FactorSkippedPeriod": {
+        "properties": {
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fecha",
+          "motivo"
+        ],
+        "title": "FactorSkippedPeriod",
         "type": "object"
       },
       "FactorSummaryRow": {

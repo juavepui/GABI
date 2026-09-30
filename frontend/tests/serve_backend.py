@@ -84,9 +84,13 @@ def synthetic_job(command, app):
                              "ic_mean": 0.12, "ic_std": 0.02, "icir": 6.0,
                              "pct_ic_positive": 0.75, "q_spread": 0.03, "n_periods": 4}],
                 "ic_series": [{"fecha": "2019-01-02", "ic_raw": 0.12}],
-                "quantile_returns": [{"quantil": 5, "retorno_medio": 0.04}],
+                "quantile_returns": [
+                    {"fecha": fecha, "factor": "value_score", "horizonte": 3, "quantil": quantil,
+                     "retorno_medio": retorno, "retorno_medio_neutral": None}
+                    for fecha, quantil, retorno in (("2019-01-02", 1, 0.01), ("2019-04-02", 1, 0.03),
+                                                    ("2019-01-02", 5, 0.04), ("2019-04-02", 5, 0.06))],
                 "turnover": [{"factor": "value_score", "quantil": 5, "turnover": 0.2}],
-                "skipped": []}
+                "skipped": [{"fecha": "2019-07-02", "motivo": "cobertura insuficiente del universo (10/50)"}]}
     if command.kind == "historical_ranking":
         return {"as_of": command.start, "status": "RETROSPECTIVE_EXPLORATORY",
                 "independent_advantage_demonstrated": False,
