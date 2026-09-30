@@ -13,6 +13,7 @@ from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi_api.schemas.research import (
     BlindStatuses,
+    EstimateAnalysisPreview,
     EstimateCaptureStatus,
     FactorPreview,
     HistoricalPreview,
@@ -67,6 +68,21 @@ def blind_validations(query: Blind) -> dict:
 @router.get("/estimate-captures", response_model=EstimateCaptureStatus)
 def estimate_captures(query: Estimates) -> dict:
     return query.status()
+
+
+@router.get("/estimate-analysis/{job_id}", response_model=EstimateAnalysisPreview)
+def estimate_analysis_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job = queue.get(job_id)
+    if job["kind"] != "estimate_analysis":
+        raise QueryError("job_not_found", "El análisis de estimaciones no existe.", 404)
+    result = queue.result(job_id)
+    return {"job_id": job_id, "status": result["status"], "observed_cutoff": result["observed_cutoff"],
+            "period": result["period"], "horizons_months": result["horizons_months"],
+            "batches_available": result["batches_available"], "batches_needed": result["batches_needed"],
+            "span_days": result["span_days"], "span_days_needed": result["span_days_needed"],
+            "reason": result["reason"], "summary": result["summary"],
+            "independent_advantage_demonstrated": result["independent_advantage_demonstrated"],
+            "result_sha256": job["result_sha256"]}
 
 
 @router.get("/overview", response_model=ResearchOverview)

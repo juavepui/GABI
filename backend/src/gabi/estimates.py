@@ -242,6 +242,20 @@ def _capture_batches(period: str) -> pd.DataFrame:
         )
 
 
+def _snapshot_rows(period: str, captures: list[str]) -> pd.DataFrame:
+    with storage.get_connection() as conn:
+        conn.executescript(SCHEMA)
+        return pd.read_sql_query(
+            "SELECT symbol, captured_at, revised_up_30d, revised_down_30d FROM estimate_snapshots "
+            "WHERE period=? AND captured_at IN ({})".format(",".join("?" * len(captures))),
+            conn, params=[period, *captures],
+        )
+
+
+def _legacy_prices(symbols: list[str], first: str, last: str) -> dict:
+    return storage.get_prices_multi(symbols)
+
+
 MIN_BATCHES = 6
 MIN_SPAN_DAYS = 60
 MIN_SYMBOLS_PER_BATCH = 20
@@ -250,6 +264,7 @@ MIN_SYMBOLS_PER_BATCH = 20
 def evaluate_estimate_revision_signal(
     period: str = "0q", horizons_months=(1, 3), n_quantiles: int = 5,
     min_batches: int = MIN_BATCHES, min_span_days: int = MIN_SPAN_DAYS,
+    *, cutoff: date | None = None, batch_loader=None, snapshot_loader=None, price_loader=None,
 ) -> dict:
     """Rank IC cross-seccional de `net_revision_30d` (revisiones al alza
     menos a la baja en los últimos 30 días, tal cual las da Yahoo en el
@@ -260,7 +275,9 @@ def evaluate_estimate_revision_signal(
     Devuelve {"status": "insufficient_data", ...} si todavía no hay
     suficientes capturas separadas en el tiempo -- el estado esperado
     mientras el archivo propio de GABI es joven, no un fallo."""
-    batches = _capture_batches(period)
+    cutoff = cutoff or date.today()
+    batches = (batch_loader or _capture_batches)(period)
+    batches = batches[batches["captured_at"].str[:10] <= cutoff.isoformat()]
     usable = batches[batches["n_symbols"] >= MIN_SYMBOLS_PER_BATCH]
     span_days = 0
     if len(usable) >= 2:
@@ -276,13 +293,7 @@ def evaluate_estimate_revision_signal(
             ),
         }
 
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        raw = pd.read_sql_query(
-            "SELECT symbol, captured_at, revised_up_30d, revised_down_30d FROM estimate_snapshots "
-            "WHERE period=? AND captured_at IN ({})".format(",".join("?" * len(usable))),
-            conn, params=[period] + usable["captured_at"].tolist(),
-        )
+    raw = (snapshot_loader or _snapshot_rows)(period, usable["captured_at"].tolist())
     raw["net_revision_30d"] = raw["revised_up_30d"] - raw["revised_down_30d"]
     raw = raw[raw["net_revision_30d"].notna()]
 
@@ -290,11 +301,12 @@ def evaluate_estimate_revision_signal(
     for captured_at, group in raw.groupby("captured_at"):
         if len(group) < n_quantiles * 4:
             continue
-        as_of_ts = pd.Timestamp(captured_at).tz_localize(None)
-        if as_of_ts > pd.Timestamp(date.today()):
+        # Captures have a real wall-clock time; the exchange calendar expects a session date.
+        as_of_ts = pd.Timestamp(captured_at).tz_localize(None).normalize()
+        if as_of_ts > pd.Timestamp(cutoff):
             continue
-        histories = storage.get_prices_multi(group["symbol"].tolist())
         calendar = None
+        sessions = []
         for horizon in horizons_months:
             try:
                 import exchange_calendars as xcals
@@ -302,8 +314,15 @@ def evaluate_estimate_revision_signal(
                 entry, exit_session = factor_lab._entry_exit_sessions(calendar, as_of_ts, horizon)
             except Exception:
                 continue
-            if exit_session > pd.Timestamp(date.today()):
+            if exit_session > pd.Timestamp(cutoff):
                 continue
+            sessions.append((horizon, entry, exit_session))
+        if not sessions:
+            continue
+        first = min(entry for _, entry, _ in sessions).date().isoformat()
+        last = max(exit_session for _, _, exit_session in sessions).date().isoformat()
+        histories = (price_loader or _legacy_prices)(group["symbol"].tolist(), first, last)
+        for horizon, entry, exit_session in sessions:
             fwd = factor_lab._forward_returns(histories, group["symbol"], entry, exit_session)
             if len(fwd) < n_quantiles * 4:
                 continue

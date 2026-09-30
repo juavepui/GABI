@@ -227,7 +227,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis';
     /**
      * Portfolio Id
      */
@@ -583,6 +583,94 @@ export type ErrorResponse = {
      * Status
      */
     status?: string;
+};
+
+/**
+ * EstimateAnalysisPreview
+ */
+export type EstimateAnalysisPreview = {
+    /**
+     * Batches Available
+     */
+    batches_available: number;
+    /**
+     * Batches Needed
+     */
+    batches_needed: number;
+    /**
+     * Horizons Months
+     */
+    horizons_months: Array<number>;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Observed Cutoff
+     */
+    observed_cutoff: string;
+    /**
+     * Period
+     */
+    period: '0q';
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Span Days
+     */
+    span_days: number;
+    /**
+     * Span Days Needed
+     */
+    span_days_needed: number;
+    /**
+     * Status
+     */
+    status: 'insufficient_data' | 'ok';
+    /**
+     * Summary
+     */
+    summary: Array<EstimateAnalysisRow>;
+};
+
+/**
+ * EstimateAnalysisRow
+ */
+export type EstimateAnalysisRow = {
+    /**
+     * Horizonte
+     */
+    horizonte: number;
+    /**
+     * Ic Mean
+     */
+    ic_mean: number | null;
+    /**
+     * Ic Std
+     */
+    ic_std: number | null;
+    /**
+     * Icir
+     */
+    icir: number | null;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * Pct Ic Positive
+     */
+    pct_ic_positive: number | null;
 };
 
 /**
@@ -4306,6 +4394,56 @@ export type BlindValidationsApiV1ResearchBlindValidationsGetResponses = {
 };
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetResponse = BlindValidationsApiV1ResearchBlindValidationsGetResponses[keyof BlindValidationsApiV1ResearchBlindValidationsGetResponses];
+
+export type EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/estimate-analysis/{job_id}';
+};
+
+export type EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetError = EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetErrors[keyof EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetErrors];
+
+export type EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: EstimateAnalysisPreview;
+};
+
+export type EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetResponse = EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetResponses[keyof EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetResponses];
 
 export type EstimateCapturesApiV1ResearchEstimateCapturesGetData = {
     body?: never;

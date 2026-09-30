@@ -105,6 +105,31 @@ class EstimateCaptureStatus(BaseModel):
     independent_advantage_demonstrated: bool
 
 
+class EstimateAnalysisRow(BaseModel):
+    horizonte: int
+    ic_mean: float | None
+    ic_std: float | None
+    icir: float | None
+    pct_ic_positive: float | None
+    n_periods: int
+
+
+class EstimateAnalysisPreview(BaseModel):
+    job_id: str
+    status: Literal["insufficient_data", "ok"]
+    observed_cutoff: str
+    period: Literal["0q"]
+    horizons_months: list[int]
+    batches_available: int
+    batches_needed: int
+    span_days: int
+    span_days_needed: int
+    reason: str | None
+    summary: list[EstimateAnalysisRow]
+    independent_advantage_demonstrated: bool
+    result_sha256: str
+
+
 class FactorSummaryRow(BaseModel):
     factor: str
     horizonte: int

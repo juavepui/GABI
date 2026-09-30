@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend" / "src"))
 import pandas as pd
 import streamlit as st
 
-from gabi import estimates, factor_lab, factor_sector_ui
+from gabi import factor_lab, factor_sector_ui
 
 st.title("📐 Factor Lab")
 st.caption(
@@ -133,19 +133,5 @@ st.caption(
     "sincronizó estimaciones de verdad (🔍 Ficha de empresa → \"Estimaciones de consenso\"). No entra "
     "en el Composite Score bajo ningún concepto sin un experimento registrado en 🔬 Research Lab."
 )
-estimates_result = estimates.evaluate_estimate_revision_signal()
-if estimates_result["status"] == "insufficient_data":
-    st.info(
-        f"ℹ️ Todavía sin datos suficientes ({estimates_result['batches_available']}/"
-        f"{estimates_result['batches_needed']} capturas, {estimates_result['span_days']}/"
-        f"{estimates_result['span_days_needed']} días de margen). {estimates_result['reason']}"
-    )
-else:
-    st.dataframe(
-        estimates_result["summary"], hide_index=True, width="stretch",
-        column_config={col: st.column_config.NumberColumn(format="%.3f")
-                      for col in estimates_result["summary"].columns if col != "horizonte"},
-    )
-    st.caption(f"Basado en {estimates_result['batches_available']} capturas reales a lo largo de "
-              f"{estimates_result['span_days']} días -- 'net_revision_30d' = revisiones al alza menos "
-              "a la baja en los últimos 30 días, tal cual las da Yahoo en el momento de cada captura.")
+st.info("La evaluación de revisiones se ejecuta como trabajo explícito desde Factor Lab en React. "
+        "Allí se muestran las capturas disponibles y se limita el cálculo al periodo observado.")

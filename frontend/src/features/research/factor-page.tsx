@@ -70,7 +70,7 @@ export function FactorPage() {
         </p>
       </header>
       <PublishedFactorMap />
-      <EstimateCaptures />
+      <EstimateCaptures researchAllowed={model.data?.mode === 'RESEARCH'} />
       {model.data?.mode === 'INVESTOR' && (
         <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
           Para ejecutar Factor Lab, activa el modo Research en{' '}

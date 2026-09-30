@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
-from gabi.application.research.reservations import require_factor_period, require_observed_period
+from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis"]
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -95,7 +95,7 @@ class Jobs:
             raise QueryError("research_required", "Factor Lab requiere el modo Research local.", 403)
 
     def submit(self, command: JobCommand, key: str, *, origin: str = "ui") -> dict:
-        if command.kind == "factor_analysis":
+        if command.kind in {"factor_analysis", "estimate_analysis"}:
             self._require_research()
         if origin == "ui" and command.kind in {"maintenance", "tiingo"}:
             raise QueryError("forbidden_job", "Este trabajo pertenece al programador local.", 403)
@@ -114,7 +114,7 @@ class Jobs:
 
     def result(self, job_id: str) -> dict:
         job = self.repository.get(job_id)
-        if job["kind"] == "factor_analysis":
+        if job["kind"] in {"factor_analysis", "estimate_analysis"}:
             self._require_research()
         if job["kind"] in {"maintenance", "tiingo"}:
             raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
@@ -126,4 +126,10 @@ class Jobs:
                 require_factor_period(parameters.get("start"), parameters.get("end"))
             else:
                 require_observed_period(parameters.get("start"), parameters.get("end"))
-        return self.repository.result(job_id)
+        result = self.repository.result(job_id)
+        if job["kind"] == "estimate_analysis" and (
+                result.get("kind") != "estimate_analysis" or
+                result.get("observed_cutoff") != OBSERVED_END.isoformat() or
+                result.get("horizons_months") != [1, 3]):
+            raise QueryError("reserved_period", "El resultado de estimaciones no respeta el corte observado.", 403)
+        return result

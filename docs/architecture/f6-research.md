@@ -64,9 +64,18 @@ ahora también en React. SQLite se abre en modo de solo lectura y una agregació
 devuelve solo recuentos y primeras/últimas fechas de lotes con al menos 20
 símbolos; no carga filas de símbolos ni inicializa el esquema. Se muestran los
 umbrales heredados de 6 capturas y 60 días, pero la consulta nunca calcula IC
-o retornos y no afirma ventaja independiente. El cálculo experimental heredado
-sigue en Streamlit y necesita una acción explícita con corte observado antes de
-migrarse.
+o retornos y no afirma ventaja independiente. La evaluación se inicia ahora solo
+con el job `estimate_analysis` en modo Research. Reutiliza el cálculo Rank IC
+heredado con lectores inyectados de solo lectura: como máximo 64 capturas de
+1.000 símbolos y 300.000 filas de precios por ventana, entre 2010-01-01 y el
+corte observado 2025-07-02. Los horizontes son 1 y 3 meses; las sesiones de
+salida posteriores al corte se omiten antes de leer precios. El artefacto
+íntegro se publica con hash y el backend vuelve a comprobar su corte antes de
+entregarlo. No hay caché de cálculo: repetir el experimento requiere otro job.
+Una captura con hora se normaliza al día para el calendario bursátil, conservando
+su `captured_at` real. La comparación con la fórmula heredada y la ausencia de
+escrituras del nuevo lector se prueban con datos temporales. Streamlit ya no
+ejecuta esa evaluación automáticamente al renderizar; remite al job de React.
 El mapa Factor Zoo publicado y el diagnóstico SIC fechado se consultan ahora
 también en React. La API verifica los preregistros, el manifiesto, los siete
 resultados publicados, el código congelado del suplemento y sus cinco CSV antes
@@ -108,7 +117,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
-| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; mapa publicado, diagnóstico SIC y cobertura de estimaciones en React | Migrar la evaluación explícita y acotada de estimaciones; comprobar paridad de las restantes vistas. |
+| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Comprobar paridad de las restantes vistas. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 

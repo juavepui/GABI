@@ -438,7 +438,8 @@
               "decision_plan",
               "filing_check",
               "historical_ranking",
-              "factor_analysis"
+              "factor_analysis",
+              "estimate_analysis"
             ],
             "title": "Kind",
             "type": "string"
@@ -1053,6 +1054,163 @@
           "error"
         ],
         "title": "ErrorResponse",
+        "type": "object"
+      },
+      "EstimateAnalysisPreview": {
+        "properties": {
+          "batches_available": {
+            "title": "Batches Available",
+            "type": "integer"
+          },
+          "batches_needed": {
+            "title": "Batches Needed",
+            "type": "integer"
+          },
+          "horizons_months": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Horizons Months",
+            "type": "array"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "observed_cutoff": {
+            "title": "Observed Cutoff",
+            "type": "string"
+          },
+          "period": {
+            "const": "0q",
+            "title": "Period",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "span_days": {
+            "title": "Span Days",
+            "type": "integer"
+          },
+          "span_days_needed": {
+            "title": "Span Days Needed",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "insufficient_data",
+              "ok"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "items": {
+              "$ref": "#/components/schemas/EstimateAnalysisRow"
+            },
+            "title": "Summary",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "observed_cutoff",
+          "period",
+          "horizons_months",
+          "batches_available",
+          "batches_needed",
+          "span_days",
+          "span_days_needed",
+          "reason",
+          "summary",
+          "independent_advantage_demonstrated",
+          "result_sha256"
+        ],
+        "title": "EstimateAnalysisPreview",
+        "type": "object"
+      },
+      "EstimateAnalysisRow": {
+        "properties": {
+          "horizonte": {
+            "title": "Horizonte",
+            "type": "integer"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "ic_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Std"
+          },
+          "icir": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icir"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "pct_ic_positive": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Ic Positive"
+          }
+        },
+        "required": [
+          "horizonte",
+          "ic_mean",
+          "ic_std",
+          "icir",
+          "pct_ic_positive",
+          "n_periods"
+        ],
+        "title": "EstimateAnalysisRow",
         "type": "object"
       },
       "EstimateCaptureStatus": {
@@ -8084,6 +8242,99 @@
           }
         },
         "summary": "Blind Validations",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/estimate-analysis/{job_id}": {
+      "get": {
+        "operationId": "estimate_analysis_preview_api_v1_research_estimate_analysis__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimateAnalysisPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Estimate Analysis Preview",
         "tags": [
           "research"
         ]

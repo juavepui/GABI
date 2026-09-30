@@ -100,6 +100,11 @@ class LegacyExecutor:
                                          command.factor_mode, command.factor_max_symbols,
                                          lambda start, end, **options: run_factors(
                                              start, end, data_dir=self.settings.data_dir, **options))
+        if command.kind == "estimate_analysis":
+            from gabi.application.research.estimate_analysis import build_estimate_analysis
+            from gabi.infrastructure.legacy.estimates import run_estimate_analysis
+
+            return build_estimate_analysis(lambda cutoff: run_estimate_analysis(self.settings.data_dir, cutoff))
         if command.kind == "symbols":
             from gabi import screener
 

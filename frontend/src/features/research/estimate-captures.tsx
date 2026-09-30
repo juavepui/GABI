@@ -1,12 +1,39 @@
-import { useQuery } from '@tanstack/react-query';
-import { getEstimateCaptures } from '@/shared/api/client';
+import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  cancelJob,
+  createJob,
+  getEstimateAnalysisPreview,
+  getEstimateCaptures,
+  getJob,
+} from '@/shared/api/client';
+import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 
-export function EstimateCaptures() {
+export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean }) {
+  const [jobId, setJobId] = useState<string | null>(null);
   const query = useQuery({
     queryKey: ['research', 'estimate-captures'],
     queryFn: ({ signal }) => getEstimateCaptures(signal),
   });
+  const start = useMutation({
+    mutationFn: () =>
+      createJob({ kind: 'estimate_analysis', idempotency_key: 'estimates:' + crypto.randomUUID() }),
+    onSuccess: (job) => setJobId(job.id),
+  });
+  const job = useQuery({
+    queryKey: ['job', jobId],
+    queryFn: ({ signal }) => getJob(jobId!, signal),
+    enabled: jobId != null,
+    refetchInterval: (result) =>
+      ['queued', 'running'].includes(result.state.data?.status ?? '') ? 2000 : false,
+  });
+  const preview = useQuery({
+    queryKey: ['research', 'estimate-analysis', jobId],
+    queryFn: ({ signal }) => getEstimateAnalysisPreview(jobId!, signal),
+    enabled: job.data?.status === 'succeeded',
+  });
+  const cancel = useMutation({ mutationFn: () => cancelJob(jobId!) });
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
   const data = query.data;
@@ -32,6 +59,87 @@ export function EstimateCaptures() {
           : 'Aún falta profundidad para plantear el experimento.'}{' '}
         Ninguna ventaja frente al S&amp;P 500 queda demostrada por estas capturas.
       </p>
+      <Button
+        className="mt-4"
+        type="button"
+        disabled={!researchAllowed || start.isPending}
+        onClick={() => {
+          setJobId(null);
+          start.mutate();
+        }}
+      >
+        Evaluar revisiones hasta julio de 2025
+      </Button>
+      {!researchAllowed && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Activa el modo Research para ejecutar el análisis.
+        </p>
+      )}
+      {start.isError && <ErrorState error={start.error} retry={() => start.mutate()} />}
+      {job.isError && <ErrorState error={job.error} retry={() => void job.refetch()} />}
+      {job.data && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Trabajo {job.data.id.slice(0, 8)} · {job.data.phase} · {job.data.progress} % ·{' '}
+          {job.data.status}
+        </p>
+      )}
+      {job.data && ['queued', 'running'].includes(job.data.status) && (
+        <Button
+          className="mt-2"
+          type="button"
+          variant="outline"
+          disabled={cancel.isPending}
+          onClick={() => cancel.mutate()}
+        >
+          Solicitar cancelación
+        </Button>
+      )}
+      {job.data?.status === 'failed' && (
+        <p className="mt-2 text-sm text-destructive">No se pudo completar el análisis local.</p>
+      )}
+      {preview.isPending && job.data?.status === 'succeeded' && <LoadingState />}
+      {preview.isError && <ErrorState error={preview.error} retry={() => void preview.refetch()} />}
+      {preview.data && (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm">
+            {preview.data.status === 'insufficient_data'
+              ? preview.data.reason
+              : `Rank IC retrospectivo calculado con ${preview.data.batches_available} capturas observadas.`}
+          </p>
+          {preview.data.summary.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th>Horizonte</th>
+                    <th>IC medio</th>
+                    <th>Periodos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.data.summary.map((row) => (
+                    <tr className="border-b" key={row.horizonte}>
+                      <td>{row.horizonte} meses</td>
+                      <td>{row.ic_mean == null ? '—' : row.ic_mean.toFixed(3)}</td>
+                      <td>{row.n_periods}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <a
+            className="text-sm text-primary underline"
+            href={`/api/v1/jobs/${preview.data.job_id}/result`}
+            download={`gabi-estimaciones-${preview.data.job_id}.json`}
+          >
+            Descargar serie y resumen íntegros
+          </a>
+          <p className="break-all text-xs text-muted-foreground">
+            SHA-256: {preview.data.result_sha256}
+          </p>
+        </div>
+      )}
     </section>
   );
 }

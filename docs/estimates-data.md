@@ -36,6 +36,13 @@ momento de cada captura) contra el retorno futuro real — pero solo sobre
 capturas devuelve `status="insufficient_data"`: es el estado correcto
 mientras el archivo propio de GABI sea joven, no un fallo.
 
+En la interfaz React, este cálculo se lanza con un job explícito en modo
+Research. El job solo considera capturas reales entre 2010-01-01 y el corte
+observado 2025-07-02, y solo lee precios hasta ese corte. Si las capturas
+disponibles son posteriores, devuelve datos insuficientes; no reconstruye ni
+abre retrospectivamente un consenso que Yahoo nunca publicó. La vista de
+Streamlit ya no calcula el IC al abrirse.
+
 Esta issue queda **aparcada en la práctica** hasta que se acumulen
 suficientes capturas separadas en el tiempo (por defecto: al menos 6
 capturas con 20+ símbolos cada una, repartidas en 60+ días). No se ha
