@@ -100,8 +100,13 @@ export function getResearchTrials(
   if (family) params.set('family', family);
   return get('/api/v1/research/trials?' + params.toString(), signal);
 }
-export function getHistoricalPreview(id: string, signal?: AbortSignal): Promise<HistoricalPreview> {
-  return get('/api/v1/research/historical/' + encodeURIComponent(id), signal);
+export function getHistoricalPreview(
+  id: string,
+  coverageThreshold: number,
+  signal?: AbortSignal,
+): Promise<HistoricalPreview> {
+  const query = new URLSearchParams({ coverage_threshold: String(coverageThreshold) });
+  return get('/api/v1/research/historical/' + encodeURIComponent(id) + '?' + query, signal);
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);
@@ -127,9 +132,13 @@ export function getBacktestPreview(id: string, signal?: AbortSignal): Promise<Ba
 export function getBacktestDiagnostics(
   id: string,
   taxCapital: number,
+  coverageThreshold: number,
   signal?: AbortSignal,
 ): Promise<BacktestDiagnosticsResponse> {
-  const query = new URLSearchParams({ tax_capital: String(taxCapital) });
+  const query = new URLSearchParams({
+    tax_capital: String(taxCapital),
+    coverage_threshold: String(coverageThreshold),
+  });
   return get(
     '/api/v1/research/backtests/' + encodeURIComponent(id) + '/diagnostics?' + query,
     signal,

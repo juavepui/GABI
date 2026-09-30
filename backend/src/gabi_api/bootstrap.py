@@ -26,10 +26,12 @@ from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.filings import compare_cached
+from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
 from gabi.infrastructure.legacy.signals import compare_snapshots
@@ -100,6 +102,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today)
     estimate_queries = EstimateQueries(SqliteEstimateCaptures(settings.data_dir))
     backtest_diagnostics = BacktestDiagnostics(jobs, LegacyBacktestMath())
+    historical_queries = HistoricalQueries(jobs, LegacyRankingQuality())
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -129,6 +132,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.blind_validations = blind_validations
     app.state.estimate_queries = estimate_queries
     app.state.backtest_diagnostics = backtest_diagnostics
+    app.state.historical_queries = historical_queries
     app.state.settings = settings
     app.state.model_commands = model_commands
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],

@@ -19,6 +19,7 @@ class BacktestMath(Protocol):
     def tax_drag(self, periods: pd.DataFrame, initial_capital: float) -> dict: ...
     def zero_turnover(self, periods: pd.DataFrame, return_column: str) -> pd.DataFrame: ...
     def tax_limitations(self) -> list[str]: ...
+    def ranking_warnings(self, quality: dict, threshold: float) -> list[str]: ...
 
 
 def _tail(summary: dict) -> dict:
@@ -68,10 +69,20 @@ class BacktestDiagnostics:
         series = self._series(SERIES_V2, lambda column: self.math.returns_from_nav(curve[column].dropna()), horizon)
         return {"horizon": horizon, "series": series, "message": None}
 
-    def diagnostics(self, job_id: str, tax_capital: float) -> dict:
+    def _quality(self, artifact: dict, threshold: float) -> list[dict]:
+        rows = []
+        for fecha, quality in sorted((artifact.get("data_quality") or {}).items()):
+            messages = self.math.ranking_warnings(quality, threshold)
+            if messages:
+                rows.append({"fecha": fecha, "messages": messages})
+        return rows
+
+    def diagnostics(self, job_id: str, tax_capital: float, threshold: float = 0.7) -> dict:
         job = self.jobs.get(job_id)
         if job["kind"] not in {"backtest_v1", "backtest_v2"}:
             raise QueryError("job_not_found", "El backtest no existe.", 404)
+        if not 0 <= threshold <= 1:
+            raise QueryError("invalid_query", "El umbral de cobertura debe estar entre 0 y 1.", 422)
         if not 1_000 <= tax_capital <= 100_000_000:
             raise QueryError("invalid_query", "El capital de la simulación fiscal no es válido.", 422)
         artifact = self.jobs.result(job_id)  # Research mode, reserved dates and SHA-256 are checked here.
@@ -80,7 +91,8 @@ class BacktestDiagnostics:
             curve = pd.DataFrame(artifact["curve"])
             curve.index = pd.to_datetime(curve.pop("fecha"))
             return {"job_id": job_id, "kind": job["kind"], "tail": self._tail_v2(curve.astype(float)),
-                    "tax": None, "result_sha256": job["result_sha256"]}
+                    "tax": None, "quality_threshold": threshold,
+                    "quality_warnings": self._quality(artifact, threshold), "result_sha256": job["result_sha256"]}
         tax = None
         try:
             tax = {"capital": tax_capital,
@@ -92,4 +104,5 @@ class BacktestDiagnostics:
             tax = {"capital": tax_capital, "strategy": None, "spy_buy_and_hold": None,
                    "limitations": self.math.tax_limitations(), "error": str(exc)}
         return {"job_id": job_id, "kind": job["kind"], "tail": self._tail_v1(periods), "tax": tax,
+                "quality_threshold": threshold, "quality_warnings": self._quality(artifact, threshold),
                 "result_sha256": job["result_sha256"]}

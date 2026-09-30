@@ -24,6 +24,15 @@ V2 = {"months": 3, "top_n": 20, "mode": "fast_dev", "max_symbols": 200, "initial
       "commission_usd": 1, "spread_bps": 10, "rotation_hurdle_points": 0}
 
 
+QUALITY = {
+    "2019-01-02": {"blocks": {"value": {"complete": 0.4, "any": 0.9, "none": 0.1, "n_metrics": 4},
+                              "quality": {"complete": 0.9, "any": 1.0, "none": 0.0, "n_metrics": 5}},
+                   "sector_degraded": 0.5, "identity_unresolved": 0.1},
+    "2019-04-02": {"blocks": {"value": {"complete": 0.95, "any": 1.0, "none": 0.0, "n_metrics": 4}},
+                   "sector_degraded": 0.0, "identity_unresolved": 0.0},
+}
+
+
 def _v1_result(*_args, **_kwargs):
     periods = pd.DataFrame([
         {"fecha": "2019-01-02", "hasta": "2019-04-02", "candidatas": "AAA, BBB",
@@ -39,7 +48,7 @@ def _v1_result(*_args, **_kwargs):
     metrics = {"anualizado": 0.1, "vol_anualizada": 0.2, "sharpe": 0.3, "sortino": float("nan"),
                "max_drawdown": -0.02}
     return {"periods": periods, "skipped": [{"fecha": "2019-07-02", "motivo": "sin cobertura"}],
-            "data_quality": {"2019-01-02": {"n": 50}}, "rotation_hurdle_points": 0.0,
+            "data_quality": QUALITY, "rotation_hurdle_points": 0.0,
             "turnover_medio": 50.0, "return": 0.029, "spy_return": 0.0403, "universo_ew_return": 0.04,
             "drawdown": -0.02, "metrics": {"estrategia": metrics, "universo_ew": metrics, "spy": metrics}}
 
@@ -135,7 +144,7 @@ def test_v1_job_publishes_complete_artifact_and_typed_preview(tmp_path):
                                      "universo_ew": pytest.approx(1.04), "spy": pytest.approx(1.0403)}
         assert data["skipped"] == [{"fecha": "2019-07-02", "motivo": "sin cobertura"}]
         full = api.get(f"/api/v1/jobs/{job_id}/result").json()
-        assert full["data_quality"] == {"2019-01-02": {"n": 50}}
+        assert full["data_quality"] == QUALITY
         assert full["periods"][1]["capital"] == pytest.approx(1.029)
         assert data["result_sha256"] == SqliteJobs(tmp_path).get(job_id)["result_sha256"]
         assert api.get(f"/api/v1/research/factors/{job_id}").status_code == 404
@@ -343,6 +352,13 @@ def test_v1_diagnostics_match_streamlit_tail_and_tax(tmp_path):
             assert got[field] == expected[field]
         assert got["tax_by_year"] == [{"year": year} | row for year, row in expected["tax_by_year"].items()]
     assert data["tax"]["limitations"] == tax_drag.LIMITATIONS
+    from gabi import data_quality
+
+    assert data["quality_threshold"] == 0.7
+    assert data["quality_warnings"] == [
+        {"fecha": fecha, "messages": data_quality.ranking_quality_warnings(quality, 0.7)}
+        for fecha, quality in QUALITY.items() if data_quality.ranking_quality_warnings(quality, 0.7)]
+    assert [row["fecha"] for row in data["quality_warnings"]] == ["2019-01-02"]
 
 
 def test_v1_tail_refuses_mixed_durations_and_v2_uses_daily_nav(tmp_path):

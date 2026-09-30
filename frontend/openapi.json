@@ -63,6 +63,17 @@
             "title": "Kind",
             "type": "string"
           },
+          "quality_threshold": {
+            "title": "Quality Threshold",
+            "type": "number"
+          },
+          "quality_warnings": {
+            "items": {
+              "$ref": "#/components/schemas/PeriodQualityWarning"
+            },
+            "title": "Quality Warnings",
+            "type": "array"
+          },
           "result_sha256": {
             "title": "Result Sha256",
             "type": "string"
@@ -86,6 +97,8 @@
           "kind",
           "tail",
           "tax",
+          "quality_threshold",
+          "quality_warnings",
           "result_sha256"
         ],
         "title": "BacktestDiagnosticsResponse",
@@ -3219,11 +3232,131 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HistoricalCoverage": {
+        "properties": {
+          "historical_coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoricalCoverageLayer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "identity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoricalIdentity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_sector": {
+            "title": "No Sector",
+            "type": "integer"
+          },
+          "sector_approximate": {
+            "title": "Sector Approximate",
+            "type": "integer"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "with_fundamentals": {
+            "title": "With Fundamentals",
+            "type": "integer"
+          },
+          "with_price": {
+            "title": "With Price",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "threshold",
+          "historical_coverage",
+          "identity",
+          "with_fundamentals",
+          "with_price",
+          "sector_approximate",
+          "no_sector",
+          "warnings"
+        ],
+        "title": "HistoricalCoverage",
+        "type": "object"
+      },
+      "HistoricalCoverageLayer": {
+        "properties": {
+          "accredited_prices": {
+            "title": "Accredited Prices",
+            "type": "integer"
+          },
+          "excluded": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Excluded",
+            "type": "object"
+          },
+          "identity_accredited": {
+            "title": "Identity Accredited",
+            "type": "integer"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "members",
+          "identity_accredited",
+          "accredited_prices",
+          "scored",
+          "excluded"
+        ],
+        "title": "HistoricalCoverageLayer",
+        "type": "object"
+      },
+      "HistoricalIdentity": {
+        "properties": {
+          "ambiguous": {
+            "title": "Ambiguous",
+            "type": "integer"
+          },
+          "unresolved": {
+            "title": "Unresolved",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ambiguous",
+          "unresolved"
+        ],
+        "title": "HistoricalIdentity",
+        "type": "object"
+      },
       "HistoricalPreview": {
         "properties": {
           "as_of": {
             "title": "As Of",
             "type": "string"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/HistoricalCoverage"
           },
           "independent_advantage_demonstrated": {
             "title": "Independent Advantage Demonstrated",
@@ -3271,6 +3404,7 @@
           "total",
           "shown",
           "rows",
+          "coverage",
           "result_sha256"
         ],
         "title": "HistoricalPreview",
@@ -4327,6 +4461,27 @@
           "blind_validation_id"
         ],
         "title": "ModelResponse",
+        "type": "object"
+      },
+      "PeriodQualityWarning": {
+        "properties": {
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "fecha",
+          "messages"
+        ],
+        "title": "PeriodQualityWarning",
         "type": "object"
       },
       "PlanRequest": {
@@ -10789,6 +10944,18 @@
               "title": "Tax Capital",
               "type": "number"
             }
+          },
+          {
+            "in": "query",
+            "name": "coverage_threshold",
+            "required": false,
+            "schema": {
+              "default": 0.7,
+              "maximum": 1,
+              "minimum": 0,
+              "title": "Coverage Threshold",
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -11229,6 +11396,18 @@
               "pattern": "^[a-f0-9]{32}$",
               "title": "Job Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "coverage_threshold",
+            "required": false,
+            "schema": {
+              "default": 0.7,
+              "maximum": 1,
+              "minimum": 0,
+              "title": "Coverage Threshold",
+              "type": "number"
             }
           }
         ],

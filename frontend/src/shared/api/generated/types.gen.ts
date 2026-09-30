@@ -39,6 +39,14 @@ export type BacktestDiagnosticsResponse = {
      */
     kind: 'backtest_v1' | 'backtest_v2';
     /**
+     * Quality Threshold
+     */
+    quality_threshold: number;
+    /**
+     * Quality Warnings
+     */
+    quality_warnings: Array<PeriodQualityWarning>;
+    /**
      * Result Sha256
      */
     result_sha256: string;
@@ -1652,6 +1660,80 @@ export type HealthResponse = {
 };
 
 /**
+ * HistoricalCoverage
+ */
+export type HistoricalCoverage = {
+    historical_coverage: HistoricalCoverageLayer | null;
+    identity: HistoricalIdentity | null;
+    /**
+     * No Sector
+     */
+    no_sector: number;
+    /**
+     * Sector Approximate
+     */
+    sector_approximate: number;
+    /**
+     * Threshold
+     */
+    threshold: number;
+    /**
+     * Warnings
+     */
+    warnings: Array<string>;
+    /**
+     * With Fundamentals
+     */
+    with_fundamentals: number;
+    /**
+     * With Price
+     */
+    with_price: number;
+};
+
+/**
+ * HistoricalCoverageLayer
+ */
+export type HistoricalCoverageLayer = {
+    /**
+     * Accredited Prices
+     */
+    accredited_prices: number;
+    /**
+     * Excluded
+     */
+    excluded: {
+        [key: string]: number;
+    };
+    /**
+     * Identity Accredited
+     */
+    identity_accredited: number;
+    /**
+     * Members
+     */
+    members: number;
+    /**
+     * Scored
+     */
+    scored: number;
+};
+
+/**
+ * HistoricalIdentity
+ */
+export type HistoricalIdentity = {
+    /**
+     * Ambiguous
+     */
+    ambiguous: number;
+    /**
+     * Unresolved
+     */
+    unresolved: number;
+};
+
+/**
  * HistoricalPreview
  */
 export type HistoricalPreview = {
@@ -1659,6 +1741,7 @@ export type HistoricalPreview = {
      * As Of
      */
     as_of: string;
+    coverage: HistoricalCoverage;
     /**
      * Independent Advantage Demonstrated
      */
@@ -2189,6 +2272,20 @@ export type ModelResponse = {
      * Weights Unit
      */
     weights_unit?: 'fraction';
+};
+
+/**
+ * PeriodQualityWarning
+ */
+export type PeriodQualityWarning = {
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Messages
+     */
+    messages: Array<string>;
 };
 
 /**
@@ -5608,6 +5705,10 @@ export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetData = {
          * Tax Capital
          */
         tax_capital?: number;
+        /**
+         * Coverage Threshold
+         */
+        coverage_threshold?: number;
     };
     url: '/api/v1/research/backtests/{job_id}/diagnostics';
 };
@@ -5848,7 +5949,12 @@ export type HistoricalPreviewApiV1ResearchHistoricalJobIdGetData = {
          */
         job_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Coverage Threshold
+         */
+        coverage_threshold?: number;
+    };
     url: '/api/v1/research/historical/{job_id}';
 };
 

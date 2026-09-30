@@ -56,6 +56,30 @@ class HistoricalRow(BaseModel):
     price: float | None = None
 
 
+class HistoricalCoverageLayer(BaseModel):
+    members: int
+    identity_accredited: int
+    accredited_prices: int
+    scored: int
+    excluded: dict[str, int]
+
+
+class HistoricalIdentity(BaseModel):
+    ambiguous: int
+    unresolved: int
+
+
+class HistoricalCoverage(BaseModel):
+    threshold: float
+    historical_coverage: HistoricalCoverageLayer | None
+    identity: HistoricalIdentity | None
+    with_fundamentals: int
+    with_price: int
+    sector_approximate: int
+    no_sector: int
+    warnings: list[str]
+
+
 class HistoricalPreview(BaseModel):
     job_id: str
     as_of: str
@@ -65,6 +89,7 @@ class HistoricalPreview(BaseModel):
     total: int
     shown: int
     rows: list[HistoricalRow]
+    coverage: HistoricalCoverage
     result_sha256: str
 
 
@@ -193,11 +218,18 @@ class BacktestTax(BaseModel):
     error: str | None
 
 
+class PeriodQualityWarning(BaseModel):
+    fecha: str
+    messages: list[str]
+
+
 class BacktestDiagnosticsResponse(BaseModel):
     job_id: str
     kind: Literal["backtest_v1", "backtest_v2"]
     tail: BacktestTail
     tax: BacktestTax | None
+    quality_threshold: float
+    quality_warnings: list[PeriodQualityWarning]
     result_sha256: str
 
 

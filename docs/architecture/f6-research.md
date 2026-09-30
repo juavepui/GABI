@@ -80,6 +80,15 @@ empresas del universo de esa fecha con `edgar.ensure_edgar_data(..., as_of)` y
 25 más SPY, igual que la página antigua. Es la única acción de estas pantallas
 que usa la red y escribe en la base; las fechas se limitan al periodo observado
 y el resultado lista hasta 1.000 fallos por símbolo y etapa.
+La vista del ranking histórico calcula ahora en el backend la misma cobertura que
+Streamlit sobre todas las filas del artefacto, no solo las 100 mostradas: capa
+histórica 2010-2015 y sus exclusiones, identidades ambiguas o sin acreditar,
+recuentos de fundamentales, precio y sector, y los avisos de sector y de bloques
+del score con `data_quality.score_block_coverage`/`block_coverage_warnings` y el
+umbral de cobertura (70 % por defecto, como el control lateral antiguo). Los
+diagnósticos de V1/V2 añaden los avisos por rebalanceo de
+`ranking_quality_warnings` sobre la calidad guardada en el artefacto. Las
+pruebas comparan los textos con las expresiones de la página antigua.
 El job exploratorio `backtest` que ya existía en Administración también queda
 limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
@@ -179,7 +188,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Avisos de cobertura, tabla completa de métricas y resultado posterior de candidatas y bloques. |
+| Ranking histórico | Ranking por fecha, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Tabla completa de métricas y resultado posterior de candidatas y bloques. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

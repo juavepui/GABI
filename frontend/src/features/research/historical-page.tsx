@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BacktestPanel } from './backtest-panel';
+import { CoverageThreshold, HistoricalCoverageNotes } from './coverage-notes';
 import { PrepareData } from './prepare-data';
 
 const number = (value: number | null | undefined) =>
@@ -15,6 +16,7 @@ export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
   const [asOf, setAsOf] = useState('2019-01-02');
   const [prepareLimit, setPrepareLimit] = useState<15 | 50 | null>(15);
+  const [threshold, setThreshold] = useState(0.7);
   const [jobId, setJobId] = useState<string | null>(null);
   const start = useMutation({
     mutationFn: () =>
@@ -33,8 +35,9 @@ export function HistoricalPage() {
       ['queued', 'running'].includes(query.state.data?.status ?? '') ? 2000 : false,
   });
   const preview = useQuery({
-    queryKey: ['research', 'historical', jobId],
-    queryFn: ({ signal }) => getHistoricalPreview(jobId!, signal),
+    queryKey: ['research', 'historical', jobId, threshold],
+    queryFn: ({ signal }) => getHistoricalPreview(jobId!, threshold, signal),
+    placeholderData: (previous) => previous,
     enabled: job.data?.status === 'succeeded',
   });
   const cancel = useMutation({ mutationFn: () => cancelJob(jobId!) });
@@ -140,6 +143,10 @@ export function HistoricalPage() {
             orden original. Identidad y sector aproximados permanecen visibles; el JSON completo se
             conserva con hash {preview.data.result_sha256.slice(0, 12)}…
           </p>
+          <div className="mt-4 space-y-3">
+            <CoverageThreshold value={threshold} onChange={setThreshold} />
+            <HistoricalCoverageNotes coverage={preview.data.coverage} total={preview.data.total} />
+          </div>
           <a
             className="mt-3 inline-block text-sm text-primary underline"
             href={'/api/v1/jobs/' + preview.data.job_id + '/result'}

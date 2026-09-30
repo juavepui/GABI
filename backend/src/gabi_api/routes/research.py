@@ -13,6 +13,7 @@ from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.factors import quantile_means
+from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi_api.schemas.research import (
     BacktestDiagnosticsResponse,
@@ -51,6 +52,13 @@ def diagnostics_service(request: Request) -> BacktestDiagnostics:
 
 
 Diagnostics = Annotated[BacktestDiagnostics, Depends(diagnostics_service)]
+
+
+def historical_service(request: Request) -> HistoricalQueries:
+    return request.app.state.historical_queries
+
+
+HistoricalRanking = Annotated[HistoricalQueries, Depends(historical_service)]
 
 
 def blind_service(request: Request) -> BlindValidationQueries:
@@ -124,23 +132,9 @@ def trials(catalog: Catalog, offset: Annotated[int, Query(ge=0, le=10_000)] = 0,
 
 
 @router.get("/historical/{job_id}", response_model=HistoricalPreview)
-def historical_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
-    job = queue.get(job_id)
-    if job["kind"] != "historical_ranking":
-        raise QueryError("job_not_found", "El ranking histórico no existe.", 404)
-    result = queue.result(job_id)
-    rows = result["rows"][:100]
-    return {
-        "job_id": job_id,
-        "as_of": result["as_of"],
-        "status": result["status"],
-        "independent_advantage_demonstrated": result["independent_advantage_demonstrated"],
-        "universe_info": result["universe_info"],
-        "total": result["total"],
-        "shown": len(rows),
-        "rows": rows,
-        "result_sha256": job["result_sha256"],
-    }
+def historical_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], query: HistoricalRanking,
+                       coverage_threshold: Annotated[float, Query(ge=0, le=1)] = 0.7) -> dict:
+    return query.preview(job_id, coverage_threshold)
 
 
 @router.get("/backtests/{job_id}", response_model=BacktestPreview)
@@ -153,8 +147,9 @@ def backtest_result(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], que
 
 @router.get("/backtests/{job_id}/diagnostics", response_model=BacktestDiagnosticsResponse)
 def backtest_diagnostics(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], query: Diagnostics,
-                         tax_capital: Annotated[float, Query(ge=1_000, le=100_000_000)] = 100_000.0) -> dict:
-    return query.diagnostics(job_id, tax_capital)
+                         tax_capital: Annotated[float, Query(ge=1_000, le=100_000_000)] = 100_000.0,
+                         coverage_threshold: Annotated[float, Query(ge=0, le=1)] = 0.7) -> dict:
+    return query.diagnostics(job_id, tax_capital, coverage_threshold)
 
 
 @router.get("/backtest-factors/{job_id}", response_model=BacktestFactorsPreview)

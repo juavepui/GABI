@@ -4,6 +4,7 @@ import { getBacktestDiagnostics } from '@/shared/api/client';
 import type { TailSeries, TaxDrag } from '@/shared/api/generated/types.gen';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { CoverageThreshold, WarningText } from './coverage-notes';
 
 const pct = (value: number | null | undefined, digits = 2) =>
   value == null
@@ -62,9 +63,11 @@ function TaxColumn({ label, tax }: { label: string; tax: TaxDrag }) {
 export function BacktestDiagnostics({ jobId, v1 }: { jobId: string; v1: boolean }) {
   const [capital, setCapital] = useState(100000);
   const [applied, setApplied] = useState(100000);
+  const [threshold, setThreshold] = useState(0.7);
   const query = useQuery({
-    queryKey: ['research', 'backtest-diagnostics', jobId, applied],
-    queryFn: ({ signal }) => getBacktestDiagnostics(jobId, applied, signal),
+    queryKey: ['research', 'backtest-diagnostics', jobId, applied, threshold],
+    queryFn: ({ signal }) => getBacktestDiagnostics(jobId, applied, threshold, signal),
+    placeholderData: (previous) => previous,
   });
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
@@ -72,6 +75,38 @@ export function BacktestDiagnostics({ jobId, v1 }: { jobId: string; v1: boolean 
   const tail = data.tail;
   return (
     <div className="space-y-3">
+      <div
+        className="rounded-lg border p-4 text-sm"
+        role="region"
+        aria-label="Calidad de datos por periodo"
+      >
+        <p className="text-xs text-muted-foreground">
+          Limitaciones estructurales de datos históricos: sector aproximado y cobertura SEC
+          incompleta. Se avisa de cada rebalanceo cuya cobertura queda por debajo del umbral.
+        </p>
+        <div className="mt-2">
+          <CoverageThreshold value={threshold} onChange={setThreshold} />
+        </div>
+        {data.quality_warnings.length === 0 ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Ningún rebalanceo por debajo del umbral.
+          </p>
+        ) : (
+          <ul className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-400">
+            {data.quality_warnings.map((row) => (
+              <li key={row.fecha}>
+                {row.fecha}:{' '}
+                {row.messages.map((message, index) => (
+                  <span key={index}>
+                    {index > 0 && ' · '}
+                    <WarningText text={message} />
+                  </span>
+                ))}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <details className="rounded-lg border p-4 text-sm">
         <summary className="cursor-pointer font-medium">
           Riesgo de cola · {v1 ? 'retornos por rebalanceo' : 'retornos diarios'}

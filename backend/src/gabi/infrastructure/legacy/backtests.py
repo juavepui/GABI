@@ -105,6 +105,12 @@ class LegacyBacktestMath:
         return tax_drag.zero_turnover_periods(periods, return_column)
 
     @staticmethod
+    def ranking_warnings(quality: dict, threshold: float) -> list[str]:
+        from gabi import data_quality
+
+        return data_quality.ranking_quality_warnings(quality, threshold)
+
+    @staticmethod
     def tax_limitations() -> list[str]:
         from gabi import tax_drag
 

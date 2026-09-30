@@ -19,6 +19,11 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
   await expect(page.getByRole('heading', { name: 'Ranking a 2019-01-02' })).toBeVisible();
   await expect(page.getByRole('row', { name: /T000/ })).toContainText('72,5');
   await expect(page.getByRole('row', { name: /T001/ })).toContainText('unresolved');
+  const coverage = page.getByRole('region', { name: 'Cobertura de la reconstrucción' });
+  await expect(
+    coverage.getByText(/1\/2 empresas sin identidad histórica acreditada/),
+  ).toBeVisible();
+  await expect(coverage.getByText('Cobertura de datos degradada', { exact: false })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Descargar resultado completo' })).toBeVisible();
 });
 
@@ -86,6 +91,7 @@ test('backtest V1 se ejecuta como job Research y conserva el resultado completo'
     await result.getByText('1 periodo(s) saltado(s)').click();
     await expect(result.getByText('2019-07-02: cobertura insuficiente')).toBeVisible();
     await expect(result.getByRole('link', { name: /Descargar backtest completo/ })).toBeVisible();
+    await expect(result.getByText('Ningún rebalanceo por debajo del umbral.')).toBeVisible();
     await result.getByText(/^Riesgo de cola/).click();
     await expect(
       result.getByText('Horizonte: 3 meses (rebalanceo V1).', { exact: false }),
