@@ -1,6 +1,6 @@
 """Loopback test API. No real configuration, credentials, database or network sources."""
-import json
 import hashlib
+import json
 import sqlite3
 import sys
 import threading
@@ -10,8 +10,8 @@ from tempfile import TemporaryDirectory, gettempdir
 
 import uvicorn
 
-from gabi.infrastructure.jobs.worker import Worker
 from gabi.domain.research.blind import canonical_payload
+from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
