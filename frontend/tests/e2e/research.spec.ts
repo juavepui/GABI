@@ -86,6 +86,18 @@ test('backtest V1 se ejecuta como job Research y conserva el resultado completo'
     await result.getByText('1 periodo(s) saltado(s)').click();
     await expect(result.getByText('2019-07-02: cobertura insuficiente')).toBeVisible();
     await expect(result.getByRole('link', { name: /Descargar backtest completo/ })).toBeVisible();
+    await result.getByText(/^Riesgo de cola/).click();
+    await expect(
+      result.getByText('Horizonte: 3 meses (rebalanceo V1).', { exact: false }),
+    ).toBeVisible();
+    await result.getByText(/^Drag fiscal español/).click();
+    await expect(result.getByText('SPY comprado y mantenido')).toBeVisible();
+    await result.getByText(/^Contraste con factores académicos/).click();
+    await result.getByRole('button', { name: 'Calcular contraste' }).click();
+    const contrast = result.getByRole('region', { name: 'Contraste Fama-French' });
+    await expect(contrast.getByText('t-stat del alfa (HAC)')).toBeVisible();
+    await expect(contrast.getByRole('row', { name: /^Mkt-RF/ })).toContainText('1,02');
+    await expect(contrast.getByText(/fixture sin trimestres suficientes/).first()).toBeVisible();
     await result.getByText('Registrar este experimento en Research Lab').click();
     await result.getByLabel('Familia (agrupa intentos comparables)').fill('mf-v1');
     await result.getByRole('button', { name: 'Registrar en Research Lab' }).click();

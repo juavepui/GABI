@@ -27,6 +27,26 @@ export type BacktestCurvePoint = {
 };
 
 /**
+ * BacktestDiagnosticsResponse
+ */
+export type BacktestDiagnosticsResponse = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Kind
+     */
+    kind: 'backtest_v1' | 'backtest_v2';
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    tail: BacktestTail;
+    tax: BacktestTax | null;
+};
+
+/**
  * BacktestExitEvent
  */
 export type BacktestExitEvent = {
@@ -46,6 +66,56 @@ export type BacktestExitEvent = {
      * Symbol
      */
     symbol: string;
+};
+
+/**
+ * BacktestFactorsPreview
+ */
+export type BacktestFactorsPreview = {
+    benchmark: FactorBenchmark | null;
+    /**
+     * Benchmark Error
+     */
+    benchmark_error: string | null;
+    factors_source: FactorsSource;
+    /**
+     * Hac Lags Requested
+     */
+    hac_lags_requested: number | null;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    regression: FactorRegression | null;
+    /**
+     * Regression Error
+     */
+    regression_error: string | null;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Source Job Id
+     */
+    source_job_id: string;
+    /**
+     * Source Result Sha256
+     */
+    source_result_sha256: string;
+    stability: FactorStability | null;
+    /**
+     * Stability Error
+     */
+    stability_error: string | null;
+    /**
+     * Status
+     */
+    status: string;
 };
 
 /**
@@ -335,6 +405,148 @@ export type BacktestSeriesMetrics = {
 };
 
 /**
+ * BacktestTail
+ */
+export type BacktestTail = {
+    /**
+     * Horizon
+     */
+    horizon: string | null;
+    /**
+     * Message
+     */
+    message: string | null;
+    /**
+     * Series
+     */
+    series: Array<TailSeries>;
+};
+
+/**
+ * BacktestTax
+ */
+export type BacktestTax = {
+    /**
+     * Capital
+     */
+    capital: number;
+    /**
+     * Error
+     */
+    error: string | null;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    spy_buy_and_hold: TaxDrag | null;
+    strategy: TaxDrag | null;
+};
+
+/**
+ * BenchmarkActive
+ */
+export type BenchmarkActive = {
+    /**
+     * Cagr Difference
+     */
+    cagr_difference: number | null;
+    /**
+     * Mean Active Per Quarter
+     */
+    mean_active_per_quarter: number | null;
+    /**
+     * Relative Wealth Return
+     */
+    relative_wealth_return: number | null;
+};
+
+/**
+ * BenchmarkComparison
+ */
+export type BenchmarkComparison = {
+    /**
+     * Active
+     */
+    active?: {
+        [key: string]: BenchmarkActive;
+    };
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Metrics
+     */
+    metrics?: {
+        [key: string]: BenchmarkMetrics;
+    };
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Periods
+     */
+    periods?: Array<BenchmarkPeriod>;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status?: string | null;
+};
+
+/**
+ * BenchmarkMethod
+ */
+export type BenchmarkMethod = {
+    /**
+     * Embargo Quarters
+     */
+    embargo_quarters: number;
+    /**
+     * Min Train
+     */
+    min_train: number;
+};
+
+/**
+ * BenchmarkMetrics
+ */
+export type BenchmarkMetrics = {
+    /**
+     * Cagr
+     */
+    cagr: number | null;
+    /**
+     * Total Return
+     */
+    total_return: number | null;
+};
+
+/**
+ * BenchmarkPeriod
+ */
+export type BenchmarkPeriod = {
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Hasta
+     */
+    hasta: string;
+    /**
+     * Wealth
+     */
+    wealth: {
+        [key: string]: number | null;
+    };
+};
+
+/**
  * BlindIntegrity
  */
 export type BlindIntegrity = {
@@ -535,6 +747,7 @@ export type CreateJobRequest = {
      * End
      */
     end?: string | null;
+    factor_contrast?: FactorContrastRequest | null;
     /**
      * Factor Max Symbols
      */
@@ -558,7 +771,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors';
     /**
      * Portfolio Id
      */
@@ -1078,6 +1291,35 @@ export type ExpectedValue = {
 };
 
 /**
+ * FactorBenchmark
+ */
+export type FactorBenchmark = {
+    expanding: BenchmarkComparison;
+    in_sample: BenchmarkComparison;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    method: BenchmarkMethod;
+};
+
+/**
+ * FactorContrastRequest
+ *
+ * Fama-French 5 + Momentum contrast of one finished V1 backtest.
+ */
+export type FactorContrastRequest = {
+    /**
+     * Hac Lags
+     */
+    hac_lags?: number | null;
+    /**
+     * Source Job Id
+     */
+    source_job_id: string;
+};
+
+/**
  * FactorPreview
  */
 export type FactorPreview = {
@@ -1166,6 +1408,68 @@ export type FactorQuantileMean = {
 };
 
 /**
+ * FactorRegression
+ */
+export type FactorRegression = {
+    /**
+     * Alpha Anualizado
+     */
+    alpha_anualizado: number | null;
+    /**
+     * Coef
+     */
+    coef: {
+        [key: string]: number | null;
+    };
+    /**
+     * Dof
+     */
+    dof: number;
+    /**
+     * Hac Lags
+     */
+    hac_lags: number;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Periodos Alineados
+     */
+    periodos_alineados: number;
+    /**
+     * Periodos Totales
+     */
+    periodos_totales: number;
+    /**
+     * Periods Per Year
+     */
+    periods_per_year: number;
+    /**
+     * R2
+     */
+    r2: number | null;
+    /**
+     * Se
+     */
+    se: {
+        [key: string]: number | null;
+    };
+    /**
+     * T Stat
+     */
+    t_stat: {
+        [key: string]: number | null;
+    };
+    /**
+     * T Stat Ols
+     */
+    t_stat_ols: {
+        [key: string]: number | null;
+    };
+};
+
+/**
  * FactorSkippedPeriod
  */
 export type FactorSkippedPeriod = {
@@ -1177,6 +1481,37 @@ export type FactorSkippedPeriod = {
      * Motivo
      */
     motivo: string;
+};
+
+/**
+ * FactorStability
+ */
+export type FactorStability = {
+    /**
+     * Calendar Years
+     */
+    calendar_years: Array<StabilityYear>;
+    /**
+     * Events
+     */
+    events: Array<StabilityEvent>;
+    full: StabilityFit;
+    /**
+     * Halves
+     */
+    halves: Array<StabilityFit>;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Rolling
+     */
+    rolling: Array<StabilityFit>;
 };
 
 /**
@@ -1237,6 +1572,32 @@ export type FactorTurnoverRow = {
      * Turnover
      */
     turnover?: number | null;
+};
+
+/**
+ * FactorsSource
+ */
+export type FactorsSource = {
+    /**
+     * File
+     */
+    file: string;
+    /**
+     * First Month
+     */
+    first_month: string;
+    /**
+     * Last Month
+     */
+    last_month: string;
+    /**
+     * Sha256
+     */
+    sha256: string;
+    /**
+     * Url
+     */
+    url: string;
 };
 
 /**
@@ -2760,6 +3121,209 @@ export type SnapshotList = {
 };
 
 /**
+ * StabilityAttribution
+ */
+export type StabilityAttribution = {
+    /**
+     * Contribution To Full Quarterly Alpha
+     */
+    contribution_to_full_quarterly_alpha: number | null;
+};
+
+/**
+ * StabilityEvent
+ */
+export type StabilityEvent = {
+    attribution: StabilityAttribution;
+    /**
+     * Compounded Return
+     */
+    compounded_return: number | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Local Regression
+     */
+    local_regression: StabilityFit | {
+        [key: string]: string;
+    };
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    without_episode: StabilityFit | null;
+};
+
+/**
+ * StabilityFit
+ */
+export type StabilityFit = {
+    /**
+     * Alpha Anualizado
+     */
+    alpha_anualizado?: number | null;
+    /**
+     * Ci95 Pointwise
+     */
+    ci95_pointwise?: {
+        [key: string]: Array<number | null>;
+    } | null;
+    /**
+     * Coef
+     */
+    coef?: {
+        [key: string]: number | null;
+    } | null;
+    /**
+     * Dof
+     */
+    dof: number;
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * T Stat
+     */
+    t_stat?: {
+        [key: string]: number | null;
+    } | null;
+    /**
+     * Window
+     */
+    window?: number | null;
+};
+
+/**
+ * StabilityYear
+ */
+export type StabilityYear = {
+    /**
+     * Adjusted Sum
+     */
+    adjusted_sum: number | null;
+    /**
+     * Compounded Return
+     */
+    compounded_return: number | null;
+    /**
+     * Contribution To Full Quarterly Alpha
+     */
+    contribution_to_full_quarterly_alpha: number | null;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Year Of Start
+     */
+    year_of_start: number;
+};
+
+/**
+ * TailLevel
+ */
+export type TailLevel = {
+    /**
+     * Confidence
+     */
+    confidence: number;
+    /**
+     * Expected Shortfall
+     */
+    expected_shortfall: number | null;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Status
+     */
+    status: 'empty' | 'below_resolution' | 'sparse' | 'descriptive';
+    /**
+     * Tail Mass
+     */
+    tail_mass: number;
+    /**
+     * Tail Observations
+     */
+    tail_observations: number;
+    /**
+     * Var
+     */
+    var: number | null;
+};
+
+/**
+ * TailSeries
+ */
+export type TailSeries = {
+    /**
+     * Error
+     */
+    error: string | null;
+    /**
+     * Name
+     */
+    name: string;
+    summary: TailSummary | null;
+};
+
+/**
+ * TailSummary
+ */
+export type TailSummary = {
+    /**
+     * Annualized
+     */
+    annualized: boolean;
+    /**
+     * Excess Kurtosis
+     */
+    excess_kurtosis: number | null;
+    /**
+     * Horizon
+     */
+    horizon: string;
+    /**
+     * Kurtosis Convention
+     */
+    kurtosis_convention: string;
+    level_95: TailLevel;
+    level_99: TailLevel;
+    /**
+     * Method
+     */
+    method: string;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Skewness
+     */
+    skewness: number | null;
+};
+
+/**
  * TargetPosition
  */
 export type TargetPosition = {
@@ -2795,6 +3359,78 @@ export type TargetPosition = {
      * Weight Percent
      */
     weight_percent: number;
+};
+
+/**
+ * TaxDrag
+ */
+export type TaxDrag = {
+    /**
+     * Aftertax Return
+     */
+    aftertax_return: number;
+    /**
+     * Final Value Aftertax
+     */
+    final_value_aftertax: number;
+    /**
+     * Final Value Pretax
+     */
+    final_value_pretax: number;
+    /**
+     * Initial Capital
+     */
+    initial_capital: number;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * N Years
+     */
+    n_years: number;
+    /**
+     * Pretax Return
+     */
+    pretax_return: number;
+    /**
+     * Tax By Year
+     */
+    tax_by_year: Array<TaxYear>;
+    /**
+     * Tax Drag Pct Points
+     */
+    tax_drag_pct_points: number;
+    /**
+     * Total Tax Paid
+     */
+    total_tax_paid: number;
+    /**
+     * Unrealized Gain Remaining
+     */
+    unrealized_gain_remaining: number;
+};
+
+/**
+ * TaxYear
+ */
+export type TaxYear = {
+    /**
+     * Realized Net
+     */
+    realized_net: number;
+    /**
+     * Tax
+     */
+    tax: number;
+    /**
+     * Taxable
+     */
+    taxable: number;
+    /**
+     * Year
+     */
+    year: number;
 };
 
 /**
@@ -4758,6 +5394,56 @@ export type RankingApiV1RankingGetResponses = {
 
 export type RankingApiV1RankingGetResponse = RankingApiV1RankingGetResponses[keyof RankingApiV1RankingGetResponses];
 
+export type BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/backtest-factors/{job_id}';
+};
+
+export type BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetError = BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetErrors[keyof BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetErrors];
+
+export type BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BacktestFactorsPreview;
+};
+
+export type BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetResponse = BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetResponses[keyof BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetResponses];
+
 export type BacktestResultApiV1ResearchBacktestsJobIdGetData = {
     body?: never;
     path: {
@@ -4807,6 +5493,61 @@ export type BacktestResultApiV1ResearchBacktestsJobIdGetResponses = {
 };
 
 export type BacktestResultApiV1ResearchBacktestsJobIdGetResponse = BacktestResultApiV1ResearchBacktestsJobIdGetResponses[keyof BacktestResultApiV1ResearchBacktestsJobIdGetResponses];
+
+export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: {
+        /**
+         * Tax Capital
+         */
+        tax_capital?: number;
+    };
+    url: '/api/v1/research/backtests/{job_id}/diagnostics';
+};
+
+export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetError = BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetErrors[keyof BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetErrors];
+
+export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BacktestDiagnosticsResponse;
+};
+
+export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponse = BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponses[keyof BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponses];
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetData = {
     body?: never;

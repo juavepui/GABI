@@ -49,6 +49,48 @@
         "title": "BacktestCurvePoint",
         "type": "object"
       },
+      "BacktestDiagnosticsResponse": {
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "backtest_v1",
+              "backtest_v2"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "tail": {
+            "$ref": "#/components/schemas/BacktestTail"
+          },
+          "tax": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BacktestTax"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "job_id",
+          "kind",
+          "tail",
+          "tax",
+          "result_sha256"
+        ],
+        "title": "BacktestDiagnosticsResponse",
+        "type": "object"
+      },
       "BacktestExitEvent": {
         "properties": {
           "estado": {
@@ -75,6 +117,129 @@
           "estricto"
         ],
         "title": "BacktestExitEvent",
+        "type": "object"
+      },
+      "BacktestFactorsPreview": {
+        "properties": {
+          "benchmark": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactorBenchmark"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "benchmark_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Error"
+          },
+          "factors_source": {
+            "$ref": "#/components/schemas/FactorsSource"
+          },
+          "hac_lags_requested": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hac Lags Requested"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "regression": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactorRegression"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "regression_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regression Error"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "source_job_id": {
+            "title": "Source Job Id",
+            "type": "string"
+          },
+          "source_result_sha256": {
+            "title": "Source Result Sha256",
+            "type": "string"
+          },
+          "stability": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactorStability"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stability_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stability Error"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "independent_advantage_demonstrated",
+          "source_job_id",
+          "source_result_sha256",
+          "hac_lags_requested",
+          "factors_source",
+          "regression",
+          "regression_error",
+          "stability",
+          "stability_error",
+          "benchmark",
+          "benchmark_error",
+          "result_sha256"
+        ],
+        "title": "BacktestFactorsPreview",
         "type": "object"
       },
       "BacktestOptions": {
@@ -767,6 +932,298 @@
         "title": "BacktestSeriesMetrics",
         "type": "object"
       },
+      "BacktestTail": {
+        "properties": {
+          "horizon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horizon"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/TailSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          }
+        },
+        "required": [
+          "horizon",
+          "message",
+          "series"
+        ],
+        "title": "BacktestTail",
+        "type": "object"
+      },
+      "BacktestTax": {
+        "properties": {
+          "capital": {
+            "title": "Capital",
+            "type": "number"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "spy_buy_and_hold": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaxDrag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaxDrag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "capital",
+          "strategy",
+          "spy_buy_and_hold",
+          "limitations",
+          "error"
+        ],
+        "title": "BacktestTax",
+        "type": "object"
+      },
+      "BenchmarkActive": {
+        "properties": {
+          "cagr_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr Difference"
+          },
+          "mean_active_per_quarter": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Active Per Quarter"
+          },
+          "relative_wealth_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Wealth Return"
+          }
+        },
+        "required": [
+          "mean_active_per_quarter",
+          "cagr_difference",
+          "relative_wealth_return"
+        ],
+        "title": "BenchmarkActive",
+        "type": "object"
+      },
+      "BenchmarkComparison": {
+        "properties": {
+          "active": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BenchmarkActive"
+            },
+            "default": {},
+            "title": "Active",
+            "type": "object"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BenchmarkMetrics"
+            },
+            "default": {},
+            "title": "Metrics",
+            "type": "object"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "periods": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkPeriod"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "n_obs"
+        ],
+        "title": "BenchmarkComparison",
+        "type": "object"
+      },
+      "BenchmarkMethod": {
+        "properties": {
+          "embargo_quarters": {
+            "title": "Embargo Quarters",
+            "type": "integer"
+          },
+          "min_train": {
+            "title": "Min Train",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min_train",
+          "embargo_quarters"
+        ],
+        "title": "BenchmarkMethod",
+        "type": "object"
+      },
+      "BenchmarkMetrics": {
+        "properties": {
+          "cagr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr"
+          },
+          "total_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Return"
+          }
+        },
+        "required": [
+          "total_return",
+          "cagr"
+        ],
+        "title": "BenchmarkMetrics",
+        "type": "object"
+      },
+      "BenchmarkPeriod": {
+        "properties": {
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "hasta": {
+            "title": "Hasta",
+            "type": "string"
+          },
+          "wealth": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Wealth",
+            "type": "object"
+          }
+        },
+        "required": [
+          "fecha",
+          "hasta",
+          "wealth"
+        ],
+        "title": "BenchmarkPeriod",
+        "type": "object"
+      },
       "BlindIntegrity": {
         "properties": {
           "broken_at": {
@@ -1137,6 +1594,16 @@
             ],
             "title": "End"
           },
+          "factor_contrast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactorContrastRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "factor_max_symbols": {
             "anyOf": [
               {
@@ -1218,7 +1685,8 @@
               "estimate_analysis",
               "backtest_v1",
               "backtest_v2",
-              "backtest_register"
+              "backtest_register",
+              "backtest_factors"
             ],
             "title": "Kind",
             "type": "string"
@@ -2110,6 +2578,63 @@
         "title": "ExpectedValue",
         "type": "object"
       },
+      "FactorBenchmark": {
+        "properties": {
+          "expanding": {
+            "$ref": "#/components/schemas/BenchmarkComparison"
+          },
+          "in_sample": {
+            "$ref": "#/components/schemas/BenchmarkComparison"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "method": {
+            "$ref": "#/components/schemas/BenchmarkMethod"
+          }
+        },
+        "required": [
+          "method",
+          "in_sample",
+          "expanding",
+          "limitations"
+        ],
+        "title": "FactorBenchmark",
+        "type": "object"
+      },
+      "FactorContrastRequest": {
+        "additionalProperties": false,
+        "description": "Fama-French 5 + Momentum contrast of one finished V1 backtest.",
+        "properties": {
+          "hac_lags": {
+            "anyOf": [
+              {
+                "maximum": 400.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hac Lags"
+          },
+          "source_job_id": {
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Source Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_job_id"
+        ],
+        "title": "FactorContrastRequest",
+        "type": "object"
+      },
       "FactorPreview": {
         "properties": {
           "end": {
@@ -2252,6 +2777,128 @@
         "title": "FactorQuantileMean",
         "type": "object"
       },
+      "FactorRegression": {
+        "properties": {
+          "alpha_anualizado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha Anualizado"
+          },
+          "coef": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Coef",
+            "type": "object"
+          },
+          "dof": {
+            "title": "Dof",
+            "type": "integer"
+          },
+          "hac_lags": {
+            "title": "Hac Lags",
+            "type": "integer"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "periodos_alineados": {
+            "title": "Periodos Alineados",
+            "type": "integer"
+          },
+          "periodos_totales": {
+            "title": "Periodos Totales",
+            "type": "integer"
+          },
+          "periods_per_year": {
+            "title": "Periods Per Year",
+            "type": "number"
+          },
+          "r2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R2"
+          },
+          "se": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Se",
+            "type": "object"
+          },
+          "t_stat": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "T Stat",
+            "type": "object"
+          },
+          "t_stat_ols": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "T Stat Ols",
+            "type": "object"
+          }
+        },
+        "required": [
+          "n_obs",
+          "dof",
+          "r2",
+          "coef",
+          "se",
+          "t_stat",
+          "t_stat_ols",
+          "hac_lags",
+          "periods_per_year",
+          "alpha_anualizado",
+          "periodos_alineados",
+          "periodos_totales"
+        ],
+        "title": "FactorRegression",
+        "type": "object"
+      },
       "FactorSkippedPeriod": {
         "properties": {
           "fecha": {
@@ -2268,6 +2915,63 @@
           "motivo"
         ],
         "title": "FactorSkippedPeriod",
+        "type": "object"
+      },
+      "FactorStability": {
+        "properties": {
+          "calendar_years": {
+            "items": {
+              "$ref": "#/components/schemas/StabilityYear"
+            },
+            "title": "Calendar Years",
+            "type": "array"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/StabilityEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "full": {
+            "$ref": "#/components/schemas/StabilityFit"
+          },
+          "halves": {
+            "items": {
+              "$ref": "#/components/schemas/StabilityFit"
+            },
+            "title": "Halves",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "rolling": {
+            "items": {
+              "$ref": "#/components/schemas/StabilityFit"
+            },
+            "title": "Rolling",
+            "type": "array"
+          }
+        },
+        "required": [
+          "n_obs",
+          "full",
+          "halves",
+          "rolling",
+          "events",
+          "calendar_years",
+          "limitations"
+        ],
+        "title": "FactorStability",
         "type": "object"
       },
       "FactorSummaryRow": {
@@ -2380,6 +3084,39 @@
           "quantil"
         ],
         "title": "FactorTurnoverRow",
+        "type": "object"
+      },
+      "FactorsSource": {
+        "properties": {
+          "file": {
+            "title": "File",
+            "type": "string"
+          },
+          "first_month": {
+            "title": "First Month",
+            "type": "string"
+          },
+          "last_month": {
+            "title": "Last Month",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "sha256",
+          "first_month",
+          "last_month",
+          "url"
+        ],
+        "title": "FactorsSource",
         "type": "object"
       },
       "Filing": {
@@ -5168,6 +5905,442 @@
         "title": "SnapshotList",
         "type": "object"
       },
+      "StabilityAttribution": {
+        "properties": {
+          "contribution_to_full_quarterly_alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contribution To Full Quarterly Alpha"
+          }
+        },
+        "required": [
+          "contribution_to_full_quarterly_alpha"
+        ],
+        "title": "StabilityAttribution",
+        "type": "object"
+      },
+      "StabilityEvent": {
+        "properties": {
+          "attribution": {
+            "$ref": "#/components/schemas/StabilityAttribution"
+          },
+          "compounded_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compounded Return"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "local_regression": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StabilityFit"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "title": "Local Regression"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "without_episode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StabilityFit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "n_obs",
+          "compounded_return",
+          "attribution",
+          "local_regression",
+          "without_episode"
+        ],
+        "title": "StabilityEvent",
+        "type": "object"
+      },
+      "StabilityFit": {
+        "properties": {
+          "alpha_anualizado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha Anualizado"
+          },
+          "ci95_pointwise": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci95 Pointwise"
+          },
+          "coef": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coef"
+          },
+          "dof": {
+            "title": "Dof",
+            "type": "integer"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "t_stat": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Stat"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window"
+          }
+        },
+        "required": [
+          "n_obs",
+          "dof",
+          "status"
+        ],
+        "title": "StabilityFit",
+        "type": "object"
+      },
+      "StabilityYear": {
+        "properties": {
+          "adjusted_sum": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Sum"
+          },
+          "compounded_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compounded Return"
+          },
+          "contribution_to_full_quarterly_alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contribution To Full Quarterly Alpha"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "year_of_start": {
+            "title": "Year Of Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year_of_start",
+          "n_obs",
+          "compounded_return",
+          "adjusted_sum",
+          "contribution_to_full_quarterly_alpha"
+        ],
+        "title": "StabilityYear",
+        "type": "object"
+      },
+      "TailLevel": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "expected_shortfall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Shortfall"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "empty",
+              "below_resolution",
+              "sparse",
+              "descriptive"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tail_mass": {
+            "title": "Tail Mass",
+            "type": "number"
+          },
+          "tail_observations": {
+            "title": "Tail Observations",
+            "type": "integer"
+          },
+          "var": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Var"
+          }
+        },
+        "required": [
+          "confidence",
+          "n_obs",
+          "tail_mass",
+          "tail_observations",
+          "var",
+          "expected_shortfall",
+          "status"
+        ],
+        "title": "TailLevel",
+        "type": "object"
+      },
+      "TailSeries": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TailSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "summary",
+          "error"
+        ],
+        "title": "TailSeries",
+        "type": "object"
+      },
+      "TailSummary": {
+        "properties": {
+          "annualized": {
+            "title": "Annualized",
+            "type": "boolean"
+          },
+          "excess_kurtosis": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excess Kurtosis"
+          },
+          "horizon": {
+            "title": "Horizon",
+            "type": "string"
+          },
+          "kurtosis_convention": {
+            "title": "Kurtosis Convention",
+            "type": "string"
+          },
+          "level_95": {
+            "$ref": "#/components/schemas/TailLevel"
+          },
+          "level_99": {
+            "$ref": "#/components/schemas/TailLevel"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "skewness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skewness"
+          }
+        },
+        "required": [
+          "n_obs",
+          "skewness",
+          "excess_kurtosis",
+          "kurtosis_convention",
+          "horizon",
+          "method",
+          "annualized",
+          "level_95",
+          "level_99"
+        ],
+        "title": "TailSummary",
+        "type": "object"
+      },
       "TargetPosition": {
         "additionalProperties": false,
         "properties": {
@@ -5250,6 +6423,100 @@
           "amount_eur"
         ],
         "title": "TargetPosition",
+        "type": "object"
+      },
+      "TaxDrag": {
+        "properties": {
+          "aftertax_return": {
+            "title": "Aftertax Return",
+            "type": "number"
+          },
+          "final_value_aftertax": {
+            "title": "Final Value Aftertax",
+            "type": "number"
+          },
+          "final_value_pretax": {
+            "title": "Final Value Pretax",
+            "type": "number"
+          },
+          "initial_capital": {
+            "title": "Initial Capital",
+            "type": "number"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "n_years": {
+            "title": "N Years",
+            "type": "integer"
+          },
+          "pretax_return": {
+            "title": "Pretax Return",
+            "type": "number"
+          },
+          "tax_by_year": {
+            "items": {
+              "$ref": "#/components/schemas/TaxYear"
+            },
+            "title": "Tax By Year",
+            "type": "array"
+          },
+          "tax_drag_pct_points": {
+            "title": "Tax Drag Pct Points",
+            "type": "number"
+          },
+          "total_tax_paid": {
+            "title": "Total Tax Paid",
+            "type": "number"
+          },
+          "unrealized_gain_remaining": {
+            "title": "Unrealized Gain Remaining",
+            "type": "number"
+          }
+        },
+        "required": [
+          "initial_capital",
+          "final_value_pretax",
+          "final_value_aftertax",
+          "pretax_return",
+          "aftertax_return",
+          "tax_drag_pct_points",
+          "total_tax_paid",
+          "unrealized_gain_remaining",
+          "n_periods",
+          "n_years",
+          "tax_by_year"
+        ],
+        "title": "TaxDrag",
+        "type": "object"
+      },
+      "TaxYear": {
+        "properties": {
+          "realized_net": {
+            "title": "Realized Net",
+            "type": "number"
+          },
+          "tax": {
+            "title": "Tax",
+            "type": "number"
+          },
+          "taxable": {
+            "title": "Taxable",
+            "type": "number"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "realized_net",
+          "taxable",
+          "tax"
+        ],
+        "title": "TaxYear",
         "type": "object"
       },
       "UndoResult": {
@@ -9090,6 +10357,99 @@
         ]
       }
     },
+    "/api/v1/research/backtest-factors/{job_id}": {
+      "get": {
+        "operationId": "backtest_factors_api_v1_research_backtest_factors__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestFactorsPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Backtest Factors",
+        "tags": [
+          "research"
+        ]
+      }
+    },
     "/api/v1/research/backtests/{job_id}": {
       "get": {
         "operationId": "backtest_result_api_v1_research_backtests__job_id__get",
@@ -9178,6 +10538,111 @@
           }
         },
         "summary": "Backtest Result",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/backtests/{job_id}/diagnostics": {
+      "get": {
+        "operationId": "backtest_diagnostics_api_v1_research_backtests__job_id__diagnostics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tax_capital",
+            "required": false,
+            "schema": {
+              "default": 100000.0,
+              "maximum": 100000000,
+              "minimum": 1000,
+              "title": "Tax Capital",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestDiagnosticsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Backtest Diagnostics",
         "tags": [
           "research"
         ]

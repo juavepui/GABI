@@ -113,6 +113,8 @@ class SqliteJobs:
             payload["backtest_options"] = command.backtest_options
         if command.research_log is not None:
             payload["research_log"] = command.research_log
+        if command.factor_contrast is not None:
+            payload["factor_contrast"] = command.factor_contrast
         parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None

@@ -69,7 +69,8 @@ def create_job(body: CreateJobRequest, service: Service) -> dict:
                          body.decision_policy.model_dump() if body.decision_policy else None, body.holdings_text,
                          body.snapshot_id, body.factor_months, body.factor_mode, body.factor_max_symbols,
                          body.backtest_options.model_dump(exclude_none=True) if body.backtest_options else None,
-                         body.research_log.model_dump() if body.research_log else None)
+                         body.research_log.model_dump() if body.research_log else None,
+                         body.factor_contrast.model_dump() if body.factor_contrast else None)
     return service.submit(command, body.idempotency_key)
 
 

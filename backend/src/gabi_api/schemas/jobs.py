@@ -34,8 +34,17 @@ class ResearchLogRequest(BaseModel):
     notes: str | None = Field(default=None, max_length=2_000)
 
 
+class FactorContrastRequest(BaseModel):
+    """Fama-French 5 + Momentum contrast of one finished V1 backtest."""
+
+    model_config = {"extra": "forbid"}
+
+    source_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    hac_lags: int | None = Field(default=None, ge=0, le=400)
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -49,6 +58,7 @@ class CreateJobRequest(BaseModel):
     factor_max_symbols: Literal[50, 100, 200] | None = None
     backtest_options: BacktestOptions | None = None
     research_log: ResearchLogRequest | None = None
+    factor_contrast: FactorContrastRequest | None = None
 
 
 class JobEvent(BaseModel):

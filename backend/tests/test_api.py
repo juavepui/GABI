@@ -67,6 +67,8 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                              "/api/v1/research/estimate-captures",
                                              "/api/v1/research/estimate-analysis/{job_id}",
                                              "/api/v1/research/backtests/{job_id}",
+                                             "/api/v1/research/backtests/{job_id}/diagnostics",
+                                             "/api/v1/research/backtest-factors/{job_id}",
                                              "/api/v1/research/factors/{job_id}",
                                              "/api/v1/research/published-factors",
                                              "/api/v1/research/published-factors/exports/{name}"}

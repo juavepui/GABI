@@ -5,6 +5,8 @@ import type { BacktestOptions, BacktestPreview } from '@/shared/api/generated/ty
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { BacktestDiagnostics } from './backtest-diagnostics';
+import { BacktestFactors } from './backtest-factors';
 import { BacktestRegister } from './backtest-register';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
@@ -511,6 +513,14 @@ function BacktestResult({ result }: { result: BacktestPreview }) {
         Descargar backtest completo (periodos, curva, calidad de datos)
       </a>
       <p className="break-all text-xs text-muted-foreground">SHA-256: {result.result_sha256}</p>
+      <BacktestDiagnostics jobId={result.job_id} v1={!v2} />
+      {!v2 && (
+        <BacktestFactors
+          key={result.job_id}
+          sourceJobId={result.job_id}
+          periods={result.periods.length}
+        />
+      )}
       <BacktestRegister key={result.job_id} sourceJobId={result.job_id} />
     </section>
   );

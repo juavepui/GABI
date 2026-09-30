@@ -130,6 +130,201 @@ class EstimateAnalysisPreview(BaseModel):
     result_sha256: str
 
 
+class TailLevel(BaseModel):
+    confidence: float
+    n_obs: int
+    tail_mass: float
+    tail_observations: int
+    var: float | None
+    expected_shortfall: float | None
+    status: Literal["empty", "below_resolution", "sparse", "descriptive"]
+
+
+class TailSummary(BaseModel):
+    n_obs: int
+    skewness: float | None
+    excess_kurtosis: float | None
+    kurtosis_convention: str
+    horizon: str
+    method: str
+    annualized: bool
+    level_95: TailLevel
+    level_99: TailLevel
+
+
+class TailSeries(BaseModel):
+    name: str
+    summary: TailSummary | None
+    error: str | None
+
+
+class BacktestTail(BaseModel):
+    horizon: str | None
+    message: str | None
+    series: list[TailSeries]
+
+
+class TaxYear(BaseModel):
+    year: int
+    realized_net: float
+    taxable: float
+    tax: float
+
+
+class TaxDrag(BaseModel):
+    initial_capital: float
+    final_value_pretax: float
+    final_value_aftertax: float
+    pretax_return: float
+    aftertax_return: float
+    tax_drag_pct_points: float
+    total_tax_paid: float
+    unrealized_gain_remaining: float
+    n_periods: int
+    n_years: int
+    tax_by_year: list[TaxYear]
+
+
+class BacktestTax(BaseModel):
+    capital: float
+    strategy: TaxDrag | None
+    spy_buy_and_hold: TaxDrag | None
+    limitations: list[str]
+    error: str | None
+
+
+class BacktestDiagnosticsResponse(BaseModel):
+    job_id: str
+    kind: Literal["backtest_v1", "backtest_v2"]
+    tail: BacktestTail
+    tax: BacktestTax | None
+    result_sha256: str
+
+
+class FactorRegression(BaseModel):
+    n_obs: int
+    dof: int
+    r2: float | None
+    coef: dict[str, float | None]
+    se: dict[str, float | None]
+    t_stat: dict[str, float | None]
+    t_stat_ols: dict[str, float | None]
+    hac_lags: int
+    periods_per_year: float
+    alpha_anualizado: float | None
+    periodos_alineados: int
+    periodos_totales: int
+
+
+class StabilityFit(BaseModel):
+    n_obs: int
+    dof: int
+    status: str
+    window: int | None = None
+    start: str | None = None
+    end: str | None = None
+    alpha_anualizado: float | None = None
+    coef: dict[str, float | None] | None = None
+    t_stat: dict[str, float | None] | None = None
+    ci95_pointwise: dict[str, list[float | None]] | None = None
+
+
+class StabilityAttribution(BaseModel):
+    contribution_to_full_quarterly_alpha: float | None
+
+
+class StabilityEvent(BaseModel):
+    id: str
+    label: str
+    n_obs: int
+    compounded_return: float | None
+    attribution: StabilityAttribution
+    local_regression: StabilityFit | dict[str, str]
+    without_episode: StabilityFit | None
+
+
+class StabilityYear(BaseModel):
+    year_of_start: int
+    n_obs: int
+    compounded_return: float | None
+    adjusted_sum: float | None
+    contribution_to_full_quarterly_alpha: float | None
+
+
+class FactorStability(BaseModel):
+    n_obs: int
+    full: StabilityFit
+    halves: list[StabilityFit]
+    rolling: list[StabilityFit]
+    events: list[StabilityEvent]
+    calendar_years: list[StabilityYear]
+    limitations: list[str]
+
+
+class BenchmarkMetrics(BaseModel):
+    total_return: float | None
+    cagr: float | None
+
+
+class BenchmarkActive(BaseModel):
+    mean_active_per_quarter: float | None
+    cagr_difference: float | None
+    relative_wealth_return: float | None
+
+
+class BenchmarkPeriod(BaseModel):
+    fecha: str
+    hasta: str
+    wealth: dict[str, float | None]
+
+
+class BenchmarkComparison(BaseModel):
+    status: str | None = None
+    n_obs: int
+    start: str | None = None
+    end: str | None = None
+    metrics: dict[str, BenchmarkMetrics] = {}
+    active: dict[str, BenchmarkActive] = {}
+    periods: list[BenchmarkPeriod] = []
+
+
+class BenchmarkMethod(BaseModel):
+    min_train: int
+    embargo_quarters: int
+
+
+class FactorBenchmark(BaseModel):
+    method: BenchmarkMethod
+    in_sample: BenchmarkComparison
+    expanding: BenchmarkComparison
+    limitations: list[str]
+
+
+class FactorsSource(BaseModel):
+    file: str
+    sha256: str
+    first_month: str
+    last_month: str
+    url: str
+
+
+class BacktestFactorsPreview(BaseModel):
+    job_id: str
+    status: str
+    independent_advantage_demonstrated: bool
+    source_job_id: str
+    source_result_sha256: str
+    hac_lags_requested: int | None
+    factors_source: FactorsSource
+    regression: FactorRegression | None
+    regression_error: str | None
+    stability: FactorStability | None
+    stability_error: str | None
+    benchmark: FactorBenchmark | None
+    benchmark_error: str | None
+    result_sha256: str
+
+
 class FactorSummaryRow(BaseModel):
     factor: str
     horizonte: int

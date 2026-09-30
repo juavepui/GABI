@@ -51,8 +51,27 @@ backtest como hacía Streamlit, porque recorre todas las tablas de la base. En l
 base local de 12 GB tardó 1.937 s con 7,2 MiB de pico Python (`tracemalloc`),
 medido mientras otra verificación leía la misma base; no se atribuye esa cifra a
 una ejecución aislada. Un backtest solo puede registrarse una vez; un segundo intento falla
-sin escribir. Quedan en Streamlit el contraste Fama-French, el drag fiscal, el
-riesgo de cola y la preparación de datos.
+sin escribir.
+El riesgo de cola (V1 por rebalanceo si todos los periodos duran lo mismo; V2 por
+sesión sobre la NAV diaria) y el drag fiscal español de V1 se consultan con
+`GET /research/backtests/{id}/diagnostics`. La consulta relee el artefacto
+verificado y aplica `portfolio_metrics.tail_risk_metrics` y
+`tax_drag.simulate_tax_drag` mediante un adaptador legacy inyectado en el
+bootstrap; no descarga, no escribe y no ejecuta el backtest. El capital de la
+simulación fiscal se limita a 1.000-100.000.000 €. Las pruebas comparan ambos
+resultados con las llamadas de la página antigua.
+El contraste Fama-French 5 + Momentum es el job explícito `backtest_factors`,
+solo para V1 como en Streamlit, con retardos HAC automáticos o fijados antes de
+ver el resultado. Usa `data/ff_factors.csv` y solo descarga los factores de
+Kenneth French si esa copia no existe. Ejecuta la regresión HAC, la estabilidad
+temporal y el benchmark ajustado por beta y factores con los módulos sin cambios;
+un fallo en una parte conserva su mensaje sin ocultar las demás. El artefacto
+guarda el backtest de origen y su hash, y el SHA-256 y los meses del fichero de
+factores; al leerlo se repite la comprobación del periodo del backtest de origen.
+React presenta el alfa, las betas, la estabilidad por mitades, las ventanas
+móviles con su intervalo, los episodios y las curvas del benchmark. Las tablas de
+regresiones in-sample y de coeficientes por entrenamiento expansivo solo están en
+el JSON descargable. La preparación de datos sigue en Streamlit.
 El job exploratorio `backtest` que ya existía en Administración también queda
 limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
@@ -152,7 +171,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha, backtests V1/V2 y su registro en Research Lab como jobs Research en React, con artefacto y hash | Fama-French, drag fiscal, riesgo de cola y preparación explícita de datos. |
+| Ranking histórico | Ranking por fecha, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Preparación explícita de datos (descarga SEC y precios) como job. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

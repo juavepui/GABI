@@ -113,6 +113,11 @@ class LegacyExecutor:
             assert command.backtest_options is not None
             return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                                   run_backtest_v1 if command.kind == "backtest_v1" else run_backtest_v2)
+        if command.kind == "backtest_factors":
+            from gabi.infrastructure.legacy.backtests import contrast_backtest
+
+            assert command.factor_contrast is not None
+            return contrast_backtest(self.settings.data_dir, command.factor_contrast)
         if command.kind == "backtest_register":
             from gabi.infrastructure.legacy.backtests import register_backtest
 

@@ -6,11 +6,13 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
+from gabi.application.research.backtest_factors import normalize_factor_contrast
 from gabi.application.research.backtests import normalize_backtest, normalize_registration
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register"]
-RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register"}
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors"]
+RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
+                  "backtest_factors"}
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -29,6 +31,7 @@ class JobCommand:
     factor_max_symbols: int | None = None
     backtest_options: dict | None = None
     research_log: dict | None = None
+    factor_contrast: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -70,6 +73,10 @@ class JobCommand:
             object.__setattr__(self, "research_log", normalize_registration(self.research_log))
         elif self.research_log is not None:
             raise QueryError("invalid_job", "Este trabajo no admite registro en Research Lab.", 422)
+        if self.kind == "backtest_factors":
+            object.__setattr__(self, "factor_contrast", normalize_factor_contrast(self.factor_contrast))
+        elif self.factor_contrast is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite contraste Fama-French.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
@@ -139,6 +146,14 @@ class Jobs:
                 require_factor_period(parameters.get("start"), parameters.get("end"))
             else:
                 require_observed_period(parameters.get("start"), parameters.get("end"))
+        if job["kind"] in {"backtest_factors", "backtest_register"}:
+            # Derived artifacts inherit the reserved-period check of their source backtest.
+            source_id = (job["parameters"].get("factor_contrast") or job["parameters"].get("research_log") or {}
+                         ).get("source_job_id")
+            source = self.repository.get(source_id) if source_id else None
+            if source is None or source["kind"] not in {"backtest_v1", "backtest_v2"}:
+                raise QueryError("result_unavailable", "El backtest de origen no existe.", 404)
+            require_observed_period(source["parameters"].get("start"), source["parameters"].get("end"))
         result = self.repository.result(job_id)
         if job["kind"] == "estimate_analysis" and (
                 result.get("kind") != "estimate_analysis" or

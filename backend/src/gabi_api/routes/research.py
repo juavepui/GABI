@@ -7,6 +7,7 @@ from fastapi.responses import Response
 
 from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
+from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.backtests import backtest_preview
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
@@ -14,6 +15,8 @@ from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi_api.schemas.research import (
+    BacktestDiagnosticsResponse,
+    BacktestFactorsPreview,
     BacktestPreview,
     BlindStatuses,
     EstimateAnalysisPreview,
@@ -40,6 +43,13 @@ def jobs(request: Request) -> Jobs:
 
 
 Queue = Annotated[Jobs, Depends(jobs)]
+
+
+def diagnostics_service(request: Request) -> BacktestDiagnostics:
+    return request.app.state.backtest_diagnostics
+
+
+Diagnostics = Annotated[BacktestDiagnostics, Depends(diagnostics_service)]
 
 
 def blind_service(request: Request) -> BlindValidationQueries:
@@ -138,6 +148,20 @@ def backtest_result(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], que
     if job["kind"] not in {"backtest_v1", "backtest_v2"}:
         raise QueryError("job_not_found", "El backtest no existe.", 404)
     return backtest_preview(queue.result(job_id)) | {"job_id": job_id, "result_sha256": job["result_sha256"]}
+
+
+@router.get("/backtests/{job_id}/diagnostics", response_model=BacktestDiagnosticsResponse)
+def backtest_diagnostics(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], query: Diagnostics,
+                         tax_capital: Annotated[float, Query(ge=1_000, le=100_000_000)] = 100_000.0) -> dict:
+    return query.diagnostics(job_id, tax_capital)
+
+
+@router.get("/backtest-factors/{job_id}", response_model=BacktestFactorsPreview)
+def backtest_factors(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job = queue.get(job_id)
+    if job["kind"] != "backtest_factors":
+        raise QueryError("job_not_found", "El contraste Fama-French no existe.", 404)
+    return queue.result(job_id) | {"job_id": job_id, "result_sha256": job["result_sha256"]}
 
 
 @router.get("/factors/{job_id}", response_model=FactorPreview)

@@ -84,7 +84,8 @@ class Worker:
                                  job["parameters"].get("factor_mode"),
                                  job["parameters"].get("factor_max_symbols"),
                                  job["parameters"].get("backtest_options"),
-                                 job["parameters"].get("research_log"))
+                                 job["parameters"].get("research_log"),
+                                 job["parameters"].get("factor_contrast"))
             result = self.execute(command)
             if self.store.progress(job_id, token, 90, "Guardando resultado", {"stage": "computed"}):
                 self.store.finish(job_id, token, "cancelled")

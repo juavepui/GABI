@@ -98,6 +98,21 @@ def synthetic_backtest_v1(start, end, options):
             "metrics": {"estrategia": metrics, "universo_ew": metrics, "spy": metrics}}
 
 
+
+def synthetic_factor_contrast(periods, hac_lags):
+    names = ["alpha", "Mkt-RF", "SMB", "HML", "RMW", "CMA", "Mom"]
+    values = dict(zip(names, (0.004, 1.02, 0.1, -0.05, 0.2, 0.03, 0.08)))
+    return {"factors_source": {"file": "ff_factors.csv", "sha256": "0" * 64, "first_month": "1990-01-01",
+                               "last_month": "2025-06-01", "url": "https://example.invalid"},
+            "regression": {"n_obs": 20, "dof": 13, "r2": 0.91, "coef": values,
+                           "se": {name: 0.002 for name in names},
+                           "t_stat": {name: 2.1 for name in names},
+                           "t_stat_ols": {name: 2.5 for name in names}, "hac_lags": hac_lags or 3,
+                           "periods_per_year": 4, "alpha_anualizado": 0.0161,
+                           "periodos_alineados": 20, "periodos_totales": 20},
+            "stability": "Diagnóstico temporal no disponible: fixture sin trimestres suficientes",
+            "benchmark": "Benchmark trimestral no disponible: fixture sin trimestres suficientes"}
+
 def synthetic_job(command, app):
     time.sleep(0.5)
     if command.kind == "factor_analysis":
@@ -119,6 +134,14 @@ def synthetic_job(command, app):
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)
+    if command.kind == "backtest_factors":
+        from gabi.application.research.backtest_factors import build_factor_contrast
+        from gabi.infrastructure.storage.jobs import SqliteJobs as Jobs
+
+        source = Jobs(Path(app.state.settings.data_dir))
+        source_id = command.factor_contrast["source_job_id"]
+        return build_factor_contrast(source.result(source_id), command.factor_contrast,
+                                     source.get(source_id)["result_sha256"], synthetic_factor_contrast)
     if command.kind == "backtest_register":
         return {"kind": "backtest_register", "experiment_id": 7,
                 "source_job_id": command.research_log["source_job_id"], "data_fingerprint": "fixture",

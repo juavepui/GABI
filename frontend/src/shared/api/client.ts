@@ -46,6 +46,8 @@ import type {
   EstimateCaptureStatus,
   EstimateAnalysisPreview,
   BacktestPreview,
+  BacktestDiagnosticsResponse,
+  BacktestFactorsPreview,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -120,6 +122,23 @@ export function getEstimateAnalysisPreview(
 }
 export function getBacktestPreview(id: string, signal?: AbortSignal): Promise<BacktestPreview> {
   return get('/api/v1/research/backtests/' + encodeURIComponent(id), signal);
+}
+export function getBacktestDiagnostics(
+  id: string,
+  taxCapital: number,
+  signal?: AbortSignal,
+): Promise<BacktestDiagnosticsResponse> {
+  const query = new URLSearchParams({ tax_capital: String(taxCapital) });
+  return get(
+    '/api/v1/research/backtests/' + encodeURIComponent(id) + '/diagnostics?' + query,
+    signal,
+  );
+}
+export function getBacktestFactors(
+  id: string,
+  signal?: AbortSignal,
+): Promise<BacktestFactorsPreview> {
+  return get('/api/v1/research/backtest-factors/' + encodeURIComponent(id), signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

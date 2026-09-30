@@ -299,3 +299,153 @@ def test_register_job_logs_once_with_fingerprint_and_provenance(tmp_path, monkey
     with TestClient(create_app(Settings(tmp_path))) as api:
         denied = api.post("/api/v1/jobs", json=request | {"idempotency_key": "register-test-04"})
         assert denied.status_code == 403
+
+
+def _finished_backtest(tmp_path, kind, options, run):
+    (tmp_path / "app_mode.json").write_text('{"mode":"RESEARCH"}')
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand(kind, start="2019-01-02", end="2020-01-02", backtest_options=options),
+                        f"{kind}-diag-01", "ui")
+    assert Worker(store, lambda command: build_backtest(command.kind, command.start, command.end,
+                                                        command.backtest_options, run), tmp_path).run_once()
+    return job["id"]
+
+
+def _level(summary, level):
+    return {key: value for key, value in summary[level].items()}
+
+
+def test_v1_diagnostics_match_streamlit_tail_and_tax(tmp_path):
+    from gabi import tax_drag
+
+    job_id = _finished_backtest(tmp_path, "backtest_v1", V1, _v1_result)
+    test = _v1_result()
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        response = api.get(f"/api/v1/research/backtests/{job_id}/diagnostics?tax_capital=50000")
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert api.get(f"/api/v1/research/backtests/{job_id}/diagnostics?tax_capital=10").status_code == 422
+    assert data["tail"]["horizon"] == "3 meses (rebalanceo V1)"
+    for row, (name, column) in zip(data["tail"]["series"], (("Estrategia", "retorno"),
+                                                           ("Universo EW", "universo_ew"), ("SPY", "spy"))):
+        expected = portfolio_metrics.tail_risk_metrics(test["periods"][column], horizon="3 meses (rebalanceo V1)")
+        assert row["name"] == name and row["error"] is None
+        assert row["summary"]["level_95"] == _level(expected, "95")
+        assert row["summary"]["level_99"] == _level(expected, "99")
+        assert row["summary"]["skewness"] == expected["skewness"]
+    strategy = tax_drag.simulate_tax_drag(test["periods"], initial_capital=50_000.0)
+    benchmark = tax_drag.simulate_tax_drag(tax_drag.zero_turnover_periods(test["periods"], "spy"),
+                                           initial_capital=50_000.0)
+    for key, expected in (("strategy", strategy), ("spy_buy_and_hold", benchmark)):
+        got = data["tax"][key]
+        for field in ("pretax_return", "aftertax_return", "total_tax_paid", "unrealized_gain_remaining",
+                      "final_value_aftertax"):
+            assert got[field] == expected[field]
+        assert got["tax_by_year"] == [{"year": year} | row for year, row in expected["tax_by_year"].items()]
+    assert data["tax"]["limitations"] == tax_drag.LIMITATIONS
+
+
+def test_v1_tail_refuses_mixed_durations_and_v2_uses_daily_nav(tmp_path):
+    def mixed(*args, **kwargs):
+        result = _v1_result()
+        result["periods"].loc[1, "hasta"] = "2019-10-02"
+        return result
+
+    job_id = _finished_backtest(tmp_path, "backtest_v1", V1, mixed)
+    engine = _v2_engine()
+    engine["metrics"] = {"estrategia": {}, "spy": {}, "calmar": None, "recovery_days": None, "beta": None,
+                         "information_ratio": None, "capture": {"upside": None, "downside": None}}
+    v2_id = _finished_backtest(tmp_path, "backtest_v2", V2, lambda *_: engine)
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        mixed_tail = api.get(f"/api/v1/research/backtests/{job_id}/diagnostics").json()["tail"]
+        assert mixed_tail["series"] == [] and mixed_tail["horizon"] is None
+        v2 = api.get(f"/api/v1/research/backtests/{v2_id}/diagnostics").json()
+    assert v2["tax"] is None
+    for row, nav in zip(v2["tail"]["series"], (engine["nav_curve"], engine["nav_curve_spy"])):
+        expected = portfolio_metrics.tail_risk_metrics(portfolio_metrics.returns_from_nav(nav),
+                                                       horizon="una sesión (NAV diario)")
+        assert row["summary"]["level_95"] == _level(expected, "95")
+        assert row["summary"]["n_obs"] == len(nav) - 1
+    (tmp_path / "app_mode.json").write_text('{"mode":"INVESTOR"}')
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        assert api.get(f"/api/v1/research/backtests/{v2_id}/diagnostics").status_code == 403
+
+
+def _quarterly_v1(*_args, **_kwargs):
+    rng = np.random.default_rng(7)
+    starts = pd.date_range("2014-01-02", periods=24, freq="3MS") + pd.Timedelta(days=1)
+    periods = pd.DataFrame({
+        "fecha": [d.date().isoformat() for d in starts],
+        "hasta": [(d + pd.DateOffset(months=3)).date().isoformat() for d in starts],
+        "candidatas": "AAA, BBB", "cobertura universo": "45/50",
+        "retorno": rng.normal(0.02, 0.05, 24), "spy": rng.normal(0.02, 0.04, 24),
+        "universo_ew": rng.normal(0.015, 0.045, 24), "turnover_pct": [None] + [60.0] * 23,
+    })
+    periods["capital"] = (1 + periods["retorno"]).cumprod()
+    periods["spy_capital"] = (1 + periods["spy"]).cumprod()
+    periods["universo_capital"] = (1 + periods["universo_ew"]).cumprod()
+    metrics = {"anualizado": 0.1, "vol_anualizada": 0.2, "sharpe": 0.3, "sortino": 0.4, "max_drawdown": -0.1}
+    return {"periods": periods, "skipped": [], "data_quality": {}, "rotation_hurdle_points": 0.0,
+            "turnover_medio": 60.0, "return": float(periods["capital"].iloc[-1] - 1),
+            "spy_return": float(periods["spy_capital"].iloc[-1] - 1),
+            "universo_ew_return": float(periods["universo_capital"].iloc[-1] - 1), "drawdown": -0.1,
+            "metrics": {"estrategia": metrics, "universo_ew": metrics, "spy": metrics}}
+
+
+def _write_factors(path):
+    rng = np.random.default_rng(11)
+    months = pd.date_range("2013-01-01", "2020-12-01", freq="MS")
+    frame = pd.DataFrame(rng.normal(0.005, 0.02, (len(months), 6)), index=months,
+                         columns=["Mkt-RF", "SMB", "HML", "RMW", "CMA", "Mom"])
+    frame["RF"] = 0.001
+    frame.to_csv(path)
+
+
+def test_factor_contrast_job_matches_streamlit_block(tmp_path, monkeypatch):
+    from gabi import academic_factors, config, factor_benchmark, factor_stability
+    from gabi.application.research.historical import _json_value
+    from gabi.infrastructure.legacy.jobs import LegacyExecutor
+
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    monkeypatch.setattr(academic_factors, "_download_zip_csv", lambda url: pytest.fail("no download"))
+    _write_factors(tmp_path / "ff_factors.csv")
+    (tmp_path / "app_mode.json").write_text('{"mode":"RESEARCH"}')
+    store = SqliteJobs(tmp_path)
+    source = store.enqueue(JobCommand("backtest_v1", start="2014-01-02", end="2020-01-03",
+                                      backtest_options=V1), "backtest-ff-src", "ui")
+    assert Worker(store, lambda command: build_backtest(command.kind, command.start, command.end,
+                                                        command.backtest_options, _quarterly_v1), tmp_path).run_once()
+    request = {"kind": "backtest_factors", "idempotency_key": "factors-test-01",
+               "factor_contrast": {"source_job_id": source["id"], "hac_lags": 2}}
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        created = api.post("/api/v1/jobs", json=request)
+        assert created.status_code == 202, created.text
+        assert Worker(store, LegacyExecutor(Settings(tmp_path)), tmp_path).run_once()
+        job_id = created.json()["id"]
+        preview = api.get(f"/api/v1/research/backtest-factors/{job_id}")
+        assert preview.status_code == 200, preview.text
+        full = api.get(f"/api/v1/jobs/{job_id}/result").json()
+        too_many = api.post("/api/v1/jobs", json=request | {
+            "idempotency_key": "factors-test-02", "factor_contrast": {"source_job_id": source["id"], "hac_lags": 24}})
+        assert Worker(store, LegacyExecutor(Settings(tmp_path)), tmp_path).run_once()
+        assert store.get(too_many.json()["id"])["status"] == "failed"
+
+    periods = _quarterly_v1()["periods"]
+    factors = academic_factors.fetch_ff_factors()
+    streamlit = {
+        "regression": academic_factors.regress_returns_on_factors(periods, factors, hac_lags=2),
+        "stability": factor_stability.analyze(factor_stability.aligned_quarters(periods, factors)),
+        "benchmark": factor_benchmark.analyze(factor_benchmark.aligned_inputs(periods, factors)),
+    }
+    for part, expected in streamlit.items():
+        assert full[f"{part}_error"] is None
+        assert full[part] == json.loads(json.dumps(_json_value(expected), allow_nan=False)), part
+    data = preview.json()
+    assert data["regression"]["hac_lags"] == 2
+    assert data["regression"]["alpha_anualizado"] == streamlit["regression"]["alpha_anualizado"]
+    assert data["stability"]["full"]["status"] == "ok"
+    assert data["benchmark"]["expanding"]["n_obs"] == streamlit["benchmark"]["expanding"]["n_obs"]
+    assert data["factors_source"]["last_month"] == "2020-12-01"
+    assert data["source_result_sha256"] == store.get(source["id"])["result_sha256"]
+    assert data["independent_advantage_demonstrated"] is False

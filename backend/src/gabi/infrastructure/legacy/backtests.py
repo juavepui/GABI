@@ -75,3 +75,75 @@ def register_backtest(data_dir: Path, registration: dict) -> dict:
             "source_result_sha256": job["result_sha256"], "data_fingerprint": fingerprint,
             "data_fingerprint_scope": "registration", "stage": registration["stage"],
             "family": registration["family"], "hypothesis_registered": registration["hypothesis_registered"]}
+
+
+class LegacyBacktestMath:
+    """Pure legacy formulas shared with the Streamlit page; no storage access."""
+
+    @staticmethod
+    def tail_risk(returns, horizon: str) -> dict:
+        from gabi import portfolio_metrics
+
+        return portfolio_metrics.tail_risk_metrics(returns, horizon=horizon)
+
+    @staticmethod
+    def returns_from_nav(nav):
+        from gabi import portfolio_metrics
+
+        return portfolio_metrics.returns_from_nav(nav)
+
+    @staticmethod
+    def tax_drag(periods, initial_capital: float) -> dict:
+        from gabi import tax_drag
+
+        return tax_drag.simulate_tax_drag(periods, initial_capital=initial_capital)
+
+    @staticmethod
+    def zero_turnover(periods, return_column: str):
+        from gabi import tax_drag
+
+        return tax_drag.zero_turnover_periods(periods, return_column)
+
+    @staticmethod
+    def tax_limitations() -> list[str]:
+        from gabi import tax_drag
+
+        return list(tax_drag.LIMITATIONS)
+
+
+def run_factor_contrast(periods, hac_lags: int | None) -> dict:
+    """The Fama-French block of the old V1 page: cached factors, HAC regression, stability, benchmark."""
+    import hashlib
+
+    from gabi import academic_factors, config, factor_benchmark, factor_stability
+
+    factors = academic_factors.fetch_ff_factors()  # Reads data/ff_factors.csv; downloads only if absent.
+    cache = config.DATA_DIR / "ff_factors.csv"
+    source = {"file": "ff_factors.csv", "sha256": hashlib.sha256(cache.read_bytes()).hexdigest(),
+              "first_month": factors.index.min().date().isoformat(),
+              "last_month": factors.index.max().date().isoformat(),
+              "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"}
+    result: dict = {"factors_source": source}
+    try:
+        result["regression"] = academic_factors.regress_returns_on_factors(periods, factors, hac_lags=hac_lags)
+    except (ValueError, RuntimeError) as exc:
+        result["regression"] = str(exc)
+    try:
+        result["stability"] = factor_stability.analyze(factor_stability.aligned_quarters(periods, factors))
+    except (ValueError, KeyError) as exc:
+        result["stability"] = f"Diagnóstico temporal no disponible: {exc}"
+    try:
+        result["benchmark"] = factor_benchmark.analyze(factor_benchmark.aligned_inputs(periods, factors))
+    except (ValueError, KeyError) as exc:
+        result["benchmark"] = f"Benchmark trimestral no disponible: {exc}"
+    return result
+
+
+def contrast_backtest(data_dir: Path, request: dict) -> dict:
+    from gabi.application.research.backtest_factors import build_factor_contrast
+    from gabi.infrastructure.storage.jobs import SqliteJobs
+
+    jobs = SqliteJobs(data_dir)
+    source = jobs.get(request["source_job_id"])
+    artifact = jobs.result(request["source_job_id"])  # Verifies the stored SHA-256.
+    return build_factor_contrast(artifact, request, source["result_sha256"], run_factor_contrast)
