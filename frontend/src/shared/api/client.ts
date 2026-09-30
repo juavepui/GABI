@@ -40,6 +40,7 @@ import type {
   SearchTrials,
   HistoricalPreview,
   BlindStatuses,
+  FactorPreview,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -96,6 +97,9 @@ export function getHistoricalPreview(id: string, signal?: AbortSignal): Promise<
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);
+}
+export function getFactorPreview(id: string, signal?: AbortSignal): Promise<FactorPreview> {
+  return get('/api/v1/research/factors/' + encodeURIComponent(id), signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

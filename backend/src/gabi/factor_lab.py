@@ -66,6 +66,7 @@ def run_factor_analysis(
     start: str, end: str, months: int = 3, max_symbols: int | None = None, mode: str = "validation",
     factor_cols=DEFAULT_FACTOR_COLS, horizons_months=DEFAULT_HORIZONS, n_quantiles: int = 5,
     min_coverage: float = .7, min_universe_coverage: float = .5,
+    price_loader=None,
 ) -> dict:
     """Analiza si cada columna de `factor_cols` (Value/Quality/Momentum/Risk/
     Composite por defecto) ordena el retorno FUTURO real de las empresas, no
@@ -129,7 +130,13 @@ def run_factor_analysis(
             skipped.append({"fecha": as_of_str, "motivo": str(exc)})
             continue
 
-        histories = storage.get_prices_multi(eligible.index.tolist())
+        if price_loader is None:
+            histories = storage.get_prices_multi(eligible.index.tolist())
+        else:
+            first_session, _ = _entry_exit_sessions(calendar, as_of, min(horizons_months))
+            _, last_session = _entry_exit_sessions(calendar, as_of, max(horizons_months))
+            histories = price_loader(eligible.index.tolist(), first_session.date().isoformat(),
+                                     last_session.date().isoformat())
         sectors = eligible["sector"] if "sector" in eligible.columns else pd.Series(dtype=object)
 
         for factor in factor_cols:

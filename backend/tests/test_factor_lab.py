@@ -7,6 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from gabi import config, storage
 from gabi import factor_lab as fl
+from gabi.infrastructure.storage.factor_prices import SqliteFactorPrices
 
 
 def _seed_prices(dates, symbol_closes):
@@ -77,6 +78,28 @@ def test_perfect_predictor_gives_ic_near_one_and_positive_spread(tmp_path, monke
                  & (~summary["sector_neutral"])].iloc[0]
     assert row["ic_mean"] == pytest.approx(1.0, abs=1e-6)
     assert row["q_spread"] > 0
+
+
+def test_bounded_price_reader_matches_original_factor_metrics(tmp_path, monkeypatch):
+    _isolate(tmp_path, monkeypatch)
+    symbols = ["A", "B", "C", "D", "E", "F"]
+    dates = pd.date_range("2024-01-01", periods=45, freq="B")
+    for i, symbol in enumerate(symbols):
+        _seed_prices(dates, [(symbol, [100.0] * 20 + [100.0 + i] * 25)])
+    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
+    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of",
+                        _fake_ranking({symbol: i for i, symbol in enumerate(symbols)}))
+    options = {"months": 1, "max_symbols": 6, "mode": "fast_dev",
+               "factor_cols": ("composite_score",), "horizons_months": (1,), "n_quantiles": 3}
+    original = fl.run_factor_analysis("2024-01-02", "2024-02-02", **options)
+    reader = SqliteFactorPrices(tmp_path)
+    bounded = fl.run_factor_analysis("2024-01-02", "2024-02-02", price_loader=reader, **options)
+    for name in ("summary", "ic_series", "quantile_returns", "turnover"):
+        pd.testing.assert_frame_equal(original[name], bounded[name])
+    assert original["skipped"] == bounded["skipped"]
+    window = reader(symbols, "2024-01-03", "2024-02-05")
+    assert all(series.index.min() >= pd.Timestamp("2024-01-03") for series in window.values())
+    assert all(series.index.max() <= pd.Timestamp("2024-02-05") for series in window.values())
 
 
 def test_no_relationship_gives_ic_near_zero_on_average(tmp_path, monkeypatch):

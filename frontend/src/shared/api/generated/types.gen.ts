@@ -205,6 +205,18 @@ export type CreateJobRequest = {
      */
     end?: string | null;
     /**
+     * Factor Max Symbols
+     */
+    factor_max_symbols?: 50 | 100 | 200 | null;
+    /**
+     * Factor Mode
+     */
+    factor_mode?: 'validation' | 'fast_dev' | null;
+    /**
+     * Factor Months
+     */
+    factor_months?: 1 | 3 | 6 | 12 | null;
+    /**
      * Holdings Text
      */
     holdings_text?: string | null;
@@ -215,7 +227,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis';
     /**
      * Portfolio Id
      */
@@ -589,6 +601,120 @@ export type ExpectedValue = {
      * Probs Summed To 100
      */
     probs_summed_to_100: boolean;
+};
+
+/**
+ * FactorPreview
+ */
+export type FactorPreview = {
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Max Symbols
+     */
+    max_symbols: number | null;
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Skipped Count
+     */
+    skipped_count: number;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Summary
+     */
+    summary: Array<FactorSummaryRow>;
+    /**
+     * Turnover
+     */
+    turnover: Array<FactorTurnoverRow>;
+};
+
+/**
+ * FactorSummaryRow
+ */
+export type FactorSummaryRow = {
+    /**
+     * Factor
+     */
+    factor: string;
+    /**
+     * Horizonte
+     */
+    horizonte: number;
+    /**
+     * Ic Mean
+     */
+    ic_mean?: number | null;
+    /**
+     * Ic Std
+     */
+    ic_std?: number | null;
+    /**
+     * Icir
+     */
+    icir?: number | null;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * Pct Ic Positive
+     */
+    pct_ic_positive?: number | null;
+    /**
+     * Q Spread
+     */
+    q_spread?: number | null;
+    /**
+     * Sector Neutral
+     */
+    sector_neutral: boolean;
+};
+
+/**
+ * FactorTurnoverRow
+ */
+export type FactorTurnoverRow = {
+    /**
+     * Factor
+     */
+    factor: string;
+    /**
+     * Quantil
+     */
+    quantil: number;
+    /**
+     * Turnover
+     */
+    turnover?: number | null;
 };
 
 /**
@@ -3885,6 +4011,56 @@ export type BlindValidationsApiV1ResearchBlindValidationsGetResponses = {
 };
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetResponse = BlindValidationsApiV1ResearchBlindValidationsGetResponses[keyof BlindValidationsApiV1ResearchBlindValidationsGetResponses];
+
+export type FactorPreviewApiV1ResearchFactorsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/factors/{job_id}';
+};
+
+export type FactorPreviewApiV1ResearchFactorsJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type FactorPreviewApiV1ResearchFactorsJobIdGetError = FactorPreviewApiV1ResearchFactorsJobIdGetErrors[keyof FactorPreviewApiV1ResearchFactorsJobIdGetErrors];
+
+export type FactorPreviewApiV1ResearchFactorsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: FactorPreview;
+};
+
+export type FactorPreviewApiV1ResearchFactorsJobIdGetResponse = FactorPreviewApiV1ResearchFactorsJobIdGetResponses[keyof FactorPreviewApiV1ResearchFactorsJobIdGetResponses];
 
 export type HistoricalPreviewApiV1ResearchHistoricalJobIdGetData = {
     body?: never;

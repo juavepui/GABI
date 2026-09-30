@@ -32,7 +32,12 @@ import {
   PortfolioPage,
   SimulationsPage,
 } from '@/features/portfolio/index';
-import { BlindValidationsPage, HistoricalPage, ResearchPage } from '@/features/research/index';
+import {
+  BlindValidationsPage,
+  FactorPage,
+  HistoricalPage,
+  ResearchPage,
+} from '@/features/research/index';
 import { AdministrationPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
 
@@ -162,6 +167,7 @@ function Shell() {
           <Route path="/investigacion" element={<ResearchPage />} />
           <Route path="/investigacion/historico" element={<HistoricalPage />} />
           <Route path="/investigacion/validaciones" element={<BlindValidationsPage />} />
+          <Route path="/investigacion/factores" element={<FactorPage />} />
           <Route path="/administracion" element={<AdministrationPage />} />
           <Route
             path="*"

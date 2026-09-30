@@ -5,6 +5,7 @@ import sqlite3
 import sys
 import threading
 import time
+from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
 
@@ -25,8 +26,9 @@ def main():
         root = Path(directory).resolve()
         assert root.is_relative_to(Path(gettempdir()).resolve())
         seed_fixture(root)
+        (root / "app_mode.json").write_text('{"mode":"RESEARCH"}')
         payload = canonical_payload("2026-07-01", ["SEALED_TICKER"], {"SEALED_TICKER": 100.0})
-        with sqlite3.connect(root / "gabi.db") as db:
+        with closing(sqlite3.connect(root / "gabi.db")) as db:
             db.execute("INSERT INTO blind_validations "
                        "(id,created_at,name,model_id,weights_json,n_positions,rebalance_months,start_date,unlock_date,status) "
                        "VALUES (1,'2026-07-01',?,'fixture','{}',1,?,?,?,?)",
@@ -37,6 +39,7 @@ def main():
                        (1, "2026-07-01", json.dumps(["SEALED_TICKER"]),
                         json.dumps({"SEALED_TICKER": 100.0}), None,
                         hashlib.sha256(payload.encode()).hexdigest()))
+            db.commit()
         published = root / "published-ledger.json"
         published.write_text(json.dumps({
             "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
@@ -63,6 +66,18 @@ def main():
 
 def synthetic_job(command, app):
     time.sleep(0.5)
+    if command.kind == "factor_analysis":
+        return {"kind": "factor_analysis", "status": "RETROSPECTIVE_EXPLORATORY",
+                "independent_advantage_demonstrated": False, "start": command.start, "end": command.end,
+                "months": command.factor_months, "mode": command.factor_mode,
+                "max_symbols": command.factor_max_symbols,
+                "summary": [{"factor": "value_score", "horizonte": 3, "sector_neutral": False,
+                             "ic_mean": 0.12, "ic_std": 0.02, "icir": 6.0,
+                             "pct_ic_positive": 0.75, "q_spread": 0.03, "n_periods": 4}],
+                "ic_series": [{"fecha": "2019-01-02", "ic_raw": 0.12}],
+                "quantile_returns": [{"quantil": 5, "retorno_medio": 0.04}],
+                "turnover": [{"factor": "value_score", "quantil": 5, "turnover": 0.2}],
+                "skipped": []}
     if command.kind == "historical_ranking":
         return {"as_of": command.start, "status": "RETROSPECTIVE_EXPLORATORY",
                 "independent_advantage_demonstrated": False,

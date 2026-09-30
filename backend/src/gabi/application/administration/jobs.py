@@ -1,13 +1,14 @@
 """Job commands and contracts, independent of HTTP, SQLite and legacy engines."""
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
-from gabi.application.research.reservations import require_observed_period
+from gabi.application.research.reservations import require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis"]
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -21,6 +22,9 @@ class JobCommand:
     decision_policy: dict | None = None
     holdings_text: str | None = None
     snapshot_id: int | None = None
+    factor_months: int | None = None
+    factor_mode: str | None = None
+    factor_max_symbols: int | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -44,8 +48,18 @@ class JobCommand:
             if self.end is not None:
                 raise QueryError("invalid_job", "El ranking histórico admite una sola fecha.", 422)
             require_observed_period(self.start)
+        elif self.kind == "factor_analysis":
+            require_factor_period(self.start, self.end)
+            if self.factor_months not in (1, 3, 6, 12) or self.factor_mode not in ("validation", "fast_dev"):
+                raise QueryError("invalid_job", "Parámetros de Factor Lab no válidos.", 422)
+            if (self.factor_mode == "validation" and self.factor_max_symbols is not None or
+                    self.factor_mode == "fast_dev" and self.factor_max_symbols not in (50, 100, 200)):
+                raise QueryError("invalid_job", "La muestra no corresponde al modo de Factor Lab.", 422)
         elif self.start is not None or self.end is not None:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
+        if self.kind != "factor_analysis" and any(value is not None for value in
+                                                  (self.factor_months, self.factor_mode, self.factor_max_symbols)):
+            raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
         if self.kind == "sim_result":
             if self.portfolio_id is None or not 1 <= self.portfolio_id <= 1_000_000:
                 raise QueryError("invalid_job", "Indica una cartera simulada válida.", 422)
@@ -72,10 +86,17 @@ class JobRepository(Protocol):
 
 
 class Jobs:
-    def __init__(self, repository: JobRepository):
+    def __init__(self, repository: JobRepository, research_allowed: Callable[[], bool] | None = None):
         self.repository = repository
+        self.research_allowed = research_allowed
+
+    def _require_research(self) -> None:
+        if self.research_allowed is None or not self.research_allowed():
+            raise QueryError("research_required", "Factor Lab requiere el modo Research local.", 403)
 
     def submit(self, command: JobCommand, key: str, *, origin: str = "ui") -> dict:
+        if command.kind == "factor_analysis":
+            self._require_research()
         if origin == "ui" and command.kind in {"maintenance", "tiingo"}:
             raise QueryError("forbidden_job", "Este trabajo pertenece al programador local.", 403)
         if not 8 <= len(key) <= 100 or not re.fullmatch(r"[A-Za-z0-9._:-]+", key):
@@ -93,11 +114,16 @@ class Jobs:
 
     def result(self, job_id: str) -> dict:
         job = self.repository.get(job_id)
+        if job["kind"] == "factor_analysis":
+            self._require_research()
         if job["kind"] in {"maintenance", "tiingo"}:
             raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
-        if job["kind"] in {"backtest", "historical_ranking"}:
+        if job["kind"] in {"backtest", "historical_ranking", "factor_analysis"}:
             parameters = job["parameters"]
             if job["kind"] == "historical_ranking" and parameters.get("end") is not None:
                 raise QueryError("reserved_period", "Este resultado no corresponde a una sola fecha observada.", 403)
-            require_observed_period(parameters.get("start"), parameters.get("end"))
+            if job["kind"] == "factor_analysis":
+                require_factor_period(parameters.get("start"), parameters.get("end"))
+            else:
+                require_observed_period(parameters.get("start"), parameters.get("end"))
         return self.repository.result(job_id)

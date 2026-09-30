@@ -78,7 +78,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     model_queries = ModelQueries(repository, policy)
     market = MarketQueries(repository, model_queries, today)
     model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir))
-    jobs = Jobs(SqliteJobs(settings.data_dir))
+    jobs = Jobs(SqliteJobs(settings.data_dir), lambda: model_queries.model().mode == "RESEARCH")
     portfolio = PortfolioQueries(repository, policy, today)
     journal = Journal(SqliteJournal(settings.data_dir))
     macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata())

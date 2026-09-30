@@ -90,6 +90,16 @@ class LegacyExecutor:
 
             assert command.start is not None
             return build_historical_ranking(command.start, run_historical)
+        if command.kind == "factor_analysis":
+            from gabi.application.research.factors import build_factor_analysis
+            from gabi.infrastructure.legacy.factors import run_factors
+
+            assert command.start is not None and command.end is not None
+            assert command.factor_months is not None and command.factor_mode is not None
+            return build_factor_analysis(command.start, command.end, command.factor_months,
+                                         command.factor_mode, command.factor_max_symbols,
+                                         lambda start, end, **options: run_factors(
+                                             start, end, data_dir=self.settings.data_dir, **options))
         if command.kind == "symbols":
             from gabi import screener
 

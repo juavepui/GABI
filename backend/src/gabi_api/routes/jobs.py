@@ -58,7 +58,7 @@ def local_settings(local: Local) -> LocalSettingsResponse:
 def create_job(body: CreateJobRequest, service: Service) -> dict:
     command = JobCommand(body.kind, tuple(body.symbols), body.start, body.end, body.portfolio_id,
                          body.decision_policy.model_dump() if body.decision_policy else None, body.holdings_text,
-                         body.snapshot_id)
+                         body.snapshot_id, body.factor_months, body.factor_mode, body.factor_max_symbols)
     return service.submit(command, body.idempotency_key)
 
 

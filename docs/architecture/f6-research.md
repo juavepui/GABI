@@ -37,6 +37,34 @@ símbolos, precios de entrada, pesos ni rendimiento, incluso tras el desbloqueo.
 Cada consulta relee los registros, por lo que no existe una caché de sellos que
 pueda quedar obsoleta. El alta, los rebalanceos y la revelación aún no se han
 migrado.
+
+Factor Lab se ejecuta ahora por `factor_analysis` en el worker, con el motor
+histórico y sus cinco scores, cuatro horizontes y quintiles originales sin
+cambiar sus fórmulas. El comando fija rebalanceo (1/3/6/12 meses), modo
+`validation` con universo completo o `fast_dev` con 50/100/200 empresas. El
+servidor exige el modo Research local tanto para encolar como para leer el
+resultado; durante la transición el selector de modo permanece en Streamlit.
+Solo admite ventanas desde 2010 de hasta seis años y un fin máximo de
+2024-07-01: el horizonte de
+12 meses no puede alcanzar los datos prospectivos posteriores al corte observado
+de 2025-07-02. La comprobación se repite al leer el artefacto, también para jobs
+persistidos. El resultado íntegro (series IC, quintiles, rotación, periodos
+saltados) se guarda con SHA-256 y límite de 10 MB; React presenta el resumen
+tipado y permite descargar el JSON. Cada ejecución es un ensayo retrospectivo;
+`fast_dev` es muestreo y ningún resultado se promociona automáticamente a
+evidencia independiente. El job no usa caché de cálculo: se ejecuta solo por
+acción explícita y el artefacto queda invalidado únicamente si se cancela,
+falla o su hash ya no coincide. La sección de estimaciones y el análisis sectorial
+separado continúan en Streamlit hasta verificar su migración.
+El worker inyecta un lector SQLite de solo lectura limitado a las sesiones de
+entrada/salida de cada periodo, 1.000 símbolos y 300.000 filas por consulta;
+la función antigua conserva su entrada previa para Streamlit. Una prueba con
+datos temporales compara todos los DataFrames resultantes. Medición de una
+lectura, no del análisis completo: `python scripts/measure_f6_factor_prices.py`,
+Windows/Python 3.12, 50 símbolos y 2.348 sesiones sintéticas: la lectura de
+historial completo tardó 0,808 s y tuvo 39,665 MiB de pico Python; la ventana
+de 260 sesiones tardó 0,176 s y tuvo 3,360 MiB. No se extrapolan esas cifras
+a la base local de 83 GB.
 Medición de la serialización, no del cálculo histórico ni de SQLite:
 `python scripts/measure_f6_historical.py` en Windows/Python 3.13.7, fixture
 sintética de 500 empresas y 62 columnas, 999.398 bytes JSON, 0,3844 s y
@@ -54,7 +82,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
-| Factor Lab | Streamlit | Análisis por factor y ventanas mediante jobs con procedencia. |
+| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; estimaciones/sector separados aún en Streamlit | Completar bloques de estimaciones y sector, y paridad de vistas. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 

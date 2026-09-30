@@ -6,7 +6,7 @@ from gabi_api.schemas.decisions import DecisionPolicy
 
 
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -15,6 +15,9 @@ class CreateJobRequest(BaseModel):
     decision_policy: DecisionPolicy | None = None
     holdings_text: str | None = Field(default=None, max_length=5000)
     snapshot_id: int | None = Field(default=None, ge=1, le=1_000_000)
+    factor_months: Literal[1, 3, 6, 12] | None = None
+    factor_mode: Literal["validation", "fast_dev"] | None = None
+    factor_max_symbols: Literal[50, 100, 200] | None = None
 
 
 class JobEvent(BaseModel):

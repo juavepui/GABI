@@ -8,7 +8,7 @@ from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
-from gabi_api.schemas.research import BlindStatuses, HistoricalPreview, ResearchOverview, SearchTrials
+from gabi_api.schemas.research import BlindStatuses, FactorPreview, HistoricalPreview, ResearchOverview, SearchTrials
 
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
 
@@ -68,4 +68,20 @@ def historical_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], 
         "shown": len(rows),
         "rows": rows,
         "result_sha256": job["result_sha256"],
+    }
+
+
+@router.get("/factors/{job_id}", response_model=FactorPreview)
+def factor_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job = queue.get(job_id)
+    if job["kind"] != "factor_analysis":
+        raise QueryError("job_not_found", "El análisis de factores no existe.", 404)
+    result = queue.result(job_id)
+    return {
+        "job_id": job_id, "start": result["start"], "end": result["end"],
+        "months": result["months"], "mode": result["mode"],
+        "max_symbols": result["max_symbols"], "status": result["status"],
+        "independent_advantage_demonstrated": result["independent_advantage_demonstrated"],
+        "summary": result["summary"], "turnover": result["turnover"],
+        "skipped_count": len(result["skipped"]), "result_sha256": job["result_sha256"],
     }

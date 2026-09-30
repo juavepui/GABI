@@ -88,3 +88,36 @@ class BlindStatus(BaseModel):
 
 class BlindStatuses(BaseModel):
     items: list[BlindStatus]
+
+
+class FactorSummaryRow(BaseModel):
+    factor: str
+    horizonte: int
+    sector_neutral: bool
+    ic_mean: float | None = None
+    ic_std: float | None = None
+    icir: float | None = None
+    pct_ic_positive: float | None = None
+    q_spread: float | None = None
+    n_periods: int
+
+
+class FactorTurnoverRow(BaseModel):
+    factor: str
+    quantil: int
+    turnover: float | None = None
+
+
+class FactorPreview(BaseModel):
+    job_id: str
+    start: str
+    end: str
+    months: int
+    mode: str
+    max_symbols: int | None
+    status: str
+    independent_advantage_demonstrated: bool
+    summary: list[FactorSummaryRow]
+    turnover: list[FactorTurnoverRow]
+    skipped_count: int
+    result_sha256: str

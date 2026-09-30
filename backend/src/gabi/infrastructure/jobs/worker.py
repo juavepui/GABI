@@ -79,7 +79,10 @@ class Worker:
                                  job["parameters"].get("portfolio_id"),
                                  job["parameters"].get("decision_policy"),
                                  job["parameters"].get("holdings_text"),
-                                 job["parameters"].get("snapshot_id"))
+                                 job["parameters"].get("snapshot_id"),
+                                 job["parameters"].get("factor_months"),
+                                 job["parameters"].get("factor_mode"),
+                                 job["parameters"].get("factor_max_symbols"))
             result = self.execute(command)
             if self.store.progress(job_id, token, 90, "Guardando resultado", {"stage": "computed"}):
                 self.store.finish(job_id, token, "cancelled")

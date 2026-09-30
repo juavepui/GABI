@@ -361,6 +361,54 @@
             ],
             "title": "End"
           },
+          "factor_max_symbols": {
+            "anyOf": [
+              {
+                "enum": [
+                  50,
+                  100,
+                  200
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factor Max Symbols"
+          },
+          "factor_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "validation",
+                  "fast_dev"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factor Mode"
+          },
+          "factor_months": {
+            "anyOf": [
+              {
+                "enum": [
+                  1,
+                  3,
+                  6,
+                  12
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factor Months"
+          },
           "holdings_text": {
             "anyOf": [
               {
@@ -389,7 +437,8 @@
               "sim_compare",
               "decision_plan",
               "filing_check",
-              "historical_ranking"
+              "historical_ranking",
+              "factor_analysis"
             ],
             "title": "Kind",
             "type": "string"
@@ -1028,6 +1077,199 @@
           "probs_summed_to_100"
         ],
         "title": "ExpectedValue",
+        "type": "object"
+      },
+      "FactorPreview": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "max_symbols": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Symbols"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "skipped_count": {
+            "title": "Skipped Count",
+            "type": "integer"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "items": {
+              "$ref": "#/components/schemas/FactorSummaryRow"
+            },
+            "title": "Summary",
+            "type": "array"
+          },
+          "turnover": {
+            "items": {
+              "$ref": "#/components/schemas/FactorTurnoverRow"
+            },
+            "title": "Turnover",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "start",
+          "end",
+          "months",
+          "mode",
+          "max_symbols",
+          "status",
+          "independent_advantage_demonstrated",
+          "summary",
+          "turnover",
+          "skipped_count",
+          "result_sha256"
+        ],
+        "title": "FactorPreview",
+        "type": "object"
+      },
+      "FactorSummaryRow": {
+        "properties": {
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "horizonte": {
+            "title": "Horizonte",
+            "type": "integer"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "ic_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Std"
+          },
+          "icir": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icir"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "pct_ic_positive": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Ic Positive"
+          },
+          "q_spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q Spread"
+          },
+          "sector_neutral": {
+            "title": "Sector Neutral",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "factor",
+          "horizonte",
+          "sector_neutral",
+          "n_periods"
+        ],
+        "title": "FactorSummaryRow",
+        "type": "object"
+      },
+      "FactorTurnoverRow": {
+        "properties": {
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "quantil": {
+            "title": "Quantil",
+            "type": "integer"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          }
+        },
+        "required": [
+          "factor",
+          "quantil"
+        ],
+        "title": "FactorTurnoverRow",
         "type": "object"
       },
       "Filing": {
@@ -7332,6 +7574,99 @@
           }
         },
         "summary": "Blind Validations",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/factors/{job_id}": {
+      "get": {
+        "operationId": "factor_preview_api_v1_research_factors__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactorPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Factor Preview",
         "tags": [
           "research"
         ]

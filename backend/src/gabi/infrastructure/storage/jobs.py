@@ -105,6 +105,10 @@ class SqliteJobs:
             payload["holdings_text"] = command.holdings_text
         if command.snapshot_id is not None:
             payload["snapshot_id"] = command.snapshot_id
+        if command.kind == "factor_analysis":
+            payload["factor_months"] = command.factor_months
+            payload["factor_mode"] = command.factor_mode
+            payload["factor_max_symbols"] = command.factor_max_symbols
         parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None
