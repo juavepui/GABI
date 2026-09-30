@@ -319,8 +319,8 @@ export function AdministrationPage() {
         <CardHeader>
           <CardTitle>Investigación exploratoria</CardTitle>
           <CardDescription>
-            Backtest histórico de hasta un año. El resultado se guarda como artefacto verificable;
-            no constituye validación prospectiva.
+            Backtest histórico de hasta un año entre 2010 y julio de 2025. El resultado se guarda
+            como artefacto verificable; no constituye validación prospectiva.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -335,6 +335,8 @@ export function AdministrationPage() {
               Desde
               <input
                 type="date"
+                min="2010-01-01"
+                max="2025-07-02"
                 value={start}
                 onChange={(event) => setStart(event.target.value)}
                 className="mt-1 block rounded-md border bg-background p-2"
@@ -345,6 +347,8 @@ export function AdministrationPage() {
               Hasta
               <input
                 type="date"
+                min="2010-01-01"
+                max="2025-07-02"
                 value={end}
                 onChange={(event) => setEnd(event.target.value)}
                 className="mt-1 block rounded-md border bg-background p-2"

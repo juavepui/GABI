@@ -147,6 +147,23 @@ def test_job_validation_blocks_arbitrary_paths_and_scheduler_only_ops(tmp_path):
         assert api.post("/api/v1/jobs", json={"kind": "maintenance", "idempotency_key": "maintenance-1"}).status_code == 422
 
 
+def test_backtest_reservations_guard_submission_and_old_result_reads(tmp_path):
+    with client(tmp_path) as api:
+        for start, end in (("2009-01-01", "2009-06-01"), ("2026-01-01", "2026-06-01")):
+            response = create_job(api, kind="backtest", key=f"blocked-{start}", start=start, end=end)
+            assert response.status_code == 403
+            assert response.json()["error"]["code"] == "reserved_period"
+    store = SqliteJobs(tmp_path)
+    old = store.enqueue(JobCommand("backtest", start="2019-01-01", end="2019-06-01"), "old-backtest", "ui")
+    with sqlite3.connect(store.path) as db:
+        db.execute("UPDATE jobs SET parameters=? WHERE id=?",
+                   (json.dumps({"symbols": [], "start": "2009-01-01", "end": "2009-06-01"}), old["id"]))
+    with client(tmp_path) as api:
+        response = api.get(f"/api/v1/jobs/{old['id']}/result")
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "reserved_period"
+
+
 def test_separate_worker_process_and_scheduler_share_persistent_queue(tmp_path):
     (tmp_path / "sp500_constituents.csv").write_text("symbol\nSPY\nRSP\n")
     with sqlite3.connect(tmp_path / "gabi.db") as db:

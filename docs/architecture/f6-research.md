@@ -23,6 +23,11 @@ todas las filas en un artefacto JSON con hash; la pantalla presenta las primeras
 100 y permite descargar el resultado completo. Es exploración retrospectiva,
 no validación fuera de muestra. Los backtests V1/V2 de esta página siguen en
 Streamlit hasta migrar sus parámetros, costes y registro de ensayos.
+El job exploratorio `backtest` que ya existía en Administración también queda
+limitado a la misma ventana observada. La API verifica la fecha tanto al
+encolar como al leer artefactos de jobs antiguos: una URL directa no puede
+eludir la reserva de #43. El universo del motor sigue siendo S&P 500; no se
+ofrece el conjunto reservado fuera del índice de #44.
 Medición de la serialización, no del cálculo histórico ni de SQLite:
 `python scripts/measure_f6_historical.py` en Windows/Python 3.13.7, fixture
 sintética de 500 empresas y 62 columnas, 999.398 bytes JSON, 0,3844 s y

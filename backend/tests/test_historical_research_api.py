@@ -65,5 +65,5 @@ def test_historical_job_rejects_reserved_or_future_dates_before_writing(tmp_path
         assert api.post("/api/v1/jobs", json={
             "kind": "historical_ranking", "start": "2019-01-02", "end": "2020-01-02",
             "idempotency_key": "invalid-end",
-        }).status_code == 403
+        }).status_code == 422
     assert not data.exists()
