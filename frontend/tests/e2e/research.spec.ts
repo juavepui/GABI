@@ -32,11 +32,16 @@ test('validación ciega muestra integridad sin desvelar posiciones', async ({ pa
 });
 
 test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ page }) => {
-  await page.goto('/investigacion');
-  await page.getByRole('link', { name: 'Abrir Factor Lab' }).click();
-  await expect(page.getByRole('heading', { name: 'Factor Lab' })).toBeVisible();
-  await page.getByRole('button', { name: 'Ejecutar Factor Lab' }).click();
-  await expect(page.getByRole('heading', { name: 'Resumen de factores' })).toBeVisible();
-  await expect(page.getByRole('row', { name: /value_score/ })).toContainText('0,12');
-  await expect(page.getByRole('link', { name: /Descargar series/ })).toBeVisible();
+  await page.request.post('http://127.0.0.1:8001/_test/mode?mode=RESEARCH');
+  try {
+    await page.goto('/investigacion');
+    await page.getByRole('link', { name: 'Abrir Factor Lab' }).click();
+    await expect(page.getByRole('heading', { name: 'Factor Lab' })).toBeVisible();
+    await page.getByRole('button', { name: 'Ejecutar Factor Lab' }).click();
+    await expect(page.getByRole('heading', { name: 'Resumen de factores' })).toBeVisible();
+    await expect(page.getByRole('row', { name: /value_score 3 meses/ })).toContainText('0,12');
+    await expect(page.getByRole('link', { name: /Descargar series/ })).toBeVisible();
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/_test/mode?mode=INVESTOR');
+  }
 });
