@@ -43,7 +43,12 @@ histórico y sus cinco scores, cuatro horizontes y quintiles originales sin
 cambiar sus fórmulas. El comando fija rebalanceo (1/3/6/12 meses), modo
 `validation` con universo completo o `fast_dev` con 50/100/200 empresas. El
 servidor exige el modo Research local tanto para encolar como para leer el
-resultado; durante la transición el selector de modo permanece en Streamlit.
+resultado. Administración en React permite cambiar Investor/Research mediante
+un comando explícito que guarda `data/app_mode.json` de forma atómica, compatible
+con Streamlit. Las consultas leen el modo sin escribir ni descargar datos; un
+cambio invalida las consultas activas del cliente. Volver a Investor bloquea
+los trabajos de investigación y usa los pesos congelados sin borrar los pesos
+Research guardados.
 Solo admite ventanas desde 2010 de hasta seis años y un fin máximo de
 2024-07-01: el horizonte de
 12 meses no puede alcanzar los datos prospectivos posteriores al corte observado

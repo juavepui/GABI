@@ -59,13 +59,6 @@ def main():
         }), encoding="utf-8")
         app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published)
 
-        @app.post("/_test/mode")
-        def test_mode(mode: str):
-            if mode not in {"INVESTOR", "RESEARCH"}:
-                raise ValueError("Unsupported test mode")
-            (root / "app_mode.json").write_text(json.dumps({"mode": mode}), encoding="utf-8")
-            return {"mode": mode}
-
         worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command, app), root)
         threading.Thread(target=lambda: work_forever(worker), daemon=True).start()
         uvicorn.run(app, host="127.0.0.1", port=8001, log_level="warning")

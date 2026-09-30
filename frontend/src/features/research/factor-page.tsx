@@ -69,8 +69,11 @@ export function FactorPage() {
       </header>
       {model.data?.mode === 'INVESTOR' && (
         <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
-          Para ejecutar Factor Lab, activa el modo Research en Streamlit. El servidor bloqueará el
-          trabajo mientras esté activo el modo Investor.
+          Para ejecutar Factor Lab, activa el modo Research en{' '}
+          <Link className="font-medium text-primary underline" to="/administracion">
+            Administración
+          </Link>
+          . El servidor bloqueará el trabajo mientras esté activo el modo Investor.
         </p>
       )}
       <form

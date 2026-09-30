@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Request
 from fastapi import Path as ApiPath
@@ -35,6 +35,15 @@ class WeightsRequest(BaseModel):
     quality: float = Field(ge=0, le=1, allow_inf_nan=False)
     momentum: float = Field(ge=0, le=1, allow_inf_nan=False)
     risk: float = Field(ge=0, le=1, allow_inf_nan=False)
+
+
+class ModeRequest(BaseModel):
+    mode: Literal["INVESTOR", "RESEARCH"]
+
+
+@router.post("/administration/mode", response_model=ModelResponse)
+def set_mode(body: ModeRequest, service: ModelCommand) -> ModelResponse:
+    return model_response(service.set_mode(body.mode))
 
 
 @router.post("/administration/weights", response_model=ModelResponse)

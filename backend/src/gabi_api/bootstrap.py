@@ -37,6 +37,7 @@ from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_research import FilePublishedLedger
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
@@ -77,7 +78,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     repository = ReadOnlyMarket(settings, calculators(), policy, benchmark, risk_free_rate)
     model_queries = ModelQueries(repository, policy)
     market = MarketQueries(repository, model_queries, today)
-    model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir))
+    model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir), FileMode(settings.data_dir))
     jobs = Jobs(SqliteJobs(settings.data_dir), lambda: model_queries.model().mode == "RESEARCH")
     portfolio = PortfolioQueries(repository, policy, today)
     journal = Journal(SqliteJournal(settings.data_dir))

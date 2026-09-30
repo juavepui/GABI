@@ -1250,6 +1250,16 @@ export type Metric = {
 };
 
 /**
+ * ModeRequest
+ */
+export type ModeRequest = {
+    /**
+     * Mode
+     */
+    mode: 'INVESTOR' | 'RESEARCH';
+};
+
+/**
  * ModelResponse
  */
 export type ModelResponse = {
@@ -2087,6 +2097,51 @@ export type WeightsRequest = {
      */
     value: number;
 };
+
+export type SetModeApiV1AdministrationModePostData = {
+    body: ModeRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/administration/mode';
+};
+
+export type SetModeApiV1AdministrationModePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SetModeApiV1AdministrationModePostError = SetModeApiV1AdministrationModePostErrors[keyof SetModeApiV1AdministrationModePostErrors];
+
+export type SetModeApiV1AdministrationModePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ModelResponse;
+};
+
+export type SetModeApiV1AdministrationModePostResponse = SetModeApiV1AdministrationModePostResponses[keyof SetModeApiV1AdministrationModePostResponses];
 
 export type LocalSettingsApiV1AdministrationSettingsGetData = {
     body?: never;

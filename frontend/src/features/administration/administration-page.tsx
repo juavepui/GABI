@@ -14,6 +14,7 @@ import type { CreateJobRequest, JobResponse } from '@/shared/api/generated/types
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { WeightsEditor } from './weights-editor';
+import { ModeSelector } from './mode-selector';
 
 const names: Record<string, string> = {
   refresh: 'Actualizar datos del mercado',
@@ -307,10 +308,13 @@ export function AdministrationPage() {
                 No se puede leer el modelo.
               </p>
             ) : model.data ? (
-              <WeightsEditor
-                key={`${model.data.mode}:${Object.values(model.data.weights).join(':')}`}
-                model={model.data}
-              />
+              <>
+                <ModeSelector model={model.data} />
+                <WeightsEditor
+                  key={`${model.data.mode}:${Object.values(model.data.weights).join(':')}`}
+                  model={model.data}
+                />
+              </>
             ) : null}
           </CardContent>
         </Card>

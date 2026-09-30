@@ -32,7 +32,9 @@ test('validación ciega muestra integridad sin desvelar posiciones', async ({ pa
 });
 
 test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ page }) => {
-  await page.request.post('http://127.0.0.1:8001/_test/mode?mode=RESEARCH');
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
   try {
     await page.goto('/investigacion');
     await page.getByRole('link', { name: 'Abrir Factor Lab' }).click();
@@ -42,6 +44,8 @@ test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ 
     await expect(page.getByRole('row', { name: /value_score 3 meses/ })).toContainText('0,12');
     await expect(page.getByRole('link', { name: /Descargar series/ })).toBeVisible();
   } finally {
-    await page.request.post('http://127.0.0.1:8001/_test/mode?mode=INVESTOR');
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
   }
 });

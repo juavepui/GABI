@@ -40,6 +40,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/ranking", "/api/v1/companies/{symbol}",
                                          "/api/v1/comparison", "/api/v1/portfolio/plan",
                                          "/api/v1/administration/settings", "/api/v1/administration/weights",
+                                         "/api/v1/administration/mode",
                                          "/api/v1/jobs",
                                          "/api/v1/jobs/{job_id}", "/api/v1/jobs/{job_id}/cancel",
                                          "/api/v1/jobs/{job_id}/result",
@@ -159,6 +160,39 @@ def test_research_alternatives_are_explicit_and_do_not_write(api):
     payload = client.get("/api/v1/ranking?value=.25&quality=.25&momentum=.25&risk=.25").json()
     assert payload["model"]["status"] == "EXPERIMENTAL"
     assert hashes(root) == before
+
+
+def test_mode_command_is_explicit_persistent_and_compatible_with_legacy(api, monkeypatch):
+    client, _, root = api
+    weights = {"value": .25, "quality": .25, "momentum": .25, "risk": .25}
+    (root / "weights.json").write_text(json.dumps(weights))
+    saved_weights = (root / "weights.json").read_bytes()
+    monkeypatch.setattr(app_mode, "MODE_PATH", root / "app_mode.json")
+    monkeypatch.setattr(config, "DATA_DIR", root)
+
+    assert client.get("/api/v1/model").json()["mode"] == "INVESTOR"
+    invalid = client.post("/api/v1/administration/mode", json={"mode": "ADMIN"})
+    assert invalid.status_code == 422
+    assert not (root / "app_mode.json").exists()
+
+    research = client.post("/api/v1/administration/mode", json={"mode": "RESEARCH"})
+    assert research.status_code == 200, research.text
+    assert research.json()["mode"] == "RESEARCH"
+    assert research.json()["weights"] == weights
+    assert research.json()["status"] == "EXPERIMENTAL"
+    assert app_mode.get_mode() == "RESEARCH"
+    assert client.get("/api/v1/model").json()["mode"] == "RESEARCH"
+
+    investor = client.post("/api/v1/administration/mode", json={"mode": "INVESTOR"})
+    assert investor.status_code == 200, investor.text
+    assert investor.json()["weights"] == app_mode.FROZEN_WEIGHTS
+    assert investor.json()["status"] == "FROZEN"
+    assert app_mode.get_mode() == "INVESTOR"
+    assert (root / "weights.json").read_bytes() == saved_weights
+    assert list(root.glob("app_mode.*.tmp")) == []
+
+    app_mode.set_mode("RESEARCH")
+    assert client.get("/api/v1/model").json()["mode"] == "RESEARCH"
 
 
 @pytest.mark.parametrize("query", ["value=.3", "value=.1&quality=.1&momentum=.1&risk=.1",

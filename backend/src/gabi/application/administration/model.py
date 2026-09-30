@@ -42,6 +42,10 @@ class WeightWriter(Protocol):
     def save_weights(self, weights: dict[str, float]) -> None: ...
 
 
+class ModeWriter(Protocol):
+    def save_mode(self, mode: str) -> None: ...
+
+
 class ModelQueries:
     def __init__(self, reader: ModelReader, policy: ModelPolicy):
         self.reader, self.policy = reader, policy
@@ -65,8 +69,14 @@ class ModelQueries:
 
 
 class ModelCommands:
-    def __init__(self, queries: ModelQueries, writer: WeightWriter):
-        self.queries, self.writer = queries, writer
+    def __init__(self, queries: ModelQueries, writer: WeightWriter, mode_writer: ModeWriter):
+        self.queries, self.writer, self.mode_writer = queries, writer, mode_writer
+
+    def set_mode(self, mode: str) -> ModelState:
+        if mode not in ("INVESTOR", "RESEARCH"):
+            raise QueryError("invalid_mode", "El modo debe ser Investor o Research.", 422)
+        self.mode_writer.save_mode(mode)
+        return self.queries.model()
 
     def save_weights(self, weights: dict[str, float]) -> ModelState:
         self.queries.model(weights)  # validates four finite fractions and Research mode before any write

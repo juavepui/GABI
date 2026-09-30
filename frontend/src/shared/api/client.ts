@@ -41,6 +41,7 @@ import type {
   HistoricalPreview,
   BlindStatuses,
   FactorPreview,
+  ModeRequest,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -109,6 +110,13 @@ export function getLocalSettings(signal?: AbortSignal): Promise<LocalSettingsRes
 }
 export function getModel(signal?: AbortSignal): Promise<ModelResponse> {
   return get('/api/v1/model', signal);
+}
+export function setMode(mode: ModeRequest['mode']): Promise<ModelResponse> {
+  return request('/api/v1/administration/mode', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  });
 }
 export function saveWeights(body: WeightsRequest): Promise<ModelResponse> {
   return request('/api/v1/administration/weights', {

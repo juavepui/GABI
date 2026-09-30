@@ -88,8 +88,8 @@ export function WeightsEditor({ model }: { model: ModelResponse }) {
         </>
       ) : (
         <p className="text-xs text-muted-foreground">
-          El modo Investor utiliza los pesos congelados. Cambia a Research en Streamlit para editar
-          sus valores por defecto.
+          El modo Investor utiliza los pesos congelados. Activa Research arriba para editar sus
+          valores por defecto.
         </p>
       )}
     </form>
