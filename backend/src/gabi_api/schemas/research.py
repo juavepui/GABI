@@ -66,3 +66,25 @@ class HistoricalPreview(BaseModel):
     shown: int
     rows: list[HistoricalRow]
     result_sha256: str
+
+
+class BlindIntegrity(BaseModel):
+    ok: bool
+    broken_at: str | None
+    n_periods: int
+
+
+class BlindStatus(BaseModel):
+    id: int
+    name: str
+    status: str
+    unlock_date: str
+    n_periods: int
+    next_rebalance_due: str
+    days_to_unlock: int
+    integrity: BlindIntegrity
+    revealed: bool
+
+
+class BlindStatuses(BaseModel):
+    items: list[BlindStatus]

@@ -28,6 +28,15 @@ limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
 eludir la reserva de #43. El universo del motor sigue siendo S&P 500; no se
 ofrece el conjunto reservado fuera del índice de #44.
+La consulta `blind-validations` lee solo metadatos y registros de sellos desde
+SQLite en modo de solo lectura. Verifica la cadena con la misma función pura
+que usa el módulo Streamlit, con topes de 50 validaciones, 100 periodos por
+validación, 1.000 periodos totales y 16.384 caracteres por campo JSON;
+excederlos devuelve 503 sin recortar silenciosamente. Nunca devuelve
+símbolos, precios de entrada, pesos ni rendimiento, incluso tras el desbloqueo.
+Cada consulta relee los registros, por lo que no existe una caché de sellos que
+pueda quedar obsoleta. El alta, los rebalanceos y la revelación aún no se han
+migrado.
 Medición de la serialización, no del cálculo histórico ni de SQLite:
 `python scripts/measure_f6_historical.py` en Windows/Python 3.13.7, fixture
 sintética de 500 empresas y 62 columnas, 999.398 bytes JSON, 0,3844 s y
@@ -46,7 +55,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 | Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Streamlit | Análisis por factor y ventanas mediante jobs con procedencia. |
-| Blind Forward Validation | Streamlit | Alta, rebalanceos, sellos y revelación protegidos por API y preregistro. |
+| Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 
 Antes de cerrar #68 se comprobarán los 17 recorridos del inventario F0, la

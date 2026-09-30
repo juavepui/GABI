@@ -57,6 +57,12 @@ export function ResearchPage() {
         >
           Abrir ranking histórico →
         </Link>
+        <Link
+          className="ml-5 mt-3 inline-block text-sm font-medium text-primary underline"
+          to="/investigacion/validaciones"
+        >
+          Ver validaciones ciegas →
+        </Link>
       </header>
 
       {(overview.isPending || trials.isPending) && <LoadingState />}
@@ -197,3 +203,4 @@ export function ResearchPage() {
 }
 
 export { HistoricalPage } from './historical-page';
+export { BlindValidationsPage } from './blind-validations-page';

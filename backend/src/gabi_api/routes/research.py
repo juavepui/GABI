@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 
 from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
+from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
-from gabi_api.schemas.research import HistoricalPreview, ResearchOverview, SearchTrials
+from gabi_api.schemas.research import BlindStatuses, HistoricalPreview, ResearchOverview, SearchTrials
 
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
 
@@ -24,6 +25,18 @@ def jobs(request: Request) -> Jobs:
 
 
 Queue = Annotated[Jobs, Depends(jobs)]
+
+
+def blind_service(request: Request) -> BlindValidationQueries:
+    return request.app.state.blind_validations
+
+
+Blind = Annotated[BlindValidationQueries, Depends(blind_service)]
+
+
+@router.get("/blind-validations", response_model=BlindStatuses)
+def blind_validations(query: Blind) -> dict:
+    return query.list_status()
 
 
 @router.get("/overview", response_model=ResearchOverview)

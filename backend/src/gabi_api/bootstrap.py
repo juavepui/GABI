@@ -22,6 +22,7 @@ from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
 from gabi.application.portfolio.simulations import Simulations
+from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.filings import compare_cached
@@ -30,6 +31,7 @@ from gabi.infrastructure.legacy.market import calculators, defaults, model_polic
 from gabi.infrastructure.legacy.signals import compare_snapshots
 from gabi.infrastructure.legacy.simulations import LegacySimulationMath
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
@@ -86,6 +88,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     decisions = Decisions(repository, SqliteDecisions(settings.data_dir), policy, today, build_decisions, jobs)
     research_catalog = ResearchCatalog(FilePublishedLedger(
         published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"))
+    blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -111,6 +114,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.simulations = simulations
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
+    app.state.blind_validations = blind_validations
     app.state.settings = settings
     app.state.model_commands = model_commands
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],

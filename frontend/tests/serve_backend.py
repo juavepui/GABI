@@ -1,5 +1,7 @@
 """Loopback test API. No real configuration, credentials, database or network sources."""
 import json
+import hashlib
+import sqlite3
 import sys
 import threading
 import time
@@ -9,6 +11,7 @@ from tempfile import TemporaryDirectory, gettempdir
 import uvicorn
 
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.domain.research.blind import canonical_payload
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
@@ -22,6 +25,18 @@ def main():
         root = Path(directory).resolve()
         assert root.is_relative_to(Path(gettempdir()).resolve())
         seed_fixture(root)
+        payload = canonical_payload("2026-07-01", ["SEALED_TICKER"], {"SEALED_TICKER": 100.0})
+        with sqlite3.connect(root / "gabi.db") as db:
+            db.execute("INSERT INTO blind_validations "
+                       "(id,created_at,name,model_id,weights_json,n_positions,rebalance_months,start_date,unlock_date,status) "
+                       "VALUES (1,'2026-07-01',?,'fixture','{}',1,?,?,?,?)",
+                       ("Fixture ciega", 3, "2026-07-01", "2027-09-17", "locked"))
+            db.execute("INSERT INTO blind_validation_periods "
+                       "(validation_id,rebalance_date,symbols_json,entry_prices_json,prev_hash,record_hash,recorded_at,weights_json) "
+                       "VALUES (?,?,?,?,?,?,'2026-07-01','{}')",
+                       (1, "2026-07-01", json.dumps(["SEALED_TICKER"]),
+                        json.dumps({"SEALED_TICKER": 100.0}), None,
+                        hashlib.sha256(payload.encode()).hexdigest()))
         published = root / "published-ledger.json"
         published.write_text(json.dumps({
             "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",

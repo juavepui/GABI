@@ -1,6 +1,104 @@
 {
   "components": {
     "schemas": {
+      "BlindIntegrity": {
+        "properties": {
+          "broken_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Broken At"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "broken_at",
+          "n_periods"
+        ],
+        "title": "BlindIntegrity",
+        "type": "object"
+      },
+      "BlindStatus": {
+        "properties": {
+          "days_to_unlock": {
+            "title": "Days To Unlock",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "integrity": {
+            "$ref": "#/components/schemas/BlindIntegrity"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "next_rebalance_due": {
+            "title": "Next Rebalance Due",
+            "type": "string"
+          },
+          "revealed": {
+            "title": "Revealed",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "unlock_date": {
+            "title": "Unlock Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "unlock_date",
+          "n_periods",
+          "next_rebalance_due",
+          "days_to_unlock",
+          "integrity",
+          "revealed"
+        ],
+        "title": "BlindStatus",
+        "type": "object"
+      },
+      "BlindStatuses": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BlindStatus"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BlindStatuses",
+        "type": "object"
+      },
       "CapitalAllocation": {
         "additionalProperties": false,
         "properties": {
@@ -7155,6 +7253,87 @@
         "summary": "Ranking",
         "tags": [
           "market"
+        ]
+      }
+    },
+    "/api/v1/research/blind-validations": {
+      "get": {
+        "operationId": "blind_validations_api_v1_research_blind_validations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlindStatuses"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Blind Validations",
+        "tags": [
+          "research"
         ]
       }
     },

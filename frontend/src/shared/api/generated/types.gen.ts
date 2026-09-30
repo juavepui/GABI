@@ -5,6 +5,73 @@ export type ClientOptions = {
 };
 
 /**
+ * BlindIntegrity
+ */
+export type BlindIntegrity = {
+    /**
+     * Broken At
+     */
+    broken_at: string | null;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * Ok
+     */
+    ok: boolean;
+};
+
+/**
+ * BlindStatus
+ */
+export type BlindStatus = {
+    /**
+     * Days To Unlock
+     */
+    days_to_unlock: number;
+    /**
+     * Id
+     */
+    id: number;
+    integrity: BlindIntegrity;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Next Rebalance Due
+     */
+    next_rebalance_due: string;
+    /**
+     * Revealed
+     */
+    revealed: boolean;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Unlock Date
+     */
+    unlock_date: string;
+};
+
+/**
+ * BlindStatuses
+ */
+export type BlindStatuses = {
+    /**
+     * Items
+     */
+    items: Array<BlindStatus>;
+};
+
+/**
  * CapitalAllocation
  */
 export type CapitalAllocation = {
@@ -3773,6 +3840,51 @@ export type RankingApiV1RankingGetResponses = {
 };
 
 export type RankingApiV1RankingGetResponse = RankingApiV1RankingGetResponses[keyof RankingApiV1RankingGetResponses];
+
+export type BlindValidationsApiV1ResearchBlindValidationsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/blind-validations';
+};
+
+export type BlindValidationsApiV1ResearchBlindValidationsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BlindValidationsApiV1ResearchBlindValidationsGetError = BlindValidationsApiV1ResearchBlindValidationsGetErrors[keyof BlindValidationsApiV1ResearchBlindValidationsGetErrors];
+
+export type BlindValidationsApiV1ResearchBlindValidationsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BlindStatuses;
+};
+
+export type BlindValidationsApiV1ResearchBlindValidationsGetResponse = BlindValidationsApiV1ResearchBlindValidationsGetResponses[keyof BlindValidationsApiV1ResearchBlindValidationsGetResponses];
 
 export type HistoricalPreviewApiV1ResearchHistoricalJobIdGetData = {
     body?: never;

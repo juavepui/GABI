@@ -21,3 +21,12 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
   await expect(page.getByRole('row', { name: /T001/ })).toContainText('unresolved');
   await expect(page.getByRole('link', { name: 'Descargar resultado completo' })).toBeVisible();
 });
+
+test('validación ciega muestra integridad sin desvelar posiciones', async ({ page }) => {
+  await page.goto('/investigacion');
+  await page.getByRole('link', { name: 'Ver validaciones ciegas' }).click();
+  await expect(page.getByRole('heading', { name: 'Validaciones ciegas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '#1 · Fixture ciega' })).toBeVisible();
+  await expect(page.getByText('Íntegra')).toBeVisible();
+  await expect(page.getByText('SEALED_TICKER')).toHaveCount(0);
+});

@@ -23,6 +23,7 @@ from datetime import date
 import pandas as pd
 
 from . import screener_asof, storage
+from .domain.research.blind import canonical_payload, verify_chain
 from .research_lab import _current_git_commit, log_experiment
 
 SCHEMA = """
@@ -76,11 +77,7 @@ def _ensure_schema(conn):
 
 
 def _canonical_payload(rebalance_date: str, symbols: list, entry_prices: dict) -> str:
-    return json.dumps({
-        "rebalance_date": rebalance_date,
-        "symbols": sorted(symbols),
-        "entry_prices": {s: entry_prices[s] for s in sorted(entry_prices)},
-    }, sort_keys=True)
+    return canonical_payload(rebalance_date, symbols, entry_prices)
 
 
 def create_validation(name: str, weights: dict, n_positions: int, rebalance_months: int,
@@ -215,15 +212,7 @@ def verify_integrity(validation_id: int) -> dict:
     with storage.get_connection() as conn:
         _ensure_schema(conn)
         periods = _get_periods(conn, validation_id)
-    prev_hash = None
-    for period in periods:
-        payload = _canonical_payload(period["rebalance_date"], json.loads(period["symbols_json"]),
-                                     json.loads(period["entry_prices_json"]))
-        expected = hashlib.sha256(f"{prev_hash or ''}{payload}".encode()).hexdigest()
-        if expected != period["record_hash"] or period["prev_hash"] != prev_hash:
-            return {"ok": False, "broken_at": period["rebalance_date"], "n_periods": len(periods)}
-        prev_hash = period["record_hash"]
-    return {"ok": True, "broken_at": None, "n_periods": len(periods)}
+    return verify_chain(periods)
 
 
 def _is_revealed(validation: dict) -> bool:
