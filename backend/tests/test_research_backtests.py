@@ -189,3 +189,113 @@ def test_legacy_adapters_pass_parameters_and_match_streamlit_metrics(monkeypatch
     assert artifact["curve"][0] == {"fecha": "2019-01-03", "estrategia": float(nav.iloc[0]),
                                     "spy": float(nav_spy.iloc[0])}
     assert artifact["exit_events"][0]["symbol"] == "OLD"
+
+
+def _streamlit_v1_kwargs(test, universe_size, n_picks, interval, bt_cost, start, end, family, notes):
+    """The keyword arguments app/pages/8_Ranking_Historico.py passed for V1."""
+    strat_m = test["metrics"]["estrategia"]
+    return dict(
+        universe=f"S&P 500 histórico, muestra de {universe_size}",
+        factors="Value/Quality/Momentum/Risk", n_positions=int(n_picks),
+        rebalance={1: "Monthly", 3: "Quarterly", 6: "Semiannual", 12: "Annual"}[interval],
+        cost_model=f"V1: {bt_cost:.0f}pb round-trip sobre el 100% de cada posición cada periodo",
+        is_start=start, is_end=end, family=family or None,
+        sharpe=strat_m["sharpe"], sortino=strat_m["sortino"], max_drawdown=strat_m["max_drawdown"],
+        total_return=test["return"], n_periods=len(test["periods"]), periods_per_year=12 / interval,
+        returns=test["periods"].set_index(pd.to_datetime(test["periods"]["hasta"]))["retorno"],
+        notes=notes or None, result={"data_quality": test.get("data_quality", {})})
+
+
+def _roundtrip(artifact):
+    return json.loads(json.dumps(artifact, allow_nan=False, default=str, sort_keys=True))
+
+
+def test_registration_matches_streamlit_experiment_fields():
+    from gabi import research_lab
+    from gabi.application.research.backtests import STAGES, experiment_from_backtest, normalize_registration
+
+    assert list(STAGES) == research_lab.STAGES
+    registration = normalize_registration({"source_job_id": "a" * 32, "stage": "RESEARCH",
+                                           "hypothesis_registered": False, "family": " v1 ", "notes": ""})
+    assert registration["family"] == "v1" and registration["notes"] is None
+    test = _v1_result()
+    artifact = _roundtrip(build_backtest("backtest_v1", "2019-01-02", "2020-01-02", V1, lambda *_: test))
+    record = experiment_from_backtest(artifact, registration, "f" * 64)
+    expected = _streamlit_v1_kwargs(test, 50, 10, 3, 10.0, "2019-01-02", "2020-01-02", "v1", "")
+    returns, expected_returns = record.pop("returns"), expected.pop("returns")
+    pd.testing.assert_series_equal(returns, expected_returns, check_names=False)
+    assert {str(k): float(v) for k, v in returns.items()} == {
+        str(k): float(v) for k, v in expected_returns.items()}
+    assert record.pop("result") == expected.pop("result") | {
+        "backtest_job_id": "a" * 32, "backtest_result_sha256": "f" * 64,
+        "data_fingerprint_scope": "registration"}
+    assert record.pop("model_id") == "GABI-MF-v1"
+    assert (record.pop("stage"), record.pop("hypothesis_registered")) == ("RESEARCH", False)
+    # SQLite stores NaN as NULL, so a NaN metric from the engine and None from JSON log the same row.
+    assert record == {key: None if isinstance(value, float) and value != value else value
+                      for key, value in expected.items()}
+
+    engine = _v2_engine()
+    nav = engine["nav_curve"]
+    engine["metrics"] = {"estrategia": multifactor_backtest.daily_risk_metrics(nav),
+                         "spy": multifactor_backtest.daily_risk_metrics(engine["nav_curve_spy"]),
+                         "calmar": None, "recovery_days": None, "beta": None, "information_ratio": None,
+                         "capture": {"upside": None, "downside": None}}
+    artifact = _roundtrip(build_backtest("backtest_v2", "2019-01-02", "2020-01-02", V2, lambda *_: engine))
+    record = experiment_from_backtest(artifact, registration | {"stage": "IN_SAMPLE"}, "f" * 64)
+    pd.testing.assert_series_equal(record["returns"], nav.pct_change().dropna(), check_names=False,
+                                   check_freq=False)
+    assert record["total_return"] == float(nav.iloc[-1] / nav.iloc[0] - 1)
+    assert record["universe"] == "S&P 500 histórico, muestra de 200"
+    assert record["cost_model"] == "V2: 1.00$ fijo + 10pb spread, solo sobre variación de peso real"
+    assert (record["n_periods"], record["periods_per_year"]) == (len(nav) - 1, 252)
+    assert record["result"]["capital_inicial"] == 100_000.0
+
+
+def test_register_job_logs_once_with_fingerprint_and_provenance(tmp_path, monkeypatch):
+    from gabi import config, data_quality, research_lab
+    from gabi.infrastructure.legacy.jobs import LegacyExecutor
+
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    monkeypatch.setattr(data_quality, "compute_data_fingerprint", lambda *a, **k: "fp-test")
+    (tmp_path / "app_mode.json").write_text('{"mode":"RESEARCH"}')
+    store = SqliteJobs(tmp_path)
+    source = store.enqueue(JobCommand("backtest_v1", start="2019-01-02", end="2020-01-02",
+                                      backtest_options=V1), "backtest-source-1", "ui")
+    assert Worker(store, lambda command: build_backtest(command.kind, command.start, command.end,
+                                                        command.backtest_options, _v1_result), tmp_path).run_once()
+    executor = LegacyExecutor(Settings(tmp_path))
+    request = {"kind": "backtest_register", "idempotency_key": "register-test-01",
+               "research_log": {"source_job_id": source["id"], "stage": "RESEARCH",
+                                "hypothesis_registered": True, "family": "mf-v1", "notes": "nota"}}
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        created = api.post("/api/v1/jobs", json=request)
+        assert created.status_code == 202, created.text
+        assert Worker(store, executor, tmp_path).run_once()
+        result = api.get(f"/api/v1/jobs/{created.json()['id']}/result").json()
+        assert result["data_fingerprint"] == "fp-test"
+        experiments = research_lab.list_experiments()
+        assert len(experiments) == 1
+        row = experiments.iloc[0]
+        assert row["id"] == result["experiment_id"]
+        assert (row["model_id"], row["stage"], row["family"], row["hypothesis_registered"]) == (
+            "GABI-MF-v1", "RESEARCH", "mf-v1", 1)
+        assert row["data_fingerprint"] == "fp-test"
+        assert json.loads(row["returns_json"]) == {"2019-04-02 00:00:00": 0.05, "2019-07-02 00:00:00": -0.02}
+        stored = json.loads(row["result_json"])
+        assert stored["backtest_job_id"] == source["id"]
+        assert stored["backtest_result_sha256"] == store.get(source["id"])["result_sha256"]
+
+        again = api.post("/api/v1/jobs", json=request | {"idempotency_key": "register-test-02"})
+        assert Worker(store, executor, tmp_path).run_once()
+        assert store.get(again.json()["id"])["status"] == "failed"
+        assert len(research_lab.list_experiments()) == 1
+
+        bad = api.post("/api/v1/jobs", json=request | {"idempotency_key": "register-test-03",
+                                                       "research_log": request["research_log"] | {"stage": "X"}})
+        assert bad.status_code == 422
+    (tmp_path / "app_mode.json").write_text('{"mode":"INVESTOR"}')
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        denied = api.post("/api/v1/jobs", json=request | {"idempotency_key": "register-test-04"})
+        assert denied.status_code == 403

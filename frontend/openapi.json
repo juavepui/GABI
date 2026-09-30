@@ -1217,7 +1217,8 @@
               "factor_analysis",
               "estimate_analysis",
               "backtest_v1",
-              "backtest_v2"
+              "backtest_v2",
+              "backtest_register"
             ],
             "title": "Kind",
             "type": "string"
@@ -1234,6 +1235,16 @@
               }
             ],
             "title": "Portfolio Id"
+          },
+          "research_log": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchLogRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "snapshot_id": {
             "anyOf": [
@@ -4202,6 +4213,62 @@
           "risk_free_rate"
         ],
         "title": "RankingResponse",
+        "type": "object"
+      },
+      "ResearchLogRequest": {
+        "additionalProperties": false,
+        "description": "Register one finished V1/V2 backtest in Research Lab.",
+        "properties": {
+          "family": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "hypothesis_registered": {
+            "title": "Hypothesis Registered",
+            "type": "boolean"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "source_job_id": {
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Source Job Id",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "RESEARCH",
+              "IN_SAMPLE",
+              "OUT_OF_SAMPLE",
+              "LIVE_FORWARD"
+            ],
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_job_id",
+          "stage",
+          "hypothesis_registered"
+        ],
+        "title": "ResearchLogRequest",
         "type": "object"
       },
       "ResearchOverview": {

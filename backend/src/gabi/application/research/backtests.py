@@ -155,3 +155,75 @@ def backtest_preview(result: dict) -> dict:
         "beta": metrics["beta"], "information_ratio": metrics["information_ratio"],
         "capture_upside": metrics["capture"]["upside"], "capture_downside": metrics["capture"]["downside"],
     }
+
+
+STAGES = ("RESEARCH", "IN_SAMPLE", "OUT_OF_SAMPLE", "LIVE_FORWARD")  # research_lab.STAGES
+REGISTRATION_KEYS = {"source_job_id", "stage", "family", "hypothesis_registered", "notes"}
+_REBALANCE = {1: "Monthly", 3: "Quarterly", 6: "Semiannual", 12: "Annual"}
+
+
+def normalize_registration(registration: dict | None) -> dict:
+    """An explicit Research Lab entry for one finished backtest job."""
+    registration = dict(registration or {})
+    registration.setdefault("family", None)
+    registration.setdefault("notes", None)
+    if set(registration) != REGISTRATION_KEYS:
+        raise QueryError("invalid_job", "El registro no corresponde a un backtest.", 422)
+    source = registration["source_job_id"]
+    if not isinstance(source, str) or len(source) != 32 or any(c not in "0123456789abcdef" for c in source):
+        raise QueryError("invalid_job", "Indica un backtest terminado válido.", 422)
+    if registration["stage"] not in STAGES or not isinstance(registration["hypothesis_registered"], bool):
+        raise QueryError("invalid_job", "La fase o la hipótesis del registro no son válidas.", 422)
+    for key, limit in (("family", 100), ("notes", 2_000)):
+        value = registration[key]
+        if value is not None and (not isinstance(value, str) or len(value) > limit):
+            raise QueryError("invalid_job", f"El campo {key} del registro no es válido.", 422)
+        registration[key] = value.strip() or None if isinstance(value, str) else None
+    return registration
+
+
+def experiment_from_backtest(artifact: dict, registration: dict, source_sha256: str) -> dict:
+    """Keyword arguments for research_lab.log_experiment, as the Streamlit page built them."""
+    kind = artifact.get("kind")
+    if kind not in {"backtest_v1", "backtest_v2"}:
+        raise ValueError("El trabajo de origen no es un backtest.")
+    require_observed_period(artifact["start"], artifact["end"])
+    options = artifact["options"]
+    common = {
+        "stage": registration["stage"], "hypothesis_registered": registration["hypothesis_registered"],
+        "factors": "Value/Quality/Momentum/Risk", "n_positions": int(options["top_n"]),
+        "rebalance": _REBALANCE[options["months"]], "is_start": artifact["start"], "is_end": artifact["end"],
+        "family": registration["family"], "notes": registration["notes"],
+    }
+    # Streamlit fingerprinted right after the run; this entry says it was computed at registration.
+    provenance = {"backtest_job_id": registration["source_job_id"], "backtest_result_sha256": source_sha256,
+                  "data_fingerprint_scope": "registration"}
+    if kind == "backtest_v1":
+        periods = pd.DataFrame(artifact["periods"])
+        metrics = artifact["metrics"]["estrategia"]
+        return common | {
+            "model_id": "GABI-MF-v1", "universe": f"S&P 500 histórico, muestra de {options['universe_size']}",
+            "cost_model": f"V1: {options['cost_bps']:.0f}pb round-trip sobre el 100% de cada posición cada periodo",
+            "sharpe": metrics["sharpe"], "sortino": metrics["sortino"], "max_drawdown": metrics["max_drawdown"],
+            "total_return": artifact["return"], "n_periods": len(periods),
+            "periods_per_year": 12 / options["months"],
+            "returns": periods.set_index(pd.to_datetime(periods["hasta"]))["retorno"],
+            "result": {"data_quality": artifact["data_quality"]} | provenance,
+        }
+    nav = pd.Series({pd.Timestamp(point["fecha"]): point["estrategia"] for point in artifact["curve"]},
+                    dtype=float).sort_index()
+    returns = nav.pct_change().dropna()
+    metrics = artifact["metrics"]["estrategia"]
+    return common | {
+        "model_id": "GABI-MF-v2",
+        "universe": ("S&P 500 histórico completo, sin muestreo" if artifact["mode"] == "validation"
+                     else f"S&P 500 histórico, muestra de {options['max_symbols']}"),
+        "cost_model": (f"V2: {options['commission_usd']:.2f}$ fijo + {options['spread_bps']:.0f}pb spread, "
+                       "solo sobre variación de peso real"),
+        "sharpe": metrics["sharpe"], "sortino": metrics["sortino"], "max_drawdown": metrics["max_drawdown"],
+        "total_return": float(nav.iloc[-1] / nav.iloc[0] - 1), "n_periods": len(returns),
+        "periods_per_year": 252, "returns": returns,
+        "result": {"data_quality": artifact["data_quality"], "mode": artifact["mode"],
+                   "turnover_medio": artifact["turnover_medio"], "comision_total": artifact["comision_total"],
+                   "capital_inicial": options["initial_capital"]} | provenance,
+    }

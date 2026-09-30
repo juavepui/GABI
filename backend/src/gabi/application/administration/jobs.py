@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
-from gabi.application.research.backtests import normalize_backtest
+from gabi.application.research.backtests import normalize_backtest, normalize_registration
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2"]
-RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2"}
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register"]
+RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register"}
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -28,6 +28,7 @@ class JobCommand:
     factor_mode: str | None = None
     factor_max_symbols: int | None = None
     backtest_options: dict | None = None
+    research_log: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -65,6 +66,10 @@ class JobCommand:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
         if self.kind not in {"backtest_v1", "backtest_v2"} and self.backtest_options is not None:
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de backtest.", 422)
+        if self.kind == "backtest_register":
+            object.__setattr__(self, "research_log", normalize_registration(self.research_log))
+        elif self.research_log is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite registro en Research Lab.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)

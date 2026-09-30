@@ -1,5 +1,9 @@
 """Run the unchanged V1/V2 backtest engines with the metrics Streamlit showed."""
 
+import sqlite3
+from contextlib import closing
+from pathlib import Path
+
 
 def run_backtest_v1(start: str, end: str, options: dict) -> dict:
     from gabi import multifactor_backtest
@@ -33,3 +37,41 @@ def run_backtest_v2(start: str, end: str, options: dict) -> dict:
         "capture": portfolio_metrics.capture_ratios(returns, returns_spy),
     }
     return result
+
+
+def _already_registered(data_dir: Path, source_job_id: str) -> int | None:
+    path = data_dir / "gabi.db"
+    if not path.is_file():
+        return None
+    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=30)) as db:
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='experiments'").fetchone() is None:
+            return None
+        row = db.execute("SELECT id FROM experiments WHERE json_valid(result_json) "
+                         "AND json_extract(result_json,'$.backtest_job_id')=?", (source_job_id,)).fetchone()
+    return row[0] if row else None
+
+
+def register_backtest(data_dir: Path, registration: dict) -> dict:
+    """Log a verified backtest artifact once, with the same fields and data fingerprint as Streamlit."""
+    from gabi import data_quality, research_lab
+    from gabi.application.research.backtests import experiment_from_backtest
+    from gabi.infrastructure.storage.jobs import SqliteJobs
+
+    source = registration["source_job_id"]
+    jobs = SqliteJobs(data_dir)
+    job = jobs.get(source)
+    if job["kind"] not in {"backtest_v1", "backtest_v2"}:
+        raise ValueError("El trabajo de origen no es un backtest V1/V2.")
+    artifact = jobs.result(source)  # Verifies the stored SHA-256 before reading it.
+    existing = _already_registered(data_dir, source)
+    if existing is not None:
+        raise ValueError(f"Este backtest ya está registrado como experimento #{existing}.")
+    record = experiment_from_backtest(artifact, registration, job["result_sha256"])
+    fingerprint = data_quality.compute_data_fingerprint()
+    experiment_id = research_lab.log_experiment(
+        record.pop("model_id"), record.pop("stage"), record.pop("hypothesis_registered"),
+        data_fingerprint=fingerprint, **record)
+    return {"kind": "backtest_register", "experiment_id": experiment_id, "source_job_id": source,
+            "source_result_sha256": job["result_sha256"], "data_fingerprint": fingerprint,
+            "data_fingerprint_scope": "registration", "stage": registration["stage"],
+            "family": registration["family"], "hypothesis_registered": registration["hypothesis_registered"]}

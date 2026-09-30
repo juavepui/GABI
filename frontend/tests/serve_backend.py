@@ -119,6 +119,10 @@ def synthetic_job(command, app):
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)
+    if command.kind == "backtest_register":
+        return {"kind": "backtest_register", "experiment_id": 7,
+                "source_job_id": command.research_log["source_job_id"], "data_fingerprint": "fixture",
+                "data_fingerprint_scope": "registration", "stage": command.research_log["stage"]}
     if command.kind == "historical_ranking":
         return {"as_of": command.start, "status": "RETROSPECTIVE_EXPLORATORY",
                 "independent_advantage_demonstrated": False,

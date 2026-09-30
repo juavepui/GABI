@@ -38,10 +38,20 @@ saltados, calidad de datos, salidas por baja y la curva (hasta 200 periodos y
 5.000 puntos) con SHA-256; React presenta métricas, curva y tablas y permite
 descargarlo íntegro. El job no descarga datos: la preparación sigue siendo una
 acción aparte. Los motores leen el historial de precios como antes; no se ha
-medido ni acotado esa lectura en este cambio. Quedan en Streamlit el registro del
-ensayo en Research Lab (con la huella de datos, que recorre tablas completas y
-no se calcula automáticamente en el job), el contraste Fama-French, el drag
-fiscal, el riesgo de cola y la preparación de datos.
+medido ni acotado esa lectura en este cambio.
+El registro en Research Lab es otro job explícito, `backtest_register`, en modo
+Research. Recibe el backtest de origen, la fase, la familia, si la hipótesis se
+registró antes y las notas; relee el artefacto verificando su SHA-256, repite la
+comprobación del periodo observado y traduce el resultado a los mismos campos que
+Streamlit pasaba a `research_lab.log_experiment` (una prueba los compara,
+incluida la serie de retornos). El experimento añade a `result_json` el job de
+origen, su hash y `data_fingerprint_scope="registration"`: la huella
+`compute_data_fingerprint()` completa se calcula al registrar, no al terminar el
+backtest como hacía Streamlit, porque recorre todas las tablas de la base y en la
+base local de 12 GB tardó más de diez minutos (medido con otra lectura
+concurrente). Un backtest solo puede registrarse una vez; un segundo intento falla
+sin escribir. Quedan en Streamlit el contraste Fama-French, el drag fiscal, el
+riesgo de cola y la preparación de datos.
 El job exploratorio `backtest` que ya existía en Administración también queda
 limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
@@ -141,7 +151,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha y backtests V1/V2 como jobs Research en React, con artefacto y hash | Registro en Research Lab con huella de datos, Fama-French, drag fiscal, riesgo de cola y preparación explícita de datos. |
+| Ranking histórico | Ranking por fecha, backtests V1/V2 y su registro en Research Lab como jobs Research en React, con artefacto y hash | Fama-French, drag fiscal, riesgo de cola y preparación explícita de datos. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

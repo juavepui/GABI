@@ -22,8 +22,20 @@ class BacktestOptions(BaseModel):
     spread_bps: float | None = Field(default=None, ge=0, le=500)
 
 
+class ResearchLogRequest(BaseModel):
+    """Register one finished V1/V2 backtest in Research Lab."""
+
+    model_config = {"extra": "forbid"}
+
+    source_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    stage: Literal["RESEARCH", "IN_SAMPLE", "OUT_OF_SAMPLE", "LIVE_FORWARD"]
+    hypothesis_registered: bool
+    family: str | None = Field(default=None, max_length=100)
+    notes: str | None = Field(default=None, max_length=2_000)
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -36,6 +48,7 @@ class CreateJobRequest(BaseModel):
     factor_mode: Literal["validation", "fast_dev"] | None = None
     factor_max_symbols: Literal[50, 100, 200] | None = None
     backtest_options: BacktestOptions | None = None
+    research_log: ResearchLogRequest | None = None
 
 
 class JobEvent(BaseModel):

@@ -558,11 +558,12 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register';
     /**
      * Portfolio Id
      */
     portfolio_id?: number | null;
+    research_log?: ResearchLogRequest | null;
     /**
      * Snapshot Id
      */
@@ -2190,6 +2191,34 @@ export type RankingResponse = {
      * Universe Cached At
      */
     universe_cached_at: string | null;
+};
+
+/**
+ * ResearchLogRequest
+ *
+ * Register one finished V1/V2 backtest in Research Lab.
+ */
+export type ResearchLogRequest = {
+    /**
+     * Family
+     */
+    family?: string | null;
+    /**
+     * Hypothesis Registered
+     */
+    hypothesis_registered: boolean;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Source Job Id
+     */
+    source_job_id: string;
+    /**
+     * Stage
+     */
+    stage: 'RESEARCH' | 'IN_SAMPLE' | 'OUT_OF_SAMPLE' | 'LIVE_FORWARD';
 };
 
 /**

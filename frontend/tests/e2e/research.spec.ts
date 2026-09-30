@@ -86,6 +86,10 @@ test('backtest V1 se ejecuta como job Research y conserva el resultado completo'
     await result.getByText('1 periodo(s) saltado(s)').click();
     await expect(result.getByText('2019-07-02: cobertura insuficiente')).toBeVisible();
     await expect(result.getByRole('link', { name: /Descargar backtest completo/ })).toBeVisible();
+    await result.getByText('Registrar este experimento en Research Lab').click();
+    await result.getByLabel('Familia (agrupa intentos comparables)').fill('mf-v1');
+    await result.getByRole('button', { name: 'Registrar en Research Lab' }).click();
+    await expect(result.getByText('Experimento #7 registrado en Research Lab.')).toBeVisible();
   } finally {
     await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
       data: { mode: 'INVESTOR' },

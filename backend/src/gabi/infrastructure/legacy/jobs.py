@@ -113,6 +113,11 @@ class LegacyExecutor:
             assert command.backtest_options is not None
             return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                                   run_backtest_v1 if command.kind == "backtest_v1" else run_backtest_v2)
+        if command.kind == "backtest_register":
+            from gabi.infrastructure.legacy.backtests import register_backtest
+
+            assert command.research_log is not None
+            return register_backtest(self.settings.data_dir, command.research_log)
         if command.kind == "symbols":
             from gabi import screener
 
