@@ -1,6 +1,772 @@
 {
   "components": {
     "schemas": {
+      "BacktestCurvePoint": {
+        "properties": {
+          "estrategia": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estrategia"
+          },
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "spy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spy"
+          },
+          "universo_ew": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universo Ew"
+          }
+        },
+        "required": [
+          "fecha",
+          "estrategia",
+          "spy"
+        ],
+        "title": "BacktestCurvePoint",
+        "type": "object"
+      },
+      "BacktestExitEvent": {
+        "properties": {
+          "estado": {
+            "title": "Estado",
+            "type": "string"
+          },
+          "estricto": {
+            "title": "Estricto",
+            "type": "boolean"
+          },
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "fecha",
+          "estado",
+          "estricto"
+        ],
+        "title": "BacktestExitEvent",
+        "type": "object"
+      },
+      "BacktestOptions": {
+        "additionalProperties": false,
+        "description": "Exact per-engine keys are enforced by the application use case.",
+        "properties": {
+          "commission_usd": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commission Usd"
+          },
+          "cost_bps": {
+            "anyOf": [
+              {
+                "maximum": 500.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Bps"
+          },
+          "initial_capital": {
+            "anyOf": [
+              {
+                "maximum": 100000000.0,
+                "minimum": 1000.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Capital"
+          },
+          "max_symbols": {
+            "anyOf": [
+              {
+                "enum": [
+                  50,
+                  100,
+                  200
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Symbols"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "validation",
+                  "fast_dev"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "months": {
+            "enum": [
+              1,
+              3,
+              6,
+              12
+            ],
+            "title": "Months",
+            "type": "integer"
+          },
+          "rotation_hurdle_points": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Rotation Hurdle Points",
+            "type": "number"
+          },
+          "spread_bps": {
+            "anyOf": [
+              {
+                "maximum": 500.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread Bps"
+          },
+          "top_n": {
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Top N",
+            "type": "integer"
+          },
+          "universe_size": {
+            "anyOf": [
+              {
+                "enum": [
+                  50,
+                  100,
+                  500
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe Size"
+          }
+        },
+        "required": [
+          "months",
+          "top_n",
+          "rotation_hurdle_points"
+        ],
+        "title": "BacktestOptions",
+        "type": "object"
+      },
+      "BacktestPeriod": {
+        "properties": {
+          "bought": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bought"
+          },
+          "candidatas": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidatas"
+          },
+          "cobertura_universo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cobertura Universo"
+          },
+          "comision_pagada": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comision Pagada"
+          },
+          "coste_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coste Total"
+          },
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "hasta": {
+            "title": "Hasta",
+            "type": "string"
+          },
+          "held": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held"
+          },
+          "retorno": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retorno"
+          },
+          "sold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sold"
+          },
+          "spread_pagado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread Pagado"
+          },
+          "spy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spy"
+          },
+          "turnover_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Pct"
+          },
+          "universo_ew": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universo Ew"
+          }
+        },
+        "required": [
+          "fecha",
+          "hasta"
+        ],
+        "title": "BacktestPeriod",
+        "type": "object"
+      },
+      "BacktestPreview": {
+        "properties": {
+          "beta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Beta"
+          },
+          "calmar": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calmar"
+          },
+          "capital_final": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capital Final"
+          },
+          "capture_downside": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Downside"
+          },
+          "capture_upside": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Upside"
+          },
+          "comision_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comision Total"
+          },
+          "commission_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commission Usd"
+          },
+          "cost_bps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Bps"
+          },
+          "coste_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coste Total"
+          },
+          "curve": {
+            "items": {
+              "$ref": "#/components/schemas/BacktestCurvePoint"
+            },
+            "title": "Curve",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "exit_events": {
+            "items": {
+              "$ref": "#/components/schemas/BacktestExitEvent"
+            },
+            "title": "Exit Events",
+            "type": "array"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "information_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Information Ratio"
+          },
+          "initial_capital": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Capital"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "backtest_v1",
+              "backtest_v2"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "max_symbols": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Symbols"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "validation",
+                  "fast_dev"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/BacktestPeriod"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "recovery_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovery Days"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "rotation_hurdle_points": {
+            "title": "Rotation Hurdle Points",
+            "type": "number"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/BacktestSeriesMetrics"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/FactorSkippedPeriod"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "spread_bps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread Bps"
+          },
+          "spread_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread Total"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "strict_result": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strict Result"
+          },
+          "top_n": {
+            "title": "Top N",
+            "type": "integer"
+          },
+          "turnover_medio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Medio"
+          },
+          "universe_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe Size"
+          }
+        },
+        "required": [
+          "job_id",
+          "kind",
+          "status",
+          "independent_advantage_demonstrated",
+          "start",
+          "end",
+          "months",
+          "top_n",
+          "rotation_hurdle_points",
+          "series",
+          "turnover_medio",
+          "exit_events",
+          "periods",
+          "skipped",
+          "curve",
+          "result_sha256"
+        ],
+        "title": "BacktestPreview",
+        "type": "object"
+      },
+      "BacktestSeriesMetrics": {
+        "properties": {
+          "anualizado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anualizado"
+          },
+          "max_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown"
+          },
+          "name": {
+            "enum": [
+              "estrategia",
+              "universo_ew",
+              "spy"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "sharpe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sharpe"
+          },
+          "sortino": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sortino"
+          },
+          "total_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Return"
+          },
+          "vol_anualizada": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Anualizada"
+          }
+        },
+        "required": [
+          "name",
+          "total_return",
+          "anualizado",
+          "vol_anualizada",
+          "sharpe",
+          "sortino",
+          "max_drawdown"
+        ],
+        "title": "BacktestSeriesMetrics",
+        "type": "object"
+      },
       "BlindIntegrity": {
         "properties": {
           "broken_at": {
@@ -340,6 +1106,16 @@
       },
       "CreateJobRequest": {
         "properties": {
+          "backtest_options": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BacktestOptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "decision_policy": {
             "anyOf": [
               {
@@ -439,7 +1215,9 @@
               "filing_check",
               "historical_ranking",
               "factor_analysis",
-              "estimate_analysis"
+              "estimate_analysis",
+              "backtest_v1",
+              "backtest_v2"
             ],
             "title": "Kind",
             "type": "string"
@@ -8242,6 +9020,99 @@
         "summary": "Ranking",
         "tags": [
           "market"
+        ]
+      }
+    },
+    "/api/v1/research/backtests/{job_id}": {
+      "get": {
+        "operationId": "backtest_result_api_v1_research_backtests__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Backtest Result",
+        "tags": [
+          "research"
         ]
       }
     },

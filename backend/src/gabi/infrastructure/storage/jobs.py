@@ -109,6 +109,8 @@ class SqliteJobs:
             payload["factor_months"] = command.factor_months
             payload["factor_mode"] = command.factor_mode
             payload["factor_max_symbols"] = command.factor_max_symbols
+        if command.backtest_options is not None:
+            payload["backtest_options"] = command.backtest_options
         parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None

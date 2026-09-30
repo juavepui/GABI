@@ -1,15 +1,17 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { cancelJob, createJob, getHistoricalPreview, getJob } from '@/shared/api/client';
+import { cancelJob, createJob, getHistoricalPreview, getJob, getModel } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { BacktestPanel } from './backtest-panel';
 
 const number = (value: number | null | undefined) =>
   value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);
 
 export function HistoricalPage() {
+  const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
   const [asOf, setAsOf] = useState('2019-01-02');
   const [jobId, setJobId] = useState<string | null>(null);
   const start = useMutation({
@@ -152,6 +154,7 @@ export function HistoricalPage() {
           </div>
         </section>
       )}
+      <BacktestPanel researchAllowed={model.data?.mode === 'RESEARCH'} />
     </div>
   );
 }

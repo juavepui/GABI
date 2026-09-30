@@ -105,6 +105,14 @@ class LegacyExecutor:
             from gabi.infrastructure.legacy.estimates import run_estimate_analysis
 
             return build_estimate_analysis(lambda cutoff: run_estimate_analysis(self.settings.data_dir, cutoff))
+        if command.kind in {"backtest_v1", "backtest_v2"}:
+            from gabi.application.research.backtests import build_backtest
+            from gabi.infrastructure.legacy.backtests import run_backtest_v1, run_backtest_v2
+
+            assert command.start is not None and command.end is not None
+            assert command.backtest_options is not None
+            return build_backtest(command.kind, command.start, command.end, command.backtest_options,
+                                  run_backtest_v1 if command.kind == "backtest_v1" else run_backtest_v2)
         if command.kind == "symbols":
             from gabi import screener
 

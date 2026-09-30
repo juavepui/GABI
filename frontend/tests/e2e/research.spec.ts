@@ -66,3 +66,29 @@ test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ 
     });
   }
 });
+
+test('backtest V1 se ejecuta como job Research y conserva el resultado completo', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/historico');
+    await expect(
+      page.getByRole('heading', { name: 'Backtest multifactor por rebalanceos' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Ejecutar backtest' }).click();
+    const result = page.getByRole('region', { name: 'Resultado del backtest' });
+    await expect(result.getByRole('heading', { name: /Resultado V1/ })).toBeVisible();
+    await expect(result.getByRole('row', { name: /^Estrategia/ })).toContainText('12 %');
+    await expect(result.getByRole('row', { name: /^SPY/ })).toContainText('0,45');
+    await result.getByText('1 periodo(s) saltado(s)').click();
+    await expect(result.getByText('2019-07-02: cobertura insuficiente')).toBeVisible();
+    await expect(result.getByRole('link', { name: /Descargar backtest completo/ })).toBeVisible();
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});

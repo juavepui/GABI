@@ -5,6 +5,336 @@ export type ClientOptions = {
 };
 
 /**
+ * BacktestCurvePoint
+ */
+export type BacktestCurvePoint = {
+    /**
+     * Estrategia
+     */
+    estrategia: number | null;
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Spy
+     */
+    spy: number | null;
+    /**
+     * Universo Ew
+     */
+    universo_ew?: number | null;
+};
+
+/**
+ * BacktestExitEvent
+ */
+export type BacktestExitEvent = {
+    /**
+     * Estado
+     */
+    estado: string;
+    /**
+     * Estricto
+     */
+    estricto: boolean;
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * BacktestOptions
+ *
+ * Exact per-engine keys are enforced by the application use case.
+ */
+export type BacktestOptions = {
+    /**
+     * Commission Usd
+     */
+    commission_usd?: number | null;
+    /**
+     * Cost Bps
+     */
+    cost_bps?: number | null;
+    /**
+     * Initial Capital
+     */
+    initial_capital?: number | null;
+    /**
+     * Max Symbols
+     */
+    max_symbols?: 50 | 100 | 200 | null;
+    /**
+     * Mode
+     */
+    mode?: 'validation' | 'fast_dev' | null;
+    /**
+     * Months
+     */
+    months: 1 | 3 | 6 | 12;
+    /**
+     * Rotation Hurdle Points
+     */
+    rotation_hurdle_points: number;
+    /**
+     * Spread Bps
+     */
+    spread_bps?: number | null;
+    /**
+     * Top N
+     */
+    top_n: number;
+    /**
+     * Universe Size
+     */
+    universe_size?: 50 | 100 | 500 | null;
+};
+
+/**
+ * BacktestPeriod
+ */
+export type BacktestPeriod = {
+    /**
+     * Bought
+     */
+    bought?: string | null;
+    /**
+     * Candidatas
+     */
+    candidatas?: string | null;
+    /**
+     * Cobertura Universo
+     */
+    cobertura_universo?: string | null;
+    /**
+     * Comision Pagada
+     */
+    comision_pagada?: number | null;
+    /**
+     * Coste Total
+     */
+    coste_total?: number | null;
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Hasta
+     */
+    hasta: string;
+    /**
+     * Held
+     */
+    held?: string | null;
+    /**
+     * Retorno
+     */
+    retorno?: number | null;
+    /**
+     * Sold
+     */
+    sold?: string | null;
+    /**
+     * Spread Pagado
+     */
+    spread_pagado?: number | null;
+    /**
+     * Spy
+     */
+    spy?: number | null;
+    /**
+     * Turnover Pct
+     */
+    turnover_pct?: number | null;
+    /**
+     * Universo Ew
+     */
+    universo_ew?: number | null;
+};
+
+/**
+ * BacktestPreview
+ */
+export type BacktestPreview = {
+    /**
+     * Beta
+     */
+    beta?: number | null;
+    /**
+     * Calmar
+     */
+    calmar?: number | null;
+    /**
+     * Capital Final
+     */
+    capital_final?: number | null;
+    /**
+     * Capture Downside
+     */
+    capture_downside?: number | null;
+    /**
+     * Capture Upside
+     */
+    capture_upside?: number | null;
+    /**
+     * Comision Total
+     */
+    comision_total?: number | null;
+    /**
+     * Commission Usd
+     */
+    commission_usd?: number | null;
+    /**
+     * Cost Bps
+     */
+    cost_bps?: number | null;
+    /**
+     * Coste Total
+     */
+    coste_total?: number | null;
+    /**
+     * Curve
+     */
+    curve: Array<BacktestCurvePoint>;
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Exit Events
+     */
+    exit_events: Array<BacktestExitEvent>;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Information Ratio
+     */
+    information_ratio?: number | null;
+    /**
+     * Initial Capital
+     */
+    initial_capital?: number | null;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Kind
+     */
+    kind: 'backtest_v1' | 'backtest_v2';
+    /**
+     * Max Symbols
+     */
+    max_symbols?: number | null;
+    /**
+     * Mode
+     */
+    mode?: 'validation' | 'fast_dev' | null;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Periods
+     */
+    periods: Array<BacktestPeriod>;
+    /**
+     * Recovery Days
+     */
+    recovery_days?: number | null;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Rotation Hurdle Points
+     */
+    rotation_hurdle_points: number;
+    /**
+     * Series
+     */
+    series: Array<BacktestSeriesMetrics>;
+    /**
+     * Skipped
+     */
+    skipped: Array<FactorSkippedPeriod>;
+    /**
+     * Spread Bps
+     */
+    spread_bps?: number | null;
+    /**
+     * Spread Total
+     */
+    spread_total?: number | null;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Strict Result
+     */
+    strict_result?: boolean | null;
+    /**
+     * Top N
+     */
+    top_n: number;
+    /**
+     * Turnover Medio
+     */
+    turnover_medio: number | null;
+    /**
+     * Universe Size
+     */
+    universe_size?: number | null;
+};
+
+/**
+ * BacktestSeriesMetrics
+ */
+export type BacktestSeriesMetrics = {
+    /**
+     * Anualizado
+     */
+    anualizado: number | null;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown: number | null;
+    /**
+     * Name
+     */
+    name: 'estrategia' | 'universo_ew' | 'spy';
+    /**
+     * Sharpe
+     */
+    sharpe: number | null;
+    /**
+     * Sortino
+     */
+    sortino: number | null;
+    /**
+     * Total Return
+     */
+    total_return: number | null;
+    /**
+     * Vol Anualizada
+     */
+    vol_anualizada: number | null;
+};
+
+/**
  * BlindIntegrity
  */
 export type BlindIntegrity = {
@@ -199,6 +529,7 @@ export type ComparisonResponse = {
  * CreateJobRequest
  */
 export type CreateJobRequest = {
+    backtest_options?: BacktestOptions | null;
     decision_policy?: DecisionPolicy | null;
     /**
      * End
@@ -227,7 +558,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2';
     /**
      * Portfolio Id
      */
@@ -4397,6 +4728,56 @@ export type RankingApiV1RankingGetResponses = {
 };
 
 export type RankingApiV1RankingGetResponse = RankingApiV1RankingGetResponses[keyof RankingApiV1RankingGetResponses];
+
+export type BacktestResultApiV1ResearchBacktestsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/backtests/{job_id}';
+};
+
+export type BacktestResultApiV1ResearchBacktestsJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BacktestResultApiV1ResearchBacktestsJobIdGetError = BacktestResultApiV1ResearchBacktestsJobIdGetErrors[keyof BacktestResultApiV1ResearchBacktestsJobIdGetErrors];
+
+export type BacktestResultApiV1ResearchBacktestsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BacktestPreview;
+};
+
+export type BacktestResultApiV1ResearchBacktestsJobIdGetResponse = BacktestResultApiV1ResearchBacktestsJobIdGetResponses[keyof BacktestResultApiV1ResearchBacktestsJobIdGetResponses];
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetData = {
     body?: never;

@@ -21,8 +21,27 @@ backend: ni la UI ni una llamada directa pueden abrir el periodo pre-2010 de
 #43 o fechas prospectivas. El worker usa el motor legacy intacto y conserva
 todas las filas en un artefacto JSON con hash; la pantalla presenta las primeras
 100 y permite descargar el resultado completo. Es exploración retrospectiva,
-no validación fuera de muestra. Los backtests V1/V2 de esta página siguen en
-Streamlit hasta migrar sus parámetros, costes y registro de ensayos.
+no validación fuera de muestra.
+Los backtests V1 (coste plano por lado) y V2 (acciones y caja, comisión fija y
+spread, curva diaria) se ejecutan ahora con los jobs `backtest_v1` y
+`backtest_v2`, solo en modo Research y con los mismos parámetros que Streamlit:
+rebalanceo, empresas, umbral de rotación, coste/universo en V1 y modo, muestra,
+capital, comisión y spread en V2. El caso de uso rechaza claves ajenas al motor,
+muestras incoherentes con el modo y cualquier ventana fuera de 2010-01-01 a
+2025-07-02; la sesión de salida del último periodo no supera ese corte. La
+comprobación se repite al leer artefactos persistidos. El adaptador legacy llama a
+`multifactor_backtest.run` y `portfolio_backtest.run` sin cambiarlos y calcula las
+métricas de V2 (diarias, Calmar, recuperación, beta, Information Ratio y
+capturas) con las mismas funciones que la página antigua; una prueba compara
+ambos resultados. El artefacto conserva parámetros normalizados, periodos,
+saltados, calidad de datos, salidas por baja y la curva (hasta 200 periodos y
+5.000 puntos) con SHA-256; React presenta métricas, curva y tablas y permite
+descargarlo íntegro. El job no descarga datos: la preparación sigue siendo una
+acción aparte. Los motores leen el historial de precios como antes; no se ha
+medido ni acotado esa lectura en este cambio. Quedan en Streamlit el registro del
+ensayo en Research Lab (con la huella de datos, que recorre tablas completas y
+no se calcula automáticamente en el job), el contraste Fama-French, el drag
+fiscal, el riesgo de cola y la preparación de datos.
 El job exploratorio `backtest` que ya existía en Administración también queda
 limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
@@ -122,7 +141,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
+| Ranking histórico | Ranking por fecha y backtests V1/V2 como jobs Research en React, con artefacto y hash | Registro en Research Lab con huella de datos, Fama-French, drag fiscal, riesgo de cola y preparación explícita de datos. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

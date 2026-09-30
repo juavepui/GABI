@@ -7,12 +7,14 @@ from fastapi.responses import Response
 
 from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
+from gabi.application.research.backtests import backtest_preview
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi_api.schemas.research import (
+    BacktestPreview,
     BlindStatuses,
     EstimateAnalysisPreview,
     EstimateCaptureStatus,
@@ -128,6 +130,14 @@ def historical_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], 
         "rows": rows,
         "result_sha256": job["result_sha256"],
     }
+
+
+@router.get("/backtests/{job_id}", response_model=BacktestPreview)
+def backtest_result(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job = queue.get(job_id)
+    if job["kind"] not in {"backtest_v1", "backtest_v2"}:
+        raise QueryError("job_not_found", "El backtest no existe.", 404)
+    return backtest_preview(queue.result(job_id)) | {"job_id": job_id, "result_sha256": job["result_sha256"]}
 
 
 @router.get("/factors/{job_id}", response_model=FactorPreview)

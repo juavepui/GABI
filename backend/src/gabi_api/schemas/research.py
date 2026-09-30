@@ -178,6 +178,84 @@ class FactorPreview(BaseModel):
     result_sha256: str
 
 
+class BacktestSeriesMetrics(BaseModel):
+    name: Literal["estrategia", "universo_ew", "spy"]
+    total_return: float | None
+    anualizado: float | None
+    vol_anualizada: float | None
+    sharpe: float | None
+    sortino: float | None
+    max_drawdown: float | None
+
+
+class BacktestPeriod(BaseModel):
+    fecha: str
+    hasta: str
+    candidatas: str | None = None
+    cobertura_universo: str | None = None
+    retorno: float | None = None
+    spy: float | None = None
+    universo_ew: float | None = None
+    held: str | None = None
+    sold: str | None = None
+    bought: str | None = None
+    turnover_pct: float | None = None
+    comision_pagada: float | None = None
+    spread_pagado: float | None = None
+    coste_total: float | None = None
+
+
+class BacktestCurvePoint(BaseModel):
+    fecha: str
+    estrategia: float | None
+    universo_ew: float | None = None
+    spy: float | None
+
+
+class BacktestExitEvent(BaseModel):
+    symbol: str
+    fecha: str
+    estado: str
+    estricto: bool
+
+
+class BacktestPreview(BaseModel):
+    job_id: str
+    kind: Literal["backtest_v1", "backtest_v2"]
+    status: str
+    independent_advantage_demonstrated: bool
+    start: str
+    end: str
+    months: int
+    top_n: int
+    rotation_hurdle_points: float
+    cost_bps: float | None = None
+    universe_size: int | None = None
+    mode: Literal["validation", "fast_dev"] | None = None
+    max_symbols: int | None = None
+    initial_capital: float | None = None
+    commission_usd: float | None = None
+    spread_bps: float | None = None
+    series: list[BacktestSeriesMetrics]
+    turnover_medio: float | None
+    capital_final: float | None = None
+    comision_total: float | None = None
+    spread_total: float | None = None
+    coste_total: float | None = None
+    calmar: float | None = None
+    recovery_days: int | None = None
+    beta: float | None = None
+    information_ratio: float | None = None
+    capture_upside: float | None = None
+    capture_downside: float | None = None
+    strict_result: bool | None = None
+    exit_events: list[BacktestExitEvent]
+    periods: list[BacktestPeriod]
+    skipped: list[FactorSkippedPeriod]
+    curve: list[BacktestCurvePoint]
+    result_sha256: str
+
+
 class PublishedSicWindow(BaseModel):
     period: str
     ic_mean: float | None

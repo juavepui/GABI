@@ -6,9 +6,11 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
+from gabi.application.research.backtests import normalize_backtest
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2"]
+RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2"}
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -25,6 +27,7 @@ class JobCommand:
     factor_months: int | None = None
     factor_mode: str | None = None
     factor_max_symbols: int | None = None
+    backtest_options: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -55,8 +58,13 @@ class JobCommand:
             if (self.factor_mode == "validation" and self.factor_max_symbols is not None or
                     self.factor_mode == "fast_dev" and self.factor_max_symbols not in (50, 100, 200)):
                 raise QueryError("invalid_job", "La muestra no corresponde al modo de Factor Lab.", 422)
+        elif self.kind in {"backtest_v1", "backtest_v2"}:
+            object.__setattr__(self, "backtest_options",
+                               normalize_backtest(self.kind, self.start, self.end, self.backtest_options))
         elif self.start is not None or self.end is not None:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
+        if self.kind not in {"backtest_v1", "backtest_v2"} and self.backtest_options is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite parámetros de backtest.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
@@ -92,10 +100,10 @@ class Jobs:
 
     def _require_research(self) -> None:
         if self.research_allowed is None or not self.research_allowed():
-            raise QueryError("research_required", "Factor Lab requiere el modo Research local.", 403)
+            raise QueryError("research_required", "Esta investigación requiere el modo Research local.", 403)
 
     def submit(self, command: JobCommand, key: str, *, origin: str = "ui") -> dict:
-        if command.kind in {"factor_analysis", "estimate_analysis"}:
+        if command.kind in RESEARCH_KINDS:
             self._require_research()
         if origin == "ui" and command.kind in {"maintenance", "tiingo"}:
             raise QueryError("forbidden_job", "Este trabajo pertenece al programador local.", 403)
@@ -114,11 +122,11 @@ class Jobs:
 
     def result(self, job_id: str) -> dict:
         job = self.repository.get(job_id)
-        if job["kind"] in {"factor_analysis", "estimate_analysis"}:
+        if job["kind"] in RESEARCH_KINDS:
             self._require_research()
         if job["kind"] in {"maintenance", "tiingo"}:
             raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
-        if job["kind"] in {"backtest", "historical_ranking", "factor_analysis"}:
+        if job["kind"] in {"backtest", "historical_ranking", "factor_analysis", "backtest_v1", "backtest_v2"}:
             parameters = job["parameters"]
             if job["kind"] == "historical_ranking" and parameters.get("end") is not None:
                 raise QueryError("reserved_period", "Este resultado no corresponde a una sola fecha observada.", 403)

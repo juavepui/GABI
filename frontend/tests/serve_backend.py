@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory, gettempdir
 
 import uvicorn
 
+from gabi.application.research.backtests import build_backtest
 from gabi.domain.research.blind import canonical_payload
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.settings import Settings
@@ -73,6 +74,30 @@ def main():
         uvicorn.run(app, host="127.0.0.1", port=8001, log_level="warning")
 
 
+def synthetic_backtest_v1(start, end, options):
+    import pandas as pd
+
+    periods = pd.DataFrame([
+        {"fecha": "2019-01-02", "hasta": "2019-04-02", "candidatas": "T000, T001",
+         "cobertura universo": "45/50", "retorno": 0.05, "spy": 0.02, "universo_ew": 0.03,
+         "turnover_pct": None},
+        {"fecha": "2019-04-02", "hasta": "2019-07-02", "candidatas": "T000, T002",
+         "cobertura universo": "44/50", "retorno": 0.01, "spy": 0.03, "universo_ew": 0.02,
+         "turnover_pct": 50.0},
+    ])
+    periods["capital"] = (1 + periods["retorno"]).cumprod()
+    periods["spy_capital"] = (1 + periods["spy"]).cumprod()
+    periods["universo_capital"] = (1 + periods["universo_ew"]).cumprod()
+    metrics = {"anualizado": 0.12, "vol_anualizada": 0.18, "sharpe": 0.45, "sortino": 0.6,
+               "max_drawdown": -0.04}
+    return {"periods": periods, "skipped": [{"fecha": "2019-07-02", "motivo": "cobertura insuficiente"}],
+            "data_quality": {}, "rotation_hurdle_points": options["rotation_hurdle_points"],
+            "turnover_medio": 50.0, "return": float(periods["capital"].iloc[-1] - 1),
+            "spy_return": float(periods["spy_capital"].iloc[-1] - 1),
+            "universo_ew_return": float(periods["universo_capital"].iloc[-1] - 1), "drawdown": 0.0,
+            "metrics": {"estrategia": metrics, "universo_ew": metrics, "spy": metrics}}
+
+
 def synthetic_job(command, app):
     time.sleep(0.5)
     if command.kind == "factor_analysis":
@@ -91,6 +116,9 @@ def synthetic_job(command, app):
                                                     ("2019-01-02", 5, 0.04), ("2019-04-02", 5, 0.06))],
                 "turnover": [{"factor": "value_score", "quantil": 5, "turnover": 0.2}],
                 "skipped": [{"fecha": "2019-07-02", "motivo": "cobertura insuficiente del universo (10/50)"}]}
+    if command.kind == "backtest_v1":
+        return build_backtest(command.kind, command.start, command.end, command.backtest_options,
+                              synthetic_backtest_v1)
     if command.kind == "historical_ranking":
         return {"as_of": command.start, "status": "RETROSPECTIVE_EXPLORATORY",
                 "independent_advantage_demonstrated": False,
@@ -122,3 +150,4 @@ def work_forever(worker):
 
 if __name__ == "__main__":
     main()
+
