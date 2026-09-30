@@ -10,3 +10,14 @@ test('Investigación distingue ensayos fallidos de reservas pendientes', async (
   await expect(page.getByText('trial/pending')).toBeVisible();
   await expect(page.getByText('trial/failed')).toHaveCount(0);
 });
+
+test('ranking histórico se calcula en un job y muestra identidad y cobertura', async ({ page }) => {
+  await page.goto('/investigacion');
+  await page.getByRole('link', { name: 'Abrir ranking histórico' }).click();
+  await expect(page.getByRole('heading', { name: 'Ranking histórico' })).toBeVisible();
+  await page.getByRole('button', { name: 'Calcular ranking' }).click();
+  await expect(page.getByRole('heading', { name: 'Ranking a 2019-01-02' })).toBeVisible();
+  await expect(page.getByRole('row', { name: /T000/ })).toContainText('72,5');
+  await expect(page.getByRole('row', { name: /T001/ })).toContainText('unresolved');
+  await expect(page.getByRole('link', { name: 'Descargar resultado completo' })).toBeVisible();
+});

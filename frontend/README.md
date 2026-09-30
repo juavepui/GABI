@@ -85,7 +85,8 @@ snapshots, filings SEC cacheados y calendario de resultados. Cartera incorpora
 plan objetivo, diario, ayuda contextual, decisiones experimentales y carteras
 simuladas. [Cobertura y límites de F5](../docs/architecture/f5-portfolio-market.md).
 Investigación muestra el registro de búsquedas publicadas, incluidos ensayos
-fallidos y límites de evidencia. El resto de sus recorridos sigue en Streamlit.
+fallidos y límites de evidencia, y permite reconstruir un ranking histórico
+observado mediante un job. Los backtests y laboratorios siguen en Streamlit.
 [Cobertura y pasos pendientes de F6](../docs/architecture/f6-research.md).
 Administración permite encolar refrescos incrementales, hasta diez símbolos,
 auditoría de cobertura y un backtest exploratorio de hasta un año. Muestra el

@@ -84,6 +84,12 @@ class LegacyExecutor:
 
         if config.DATA_DIR.resolve() != self.settings.data_dir.resolve():
             raise RuntimeError("El worker y la API no usan el mismo directorio de datos.")
+        if command.kind == "historical_ranking":
+            from gabi.application.research.historical import build_historical_ranking
+            from gabi.infrastructure.legacy.historical import run_historical
+
+            assert command.start is not None
+            return build_historical_ranking(command.start, run_historical)
         if command.kind == "symbols":
             from gabi import screener
 

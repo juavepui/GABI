@@ -38,6 +38,7 @@ import type {
   DecisionProgress,
   ResearchOverview,
   SearchTrials,
+  HistoricalPreview,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -88,6 +89,9 @@ export function getResearchTrials(
   const params = new URLSearchParams({ offset: String(offset), limit: '25' });
   if (family) params.set('family', family);
   return get('/api/v1/research/trials?' + params.toString(), signal);
+}
+export function getHistoricalPreview(id: string, signal?: AbortSignal): Promise<HistoricalPreview> {
+  return get('/api/v1/research/historical/' + encodeURIComponent(id), signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

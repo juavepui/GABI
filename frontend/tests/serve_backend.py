@@ -48,6 +48,17 @@ def main():
 
 def synthetic_job(command, app):
     time.sleep(0.5)
+    if command.kind == "historical_ranking":
+        return {"as_of": command.start, "status": "RETROSPECTIVE_EXPLORATORY",
+                "independent_advantage_demonstrated": False,
+                "universe_info": {"is_exact": True, "source_date": command.start},
+                "total": 2, "rows": [
+                    {"symbol": "T000", "name": "Fixture A", "sector": "Industrials",
+                     "composite_score": 72.5, "score_coverage": 0.9, "identity_status": "resolved",
+                     "sector_is_approximate": False, "price": 100.0},
+                    {"symbol": "T001", "name": "Fixture B", "sector": None,
+                     "composite_score": None, "score_coverage": 0.3, "identity_status": "unresolved",
+                     "sector_is_approximate": True, "price": None}]}
     if command.kind == "decision_plan":
         return app.state.decisions.generate(command.decision_policy, command.holdings_text)
     if command.kind == "filing_check":

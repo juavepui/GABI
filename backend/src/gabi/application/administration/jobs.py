@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking"]
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -38,6 +38,15 @@ class JobCommand:
                 raise QueryError("invalid_job", "Indica fechas ISO válidas.", 422) from exc
             if first >= last or last > date.today() or (last - first).days > 370:
                 raise QueryError("invalid_job", "El backtest debe cubrir hasta un año cerrado en el pasado.", 422)
+        elif self.kind == "historical_ranking":
+            from datetime import date
+
+            try:
+                as_of = date.fromisoformat(self.start or "")
+            except ValueError as exc:
+                raise QueryError("invalid_job", "Indica una fecha histórica ISO válida.", 422) from exc
+            if self.end is not None or not date(2010, 1, 1) <= as_of <= date(2025, 7, 2):
+                raise QueryError("reserved_period", "Solo se permite el histórico S&P 500 observado de 2010 a julio de 2025.", 403)
         elif self.start is not None or self.end is not None:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
         if self.kind == "sim_result":

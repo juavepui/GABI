@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getResearchOverview, getResearchTrials } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
@@ -51,6 +51,12 @@ export function ResearchPage() {
           validación independiente. GABI todavía no ha demostrado una estrategia neta claramente
           superior al S&amp;P 500.
         </p>
+        <Link
+          className="mt-3 inline-block text-sm font-medium text-primary underline"
+          to="/investigacion/historico"
+        >
+          Abrir ranking histórico →
+        </Link>
       </header>
 
       {(overview.isPending || trials.isPending) && <LoadingState />}
@@ -189,3 +195,5 @@ export function ResearchPage() {
     </div>
   );
 }
+
+export { HistoricalPage } from './historical-page';
