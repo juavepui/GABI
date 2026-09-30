@@ -43,6 +43,7 @@ import type {
   FactorPreview,
   ModeRequest,
   PublishedFactors,
+  EstimateCaptureStatus,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -105,6 +106,9 @@ export function getFactorPreview(id: string, signal?: AbortSignal): Promise<Fact
 }
 export function getPublishedFactors(signal?: AbortSignal): Promise<PublishedFactors> {
   return get('/api/v1/research/published-factors', signal);
+}
+export function getEstimateCaptures(signal?: AbortSignal): Promise<EstimateCaptureStatus> {
+  return get('/api/v1/research/estimate-captures', signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

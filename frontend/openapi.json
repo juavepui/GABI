@@ -1055,6 +1055,90 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "EstimateCaptureStatus": {
+        "properties": {
+          "batches_eligible": {
+            "title": "Batches Eligible",
+            "type": "integer"
+          },
+          "batches_needed": {
+            "title": "Batches Needed",
+            "type": "integer"
+          },
+          "batches_total": {
+            "title": "Batches Total",
+            "type": "integer"
+          },
+          "evaluation_status": {
+            "const": "not_run",
+            "title": "Evaluation Status",
+            "type": "string"
+          },
+          "first_eligible": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Eligible"
+          },
+          "history_threshold_met": {
+            "title": "History Threshold Met",
+            "type": "boolean"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "last_eligible": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Eligible"
+          },
+          "period": {
+            "const": "0q",
+            "title": "Period",
+            "type": "string"
+          },
+          "span_days": {
+            "title": "Span Days",
+            "type": "integer"
+          },
+          "span_days_needed": {
+            "title": "Span Days Needed",
+            "type": "integer"
+          },
+          "symbols_per_batch_needed": {
+            "title": "Symbols Per Batch Needed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "period",
+          "batches_total",
+          "batches_eligible",
+          "first_eligible",
+          "last_eligible",
+          "span_days",
+          "batches_needed",
+          "span_days_needed",
+          "symbols_per_batch_needed",
+          "history_threshold_met",
+          "evaluation_status",
+          "independent_advantage_demonstrated"
+        ],
+        "title": "EstimateCaptureStatus",
+        "type": "object"
+      },
       "ExpectedValue": {
         "additionalProperties": false,
         "properties": {
@@ -8000,6 +8084,87 @@
           }
         },
         "summary": "Blind Validations",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/estimate-captures": {
+      "get": {
+        "operationId": "estimate_captures_api_v1_research_estimate_captures_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimateCaptureStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Estimate Captures",
         "tags": [
           "research"
         ]

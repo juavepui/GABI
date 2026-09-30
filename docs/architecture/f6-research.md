@@ -59,7 +59,14 @@ tipado y permite descargar el JSON. Cada ejecución es un ensayo retrospectivo;
 `fast_dev` es muestreo y ningún resultado se promociona automáticamente a
 evidencia independiente. El job no usa caché de cálculo: se ejecuta solo por
 acción explícita y el artefacto queda invalidado únicamente si se cancela,
-falla o su hash ya no coincide. La sección de estimaciones continúa en Streamlit.
+falla o su hash ya no coincide. El estado de capturas de estimaciones se consulta
+ahora también en React. SQLite se abre en modo de solo lectura y una agregación
+devuelve solo recuentos y primeras/últimas fechas de lotes con al menos 20
+símbolos; no carga filas de símbolos ni inicializa el esquema. Se muestran los
+umbrales heredados de 6 capturas y 60 días, pero la consulta nunca calcula IC
+o retornos y no afirma ventaja independiente. El cálculo experimental heredado
+sigue en Streamlit y necesita una acción explícita con corte observado antes de
+migrarse.
 El mapa Factor Zoo publicado y el diagnóstico SIC fechado se consultan ahora
 también en React. La API verifica los preregistros, el manifiesto, los siete
 resultados publicados, el código congelado del suplemento y sus cinco CSV antes
@@ -101,7 +108,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
-| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; mapa publicado y diagnóstico SIC en React | Migrar estimaciones y comprobar paridad de las restantes vistas. |
+| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; mapa publicado, diagnóstico SIC y cobertura de estimaciones en React | Migrar la evaluación explícita y acotada de estimaciones; comprobar paridad de las restantes vistas. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 

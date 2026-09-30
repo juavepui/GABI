@@ -9,9 +9,11 @@ from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
+from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi_api.schemas.research import (
     BlindStatuses,
+    EstimateCaptureStatus,
     FactorPreview,
     HistoricalPreview,
     PublishedFactors,
@@ -50,9 +52,21 @@ def published_factor_service(request: Request) -> PublishedFactorQueries:
 Published = Annotated[PublishedFactorQueries, Depends(published_factor_service)]
 
 
+def estimate_service(request: Request) -> EstimateQueries:
+    return request.app.state.estimate_queries
+
+
+Estimates = Annotated[EstimateQueries, Depends(estimate_service)]
+
+
 @router.get("/blind-validations", response_model=BlindStatuses)
 def blind_validations(query: Blind) -> dict:
     return query.list_status()
+
+
+@router.get("/estimate-captures", response_model=EstimateCaptureStatus)
+def estimate_captures(query: Estimates) -> dict:
+    return query.status()
 
 
 @router.get("/overview", response_model=ResearchOverview)

@@ -90,6 +90,21 @@ class BlindStatuses(BaseModel):
     items: list[BlindStatus]
 
 
+class EstimateCaptureStatus(BaseModel):
+    period: Literal["0q"]
+    batches_total: int
+    batches_eligible: int
+    first_eligible: str | None
+    last_eligible: str | None
+    span_days: int
+    batches_needed: int
+    span_days_needed: int
+    symbols_per_batch_needed: int
+    history_threshold_met: bool
+    evaluation_status: Literal["not_run"]
+    independent_advantage_demonstrated: bool
+
+
 class FactorSummaryRow(BaseModel):
     factor: str
     horizonte: int

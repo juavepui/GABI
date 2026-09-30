@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { PublishedFactorMap } from './published-factor-map';
+import { EstimateCaptures } from './estimate-captures';
 
 const format = (value: number | null | undefined, digits = 3) =>
   value == null
@@ -69,6 +70,7 @@ export function FactorPage() {
         </p>
       </header>
       <PublishedFactorMap />
+      <EstimateCaptures />
       {model.data?.mode === 'INVESTOR' && (
         <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
           Para ejecutar Factor Lab, activa el modo Research en{' '}

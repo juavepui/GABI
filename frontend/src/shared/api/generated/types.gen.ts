@@ -586,6 +586,60 @@ export type ErrorResponse = {
 };
 
 /**
+ * EstimateCaptureStatus
+ */
+export type EstimateCaptureStatus = {
+    /**
+     * Batches Eligible
+     */
+    batches_eligible: number;
+    /**
+     * Batches Needed
+     */
+    batches_needed: number;
+    /**
+     * Batches Total
+     */
+    batches_total: number;
+    /**
+     * Evaluation Status
+     */
+    evaluation_status: 'not_run';
+    /**
+     * First Eligible
+     */
+    first_eligible: string | null;
+    /**
+     * History Threshold Met
+     */
+    history_threshold_met: boolean;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Last Eligible
+     */
+    last_eligible: string | null;
+    /**
+     * Period
+     */
+    period: '0q';
+    /**
+     * Span Days
+     */
+    span_days: number;
+    /**
+     * Span Days Needed
+     */
+    span_days_needed: number;
+    /**
+     * Symbols Per Batch Needed
+     */
+    symbols_per_batch_needed: number;
+};
+
+/**
  * ExpectedValue
  */
 export type ExpectedValue = {
@@ -4252,6 +4306,51 @@ export type BlindValidationsApiV1ResearchBlindValidationsGetResponses = {
 };
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetResponse = BlindValidationsApiV1ResearchBlindValidationsGetResponses[keyof BlindValidationsApiV1ResearchBlindValidationsGetResponses];
+
+export type EstimateCapturesApiV1ResearchEstimateCapturesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/estimate-captures';
+};
+
+export type EstimateCapturesApiV1ResearchEstimateCapturesGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type EstimateCapturesApiV1ResearchEstimateCapturesGetError = EstimateCapturesApiV1ResearchEstimateCapturesGetErrors[keyof EstimateCapturesApiV1ResearchEstimateCapturesGetErrors];
+
+export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: EstimateCaptureStatus;
+};
+
+export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponse = EstimateCapturesApiV1ResearchEstimateCapturesGetResponses[keyof EstimateCapturesApiV1ResearchEstimateCapturesGetResponses];
 
 export type FactorPreviewApiV1ResearchFactorsJobIdGetData = {
     body?: never;
