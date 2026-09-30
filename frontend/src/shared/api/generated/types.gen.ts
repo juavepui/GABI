@@ -1660,6 +1660,28 @@ export type HealthResponse = {
 };
 
 /**
+ * HistoricalColumn
+ */
+export type HistoricalColumn = {
+    /**
+     * Colored
+     */
+    colored: boolean;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Unit
+     */
+    unit: 'text' | 'USD' | 'ratio' | 'fraction' | 'count' | 'points_0_100';
+};
+
+/**
  * HistoricalCoverage
  */
 export type HistoricalCoverage = {
@@ -1818,6 +1840,58 @@ export type HistoricalRow = {
      * Symbol
      */
     symbol: string;
+};
+
+/**
+ * HistoricalTable
+ */
+export type HistoricalTable = {
+    /**
+     * Columns
+     */
+    columns: Array<HistoricalColumn>;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Offset
+     */
+    offset: number;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Rows
+     */
+    rows: Array<HistoricalTableRow>;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
+ * HistoricalTableRow
+ */
+export type HistoricalTableRow = {
+    /**
+     * Colors
+     */
+    colors: {
+        [key: string]: number | null;
+    };
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number | string | null;
+    };
 };
 
 /**
@@ -5995,6 +6069,77 @@ export type HistoricalPreviewApiV1ResearchHistoricalJobIdGetResponses = {
 };
 
 export type HistoricalPreviewApiV1ResearchHistoricalJobIdGetResponse = HistoricalPreviewApiV1ResearchHistoricalJobIdGetResponses[keyof HistoricalPreviewApiV1ResearchHistoricalJobIdGetResponses];
+
+export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: {
+        /**
+         * Hide No Data
+         */
+        hide_no_data?: boolean;
+        /**
+         * Sort
+         */
+        sort?: string | null;
+        /**
+         * Descending
+         */
+        descending?: boolean;
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/research/historical/{job_id}/table';
+};
+
+export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetError = HistoricalTableApiV1ResearchHistoricalJobIdTableGetErrors[keyof HistoricalTableApiV1ResearchHistoricalJobIdTableGetErrors];
+
+export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HistoricalTable;
+};
+
+export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponse = HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponses[keyof HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponses];
 
 export type OverviewApiV1ResearchOverviewGetData = {
     body?: never;

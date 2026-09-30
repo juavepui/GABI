@@ -89,6 +89,16 @@ umbral de cobertura (70 % por defecto, como el control lateral antiguo). Los
 diagnósticos de V1/V2 añaden los avisos por rebalanceo de
 `ranking_quality_warnings` sobre la calidad guardada en el artefacto. Las
 pruebas comparan los textos con las expresiones de la página antigua.
+La tabla de métricas reconstruidas se consulta paginada (100 filas, máximo 200)
+con `GET /research/historical/{id}/table`: las mismas columnas y etiquetas de la
+página antigua, "ocultar empresas sin ningún dato" y orden por una columna en el
+backend. El color de cada celda es el percentil sectorial `<métrica>_pct` que ya
+calculó el motor, o el propio score, igual que `build_color_basis`; React solo lo
+pinta con la misma escala. Cada columna declara su unidad: `shares_dilution_yoy`,
+`buyback_yield` y `capex_to_ocf` son fracciones y `acquisitions_latest` dólares,
+aunque la tabla antigua los imprimía sin convertir. El job del ranking guarda
+ahora el nombre SEC resuelto de cada símbolo, que Streamlit consultaba en cada
+render; los artefactos anteriores usan el nombre del motor.
 El job exploratorio `backtest` que ya existía en Administración también queda
 limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
@@ -188,7 +198,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Tabla completa de métricas y resultado posterior de candidatas y bloques. |
+| Ranking histórico | Ranking por fecha, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Resultado posterior de candidatas y bloques con corte observado. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

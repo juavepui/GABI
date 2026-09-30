@@ -2,9 +2,14 @@
 
 
 def run_historical(as_of: str) -> dict:
-    from gabi import screener_asof
+    from gabi import edgar, screener_asof
 
-    return screener_asof.build_ranking_as_of(as_of)
+    result = screener_asof.build_ranking_as_of(as_of)
+    table = result["table"]
+    if not table.empty:
+        # The old page looked the SEC title up on every render; the job stores it once with the artifact.
+        result["table"] = table.assign(resolved_title=[edgar.get_resolved_title(symbol) for symbol in table.index])
+    return result
 
 
 class LegacyRankingQuality:

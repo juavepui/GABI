@@ -80,6 +80,28 @@ class HistoricalCoverage(BaseModel):
     warnings: list[str]
 
 
+class HistoricalColumn(BaseModel):
+    key: str
+    label: str
+    unit: Literal["text", "USD", "ratio", "fraction", "count", "points_0_100"]
+    colored: bool
+
+
+class HistoricalTableRow(BaseModel):
+    symbol: str
+    values: dict[str, float | str | None]
+    colors: dict[str, float | None]
+
+
+class HistoricalTable(BaseModel):
+    job_id: str
+    columns: list[HistoricalColumn]
+    total: int
+    offset: int
+    rows: list[HistoricalTableRow]
+    result_sha256: str
+
+
 class HistoricalPreview(BaseModel):
     job_id: str
     as_of: str

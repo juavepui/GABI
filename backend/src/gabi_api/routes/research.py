@@ -24,6 +24,7 @@ from gabi_api.schemas.research import (
     EstimateCaptureStatus,
     FactorPreview,
     HistoricalPreview,
+    HistoricalTable,
     PreparationResult,
     PublishedFactors,
     ResearchOverview,
@@ -135,6 +136,15 @@ def trials(catalog: Catalog, offset: Annotated[int, Query(ge=0, le=10_000)] = 0,
 def historical_preview(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], query: HistoricalRanking,
                        coverage_threshold: Annotated[float, Query(ge=0, le=1)] = 0.7) -> dict:
     return query.preview(job_id, coverage_threshold)
+
+
+@router.get("/historical/{job_id}/table", response_model=HistoricalTable)
+def historical_table(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], query: HistoricalRanking,
+                     hide_no_data: bool = True, sort: Annotated[str | None, Query(max_length=60)] = None,
+                     descending: bool = True, offset: Annotated[int, Query(ge=0)] = 0,
+                     limit: Annotated[int, Query(ge=1, le=200)] = 100) -> dict:
+    return query.table(job_id, hide_no_data=hide_no_data, sort=sort, descending=descending,
+                       offset=offset, limit=limit)
 
 
 @router.get("/backtests/{job_id}", response_model=BacktestPreview)

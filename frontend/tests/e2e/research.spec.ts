@@ -17,8 +17,12 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
   await expect(page.getByRole('heading', { name: 'Ranking histórico' })).toBeVisible();
   await page.getByRole('button', { name: 'Calcular ranking' }).click();
   await expect(page.getByRole('heading', { name: 'Ranking a 2019-01-02' })).toBeVisible();
-  await expect(page.getByRole('row', { name: /T000/ })).toContainText('72,5');
-  await expect(page.getByRole('row', { name: /T001/ })).toContainText('unresolved');
+  const table = page.getByRole('table', { name: 'Métricas reconstruidas' });
+  await page.getByLabel('Ocultar empresas sin ningún dato reconstruido').uncheck();
+  await expect(table.getByRole('row', { name: /T000/ })).toContainText('72,50');
+  await expect(table.getByRole('row', { name: /T001/ })).toContainText('Fixture B');
+  await table.getByRole('button', { name: 'Composite' }).click();
+  await expect(table.getByRole('row').nth(1)).toContainText('T000');
   const coverage = page.getByRole('region', { name: 'Cobertura de la reconstrucción' });
   await expect(
     coverage.getByText(/1\/2 empresas sin identidad histórica acreditada/),

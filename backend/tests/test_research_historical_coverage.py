@@ -78,3 +78,56 @@ def test_historical_layer_replaces_identity_counts(tmp_path):
     assert coverage["identity"] is None
     assert coverage["historical_coverage"]["accredited_prices"] == 6
     assert coverage["historical_coverage"]["excluded"] == {"identity_unresolved_or_ambiguous": 3}
+
+
+def test_table_columns_keep_streamlit_labels_and_fix_only_documented_units():
+    from gabi.application.research.historical_queries import TABLE_COLUMNS
+    from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO
+
+    for key, label, unit in TABLE_COLUMNS:
+        if key != "resolved_title":
+            assert label == METRIC_INFO.get(key, {}).get("label", key)
+        if key in FRACTION_COLUMNS:
+            assert unit == "fraction", key
+    corrected = {key for key, _, unit in TABLE_COLUMNS if unit == "fraction"} - FRACTION_COLUMNS
+    assert corrected == {"shares_dilution_yoy", "buyback_yield", "capex_to_ocf"}
+
+
+def test_historical_table_pages_sorts_and_colours_like_streamlit(tmp_path):
+    from gabi.ui_helpers import build_color_basis
+
+    job_id = _job(tmp_path)
+    df = _table()["table"]
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        default = api.get(f"/api/v1/research/historical/{job_id}/table").json()
+        everything = api.get(f"/api/v1/research/historical/{job_id}/table?hide_no_data=false").json()
+        page = api.get(f"/api/v1/research/historical/{job_id}/table?hide_no_data=false"
+                       "&sort=composite_score&descending=false&offset=2&limit=3").json()
+        assert api.get(f"/api/v1/research/historical/{job_id}/table?sort=secret").status_code == 422
+    shown = df[df["roic"].notna() | df["market_cap"].notna()]
+    assert default["total"] == len(shown)
+    assert [row["symbol"] for row in default["rows"]] == shown.index.tolist()
+    assert everything["total"] == 10
+    assert [row["symbol"] for row in page["rows"]] == ["T002", "T003", "T004"]
+    keys = [column["key"] for column in everything["columns"]]
+    basis = build_color_basis(df, [key for key in keys if key != "resolved_title"])
+    for row in everything["rows"]:
+        for key in keys:
+            if key in ("resolved_title", "sector"):
+                continue
+            expected = basis.loc[row["symbol"], key]
+            assert row["colors"][key] == (None if pd.isna(expected) else expected), (row["symbol"], key)
+    first = everything["rows"][0]
+    assert first["values"]["resolved_title"] == "Empresa 0"
+    assert first["values"]["composite_score"] == 50.0
+
+
+def test_historical_job_stores_sec_titles_once(monkeypatch):
+    from gabi import edgar, screener_asof
+    from gabi.infrastructure.legacy.historical import run_historical
+
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", lambda as_of: _table())
+    monkeypatch.setattr(edgar, "get_resolved_title", lambda symbol: f"SEC {symbol}" if symbol != "T001" else None)
+    table = run_historical("2012-06-01")["table"]
+    assert table.loc["T000", "resolved_title"] == "SEC T000"
+    assert pd.isna(table.loc["T001", "resolved_title"])

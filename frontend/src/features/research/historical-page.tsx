@@ -7,10 +7,8 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BacktestPanel } from './backtest-panel';
 import { CoverageThreshold, HistoricalCoverageNotes } from './coverage-notes';
+import { HistoricalTable } from './historical-table';
 import { PrepareData } from './prepare-data';
-
-const number = (value: number | null | undefined) =>
-  value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);
 
 export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
@@ -139,8 +137,7 @@ export function HistoricalPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="text-xl font-semibold">Ranking a {preview.data.as_of}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {preview.data.total} empresas · se muestran las primeras {preview.data.shown} en el
-            orden original. Identidad y sector aproximados permanecen visibles; el JSON completo se
+            {preview.data.total} empresas en el orden original del motor. El JSON completo se
             conserva con hash {preview.data.result_sha256.slice(0, 12)}…
           </p>
           <div className="mt-4 space-y-3">
@@ -154,39 +151,8 @@ export function HistoricalPage() {
           >
             Descargar resultado completo
           </a>
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-sm">
-              <thead>
-                <tr className="border-b text-xs text-muted-foreground">
-                  <th className="py-2">Empresa</th>
-                  <th>Sector</th>
-                  <th>Score</th>
-                  <th>Cobertura</th>
-                  <th>Identidad</th>
-                  <th>Precio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.data.rows.map((row) => (
-                  <tr key={row.symbol} className="border-b last:border-0">
-                    <td className="py-3">
-                      <span className="font-medium">{row.symbol}</span>
-                      <span className="block text-xs text-muted-foreground">{row.name ?? '—'}</span>
-                    </td>
-                    <td>
-                      {row.sector ?? '—'}
-                      {row.sector_is_approximate && ' · aproximado'}
-                    </td>
-                    <td>{number(row.composite_score)}</td>
-                    <td>
-                      {row.score_coverage == null ? '—' : number(row.score_coverage * 100) + ' %'}
-                    </td>
-                    <td>{row.identity_status ?? '—'}</td>
-                    <td>{number(row.price)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-5">
+            <HistoricalTable key={preview.data.job_id} jobId={preview.data.job_id} />
           </div>
         </section>
       )}

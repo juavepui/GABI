@@ -3232,6 +3232,42 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HistoricalColumn": {
+        "properties": {
+          "colored": {
+            "title": "Colored",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "text",
+              "USD",
+              "ratio",
+              "fraction",
+              "count",
+              "points_0_100"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "colored"
+        ],
+        "title": "HistoricalColumn",
+        "type": "object"
+      },
       "HistoricalCoverage": {
         "properties": {
           "historical_coverage": {
@@ -3509,6 +3545,96 @@
           "symbol"
         ],
         "title": "HistoricalRow",
+        "type": "object"
+      },
+      "HistoricalTable": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/HistoricalColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/HistoricalTableRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "columns",
+          "total",
+          "offset",
+          "rows",
+          "result_sha256"
+        ],
+        "title": "HistoricalTable",
+        "type": "object"
+      },
+      "HistoricalTableRow": {
+        "properties": {
+          "colors": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Colors",
+            "type": "object"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "symbol",
+          "values",
+          "colors"
+        ],
+        "title": "HistoricalTableRow",
         "type": "object"
       },
       "Identity": {
@@ -11484,6 +11610,159 @@
           }
         },
         "summary": "Historical Preview",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/historical/{job_id}/table": {
+      "get": {
+        "operationId": "historical_table_api_v1_research_historical__job_id__table_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hide_no_data",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Hide No Data",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort"
+            }
+          },
+          {
+            "in": "query",
+            "name": "descending",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Descending",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalTable"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Historical Table",
         "tags": [
           "research"
         ]
