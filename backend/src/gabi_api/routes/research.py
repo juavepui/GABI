@@ -23,6 +23,7 @@ from gabi_api.schemas.research import (
     EstimateAnalysisPreview,
     EstimateCaptureStatus,
     FactorPreview,
+    HistoricalOutcomes,
     HistoricalPreview,
     HistoricalTable,
     PreparationResult,
@@ -145,6 +146,14 @@ def historical_table(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], qu
                      limit: Annotated[int, Query(ge=1, le=200)] = 100) -> dict:
     return query.table(job_id, hide_no_data=hide_no_data, sort=sort, descending=descending,
                        offset=offset, limit=limit)
+
+
+@router.get("/historical-outcomes/{job_id}", response_model=HistoricalOutcomes)
+def historical_outcomes(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job = queue.get(job_id)
+    if job["kind"] != "historical_outcomes":
+        raise QueryError("job_not_found", "La evaluación posterior no existe.", 404)
+    return queue.result(job_id) | {"job_id": job_id, "result_sha256": job["result_sha256"]}
 
 
 @router.get("/backtests/{job_id}", response_model=BacktestPreview)

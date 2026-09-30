@@ -54,8 +54,18 @@ class PreparationRequest(BaseModel):
     max_symbols: Literal[50, 100, 200, 500] | None = None
 
 
+class OutcomesRequest(BaseModel):
+    """Later return of the leaders of one finished historical ranking."""
+
+    model_config = {"extra": "forbid"}
+
+    source_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    top_n: int = Field(ge=1, le=50)
+    cost_bps: float = Field(default=0.0, ge=0, le=100)
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -71,6 +81,7 @@ class CreateJobRequest(BaseModel):
     research_log: ResearchLogRequest | None = None
     factor_contrast: FactorContrastRequest | None = None
     preparation: PreparationRequest | None = None
+    outcomes: OutcomesRequest | None = None
 
 
 class JobEvent(BaseModel):

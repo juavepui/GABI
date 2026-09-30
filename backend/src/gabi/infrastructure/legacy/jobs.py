@@ -113,6 +113,11 @@ class LegacyExecutor:
             assert command.backtest_options is not None
             return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                                   run_backtest_v1 if command.kind == "backtest_v1" else run_backtest_v2)
+        if command.kind == "historical_outcomes":
+            from gabi.infrastructure.legacy.historical import run_outcomes
+
+            assert command.outcomes is not None
+            return run_outcomes(self.settings.data_dir, command.outcomes)
         if command.kind == "prepare_history":
             from gabi.infrastructure.legacy.preparation import prepare_history
 

@@ -7,6 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BacktestPanel } from './backtest-panel';
 import { CoverageThreshold, HistoricalCoverageNotes } from './coverage-notes';
+import { HistoricalOutcomes } from './historical-outcomes';
 import { HistoricalTable } from './historical-table';
 import { PrepareData } from './prepare-data';
 
@@ -153,6 +154,13 @@ export function HistoricalPage() {
           </a>
           <div className="mt-5">
             <HistoricalTable key={preview.data.job_id} jobId={preview.data.job_id} />
+          </div>
+          <div className="mt-5">
+            <HistoricalOutcomes
+              key={preview.data.job_id}
+              rankingJobId={preview.data.job_id}
+              researchAllowed={model.data?.mode === 'RESEARCH'}
+            />
           </div>
         </section>
       )}

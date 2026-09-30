@@ -32,3 +32,22 @@ class LegacyRankingQuality:
         from gabi import data_quality
 
         return data_quality.ranking_quality_warnings(quality, threshold)
+
+
+def run_outcomes(data_dir, request: dict) -> dict:
+    """The "Resultado posterior" and block comparison of the old page, with bounded observed prices."""
+    from gabi import evaluation
+    from gabi.application.research.historical_outcomes import build_outcomes
+    from gabi.application.research.reservations import OBSERVED_END
+    from gabi.infrastructure.storage.jobs import SqliteJobs
+    from gabi.infrastructure.storage.window_prices import SqliteWindowPrices
+
+    jobs = SqliteJobs(data_dir)
+    source = jobs.get(request["source_job_id"])
+    if source["kind"] != "historical_ranking":
+        raise ValueError("El trabajo de origen no es un ranking histórico.")
+    ranking = jobs.result(request["source_job_id"])  # Verifies the stored SHA-256.
+    prices = SqliteWindowPrices(data_dir, OBSERVED_END)
+    return build_outcomes(ranking, request, source["result_sha256"],
+                          lambda symbols, as_of, months, cost: evaluation.evaluate(
+                              symbols, as_of, months, cost, price_at=prices, today=OBSERVED_END))

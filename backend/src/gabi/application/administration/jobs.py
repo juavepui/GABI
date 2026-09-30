@@ -8,12 +8,16 @@ from typing import Literal, Protocol
 from gabi.application.errors import QueryError
 from gabi.application.research.backtest_factors import normalize_factor_contrast
 from gabi.application.research.backtests import normalize_backtest, normalize_registration
+from gabi.application.research.historical_outcomes import normalize_outcomes
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
-                  "backtest_factors"}
+                  "backtest_factors", "historical_outcomes"}
+DERIVED_SOURCES = {"backtest_factors": ("factor_contrast", {"backtest_v1", "backtest_v2"}),
+                   "backtest_register": ("research_log", {"backtest_v1", "backtest_v2"}),
+                   "historical_outcomes": ("outcomes", {"historical_ranking"})}
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -34,6 +38,7 @@ class JobCommand:
     research_log: dict | None = None
     factor_contrast: dict | None = None
     preparation: dict | None = None
+    outcomes: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -83,6 +88,10 @@ class JobCommand:
             raise QueryError("invalid_job", "Este trabajo no admite contraste Fama-French.", 422)
         if self.kind != "prepare_history" and self.preparation is not None:
             raise QueryError("invalid_job", "Este trabajo no admite preparación de datos.", 422)
+        if self.kind == "historical_outcomes":
+            object.__setattr__(self, "outcomes", normalize_outcomes(self.outcomes))
+        elif self.outcomes is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite evaluación posterior.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
@@ -153,13 +162,13 @@ class Jobs:
                 require_factor_period(parameters.get("start"), parameters.get("end"))
             else:
                 require_observed_period(parameters.get("start"), parameters.get("end"))
-        if job["kind"] in {"backtest_factors", "backtest_register"}:
-            # Derived artifacts inherit the reserved-period check of their source backtest.
-            source_id = (job["parameters"].get("factor_contrast") or job["parameters"].get("research_log") or {}
-                         ).get("source_job_id")
+        if job["kind"] in DERIVED_SOURCES:
+            # Derived artifacts inherit the reserved-period check of their source job.
+            field, kinds = DERIVED_SOURCES[job["kind"]]
+            source_id = (job["parameters"].get(field) or {}).get("source_job_id")
             source = self.repository.get(source_id) if source_id else None
-            if source is None or source["kind"] not in {"backtest_v1", "backtest_v2"}:
-                raise QueryError("result_unavailable", "El backtest de origen no existe.", 404)
+            if source is None or source["kind"] not in kinds:
+                raise QueryError("result_unavailable", "El trabajo de origen no existe.", 404)
             require_observed_period(source["parameters"].get("start"), source["parameters"].get("end"))
         result = self.repository.result(job_id)
         if job["kind"] == "estimate_analysis" and (

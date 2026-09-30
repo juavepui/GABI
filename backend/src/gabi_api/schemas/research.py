@@ -102,6 +102,41 @@ class HistoricalTable(BaseModel):
     result_sha256: str
 
 
+class OutcomeResult(BaseModel):
+    months: int
+    status: Literal["complete", "incomplete", "pending", "reserved"]
+    end_date: str
+    requested: int | None = None
+    available: int | None = None
+    portfolio_return: float | None = None
+    benchmark_return: float | None = None
+    excess_return: float | None = None
+    missing: list[str] = []
+
+
+class BlockOutcome(BaseModel):
+    block: str
+    column: str
+    symbols: list[str]
+    outcome: OutcomeResult
+
+
+class HistoricalOutcomes(BaseModel):
+    job_id: str
+    status: str
+    independent_advantage_demonstrated: bool
+    as_of: str
+    source_job_id: str
+    source_result_sha256: str
+    top_n: int
+    cost_bps: float
+    observed_cutoff: str
+    candidates: list[str]
+    horizons: list[OutcomeResult]
+    blocks: list[BlockOutcome]
+    result_sha256: str
+
+
 class HistoricalPreview(BaseModel):
     job_id: str
     as_of: str

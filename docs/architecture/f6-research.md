@@ -99,6 +99,21 @@ pinta con la misma escala. Cada columna declara su unidad: `shares_dilution_yoy`
 aunque la tabla antigua los imprimía sin convertir. El job del ranking guarda
 ahora el nombre SEC resuelto de cada símbolo, que Streamlit consultaba en cada
 render; los artefactos anteriores usan el nombre del motor.
+El resultado posterior de las primeras candidatas (6 y 12 meses) y la
+comparación por bloques (12 meses) son el job `historical_outcomes`, en modo
+Research, sobre un ranking ya calculado: misma selección que la página antigua
+(primeras N con Composite; N líderes de cada bloque con cobertura >= 50 %) y la
+fórmula sin cambios de `evaluation.evaluate`. `evaluate` acepta ahora un lector de
+precios y un corte opcionales, con el comportamiento anterior por defecto. El job
+inyecta `SqliteWindowPrices`, que lee en solo lectura la ventana de ±7 días de
+cada fecha (la misma tolerancia de `_adjusted_at`) y rechaza cualquier ventana
+posterior al 2025-07-02. Si fecha + horizonte + 7 días supera ese corte, el
+horizonte se marca como reservado sin consultar sus precios; Streamlit lo
+calculaba o lo dejaba como pendiente según la fecha de hoy. Una prueba compara
+el lector acotado con `_adjusted_at` y el resultado con la llamada antigua. Con
+esto la página de Ranking histórico queda cubierta en React; el tamaño de
+universo 15/50 de la reconstrucción antigua era solo una muestra más rápida del
+universo completo que calcula el job.
 El job exploratorio `backtest` que ya existía en Administración también queda
 limitado a la misma ventana observada. La API verifica la fecha tanto al
 encolar como al leer artefactos de jobs antiguos: una URL directa no puede
@@ -198,7 +213,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Resultado posterior de candidatas y bloques con corte observado. |
+| Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Verificar el recorrido con la base local y retirar la página Streamlit y sus excepciones. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

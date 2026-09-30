@@ -262,20 +262,25 @@ def snapshot_price_curve(snapshot_id: int) -> pd.DataFrame:
     return curve.dropna(how="all")
 
 
-def evaluate(symbols: list[str], as_of_date: str, months: int = 6, cost_bps: float = 0) -> dict:
-    """Rentabilidad total con el mismo peso por candidata, incluyendo el coste de ida y vuelta; los datos que faltan nunca cuentan como cero."""
+def evaluate(symbols: list[str], as_of_date: str, months: int = 6, cost_bps: float = 0, *,
+             price_at=None, today: date | None = None) -> dict:
+    """Rentabilidad total con el mismo peso por candidata, incluyendo el coste de ida y vuelta; los datos que faltan nunca cuentan como cero.
+
+    `price_at(symbol, target, after=False)` y `today` permiten inyectar un
+    lector de precios acotado y un corte fijo; por defecto, la caché completa y hoy."""
+    price_at = price_at or _adjusted_at
     start = pd.Timestamp(as_of_date)
     end = start + pd.DateOffset(months=months)
-    if end > pd.Timestamp(date.today()):
+    if end > pd.Timestamp(today or date.today()):
         return {"status": "pending", "end_date": end.date().isoformat()}
     returns = {}
     for symbol in dict.fromkeys(symbols):
-        p0 = _adjusted_at(symbol, start)
-        p1 = _adjusted_at(symbol, end, after=True)
+        p0 = price_at(symbol, start)
+        p1 = price_at(symbol, end, after=True)
         if p0 and p1:
             returns[symbol] = p1 / p0 - 1 - 2 * cost_bps / 10000
-    b0 = _adjusted_at("SPY", start)
-    b1 = _adjusted_at("SPY", end, after=True)
+    b0 = price_at("SPY", start)
+    b1 = price_at("SPY", end, after=True)
     benchmark = b1 / b0 - 1 - 2 * cost_bps / 10000 if b0 and b1 else None
     portfolio = sum(returns.values()) / len(returns) if returns else None
     return {

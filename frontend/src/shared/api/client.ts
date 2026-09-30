@@ -50,6 +50,7 @@ import type {
   BacktestFactorsPreview,
   PreparationResult,
   HistoricalTable,
+  HistoricalOutcomes,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -174,6 +175,12 @@ export function getHistoricalTable(
   });
   if (query.sort) params.set('sort', query.sort);
   return get('/api/v1/research/historical/' + encodeURIComponent(id) + '/table?' + params, signal);
+}
+export function getHistoricalOutcomes(
+  id: string,
+  signal?: AbortSignal,
+): Promise<HistoricalOutcomes> {
+  return get('/api/v1/research/historical-outcomes/' + encodeURIComponent(id), signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

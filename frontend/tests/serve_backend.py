@@ -134,6 +134,17 @@ def synthetic_job(command, app):
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)
+    if command.kind == "historical_outcomes":
+        from gabi.application.research.historical_outcomes import build_outcomes
+        from gabi.infrastructure.storage.jobs import SqliteJobs as Jobs
+
+        source = Jobs(Path(app.state.settings.data_dir))
+        source_id = command.outcomes["source_job_id"]
+        return build_outcomes(source.result(source_id), command.outcomes, source.get(source_id)["result_sha256"],
+                              lambda symbols, as_of, months, cost: {
+                                  "status": "complete", "end_date": "2019-07-02", "available": len(symbols),
+                                  "requested": len(symbols), "portfolio_return": 0.05 if months == 6 else 0.12,
+                                  "benchmark_return": 0.03, "excess_return": 0.02, "missing": []})
     if command.kind == "prepare_history":
         from gabi.application.research.preparation import preparation_result
 

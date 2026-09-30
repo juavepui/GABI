@@ -1335,6 +1335,36 @@
         "title": "BlindStatuses",
         "type": "object"
       },
+      "BlockOutcome": {
+        "properties": {
+          "block": {
+            "title": "Block",
+            "type": "string"
+          },
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/OutcomeResult"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "required": [
+          "block",
+          "column",
+          "symbols",
+          "outcome"
+        ],
+        "title": "BlockOutcome",
+        "type": "object"
+      },
       "CapitalAllocation": {
         "additionalProperties": false,
         "properties": {
@@ -1700,10 +1730,21 @@
               "backtest_v2",
               "backtest_register",
               "backtest_factors",
-              "prepare_history"
+              "prepare_history",
+              "historical_outcomes"
             ],
             "title": "Kind",
             "type": "string"
+          },
+          "outcomes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutcomesRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "portfolio_id": {
             "anyOf": [
@@ -3385,6 +3426,88 @@
         "title": "HistoricalIdentity",
         "type": "object"
       },
+      "HistoricalOutcomes": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/BlockOutcome"
+            },
+            "title": "Blocks",
+            "type": "array"
+          },
+          "candidates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "cost_bps": {
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "horizons": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeResult"
+            },
+            "title": "Horizons",
+            "type": "array"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "observed_cutoff": {
+            "title": "Observed Cutoff",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "source_job_id": {
+            "title": "Source Job Id",
+            "type": "string"
+          },
+          "source_result_sha256": {
+            "title": "Source Result Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "top_n": {
+            "title": "Top N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "independent_advantage_demonstrated",
+          "as_of",
+          "source_job_id",
+          "source_result_sha256",
+          "top_n",
+          "cost_bps",
+          "observed_cutoff",
+          "candidates",
+          "horizons",
+          "blocks",
+          "result_sha256"
+        ],
+        "title": "HistoricalOutcomes",
+        "type": "object"
+      },
       "HistoricalPreview": {
         "properties": {
           "as_of": {
@@ -4587,6 +4710,128 @@
           "blind_validation_id"
         ],
         "title": "ModelResponse",
+        "type": "object"
+      },
+      "OutcomeResult": {
+        "properties": {
+          "available": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "excess_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excess Return"
+          },
+          "missing": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "portfolio_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Return"
+          },
+          "requested": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "incomplete",
+              "pending",
+              "reserved"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "months",
+          "status",
+          "end_date"
+        ],
+        "title": "OutcomeResult",
+        "type": "object"
+      },
+      "OutcomesRequest": {
+        "additionalProperties": false,
+        "description": "Later return of the leaders of one finished historical ranking.",
+        "properties": {
+          "cost_bps": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "source_job_id": {
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Source Job Id",
+            "type": "string"
+          },
+          "top_n": {
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Top N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source_job_id",
+          "top_n"
+        ],
+        "title": "OutcomesRequest",
         "type": "object"
       },
       "PeriodQualityWarning": {
@@ -11505,6 +11750,99 @@
           }
         },
         "summary": "Factor Preview",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/historical-outcomes/{job_id}": {
+      "get": {
+        "operationId": "historical_outcomes_api_v1_research_historical_outcomes__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalOutcomes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Historical Outcomes",
         "tags": [
           "research"
         ]

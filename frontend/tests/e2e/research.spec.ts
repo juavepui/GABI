@@ -129,3 +129,23 @@ test('preparar datos de una fecha es un job explícito que lista los fallos', as
   await result.getByText('Ver los 1 símbolos con algún fallo').click();
   await expect(result.getByText('T009 · precio · sin histórico en la fuente')).toBeVisible();
 });
+
+test('resultado posterior del ranking es un job Research con corte observado', async ({ page }) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/historico');
+    await page.getByRole('button', { name: 'Calcular ranking' }).click();
+    const panel = page.getByRole('region', {
+      name: 'Resultado posterior de las primeras candidatas',
+    });
+    await panel.getByRole('button', { name: 'Evaluar resultado posterior' }).click();
+    await expect(panel.getByText(/6 meses: candidatas \+5,0 %/)).toBeVisible();
+    await expect(panel.getByRole('row', { name: /^Value/ })).toContainText('+12,0 %');
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});

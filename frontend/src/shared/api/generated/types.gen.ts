@@ -622,6 +622,25 @@ export type BlindStatuses = {
 };
 
 /**
+ * BlockOutcome
+ */
+export type BlockOutcome = {
+    /**
+     * Block
+     */
+    block: string;
+    /**
+     * Column
+     */
+    column: string;
+    outcome: OutcomeResult;
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+};
+
+/**
  * CapitalAllocation
  */
 export type CapitalAllocation = {
@@ -779,7 +798,8 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes';
+    outcomes?: OutcomesRequest | null;
     /**
      * Portfolio Id
      */
@@ -1756,6 +1776,64 @@ export type HistoricalIdentity = {
 };
 
 /**
+ * HistoricalOutcomes
+ */
+export type HistoricalOutcomes = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Blocks
+     */
+    blocks: Array<BlockOutcome>;
+    /**
+     * Candidates
+     */
+    candidates: Array<string>;
+    /**
+     * Cost Bps
+     */
+    cost_bps: number;
+    /**
+     * Horizons
+     */
+    horizons: Array<OutcomeResult>;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Observed Cutoff
+     */
+    observed_cutoff: string;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Source Job Id
+     */
+    source_job_id: string;
+    /**
+     * Source Result Sha256
+     */
+    source_result_sha256: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Top N
+     */
+    top_n: number;
+};
+
+/**
  * HistoricalPreview
  */
 export type HistoricalPreview = {
@@ -2346,6 +2424,68 @@ export type ModelResponse = {
      * Weights Unit
      */
     weights_unit?: 'fraction';
+};
+
+/**
+ * OutcomeResult
+ */
+export type OutcomeResult = {
+    /**
+     * Available
+     */
+    available?: number | null;
+    /**
+     * Benchmark Return
+     */
+    benchmark_return?: number | null;
+    /**
+     * End Date
+     */
+    end_date: string;
+    /**
+     * Excess Return
+     */
+    excess_return?: number | null;
+    /**
+     * Missing
+     */
+    missing?: Array<string>;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Portfolio Return
+     */
+    portfolio_return?: number | null;
+    /**
+     * Requested
+     */
+    requested?: number | null;
+    /**
+     * Status
+     */
+    status: 'complete' | 'incomplete' | 'pending' | 'reserved';
+};
+
+/**
+ * OutcomesRequest
+ *
+ * Later return of the leaders of one finished historical ranking.
+ */
+export type OutcomesRequest = {
+    /**
+     * Cost Bps
+     */
+    cost_bps?: number;
+    /**
+     * Source Job Id
+     */
+    source_job_id: string;
+    /**
+     * Top N
+     */
+    top_n: number;
 };
 
 /**
@@ -6014,6 +6154,56 @@ export type FactorPreviewApiV1ResearchFactorsJobIdGetResponses = {
 };
 
 export type FactorPreviewApiV1ResearchFactorsJobIdGetResponse = FactorPreviewApiV1ResearchFactorsJobIdGetResponses[keyof FactorPreviewApiV1ResearchFactorsJobIdGetResponses];
+
+export type HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/historical-outcomes/{job_id}';
+};
+
+export type HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetError = HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetErrors[keyof HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetErrors];
+
+export type HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HistoricalOutcomes;
+};
+
+export type HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetResponse = HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetResponses[keyof HistoricalOutcomesApiV1ResearchHistoricalOutcomesJobIdGetResponses];
 
 export type HistoricalPreviewApiV1ResearchHistoricalJobIdGetData = {
     body?: never;
