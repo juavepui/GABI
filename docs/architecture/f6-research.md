@@ -47,9 +47,10 @@ Streamlit pasaba a `research_lab.log_experiment` (una prueba los compara,
 incluida la serie de retornos). El experimento añade a `result_json` el job de
 origen, su hash y `data_fingerprint_scope="registration"`: la huella
 `compute_data_fingerprint()` completa se calcula al registrar, no al terminar el
-backtest como hacía Streamlit, porque recorre todas las tablas de la base y en la
-base local de 12 GB tardó más de diez minutos (medido con otra lectura
-concurrente). Un backtest solo puede registrarse una vez; un segundo intento falla
+backtest como hacía Streamlit, porque recorre todas las tablas de la base. En la
+base local de 12 GB tardó 1.937 s con 7,2 MiB de pico Python (`tracemalloc`),
+medido mientras otra verificación leía la misma base; no se atribuye esa cifra a
+una ejecución aislada. Un backtest solo puede registrarse una vez; un segundo intento falla
 sin escribir. Quedan en Streamlit el contraste Fama-French, el drag fiscal, el
 riesgo de cola y la preparación de datos.
 El job exploratorio `backtest` que ya existía en Administración también queda
