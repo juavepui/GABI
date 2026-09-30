@@ -59,8 +59,22 @@ tipado y permite descargar el JSON. Cada ejecución es un ensayo retrospectivo;
 `fast_dev` es muestreo y ningún resultado se promociona automáticamente a
 evidencia independiente. El job no usa caché de cálculo: se ejecuta solo por
 acción explícita y el artefacto queda invalidado únicamente si se cancela,
-falla o su hash ya no coincide. La sección de estimaciones y el análisis sectorial
-separado continúan en Streamlit hasta verificar su migración.
+falla o su hash ya no coincide. La sección de estimaciones continúa en Streamlit.
+El mapa Factor Zoo publicado y el diagnóstico SIC fechado se consultan ahora
+también en React. La API verifica los preregistros, el manifiesto, los siete
+resultados publicados, el código congelado del suplemento y sus cinco CSV antes
+de exponer solo el resumen, la cobertura y tres exportaciones permitidas. La
+primera lectura tiene un límite agregado de 16 MB; las siguientes comparan
+identidad, tamaño y tiempos de modificación/cambio de los archivos, y repiten
+las huellas si alguno cambia. Streamlit presenta el mismo caso de uso mediante
+su verificador heredado, también con invalidación por metadatos entre renders.
+Las cachés no incluyen `data/`, SQLite, fuentes externas ni resultados reservados. Un cambio
+o ausencia invalida el resultado y devuelve 503. Los diagnósticos SIC siguen
+siendo descriptivos, sin cambio de p-valores, pesos ni confianza de evidencia.
+Medición de lectura local de los artefactos ya publicados, Windows/Python 3.13.7:
+`evidence_catalog.load()` heredado 0,0549 s, primera verificación nueva 0,0551 s,
+y consulta cacheada 0,000905 s de mediana en 20 repeticiones. La primera lectura
+no mejora materialmente; los tiempos no incluyen render de React ni `data/`.
 El worker inyecta un lector SQLite de solo lectura limitado a las sesiones de
 entrada/salida de cada periodo, 1.000 símbolos y 300.000 filas por consulta;
 la función antigua conserva su entrada previa para Streamlit. Una prueba con
@@ -87,7 +101,7 @@ de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha en React y job; backtests en Streamlit | Backtests V1/V2 como jobs con costes y registro íntegros. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
-| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; estimaciones/sector separados aún en Streamlit | Completar bloques de estimaciones y sector, y paridad de vistas. |
+| Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash; mapa publicado y diagnóstico SIC en React | Migrar estimaciones y comprobar paridad de las restantes vistas. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 

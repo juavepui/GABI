@@ -42,6 +42,7 @@ import type {
   BlindStatuses,
   FactorPreview,
   ModeRequest,
+  PublishedFactors,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -101,6 +102,9 @@ export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses
 }
 export function getFactorPreview(id: string, signal?: AbortSignal): Promise<FactorPreview> {
   return get('/api/v1/research/factors/' + encodeURIComponent(id), signal);
+}
+export function getPublishedFactors(signal?: AbortSignal): Promise<PublishedFactors> {
+  return get('/api/v1/research/published-factors', signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

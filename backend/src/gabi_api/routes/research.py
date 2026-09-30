@@ -3,12 +3,21 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi.responses import Response
 
 from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
-from gabi_api.schemas.research import BlindStatuses, FactorPreview, HistoricalPreview, ResearchOverview, SearchTrials
+from gabi.application.research.published_factors import PublishedFactorQueries
+from gabi_api.schemas.research import (
+    BlindStatuses,
+    FactorPreview,
+    HistoricalPreview,
+    PublishedFactors,
+    ResearchOverview,
+    SearchTrials,
+)
 
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
 
@@ -34,6 +43,13 @@ def blind_service(request: Request) -> BlindValidationQueries:
 Blind = Annotated[BlindValidationQueries, Depends(blind_service)]
 
 
+def published_factor_service(request: Request) -> PublishedFactorQueries:
+    return request.app.state.published_factors
+
+
+Published = Annotated[PublishedFactorQueries, Depends(published_factor_service)]
+
+
 @router.get("/blind-validations", response_model=BlindStatuses)
 def blind_validations(query: Blind) -> dict:
     return query.list_status()
@@ -42,6 +58,18 @@ def blind_validations(query: Blind) -> dict:
 @router.get("/overview", response_model=ResearchOverview)
 def overview(catalog: Catalog) -> dict:
     return catalog.overview()
+
+
+@router.get("/published-factors", response_model=PublishedFactors)
+def published_factors(query: Published) -> dict:
+    return query.overview()
+
+
+@router.get("/published-factors/exports/{name}")
+def published_factor_export(name: str, query: Published) -> Response:
+    contents = query.export(name)
+    return Response(contents, media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @router.get("/trials", response_model=SearchTrials)

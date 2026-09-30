@@ -31,6 +31,19 @@ test('validación ciega muestra integridad sin desvelar posiciones', async ({ pa
   await expect(page.getByText('SEALED_TICKER')).toHaveCount(0);
 });
 
+test('Factor Lab muestra el mapa publicado y la cobertura SIC sin recalcularlo', async ({
+  page,
+}) => {
+  await page.goto('/investigacion/factores');
+  const map = page.getByRole('region', { name: 'Mapa de evidencia por factor' });
+  await expect(map.getByText('13 señales y 57 trimestres publicados.')).toBeVisible();
+  await expect(map.getByText('ninguna señal supera la corrección Holm al 5 %.')).toBeVisible();
+  await expect(map.getByRole('row', { name: /PER/ })).toContainText('0,266');
+  await map.getByLabel('Señal · estabilidad por industria').selectOption('roic');
+  await expect(map.getByRole('row', { name: /Manufactura/ })).toBeVisible();
+  await expect(map.getByRole('link', { name: 'Descargar Cobertura y exclusiones' })).toBeVisible();
+});
+
 test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ page }) => {
   await page.goto('/administracion');
   await page.getByRole('button', { name: 'Activar Research' }).click();

@@ -1,6 +1,7 @@
 """Loopback test API. No real configuration, credentials, database or network sources."""
 import hashlib
 import json
+import shutil
 import sqlite3
 import sys
 import threading
@@ -15,6 +16,7 @@ from gabi.domain.research.blind import canonical_payload
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
+from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi_api.bootstrap import create_app
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend" / "tests"))
@@ -26,6 +28,12 @@ def main():
         root = Path(directory).resolve()
         assert root.is_relative_to(Path(gettempdir()).resolve())
         seed_fixture(root)
+        published_root = Path(__file__).resolve().parents[2]
+        for source in FilePublishedFactors(published_root)._paths():
+            if source.is_relative_to(published_root / "docs"):
+                destination = root / source.relative_to(published_root)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, destination)
         payload = canonical_payload("2026-07-01", ["SEALED_TICKER"], {"SEALED_TICKER": 100.0})
         with closing(sqlite3.connect(root / "gabi.db")) as db:
             db.execute("INSERT INTO blind_validations "
@@ -57,7 +65,8 @@ def main():
                  "demonstrated_superiority": False}],
             "additional_observed_records": [],
         }), encoding="utf-8")
-        app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published)
+        app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published,
+                         published_factors_root=root)
 
         worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command, app), root)
         threading.Thread(target=lambda: work_forever(worker), daemon=True).start()

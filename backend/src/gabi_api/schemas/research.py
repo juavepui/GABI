@@ -1,6 +1,6 @@
 """Public research catalog contracts; no operational holdout results."""
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -121,3 +121,57 @@ class FactorPreview(BaseModel):
     turnover: list[FactorTurnoverRow]
     skipped_count: int
     result_sha256: str
+
+
+class PublishedSicWindow(BaseModel):
+    period: str
+    ic_mean: float | None
+    n_periods: int
+
+
+class PublishedSicDivision(BaseModel):
+    division: str
+    name: str
+    ic_mean: float | None
+    icir: float | None
+    n_periods: int
+    positive_fraction: float | None
+    status: str
+    windows: list[PublishedSicWindow]
+
+
+class PublishedFactor(BaseModel):
+    metric: str
+    ic_mean: float | None
+    icir: float | None
+    p_holm: float | None
+    classification: str
+    n_periods: int
+    q_spread: float | None
+    sic_divisions: list[PublishedSicDivision]
+
+
+class PublishedSicCoverage(BaseModel):
+    date: str
+    stratum: str
+    n_eligible: int
+    n_identity: int
+    n_selected_filing: int
+    n_classified: int
+    classified_fraction: float | None
+
+
+class PublishedFactors(BaseModel):
+    status: Literal["RETROSPECTIVE_DESCRIPTIVE"]
+    independent_advantage_demonstrated: bool
+    holm_significant_count: int
+    factor_zoo_sha256: str
+    sic_sha256: str
+    n_dates: int
+    minimum_pairs: int
+    minimum_summary_periods: int
+    n_eligible: int
+    n_classified: int
+    classified_fraction: float | None
+    factors: list[PublishedFactor]
+    coverage: list[PublishedSicCoverage]

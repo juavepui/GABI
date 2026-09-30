@@ -1441,6 +1441,192 @@ export type Provenance = {
 };
 
 /**
+ * PublishedFactor
+ */
+export type PublishedFactor = {
+    /**
+     * Classification
+     */
+    classification: string;
+    /**
+     * Ic Mean
+     */
+    ic_mean: number | null;
+    /**
+     * Icir
+     */
+    icir: number | null;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * P Holm
+     */
+    p_holm: number | null;
+    /**
+     * Q Spread
+     */
+    q_spread: number | null;
+    /**
+     * Sic Divisions
+     */
+    sic_divisions: Array<PublishedSicDivision>;
+};
+
+/**
+ * PublishedFactors
+ */
+export type PublishedFactors = {
+    /**
+     * Classified Fraction
+     */
+    classified_fraction: number | null;
+    /**
+     * Coverage
+     */
+    coverage: Array<PublishedSicCoverage>;
+    /**
+     * Factor Zoo Sha256
+     */
+    factor_zoo_sha256: string;
+    /**
+     * Factors
+     */
+    factors: Array<PublishedFactor>;
+    /**
+     * Holm Significant Count
+     */
+    holm_significant_count: number;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Minimum Pairs
+     */
+    minimum_pairs: number;
+    /**
+     * Minimum Summary Periods
+     */
+    minimum_summary_periods: number;
+    /**
+     * N Classified
+     */
+    n_classified: number;
+    /**
+     * N Dates
+     */
+    n_dates: number;
+    /**
+     * N Eligible
+     */
+    n_eligible: number;
+    /**
+     * Sic Sha256
+     */
+    sic_sha256: string;
+    /**
+     * Status
+     */
+    status: 'RETROSPECTIVE_DESCRIPTIVE';
+};
+
+/**
+ * PublishedSicCoverage
+ */
+export type PublishedSicCoverage = {
+    /**
+     * Classified Fraction
+     */
+    classified_fraction: number | null;
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * N Classified
+     */
+    n_classified: number;
+    /**
+     * N Eligible
+     */
+    n_eligible: number;
+    /**
+     * N Identity
+     */
+    n_identity: number;
+    /**
+     * N Selected Filing
+     */
+    n_selected_filing: number;
+    /**
+     * Stratum
+     */
+    stratum: string;
+};
+
+/**
+ * PublishedSicDivision
+ */
+export type PublishedSicDivision = {
+    /**
+     * Division
+     */
+    division: string;
+    /**
+     * Ic Mean
+     */
+    ic_mean: number | null;
+    /**
+     * Icir
+     */
+    icir: number | null;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Positive Fraction
+     */
+    positive_fraction: number | null;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Windows
+     */
+    windows: Array<PublishedSicWindow>;
+};
+
+/**
+ * PublishedSicWindow
+ */
+export type PublishedSicWindow = {
+    /**
+     * Ic Mean
+     */
+    ic_mean: number | null;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * Period
+     */
+    period: string;
+};
+
+/**
  * RankingResponse
  */
 export type RankingResponse = {
@@ -4211,6 +4397,99 @@ export type OverviewApiV1ResearchOverviewGetResponses = {
 };
 
 export type OverviewApiV1ResearchOverviewGetResponse = OverviewApiV1ResearchOverviewGetResponses[keyof OverviewApiV1ResearchOverviewGetResponses];
+
+export type PublishedFactorsApiV1ResearchPublishedFactorsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/published-factors';
+};
+
+export type PublishedFactorsApiV1ResearchPublishedFactorsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PublishedFactorsApiV1ResearchPublishedFactorsGetError = PublishedFactorsApiV1ResearchPublishedFactorsGetErrors[keyof PublishedFactorsApiV1ResearchPublishedFactorsGetErrors];
+
+export type PublishedFactorsApiV1ResearchPublishedFactorsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublishedFactors;
+};
+
+export type PublishedFactorsApiV1ResearchPublishedFactorsGetResponse = PublishedFactorsApiV1ResearchPublishedFactorsGetResponses[keyof PublishedFactorsApiV1ResearchPublishedFactorsGetResponses];
+
+export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/v1/research/published-factors/exports/{name}';
+};
+
+export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetError = PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetErrors[keyof PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetErrors];
+
+export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type TrialsApiV1ResearchTrialsGetData = {
     body?: never;

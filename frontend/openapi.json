@@ -2706,6 +2706,324 @@
         "title": "Provenance",
         "type": "object"
       },
+      "PublishedFactor": {
+        "properties": {
+          "classification": {
+            "title": "Classification",
+            "type": "string"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "icir": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icir"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "p_holm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Holm"
+          },
+          "q_spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q Spread"
+          },
+          "sic_divisions": {
+            "items": {
+              "$ref": "#/components/schemas/PublishedSicDivision"
+            },
+            "title": "Sic Divisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "metric",
+          "ic_mean",
+          "icir",
+          "p_holm",
+          "classification",
+          "n_periods",
+          "q_spread",
+          "sic_divisions"
+        ],
+        "title": "PublishedFactor",
+        "type": "object"
+      },
+      "PublishedFactors": {
+        "properties": {
+          "classified_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classified Fraction"
+          },
+          "coverage": {
+            "items": {
+              "$ref": "#/components/schemas/PublishedSicCoverage"
+            },
+            "title": "Coverage",
+            "type": "array"
+          },
+          "factor_zoo_sha256": {
+            "title": "Factor Zoo Sha256",
+            "type": "string"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/PublishedFactor"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "holm_significant_count": {
+            "title": "Holm Significant Count",
+            "type": "integer"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "minimum_pairs": {
+            "title": "Minimum Pairs",
+            "type": "integer"
+          },
+          "minimum_summary_periods": {
+            "title": "Minimum Summary Periods",
+            "type": "integer"
+          },
+          "n_classified": {
+            "title": "N Classified",
+            "type": "integer"
+          },
+          "n_dates": {
+            "title": "N Dates",
+            "type": "integer"
+          },
+          "n_eligible": {
+            "title": "N Eligible",
+            "type": "integer"
+          },
+          "sic_sha256": {
+            "title": "Sic Sha256",
+            "type": "string"
+          },
+          "status": {
+            "const": "RETROSPECTIVE_DESCRIPTIVE",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "independent_advantage_demonstrated",
+          "holm_significant_count",
+          "factor_zoo_sha256",
+          "sic_sha256",
+          "n_dates",
+          "minimum_pairs",
+          "minimum_summary_periods",
+          "n_eligible",
+          "n_classified",
+          "classified_fraction",
+          "factors",
+          "coverage"
+        ],
+        "title": "PublishedFactors",
+        "type": "object"
+      },
+      "PublishedSicCoverage": {
+        "properties": {
+          "classified_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classified Fraction"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "n_classified": {
+            "title": "N Classified",
+            "type": "integer"
+          },
+          "n_eligible": {
+            "title": "N Eligible",
+            "type": "integer"
+          },
+          "n_identity": {
+            "title": "N Identity",
+            "type": "integer"
+          },
+          "n_selected_filing": {
+            "title": "N Selected Filing",
+            "type": "integer"
+          },
+          "stratum": {
+            "title": "Stratum",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "stratum",
+          "n_eligible",
+          "n_identity",
+          "n_selected_filing",
+          "n_classified",
+          "classified_fraction"
+        ],
+        "title": "PublishedSicCoverage",
+        "type": "object"
+      },
+      "PublishedSicDivision": {
+        "properties": {
+          "division": {
+            "title": "Division",
+            "type": "string"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "icir": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icir"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "positive_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Positive Fraction"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/PublishedSicWindow"
+            },
+            "title": "Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "division",
+          "name",
+          "ic_mean",
+          "icir",
+          "n_periods",
+          "positive_fraction",
+          "status",
+          "windows"
+        ],
+        "title": "PublishedSicDivision",
+        "type": "object"
+      },
+      "PublishedSicWindow": {
+        "properties": {
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "n_periods": {
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "ic_mean",
+          "n_periods"
+        ],
+        "title": "PublishedSicWindow",
+        "type": "object"
+      },
       "RankingResponse": {
         "additionalProperties": false,
         "properties": {
@@ -7949,6 +8267,177 @@
           }
         },
         "summary": "Overview",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/published-factors": {
+      "get": {
+        "operationId": "published_factors_api_v1_research_published_factors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedFactors"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Published Factors",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/published-factors/exports/{name}": {
+      "get": {
+        "operationId": "published_factor_export_api_v1_research_published_factors_exports__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Published Factor Export",
         "tags": [
           "research"
         ]

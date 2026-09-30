@@ -24,6 +24,7 @@ from gabi.application.portfolio.planning import PortfolioQueries
 from gabi.application.portfolio.simulations import Simulations
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
+from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.macro import series_metadata
@@ -38,6 +39,7 @@ from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
 from gabi.infrastructure.storage.mode import FileMode
+from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedLedger
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
@@ -71,7 +73,8 @@ class HealthResponse(BaseModel):
 
 
 def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today,
-               published_ledger: Path | None = None, frontend_dist: Path | None = None) -> FastAPI:
+               published_ledger: Path | None = None, published_factors_root: Path | None = None,
+               frontend_dist: Path | None = None) -> FastAPI:
     settings = settings or Settings.from_environment()
     benchmark, risk_free_rate = defaults()
     policy = model_policy()
@@ -89,6 +92,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     decisions = Decisions(repository, SqliteDecisions(settings.data_dir), policy, today, build_decisions, jobs)
     research_catalog = ResearchCatalog(FilePublishedLedger(
         published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"))
+    published_factors = PublishedFactorQueries(FilePublishedFactors(published_factors_root or settings.data_dir.parent))
     blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today)
 
     @asynccontextmanager
@@ -115,6 +119,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.simulations = simulations
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
+    app.state.published_factors = published_factors
     app.state.blind_validations = blind_validations
     app.state.settings = settings
     app.state.model_commands = model_commands
