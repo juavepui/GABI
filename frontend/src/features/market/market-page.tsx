@@ -55,6 +55,24 @@ export function MarketPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Compara empresas con los datos y el modelo de tu instalación local.
           </p>
+          <Link
+            className="mt-3 inline-block text-sm font-medium text-primary underline"
+            to="/mercado/comparar"
+          >
+            Comparar empresas →
+          </Link>
+          <Link
+            className="ml-4 inline-block text-sm font-medium text-primary underline"
+            to="/mercado/macro"
+          >
+            Panel macro →
+          </Link>
+          <Link
+            className="ml-4 inline-block text-sm font-medium text-primary underline"
+            to="/mercado/senales"
+          >
+            Signal Monitor →
+          </Link>
         </div>
         <Button
           variant="outline"

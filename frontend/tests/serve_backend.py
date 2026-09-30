@@ -22,13 +22,19 @@ def main():
         assert root.is_relative_to(Path(gettempdir()).resolve())
         seed_fixture(root)
         app = create_app(Settings(root), today=lambda: TODAY)
-        worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command), root)
+        worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command, app), root)
         threading.Thread(target=lambda: work_forever(worker), daemon=True).start()
         uvicorn.run(app, host="127.0.0.1", port=8001, log_level="warning")
 
 
-def synthetic_job(command):
+def synthetic_job(command, app):
     time.sleep(0.5)
+    if command.kind == "decision_plan":
+        return app.state.decisions.generate(command.decision_policy, command.holdings_text)
+    if command.kind == "filing_check":
+        return app.state.signals.filings(command.snapshot_id)
+    if command.kind == "sim_compare":
+        return app.state.simulations.compare()
     if command.kind == "quality":
         return {"universe": 2, "sources": {"prices": {"covered": 2, "total": 2},
                                             "fundamentals": {"covered": 1, "total": 2}}}

@@ -75,7 +75,11 @@ class Worker:
                 self.store.finish(job_id, token, "cancelled")
                 return True
             command = JobCommand(job["kind"], tuple(job["parameters"]["symbols"]),
-                                 job["parameters"]["start"], job["parameters"]["end"])
+                                 job["parameters"]["start"], job["parameters"]["end"],
+                                 job["parameters"].get("portfolio_id"),
+                                 job["parameters"].get("decision_policy"),
+                                 job["parameters"].get("holdings_text"),
+                                 job["parameters"].get("snapshot_id"))
             result = self.execute(command)
             if self.store.progress(job_id, token, 90, "Guardando resultado", {"stage": "computed"}):
                 self.store.finish(job_id, token, "cancelled")

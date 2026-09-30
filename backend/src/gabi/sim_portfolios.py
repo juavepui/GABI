@@ -6,6 +6,8 @@ from math import isfinite
 import exchange_calendars as xcals
 import pandas as pd
 
+from gabi.domain.portfolio.simulation import execution_quote as _execution_quote
+
 from . import storage
 
 SCHEMA = """
@@ -111,25 +113,8 @@ def list_trades(portfolio_id: int) -> pd.DataFrame:
 
 def execution_quote(symbol: str, requested_date: str, market: str = "XNYS") -> dict:
     """Usa la primera sesión del mercado elegido; nunca se salta una cotización que falte en caché (falla en vez de aproximar)."""
-    target = pd.Timestamp(requested_date)
-    if target.date() > date.today():
-        raise ValueError("No se puede simular una operación futura.")
-    if market not in MARKETS:
-        raise ValueError("Mercado no admitido.")
-    session = xcals.get_calendar(market).date_to_session(target, direction="next")
-    if session.date() > date.today():
-        raise ValueError("Todavía no hay una sesión bursátil cerrada para esta fecha.")
     history = storage.get_prices(symbol)
-    if history.empty or "adj_close" not in history:
-        raise ValueError("No hay precios descargados para este símbolo.")
-    if session not in history.index:
-        raise ValueError(f"Falta el precio de {symbol} en la primera sesión bursátil ({session.date()}).")
-    day, row = session, history.loc[session]
-    if (pd.isna(row["close"]) or pd.isna(row["adj_close"])
-            or row["close"] <= 0 or row["adj_close"] <= 0):
-        raise ValueError("El precio de ejecución no es válido.")
-    return {"date": day.date().isoformat(), "close": float(row["close"]),
-            "adj_close": float(row["adj_close"])}
+    return _execution_quote(history, requested_date, market, date.today())
 
 
 def _price_at(histories: dict, symbol: str, day: str) -> float:
@@ -288,6 +273,19 @@ def portfolio_history(portfolio_id: int) -> dict:
     pairs = {fx_symbol(currency, base) for currency in currencies.values()}
     pairs.add(fx_symbol("USD", base))
     histories = storage.get_prices_multi(symbols + ["SPY"] + [p for p in pairs if p])
+    return portfolio_history_from_data(portfolio, trades, histories)
+
+
+def portfolio_history_from_data(portfolio: dict, trades: pd.DataFrame, histories: dict) -> dict:
+    """Replay cached inputs supplied by either Streamlit or the local API."""
+    if trades.empty:
+        return {"curve": pd.DataFrame(), "cash": portfolio["initial_cash"], "positions": {},
+                "trades": trades, "portfolio": portfolio}
+    symbols = trades["symbol"].unique().tolist()
+    base = portfolio["base_currency"]
+    currencies = {s: trades.loc[trades["symbol"] == s, "quote_currency"].iloc[0] for s in symbols}
+    if any(trades.loc[trades["symbol"] == s, "quote_currency"].nunique() > 1 for s in symbols):
+        raise ValueError("Un mismo ticker no puede cambiar de divisa dentro de una cartera.")
     start = pd.Timestamp(trades["execution_date"].min())
     end = min(pd.Timestamp(date.today()), max((h.index.max() for h in histories.values() if not h.empty), default=start))
     calendar = pd.DatetimeIndex([])

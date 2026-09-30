@@ -106,5 +106,18 @@ class MarketQueries:
         result.total = 1
         return result, self.repository.price_history(normalized, bars, result.snapshot.revision)
 
+    def compare(self, symbols: list[str]) -> RankingResult:
+        normalized = [symbol.strip().upper().replace(".", "-") for symbol in symbols]
+        if len(normalized) < 2 or len(normalized) > 5 or len(set(normalized)) != len(normalized):
+            raise QueryError("invalid_comparison", "Elige entre dos y cinco empresas distintas.", 422)
+        result = self.ranking(RankingFilter(hide_no_data=False), limit=1000)
+        missing = [symbol for symbol in normalized if symbol not in result.snapshot.table.index]
+        if missing:
+            raise QueryError("company_not_found", "Alguna empresa no está en el universo local cacheado.", 404)
+        result.rows = result.snapshot.table.loc[normalized]
+        result.total = len(normalized)
+        result.limit = len(normalized)
+        return result
+
     def close(self) -> None:
         self.repository.close()

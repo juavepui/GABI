@@ -77,18 +77,11 @@ def list_filings(symbol: str, form: str, *, entity_id: str | None = None) -> pd.
     en cualquier momento a partir de edgar_facts."""
     if form not in FORM_DURATION_RANGES:
         raise ValueError(f"form debe ser uno de {list(FORM_DURATION_RANGES)}")
-    cols = ["accn", "form", "filed_date", "period_end", "url"]
     df = edgar.get_edgar_facts(symbol, entity_id=entity_id)
-    if df.empty:
-        return pd.DataFrame(columns=cols)
-    df = df[(df["form"] == form) & df["accn"].notna() & df["filed_date"].notna()]
-    if df.empty:
-        return pd.DataFrame(columns=cols)
-    grouped = df.groupby("accn").agg(filed_date=("filed_date", "max"), period_end=("end_date", "max")).reset_index()
-    grouped["form"] = form
-    cik = _stored_cik(symbol)
-    grouped["url"] = grouped["accn"].map(lambda a: _filing_index_url(cik, a)) if cik else None
-    grouped = grouped.sort_values("filed_date").reset_index(drop=True)
+    cik = _stored_cik(symbol) if not df.empty else None
+    grouped = filings_from_facts(df, form, cik)
+    if grouped.empty:
+        return grouped
 
     with storage.get_connection() as conn:
         conn.executescript(SCHEMA)
@@ -98,6 +91,23 @@ def list_filings(symbol: str, form: str, *, entity_id: str | None = None) -> pd.
             [(symbol, form, r.accn, r.filed_date, r.period_end, r.url) for r in grouped.itertuples()],
         )
         conn.commit()
+    return grouped
+
+
+def filings_from_facts(df: pd.DataFrame, form: str, cik: str | None = None) -> pd.DataFrame:
+    """Pure filing index from preloaded facts; shared by legacy and local API."""
+    if form not in FORM_DURATION_RANGES:
+        raise ValueError(f"form debe ser uno de {list(FORM_DURATION_RANGES)}")
+    cols = ["accn", "form", "filed_date", "period_end", "url"]
+    if df.empty:
+        return pd.DataFrame(columns=cols)
+    df = df[(df["form"] == form) & df["accn"].notna() & df["filed_date"].notna()]
+    if df.empty:
+        return pd.DataFrame(columns=cols)
+    grouped = df.groupby("accn").agg(filed_date=("filed_date", "max"), period_end=("end_date", "max")).reset_index()
+    grouped["form"] = form
+    grouped["url"] = grouped["accn"].map(lambda a: _filing_index_url(cik, a)) if cik else None
+    grouped = grouped.sort_values("filed_date").reset_index(drop=True)
     return grouped[cols]
 
 
@@ -114,7 +124,8 @@ def latest_two_filings(symbol: str, form: str, *, entity_id: str | None = None):
     return current, previous
 
 
-def _period_metrics_for_accn(symbol: str, accn: str, form: str, *, entity_id: str | None = None) -> dict:
+def _period_metrics_for_accn(symbol: str, accn: str, form: str, *, entity_id: str | None = None,
+                             facts: pd.DataFrame | None = None) -> dict:
     """Métricas fundamentales reportadas ESPECÍFICAMENTE en el filing
     `accn` -- no "todo lo conocido hasta esa fecha" (eso ya lo hace
     edgar.compute_edgar_metrics_as_of para 10-K), sino solo el periodo
@@ -123,7 +134,7 @@ def _period_metrics_for_accn(symbol: str, accn: str, form: str, *, entity_id: st
     es entre dos periodos DISTINTOS y no solapados (el filing actual es
     cronológicamente posterior al anterior) -- información nueva, no una
     reformulación del mismo periodo."""
-    df = edgar.get_edgar_facts(symbol, entity_id=entity_id)
+    df = facts if facts is not None else edgar.get_edgar_facts(symbol, entity_id=entity_id)
     if df.empty:
         return {}
     df = df[df["accn"] == accn]

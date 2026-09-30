@@ -132,6 +132,14 @@ class CompanyResponse(WireModel):
     revision: str
 
 
+class ComparisonResponse(WireModel):
+    items: list[CompanyRow]
+    model: ModelResponse
+    data: DataResponse
+    generated_at: datetime
+    revision: str
+
+
 def finite(value) -> float | None:
     if value is None or pd.isna(value):
         return None

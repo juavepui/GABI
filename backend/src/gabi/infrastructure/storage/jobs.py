@@ -4,6 +4,7 @@ Reading jobs never creates a database. All state changes use short transactions;
 the worker lease fences terminal updates after a process restart.
 """
 
+import hashlib
 import json
 import sqlite3
 import threading
@@ -45,6 +46,7 @@ def now() -> str:
 class SqliteJobs:
     def __init__(self, data_dir: Path):
         self.path = data_dir / "gabi_jobs.db"
+        self.data_dir = data_dir
         self._ready = False
         self._init_lock = threading.Lock()
 
@@ -95,7 +97,15 @@ class SqliteJobs:
         return result
 
     def enqueue(self, command: JobCommand, key: str, origin: str) -> dict:
-        parameters = json.dumps({"symbols": command.symbols, "start": command.start, "end": command.end}, sort_keys=True)
+        payload: dict[str, object] = {"symbols": command.symbols, "start": command.start, "end": command.end}
+        if command.portfolio_id is not None:
+            payload["portfolio_id"] = command.portfolio_id
+        if command.decision_policy is not None:
+            payload["decision_policy"] = command.decision_policy
+            payload["holdings_text"] = command.holdings_text
+        if command.snapshot_id is not None:
+            payload["snapshot_id"] = command.snapshot_id
+        parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None
             db.execute("BEGIN IMMEDIATE")
@@ -127,6 +137,22 @@ class SqliteJobs:
             assert db is not None
             events = db.execute("SELECT at,message FROM job_events WHERE job_id=? ORDER BY id DESC LIMIT 30", (job_id,))
             return self.public(row, list(reversed(events.fetchall())))
+
+    def result(self, job_id: str) -> dict:
+        job = self.get(job_id)
+        if job["status"] != "succeeded" or job["result_ref"] != job_id or not job["result_sha256"]:
+            raise QueryError("result_unavailable", "El resultado aún no está disponible.", 404)
+        artifact = self.data_dir / "jobs" / "results" / f"{job_id}.json"
+        try:
+            raw = artifact.read_bytes()
+            if len(raw) > 10_000_000 or hashlib.sha256(raw).hexdigest() != job["result_sha256"]:
+                raise ValueError("Result hash mismatch")
+            result = json.loads(raw)
+            if not isinstance(result, dict):
+                raise ValueError("Invalid result")
+            return result
+        except (OSError, ValueError) as exc:
+            raise QueryError("result_unavailable", "El artefacto no se puede verificar.", 503) from exc
 
     def cancel(self, job_id: str) -> dict:
         with self.connection(write=True) as db:

@@ -1,6 +1,3 @@
-import hashlib
-import json
-from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request
@@ -9,7 +6,6 @@ from pydantic import BaseModel, Field
 
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.administration.model import ModelCommands
-from gabi.application.errors import QueryError
 from gabi_api.schemas.jobs import CreateJobRequest, JobListResponse, JobResponse, LocalSettingsResponse
 from gabi_api.schemas.market import ModelResponse, model_response
 
@@ -60,7 +56,9 @@ def local_settings(local: Local) -> LocalSettingsResponse:
 
 @router.post("/jobs", response_model=JobResponse, status_code=202)
 def create_job(body: CreateJobRequest, service: Service) -> dict:
-    command = JobCommand(body.kind, tuple(body.symbols), body.start, body.end)
+    command = JobCommand(body.kind, tuple(body.symbols), body.start, body.end, body.portfolio_id,
+                         body.decision_policy.model_dump() if body.decision_policy else None, body.holdings_text,
+                         body.snapshot_id)
     return service.submit(command, body.idempotency_key)
 
 
@@ -80,17 +78,5 @@ def cancel_job(job_id: JobId, service: Service) -> dict:
 
 
 @router.get("/jobs/{job_id}/result")
-def job_result(job_id: JobId, service: Service, local: Local) -> dict:
-    job = service.get(job_id)
-    if job["status"] != "succeeded" or job["result_ref"] != job_id or not job["result_sha256"]:
-        raise QueryError("result_unavailable", "El resultado aún no está disponible.", 404)
-    if job["kind"] in {"maintenance", "tiingo"}:
-        raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
-    artifact = Path(local.data_dir) / "jobs" / "results" / f"{job_id}.json"
-    try:
-        raw = artifact.read_bytes()
-        if len(raw) > 10_000_000 or hashlib.sha256(raw).hexdigest() != job["result_sha256"]:
-            raise ValueError("Result hash mismatch")
-        return json.loads(raw)
-    except (OSError, ValueError) as exc:
-        raise QueryError("result_unavailable", "El artefacto no se puede verificar.", 503) from exc
+def job_result(job_id: JobId, service: Service) -> dict:
+    return service.result(job_id)

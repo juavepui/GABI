@@ -7,6 +7,7 @@ from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
 from gabi_api.schemas.market import (
     CompanyResponse,
+    ComparisonResponse,
     DataResponse,
     ModelResponse,
     PricePoint,
@@ -72,4 +73,12 @@ def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^
                            prices=[PricePoint.model_validate({"date": record["date"], "close": finite(record["close"]),
                                                               "adj_close": finite(record["adj_close"])})
                                    for record in prices.to_dict(orient="records")],
-                           generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)
+                                   generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)
+
+
+@router.get("/comparison", response_model=ComparisonResponse)
+def comparison(market: Service, symbols: Annotated[list[str], Query(min_length=2, max_length=5)]) -> ComparisonResponse:
+    result = market.compare(symbols)
+    return ComparisonResponse(items=[company_row(str(symbol), row, result) for symbol, row in result.rows.iterrows()],
+                              model=model_response(result.model), data=data_response(result.data),
+                              generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)

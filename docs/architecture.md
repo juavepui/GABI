@@ -17,6 +17,9 @@ y los filtros del Screener a casos de uso/dominio compartidos y añadido la
 Streamlit continúa operativo. F3 incorpora el [cliente React local](../frontend/README.md)
 con Screener, ficha y tipos generados desde OpenAPI. F4 añade la cola SQLite,
 worker local y Administración en [#66](https://github.com/juavepui/GABI/issues/66).
+F5 incorpora [Cartera y los recorridos de Mercado](architecture/f5-portfolio-market.md)
+con el mismo almacenamiento local y cálculos compartidos. Streamlit sigue
+disponible durante F6.
 No se presenta el destino como
 una refactorización ya completada ni se atribuye una mejora de velocidad sin medirla.
 

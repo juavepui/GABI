@@ -61,6 +61,7 @@ def test_idempotency_conflict_cancel_and_result_publication(tmp_path):
         created = create_job(api).json()
         job_id = created["id"]
         assert created["status"] == "queued"
+        assert set(created["parameters"]) == {"symbols", "start", "end"}
         assert create_job(api).json()["id"] == job_id
         assert create_job(api, kind="refresh").status_code == 409
         assert create_job(api, key="request-two").status_code == 409

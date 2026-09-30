@@ -5,6 +5,24 @@ export type ClientOptions = {
 };
 
 /**
+ * CapitalAllocation
+ */
+export type CapitalAllocation = {
+    /**
+     * Amount Eur
+     */
+    amount_eur: number;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * CompanyResponse
  */
 export type CompanyResponse = {
@@ -69,13 +87,60 @@ export type CompanyRow = {
 };
 
 /**
+ * CompareSignals
+ */
+export type CompareSignals = {
+    /**
+     * Confidence Drop
+     */
+    confidence_drop?: number;
+    /**
+     * Rank Change
+     */
+    rank_change?: number;
+    /**
+     * Score Change
+     */
+    score_change?: number;
+    /**
+     * Snapshot Id
+     */
+    snapshot_id: number;
+};
+
+/**
+ * ComparisonResponse
+ */
+export type ComparisonResponse = {
+    data: DataResponse;
+    /**
+     * Generated At
+     */
+    generated_at: string;
+    /**
+     * Items
+     */
+    items: Array<CompanyRow>;
+    model: ModelResponse;
+    /**
+     * Revision
+     */
+    revision: string;
+};
+
+/**
  * CreateJobRequest
  */
 export type CreateJobRequest = {
+    decision_policy?: DecisionPolicy | null;
     /**
      * End
      */
     end?: string | null;
+    /**
+     * Holdings Text
+     */
+    holdings_text?: string | null;
     /**
      * Idempotency Key
      */
@@ -83,7 +148,15 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check';
+    /**
+     * Portfolio Id
+     */
+    portfolio_id?: number | null;
+    /**
+     * Snapshot Id
+     */
+    snapshot_id?: number | null;
     /**
      * Start
      */
@@ -92,6 +165,24 @@ export type CreateJobRequest = {
      * Symbols
      */
     symbols?: Array<string>;
+};
+
+/**
+ * CurvePoint
+ */
+export type CurvePoint = {
+    /**
+     * Cash
+     */
+    cash: number;
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Value
+     */
+    value: number | null;
 };
 
 /**
@@ -133,6 +224,188 @@ export type DataResponse = {
 };
 
 /**
+ * DecisionJobSave
+ */
+export type DecisionJobSave = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * DecisionList
+ */
+export type DecisionList = {
+    /**
+     * Items
+     */
+    items: Array<DecisionSummary>;
+};
+
+/**
+ * DecisionPolicy
+ */
+export type DecisionPolicy = {
+    /**
+     * Constrained Optimizer
+     */
+    constrained_optimizer?: boolean;
+    /**
+     * Max Invested Pct
+     */
+    max_invested_pct?: number;
+    /**
+     * Max Position Pct
+     */
+    max_position_pct?: number;
+    /**
+     * Max Positions
+     */
+    max_positions?: number;
+    /**
+     * Max Price Age Days
+     */
+    max_price_age_days?: number;
+    /**
+     * Max Sector Pct
+     */
+    max_sector_pct?: number;
+    /**
+     * Max Volatility
+     */
+    max_volatility?: number;
+    /**
+     * Min Coverage
+     */
+    min_coverage?: number;
+    /**
+     * Min Drawdown
+     */
+    min_drawdown?: number;
+    /**
+     * Min Score
+     */
+    min_score?: number;
+    /**
+     * Trade Threshold Pct
+     */
+    trade_threshold_pct?: number;
+    /**
+     * Turnover Penalty
+     */
+    turnover_penalty?: number;
+};
+
+/**
+ * DecisionProgress
+ */
+export type DecisionProgress = {
+    /**
+     * As Of Date
+     */
+    as_of_date: string;
+    /**
+     * Available
+     */
+    available: number;
+    /**
+     * Benchmark Return
+     */
+    benchmark_return: number | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Curve
+     */
+    curve: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Data As Of
+     */
+    data_as_of: string | null;
+    /**
+     * Detail
+     */
+    detail: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Excess Return
+     */
+    excess_return: number | null;
+    /**
+     * Missing
+     */
+    missing: Array<string>;
+    /**
+     * Portfolio Return
+     */
+    portfolio_return: number | null;
+    /**
+     * Requested
+     */
+    requested: number;
+    /**
+     * Stale
+     */
+    stale: boolean;
+    /**
+     * Today
+     */
+    today: string;
+};
+
+/**
+ * DecisionRename
+ */
+export type DecisionRename = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * DecisionSummary
+ */
+export type DecisionSummary = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Method
+     */
+    method: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * DeleteDecision
+ */
+export type DeleteDecision = {
+    /**
+     * Deleted
+     */
+    deleted: boolean;
+};
+
+/**
  * Earnings
  */
 export type Earnings = {
@@ -152,6 +425,38 @@ export type Earnings = {
      * Source
      */
     source?: 'Yahoo Finance (info)';
+};
+
+/**
+ * EarningsEvent
+ */
+export type EarningsEvent = {
+    /**
+     * Days Until
+     */
+    days_until: number;
+    /**
+     * Event Date
+     */
+    event_date: string;
+    /**
+     * Is Estimate
+     */
+    is_estimate: boolean;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * EarningsList
+ */
+export type EarningsList = {
+    /**
+     * Items
+     */
+    items: Array<EarningsEvent>;
 };
 
 /**
@@ -180,6 +485,24 @@ export type ErrorResponse = {
 };
 
 /**
+ * ExpectedValue
+ */
+export type ExpectedValue = {
+    /**
+     * Expected Price
+     */
+    expected_price: number;
+    /**
+     * Expected Return Pct
+     */
+    expected_return_pct: number;
+    /**
+     * Probs Summed To 100
+     */
+    probs_summed_to_100: boolean;
+};
+
+/**
  * Filing
  */
 export type Filing = {
@@ -195,6 +518,20 @@ export type Filing = {
      * Url
      */
     url: string | null;
+};
+
+/**
+ * FilingCheckSaved
+ */
+export type FilingCheckSaved = {
+    /**
+     * Events
+     */
+    events: Array<SignalEvent>;
+    /**
+     * Recorded
+     */
+    recorded: boolean;
 };
 
 /**
@@ -348,6 +685,191 @@ export type JobResponse = {
 };
 
 /**
+ * JournalCreate
+ */
+export type JournalCreate = {
+    /**
+     * Base Price
+     */
+    base_price?: number | null;
+    /**
+     * Base Prob
+     */
+    base_prob?: number | null;
+    /**
+     * Bear Price
+     */
+    bear_price?: number | null;
+    /**
+     * Bear Prob
+     */
+    bear_prob?: number | null;
+    /**
+     * Bull Price
+     */
+    bull_price?: number | null;
+    /**
+     * Bull Prob
+     */
+    bull_prob?: number | null;
+    /**
+     * Catalysts
+     */
+    catalysts?: string | null;
+    /**
+     * Entry Price
+     */
+    entry_price?: number | null;
+    /**
+     * Horizon
+     */
+    horizon?: string | null;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Position Size Pct
+     */
+    position_size_pct?: number | null;
+    /**
+     * Risks
+     */
+    risks?: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Thesis
+     */
+    thesis?: string | null;
+};
+
+/**
+ * JournalEntry
+ */
+export type JournalEntry = {
+    /**
+     * Base Price
+     */
+    base_price?: number | null;
+    /**
+     * Base Prob
+     */
+    base_prob?: number | null;
+    /**
+     * Bear Price
+     */
+    bear_price?: number | null;
+    /**
+     * Bear Prob
+     */
+    bear_prob?: number | null;
+    /**
+     * Bull Price
+     */
+    bull_price?: number | null;
+    /**
+     * Bull Prob
+     */
+    bull_prob?: number | null;
+    /**
+     * Catalysts
+     */
+    catalysts?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Entry Price
+     */
+    entry_price?: number | null;
+    expected_value: ExpectedValue | null;
+    /**
+     * Horizon
+     */
+    horizon?: string | null;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Position Size Pct
+     */
+    position_size_pct?: number | null;
+    /**
+     * Review Date
+     */
+    review_date: string | null;
+    /**
+     * Review Notes
+     */
+    review_notes: string | null;
+    /**
+     * Review Price
+     */
+    review_price: number | null;
+    /**
+     * Risks
+     */
+    risks?: string | null;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Thesis
+     */
+    thesis?: string | null;
+};
+
+/**
+ * JournalList
+ */
+export type JournalList = {
+    /**
+     * Items
+     */
+    items: Array<JournalEntry>;
+    /**
+     * Limit
+     */
+    limit: number;
+    /**
+     * Offset
+     */
+    offset: number;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
+ * JournalReview
+ */
+export type JournalReview = {
+    /**
+     * Review Notes
+     */
+    review_notes?: string;
+    /**
+     * Review Price
+     */
+    review_price?: number | null;
+};
+
+/**
  * LocalSettingsResponse
  */
 export type LocalSettingsResponse = {
@@ -361,6 +883,58 @@ export type LocalSettingsResponse = {
      * Scheduler
      */
     scheduler?: string;
+};
+
+/**
+ * MacroPoint
+ */
+export type MacroPoint = {
+    /**
+     * Change 3M
+     */
+    change_3m: number | null;
+    /**
+     * Help
+     */
+    help: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Latest Date
+     */
+    latest_date: string | null;
+    /**
+     * Latest Value
+     */
+    latest_value: number | null;
+    /**
+     * Series Id
+     */
+    series_id: string;
+    /**
+     * Unit
+     */
+    unit: string;
+};
+
+/**
+ * MacroResponse
+ */
+export type MacroResponse = {
+    /**
+     * Affects Score
+     */
+    affects_score?: boolean;
+    /**
+     * Items
+     */
+    items: Array<MacroPoint>;
+    /**
+     * Source
+     */
+    source?: string;
 };
 
 /**
@@ -420,6 +994,79 @@ export type ModelResponse = {
      * Weights Unit
      */
     weights_unit?: 'fraction';
+};
+
+/**
+ * PlanRequest
+ */
+export type PlanRequest = {
+    /**
+     * Capital Eur
+     */
+    capital_eur?: number;
+    /**
+     * Holdings Text
+     */
+    holdings_text?: string;
+    /**
+     * N Positions
+     */
+    n_positions?: number;
+    /**
+     * New Capital Eur
+     */
+    new_capital_eur?: number;
+};
+
+/**
+ * PlanResponse
+ */
+export type PlanResponse = {
+    /**
+     * Allocations
+     */
+    allocations: Array<CapitalAllocation>;
+    data: DataResponse;
+    /**
+     * Evidence Note
+     */
+    evidence_note?: string;
+    /**
+     * Generated At
+     */
+    generated_at: string;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated?: false;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * N Positions
+     */
+    n_positions: number;
+    /**
+     * Outside Target
+     */
+    outside_target: Array<string>;
+    /**
+     * Remaining Eur
+     */
+    remaining_eur: number;
+    /**
+     * Revision
+     */
+    revision: string;
+    /**
+     * Status
+     */
+    status: 'FROZEN' | 'EXPERIMENTAL';
+    /**
+     * Target
+     */
+    target: Array<TargetPosition>;
 };
 
 /**
@@ -525,6 +1172,476 @@ export type RankingResponse = {
      * Universe Cached At
      */
     universe_cached_at: string | null;
+};
+
+/**
+ * SaveFilingCheck
+ */
+export type SaveFilingCheck = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+};
+
+/**
+ * SaveSnapshot
+ */
+export type SaveSnapshot = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Top N
+     */
+    top_n?: number;
+};
+
+/**
+ * SavedDecision
+ */
+export type SavedDecision = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Decisions
+     */
+    decisions: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Holdings
+     */
+    holdings: {
+        [key: string]: number;
+    };
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Method
+     */
+    method: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Policy
+     */
+    policy: {
+        [key: string]: unknown;
+    };
+    /**
+     * Status
+     */
+    status?: 'EXPERIMENTAL';
+};
+
+/**
+ * SignalEvent
+ */
+export type SignalEvent = {
+    /**
+     * Cause
+     */
+    cause: string;
+    /**
+     * Detected At
+     */
+    detected_at?: string | null;
+    /**
+     * Event Type
+     */
+    event_type: string;
+    /**
+     * From Snapshot Id
+     */
+    from_snapshot_id?: number | null;
+    /**
+     * Id
+     */
+    id?: number | null;
+    /**
+     * New Value
+     */
+    new_value?: unknown;
+    /**
+     * Previous Value
+     */
+    previous_value?: unknown;
+    /**
+     * Severity
+     */
+    severity: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * To Snapshot Id
+     */
+    to_snapshot_id?: number | null;
+};
+
+/**
+ * SignalEventList
+ */
+export type SignalEventList = {
+    /**
+     * Basis
+     */
+    basis?: 'frozen_weights';
+    /**
+     * Items
+     */
+    items: Array<SignalEvent>;
+    /**
+     * Note
+     */
+    note?: string;
+    /**
+     * Status
+     */
+    status?: 'DIAGNOSTIC' | 'EXPERIMENTAL';
+};
+
+/**
+ * SimulationCreate
+ */
+export type SimulationCreate = {
+    /**
+     * Base Currency
+     */
+    base_currency?: 'USD' | 'EUR';
+    /**
+     * Etf Commission
+     */
+    etf_commission?: number;
+    /**
+     * Initial Cash
+     */
+    initial_cash: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Spread Bps
+     */
+    spread_bps?: number;
+    /**
+     * Stock Commission
+     */
+    stock_commission?: number;
+};
+
+/**
+ * SimulationList
+ */
+export type SimulationList = {
+    /**
+     * Items
+     */
+    items: Array<SimulationPortfolio>;
+};
+
+/**
+ * SimulationPortfolio
+ */
+export type SimulationPortfolio = {
+    /**
+     * Base Currency
+     */
+    base_currency?: 'USD' | 'EUR';
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Etf Commission
+     */
+    etf_commission?: number;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Initial Cash
+     */
+    initial_cash: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Spread Bps
+     */
+    spread_bps?: number;
+    /**
+     * Status
+     */
+    status?: 'EXPERIMENTAL';
+    /**
+     * Stock Commission
+     */
+    stock_commission?: number;
+};
+
+/**
+ * SimulationResult
+ */
+export type SimulationResult = {
+    /**
+     * Cash
+     */
+    cash: number;
+    /**
+     * Curve
+     */
+    curve: Array<CurvePoint>;
+    /**
+     * Note
+     */
+    note?: string;
+    /**
+     * Positions
+     */
+    positions: {
+        [key: string]: number;
+    };
+    /**
+     * Status
+     */
+    status?: 'EXPERIMENTAL';
+    /**
+     * Summary
+     */
+    summary: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * SimulationTrade
+ */
+export type SimulationTrade = {
+    /**
+     * Asset Type
+     */
+    asset_type: 'STOCK' | 'ETF';
+    /**
+     * Commission
+     */
+    commission: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Execution Date
+     */
+    execution_date: string;
+    /**
+     * Fx Fee Bps
+     */
+    fx_fee_bps?: number;
+    /**
+     * Fx Rate
+     */
+    fx_rate: number;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Market
+     */
+    market?: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
+    /**
+     * Notional
+     */
+    notional: number;
+    /**
+     * Portfolio Id
+     */
+    portfolio_id: number;
+    /**
+     * Quote Currency
+     */
+    quote_currency?: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Reference Close
+     */
+    reference_close: number;
+    /**
+     * Requested Date
+     */
+    requested_date: string;
+    /**
+     * Side
+     */
+    side: 'BUY' | 'SELL';
+    /**
+     * Spread Bps
+     */
+    spread_bps: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * SimulationTradeCreate
+ */
+export type SimulationTradeCreate = {
+    /**
+     * Asset Type
+     */
+    asset_type: 'STOCK' | 'ETF';
+    /**
+     * Commission
+     */
+    commission?: number | null;
+    /**
+     * Fx Fee Bps
+     */
+    fx_fee_bps?: number;
+    /**
+     * Fx Rate
+     */
+    fx_rate?: number | null;
+    /**
+     * Market
+     */
+    market?: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
+    /**
+     * Notional
+     */
+    notional: number;
+    /**
+     * Quote Currency
+     */
+    quote_currency?: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Requested Date
+     */
+    requested_date: string;
+    /**
+     * Side
+     */
+    side: 'BUY' | 'SELL';
+    /**
+     * Spread Bps
+     */
+    spread_bps?: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * SimulationTrades
+ */
+export type SimulationTrades = {
+    /**
+     * Items
+     */
+    items: Array<SimulationTrade>;
+};
+
+/**
+ * Snapshot
+ */
+export type Snapshot = {
+    /**
+     * As Of Date
+     */
+    as_of_date: string;
+    /**
+     * Candidates
+     */
+    candidates: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Source
+     */
+    source: string;
+};
+
+/**
+ * SnapshotList
+ */
+export type SnapshotList = {
+    /**
+     * Items
+     */
+    items: Array<Snapshot>;
+};
+
+/**
+ * TargetPosition
+ */
+export type TargetPosition = {
+    /**
+     * Amount Eur
+     */
+    amount_eur: number;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Price Usd
+     */
+    price_usd: number | null;
+    /**
+     * Score Coverage Fraction
+     */
+    score_coverage_fraction: number | null;
+    /**
+     * Score Points
+     */
+    score_points: number | null;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Weight Percent
+     */
+    weight_percent: number;
+};
+
+/**
+ * UndoResult
+ */
+export type UndoResult = {
+    /**
+     * Undone
+     */
+    undone: boolean;
 };
 
 /**
@@ -698,6 +1815,56 @@ export type CompanyApiV1CompaniesSymbolGetResponses = {
 };
 
 export type CompanyApiV1CompaniesSymbolGetResponse = CompanyApiV1CompaniesSymbolGetResponses[keyof CompanyApiV1CompaniesSymbolGetResponses];
+
+export type ComparisonApiV1ComparisonGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Symbols
+         */
+        symbols: Array<string>;
+    };
+    url: '/api/v1/comparison';
+};
+
+export type ComparisonApiV1ComparisonGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ComparisonApiV1ComparisonGetError = ComparisonApiV1ComparisonGetErrors[keyof ComparisonApiV1ComparisonGetErrors];
+
+export type ComparisonApiV1ComparisonGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ComparisonResponse;
+};
+
+export type ComparisonApiV1ComparisonGetResponse = ComparisonApiV1ComparisonGetResponses[keyof ComparisonApiV1ComparisonGetResponses];
 
 export type DataStatusApiV1DataStatusGetData = {
     body?: never;
@@ -1033,6 +2200,335 @@ export type JobResultApiV1JobsJobIdResultGetResponses = {
 
 export type JobResultApiV1JobsJobIdResultGetResponse = JobResultApiV1JobsJobIdResultGetResponses[keyof JobResultApiV1JobsJobIdResultGetResponses];
 
+export type SnapshotApiV1MarketMacroGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/macro';
+};
+
+export type SnapshotApiV1MarketMacroGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SnapshotApiV1MarketMacroGetError = SnapshotApiV1MarketMacroGetErrors[keyof SnapshotApiV1MarketMacroGetErrors];
+
+export type SnapshotApiV1MarketMacroGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MacroResponse;
+};
+
+export type SnapshotApiV1MarketMacroGetResponse = SnapshotApiV1MarketMacroGetResponses[keyof SnapshotApiV1MarketMacroGetResponses];
+
+export type EventsApiV1MarketSignalsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Severity
+         */
+        severity?: 'INFO' | 'WATCH' | 'MATERIAL' | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/market/signals';
+};
+
+export type EventsApiV1MarketSignalsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type EventsApiV1MarketSignalsGetError = EventsApiV1MarketSignalsGetErrors[keyof EventsApiV1MarketSignalsGetErrors];
+
+export type EventsApiV1MarketSignalsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SignalEventList;
+};
+
+export type EventsApiV1MarketSignalsGetResponse = EventsApiV1MarketSignalsGetResponses[keyof EventsApiV1MarketSignalsGetResponses];
+
+export type CompareApiV1MarketSignalsComparePostData = {
+    body: CompareSignals;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/signals/compare';
+};
+
+export type CompareApiV1MarketSignalsComparePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompareApiV1MarketSignalsComparePostError = CompareApiV1MarketSignalsComparePostErrors[keyof CompareApiV1MarketSignalsComparePostErrors];
+
+export type CompareApiV1MarketSignalsComparePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SignalEventList;
+};
+
+export type CompareApiV1MarketSignalsComparePostResponse = CompareApiV1MarketSignalsComparePostResponses[keyof CompareApiV1MarketSignalsComparePostResponses];
+
+export type RecordFilingsApiV1MarketSignalsFilingsRecordPostData = {
+    body: SaveFilingCheck;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/signals/filings/record';
+};
+
+export type RecordFilingsApiV1MarketSignalsFilingsRecordPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RecordFilingsApiV1MarketSignalsFilingsRecordPostError = RecordFilingsApiV1MarketSignalsFilingsRecordPostErrors[keyof RecordFilingsApiV1MarketSignalsFilingsRecordPostErrors];
+
+export type RecordFilingsApiV1MarketSignalsFilingsRecordPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: FilingCheckSaved;
+};
+
+export type RecordFilingsApiV1MarketSignalsFilingsRecordPostResponse = RecordFilingsApiV1MarketSignalsFilingsRecordPostResponses[keyof RecordFilingsApiV1MarketSignalsFilingsRecordPostResponses];
+
+export type SnapshotsApiV1MarketSnapshotsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/snapshots';
+};
+
+export type SnapshotsApiV1MarketSnapshotsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SnapshotsApiV1MarketSnapshotsGetError = SnapshotsApiV1MarketSnapshotsGetErrors[keyof SnapshotsApiV1MarketSnapshotsGetErrors];
+
+export type SnapshotsApiV1MarketSnapshotsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SnapshotList;
+};
+
+export type SnapshotsApiV1MarketSnapshotsGetResponse = SnapshotsApiV1MarketSnapshotsGetResponses[keyof SnapshotsApiV1MarketSnapshotsGetResponses];
+
+export type SaveSnapshotApiV1MarketSnapshotsPostData = {
+    body: SaveSnapshot;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/snapshots';
+};
+
+export type SaveSnapshotApiV1MarketSnapshotsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveSnapshotApiV1MarketSnapshotsPostError = SaveSnapshotApiV1MarketSnapshotsPostErrors[keyof SaveSnapshotApiV1MarketSnapshotsPostErrors];
+
+export type SaveSnapshotApiV1MarketSnapshotsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: Snapshot;
+};
+
+export type SaveSnapshotApiV1MarketSnapshotsPostResponse = SaveSnapshotApiV1MarketSnapshotsPostResponses[keyof SaveSnapshotApiV1MarketSnapshotsPostResponses];
+
+export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id: number;
+    };
+    query?: never;
+    url: '/api/v1/market/snapshots/{snapshot_id}/earnings';
+};
+
+export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetError = EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetErrors[keyof EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetErrors];
+
+export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: EarningsList;
+};
+
+export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponse = EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponses[keyof EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponses];
+
 export type ModelApiV1ModelGetData = {
     body?: never;
     path?: never;
@@ -1077,6 +2573,880 @@ export type ModelApiV1ModelGetResponses = {
 };
 
 export type ModelApiV1ModelGetResponse = ModelApiV1ModelGetResponses[keyof ModelApiV1ModelGetResponses];
+
+export type ListPlansApiV1PortfolioDecisionsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/decisions';
+};
+
+export type ListPlansApiV1PortfolioDecisionsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ListPlansApiV1PortfolioDecisionsGetError = ListPlansApiV1PortfolioDecisionsGetErrors[keyof ListPlansApiV1PortfolioDecisionsGetErrors];
+
+export type ListPlansApiV1PortfolioDecisionsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: DecisionList;
+};
+
+export type ListPlansApiV1PortfolioDecisionsGetResponse = ListPlansApiV1PortfolioDecisionsGetResponses[keyof ListPlansApiV1PortfolioDecisionsGetResponses];
+
+export type SaveApiV1PortfolioDecisionsPostData = {
+    body: DecisionJobSave;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/decisions';
+};
+
+export type SaveApiV1PortfolioDecisionsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveApiV1PortfolioDecisionsPostError = SaveApiV1PortfolioDecisionsPostErrors[keyof SaveApiV1PortfolioDecisionsPostErrors];
+
+export type SaveApiV1PortfolioDecisionsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: SavedDecision;
+};
+
+export type SaveApiV1PortfolioDecisionsPostResponse = SaveApiV1PortfolioDecisionsPostResponses[keyof SaveApiV1PortfolioDecisionsPostResponses];
+
+export type PlanApiV1PortfolioDecisionsPlanIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Plan Id
+         */
+        plan_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/{plan_id}';
+};
+
+export type PlanApiV1PortfolioDecisionsPlanIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PlanApiV1PortfolioDecisionsPlanIdGetError = PlanApiV1PortfolioDecisionsPlanIdGetErrors[keyof PlanApiV1PortfolioDecisionsPlanIdGetErrors];
+
+export type PlanApiV1PortfolioDecisionsPlanIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedDecision;
+};
+
+export type PlanApiV1PortfolioDecisionsPlanIdGetResponse = PlanApiV1PortfolioDecisionsPlanIdGetResponses[keyof PlanApiV1PortfolioDecisionsPlanIdGetResponses];
+
+export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostData = {
+    body?: never;
+    path: {
+        /**
+         * Plan Id
+         */
+        plan_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/{plan_id}/delete';
+};
+
+export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostError = DeleteApiV1PortfolioDecisionsPlanIdDeletePostErrors[keyof DeleteApiV1PortfolioDecisionsPlanIdDeletePostErrors];
+
+export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeleteDecision;
+};
+
+export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponse = DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponses[keyof DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponses];
+
+export type ProgressApiV1PortfolioDecisionsPlanIdProgressGetData = {
+    body?: never;
+    path: {
+        /**
+         * Plan Id
+         */
+        plan_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/{plan_id}/progress';
+};
+
+export type ProgressApiV1PortfolioDecisionsPlanIdProgressGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ProgressApiV1PortfolioDecisionsPlanIdProgressGetError = ProgressApiV1PortfolioDecisionsPlanIdProgressGetErrors[keyof ProgressApiV1PortfolioDecisionsPlanIdProgressGetErrors];
+
+export type ProgressApiV1PortfolioDecisionsPlanIdProgressGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: DecisionProgress;
+};
+
+export type ProgressApiV1PortfolioDecisionsPlanIdProgressGetResponse = ProgressApiV1PortfolioDecisionsPlanIdProgressGetResponses[keyof ProgressApiV1PortfolioDecisionsPlanIdProgressGetResponses];
+
+export type RenameApiV1PortfolioDecisionsPlanIdRenamePostData = {
+    body: DecisionRename;
+    path: {
+        /**
+         * Plan Id
+         */
+        plan_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/{plan_id}/rename';
+};
+
+export type RenameApiV1PortfolioDecisionsPlanIdRenamePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RenameApiV1PortfolioDecisionsPlanIdRenamePostError = RenameApiV1PortfolioDecisionsPlanIdRenamePostErrors[keyof RenameApiV1PortfolioDecisionsPlanIdRenamePostErrors];
+
+export type RenameApiV1PortfolioDecisionsPlanIdRenamePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedDecision;
+};
+
+export type RenameApiV1PortfolioDecisionsPlanIdRenamePostResponse = RenameApiV1PortfolioDecisionsPlanIdRenamePostResponses[keyof RenameApiV1PortfolioDecisionsPlanIdRenamePostResponses];
+
+export type ListEntriesApiV1PortfolioJournalGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/api/v1/portfolio/journal';
+};
+
+export type ListEntriesApiV1PortfolioJournalGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ListEntriesApiV1PortfolioJournalGetError = ListEntriesApiV1PortfolioJournalGetErrors[keyof ListEntriesApiV1PortfolioJournalGetErrors];
+
+export type ListEntriesApiV1PortfolioJournalGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: JournalList;
+};
+
+export type ListEntriesApiV1PortfolioJournalGetResponse = ListEntriesApiV1PortfolioJournalGetResponses[keyof ListEntriesApiV1PortfolioJournalGetResponses];
+
+export type CreateApiV1PortfolioJournalPostData = {
+    body: JournalCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/journal';
+};
+
+export type CreateApiV1PortfolioJournalPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CreateApiV1PortfolioJournalPostError = CreateApiV1PortfolioJournalPostErrors[keyof CreateApiV1PortfolioJournalPostErrors];
+
+export type CreateApiV1PortfolioJournalPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: JournalEntry;
+};
+
+export type CreateApiV1PortfolioJournalPostResponse = CreateApiV1PortfolioJournalPostResponses[keyof CreateApiV1PortfolioJournalPostResponses];
+
+export type DeleteApiV1PortfolioJournalEntryIdDeletePostData = {
+    body?: never;
+    path: {
+        /**
+         * Entry Id
+         */
+        entry_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/journal/{entry_id}/delete';
+};
+
+export type DeleteApiV1PortfolioJournalEntryIdDeletePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeleteApiV1PortfolioJournalEntryIdDeletePostError = DeleteApiV1PortfolioJournalEntryIdDeletePostErrors[keyof DeleteApiV1PortfolioJournalEntryIdDeletePostErrors];
+
+export type DeleteApiV1PortfolioJournalEntryIdDeletePostResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteApiV1PortfolioJournalEntryIdDeletePostResponse = DeleteApiV1PortfolioJournalEntryIdDeletePostResponses[keyof DeleteApiV1PortfolioJournalEntryIdDeletePostResponses];
+
+export type ReviewApiV1PortfolioJournalEntryIdReviewPostData = {
+    body: JournalReview;
+    path: {
+        /**
+         * Entry Id
+         */
+        entry_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/journal/{entry_id}/review';
+};
+
+export type ReviewApiV1PortfolioJournalEntryIdReviewPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ReviewApiV1PortfolioJournalEntryIdReviewPostError = ReviewApiV1PortfolioJournalEntryIdReviewPostErrors[keyof ReviewApiV1PortfolioJournalEntryIdReviewPostErrors];
+
+export type ReviewApiV1PortfolioJournalEntryIdReviewPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: JournalEntry;
+};
+
+export type ReviewApiV1PortfolioJournalEntryIdReviewPostResponse = ReviewApiV1PortfolioJournalEntryIdReviewPostResponses[keyof ReviewApiV1PortfolioJournalEntryIdReviewPostResponses];
+
+export type PlanApiV1PortfolioPlanPostData = {
+    body: PlanRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/plan';
+};
+
+export type PlanApiV1PortfolioPlanPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PlanApiV1PortfolioPlanPostError = PlanApiV1PortfolioPlanPostErrors[keyof PlanApiV1PortfolioPlanPostErrors];
+
+export type PlanApiV1PortfolioPlanPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PlanResponse;
+};
+
+export type PlanApiV1PortfolioPlanPostResponse = PlanApiV1PortfolioPlanPostResponses[keyof PlanApiV1PortfolioPlanPostResponses];
+
+export type PortfoliosApiV1PortfolioSimulationsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/simulations';
+};
+
+export type PortfoliosApiV1PortfolioSimulationsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PortfoliosApiV1PortfolioSimulationsGetError = PortfoliosApiV1PortfolioSimulationsGetErrors[keyof PortfoliosApiV1PortfolioSimulationsGetErrors];
+
+export type PortfoliosApiV1PortfolioSimulationsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SimulationList;
+};
+
+export type PortfoliosApiV1PortfolioSimulationsGetResponse = PortfoliosApiV1PortfolioSimulationsGetResponses[keyof PortfoliosApiV1PortfolioSimulationsGetResponses];
+
+export type CreateApiV1PortfolioSimulationsPostData = {
+    body: SimulationCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/simulations';
+};
+
+export type CreateApiV1PortfolioSimulationsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CreateApiV1PortfolioSimulationsPostError = CreateApiV1PortfolioSimulationsPostErrors[keyof CreateApiV1PortfolioSimulationsPostErrors];
+
+export type CreateApiV1PortfolioSimulationsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: SimulationPortfolio;
+};
+
+export type CreateApiV1PortfolioSimulationsPostResponse = CreateApiV1PortfolioSimulationsPostResponses[keyof CreateApiV1PortfolioSimulationsPostResponses];
+
+export type PortfolioApiV1PortfolioSimulationsPortfolioIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Portfolio Id
+         */
+        portfolio_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/simulations/{portfolio_id}';
+};
+
+export type PortfolioApiV1PortfolioSimulationsPortfolioIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PortfolioApiV1PortfolioSimulationsPortfolioIdGetError = PortfolioApiV1PortfolioSimulationsPortfolioIdGetErrors[keyof PortfolioApiV1PortfolioSimulationsPortfolioIdGetErrors];
+
+export type PortfolioApiV1PortfolioSimulationsPortfolioIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SimulationPortfolio;
+};
+
+export type PortfolioApiV1PortfolioSimulationsPortfolioIdGetResponse = PortfolioApiV1PortfolioSimulationsPortfolioIdGetResponses[keyof PortfolioApiV1PortfolioSimulationsPortfolioIdGetResponses];
+
+export type ResultApiV1PortfolioSimulationsPortfolioIdResultGetData = {
+    body?: never;
+    path: {
+        /**
+         * Portfolio Id
+         */
+        portfolio_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/simulations/{portfolio_id}/result';
+};
+
+export type ResultApiV1PortfolioSimulationsPortfolioIdResultGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ResultApiV1PortfolioSimulationsPortfolioIdResultGetError = ResultApiV1PortfolioSimulationsPortfolioIdResultGetErrors[keyof ResultApiV1PortfolioSimulationsPortfolioIdResultGetErrors];
+
+export type ResultApiV1PortfolioSimulationsPortfolioIdResultGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SimulationResult;
+};
+
+export type ResultApiV1PortfolioSimulationsPortfolioIdResultGetResponse = ResultApiV1PortfolioSimulationsPortfolioIdResultGetResponses[keyof ResultApiV1PortfolioSimulationsPortfolioIdResultGetResponses];
+
+export type TradesApiV1PortfolioSimulationsPortfolioIdTradesGetData = {
+    body?: never;
+    path: {
+        /**
+         * Portfolio Id
+         */
+        portfolio_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/simulations/{portfolio_id}/trades';
+};
+
+export type TradesApiV1PortfolioSimulationsPortfolioIdTradesGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type TradesApiV1PortfolioSimulationsPortfolioIdTradesGetError = TradesApiV1PortfolioSimulationsPortfolioIdTradesGetErrors[keyof TradesApiV1PortfolioSimulationsPortfolioIdTradesGetErrors];
+
+export type TradesApiV1PortfolioSimulationsPortfolioIdTradesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SimulationTrades;
+};
+
+export type TradesApiV1PortfolioSimulationsPortfolioIdTradesGetResponse = TradesApiV1PortfolioSimulationsPortfolioIdTradesGetResponses[keyof TradesApiV1PortfolioSimulationsPortfolioIdTradesGetResponses];
+
+export type TradeApiV1PortfolioSimulationsPortfolioIdTradesPostData = {
+    body: SimulationTradeCreate;
+    path: {
+        /**
+         * Portfolio Id
+         */
+        portfolio_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/simulations/{portfolio_id}/trades';
+};
+
+export type TradeApiV1PortfolioSimulationsPortfolioIdTradesPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type TradeApiV1PortfolioSimulationsPortfolioIdTradesPostError = TradeApiV1PortfolioSimulationsPortfolioIdTradesPostErrors[keyof TradeApiV1PortfolioSimulationsPortfolioIdTradesPostErrors];
+
+export type TradeApiV1PortfolioSimulationsPortfolioIdTradesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: SimulationTrade;
+};
+
+export type TradeApiV1PortfolioSimulationsPortfolioIdTradesPostResponse = TradeApiV1PortfolioSimulationsPortfolioIdTradesPostResponses[keyof TradeApiV1PortfolioSimulationsPortfolioIdTradesPostResponses];
+
+export type UndoApiV1PortfolioSimulationsPortfolioIdUndoPostData = {
+    body?: never;
+    path: {
+        /**
+         * Portfolio Id
+         */
+        portfolio_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/simulations/{portfolio_id}/undo';
+};
+
+export type UndoApiV1PortfolioSimulationsPortfolioIdUndoPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type UndoApiV1PortfolioSimulationsPortfolioIdUndoPostError = UndoApiV1PortfolioSimulationsPortfolioIdUndoPostErrors[keyof UndoApiV1PortfolioSimulationsPortfolioIdUndoPostErrors];
+
+export type UndoApiV1PortfolioSimulationsPortfolioIdUndoPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: UndoResult;
+};
+
+export type UndoApiV1PortfolioSimulationsPortfolioIdUndoPostResponse = UndoApiV1PortfolioSimulationsPortfolioIdUndoPostResponses[keyof UndoApiV1PortfolioSimulationsPortfolioIdUndoPostResponses];
 
 export type RankingApiV1RankingGetData = {
     body?: never;

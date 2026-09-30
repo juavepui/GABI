@@ -80,6 +80,12 @@ export function CompanyPage() {
                     Posición global #{company.rank}
                   </span>
                 </div>
+                <Link
+                  className="mt-3 inline-block text-sm font-medium text-primary underline"
+                  to={'/cartera/diario?symbol=' + encodeURIComponent(company.symbol)}
+                >
+                  Escribir tesis en el diario →
+                </Link>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-semibold tabular-nums">

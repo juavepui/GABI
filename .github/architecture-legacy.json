@@ -836,9 +836,7 @@
     "pandas",
     "quantstats"
   ],
-  "backend/src/gabi/simple_portfolio.py": [
-    "pandas"
-  ],
+  "backend/src/gabi/simple_portfolio.py": [],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",
     "gabi.factor_stability",

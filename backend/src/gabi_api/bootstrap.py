@@ -14,14 +14,36 @@ from starlette.exceptions import HTTPException
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.errors import QueryError
+from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
+from gabi.application.market.signals import SignalMonitor
+from gabi.application.portfolio.decisions import Decisions
+from gabi.application.portfolio.journal import Journal
+from gabi.application.portfolio.planning import PortfolioQueries
+from gabi.application.portfolio.simulations import Simulations
+from gabi.infrastructure.legacy.decisions import build_decisions
+from gabi.infrastructure.legacy.filings import compare_cached
+from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+from gabi.infrastructure.legacy.signals import compare_snapshots
+from gabi.infrastructure.legacy.simulations import LegacySimulationMath
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.jobs import SqliteJobs
+from gabi.infrastructure.storage.journal import SqliteJournal
+from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.signals import SqliteSignals
+from gabi.infrastructure.storage.simulations import SqliteSimulations
 from gabi.infrastructure.storage.weights import FileWeights
+from gabi_api.routes.decisions import router as decisions_router
 from gabi_api.routes.jobs import router as jobs_router
+from gabi_api.routes.journal import router as journal_router
+from gabi_api.routes.macro import router as macro_router
 from gabi_api.routes.market import router
+from gabi_api.routes.portfolio import router as portfolio_router
+from gabi_api.routes.signals import router as signals_router
+from gabi_api.routes.simulations import router as simulations_router
 
 
 class ErrorDetail(BaseModel):
@@ -49,6 +71,13 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     market = MarketQueries(repository, model_queries, today)
     model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir))
     jobs = Jobs(SqliteJobs(settings.data_dir))
+    portfolio = PortfolioQueries(repository, policy, today)
+    journal = Journal(SqliteJournal(settings.data_dir))
+    macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata())
+    signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
+                            compare_snapshots, compare_cached, jobs)
+    simulations = Simulations(SqliteSimulations(settings.data_dir), LegacySimulationMath(), today)
+    decisions = Decisions(repository, SqliteDecisions(settings.data_dir), policy, today, build_decisions, jobs)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -67,6 +96,12 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
     app.state.jobs = jobs
+    app.state.portfolio = portfolio
+    app.state.journal = journal
+    app.state.macro = macro
+    app.state.signals = signals
+    app.state.simulations = simulations
+    app.state.decisions = decisions
     app.state.settings = settings
     app.state.model_commands = model_commands
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],
@@ -97,6 +132,12 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
 
     app.include_router(router)
     app.include_router(jobs_router)
+    app.include_router(portfolio_router)
+    app.include_router(journal_router)
+    app.include_router(macro_router)
+    app.include_router(signals_router)
+    app.include_router(simulations_router)
+    app.include_router(decisions_router)
     return app
 
 

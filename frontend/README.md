@@ -1,4 +1,4 @@
-# Frontend local de GABI — F4 / #66
+# Frontend local de GABI — F5 / #67
 
 React + TypeScript + Vite, React Router, shadcn/ui y TanStack Query.
 El Screener y la ficha consultan el backend FastAPI. Los cálculos financieros,
@@ -64,7 +64,11 @@ disponibles, no a probabilidad de éxito. Se distinguen caché vacía, selecció
 vacía, errores y datos obsoletos. Un modelo congelado o en seguimiento **no**
 acredita ventaja frente a SPY.
 
-Cartera e Investigación indican la fase pendiente y enlazan con Streamlit.
+Mercado añade comparación entre empresas, Panel Macro y Signal Monitor con
+snapshots, filings SEC cacheados y calendario de resultados. Cartera incorpora
+plan objetivo, diario, ayuda contextual, decisiones experimentales y carteras
+simuladas. [Cobertura y límites de F5](../docs/architecture/f5-portfolio-market.md).
+Investigación sigue en la fase F6 y enlaza con Streamlit.
 Administración permite encolar refrescos incrementales, hasta diez símbolos,
 auditoría de cobertura y un backtest exploratorio de hasta un año. Muestra el
 estado persistente, cancelación cooperativa y resultados verificados por hash.

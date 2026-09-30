@@ -17,6 +17,68 @@ class LegacyExecutor:
     def __call__(self, command: JobCommand) -> dict:
         if command.kind == "quality":
             return quality_snapshot(self.settings.data_dir)
+        if command.kind == "sim_result":
+            from datetime import date
+
+            from gabi.application.portfolio.simulations import Simulations
+            from gabi.infrastructure.legacy.simulations import LegacySimulationMath
+            from gabi.infrastructure.storage.simulations import SqliteSimulations
+
+            assert command.portfolio_id is not None
+            return Simulations(SqliteSimulations(self.settings.data_dir), LegacySimulationMath(), date.today).result(
+                command.portfolio_id, long=True)
+        if command.kind == "sim_compare":
+            from datetime import date
+
+            from gabi.application.portfolio.simulations import Simulations
+            from gabi.infrastructure.legacy.simulations import LegacySimulationMath
+            from gabi.infrastructure.storage.simulations import SqliteSimulations
+
+            return Simulations(SqliteSimulations(self.settings.data_dir), LegacySimulationMath(), date.today).compare()
+        if command.kind == "decision_plan":
+            from datetime import date
+
+            from gabi.application.administration.jobs import Jobs
+            from gabi.application.portfolio.decisions import Decisions
+            from gabi.infrastructure.legacy.decisions import build_decisions
+            from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+            from gabi.infrastructure.storage.decisions import SqliteDecisions
+            from gabi.infrastructure.storage.jobs import SqliteJobs
+            from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+            assert command.decision_policy is not None and command.holdings_text is not None
+            benchmark, risk_free_rate = defaults()
+            policy = model_policy()
+            market = ReadOnlyMarket(self.settings, calculators(), policy, benchmark, risk_free_rate)
+            try:
+                service = Decisions(market, SqliteDecisions(self.settings.data_dir), policy, date.today,
+                                    build_decisions, Jobs(SqliteJobs(self.settings.data_dir)))
+                return service.generate(command.decision_policy, command.holdings_text)
+            finally:
+                market.close()
+        if command.kind == "filing_check":
+            from datetime import date
+
+            from gabi.application.administration.jobs import Jobs
+            from gabi.application.market.signals import SignalMonitor
+            from gabi.infrastructure.legacy.filings import compare_cached
+            from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+            from gabi.infrastructure.legacy.signals import compare_snapshots
+            from gabi.infrastructure.storage.jobs import SqliteJobs
+            from gabi.infrastructure.storage.market import ReadOnlyMarket
+            from gabi.infrastructure.storage.signals import SqliteSignals
+
+            assert command.snapshot_id is not None
+            benchmark, risk_free_rate = defaults()
+            policy = model_policy()
+            market = ReadOnlyMarket(self.settings, calculators(), policy, benchmark, risk_free_rate)
+            try:
+                monitor = SignalMonitor(SqliteSignals(self.settings.data_dir), market, policy,
+                                        date.today, compare_snapshots, compare_cached,
+                                        Jobs(SqliteJobs(self.settings.data_dir)))
+                return monitor.filings(command.snapshot_id)
+            finally:
+                market.close()
         # Published legacy engines keep their immutable project-root config.
         from gabi import config
 

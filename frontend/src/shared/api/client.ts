@@ -8,6 +8,34 @@ import type {
   LocalSettingsResponse,
   ModelResponse,
   WeightsRequest,
+  PlanRequest,
+  PlanResponse,
+  JournalCreate,
+  JournalEntry,
+  JournalList,
+  JournalReview,
+  ComparisonResponse,
+  MacroResponse,
+  SaveSnapshot,
+  Snapshot,
+  SnapshotList,
+  CompareSignals,
+  SignalEventList,
+  EarningsList,
+  FilingCheckSaved,
+  SimulationCreate,
+  SimulationPortfolio,
+  SimulationList,
+  SimulationTrade,
+  SimulationTradeCreate,
+  SimulationTrades,
+  SimulationResult,
+  UndoResult,
+  DecisionList,
+  DecisionJobSave,
+  DecisionRename,
+  SavedDecision,
+  DecisionProgress,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -94,4 +122,137 @@ export function getCompany(
   signal?: AbortSignal,
 ): Promise<CompanyResponse> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '?bars=' + bars, signal);
+}
+
+export function getPortfolioPlan(body: PlanRequest, signal?: AbortSignal): Promise<PlanResponse> {
+  return request('/api/v1/portfolio/plan', {
+    method: 'POST',
+    signal,
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function getJournal(offset = 0, signal?: AbortSignal): Promise<JournalList> {
+  return get('/api/v1/portfolio/journal?limit=50&offset=' + offset, signal);
+}
+export function createJournal(body: JournalCreate): Promise<JournalEntry> {
+  return request('/api/v1/portfolio/journal', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function reviewJournal(id: number, body: JournalReview): Promise<JournalEntry> {
+  return request('/api/v1/portfolio/journal/' + id + '/review', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export async function deleteJournal(id: number): Promise<void> {
+  const response = await fetch('/api/v1/portfolio/journal/' + id + '/delete', { method: 'POST' });
+  if (!response.ok)
+    throw new ApiError(response.status, 'journal_delete_failed', 'No se pudo eliminar la entrada.');
+}
+
+export function getComparison(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<ComparisonResponse> {
+  const params = new URLSearchParams();
+  symbols.forEach((symbol) => params.append('symbols', symbol));
+  return get('/api/v1/comparison?' + params.toString(), signal);
+}
+
+export function getMacro(signal?: AbortSignal): Promise<MacroResponse> {
+  return get('/api/v1/market/macro', signal);
+}
+
+export function getSnapshots(signal?: AbortSignal): Promise<SnapshotList> {
+  return get('/api/v1/market/snapshots', signal);
+}
+export function saveSnapshot(body: SaveSnapshot): Promise<Snapshot> {
+  return request('/api/v1/market/snapshots', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getSignals(signal?: AbortSignal): Promise<SignalEventList> {
+  return get('/api/v1/market/signals', signal);
+}
+export function compareSignals(body: CompareSignals): Promise<SignalEventList> {
+  return request('/api/v1/market/signals/compare', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getSnapshotEarnings(id: number, signal?: AbortSignal): Promise<EarningsList> {
+  return get('/api/v1/market/snapshots/' + id + '/earnings', signal);
+}
+export function recordFilingCheck(jobId: string): Promise<FilingCheckSaved> {
+  return request('/api/v1/market/signals/filings/record', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_id: jobId }),
+  });
+}
+
+export function getSimulations(signal?: AbortSignal): Promise<SimulationList> {
+  return get('/api/v1/portfolio/simulations', signal);
+}
+export function createSimulation(body: SimulationCreate): Promise<SimulationPortfolio> {
+  return request('/api/v1/portfolio/simulations', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getSimulationTrades(id: number, signal?: AbortSignal): Promise<SimulationTrades> {
+  return get('/api/v1/portfolio/simulations/' + id + '/trades', signal);
+}
+export function createSimulationTrade(
+  id: number,
+  body: SimulationTradeCreate,
+): Promise<SimulationTrade> {
+  return request('/api/v1/portfolio/simulations/' + id + '/trades', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function undoSimulationTrade(id: number): Promise<UndoResult> {
+  return request('/api/v1/portfolio/simulations/' + id + '/undo', { method: 'POST' });
+}
+export function getSimulationResult(id: number, signal?: AbortSignal): Promise<SimulationResult> {
+  return get('/api/v1/portfolio/simulations/' + id + '/result', signal);
+}
+
+export function getDecisions(signal?: AbortSignal): Promise<DecisionList> {
+  return get('/api/v1/portfolio/decisions', signal);
+}
+export function getDecision(id: number, signal?: AbortSignal): Promise<SavedDecision> {
+  return get('/api/v1/portfolio/decisions/' + id, signal);
+}
+export function getDecisionProgress(id: number, signal?: AbortSignal): Promise<DecisionProgress> {
+  return get('/api/v1/portfolio/decisions/' + id + '/progress', signal);
+}
+export function saveDecision(body: DecisionJobSave): Promise<SavedDecision> {
+  return request('/api/v1/portfolio/decisions', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function renameDecision(id: number, body: DecisionRename): Promise<SavedDecision> {
+  return request('/api/v1/portfolio/decisions/' + id + '/rename', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function deleteDecision(id: number): Promise<{ deleted: boolean }> {
+  return request('/api/v1/portfolio/decisions/' + id + '/delete', { method: 'POST' });
 }

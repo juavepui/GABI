@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check"]
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 
 
@@ -16,6 +16,10 @@ class JobCommand:
     symbols: tuple[str, ...] = ()
     start: str | None = None
     end: str | None = None
+    portfolio_id: int | None = None
+    decision_policy: dict | None = None
+    holdings_text: str | None = None
+    snapshot_id: int | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -36,6 +40,21 @@ class JobCommand:
                 raise QueryError("invalid_job", "El backtest debe cubrir hasta un año cerrado en el pasado.", 422)
         elif self.start is not None or self.end is not None:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
+        if self.kind == "sim_result":
+            if self.portfolio_id is None or not 1 <= self.portfolio_id <= 1_000_000:
+                raise QueryError("invalid_job", "Indica una cartera simulada válida.", 422)
+        elif self.portfolio_id is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite cartera simulada.", 422)
+        if self.kind == "decision_plan":
+            if self.decision_policy is None or self.holdings_text is None or len(self.holdings_text) > 5000:
+                raise QueryError("invalid_job", "Indica politica y posiciones validas.", 422)
+        elif self.decision_policy is not None or self.holdings_text is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite politica de decisiones.", 422)
+        if self.kind == "filing_check":
+            if self.snapshot_id is None or not 1 <= self.snapshot_id <= 1_000_000:
+                raise QueryError("invalid_job", "Indica un snapshot valido.", 422)
+        elif self.snapshot_id is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite snapshot.", 422)
 
 
 class JobRepository(Protocol):
@@ -43,6 +62,7 @@ class JobRepository(Protocol):
     def list(self, limit: int = 30) -> list[dict]: ...
     def get(self, job_id: str) -> dict: ...
     def cancel(self, job_id: str) -> dict: ...
+    def result(self, job_id: str) -> dict: ...
 
 
 class Jobs:
@@ -64,3 +84,9 @@ class Jobs:
 
     def cancel(self, job_id: str) -> dict:
         return self.repository.cancel(job_id)
+
+    def result(self, job_id: str) -> dict:
+        job = self.repository.get(job_id)
+        if job["kind"] in {"maintenance", "tiingo"}:
+            raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
+        return self.repository.result(job_id)

@@ -18,8 +18,20 @@ import {
   HardDrive,
   Leaf,
 } from 'lucide-react';
-import { MarketPage, CompanyPage } from '@/features/market/index';
-import { PortfolioPage } from '@/features/portfolio/index';
+import {
+  MarketPage,
+  CompanyPage,
+  ComparisonPage,
+  MacroPage,
+  SignalPage,
+} from '@/features/market/index';
+import {
+  DecisionsPage,
+  JournalPage,
+  LearnPage,
+  PortfolioPage,
+  SimulationsPage,
+} from '@/features/portfolio/index';
 import { ResearchPage } from '@/features/research/index';
 import { AdministrationPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
@@ -139,7 +151,14 @@ function Shell() {
           <Route path="/" element={<Navigate to="/mercado" replace />} />
           <Route path="/mercado" element={<MarketPage />} />
           <Route path="/mercado/empresas/:symbol" element={<CompanyPage />} />
+          <Route path="/mercado/comparar" element={<ComparisonPage />} />
+          <Route path="/mercado/macro" element={<MacroPage />} />
+          <Route path="/mercado/senales" element={<SignalPage />} />
           <Route path="/cartera" element={<PortfolioPage />} />
+          <Route path="/cartera/diario" element={<JournalPage />} />
+          <Route path="/cartera/aprender" element={<LearnPage />} />
+          <Route path="/cartera/simuladas" element={<SimulationsPage />} />
+          <Route path="/cartera/decisiones" element={<DecisionsPage />} />
           <Route path="/investigacion" element={<ResearchPage />} />
           <Route path="/administracion" element={<AdministrationPage />} />
           <Route

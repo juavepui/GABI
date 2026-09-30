@@ -38,10 +38,28 @@ def test_health_and_openapi_without_creating_data(tmp_path):
         contract = client.get("/openapi.json").json()
         assert set(contract["paths"]) == {"/api/v1/health", "/api/v1/model", "/api/v1/data/status",
                                          "/api/v1/ranking", "/api/v1/companies/{symbol}",
+                                         "/api/v1/comparison", "/api/v1/portfolio/plan",
                                          "/api/v1/administration/settings", "/api/v1/administration/weights",
                                          "/api/v1/jobs",
                                          "/api/v1/jobs/{job_id}", "/api/v1/jobs/{job_id}/cancel",
-                                         "/api/v1/jobs/{job_id}/result"}
+                                         "/api/v1/jobs/{job_id}/result",
+                                         "/api/v1/portfolio/journal",
+                                         "/api/v1/portfolio/journal/{entry_id}/review",
+                                         "/api/v1/portfolio/journal/{entry_id}/delete",
+                                         "/api/v1/market/macro", "/api/v1/market/snapshots",
+                                         "/api/v1/market/snapshots/{snapshot_id}/earnings",
+                                         "/api/v1/market/signals", "/api/v1/market/signals/compare",
+                                         "/api/v1/market/signals/filings/record",
+                                         "/api/v1/portfolio/simulations",
+                                         "/api/v1/portfolio/simulations/{portfolio_id}",
+                                         "/api/v1/portfolio/simulations/{portfolio_id}/trades",
+                                         "/api/v1/portfolio/simulations/{portfolio_id}/undo",
+                                         "/api/v1/portfolio/simulations/{portfolio_id}/result",
+                                         "/api/v1/portfolio/decisions",
+                                         "/api/v1/portfolio/decisions/{plan_id}",
+                                         "/api/v1/portfolio/decisions/{plan_id}/progress",
+                                         "/api/v1/portfolio/decisions/{plan_id}/rename",
+                                         "/api/v1/portfolio/decisions/{plan_id}/delete"}
         assert contract["components"]["schemas"]["Metric"]["required"] == ["value", "unit"]
         assert client.get("/api/v1/ranking").json()["data"]["status"] == "empty"
         assert client.get("/api/v1/companies/TEST").status_code == 404

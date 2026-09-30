@@ -22,6 +22,7 @@ const names: Record<string, string> = {
   backtest: 'Backtest exploratorio',
   maintenance: 'Mantenimiento prospectivo',
   tiingo: 'Descarga histórica Tiingo',
+  sim_result: 'Resultado de cartera simulada',
 };
 const states: Record<string, string> = {
   queued: 'En espera',
