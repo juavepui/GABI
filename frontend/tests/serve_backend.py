@@ -1,4 +1,5 @@
 """Loopback test API. No real configuration, credentials, database or network sources."""
+import json
 import sys
 import threading
 import time
@@ -21,7 +22,25 @@ def main():
         root = Path(directory).resolve()
         assert root.is_relative_to(Path(gettempdir()).resolve())
         seed_fixture(root)
-        app = create_app(Settings(root), today=lambda: TODAY)
+        published = root / "published-ledger.json"
+        published.write_text(json.dumps({
+            "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
+            "counts": {"legacy_guard_entries": 2}, "exhaustive_search_history": False,
+            "global_error_control_established": False, "limitations": ["Fixture no exhaustiva"],
+            "diagnostics": [], "unresolved_groups": [], "legacy_entries": [
+                {"id": "trial/failed", "family": "test_family", "configuration_sha256": "a" * 64,
+                 "specification_ref": "docs/test/protocol.json", "result_ref": "docs/test/result.json",
+                 "observed_sample": {"start": "2016-01-01"}, "planned_sample": None,
+                 "state": "observed", "decision": "failed_daily_gate", "failures": ["negative_excess"],
+                 "demonstrated_superiority": False},
+                {"id": "trial/pending", "family": "forward_family", "configuration_sha256": "b" * 64,
+                 "specification_ref": "docs/forward/protocol.json", "result_ref": None,
+                 "observed_sample": None, "planned_sample": {"start": "2026-10-01"},
+                 "state": "pending_prospective", "decision": "await_preregistered_looks", "failures": None,
+                 "demonstrated_superiority": False}],
+            "additional_observed_records": [],
+        }), encoding="utf-8")
+        app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published)
         worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command, app), root)
         threading.Thread(target=lambda: work_forever(worker), daemon=True).start()
         uvicorn.run(app, host="127.0.0.1", port=8001, log_level="warning")

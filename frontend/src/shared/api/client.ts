@@ -36,6 +36,8 @@ import type {
   DecisionRename,
   SavedDecision,
   DecisionProgress,
+  ResearchOverview,
+  SearchTrials,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -74,6 +76,18 @@ async function request<T>(url: string, options: RequestInit): Promise<T> {
 }
 export function getJobs(signal?: AbortSignal): Promise<JobListResponse> {
   return get('/api/v1/jobs', signal);
+}
+export function getResearchOverview(signal?: AbortSignal): Promise<ResearchOverview> {
+  return get('/api/v1/research/overview', signal);
+}
+export function getResearchTrials(
+  offset: number,
+  family: string,
+  signal?: AbortSignal,
+): Promise<SearchTrials> {
+  const params = new URLSearchParams({ offset: String(offset), limit: '25' });
+  if (family) params.set('family', family);
+  return get('/api/v1/research/trials?' + params.toString(), signal);
 }
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);

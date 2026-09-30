@@ -1,4 +1,4 @@
-# Frontend local de GABI — F5 / #67
+# Frontend local de GABI — F6 en curso / #68
 
 React + TypeScript + Vite, React Router, shadcn/ui y TanStack Query.
 El Screener y la ficha consultan el backend FastAPI. Los cálculos financieros,
@@ -8,7 +8,23 @@ permanecen en la carpeta compartida y no se copian al frontend.
 ## Arranque local
 
 Requisitos: Node **22.13+ (serie 22) o 24+** y el entorno Python del backend instalado.
-Desde la raíz, con uv:
+Para la interfaz React y el worker bajo un solo origen, desde la raíz:
+
+```powershell
+uv sync --project backend --locked --all-groups
+npm --prefix frontend ci
+npm --prefix frontend run build
+uv run --project backend python -m gabi_cli serve
+```
+
+Abre **http://127.0.0.1:8000**. `serve` escucha solo en loopback, atiende
+React y `/api/v1` en ese origen e inicia el worker. Ctrl+C detiene ambos.
+El build debe repetirse al actualizar el frontend. Los datos permanecen en
+`data/`; el build no los copia. El catálogo de Investigación se lee de los
+metadatos publicados del checkout. Streamlit continúa disponible para los
+recorridos de investigación aún no migrados.
+
+Para desarrollo con recarga de Vite, usa dos terminales. Primera:
 
 ```powershell
 uv sync --project backend --locked --all-groups
@@ -48,8 +64,8 @@ Si ya utilizas el entorno raíz de Windows:
 ```
 
 Para comprobar el build local, usa `npm run build` y `npm run preview`.
-Los servidores se detienen con Ctrl+C. El arranque unificado y la retirada de
-Streamlit pertenecen a F6.
+Los servidores se detienen con Ctrl+C. La retirada de Streamlit espera la
+equivalencia de los cinco recorridos F6.
 
 ## Flujos disponibles
 
@@ -68,7 +84,9 @@ Mercado añade comparación entre empresas, Panel Macro y Signal Monitor con
 snapshots, filings SEC cacheados y calendario de resultados. Cartera incorpora
 plan objetivo, diario, ayuda contextual, decisiones experimentales y carteras
 simuladas. [Cobertura y límites de F5](../docs/architecture/f5-portfolio-market.md).
-Investigación sigue en la fase F6 y enlaza con Streamlit.
+Investigación muestra el registro de búsquedas publicadas, incluidos ensayos
+fallidos y límites de evidencia. El resto de sus recorridos sigue en Streamlit.
+[Cobertura y pasos pendientes de F6](../docs/architecture/f6-research.md).
 Administración permite encolar refrescos incrementales, hasta diez símbolos,
 auditoría de cobertura y un backtest exploratorio de hasta un año. Muestra el
 estado persistente, cancelación cooperativa y resultados verificados por hash.

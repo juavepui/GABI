@@ -58,8 +58,9 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/portfolio/decisions",
                                          "/api/v1/portfolio/decisions/{plan_id}",
                                          "/api/v1/portfolio/decisions/{plan_id}/progress",
-                                         "/api/v1/portfolio/decisions/{plan_id}/rename",
-                                         "/api/v1/portfolio/decisions/{plan_id}/delete"}
+                                             "/api/v1/portfolio/decisions/{plan_id}/rename",
+                                             "/api/v1/portfolio/decisions/{plan_id}/delete",
+                                             "/api/v1/research/overview", "/api/v1/research/trials"}
         assert contract["components"]["schemas"]["Metric"]["required"] == ["value", "unit"]
         assert client.get("/api/v1/ranking").json()["data"]["status"] == "empty"
         assert client.get("/api/v1/companies/TEST").status_code == 404

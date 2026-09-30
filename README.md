@@ -16,7 +16,8 @@ casos de uso y adaptadores Python; frontend React por capacidades. Las reglas
 para modificar código están en [AGENTS.md](AGENTS.md), con controles de
 arquitectura en CI para ambas partes y [migración del código existente](docs/architecture/legacy-migration.md).
 La [API local FastAPI](docs/local-api.md) ya ofrece Screener, ficha y estado de datos/modelo.
-El [frontend React local](frontend/README.md) incorpora Screener y ficha de empresa.
+El [frontend React local](frontend/README.md) incorpora Mercado, Cartera,
+Administración y el catálogo publicado de Investigación.
 Streamlit continúa operativo para los flujos pendientes de migración.
 
 ## Calidad y trazabilidad de datos
@@ -87,6 +88,10 @@ Esto crea `backend/.venv/` e instala dependencias + dependencias de desarrollo
 (pytest, ruff, mypy). Para actualizar versiones deliberadamente: `uv lock --project backend --upgrade`.
 
 ## Uso
+
+Para arrancar React, la API y el worker con un solo comando, sigue la
+[instalación y build local](frontend/README.md#arranque-local). Los flujos de
+Investigación todavía pendientes continúan en Streamlit:
 
 ```bash
 uv run --project backend streamlit run app/streamlit_app.py

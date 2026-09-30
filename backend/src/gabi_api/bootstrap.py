@@ -2,6 +2,7 @@
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -21,6 +22,7 @@ from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
 from gabi.application.portfolio.simulations import Simulations
+from gabi.application.research.catalog import ResearchCatalog
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.macro import series_metadata
@@ -33,6 +35,7 @@ from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.published_research import FilePublishedLedger
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
 from gabi.infrastructure.storage.weights import FileWeights
@@ -42,8 +45,10 @@ from gabi_api.routes.journal import router as journal_router
 from gabi_api.routes.macro import router as macro_router
 from gabi_api.routes.market import router
 from gabi_api.routes.portfolio import router as portfolio_router
+from gabi_api.routes.research import router as research_router
 from gabi_api.routes.signals import router as signals_router
 from gabi_api.routes.simulations import router as simulations_router
+from gabi_api.static import mount_frontend
 
 
 class ErrorDetail(BaseModel):
@@ -62,7 +67,8 @@ class HealthResponse(BaseModel):
     api_version: str = "v1"
 
 
-def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today) -> FastAPI:
+def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today,
+               published_ledger: Path | None = None, frontend_dist: Path | None = None) -> FastAPI:
     settings = settings or Settings.from_environment()
     benchmark, risk_free_rate = defaults()
     policy = model_policy()
@@ -78,6 +84,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                             compare_snapshots, compare_cached, jobs)
     simulations = Simulations(SqliteSimulations(settings.data_dir), LegacySimulationMath(), today)
     decisions = Decisions(repository, SqliteDecisions(settings.data_dir), policy, today, build_decisions, jobs)
+    research_catalog = ResearchCatalog(FilePublishedLedger(
+        published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"))
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -102,6 +110,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.signals = signals
     app.state.simulations = simulations
     app.state.decisions = decisions
+    app.state.research_catalog = research_catalog
     app.state.settings = settings
     app.state.model_commands = model_commands
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],
@@ -138,6 +147,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(signals_router)
     app.include_router(simulations_router)
     app.include_router(decisions_router)
+    app.include_router(research_router)
+    if frontend_dist is not None:
+        mount_frontend(app, frontend_dist)
     return app
 
 

@@ -406,6 +406,28 @@ export type DeleteDecision = {
 };
 
 /**
+ * Diagnostic
+ */
+export type Diagnostic = {
+    /**
+     * Classification
+     */
+    classification: string;
+    /**
+     * Family
+     */
+    family: string;
+    /**
+     * Result Ref
+     */
+    result_ref?: string | null;
+    /**
+     * Specification Ref
+     */
+    specification_ref?: string | null;
+};
+
+/**
  * Earnings
  */
 export type Earnings = {
@@ -1175,6 +1197,50 @@ export type RankingResponse = {
 };
 
 /**
+ * ResearchOverview
+ */
+export type ResearchOverview = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Counts
+     */
+    counts: {
+        [key: string]: number;
+    };
+    /**
+     * Diagnostics
+     */
+    diagnostics: Array<Diagnostic>;
+    /**
+     * Exhaustive Search History
+     */
+    exhaustive_search_history: boolean;
+    /**
+     * Families
+     */
+    families: Array<string>;
+    /**
+     * Global Error Control Established
+     */
+    global_error_control_established: boolean;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    /**
+     * Scope
+     */
+    scope: string;
+    /**
+     * Unresolved Groups
+     */
+    unresolved_groups: Array<unknown>;
+};
+
+/**
  * SaveFilingCheck
  */
 export type SaveFilingCheck = {
@@ -1240,6 +1306,78 @@ export type SavedDecision = {
      * Status
      */
     status?: 'EXPERIMENTAL';
+};
+
+/**
+ * SearchTrial
+ */
+export type SearchTrial = {
+    /**
+     * Configuration Sha256
+     */
+    configuration_sha256: string;
+    /**
+     * Decision
+     */
+    decision: string;
+    /**
+     * Demonstrated Superiority
+     */
+    demonstrated_superiority: boolean;
+    /**
+     * Failures
+     */
+    failures: Array<string> | null;
+    /**
+     * Family
+     */
+    family: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Observed Sample
+     */
+    observed_sample: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Planned Sample
+     */
+    planned_sample: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Result Ref
+     */
+    result_ref: string | null;
+    /**
+     * Specification Ref
+     */
+    specification_ref: string;
+    /**
+     * State
+     */
+    state: string;
+};
+
+/**
+ * SearchTrials
+ */
+export type SearchTrials = {
+    /**
+     * Items
+     */
+    items: Array<SearchTrial>;
+    /**
+     * Offset
+     */
+    offset: number;
+    /**
+     * Total
+     */
+    total: number;
 };
 
 /**
@@ -3549,3 +3687,106 @@ export type RankingApiV1RankingGetResponses = {
 };
 
 export type RankingApiV1RankingGetResponse = RankingApiV1RankingGetResponses[keyof RankingApiV1RankingGetResponses];
+
+export type OverviewApiV1ResearchOverviewGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/overview';
+};
+
+export type OverviewApiV1ResearchOverviewGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type OverviewApiV1ResearchOverviewGetError = OverviewApiV1ResearchOverviewGetErrors[keyof OverviewApiV1ResearchOverviewGetErrors];
+
+export type OverviewApiV1ResearchOverviewGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResearchOverview;
+};
+
+export type OverviewApiV1ResearchOverviewGetResponse = OverviewApiV1ResearchOverviewGetResponses[keyof OverviewApiV1ResearchOverviewGetResponses];
+
+export type TrialsApiV1ResearchTrialsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Family
+         */
+        family?: string | null;
+    };
+    url: '/api/v1/research/trials';
+};
+
+export type TrialsApiV1ResearchTrialsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type TrialsApiV1ResearchTrialsGetError = TrialsApiV1ResearchTrialsGetErrors[keyof TrialsApiV1ResearchTrialsGetErrors];
+
+export type TrialsApiV1ResearchTrialsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SearchTrials;
+};
+
+export type TrialsApiV1ResearchTrialsGetResponse = TrialsApiV1ResearchTrialsGetResponses[keyof TrialsApiV1ResearchTrialsGetResponses];
