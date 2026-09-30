@@ -418,7 +418,7 @@ Universo histórico          SEC EDGAR                    Precios
     st.markdown(
         "El motor original (V1) simula el retorno como un porcentaje agregado: cobra el mismo coste "
         "sobre el 100% de cada posición cada rebalanceo, se mantenga o no, y rota el SPY como si fuera "
-        "parte de la estrategia. El motor V2 (pestaña **Motor V2** en 🕰️ Ranking histórico) lleva "
+        "parte de la estrategia. El motor V2 (**Motor V2** en Investigación → Ranking histórico) lleva "
         "contabilidad real de acciones + caja: solo paga comisión sobre lo que de verdad se compra o "
         "vende, y el SPY se compra una vez y se mantiene, como haría un inversor pasivo real."
     )
@@ -447,8 +447,8 @@ Universo histórico          SEC EDGAR                    Precios
         "no traerlo del banco — por eso solo modela el segundo."
     )
     st.caption(
-        "La calculadora de 🕰️ Ranking histórico (pestaña Motor V1) convierte tu capital y nº de "
-        "posiciones al coste real por lado — pruébala con tus propios números."
+        "El coste real por lado depende del tamaño de cada posición: eToro cobra un importe fijo, "
+        "así que pesa más cuanto menor es la posición (ver README, \"Costes reales del bróker\")."
     )
 
     st.divider()

@@ -209,11 +209,25 @@ El build de Vite puede servirse desde FastAPI bajo `127.0.0.1:8000`; el mismo
 origen sirve `/api/v1`, `/assets` y las rutas de React. `gabi_cli serve` inicia
 API y worker, los detiene juntos y exige un build presente. El modo de desarrollo
 con Vite continúa disponible. No se retira Streamlit mientras falten sustitutos
-de los cinco recorridos de Investigación y la pestaña de backtest SMA heredada.
+de los recorridos de Investigación y la pestaña de backtest SMA heredada.
+
+La página Streamlit `8_Ranking_Historico.py` se ha retirado tras comprobar la
+equivalencia con la base local. El 2012-06-01 (497 empresas, capa histórica),
+el camino antiguo y los jobs nuevos coincidieron sin diferencias en orden del
+ranking, avisos y recuentos de cobertura, valores y colores de cada celda,
+candidatas, resultado a 6 y 12 meses y los cuatro bloques (184 s frente a 181 s;
+`gabi.db` sin cambios y red bloqueada). Los backtests V1 (500 empresas) y V2
+(muestra de 200) de 2012 coincidieron en métricas, costes, curva y periodos;
+las únicas discrepancias fueron el redondeo a 10 decimales del script de
+comparación. No se comprobó V2 con el universo completo ni fechas 2016-2025,
+porque la base local todavía no resuelve esas identidades. Se retiran su
+entrada de navegación y su excepción de arquitectura; los módulos que usaba
+siguen en uso por otras páginas o por los adaptadores legacy nuevos, y la
+historia publicada no se modifica.
 
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
-| Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Verificar el recorrido con la base local y retirar la página Streamlit y sus excepciones. |
+| Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
 | Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Verificar el recorrido con la base local y retirar la página Streamlit y su excepción. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |

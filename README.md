@@ -39,8 +39,7 @@ El detalle permite elegir la fecha de referencia del sector y distingue
 point-in-time, aproximado y ausente. El estado global sigue degradado mientras
 existan las limitaciones estructurales indicadas, aunque las descargas sean recientes.
 
-Screener y Ranking histórico permiten ajustar el umbral de cobertura en la
-barra lateral. Los backtests V1/V2 conservan el diagnóstico por fecha y lo
+Screener y Ranking histórico (React) permiten ajustar el umbral de cobertura. Los backtests V1/V2 conservan el diagnóstico por fecha y lo
 guardan con el experimento del Research Lab.
 
 El `data_fingerprint` v2 usa SHA-256 sobre contenido ordenado de precios,

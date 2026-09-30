@@ -50,7 +50,7 @@ deben duplicar fórmulas de scoring, costes o riesgo.
 | `5_Panel_Macro.py` | Mercado | `macro`, `config` | Lectura de indicadores, caché y refresco de fuentes separado | F5 |
 | `6_Comparar_Empresas.py` | Mercado | `screener`, `config` | Comparación de 2–5 empresas, unidades iguales a Screener | F5 |
 | `7_Aprender.py` | Cartera / ayuda contextual | `scoring`, diccionario de métricas | Contenido y explicaciones sin cálculos financieros nuevos | F5 |
-| `8_Ranking_Historico.py` | Investigación | `screener_asof`, `multifactor_backtest`, `portfolio_backtest`, `portfolio_metrics`, `factor_benchmark`, `tax_drag` | Backtests y comparaciones largos como jobs; registro de resultados | F6 |
+| `8_Ranking_Historico.py` | Investigación | `screener_asof`, `multifactor_backtest`, `portfolio_backtest`, `portfolio_metrics`, `factor_benchmark`, `tax_drag` | Backtests y comparaciones largos como jobs; registro de resultados | F6 · retirada tras verificar equivalencia (#68) |
 | `9_Decisiones.py` | Cartera | `decision_engine`, `screener`, `data_quality`, `storage` | Reglas experimentales y decisiones registradas; no envía órdenes | F5 |
 | `10_Carteras_Simuladas.py` | Cartera | `sim_portfolios`, `storage`, `data_fetch` | Simulaciones, operaciones y posiciones persistentes; cálculo largo como job | F5 |
 | `11_Research_Lab.py` | Investigación | `research_lab`, `overfitting_audit`, `stats_rigor`, `block_bootstrap`, `factor_stability` | Protocolos, ensayos, artefactos, fallos y exportaciones | F6 |

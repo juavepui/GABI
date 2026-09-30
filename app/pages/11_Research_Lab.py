@@ -106,7 +106,7 @@ experiments = research_lab.list_experiments()
 
 st.subheader("Experimentos registrados")
 if experiments.empty:
-    st.info("Todavía no hay experimentos registrados. Regístralos desde 🕰️ Ranking histórico tras "
+    st.info("Todavía no hay experimentos registrados. Regístralos desde Investigación → Ranking histórico (interfaz React) tras "
             "ejecutar un backtest, o manualmente más abajo.")
 else:
     families = ["(todas)"] + research_lab.list_families()
@@ -152,7 +152,7 @@ else:
             st.error(f"No existe el experimento #{int(del_id)}.")
 
 with st.expander("➕ Registrar experimento manualmente"):
-    st.caption("Para experimentos que no vienen de 🕰️ Ranking histórico (ej. resultados calculados fuera de la app).")
+    st.caption("Para experimentos que no vienen del backtest de Investigación → Ranking histórico (interfaz React) (ej. resultados calculados fuera de la app).")
     with st.form("manual_experiment"):
         m1, m2, m3 = st.columns(3)
         model_id = m1.text_input("Model ID", value="GABI-MF-v1.0")
@@ -273,12 +273,12 @@ st.subheader("🔄 PBO / CSCV (Probability of Backtest Overfitting)")
 st.caption(
     "Elige la mejor variante dentro de una muestra y comprueba si esa elección se sostiene fuera de "
     "ella. Requiere retornos observados sobre las MISMAS ventanas de al menos 2 experimentos — solo disponible para "
-    "los que se registraron desde 🕰️ Ranking histórico (no para los sembrados con cifras históricas del "
+    "los que se registraron desde Investigación → Ranking histórico (interfaz React) (no para los sembrados con cifras históricas del "
     "README, que solo tienen el Sharpe resumen)."
 )
 if len(with_returns) < 2:
     st.info("Hacen falta al menos 2 experimentos con serie de retornos guardada. Registra backtests desde "
-            "🕰️ Ranking histórico para generarlos.")
+            "Investigación → Ranking histórico (interfaz React) para generarlos.")
 else:
     options = {f"#{row.id} · {row.model_id} · Sharpe {row.sharpe:.2f}" if pd.notna(row.sharpe)
               else f"#{row.id} · {row.model_id}": row.id for row in with_returns.itertuples()}
