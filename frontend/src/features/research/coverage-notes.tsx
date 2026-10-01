@@ -29,7 +29,7 @@ export function HistoricalCoverageNotes({
         </p>
       )}
       {coverage.identity && coverage.identity.ambiguous > 0 && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950">
           {coverage.identity.ambiguous}/{total} empresas con identidad ambigua (varios alias en
           conflicto para esta fecha). No se usan sus datos por ticker para calcular el score.
         </p>
@@ -47,7 +47,7 @@ export function HistoricalCoverageNotes({
         {coverage.no_sector} sin ningún sector conocido.
       </p>
       {coverage.warnings.length > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950">
           <p className="font-medium">⚠️ Cobertura de datos degradada en esta reconstrucción</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {coverage.warnings.map((warning) => (

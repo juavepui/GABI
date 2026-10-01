@@ -8,6 +8,7 @@ from gabi.application.market.analysis_prompt import AnalysisPrompt
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
+from gabi.domain.market.comparison import positions
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
 from gabi_api.schemas.evidence import (
     CompanyEvidence,
@@ -159,8 +160,10 @@ def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^
 
 
 @router.get("/comparison", response_model=ComparisonResponse)
-def comparison(market: Service, symbols: Annotated[list[str], Query(min_length=2, max_length=5)]) -> ComparisonResponse:
+def comparison(request: Request, market: Service, symbols: Annotated[list[str], Query(min_length=2, max_length=5)]) -> ComparisonResponse:
     result = market.compare(symbols)
-    return ComparisonResponse(items=[company_row(str(symbol), row, result) for symbol, row in result.rows.iterrows()],
+    items = [company_row(str(symbol), row, result) for symbol, row in result.rows.iterrows()]
+    values = {item.symbol: {key: metric.value for key, metric in item.metrics.items()} for item in items}
+    return ComparisonResponse(items=items, positions=positions(values, request.app.state.metric_directions),
                               model=model_response(result.model), data=data_response(result.data),
                               generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)

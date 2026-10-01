@@ -1502,6 +1502,14 @@ export type ComparisonResponse = {
     items: Array<CompanyRow>;
     model: ModelResponse;
     /**
+     * Positions
+     */
+    positions: {
+        [key: string]: {
+            [key: string]: number | null;
+        };
+    };
+    /**
      * Revision
      */
     revision: string;

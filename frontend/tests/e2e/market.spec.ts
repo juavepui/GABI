@@ -266,3 +266,12 @@ test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async (
   await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
   await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
 });
+
+test('un sistema en modo oscuro no oscurece los avisos del tema claro', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  const notice = page.getByRole('region', { name: 'Avisos' }).getByText(/No es asesoramiento/);
+  await expect(notice).toBeVisible();
+  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(247, 248, 245)');
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+});

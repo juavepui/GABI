@@ -134,6 +134,8 @@ class CompanyResponse(WireModel):
 
 class ComparisonResponse(WireModel):
     items: list[CompanyRow]
+    # metric -> symbol -> 1 best .. 0 worst among the compared companies; None when there is no winner.
+    positions: dict[str, dict[str, float | None]]
     model: ModelResponse
     data: DataResponse
     generated_at: datetime

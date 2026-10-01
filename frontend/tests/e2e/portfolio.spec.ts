@@ -30,7 +30,12 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await second.fill('001'); // Search anywhere in the symbol, not only by its first letter.
   await second.press('Enter');
   await expect(page.getByRole('heading', { name: 'Métricas comparables' })).toBeVisible();
-  await expect(page.getByRole('row', { name: /Composite Score/ })).toBeVisible();
+  const composite = page.getByRole('row', { name: /Composite Score/ });
+  await expect(composite).toBeVisible();
+  // The better company on the score is green and marked as the best of the compared ones.
+  const best = composite.locator('td[title="El mejor de los comparados"]');
+  await expect(best).toHaveCount(1);
+  await expect(best).toHaveCSS('background-color', 'rgb(199, 245, 199)');
   await page.goto('/mercado/macro');
   await expect(page.getByRole('heading', { name: 'Panel macro' })).toBeVisible();
   await expect(page.getByText('Treasury 10 años')).toBeVisible();

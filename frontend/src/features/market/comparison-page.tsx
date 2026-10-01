@@ -12,17 +12,23 @@ import { Evidence } from './evidence';
 const fields = [
   ['composite_score', 'Composite Score'],
   ['score_coverage', 'Cobertura'],
-  ['confidence', 'Confianza'],
+  ['confidence', 'Cobertura ponderada'],
   ['price', 'Precio'],
   ['market_cap', 'Capitalización'],
   ['pe', 'PER'],
   ['pb', 'Precio / valor contable'],
   ['roe', 'ROE'],
   ['operating_margin', 'Margen operativo'],
-  ['revenue_growth', 'Crecimiento ingresos'],
+  ['revenue_growth_yoy', 'Crecimiento ingresos'],
   ['volatility', 'Volatilidad'],
   ['max_drawdown', 'Caída máxima'],
 ] as const;
+
+/** 0 = worst (red) .. 1 = best (green) among the compared companies; the position comes from the backend. */
+function cellStyle(position: number | null | undefined) {
+  if (position == null) return undefined;
+  return { backgroundColor: `hsl(${Math.round(position * 120)}, 70%, 87%)` };
+}
 
 export function ComparisonPage() {
   const [params, setParams] = useSearchParams();
@@ -108,16 +114,48 @@ export function ComparisonPage() {
               <tbody>
                 {fields.map(([key, label]) => (
                   <tr key={key} className="border-b last:border-0">
-                    <th className="py-3 font-medium">{label}</th>
-                    {comparison.data?.items.map((item) => (
-                      <td key={item.symbol} className="py-3 tabular-nums">
-                        {metric(item.metrics[key])}
-                      </td>
-                    ))}
+                    <th className="py-3 pr-3 font-medium">{label}</th>
+                    {comparison.data?.items.map((item) => {
+                      const position = comparison.data?.positions[key]?.[item.symbol];
+                      return (
+                        <td
+                          key={item.symbol}
+                          className={
+                            'px-3 py-3 tabular-nums text-foreground ' +
+                            (position === 1 ? 'font-semibold' : '')
+                          }
+                          style={cellStyle(position)}
+                          title={
+                            position == null
+                              ? undefined
+                              : position === 1
+                                ? 'El mejor de los comparados'
+                                : position === 0
+                                  ? 'El peor de los comparados'
+                                  : undefined
+                          }
+                        >
+                          {metric(item.metrics[key])}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
             </table>
+            <p className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span
+                className="inline-block h-3 w-24 rounded-full"
+                style={{
+                  background:
+                    'linear-gradient(to right, hsl(0,70%,80%), hsl(60,70%,80%), hsl(120,70%,80%))',
+                }}
+                aria-hidden="true"
+              />
+              Rojo peor, verde mejor entre las empresas comparadas, según si la métrica es mejor
+              alta o baja en el score (un PER bajo o una volatilidad baja son mejores). Precio y
+              capitalización no tienen mejor ni peor y quedan sin color.
+            </p>
           </section>
           <Button asChild variant="outline">
             <Link to="/mercado">Volver al Screener</Link>

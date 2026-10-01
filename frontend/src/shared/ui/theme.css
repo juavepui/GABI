@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+/* GABI only has a light theme: `dark:` must not follow the OS setting, or warnings become
+   dark-on-dark when Windows is in dark mode. It would only apply under an explicit .dark class. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -23,6 +26,7 @@
   --radius-xl: 1.125rem;
 }
 :root {
+  color-scheme: light;
   --background: #f7f8f5;
   --foreground: #25332d;
   --card: #fff;

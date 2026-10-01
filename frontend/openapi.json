@@ -2895,6 +2895,23 @@
           "model": {
             "$ref": "#/components/schemas/ModelResponse"
           },
+          "positions": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Positions",
+            "type": "object"
+          },
           "revision": {
             "title": "Revision",
             "type": "string"
@@ -2902,6 +2919,7 @@
         },
         "required": [
           "items",
+          "positions",
           "model",
           "data",
           "generated_at",

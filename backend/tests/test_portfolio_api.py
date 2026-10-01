@@ -60,4 +60,12 @@ def test_comparison_reuses_ranking_metrics_and_units(tmp_path):
         reference = {row["symbol"]: row for row in ranking["items"]}
         assert body["items"] == [reference[symbol] for symbol in symbols]
         assert body["revision"] == ranking["revision"]
+        # The better company on a scored metric is 1, the worse 0; price has no direction.
+        scores = {row["symbol"]: row["metrics"]["composite_score"]["value"] for row in body["items"]}
+        best = max(scores, key=lambda symbol: scores[symbol])
+        assert body["positions"]["composite_score"][best] == 1.0
+        pe = {row["symbol"]: row["metrics"]["pe"]["value"] for row in body["items"]}
+        if None not in pe.values() and len(set(pe.values())) == 2:
+            assert body["positions"]["pe"][min(pe, key=lambda symbol: pe[symbol])] == 1.0  # Lower PER is better.
+        assert "price" not in body["positions"] and "market_cap" not in body["positions"]
         assert api.get("/api/v1/comparison", params=[("symbols", symbols[0])] * 2).status_code == 422

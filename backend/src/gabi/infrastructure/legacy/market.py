@@ -25,3 +25,14 @@ def metric_blocks() -> tuple[dict[str, list[str]], dict[str, list[str]]]:
               "momentum": list(scoring.MOMENTUM_METRICS_HIGHER_BETTER),
               "risk": list(scoring.RISK_METRICS_LOWER_BETTER) + list(scoring.RISK_METRICS_HIGHER_BETTER)}
     return blocks, {block: list(keys) for block, keys in scoring.SCORE_METRICS.items()}
+
+
+def metric_directions() -> dict[str, str]:
+    """«higher» or «lower» is better, as scoring orders each metric; the scores themselves are higher-better."""
+    from gabi.domain.market.comparison import SCORES
+
+    directions = dict.fromkeys(SCORES, "higher")
+    directions |= dict.fromkeys(scoring.VALUE_METRICS_LOWER_BETTER + scoring.RISK_METRICS_LOWER_BETTER, "lower")
+    directions |= dict.fromkeys(scoring.QUALITY_METRICS_HIGHER_BETTER + scoring.MOMENTUM_METRICS_HIGHER_BETTER
+                                + scoring.RISK_METRICS_HIGHER_BETTER, "higher")
+    return directions

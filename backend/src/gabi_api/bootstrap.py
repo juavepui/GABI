@@ -54,7 +54,7 @@ from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
 from gabi.infrastructure.legacy.macro import series_metadata
-from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, model_policy
+from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
 from gabi.infrastructure.legacy.signals import compare_snapshots
 from gabi.infrastructure.legacy.simulations import LegacySimulationMath
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
@@ -159,6 +159,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
+    app.state.metric_directions = metric_directions()
     app.state.analysis_prompt = AnalysisPrompt(market, analysis_prompt)
     app.state.metric_glossary = {"blocks": metric_glossary(*metric_blocks()), "terms": glossary_terms()}
     app.state.evidence = EvidenceQueries(market, LegacyEvidence(), LegacyRankingQuality())
