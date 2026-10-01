@@ -5817,6 +5817,88 @@ export type Snapshot = {
 };
 
 /**
+ * SnapshotCurvePoint
+ */
+export type SnapshotCurvePoint = {
+    /**
+     * Basket
+     */
+    basket: number | null;
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Spy
+     */
+    spy: number | null;
+};
+
+/**
+ * SnapshotDetailRow
+ */
+export type SnapshotDetailRow = {
+    /**
+     * Price Now
+     */
+    price_now: number | null;
+    /**
+     * Price Start
+     */
+    price_start: number | null;
+    /**
+     * Return
+     */
+    return: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * SnapshotHorizon
+ */
+export type SnapshotHorizon = {
+    /**
+     * Available
+     */
+    available?: number | null;
+    /**
+     * Benchmark Return
+     */
+    benchmark_return?: number | null;
+    /**
+     * End Date
+     */
+    end_date: string;
+    /**
+     * Excess Return
+     */
+    excess_return?: number | null;
+    /**
+     * Missing
+     */
+    missing?: Array<string>;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Portfolio Return
+     */
+    portfolio_return?: number | null;
+    /**
+     * Requested
+     */
+    requested?: number | null;
+    /**
+     * Status
+     */
+    status: 'pending' | 'complete' | 'incomplete';
+};
+
+/**
  * SnapshotList
  */
 export type SnapshotList = {
@@ -5824,6 +5906,104 @@ export type SnapshotList = {
      * Items
      */
     items: Array<Snapshot>;
+};
+
+/**
+ * SnapshotProgress
+ */
+export type SnapshotProgress = {
+    /**
+     * As Of Date
+     */
+    as_of_date: string;
+    /**
+     * Available
+     */
+    available: number;
+    /**
+     * Benchmark Return
+     */
+    benchmark_return: number | null;
+    /**
+     * Candidates
+     */
+    candidates: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Curve
+     */
+    curve: Array<SnapshotCurvePoint>;
+    /**
+     * Data As Of
+     */
+    data_as_of: string | null;
+    /**
+     * Detail
+     */
+    detail: Array<SnapshotDetailRow>;
+    /**
+     * Excess Return
+     */
+    excess_return: number | null;
+    /**
+     * Horizons
+     */
+    horizons: Array<SnapshotHorizon>;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Missing
+     */
+    missing: Array<string>;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Portfolio Return
+     */
+    portfolio_return: number | null;
+    /**
+     * Requested
+     */
+    requested: number;
+    /**
+     * Stale
+     */
+    stale: boolean;
+    /**
+     * Today
+     */
+    today: string;
+};
+
+/**
+ * SnapshotRename
+ */
+export type SnapshotRename = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * SnapshotRenamed
+ */
+export type SnapshotRenamed = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string;
 };
 
 /**
@@ -7278,6 +7458,106 @@ export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponses = {
 };
 
 export type EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponse = EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponses[keyof EarningsApiV1MarketSnapshotsSnapshotIdEarningsGetResponses];
+
+export type SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetData = {
+    body?: never;
+    path: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id: number;
+    };
+    query?: never;
+    url: '/api/v1/market/snapshots/{snapshot_id}/progress';
+};
+
+export type SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetError = SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetErrors[keyof SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetErrors];
+
+export type SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SnapshotProgress;
+};
+
+export type SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetResponse = SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetResponses[keyof SnapshotProgressApiV1MarketSnapshotsSnapshotIdProgressGetResponses];
+
+export type RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostData = {
+    body: SnapshotRename;
+    path: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id: number;
+    };
+    query?: never;
+    url: '/api/v1/market/snapshots/{snapshot_id}/rename';
+};
+
+export type RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostError = RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostErrors[keyof RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostErrors];
+
+export type RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SnapshotRenamed;
+};
+
+export type RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostResponse = RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostResponses[keyof RenameSnapshotApiV1MarketSnapshotsSnapshotIdRenamePostResponses];
 
 export type ModelApiV1ModelGetData = {
     body?: never;

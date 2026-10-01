@@ -38,6 +38,12 @@ test('Signal Monitor conserva snapshots y compara sin abrir Streamlit', async ({
   await page.getByRole('button', { name: 'Guardar foto' }).click();
   await expect(page.getByText(/Snapshot #\d+ guardado/)).toBeVisible();
   await page.reload();
+  const tracking = page.getByRole('region', { name: 'Seguimiento del ranking guardado' });
+  await expect(tracking).toContainText('Progreso desde');
+  await expect(tracking.getByText(/6 meses: pendiente hasta/)).toBeAttached();
+  await tracking.getByLabel('Cambiar nombre de este ranking').fill('Ranking e2e');
+  await tracking.getByRole('button', { name: 'Guardar nombre' }).click();
+  await expect(tracking).toContainText('Ranking e2e');
   await page.getByRole('button', { name: 'Comparar ahora' }).click();
   await expect(page.getByText('cambios detectados')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Próximos earnings' })).toBeVisible();

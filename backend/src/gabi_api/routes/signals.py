@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Path, Query, Request
 
 from gabi.application.market.signals import SignalMonitor
+from gabi.application.market.snapshots import SnapshotTracking
 from gabi_api.schemas.signals import (
     CompareSignals,
     EarningsEvent,
@@ -14,6 +15,9 @@ from gabi_api.schemas.signals import (
     SignalEventList,
     Snapshot,
     SnapshotList,
+    SnapshotProgress,
+    SnapshotRename,
+    SnapshotRenamed,
 )
 
 router = APIRouter(prefix="/api/v1/market", tags=["market"])
@@ -21,6 +25,24 @@ router = APIRouter(prefix="/api/v1/market", tags=["market"])
 
 def service(request: Request) -> SignalMonitor:
     return request.app.state.signals
+
+
+def tracking(request: Request) -> SnapshotTracking:
+    return request.app.state.snapshot_tracking
+
+
+Tracking = Annotated[SnapshotTracking, Depends(tracking)]
+
+
+@router.get("/snapshots/{snapshot_id}/progress", response_model=SnapshotProgress)
+def snapshot_progress(snapshot_id: Annotated[int, Path(ge=1, le=1_000_000)], query: Tracking) -> dict:
+    return query.progress(snapshot_id)
+
+
+@router.post("/snapshots/{snapshot_id}/rename", response_model=SnapshotRenamed)
+def rename_snapshot(snapshot_id: Annotated[int, Path(ge=1, le=1_000_000)], body: SnapshotRename,
+                    query: Tracking) -> dict:
+    return query.rename(snapshot_id, body.name)
 
 
 @router.get("/snapshots", response_model=SnapshotList)

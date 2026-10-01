@@ -69,3 +69,61 @@ class SaveFilingCheck(WireModel):
 class FilingCheckSaved(WireModel):
     recorded: bool
     events: list[SignalEvent]
+
+
+class SnapshotDetailRow(WireModel):
+    symbol: str
+    price_start: float | None
+    price_now: float | None
+    return_: float | None = Field(alias="return")
+
+    model_config = {"populate_by_name": True}
+
+
+class SnapshotCurvePoint(WireModel):
+    date: str
+    basket: float | None
+    spy: float | None
+
+
+class SnapshotHorizon(WireModel):
+    months: int
+    status: Literal["pending", "complete", "incomplete"]
+    end_date: str
+    available: int | None = None
+    requested: int | None = None
+    portfolio_return: float | None = None
+    benchmark_return: float | None = None
+    excess_return: float | None = None
+    missing: list[str] = []
+
+
+class SnapshotProgress(WireModel):
+    id: int
+    name: str
+    as_of_date: str
+    created_at: str
+    candidates: int
+    today: str
+    data_as_of: str | None
+    stale: bool
+    available: int
+    requested: int
+    portfolio_return: float | None
+    benchmark_return: float | None
+    excess_return: float | None
+    missing: list[str]
+    detail: list[SnapshotDetailRow]
+    curve: list[SnapshotCurvePoint]
+    horizons: list[SnapshotHorizon]
+
+
+class SnapshotRename(WireModel):
+    model_config = {"extra": "forbid"}
+
+    name: str = Field(min_length=1, max_length=80)
+
+
+class SnapshotRenamed(WireModel):
+    id: int
+    name: str

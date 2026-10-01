@@ -16,6 +16,7 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
+import { SnapshotProgress } from './snapshot-progress';
 import { dateLabel } from '@/shared/lib/format';
 
 const labels: Record<string, string> = {
@@ -260,6 +261,7 @@ export function SignalPage() {
       )}
       {activeSnapshot != null && (
         <>
+          <SnapshotProgress id={activeSnapshot} />
           <section className="rounded-xl border bg-card p-5">
             <h2 className="text-lg font-semibold">Cambios en filings SEC</h2>
             <p className="mt-1 text-sm text-muted-foreground">

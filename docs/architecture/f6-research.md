@@ -478,7 +478,7 @@ sustituto:
 | Screener, Mi cartera, Ficha | Evidencia por candidata (`evidence_confidence`): Top-20 con confianza BAJA/MEDIA/ALTA, motivos a favor y en contra, factores con Holm, estabilidad SIC y descarga | Hecho: `GET /evidence` y `/companies/{symbol}/evidence` |
 | Screener | Estabilidad del ranking actual ante cambios de 1-2 puntos en los pesos (`rank_stability.analyze`) | Hecho: `GET /ranking/stability` (1,3 s con la base local; no hace falta un job) |
 | Screener | Avisos de cobertura por bloque con umbral configurable | Hecho: `GET /ranking/coverage` sobre todo el ranking, encima de la tabla de Mercado |
-| Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Migrar junto a los snapshots del Signal Monitor |
+| Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Hecho: `GET /market/snapshots/{id}/progress` y `POST .../rename`, en el Signal Monitor |
 | Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Lectura como consulta; sincronización como job explícito |
 | Ficha | Métricas informativas no puntuadas | Migrar |
 | Configuración | Guardar las claves FRED, Tiingo y Nasdaq Data Link; tamaño del universo al actualizar; resumen de fallos y reintento de los fallidos | Comandos explícitos y jobs existentes |
@@ -523,4 +523,18 @@ también en Streamlit: el hash canónico del ledger no admitía la fecha
 hash publicado cambia, porque antes esos valores producían una excepción. La
 captura diaria del registro prospectivo, que calcula la misma huella, queda
 corregida también.
+
+El seguimiento de los rankings guardados está en el Signal Monitor de React.
+`GET /market/snapshots/{id}/progress` devuelve el progreso hasta hoy de la cesta
+equiponderada frente al SPY, el detalle por empresa, la curva base 100 y los
+resultados a 6 y 12 meses. `POST /market/snapshots/{id}/rename` cambia el nombre
+con la regla antigua (1-80 caracteres). `evaluation` separa `progress_for` y
+`price_curve_for` de `snapshot_progress` y `snapshot_price_curve`, que conservan
+su comportamiento; las nuevas reciben lectores acotados y de solo lectura
+(ventana de ±7 días de `_adjusted_at`, último precio de las candidatas e
+historial desde una semana antes de la fecha guardada). Son rankings en vivo,
+no un histórico reservado, así que no hay corte de periodo, como en Streamlit.
+Con la base local, los tres rankings guardados coinciden exactamente con
+`snapshot_progress` y la curva antigua (unos 0,2 s cada uno) y `gabi.db` no
+cambia.
 

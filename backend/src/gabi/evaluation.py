@@ -182,10 +182,16 @@ def snapshot_progress(snapshot_id: int, cost_bps: float = 0) -> dict:
         return {}
     as_of_date = row.iloc[0]["as_of_date"]
     symbols = snapshot_symbols(snapshot_id)
-    start = pd.Timestamp(as_of_date)
-    today = pd.Timestamp(date.today())
+    return progress_for(symbols, as_of_date, data_as_of=_latest_cached_date(symbols + ["SPY"]), cost_bps=cost_bps)
 
-    data_as_of = _latest_cached_date(symbols + ["SPY"])
+
+def progress_for(symbols: list[str], as_of_date: str, *, data_as_of, cost_bps: float = 0, price_at=None,
+                 today: date | None = None) -> dict:
+    """`snapshot_progress` for given candidates; `price_at` and `today` allow a bounded reader, as `evaluate`."""
+    price_at = price_at or _adjusted_at
+    start = pd.Timestamp(as_of_date)
+    today = pd.Timestamp(today or date.today())
+
     # "Obsoleto" = el caché de precios no llega a ningún día DESPUÉS de la
     # fecha guardada todavía — no hay literalmente ningún dato nuevo que
     # comparar, así que un 0.0% aquí no significaría "sin cambios", sino
@@ -194,16 +200,16 @@ def snapshot_progress(snapshot_id: int, cost_bps: float = 0) -> dict:
 
     detail_rows = []
     for symbol in symbols:
-        p0 = _adjusted_at(symbol, start)
-        p1 = _adjusted_at(symbol, today)
+        p0 = price_at(symbol, start)
+        p1 = price_at(symbol, today)
         ret = (p1 / p0 - 1 - 2 * cost_bps / 10000) if p0 and p1 else None
         detail_rows.append({"symbol": symbol, "price_start": p0, "price_now": p1, "return": ret})
     detail = pd.DataFrame(detail_rows)
 
     valid_returns = detail["return"].dropna()
     portfolio_return = float(valid_returns.mean()) if not valid_returns.empty else None
-    b0 = _adjusted_at("SPY", start)
-    b1 = _adjusted_at("SPY", today)
+    b0 = price_at("SPY", start)
+    b1 = price_at("SPY", today)
     benchmark_return = (b1 / b0 - 1 - 2 * cost_bps / 10000) if b0 and b1 else None
 
     return {
@@ -231,9 +237,12 @@ def snapshot_price_curve(snapshot_id: int) -> pd.DataFrame:
         return pd.DataFrame()
     as_of_date = row.iloc[0]["as_of_date"]
     symbols = snapshot_symbols(snapshot_id)
-    start = pd.Timestamp(as_of_date) - pd.Timedelta(days=7)
+    return price_curve_for(symbols, as_of_date, storage.get_prices_multi(symbols + ["SPY"]))
 
-    histories = storage.get_prices_multi(symbols + ["SPY"])
+
+def price_curve_for(symbols: list[str], as_of_date: str, histories: dict) -> pd.DataFrame:
+    """`snapshot_price_curve` for given candidates and already read histories (SPY included)."""
+    start = pd.Timestamp(as_of_date) - pd.Timedelta(days=7)
     series = {}
     for symbol in symbols:
         h = histories.get(symbol)

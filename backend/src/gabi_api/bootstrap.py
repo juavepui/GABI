@@ -19,6 +19,7 @@ from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
+from gabi.application.market.snapshots import SnapshotTracking
 from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
@@ -48,6 +49,7 @@ from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
 from gabi.infrastructure.legacy.signals import compare_snapshots
 from gabi.infrastructure.legacy.simulations import LegacySimulationMath
+from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.blind_plans import FileBlindPlans
@@ -65,6 +67,7 @@ from gabi.infrastructure.storage.published_research import FilePublishedLedger
 from gabi.infrastructure.storage.saved_audits import FileSavedAudits
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
+from gabi.infrastructure.storage.snapshot_prices import SqliteSnapshotPrices
 from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
 from gabi_api.routes.jobs import router as jobs_router
@@ -148,6 +151,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.journal = journal
     app.state.macro = macro
     app.state.signals = signals
+    app.state.snapshot_tracking = SnapshotTracking(
+        SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
+        LegacySnapshotMath(), today)
     app.state.simulations = simulations
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog

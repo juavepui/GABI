@@ -58,6 +58,32 @@ class SqliteSignals:
                               "GROUP BY snapshot_id ORDER BY created_at DESC,snapshot_id DESC LIMIT 50").fetchall()
             return [dict(row) for row in rows]
 
+    def snapshot_meta(self, snapshot_id: int) -> dict | None:
+        db = self._read("ranking_snapshots")
+        if db is None:
+            return None
+        with closing(db):
+            columns = {row[1] for row in db.execute("PRAGMA table_info(ranking_snapshots)")}
+            name = "COALESCE(name, 'Ranking ' || as_of_date)" if "name" in columns else "'Ranking ' || as_of_date"
+            row = db.execute(f"SELECT snapshot_id AS id,{name} AS name,created_at,as_of_date,source,"
+                             "COUNT(*) AS candidates FROM ranking_snapshots WHERE snapshot_id=? GROUP BY snapshot_id",
+                             (snapshot_id,)).fetchone()
+            return dict(row) if row else None
+
+    def rename(self, snapshot_id: int, name: str) -> bool:
+        """The UPDATE of evaluation.rename_snapshot; the name column exists in every saved snapshot table."""
+        if not self.path.is_file():
+            return False
+        with closing(sqlite3.connect(self.path, timeout=5)) as db:
+            if db.execute("SELECT 1 FROM sqlite_schema WHERE name='ranking_snapshots'").fetchone() is None:
+                return False
+            columns = {row[1] for row in db.execute("PRAGMA table_info(ranking_snapshots)")}
+            if "name" not in columns:
+                db.execute("ALTER TABLE ranking_snapshots ADD COLUMN name TEXT")
+            cursor = db.execute("UPDATE ranking_snapshots SET name=? WHERE snapshot_id=?", (name, snapshot_id))
+            db.commit()
+            return cursor.rowcount > 0
+
     def snapshot(self, snapshot_id: int) -> pd.DataFrame:
         db = self._read("ranking_snapshots")
         if db is None:
