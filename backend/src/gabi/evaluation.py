@@ -190,7 +190,7 @@ def progress_for(symbols: list[str], as_of_date: str, *, data_as_of, cost_bps: f
     """`snapshot_progress` for given candidates; `price_at` and `today` allow a bounded reader, as `evaluate`."""
     price_at = price_at or _adjusted_at
     start = pd.Timestamp(as_of_date)
-    today = pd.Timestamp(today or date.today())
+    now = pd.Timestamp(today or date.today())
 
     # "Obsoleto" = el caché de precios no llega a ningún día DESPUÉS de la
     # fecha guardada todavía — no hay literalmente ningún dato nuevo que
@@ -201,7 +201,7 @@ def progress_for(symbols: list[str], as_of_date: str, *, data_as_of, cost_bps: f
     detail_rows = []
     for symbol in symbols:
         p0 = price_at(symbol, start)
-        p1 = price_at(symbol, today)
+        p1 = price_at(symbol, now)
         ret = (p1 / p0 - 1 - 2 * cost_bps / 10000) if p0 and p1 else None
         detail_rows.append({"symbol": symbol, "price_start": p0, "price_now": p1, "return": ret})
     detail = pd.DataFrame(detail_rows)
@@ -209,11 +209,11 @@ def progress_for(symbols: list[str], as_of_date: str, *, data_as_of, cost_bps: f
     valid_returns = detail["return"].dropna()
     portfolio_return = float(valid_returns.mean()) if not valid_returns.empty else None
     b0 = price_at("SPY", start)
-    b1 = price_at("SPY", today)
+    b1 = price_at("SPY", now)
     benchmark_return = (b1 / b0 - 1 - 2 * cost_bps / 10000) if b0 and b1 else None
 
     return {
-        "as_of_date": as_of_date, "today": today.date().isoformat(),
+        "as_of_date": as_of_date, "today": now.date().isoformat(),
         "data_as_of": data_as_of.date().isoformat() if data_as_of is not None else None,
         "stale": stale,
         "detail": detail, "available": int(valid_returns.shape[0]), "requested": len(symbols),
