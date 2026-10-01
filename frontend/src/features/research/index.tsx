@@ -1,8 +1,12 @@
+import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getResearchOverview, getResearchTrials } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { TrialDetail } from './trial-detail';
+import { SectionLinks } from '@/shared/ui/section-links';
+import { ChartPie, FlaskConical, History, Lock, Ruler } from 'lucide-react';
 
 const PAGE_SIZE = 25;
 
@@ -23,6 +27,7 @@ export function ResearchPage() {
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const family = params.get('family') ?? '';
   const offset = (page - 1) * PAGE_SIZE;
+  const [opened, setOpened] = useState<string | null>(null);
   const overview = useQuery({
     queryKey: ['research', 'overview'],
     queryFn: ({ signal }) => getResearchOverview(signal),
@@ -51,36 +56,46 @@ export function ResearchPage() {
           validación independiente. GABI todavía no ha demostrado una estrategia neta claramente
           superior al S&amp;P 500.
         </p>
-        <Link
-          className="mt-3 inline-block text-sm font-medium text-primary underline"
-          to="/investigacion/historico"
-        >
-          Abrir ranking histórico →
-        </Link>
-        <Link
-          className="ml-5 mt-3 inline-block text-sm font-medium text-primary underline"
-          to="/investigacion/validaciones"
-        >
-          Ver validaciones ciegas →
-        </Link>
-        <Link
-          className="ml-5 mt-3 inline-block text-sm font-medium text-primary underline"
-          to="/investigacion/factores"
-        >
-          Abrir Factor Lab →
-        </Link>
-        <Link
-          className="ml-5 mt-3 inline-block text-sm font-medium text-primary underline"
-          to="/investigacion/laboratorio"
-        >
-          Abrir Research Lab →
-        </Link>
-        <Link
-          className="ml-5 mt-3 inline-block text-sm font-medium text-primary underline"
-          to="/investigacion/carteras"
-        >
-          Abrir Portfolio Lab →
-        </Link>
+        <SectionLinks
+          label="Herramientas de Investigación"
+          links={[
+            {
+              to: '/investigacion/historico',
+              label: 'Ranking histórico',
+              description: 'Rankings pasados y backtests V1/V2',
+              icon: History,
+              tone: 'sky',
+            },
+            {
+              to: '/investigacion/validaciones',
+              label: 'Validaciones ciegas',
+              description: 'Seguimiento sellado hacia delante',
+              icon: Lock,
+              tone: 'rose',
+            },
+            {
+              to: '/investigacion/factores',
+              label: 'Factor Lab',
+              description: '¿El score ordena el retorno futuro?',
+              icon: Ruler,
+              tone: 'amber',
+            },
+            {
+              to: '/investigacion/laboratorio',
+              label: 'Research Lab',
+              description: 'Experimentos, PSR/DSR y PBO',
+              icon: FlaskConical,
+              tone: 'violet',
+            },
+            {
+              to: '/investigacion/carteras',
+              label: 'Portfolio Lab',
+              description: 'Esquemas de ponderación y estrés',
+              icon: ChartPie,
+              tone: 'emerald',
+            },
+          ]}
+        />
       </header>
 
       {(overview.isPending || trials.isPending) && <LoadingState />}
@@ -147,36 +162,59 @@ export function ResearchPage() {
                   <th className="py-2 pr-3">Ensayo</th>
                   <th className="py-2 pr-3">Muestra</th>
                   <th className="py-2 pr-3">Decisión</th>
-                  <th className="py-2">Procedencia</th>
+                  <th className="py-2 pr-3">Procedencia</th>
+                  <th className="py-2">
+                    <span className="sr-only">Detalle</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {trials.data.items.map((item) => (
-                  <tr key={item.id} className="border-b align-top last:border-0">
-                    <td className="py-3 pr-3">
-                      <span className="font-medium">{item.id}</span>
-                      <span className="block text-xs text-muted-foreground">{item.family}</span>
-                    </td>
-                    <td className="py-3 pr-3">
-                      {item.state === 'observed'
-                        ? 'Retrospectiva observada'
-                        : 'Prospectiva pendiente'}
-                    </td>
-                    <td className="py-3 pr-3">
-                      {decisionLabel[item.decision] ?? item.decision}
-                      {item.failures && item.failures.length > 0 && (
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          {item.failures.join(', ')}
+                  <Fragment key={item.id}>
+                    <tr className="border-b align-top last:border-0">
+                      <td className="py-3 pr-3">
+                        <span className="font-medium">{item.id}</span>
+                        <span className="block text-xs text-muted-foreground">{item.family}</span>
+                      </td>
+                      <td className="py-3 pr-3">
+                        {item.state === 'observed'
+                          ? 'Retrospectiva observada'
+                          : 'Prospectiva pendiente'}
+                      </td>
+                      <td className="py-3 pr-3">
+                        {decisionLabel[item.decision] ?? item.decision}
+                        {item.failures && item.failures.length > 0 && (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {item.failures.join(', ')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-3 text-xs">
+                        <span className="block break-all">{item.specification_ref}</span>
+                        <span className="block break-all text-muted-foreground">
+                          {item.result_ref ?? 'Resultado aún no disponible'}
                         </span>
-                      )}
-                    </td>
-                    <td className="py-3 text-xs">
-                      <span className="block break-all">{item.specification_ref}</span>
-                      <span className="block break-all text-muted-foreground">
-                        {item.result_ref ?? 'Resultado aún no disponible'}
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="py-3">
+                        <Button
+                          size="sm"
+                          variant={opened === item.id ? 'default' : 'outline'}
+                          aria-expanded={opened === item.id}
+                          aria-label={'Ver detalle de ' + item.id}
+                          onClick={() => setOpened(opened === item.id ? null : item.id)}
+                        >
+                          {opened === item.id ? 'Ocultar' : 'Ver detalle'}
+                        </Button>
+                      </td>
+                    </tr>
+                    {opened === item.id && (
+                      <tr>
+                        <td colSpan={5} className="pb-4">
+                          <TrialDetail id={item.id} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

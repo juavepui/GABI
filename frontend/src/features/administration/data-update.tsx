@@ -4,6 +4,7 @@ import { createJob, getJob, getJobResult } from '@/shared/api/client';
 import type { DataUpdateRequest } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
+import { ProgressBar } from '@/shared/ui/progress-bar';
 
 type UpdateResult = {
   symbols: number;
@@ -79,9 +80,13 @@ export function DataUpdate() {
         </Button>
       </div>
       {start.isError && <p className="text-destructive">{start.error.message}</p>}
-      {job.data && job.data.status !== 'succeeded' && (
-        <p role="status" className="text-muted-foreground">
-          {job.data.phase} · {job.data.progress} % · {job.data.status}
+      {job.data && ['queued', 'running'].includes(job.data.status) && (
+        <ProgressBar value={job.data.progress} phase={job.data.phase} status={job.data.status} />
+      )}
+      {job.data && ['failed', 'cancelled'].includes(job.data.status) && (
+        <p role="status" className="text-destructive">
+          La actualización no terminó ({job.data.status === 'cancelled' ? 'cancelada' : 'fallida'}).
+          Revisa las fuentes y vuelve a intentarlo.
         </p>
       )}
       {data && (

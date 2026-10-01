@@ -7,6 +7,7 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlockBootstrapResult } from './block-bootstrap-view';
 import { useJob } from '@/shared/api/use-job';
+import { ProgressBar } from '@/shared/ui/progress-bar';
 
 const OPTIONS_LIMIT = 200;
 
@@ -22,9 +23,15 @@ export function JobStatus({ state }: { state: ReturnType<typeof useJob> }) {
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {job.isError && <ErrorState error={job.error} retry={() => void job.refetch()} />}
       {job.data && job.data.status !== 'succeeded' && (
-        <div className="mt-3 text-sm text-muted-foreground">
-          Trabajo #{job.data.id.slice(0, 8)} · {job.data.phase} · {job.data.progress} % ·{' '}
-          {job.data.status}
+        <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+          {['queued', 'running'].includes(job.data.status) && (
+            <ProgressBar
+              value={job.data.progress}
+              phase={job.data.phase}
+              status={job.data.status}
+            />
+          )}
+          Trabajo #{job.data.id.slice(0, 8)} · {job.data.status}
           {['queued', 'running'].includes(job.data.status) && (
             <Button
               className="ml-3"

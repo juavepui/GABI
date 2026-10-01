@@ -6,6 +6,11 @@ test('Investigación distingue ensayos fallidos de reservas pendientes', async (
   await expect(page.getByText('trial/failed')).toBeVisible();
   await expect(page.getByText('negative_excess')).toBeVisible();
   await expect(page.getByText('Prospectiva pendiente')).toBeVisible();
+  await page.getByRole('button', { name: 'Ver detalle de trial/failed' }).click();
+  const detail = page.getByRole('region', { name: 'Detalle de trial/failed' });
+  await expect(detail).toContainText('docs/test/protocol.json');
+  await page.getByRole('button', { name: 'Ver detalle de trial/failed' }).click();
+  await expect(detail).toHaveCount(0);
   await page.getByLabel('Familia').selectOption('forward_family');
   await expect(page.getByText('trial/pending')).toBeVisible();
   await expect(page.getByText('trial/failed')).toHaveCount(0);
@@ -13,7 +18,7 @@ test('Investigación distingue ensayos fallidos de reservas pendientes', async (
 
 test('ranking histórico se calcula en un job y muestra identidad y cobertura', async ({ page }) => {
   await page.goto('/investigacion');
-  await page.getByRole('link', { name: 'Abrir ranking histórico' }).click();
+  await page.getByRole('link', { name: /^Ranking histórico/ }).click();
   await expect(page.getByRole('heading', { name: 'Ranking histórico' })).toBeVisible();
   await page.getByRole('button', { name: 'Calcular ranking' }).click();
   await expect(page.getByRole('heading', { name: 'Ranking a 2019-01-02' })).toBeVisible();
@@ -33,7 +38,7 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
 
 test('validación ciega muestra integridad sin desvelar posiciones', async ({ page }) => {
   await page.goto('/investigacion');
-  await page.getByRole('link', { name: 'Ver validaciones ciegas' }).click();
+  await page.getByRole('link', { name: /^Validaciones ciegas/ }).click();
   await expect(page.getByRole('heading', { name: 'Validaciones ciegas' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '#1 · Fixture ciega' })).toBeVisible();
   await expect(page.getByText('Íntegra')).toBeVisible();
@@ -104,7 +109,7 @@ test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ 
   await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
   try {
     await page.goto('/investigacion');
-    await page.getByRole('link', { name: 'Abrir Factor Lab' }).click();
+    await page.getByRole('link', { name: /^Factor Lab/ }).click();
     await expect(page.getByRole('heading', { name: 'Factor Lab' })).toBeVisible();
     await page.getByRole('button', { name: 'Ejecutar Factor Lab' }).click();
     await expect(page.getByRole('heading', { name: 'Resumen de factores' })).toBeVisible();
@@ -379,7 +384,7 @@ test('Portfolio Lab compara esquemas en un job Research dentro del periodo obser
   await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
   try {
     await page.goto('/investigacion');
-    await page.getByRole('link', { name: 'Abrir Portfolio Lab' }).click();
+    await page.getByRole('link', { name: /^Portfolio Lab/ }).click();
     await page.getByLabel('Risk Parity').uncheck();
     await page.getByRole('button', { name: 'Ejecutar Portfolio Lab' }).click();
     const result = page.getByRole('region', { name: 'Resultado de Portfolio Lab' });

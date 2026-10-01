@@ -30,14 +30,22 @@ def test_update_summarizes_failures_by_reason_and_retries_only_the_failed(client
     monkeypatch.setattr(screener, "get_universe",
                         lambda limit=None: pd.DataFrame({"symbol": ["AAA", "BBB", "CCC"][:limit or 3]}))
 
-    def refresh(symbols, force=False):
+    def refresh(symbols, force=False, progress_cb=None, edgar_progress_cb=None):
         calls.append((symbols, force))
+        for done in range(1, len(symbols) + 1):
+            progress_cb(done, len(symbols), symbols[done - 1])
+            edgar_progress_cb(done, len(symbols), symbols[done - 1])
         return {"price_refreshed": True, "fundamentals_refreshed": 1, "edgar_refreshed": 2,
                 "failed": {"BBB": {"fundamentales": "límite de peticiones", "edgar": "sin CIK"},
                            "CCC": {"fundamentales": "límite de peticiones"}}}
 
     monkeypatch.setattr(screener, "refresh_data", refresh)
     first = _run(client, {"universe_limit": 50, "force": False}, "update-1")
+    job_id = client.get("/api/v1/jobs").json()["jobs"][0]["id"]
+    job = client.get(f"/api/v1/jobs/{job_id}").json()
+    phases = [event["message"] for event in job["events"]]
+    assert "Fundamentales Yahoo: 3 de 3" in phases and "SEC EDGAR: 3 de 3" in phases
+    assert phases.index("Fundamentales Yahoo: 1 de 3") < phases.index("SEC EDGAR: 3 de 3")
     assert calls[0] == (["AAA", "BBB", "CCC"], False)
     assert (first["symbols"], first["fundamentals_refreshed"], first["edgar_refreshed"]) == (3, 1, 2)
     assert first["failure_groups"] == [{"reason": "límite de peticiones", "symbols": ["BBB", "CCC"]},

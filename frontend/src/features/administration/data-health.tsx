@@ -3,6 +3,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
 import type { Row, useHealthJob } from './data-health-job';
+import { ProgressBar } from '@/shared/ui/progress-bar';
 
 export function Table({
   label,
@@ -54,9 +55,7 @@ export function HealthStatus({
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {result.isError && <ErrorState error={result.error} retry={() => void result.refetch()} />}
       {job.data && ['queued', 'running'].includes(job.data.status) && (
-        <p role="status" className="text-xs text-muted-foreground">
-          {job.data.phase} · {job.data.progress} %
-        </p>
+        <ProgressBar value={job.data.progress} phase={job.data.phase} status={job.data.status} />
       )}
       {job.data && ['failed', 'cancelled'].includes(job.data.status) && (
         <p className="text-xs text-destructive">{failure}</p>

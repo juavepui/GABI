@@ -204,3 +204,21 @@ def test_legacy_writer_refuses_an_alternate_data_directory(tmp_path):
     with pytest.raises(RuntimeError, match="mismo directorio"):
         LegacyExecutor(Settings(tmp_path))(JobCommand("refresh"))
     assert not (tmp_path / "gabi.db").exists()
+
+
+def test_progress_reporting_executor_moves_the_job_and_can_be_cancelled(tmp_path):
+    store = SqliteJobs(tmp_path)
+    seen = []
+
+    def executor(command, progress):
+        progress(0.5, "Mitad")
+        seen.append(store.get(store.list()[0]["id"])["progress"])
+        store.cancel(store.list()[0]["id"])
+        progress(0.75, "Tres cuartos")
+        raise AssertionError("Cancellation must stop the executor at the next report.")
+
+    executor.reports_progress = True
+    store.enqueue(JobCommand("quality"), "progress-job-1", "ui")
+    assert Worker(store, executor, tmp_path).run_once()
+    job = store.get(store.list()[0]["id"])
+    assert seen == [5 + round(85 * 0.5)] and job["status"] == "cancelled"

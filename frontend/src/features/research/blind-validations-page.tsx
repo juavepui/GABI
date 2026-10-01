@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { breakBlindSeal, createBlindValidation, getBlindValidations } from '@/shared/api/client';
 import type { BlindCreateRequest, BlindStatus } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
@@ -8,6 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlindActions } from './blind-actions';
+import { BackLink } from '@/shared/ui/section-links';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -260,9 +260,7 @@ export function BlindValidationsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/investigacion">
-          ← Investigación
-        </Link>
+        <BackLink to="/investigacion">Investigación</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Validaciones ciegas</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Cada rebalanceo queda registrado de forma inmutable (posiciones, precios y hash

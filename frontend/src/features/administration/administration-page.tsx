@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, DatabaseZap, RefreshCw, ShieldCheck } from 'lucide-react';
@@ -18,6 +17,8 @@ import { WeightsEditor } from './weights-editor';
 import { ModeSelector } from './mode-selector';
 import { DataUpdate } from './data-update';
 import { KeyEditor } from './key-editor';
+import { SectionLinks } from '@/shared/ui/section-links';
+import { ProgressBar } from '@/shared/ui/progress-bar';
 
 const names: Record<string, string> = {
   refresh: 'Actualizar datos del mercado',
@@ -74,17 +75,12 @@ function JobRow({
           {states[job.status] ?? job.status}
         </span>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{job.phase}</p>
-      {job.status === 'running' && (
-        <div
-          className="mt-2 h-2 overflow-hidden rounded-full bg-muted"
-          role="progressbar"
-          aria-valuenow={job.progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div className="h-full bg-primary" style={{ width: `${job.progress}%` }} />
+      {['queued', 'running'].includes(job.status) ? (
+        <div className="mt-3">
+          <ProgressBar value={job.progress} phase={job.phase} status={job.status} />
         </div>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">{job.phase}</p>
       )}
       {job.status === 'failed' && (
         <p className="mt-2 text-sm text-destructive">
@@ -211,9 +207,18 @@ export function AdministrationPage() {
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Solicita actualizaciones y auditorías. El worker continúa aunque cierres el navegador.
         </p>
-        <Link className="mt-2 inline-block text-sm underline" to="/administracion/calidad">
-          Calidad de los datos: cobertura, frescura, procedencia y archivo histórico
-        </Link>
+        <SectionLinks
+          label="Apartados de Administración"
+          links={[
+            {
+              to: '/administracion/calidad',
+              label: 'Calidad de los datos',
+              description: 'Cobertura, frescura, procedencia y archivo histórico',
+              icon: ShieldCheck,
+              tone: 'teal',
+            },
+          ]}
+        />
       </div>
       {error && (
         <p

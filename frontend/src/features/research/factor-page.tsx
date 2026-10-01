@@ -8,6 +8,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { PublishedFactorMap } from './published-factor-map';
 import { EstimateCaptures } from './estimate-captures';
 import { FactorGlossary, FactorQuantiles, SkippedPeriods } from './factor-details';
+import { BackLink } from '@/shared/ui/section-links';
 
 const format = (value: number | null | undefined, digits = 3) =>
   value == null
@@ -60,9 +61,7 @@ export function FactorPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/investigacion">
-          ← Investigación
-        </Link>
+        <BackLink to="/investigacion">Investigación</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Factor Lab</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Estudia si cada score ordena los retornos futuros mediante Rank IC, quintiles y rotación.

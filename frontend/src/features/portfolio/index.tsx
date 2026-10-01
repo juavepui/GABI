@@ -9,6 +9,8 @@ import { Badge } from '@/shared/ui/badge';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { EvidenceTable } from '@/shared/ui/evidence-table';
 import { Folded } from '@/shared/ui/folded';
+import { SectionLinks } from '@/shared/ui/section-links';
+import { Compass, FlaskRound, GraduationCap, NotebookPen } from 'lucide-react';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
@@ -83,30 +85,39 @@ export function PortfolioPage() {
           Selección Top-N con los pesos congelados y cobertura mínima del 70 %. El cálculo y reparto
           de capital se hacen en Python sobre la caché local. No se envían órdenes.
         </p>
-        <Link
-          className="mt-3 inline-block text-sm font-medium text-primary underline"
-          to="/cartera/diario"
-        >
-          Abrir diario de inversión →
-        </Link>
-        <Link
-          className="ml-4 inline-block text-sm font-medium text-primary underline"
-          to="/cartera/aprender"
-        >
-          Aprender →
-        </Link>
-        <Link
-          className="ml-4 inline-block text-sm font-medium text-primary underline"
-          to="/cartera/simuladas"
-        >
-          Carteras simuladas →
-        </Link>
-        <Link
-          className="ml-4 inline-block text-sm font-medium text-primary underline"
-          to="/cartera/decisiones"
-        >
-          Decisiones →
-        </Link>
+        <SectionLinks
+          label="Apartados de Cartera"
+          links={[
+            {
+              to: '/cartera/diario',
+              label: 'Diario de inversión',
+              description: 'Tesis antes de comprar y revisión',
+              icon: NotebookPen,
+              tone: 'amber',
+            },
+            {
+              to: '/cartera/aprender',
+              label: 'Aprender',
+              description: 'Términos, estrategias y cómo piensa GABI',
+              icon: GraduationCap,
+              tone: 'emerald',
+            },
+            {
+              to: '/cartera/simuladas',
+              label: 'Carteras simuladas',
+              description: 'Operaciones hipotéticas frente a SPY',
+              icon: FlaskRound,
+              tone: 'sky',
+            },
+            {
+              to: '/cartera/decisiones',
+              label: 'Decisiones',
+              description: 'Plan experimental de compra y venta',
+              icon: Compass,
+              tone: 'violet',
+            },
+          ]}
+        />
       </header>
       <form onSubmit={submit} className="rounded-xl border bg-card p-5">
         <div className="grid gap-4 sm:grid-cols-3">

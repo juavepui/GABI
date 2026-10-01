@@ -18,6 +18,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
+import { BackLink } from '@/shared/ui/section-links';
 
 const DecisionChart = lazy(() => import('./decision-chart'));
 
@@ -198,9 +199,7 @@ export function DecisionsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/cartera">
-          ← Cartera
-        </Link>
+        <BackLink to="/cartera">Cartera</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Decisiones de cartera</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Política experimental de gestión de riesgo; usa scores congelados, pero no equivale al

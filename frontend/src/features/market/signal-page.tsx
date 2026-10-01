@@ -19,6 +19,7 @@ import { Badge } from '@/shared/ui/badge';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { SnapshotProgress } from './snapshot-progress';
 import { dateLabel } from '@/shared/lib/format';
+import { BackLink } from '@/shared/ui/section-links';
 
 const labels: Record<string, string> = {
   top_n_entry: 'Entra en el Top',
@@ -125,9 +126,7 @@ export function SignalPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/mercado">
-          ← Mercado
-        </Link>
+        <BackLink to="/mercado">Mercado</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Signal Monitor</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Compara el ranking cacheado con una foto anterior. Los eventos son cambios de datos y

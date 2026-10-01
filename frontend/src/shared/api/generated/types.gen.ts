@@ -6873,6 +6873,118 @@ export type TaxYear = {
 };
 
 /**
+ * TrialDetail
+ *
+ * A published trial with its configuration and its published result, never recomputed.
+ */
+export type TrialDetail = {
+    /**
+     * Configuration
+     */
+    configuration: Array<TrialRow>;
+    /**
+     * Decision
+     */
+    decision: string;
+    /**
+     * Demonstrated Superiority
+     */
+    demonstrated_superiority: boolean;
+    /**
+     * Failures
+     */
+    failures: Array<string> | null;
+    /**
+     * Family
+     */
+    family: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Observed Sample
+     */
+    observed_sample: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Planned Sample
+     */
+    planned_sample: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Result
+     */
+    result: Array<TrialRow>;
+    /**
+     * Result Note
+     */
+    result_note: string | null;
+    /**
+     * Result Ref
+     */
+    result_ref: string | null;
+    /**
+     * Result Verified
+     */
+    result_verified: boolean | null;
+    /**
+     * Series
+     */
+    series: Array<TrialPoint> | null;
+    /**
+     * Specification Ref
+     */
+    specification_ref: string;
+    /**
+     * State
+     */
+    state: string;
+    /**
+     * Statistics
+     */
+    statistics: Array<TrialRow>;
+};
+
+/**
+ * TrialPoint
+ */
+export type TrialPoint = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Value
+     */
+    value: number | null;
+};
+
+/**
+ * TrialRow
+ */
+export type TrialRow = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Unit
+     */
+    unit: 'fraction' | 'USD' | 'count' | 'number' | 'text' | 'boolean';
+    /**
+     * Value
+     */
+    value: string | number | number | boolean | null;
+};
+
+/**
  * UnavailableBootstrapDataset
  */
 export type UnavailableBootstrapDataset = {
@@ -11674,6 +11786,56 @@ export type SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetResponses
      */
     200: unknown;
 };
+
+export type TrialApiV1ResearchTrialGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    url: '/api/v1/research/trial';
+};
+
+export type TrialApiV1ResearchTrialGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type TrialApiV1ResearchTrialGetError = TrialApiV1ResearchTrialGetErrors[keyof TrialApiV1ResearchTrialGetErrors];
+
+export type TrialApiV1ResearchTrialGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: TrialDetail;
+};
+
+export type TrialApiV1ResearchTrialGetResponse = TrialApiV1ResearchTrialGetResponses[keyof TrialApiV1ResearchTrialGetResponses];
 
 export type TrialsApiV1ResearchTrialsGetData = {
     body?: never;

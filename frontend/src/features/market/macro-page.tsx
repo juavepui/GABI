@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getMacro } from '@/shared/api/client';
 import { dateLabel } from '@/shared/lib/format';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
+import { BackLink } from '@/shared/ui/section-links';
 
 const value = (amount: number | null) =>
   amount == null
@@ -17,9 +18,7 @@ export function MacroPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/mercado">
-          ← Mercado
-        </Link>
+        <BackLink to="/mercado">Mercado</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Panel macro</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Contexto para las tesis del{' '}

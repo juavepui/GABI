@@ -46,9 +46,28 @@ def process_lock(data_dir: Path) -> Iterator[bool]:
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)  # type: ignore[attr-defined]
 
 
+class _Cancelled(Exception):
+    """Cancellation requested while the executor was reporting progress."""
+
+
 class Worker:
-    def __init__(self, store: SqliteJobs, execute: Callable[[JobCommand], dict], data_dir: Path):
+    """Runs queued jobs. An executor with `reports_progress = True` is called as
+    `execute(command, progress)`, where `progress(fraction, phase)` moves the job between 5 % and 90 %."""
+
+    def __init__(self, store: SqliteJobs, execute: Callable[..., dict], data_dir: Path):
         self.store, self.execute, self.data_dir = store, execute, data_dir
+
+    def _progress(self, job_id: str, token: str) -> Callable[[float, str], None]:
+        last: dict = {"value": None, "phase": None}
+
+        def report(fraction: float, phase: str) -> None:
+            value = 5 + round(85 * min(max(float(fraction), 0.0), 1.0))
+            if (value, phase) == (last["value"], last["phase"]):
+                return
+            last.update(value=value, phase=phase)
+            if self.store.progress(job_id, token, value, phase[:200]):
+                raise _Cancelled
+        return report
 
     def run_once(self) -> bool:
         with process_lock(self.data_dir) as acquired:
@@ -95,7 +114,10 @@ class Worker:
                                  job["parameters"].get("company"),
                                  job["parameters"].get("update"),
                                  job["parameters"].get("health"))
-            result = self.execute(command)
+            if getattr(self.execute, "reports_progress", False):
+                result = self.execute(command, self._progress(job_id, token))
+            else:
+                result = self.execute(command)
             if self.store.progress(job_id, token, 90, "Guardando resultado", {"stage": "computed"}):
                 self.store.finish(job_id, token, "cancelled")
                 return True
@@ -114,6 +136,8 @@ class Worker:
             digest = hashlib.sha256(raw).hexdigest()
             if not self.store.finish(job_id, token, "succeeded", ref=job_id, digest=digest):
                 artifact.unlink(missing_ok=True)
+        except _Cancelled:
+            self.store.finish(job_id, token, "cancelled")
         except Exception:
             # No exception text, local paths, credentials or blind output in the HTTP log.
             self.store.finish(job_id, token, "failed", error="job_failed")

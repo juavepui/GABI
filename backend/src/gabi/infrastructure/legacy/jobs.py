@@ -1,6 +1,7 @@
 """Allowlisted legacy operations called only by the worker process."""
 
 import sqlite3
+from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
 
@@ -15,7 +16,9 @@ class LegacyExecutor:
         self.settings = settings
         self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
-    def __call__(self, command: JobCommand) -> dict:
+    reports_progress = True  # The worker passes progress(fraction, phase) to long downloads.
+
+    def __call__(self, command: JobCommand, progress: Callable[[float, str], None] | None = None) -> dict:
         if command.kind == "quality":
             return quality_snapshot(self.settings.data_dir)
         if command.kind == "sim_result":
@@ -185,7 +188,7 @@ class LegacyExecutor:
             from gabi.infrastructure.legacy.data_update import run_data_update
 
             assert command.update is not None
-            return run_data_update(command.update)
+            return run_data_update(command.update, progress)
         if command.kind == "symbols":
             from gabi import screener
 

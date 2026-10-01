@@ -38,6 +38,39 @@ class SearchTrial(BaseModel):
     demonstrated_superiority: bool
 
 
+class TrialRow(BaseModel):
+    path: str
+    key: str
+    value: str | float | int | bool | None
+    unit: Literal["fraction", "USD", "count", "number", "text", "boolean"]
+
+
+class TrialPoint(BaseModel):
+    date: str
+    value: float | None
+
+
+class TrialDetail(BaseModel):
+    """A published trial with its configuration and its published result, never recomputed."""
+
+    id: str
+    family: str
+    specification_ref: str
+    result_ref: str | None
+    observed_sample: dict[str, Any] | None
+    planned_sample: dict[str, Any] | None
+    state: str
+    decision: str
+    failures: list[str] | None
+    demonstrated_superiority: bool
+    configuration: list[TrialRow]
+    result: list[TrialRow]
+    statistics: list[TrialRow]
+    series: list[TrialPoint] | None
+    result_verified: bool | None
+    result_note: str | None
+
+
 class SearchTrials(BaseModel):
     total: int
     offset: int

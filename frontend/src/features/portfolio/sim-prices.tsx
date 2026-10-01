@@ -5,6 +5,7 @@ import { useJob } from '@/shared/api/use-job';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
+import { ProgressBar } from '@/shared/ui/progress-bar';
 
 type PricesResult = {
   symbols: string[];
@@ -63,9 +64,9 @@ export function SimulationPrices({
       </div>
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {job.data && job.data.status !== 'succeeded' && (
-        <p role="status" className="mt-2 text-xs text-muted-foreground">
-          {job.data.phase} · {job.data.status}
-        </p>
+        <div className="mt-3">
+          <ProgressBar value={job.data.progress} phase={job.data.phase} status={job.data.status} />
+        </div>
       )}
       {job.data?.status === 'failed' && (
         <p className="mt-2 text-xs text-destructive">La descarga no terminó.</p>

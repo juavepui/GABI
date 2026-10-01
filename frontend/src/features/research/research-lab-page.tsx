@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getExperiment, getExperiments } from '@/shared/api/client';
 import type { ExperimentDetail, ExperimentStage } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
@@ -10,6 +10,7 @@ import { BootstrapPanel, PboPanel } from './experiment-jobs';
 import { LiveLedgerSection } from './live-ledger';
 import { SavedAudits } from './saved-audits';
 import { DeflatedSharpePanel, ExperimentTailPanel } from './experiment-statistics';
+import { BackLink } from '@/shared/ui/section-links';
 
 const PAGE_SIZE = 50;
 
@@ -156,9 +157,7 @@ export function ResearchLabPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/investigacion">
-          ← Investigación
-        </Link>
+        <BackLink to="/investigacion">Investigación</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Research Lab</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Registro de experimentos de backtesting con su metodología, el commit exacto y el

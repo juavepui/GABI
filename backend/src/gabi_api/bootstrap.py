@@ -74,7 +74,7 @@ from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
 from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
-from gabi.infrastructure.storage.published_research import FilePublishedLedger
+from gabi.infrastructure.storage.published_research import FilePublishedArtifacts, FilePublishedLedger
 from gabi.infrastructure.storage.saved_audits import FileSavedAudits
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
@@ -128,8 +128,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                             compare_snapshots, compare_cached, jobs)
     simulations = Simulations(SqliteSimulations(settings.data_dir), LegacySimulationMath(), today)
     decisions = Decisions(repository, SqliteDecisions(settings.data_dir), policy, today, build_decisions, jobs)
-    research_catalog = ResearchCatalog(FilePublishedLedger(
-        published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"))
+    ledger_path = published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"
+    ledger = FilePublishedLedger(ledger_path)
+    # The ledger lives in <checkout>/docs/search-ledger: its references are relative to the checkout.
+    research_catalog = ResearchCatalog(ledger, FilePublishedArtifacts(ledger_path.parents[2], ledger))
     published_factors = PublishedFactorQueries(FilePublishedFactors(published_factors_root or settings.data_dir.parent))
     blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today,
                                                FileBlindPlans(blind_plans_root or settings.data_dir.parent))

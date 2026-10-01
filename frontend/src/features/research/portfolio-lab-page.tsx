@@ -1,6 +1,5 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { getModel, getPortfolioLab } from '@/shared/api/client';
 import type { PortfolioLabPreview } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
@@ -10,6 +9,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { TailRiskTable } from './tail-risk-table';
 import { useJob } from '@/shared/api/use-job';
+import { BackLink } from '@/shared/ui/section-links';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -291,9 +291,7 @@ export function PortfolioLabPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/investigacion">
-          ← Investigación
-        </Link>
+        <BackLink to="/investigacion">Investigación</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Portfolio Lab</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Con las mismas candidatas de cada rebalanceo, compara seis formas de repartir el capital,

@@ -7,7 +7,7 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.getByLabel('Posiciones actuales (SÍMBOLO,euros; una por línea)').fill('T000,100');
   await page.getByRole('button', { name: 'Calcular plan' }).click();
   await expect(page.getByRole('heading', { name: 'Dónde aportar capital nuevo' })).toBeVisible();
-  await page.getByRole('link', { name: 'Abrir diario de inversión' }).click();
+  await page.getByRole('link', { name: /^Diario de inversión/ }).click();
   await page.getByText('Nueva tesis').click();
   await page.getByLabel('Símbolo').fill('T000');
   await page.getByLabel('Precio entrada (USD)').fill('100');
@@ -24,8 +24,11 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
 
 test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await page.goto('/mercado/comparar');
-  await page.getByLabel('Empresa 1').selectOption('T000');
-  await page.getByLabel('Empresa 2').selectOption('T001');
+  await page.getByRole('combobox', { name: 'Empresa 1' }).fill('t000');
+  await page.getByRole('option', { name: /T000/ }).click();
+  const second = page.getByRole('combobox', { name: 'Empresa 2' });
+  await second.fill('001'); // Search anywhere in the symbol, not only by its first letter.
+  await second.press('Enter');
   await expect(page.getByRole('heading', { name: 'Métricas comparables' })).toBeVisible();
   await expect(page.getByRole('row', { name: /Composite Score/ })).toBeVisible();
   await page.goto('/mercado/macro');

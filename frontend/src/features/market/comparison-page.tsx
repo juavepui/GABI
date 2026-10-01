@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { getComparison } from '@/shared/api/client';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Button } from '@/shared/ui/button';
+import { CompanyPicker } from '@/shared/ui/company-picker';
+import { BackLink } from '@/shared/ui/section-links';
 import { metric } from '@/shared/lib/format';
 import { useRanking } from './queries';
 import { Evidence } from './evidence';
@@ -44,13 +46,11 @@ export function ComparisonPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/mercado">
-          ← Mercado
-        </Link>
+        <BackLink to="/mercado">Mercado</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Comparar empresas</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Elige entre dos y cinco empresas. Todas las métricas y unidades proceden del mismo ranking
-          que el Screener.
+          Busca entre dos y cinco empresas por símbolo o nombre. Todas las métricas y unidades
+          proceden del mismo ranking que el Screener.
         </p>
       </header>
       <section aria-label="Selección de empresas" className="rounded-xl border bg-card p-5">
@@ -61,22 +61,13 @@ export function ComparisonPage() {
         {universe.data && (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {Array.from({ length: Math.min(5, Math.max(2, symbols.length + 1)) }, (_, slot) => (
-              <label key={slot} className="text-xs font-medium">
-                Empresa {slot + 1}
-                <select
-                  aria-label={'Empresa ' + (slot + 1)}
-                  value={symbols[slot] ?? ''}
-                  onChange={(event) => choose(slot, event.target.value)}
-                  className="mt-1.5 h-10 w-full rounded-md border bg-background px-2 text-sm"
-                >
-                  <option value="">Seleccionar</option>
-                  {options.map((row) => (
-                    <option key={row.symbol} value={row.symbol}>
-                      {row.symbol} · {row.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <CompanyPicker
+                key={slot}
+                label={'Empresa ' + (slot + 1)}
+                options={options}
+                value={symbols[slot] ?? ''}
+                onChange={(symbol) => choose(slot, symbol)}
+              />
             ))}
           </div>
         )}

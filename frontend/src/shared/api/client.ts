@@ -1,4 +1,5 @@
 import type {
+  TrialDetail,
   AnalysisPromptResponse,
   CompanyInsiders,
   NoticesResponse,
@@ -128,6 +129,9 @@ export function getJobs(signal?: AbortSignal): Promise<JobListResponse> {
 }
 export function getResearchOverview(signal?: AbortSignal): Promise<ResearchOverview> {
   return get('/api/v1/research/overview', signal);
+}
+export function getResearchTrial(id: string, signal?: AbortSignal): Promise<TrialDetail> {
+  return get('/api/v1/research/trial?id=' + encodeURIComponent(id), signal);
 }
 export function getResearchTrials(
   offset: number,

@@ -16,6 +16,7 @@ import {
   STRATEGIES,
   STRATEGIES_INTRO,
 } from './learn-content';
+import { BackLink } from '@/shared/ui/section-links';
 
 const HiddenDrawdownChart = lazy(() => import('./hidden-drawdown-chart'));
 
@@ -381,9 +382,7 @@ export function LearnPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/cartera">
-          ← Cartera
-        </Link>
+        <BackLink to="/cartera">Cartera</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Aprender a usar GABI</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por qué,

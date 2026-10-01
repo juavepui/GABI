@@ -19,6 +19,8 @@ import { rankingParams, patchParams, sortOptions, type SortKey } from './params'
 import { Evidence } from './evidence';
 import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
 import { CoverageWarnings } from './coverage-warnings';
+import { SectionLinks } from '@/shared/ui/section-links';
+import { GitCompareArrows, Globe, Radar } from 'lucide-react';
 
 export function MarketPage() {
   const [params, setParams] = useSearchParams();
@@ -57,24 +59,32 @@ export function MarketPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Compara empresas con los datos y el modelo de tu instalación local.
           </p>
-          <Link
-            className="mt-3 inline-block text-sm font-medium text-primary underline"
-            to="/mercado/comparar"
-          >
-            Comparar empresas →
-          </Link>
-          <Link
-            className="ml-4 inline-block text-sm font-medium text-primary underline"
-            to="/mercado/macro"
-          >
-            Panel macro →
-          </Link>
-          <Link
-            className="ml-4 inline-block text-sm font-medium text-primary underline"
-            to="/mercado/senales"
-          >
-            Signal Monitor →
-          </Link>
+          <SectionLinks
+            label="Apartados de Mercado"
+            links={[
+              {
+                to: '/mercado/comparar',
+                label: 'Comparar empresas',
+                description: 'De dos a cinco, lado a lado',
+                icon: GitCompareArrows,
+                tone: 'sky',
+              },
+              {
+                to: '/mercado/macro',
+                label: 'Panel macro',
+                description: 'Tipos, inflación, curva y crédito',
+                icon: Globe,
+                tone: 'amber',
+              },
+              {
+                to: '/mercado/senales',
+                label: 'Signal Monitor',
+                description: 'Rankings guardados y cambios',
+                icon: Radar,
+                tone: 'violet',
+              },
+            ]}
+          />
         </div>
         <Button
           variant="outline"

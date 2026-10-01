@@ -65,6 +65,7 @@ from gabi_api.schemas.research import (
     SavedRankStability,
     SaveEvaluationRequest,
     SearchTrials,
+    TrialDetail,
 )
 
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
@@ -376,6 +377,11 @@ def published_factor_export(name: str, query: Published) -> Response:
     contents = query.export(name)
     return Response(contents, media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@router.get("/trial", response_model=TrialDetail)
+def trial(catalog: Catalog, trial_id: Annotated[str, Query(alias="id", min_length=1, max_length=120)]) -> dict:
+    return catalog.trial(trial_id)
 
 
 @router.get("/trials", response_model=SearchTrials)

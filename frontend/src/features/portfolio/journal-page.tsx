@@ -7,6 +7,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { dateLabel } from '@/shared/lib/format';
+import { BackLink } from '@/shared/ui/section-links';
 
 const numberOrNull = (value: FormDataEntryValue | null) =>
   value == null || String(value).trim() === '' ? null : Number(value);
@@ -179,9 +180,7 @@ export function JournalPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/cartera">
-          ← Cartera objetivo
-        </Link>
+        <BackLink to="/cartera">Cartera objetivo</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Diario de inversión</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Escribe la tesis antes de invertir y revísala después. Las entradas permanecen en la base

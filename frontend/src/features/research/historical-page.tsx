@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { cancelJob, createJob, getHistoricalPreview, getJob, getModel } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -11,6 +10,7 @@ import { HistoricalCoverageNotes } from './coverage-notes';
 import { HistoricalOutcomes } from './historical-outcomes';
 import { HistoricalTable } from './historical-table';
 import { PrepareData } from './prepare-data';
+import { BackLink } from '@/shared/ui/section-links';
 
 export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
@@ -51,9 +51,7 @@ export function HistoricalPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/investigacion">
-          ← Investigación
-        </Link>
+        <BackLink to="/investigacion">Investigación</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Ranking histórico</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Reconstruye el S&amp;P 500 en una fecha ya observada. El cálculo usa el motor histórico

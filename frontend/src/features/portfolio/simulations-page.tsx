@@ -1,6 +1,5 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import type {
   SimulationPortfolio,
   SimulationResult,
@@ -23,6 +22,7 @@ import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
 import { SimulationPrices } from './sim-prices';
+import { BackLink } from '@/shared/ui/section-links';
 
 const SimulationChart = lazy(() => import('./simulation-chart'));
 const number = (value: number | null | undefined, digits = 2) =>
@@ -403,9 +403,7 @@ export function SimulationsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm text-primary" to="/cartera">
-          ← Cartera
-        </Link>
+        <BackLink to="/cartera">Cartera</BackLink>
         <h1 className="mt-3 text-3xl font-semibold">Carteras simuladas</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Operaciones hipotéticas con costes y divisas. No se envían órdenes ni se descargan precios
