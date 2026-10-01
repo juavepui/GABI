@@ -210,6 +210,17 @@ test('Research Lab lista experimentos y su entorno solo en modo Research', async
     await page.goto('/investigacion/laboratorio');
     const table = page.getByRole('table', { name: 'Experimentos registrados' });
     await expect(table.getByRole('row', { name: /GABI-MF-v1\.0/ })).toContainText('-21.0 %');
+    // Colour by column over the whole filter: v1.0 has the best Sharpe and PBO-B the worst.
+    await expect(
+      table
+        .getByRole('row', { name: /GABI-MF-v1\.0/ })
+        .locator('td[title="El mejor de los experimentos del filtro"]'),
+    ).toHaveCSS('background-color', 'rgb(199, 245, 199)');
+    await expect(
+      table
+        .getByRole('row', { name: /GABI-PBO-B/ })
+        .locator('td[title="El peor de los experimentos del filtro"]'),
+    ).toHaveCount(1);
     await page
       .getByRole('group', { name: 'Filtros de experimentos' })
       .getByLabel('Fase')

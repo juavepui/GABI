@@ -48,6 +48,10 @@ def test_experiment_list_matches_legacy_log_without_writing(tmp_path, monkeypatc
     assert "returns_json" not in response.text
     assert [item["id"] for item in filtered.json()["items"]] == [second]
     assert paged.json()["total"] == 2 and [item["id"] for item in paged.json()["items"]] == [first]
+    # Higher Sharpe ranks first; the position is over the whole filter, so page 2 still knows it is the worst.
+    assert body["positions"]["sharpe"] == {str(second): 1.0, str(first): 0.0}
+    assert paged.json()["positions"]["sharpe"] == {str(first): 0.0}
+    assert body["positions"]["sortino"] == {str(second): None, str(first): None}  # No values, no winner.
     assert (tmp_path / "gabi.db").read_bytes() == before
 
 

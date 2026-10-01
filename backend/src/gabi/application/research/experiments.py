@@ -6,7 +6,8 @@ from typing import Protocol
 import pandas as pd
 
 from gabi.application.errors import QueryError
-from gabi.domain.research.experiments import STAGE_INFO, STAGES
+from gabi.domain.market.comparison import positions
+from gabi.domain.research.experiments import RANKED_METRICS, STAGE_INFO, STAGES
 
 
 class ExperimentStore(Protocol):
@@ -41,7 +42,12 @@ class ExperimentQueries:
         if stage is not None and stage not in STAGES:
             raise QueryError("invalid_request", "La fase no es válida.", 422)
         items, families = self.store.list(family, stage)
-        return {"total": len(items), "offset": offset, "items": items[offset:offset + limit],
+        # Ranked over every experiment of the filter, not only this page, so a colour means the same on any page.
+        ranked = positions({str(item["id"]): item for item in items}, RANKED_METRICS)
+        page = items[offset:offset + limit]
+        return {"total": len(items), "offset": offset, "items": page,
+                "positions": {metric: {str(item["id"]): cells[str(item["id"])] for item in page}
+                              for metric, cells in ranked.items()},
                 "families": families,
                 "stages": [{"id": key, **STAGE_INFO[key]} for key in STAGES]}
 

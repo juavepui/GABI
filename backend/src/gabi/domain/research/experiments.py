@@ -8,3 +8,6 @@ STAGE_INFO = {
     "OUT_OF_SAMPLE": {"emoji": "🧪", "label": "Out-of-sample", "help": "Resultado sobre datos que NO se miraron al diseñar la hipótesis."},
     "LIVE_FORWARD": {"emoji": "🚀", "label": "Live forward", "help": "Seguimiento real desde hoy, sin margen para haber influido en el diseño."},
 }
+
+# Better is higher for all three: max_drawdown is stored as a negative fraction, so closer to zero is better.
+RANKED_METRICS = {"sharpe": "higher", "sortino": "higher", "max_drawdown": "higher"}

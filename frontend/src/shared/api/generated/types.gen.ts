@@ -2606,6 +2606,14 @@ export type ExperimentList = {
      */
     offset: number;
     /**
+     * Positions
+     */
+    positions: {
+        [key: string]: {
+            [key: string]: number | null;
+        };
+    };
+    /**
      * Stages
      */
     stages: Array<ExperimentStage>;

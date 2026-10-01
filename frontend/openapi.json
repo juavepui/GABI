@@ -5143,6 +5143,23 @@
             "title": "Offset",
             "type": "integer"
           },
+          "positions": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Positions",
+            "type": "object"
+          },
           "stages": {
             "items": {
               "$ref": "#/components/schemas/ExperimentStage"
@@ -5159,6 +5176,7 @@
           "total",
           "offset",
           "items",
+          "positions",
           "families",
           "stages"
         ],

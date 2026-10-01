@@ -689,6 +689,8 @@ class ExperimentList(BaseModel):
     total: int
     offset: int
     items: list[ExperimentSummary]
+    # metric -> experiment id -> 1 best .. 0 worst among every experiment of the filter.
+    positions: dict[str, dict[str, float | None]]
     families: list[str]
     stages: list[ExperimentStage]
 

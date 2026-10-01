@@ -11,6 +11,7 @@ import { LiveLedgerSection } from './live-ledger';
 import { SavedAudits } from './saved-audits';
 import { DeflatedSharpePanel, ExperimentTailPanel } from './experiment-statistics';
 import { BackLink } from '@/shared/ui/section-links';
+import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
 
 const PAGE_SIZE = 50;
 
@@ -273,9 +274,22 @@ export function ResearchLabPage() {
                       <td className="px-3 py-2">{item.family ?? '—'}</td>
                       <td className="px-3 py-2">{item.n_positions ?? '—'}</td>
                       <td className="px-3 py-2">{item.rebalance ?? '—'}</td>
-                      <td className="px-3 py-2">{decimal(item.sharpe)}</td>
-                      <td className="px-3 py-2">{decimal(item.sortino)}</td>
-                      <td className="px-3 py-2">{percent(item.max_drawdown)}</td>
+                      {(
+                        [
+                          ['sharpe', decimal(item.sharpe)],
+                          ['sortino', decimal(item.sortino)],
+                          ['max_drawdown', percent(item.max_drawdown)],
+                        ] as const
+                      ).map(([metric, text]) => (
+                        <RankCell
+                          key={metric}
+                          className="px-3 py-2"
+                          position={data.positions[metric]?.[String(item.id)]}
+                          scope="de los experimentos del filtro"
+                        >
+                          {text}
+                        </RankCell>
+                      ))}
                       <td className="px-3 py-2">{item.hypothesis_registered ? 'Sí' : 'No'}</td>
                       <td className="px-3 py-2 font-mono">{item.git_commit ?? '—'}</td>
                       <td className="px-3 py-2">{item.has_returns ? 'Sí' : '—'}</td>
@@ -284,6 +298,11 @@ export function ResearchLabPage() {
                   ))}
                 </tbody>
               </table>
+              <RankLegend>
+                Sharpe, Sortino y caída máxima, de rojo (peor) a verde (mejor) entre todos los
+                experimentos del filtro, no solo los de esta página. Una caída máxima más cercana a
+                cero es mejor. Comparar experimentos de familias distintas no los hace equivalentes.
+              </RankLegend>
             </div>
           )}
           {pages > 1 && (
