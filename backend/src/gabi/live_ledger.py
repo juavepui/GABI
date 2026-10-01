@@ -3,7 +3,6 @@
 import argparse
 import hashlib
 import json
-import math
 import os
 import subprocess
 import sys
@@ -12,6 +11,8 @@ from datetime import UTC, datetime
 
 import numpy as np
 import pandas as pd
+
+from gabi.domain.research.live_ledger import UNREADABLE, canonical, fingerprint, replay_decision, safe, verify_chain
 
 from . import app_mode, config, edgar, identity, research_lab, storage
 from .history_refresh import last_completed_session
@@ -33,28 +34,7 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def _safe(value):
-    if isinstance(value, dict):
-        return {str(k): _safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_safe(v) for v in value]
-    if isinstance(value, np.generic):
-        return _safe(value.item())
-    if isinstance(value, float) and not math.isfinite(value):
-        return None
-    if value is pd.NA or value is pd.NaT:
-        return None
-    if isinstance(value, (datetime, pd.Timestamp)):
-        return value.isoformat()
-    return value
-
-
-def canonical(value) -> str:
-    return json.dumps(_safe(value), sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
-
-
-def fingerprint(value) -> str:
-    return hashlib.sha256(canonical(value).encode()).hexdigest()
+_safe = safe  # Public names kept for existing callers.
 
 
 def anchor_path():
@@ -98,25 +78,14 @@ def _write_anchor(seq: int, digest: str) -> None:
 
 
 def _verify(conn, *, require_anchor=True) -> dict:
-    previous, count = "", 0
-    for seq, prev, digest, payload in conn.execute("SELECT seq,prev_hash,record_hash,payload_json FROM live_ledger ORDER BY seq"):
-        count += 1
-        try:
-            expected = fingerprint({"seq": seq, "prev_hash": prev, "payload": json.loads(payload)})
-        except (TypeError, ValueError):
-            return {"ok": False, "reason": "payload ilegible o modificado", "broken_at": seq}
-        if seq != count or prev != previous or expected != digest:
-            return {"ok": False, "reason": "cadena modificada o con registros eliminados", "broken_at": seq}
-        previous = digest
-    head = {"seq": count, "hash": previous}
+    rows = conn.execute("SELECT seq,prev_hash,record_hash,payload_json FROM live_ledger ORDER BY seq")
+    anchor = None
     if require_anchor:
         try:
             anchor = json.loads(anchor_path().read_text(encoding="utf-8")) if anchor_path().exists() else {"seq": 0, "hash": ""}
         except (OSError, ValueError):
-            return {"ok": False, "reason": "ancla ilegible", **head}
-        if anchor != head:
-            return {"ok": False, "reason": "ancla distinta: cola eliminada o commit sin anclar", "anchor": anchor, **head}
-    return {"ok": True, **head}
+            anchor = UNREADABLE
+    return verify_chain(rows, anchor, require_anchor=require_anchor)
 
 
 def verify_integrity() -> dict:
@@ -338,31 +307,7 @@ def save_evaluation(report: dict) -> dict:
 def reproduce_decision(seq: int) -> dict:
     """Replay ranking from frozen blocks, without current source data or scoring code."""
     event = next((e for e in events() if e["seq"] == seq and e["payload"]["kind"] == "DECISION"), None)
-    if event is None or not event["payload"].get("inputs"):
-        raise ValueError("Decisión sin entradas derivadas para reproducir.")
-    payload = event["payload"]
-    digest = "signal-inputs-v1:" + fingerprint({"inputs": payload["inputs"], "metadata": payload.get("inputs_metadata"),
-                                               "sources": payload["sources"], "universe": payload["universe"]})
-    table = pd.DataFrame(payload["inputs"]).set_index("symbol")
-    weights = payload["configuration"]["weights"]
-    values = table.reindex(columns=[b + "_score" for b in weights]).to_numpy(dtype=float)
-    w = np.array(list(weights.values()))
-    available = np.isfinite(values)
-    denominator = available @ w
-    scores = np.divide(np.where(available, values, 0) @ w, denominator,
-                       out=np.full(len(values), np.nan), where=denominator > 0)
-    # Missing Composite can also reflect original eligibility guards.
-    saved = table.composite_score.to_numpy(dtype=float)
-    scores[~np.isfinite(saved)] = np.nan
-    matches = bool(np.allclose(scores, saved, equal_nan=True, atol=1e-8, rtol=0))
-    table["replayed"] = scores
-    eligible = table.loc[np.isfinite(scores) & (table.score_coverage >= payload["configuration"]["coverage"])]
-    ranked = eligible.assign(_symbol=eligible.index).sort_values(["replayed", "_symbol"], ascending=[False, True]).index.tolist()
-    return {"seq": seq, "record_hash": event["record_hash"], "fingerprint_matches": digest == payload["data_fingerprint"],
-            "scores_match": matches, "ranking_matches": ranked == payload["eligible"],
-            "replayed_top_n": ranked[:payload["configuration"]["top_n"]], "actual_top_n": payload["top_n"],
-            "status": payload["status"], "model_version": payload["model_version"]}
-
+    return replay_decision(event)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)

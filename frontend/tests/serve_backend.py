@@ -89,6 +89,11 @@ def main():
         # Legacy writers (Research Lab manual log) use the project config: point it at the fixture only.
         from gabi import config
         config.DATA_DIR, config.DB_PATH = root, root / "gabi.db"
+        from gabi import live_ledger
+        live_ledger._append({"kind": "DECISION", "stage": "LIVE_FORWARD", "created_at": "2026-09-28T22:00:00+00:00",
+                             "model_id": "fixture", "model_version": "fixture-model-v1", "market_date": "2026-09-28",
+                             "status": "SIGNAL", "top_n": ["T000", "T001"], "sources": {}, "git_commit": "abc1234",
+                             "data_fingerprint": "fixture-inputs", "configuration": {"weights": {}}})
         app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published,
                          published_factors_root=root, saved_audits_root=published_root)
 
@@ -162,6 +167,10 @@ def synthetic_job(command, app):
         build = build_pbo if command.kind == "experiment_pbo" else build_bootstrap
         return build(SqliteExperiments(Path(app.state.settings.data_dir)), command.experiment_analysis,
                      LegacyExperimentMath())
+    if command.kind == "live_forward_report":
+        from gabi.infrastructure.legacy.live_ledger import run_live_report
+
+        return run_live_report(command.live_report["model_version"])
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)

@@ -324,10 +324,37 @@ estabilidad del ranking (2,6 MiB); las consultas cacheadas tardan entre 0,6 y
 8 ms de mediana. Las pruebas comparan los valores con los lectores y las tablas
 antiguas, la invalidación al cambiar un fichero y la lista cerrada de descargas.
 
+El registro prospectivo (live ledger) se consulta en modo Research.
+`GET /research/live-ledger` verifica la cadena completa y el ancla, como la
+página antigua en cada render, pero lee SQLite en solo lectura y fila a fila:
+no crea `writer.lock`, no ejecuta el `CREATE TABLE` de `events()` y parsea cada
+payload una sola vez. El resultado se guarda en memoria hasta que cambian
+`gabi.db`, su WAL o el ancla. Si la lectura cae entre el commit de un escritor y
+la actualización del ancla, se repite una vez. El hash canónico, la
+verificación y la reproducción de una decisión se han movido sin cambios a
+`gabi.domain.research.live_ledger`; `live_ledger` delega en ellos y conserva sus
+nombres públicos. El detalle de una decisión comprueba su fila contra el hash
+verificado, reproduce scores y ranking desde los bloques congelados y permite
+descargar el evento canónico. El rendimiento LIVE_FORWARD es el job explícito
+`live_forward_report`, que llama a `live_performance.report` sin cambios para
+una versión de modelo. «Guardar evaluación como evento nuevo» es `POST
+/research/live-ledger/evaluations`: relee el informe verificado de ese job y
+llama a `live_ledger.save_evaluation`, con la misma guarda de directorio de
+datos. Rechaza con 409 un ledger no íntegro, un escritor ocupado o una
+evaluación con la misma huella que ya esté guardada. Un ledger alterado oculta
+las decisiones y muestra el motivo. Las pruebas comparan resumen, reproducción,
+informe y evaluación con el módulo antiguo sobre datos temporales y
+comprueban que la consulta no escribe. La base local todavía no tiene ledger.
+Medición con un ledger sintético de 250 decisiones de 500 empresas (71 MiB),
+Windows/Python 3.13.7: la verificación nueva tardó 6,9 s frente a 8,1 s de
+`live_ledger.events()`, y las consultas cacheadas 0,2 ms de mediana en 20
+repeticiones. El coste crece con el ledger porque cada cambio de la base vuelve
+a verificar la cadena completa, como hacía Streamlit en cada render.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado y auditorías guardadas en React; registro prospectivo en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado, auditorías guardadas y registro prospectivo en React | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

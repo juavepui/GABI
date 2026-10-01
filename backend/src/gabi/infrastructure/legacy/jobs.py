@@ -93,6 +93,11 @@ class LegacyExecutor:
 
         if config.DATA_DIR.resolve() != self.settings.data_dir.resolve():
             raise RuntimeError("El worker y la API no usan el mismo directorio de datos.")
+        if command.kind == "live_forward_report":
+            from gabi.infrastructure.legacy.live_ledger import run_live_report
+
+            assert command.live_report is not None
+            return run_live_report(command.live_report["model_version"])
         if command.kind == "historical_ranking":
             from gabi.application.research.historical import build_historical_ranking
             from gabi.infrastructure.legacy.historical import run_historical

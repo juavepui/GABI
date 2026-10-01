@@ -2161,10 +2161,21 @@
               "prepare_history",
               "historical_outcomes",
               "experiment_pbo",
-              "experiment_bootstrap"
+              "experiment_bootstrap",
+              "live_forward_report"
             ],
             "title": "Kind",
             "type": "string"
+          },
+          "live_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveReportRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "outcomes": {
             "anyOf": [
@@ -5981,6 +5992,638 @@
         "title": "JournalReview",
         "type": "object"
       },
+      "LedgerDecision": {
+        "properties": {
+          "candidates": {
+            "title": "Candidates",
+            "type": "integer"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "has_inputs": {
+            "title": "Has Inputs",
+            "type": "boolean"
+          },
+          "market_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Date"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "seq",
+          "stage",
+          "market_date",
+          "status",
+          "candidates",
+          "git_commit",
+          "model_version",
+          "has_inputs"
+        ],
+        "title": "LedgerDecision",
+        "type": "object"
+      },
+      "LedgerDecisionSummary": {
+        "properties": {
+          "candidates": {
+            "title": "Candidates",
+            "type": "integer"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "data_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fingerprint"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "has_inputs": {
+            "title": "Has Inputs",
+            "type": "boolean"
+          },
+          "market_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Date"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "top_n": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Top N",
+            "type": "array"
+          }
+        },
+        "required": [
+          "seq",
+          "stage",
+          "market_date",
+          "status",
+          "candidates",
+          "git_commit",
+          "model_version",
+          "has_inputs",
+          "reason",
+          "created_at",
+          "top_n",
+          "data_fingerprint",
+          "quality"
+        ],
+        "title": "LedgerDecisionSummary",
+        "type": "object"
+      },
+      "LedgerIntegrity": {
+        "properties": {
+          "broken_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Broken At"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seq"
+          }
+        },
+        "required": [
+          "ok",
+          "reason",
+          "seq",
+          "broken_at"
+        ],
+        "title": "LedgerIntegrity",
+        "type": "object"
+      },
+      "LedgerReplay": {
+        "properties": {
+          "actual_top_n": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Actual Top N",
+            "type": "array"
+          },
+          "fingerprint_matches": {
+            "title": "Fingerprint Matches",
+            "type": "boolean"
+          },
+          "ranking_matches": {
+            "title": "Ranking Matches",
+            "type": "boolean"
+          },
+          "replayed_top_n": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Replayed Top N",
+            "type": "array"
+          },
+          "scores_match": {
+            "title": "Scores Match",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "fingerprint_matches",
+          "scores_match",
+          "ranking_matches",
+          "replayed_top_n",
+          "actual_top_n"
+        ],
+        "title": "LedgerReplay",
+        "type": "object"
+      },
+      "LiveForwardReport": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "available_versions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Versions",
+            "type": "array"
+          },
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "cumulative_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cumulative Return"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "intervals": {
+            "items": {
+              "$ref": "#/components/schemas/LiveInterval"
+            },
+            "title": "Intervals",
+            "type": "array"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "outcome_data_fingerprint": {
+            "title": "Outcome Data Fingerprint",
+            "type": "string"
+          },
+          "policy": {
+            "title": "Policy",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "result_sha256",
+          "stage",
+          "model_version",
+          "available_versions",
+          "as_of",
+          "generated_at",
+          "intervals",
+          "complete",
+          "cumulative_return",
+          "benchmark_return",
+          "policy",
+          "limitations",
+          "outcome_data_fingerprint"
+        ],
+        "title": "LiveForwardReport",
+        "type": "object"
+      },
+      "LiveInterval": {
+        "properties": {
+          "cost_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Fraction"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "end_basis": {
+            "title": "End Basis",
+            "type": "string"
+          },
+          "entry": {
+            "title": "Entry",
+            "type": "string"
+          },
+          "gross_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Return"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "nav": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nav"
+          },
+          "net_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Return"
+          },
+          "record_hash": {
+            "title": "Record Hash",
+            "type": "string"
+          },
+          "requested": {
+            "title": "Requested",
+            "type": "integer"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "turnover_notional": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Notional"
+          }
+        },
+        "required": [
+          "seq",
+          "record_hash",
+          "status",
+          "entry",
+          "end",
+          "end_basis",
+          "requested",
+          "missing",
+          "gross_return",
+          "turnover_notional",
+          "cost_fraction",
+          "net_return",
+          "nav"
+        ],
+        "title": "LiveInterval",
+        "type": "object"
+      },
+      "LiveLedgerDecision": {
+        "properties": {
+          "record_hash": {
+            "title": "Record Hash",
+            "type": "string"
+          },
+          "replay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LedgerReplay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "replay_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Error"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/LedgerDecisionSummary"
+          }
+        },
+        "required": [
+          "seq",
+          "record_hash",
+          "summary",
+          "replay",
+          "replay_error"
+        ],
+        "title": "LiveLedgerDecision",
+        "type": "object"
+      },
+      "LiveLedgerOverview": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerDecision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "events_by_kind": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Events By Kind",
+            "type": "object"
+          },
+          "integrity": {
+            "$ref": "#/components/schemas/LedgerIntegrity"
+          },
+          "live_versions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Live Versions",
+            "type": "array"
+          },
+          "n_events": {
+            "title": "N Events",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "integrity",
+          "n_events",
+          "events_by_kind",
+          "decisions",
+          "live_versions"
+        ],
+        "title": "LiveLedgerOverview",
+        "type": "object"
+      },
+      "LiveReportRequest": {
+        "additionalProperties": false,
+        "description": "LIVE_FORWARD paper report of one model version, from the frozen prospective ledger.",
+        "properties": {
+          "model_version": {
+            "pattern": "^[A-Za-z0-9._:-]{1,128}$",
+            "title": "Model Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version"
+        ],
+        "title": "LiveReportRequest",
+        "type": "object"
+      },
       "LocalSettingsResponse": {
         "properties": {
           "keys": {
@@ -7749,6 +8392,21 @@
         "title": "ResearchOverview",
         "type": "object"
       },
+      "SaveEvaluationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "title": "SaveEvaluationRequest",
+        "type": "object"
+      },
       "SaveFilingCheck": {
         "additionalProperties": false,
         "properties": {
@@ -7928,6 +8586,29 @@
           "holdings"
         ],
         "title": "SavedDecision",
+        "type": "object"
+      },
+      "SavedEvaluation": {
+        "properties": {
+          "record_hash": {
+            "title": "Record Hash",
+            "type": "string"
+          },
+          "report_sha256": {
+            "title": "Report Sha256",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "record_hash",
+          "report_sha256"
+        ],
+        "title": "SavedEvaluation",
         "type": "object"
       },
       "SavedOverfittingAudit": {
@@ -15149,6 +15830,455 @@
           }
         },
         "summary": "Historical Table",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/live-forward/{job_id}": {
+      "get": {
+        "operationId": "live_forward_api_v1_research_live_forward__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveForwardReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Live Forward",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/live-ledger": {
+      "get": {
+        "operationId": "live_ledger_api_v1_research_live_ledger_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveLedgerOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Live Ledger",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/live-ledger/decisions/{seq}": {
+      "get": {
+        "operationId": "live_ledger_decision_api_v1_research_live_ledger_decisions__seq__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Seq",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveLedgerDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Live Ledger Decision",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/live-ledger/decisions/{seq}/event.json": {
+      "get": {
+        "operationId": "live_ledger_event_api_v1_research_live_ledger_decisions__seq__event_json_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Seq",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Live Ledger Event",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/live-ledger/evaluations": {
+      "post": {
+        "operationId": "save_live_evaluation_api_v1_research_live_ledger_evaluations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedEvaluation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Save Live Evaluation",
         "tags": [
           "research"
         ]

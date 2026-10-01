@@ -296,3 +296,30 @@ test('Research Lab muestra las auditorías guardadas verificadas', async ({ page
     });
   }
 });
+
+test('Research Lab verifica el registro prospectivo y guarda evaluaciones explícitas', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/laboratorio');
+    await page.getByText('Registro prospectivo · decisiones congeladas').click();
+    await expect(page.getByText(/Cadena y ancla verificadas · \d+ eventos/)).toBeVisible();
+    await page.getByRole('button', { name: 'Ver decisión 1' }).click();
+    const decision = page.getByRole('region', { name: 'Decisión congelada' });
+    await expect(decision).toContainText('T000, T001');
+    await page.getByRole('button', { name: 'Calcular reporte prospectivo' }).click();
+    const report = page.getByRole('region', { name: 'Informe prospectivo' });
+    await expect(report.getByRole('table', { name: 'Intervalos prospectivos' })).toBeVisible();
+    await report.getByRole('button', { name: 'Guardar evaluación como evento nuevo' }).click();
+    await expect(report.getByRole('status')).toHaveText(
+      /Evaluación #\d+ añadida; señales originales conservadas\./,
+    );
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});

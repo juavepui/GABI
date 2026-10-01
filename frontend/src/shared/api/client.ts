@@ -65,6 +65,10 @@ import type {
   FactorStability,
   SavedBlockBootstrap,
   SavedRankStability,
+  LiveLedgerOverview,
+  LiveLedgerDecision,
+  LiveForwardReport,
+  SavedEvaluation,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -204,6 +208,25 @@ export function getSavedRankStability(
 }
 export function savedAuditFile(audit: string, filename: string): string {
   return '/api/v1/research/saved-audits/' + audit + '/files/' + filename;
+}
+export function getLiveLedger(signal?: AbortSignal): Promise<LiveLedgerOverview> {
+  return get('/api/v1/research/live-ledger', signal);
+}
+export function getLiveLedgerDecision(
+  seq: number,
+  signal?: AbortSignal,
+): Promise<LiveLedgerDecision> {
+  return get('/api/v1/research/live-ledger/decisions/' + String(seq), signal);
+}
+export function getLiveForwardReport(id: string, signal?: AbortSignal): Promise<LiveForwardReport> {
+  return get('/api/v1/research/live-forward/' + encodeURIComponent(id), signal);
+}
+export function saveLiveEvaluation(jobId: string): Promise<SavedEvaluation> {
+  return request('/api/v1/research/live-ledger/evaluations', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_id: jobId }),
+  });
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);

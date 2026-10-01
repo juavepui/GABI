@@ -1029,7 +1029,8 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report';
+    live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
      * Portfolio Id
@@ -3063,6 +3064,329 @@ export type JournalReview = {
 };
 
 /**
+ * LedgerDecision
+ */
+export type LedgerDecision = {
+    /**
+     * Candidates
+     */
+    candidates: number;
+    /**
+     * Git Commit
+     */
+    git_commit: string | null;
+    /**
+     * Has Inputs
+     */
+    has_inputs: boolean;
+    /**
+     * Market Date
+     */
+    market_date: string | null;
+    /**
+     * Model Version
+     */
+    model_version: string | null;
+    /**
+     * Seq
+     */
+    seq: number;
+    /**
+     * Stage
+     */
+    stage: string | null;
+    /**
+     * Status
+     */
+    status: string | null;
+};
+
+/**
+ * LedgerDecisionSummary
+ */
+export type LedgerDecisionSummary = {
+    /**
+     * Candidates
+     */
+    candidates: number;
+    /**
+     * Created At
+     */
+    created_at: string | null;
+    /**
+     * Data Fingerprint
+     */
+    data_fingerprint: string | null;
+    /**
+     * Git Commit
+     */
+    git_commit: string | null;
+    /**
+     * Has Inputs
+     */
+    has_inputs: boolean;
+    /**
+     * Market Date
+     */
+    market_date: string | null;
+    /**
+     * Model Version
+     */
+    model_version: string | null;
+    /**
+     * Quality
+     */
+    quality: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Seq
+     */
+    seq: number;
+    /**
+     * Stage
+     */
+    stage: string | null;
+    /**
+     * Status
+     */
+    status: string | null;
+    /**
+     * Top N
+     */
+    top_n: Array<string>;
+};
+
+/**
+ * LedgerIntegrity
+ */
+export type LedgerIntegrity = {
+    /**
+     * Broken At
+     */
+    broken_at: number | null;
+    /**
+     * Ok
+     */
+    ok: boolean;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Seq
+     */
+    seq: number | null;
+};
+
+/**
+ * LedgerReplay
+ */
+export type LedgerReplay = {
+    /**
+     * Actual Top N
+     */
+    actual_top_n: Array<string>;
+    /**
+     * Fingerprint Matches
+     */
+    fingerprint_matches: boolean;
+    /**
+     * Ranking Matches
+     */
+    ranking_matches: boolean;
+    /**
+     * Replayed Top N
+     */
+    replayed_top_n: Array<string>;
+    /**
+     * Scores Match
+     */
+    scores_match: boolean;
+};
+
+/**
+ * LiveForwardReport
+ */
+export type LiveForwardReport = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Available Versions
+     */
+    available_versions: Array<string>;
+    /**
+     * Benchmark Return
+     */
+    benchmark_return: number | null;
+    /**
+     * Complete
+     */
+    complete: boolean;
+    /**
+     * Cumulative Return
+     */
+    cumulative_return: number | null;
+    /**
+     * Generated At
+     */
+    generated_at: string;
+    /**
+     * Intervals
+     */
+    intervals: Array<LiveInterval>;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    /**
+     * Model Version
+     */
+    model_version: string | null;
+    /**
+     * Outcome Data Fingerprint
+     */
+    outcome_data_fingerprint: string;
+    /**
+     * Policy
+     */
+    policy: string;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Stage
+     */
+    stage: string;
+};
+
+/**
+ * LiveInterval
+ */
+export type LiveInterval = {
+    /**
+     * Cost Fraction
+     */
+    cost_fraction: number | null;
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * End Basis
+     */
+    end_basis: string;
+    /**
+     * Entry
+     */
+    entry: string;
+    /**
+     * Gross Return
+     */
+    gross_return: number | null;
+    /**
+     * Missing
+     */
+    missing: Array<string>;
+    /**
+     * Nav
+     */
+    nav: number | null;
+    /**
+     * Net Return
+     */
+    net_return: number | null;
+    /**
+     * Record Hash
+     */
+    record_hash: string;
+    /**
+     * Requested
+     */
+    requested: number;
+    /**
+     * Seq
+     */
+    seq: number;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Turnover Notional
+     */
+    turnover_notional: number | null;
+};
+
+/**
+ * LiveLedgerDecision
+ */
+export type LiveLedgerDecision = {
+    /**
+     * Record Hash
+     */
+    record_hash: string;
+    replay: LedgerReplay | null;
+    /**
+     * Replay Error
+     */
+    replay_error: string | null;
+    /**
+     * Seq
+     */
+    seq: number;
+    summary: LedgerDecisionSummary;
+};
+
+/**
+ * LiveLedgerOverview
+ */
+export type LiveLedgerOverview = {
+    /**
+     * Decisions
+     */
+    decisions: Array<LedgerDecision>;
+    /**
+     * Events By Kind
+     */
+    events_by_kind: {
+        [key: string]: number;
+    };
+    integrity: LedgerIntegrity;
+    /**
+     * Live Versions
+     */
+    live_versions: Array<string>;
+    /**
+     * N Events
+     */
+    n_events: number;
+};
+
+/**
+ * LiveReportRequest
+ *
+ * LIVE_FORWARD paper report of one model version, from the frozen prospective ledger.
+ */
+export type LiveReportRequest = {
+    /**
+     * Model Version
+     */
+    model_version: string;
+};
+
+/**
  * LocalSettingsResponse
  */
 export type LocalSettingsResponse = {
@@ -4034,6 +4358,16 @@ export type ResearchOverview = {
 };
 
 /**
+ * SaveEvaluationRequest
+ */
+export type SaveEvaluationRequest = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+};
+
+/**
  * SaveFilingCheck
  */
 export type SaveFilingCheck = {
@@ -4158,6 +4492,24 @@ export type SavedDecision = {
      * Status
      */
     status?: 'EXPERIMENTAL';
+};
+
+/**
+ * SavedEvaluation
+ */
+export type SavedEvaluation = {
+    /**
+     * Record Hash
+     */
+    record_hash: string;
+    /**
+     * Report Sha256
+     */
+    report_sha256: string;
+    /**
+     * Seq
+     */
+    seq: number;
 };
 
 /**
@@ -7937,6 +8289,244 @@ export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponses = {
 };
 
 export type HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponse = HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponses[keyof HistoricalTableApiV1ResearchHistoricalJobIdTableGetResponses];
+
+export type LiveForwardApiV1ResearchLiveForwardJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/live-forward/{job_id}';
+};
+
+export type LiveForwardApiV1ResearchLiveForwardJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type LiveForwardApiV1ResearchLiveForwardJobIdGetError = LiveForwardApiV1ResearchLiveForwardJobIdGetErrors[keyof LiveForwardApiV1ResearchLiveForwardJobIdGetErrors];
+
+export type LiveForwardApiV1ResearchLiveForwardJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LiveForwardReport;
+};
+
+export type LiveForwardApiV1ResearchLiveForwardJobIdGetResponse = LiveForwardApiV1ResearchLiveForwardJobIdGetResponses[keyof LiveForwardApiV1ResearchLiveForwardJobIdGetResponses];
+
+export type LiveLedgerApiV1ResearchLiveLedgerGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/live-ledger';
+};
+
+export type LiveLedgerApiV1ResearchLiveLedgerGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type LiveLedgerApiV1ResearchLiveLedgerGetError = LiveLedgerApiV1ResearchLiveLedgerGetErrors[keyof LiveLedgerApiV1ResearchLiveLedgerGetErrors];
+
+export type LiveLedgerApiV1ResearchLiveLedgerGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LiveLedgerOverview;
+};
+
+export type LiveLedgerApiV1ResearchLiveLedgerGetResponse = LiveLedgerApiV1ResearchLiveLedgerGetResponses[keyof LiveLedgerApiV1ResearchLiveLedgerGetResponses];
+
+export type LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetData = {
+    body?: never;
+    path: {
+        /**
+         * Seq
+         */
+        seq: number;
+    };
+    query?: never;
+    url: '/api/v1/research/live-ledger/decisions/{seq}';
+};
+
+export type LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetError = LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetErrors[keyof LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetErrors];
+
+export type LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LiveLedgerDecision;
+};
+
+export type LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetResponse = LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetResponses[keyof LiveLedgerDecisionApiV1ResearchLiveLedgerDecisionsSeqGetResponses];
+
+export type LiveLedgerEventApiV1ResearchLiveLedgerDecisionsSeqEventJsonGetData = {
+    body?: never;
+    path: {
+        /**
+         * Seq
+         */
+        seq: number;
+    };
+    query?: never;
+    url: '/api/v1/research/live-ledger/decisions/{seq}/event.json';
+};
+
+export type LiveLedgerEventApiV1ResearchLiveLedgerDecisionsSeqEventJsonGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type LiveLedgerEventApiV1ResearchLiveLedgerDecisionsSeqEventJsonGetError = LiveLedgerEventApiV1ResearchLiveLedgerDecisionsSeqEventJsonGetErrors[keyof LiveLedgerEventApiV1ResearchLiveLedgerDecisionsSeqEventJsonGetErrors];
+
+export type LiveLedgerEventApiV1ResearchLiveLedgerDecisionsSeqEventJsonGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostData = {
+    body: SaveEvaluationRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/live-ledger/evaluations';
+};
+
+export type SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostError = SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostErrors[keyof SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostErrors];
+
+export type SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: SavedEvaluation;
+};
+
+export type SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostResponse = SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostResponses[keyof SaveLiveEvaluationApiV1ResearchLiveLedgerEvaluationsPostResponses];
 
 export type OverviewApiV1ResearchOverviewGetData = {
     body?: never;

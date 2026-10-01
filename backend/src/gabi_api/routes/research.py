@@ -19,8 +19,10 @@ from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.historical_queries import HistoricalQueries
+from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedgerQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
+from gabi.domain.research.live_ledger import canonical
 from gabi_api.schemas.research import (
     BacktestDiagnosticsResponse,
     BacktestFactorsPreview,
@@ -41,14 +43,19 @@ from gabi_api.schemas.research import (
     HistoricalOutcomes,
     HistoricalPreview,
     HistoricalTable,
+    LiveForwardReport,
+    LiveLedgerDecision,
+    LiveLedgerOverview,
     ManualExperimentRequest,
     PreparationResult,
     PublishedFactors,
     ResearchOverview,
     SavedAuditsOverview,
     SavedBlockBootstrap,
+    SavedEvaluation,
     SavedOverfittingAudit,
     SavedRankStability,
+    SaveEvaluationRequest,
     SearchTrials,
 )
 
@@ -235,6 +242,45 @@ def saved_audit_file(audit: Annotated[str, Path(max_length=40)], filename: Annot
     contents = query.download(audit, filename)
     return Response(contents, media_type=MEDIA.get(filename[filename.rfind("."):], "application/octet-stream"),
                     headers={"Content-Disposition": f'attachment; filename="gabi-{audit}-{filename}"'})
+
+
+def ledger_service(request: Request) -> LiveLedgerQueries:
+    return request.app.state.live_ledger
+
+
+def ledger_commands(request: Request) -> LiveLedgerCommands:
+    return request.app.state.live_ledger_commands
+
+
+Ledger = Annotated[LiveLedgerQueries, Depends(ledger_service)]
+LedgerCommands = Annotated[LiveLedgerCommands, Depends(ledger_commands)]
+
+
+@router.get("/live-ledger", response_model=LiveLedgerOverview)
+def live_ledger(query: Ledger) -> dict:
+    return query.overview()
+
+
+@router.get("/live-ledger/decisions/{seq}", response_model=LiveLedgerDecision)
+def live_ledger_decision(seq: Annotated[int, Path(ge=1)], query: Ledger) -> dict:
+    return query.decision(seq)
+
+
+@router.get("/live-ledger/decisions/{seq}/event.json")
+def live_ledger_event(seq: Annotated[int, Path(ge=1)], query: Ledger) -> Response:
+    return Response(canonical(query.event(seq)), media_type="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="gabi-live-ledger-{seq}.json"'})
+
+
+@router.post("/live-ledger/evaluations", response_model=SavedEvaluation, status_code=201)
+def save_live_evaluation(body: SaveEvaluationRequest, commands: LedgerCommands) -> dict:
+    return commands.save_evaluation(body.job_id)
+
+
+@router.get("/live-forward/{job_id}", response_model=LiveForwardReport)
+def live_forward(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job, result = _experiment_job(queue, job_id, "live_forward_report", "El informe prospectivo no existe.")
+    return result | {"job_id": job_id, "result_sha256": job["result_sha256"]}
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

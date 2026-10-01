@@ -30,6 +30,7 @@ from gabi.application.research.experiment_commands import ExperimentCommands
 from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.historical_queries import HistoricalQueries
+from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedgerQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -38,6 +39,7 @@ from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
 from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
+from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
 from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
 from gabi.infrastructure.legacy.signals import compare_snapshots
@@ -49,6 +51,7 @@ from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
+from gabi.infrastructure.storage.live_ledger import SqliteLiveLedger
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
 from gabi.infrastructure.storage.mode import FileMode
@@ -145,6 +148,16 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.estimate_queries = estimate_queries
     app.state.experiments = experiments
     app.state.experiment_statistics = experiment_statistics
+    research_mode = lambda: model_queries.model().mode == "RESEARCH"  # noqa: E731
+    app.state.live_ledger = LiveLedgerQueries(SqliteLiveLedger(settings.data_dir), research_mode)
+
+    def live_report(job_id: str) -> dict:
+        if jobs.get(job_id)["kind"] != "live_forward_report":
+            raise QueryError("job_not_found", "El informe prospectivo no existe.", 404)
+        return jobs.result(job_id)  # Research mode and the stored SHA-256 are checked here.
+
+    app.state.live_ledger_commands = LiveLedgerCommands(app.state.live_ledger,
+                                                        LegacyLiveLedger(settings.data_dir), live_report)
     app.state.saved_audits = SavedAuditQueries(FileSavedAudits(saved_audits_root or settings.data_dir.parent),
                                                lambda: model_queries.model().mode == "RESEARCH")
     app.state.experiment_commands = ExperimentCommands(LegacyExperimentLog(settings.data_dir),

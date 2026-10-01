@@ -926,3 +926,98 @@ class SavedRankStability(BaseModel):
     companies: list[RankCompany]
     sectors_complete: bool
     limitations: list[str]
+
+
+class LedgerIntegrity(BaseModel):
+    ok: bool
+    reason: str | None
+    seq: int | None
+    broken_at: int | None
+
+
+class LedgerDecision(BaseModel):
+    seq: int
+    stage: str | None
+    market_date: str | None
+    status: str | None
+    candidates: int
+    git_commit: str | None
+    model_version: str | None
+    has_inputs: bool
+
+
+class LiveLedgerOverview(BaseModel):
+    integrity: LedgerIntegrity
+    n_events: int
+    events_by_kind: dict[str, int]
+    decisions: list[LedgerDecision]
+    live_versions: list[str]
+
+
+class LedgerDecisionSummary(LedgerDecision):
+    reason: str | None
+    created_at: str | None
+    top_n: list[str]
+    data_fingerprint: str | None
+    quality: dict[str, Any] | None
+
+
+class LedgerReplay(BaseModel):
+    fingerprint_matches: bool
+    scores_match: bool
+    ranking_matches: bool
+    replayed_top_n: list[str]
+    actual_top_n: list[str]
+
+
+class LiveLedgerDecision(BaseModel):
+    seq: int
+    record_hash: str
+    summary: LedgerDecisionSummary
+    replay: LedgerReplay | None
+    replay_error: str | None
+
+
+class LiveInterval(BaseModel):
+    seq: int
+    record_hash: str
+    status: str
+    entry: str
+    end: str
+    end_basis: str
+    requested: int
+    missing: list[str]
+    gross_return: float | None
+    turnover_notional: float | None
+    cost_fraction: float | None
+    net_return: float | None
+    nav: float | None
+
+
+class LiveForwardReport(BaseModel):
+    job_id: str
+    result_sha256: str
+    stage: str
+    model_version: str | None
+    available_versions: list[str]
+    as_of: str
+    generated_at: str
+    intervals: list[LiveInterval]
+    complete: bool
+    cumulative_return: float | None
+    benchmark_return: float | None
+    policy: str
+    limitations: list[str]
+    outcome_data_fingerprint: str
+
+
+class SaveEvaluationRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+
+
+class SavedEvaluation(BaseModel):
+    seq: int
+    record_hash: str
+    report_sha256: str
