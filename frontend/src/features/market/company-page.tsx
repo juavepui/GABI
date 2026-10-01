@@ -5,9 +5,11 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
+import { Folded } from '@/shared/ui/folded';
 import { metric, dateLabel } from '@/shared/lib/format';
 import { useCompany } from './queries';
 import { Evidence } from './evidence';
+import { CompanyEvidenceDetail } from './candidate-evidence';
 import { patchParams } from './params';
 
 const PriceChart = lazy(() => import('./price-chart'));
@@ -123,6 +125,12 @@ export function CompanyPage() {
                 </Card>
               ))}
             </div>
+            <Folded
+              title="Evidencia de la candidatura · por qué se asigna su nivel de confianza"
+              className="mb-6 rounded-xl border bg-card p-5"
+            >
+              <CompanyEvidenceDetail symbol={company.symbol} />
+            </Folded>
             <Card className="mb-6 gap-4 shadow-none">
               <CardHeader className="flex flex-wrap items-center justify-between gap-3">
                 <div>

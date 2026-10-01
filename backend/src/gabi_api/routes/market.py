@@ -1,10 +1,13 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi.responses import Response
 
 from gabi.application.errors import QueryError
+from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
+from gabi_api.schemas.evidence import CompanyEvidence, EvidenceTop, RankingStability
 from gabi_api.schemas.market import (
     CompanyResponse,
     ComparisonResponse,
@@ -27,6 +30,35 @@ def service(request: Request) -> MarketQueries:
 
 
 Service = Annotated[MarketQueries, Depends(service)]
+SymbolPath = Annotated[str, Path(min_length=1, max_length=20, pattern=r"^[A-Za-z0-9^][A-Za-z0-9^.\-]*$")]
+
+
+def evidence_service(request: Request) -> EvidenceQueries:
+    return request.app.state.evidence
+
+
+Evidence = Annotated[EvidenceQueries, Depends(evidence_service)]
+
+
+@router.get("/evidence", response_model=EvidenceTop)
+def evidence_top(query: Evidence, frozen: bool = False) -> dict:
+    return query.top(frozen=frozen)
+
+
+@router.get("/ranking/stability", response_model=RankingStability)
+def ranking_stability(query: Evidence) -> dict:
+    return query.stability()
+
+
+@router.get("/companies/{symbol}/evidence", response_model=CompanyEvidence)
+def company_evidence(symbol: SymbolPath, query: Evidence) -> dict:
+    return query.company(symbol)
+
+
+@router.get("/companies/{symbol}/evidence.json")
+def company_evidence_download(symbol: SymbolPath, query: Evidence) -> Response:
+    return Response(query.download(symbol), media_type="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="evidence-{symbol.upper()}.json"'})
 
 
 @router.get("/model", response_model=ModelResponse)

@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.errors import QueryError
+from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
@@ -37,6 +38,7 @@ from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
 from gabi.infrastructure.legacy.decisions import build_decisions
+from gabi.infrastructure.legacy.evidence import LegacyEvidence
 from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
 from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
 from gabi.infrastructure.legacy.filings import compare_cached
@@ -140,6 +142,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
+    app.state.evidence = EvidenceQueries(market, LegacyEvidence())
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.journal = journal

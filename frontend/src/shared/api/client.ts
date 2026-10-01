@@ -75,6 +75,9 @@ import type {
   BlindPerformance,
   BlindExport,
   PortfolioLabPreview,
+  EvidenceTop,
+  CompanyEvidence,
+  RankingStability,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -256,6 +259,18 @@ export function getBlindPerformance(id: string, signal?: AbortSignal): Promise<B
 }
 export function getBlindExport(id: string, signal?: AbortSignal): Promise<BlindExport> {
   return get('/api/v1/research/blind-exports/' + encodeURIComponent(id), signal);
+}
+export function getEvidenceTop(frozen: boolean, signal?: AbortSignal): Promise<EvidenceTop> {
+  return get('/api/v1/evidence' + (frozen ? '?frozen=true' : ''), signal);
+}
+export function getCompanyEvidence(symbol: string, signal?: AbortSignal): Promise<CompanyEvidence> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/evidence', signal);
+}
+export function companyEvidenceDownload(symbol: string): string {
+  return '/api/v1/companies/' + encodeURIComponent(symbol) + '/evidence.json';
+}
+export function getRankingStability(signal?: AbortSignal): Promise<RankingStability> {
+  return get('/api/v1/ranking/stability', signal);
 }
 export function getPortfolioLab(id: string, signal?: AbortSignal): Promise<PortfolioLabPreview> {
   return get('/api/v1/research/portfolio-lab/' + encodeURIComponent(id), signal);

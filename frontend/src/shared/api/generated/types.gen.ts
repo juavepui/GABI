@@ -1117,6 +1117,82 @@ export type CapitalAllocation = {
 };
 
 /**
+ * CompanyEvidence
+ */
+export type CompanyEvidence = {
+    /**
+     * Collection Stage
+     */
+    collection_stage: string;
+    /**
+     * Confidence Level
+     */
+    confidence_level: 'BAJA' | 'MEDIA' | 'ALTA';
+    /**
+     * Evidence Stage
+     */
+    evidence_stage: string;
+    /**
+     * Factors
+     */
+    factors: Array<EvidenceFactor>;
+    /**
+     * Interpretation
+     */
+    interpretation: string;
+    /**
+     * Mode
+     */
+    mode: 'INVESTOR' | 'RESEARCH';
+    /**
+     * Reasons Against
+     */
+    reasons_against: Array<string>;
+    /**
+     * Reasons For
+     */
+    reasons_for: Array<string>;
+    /**
+     * Research Details
+     */
+    research_details: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Revision
+     */
+    revision: string;
+    /**
+     * Rules Version
+     */
+    rules_version: string;
+    /**
+     * Score
+     */
+    score: number | null;
+    /**
+     * Score Coverage
+     */
+    score_coverage: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Top20 Persistence
+     */
+    top20_persistence: number | null;
+    /**
+     * Validated Score Fraction
+     */
+    validated_score_fraction: number | null;
+    /**
+     * Weighted Data Coverage
+     */
+    weighted_data_coverage: number | null;
+};
+
+/**
  * CompanyResponse
  */
 export type CompanyResponse = {
@@ -1833,6 +1909,110 @@ export type EstimateCaptureStatus = {
      * Symbols Per Batch Needed
      */
     symbols_per_batch_needed: number;
+};
+
+/**
+ * EvidenceFactor
+ */
+export type EvidenceFactor = {
+    /**
+     * Contribution Points
+     */
+    contribution_points: number;
+    /**
+     * Effective Weight
+     */
+    effective_weight: number;
+    /**
+     * Family
+     */
+    family: string;
+    /**
+     * Mean Ic
+     */
+    mean_ic: number | null;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * P Holm
+     */
+    p_holm: number | null;
+    /**
+     * Percentile
+     */
+    percentile: number;
+    /**
+     * Sic Division Stability
+     */
+    sic_division_stability: Array<SicStability>;
+    /**
+     * Statistically Supported
+     */
+    statistically_supported: boolean;
+    /**
+     * Supports Candidate
+     */
+    supports_candidate: boolean;
+};
+
+/**
+ * EvidenceRow
+ */
+export type EvidenceRow = {
+    /**
+     * Confidence Level
+     */
+    confidence_level: 'BAJA' | 'MEDIA' | 'ALTA';
+    /**
+     * Score
+     */
+    score: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Top20 Persistence
+     */
+    top20_persistence: number | null;
+    /**
+     * Validated Score Fraction
+     */
+    validated_score_fraction: number | null;
+    /**
+     * Weighted Data Coverage
+     */
+    weighted_data_coverage: number | null;
+};
+
+/**
+ * EvidenceTop
+ */
+export type EvidenceTop = {
+    /**
+     * Available
+     */
+    available: boolean;
+    /**
+     * Mode
+     */
+    mode: 'INVESTOR' | 'RESEARCH';
+    /**
+     * Revision
+     */
+    revision: string;
+    /**
+     * Rows
+     */
+    rows: Array<EvidenceRow>;
+    /**
+     * Weights
+     */
+    weights: {
+        [key: string]: number;
+    };
 };
 
 /**
@@ -4793,6 +4973,53 @@ export type RankingResponse = {
 };
 
 /**
+ * RankingStability
+ */
+export type RankingStability = {
+    /**
+     * Available
+     */
+    available: boolean;
+    /**
+     * Companies
+     */
+    companies: Array<{
+        [key: string]: string | number | number | null;
+    }>;
+    /**
+     * Message
+     */
+    message: string | null;
+    /**
+     * Metrics
+     */
+    metrics: Array<{
+        [key: string]: string | number | number | null;
+    }>;
+    /**
+     * Mode
+     */
+    mode: 'INVESTOR' | 'RESEARCH';
+    /**
+     * Perturbations
+     */
+    perturbations: Array<{
+        [key: string]: string | number | number | null;
+    }>;
+    /**
+     * Revision
+     */
+    revision: string;
+    summary: StabilitySummary | null;
+    /**
+     * Weights
+     */
+    weights: {
+        [key: string]: number;
+    };
+};
+
+/**
  * ResearchLogRequest
  *
  * Register one finished V1/V2 backtest in Research Lab.
@@ -5165,6 +5392,32 @@ export type SearchTrials = {
      * Total
      */
     total: number;
+};
+
+/**
+ * SicStability
+ */
+export type SicStability = {
+    /**
+     * Group
+     */
+    group: string;
+    /**
+     * Ic Mean
+     */
+    ic_mean?: number | null;
+    /**
+     * N Periods
+     */
+    n_periods?: number | null;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Status
+     */
+    status?: string | null;
 };
 
 /**
@@ -5611,6 +5864,40 @@ export type StabilityFit = {
      * Window
      */
     window?: number | null;
+};
+
+/**
+ * StabilitySummary
+ */
+export type StabilitySummary = {
+    /**
+     * Eligible
+     */
+    eligible: number;
+    /**
+     * Excluded
+     */
+    excluded: number;
+    /**
+     * Interpretation
+     */
+    interpretation: string;
+    /**
+     * Omitted Infeasible
+     */
+    omitted_infeasible: number;
+    /**
+     * Perturbations
+     */
+    perturbations: number;
+    /**
+     * Sectors Complete
+     */
+    sectors_complete: boolean;
+    /**
+     * Stability Score
+     */
+    stability_score: number | null;
 };
 
 /**
@@ -6079,6 +6366,104 @@ export type CompanyApiV1CompaniesSymbolGetResponses = {
 
 export type CompanyApiV1CompaniesSymbolGetResponse = CompanyApiV1CompaniesSymbolGetResponses[keyof CompanyApiV1CompaniesSymbolGetResponses];
 
+export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/evidence';
+};
+
+export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetError = CompanyEvidenceApiV1CompaniesSymbolEvidenceGetErrors[keyof CompanyEvidenceApiV1CompaniesSymbolEvidenceGetErrors];
+
+export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyEvidence;
+};
+
+export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetResponse = CompanyEvidenceApiV1CompaniesSymbolEvidenceGetResponses[keyof CompanyEvidenceApiV1CompaniesSymbolEvidenceGetResponses];
+
+export type CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/evidence.json';
+};
+
+export type CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetError = CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetErrors[keyof CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetErrors];
+
+export type CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type ComparisonApiV1ComparisonGetData = {
     body?: never;
     path?: never;
@@ -6173,6 +6558,56 @@ export type DataStatusApiV1DataStatusGetResponses = {
 };
 
 export type DataStatusApiV1DataStatusGetResponse = DataStatusApiV1DataStatusGetResponses[keyof DataStatusApiV1DataStatusGetResponses];
+
+export type EvidenceTopApiV1EvidenceGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Frozen
+         */
+        frozen?: boolean;
+    };
+    url: '/api/v1/evidence';
+};
+
+export type EvidenceTopApiV1EvidenceGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type EvidenceTopApiV1EvidenceGetError = EvidenceTopApiV1EvidenceGetErrors[keyof EvidenceTopApiV1EvidenceGetErrors];
+
+export type EvidenceTopApiV1EvidenceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: EvidenceTop;
+};
+
+export type EvidenceTopApiV1EvidenceGetResponse = EvidenceTopApiV1EvidenceGetResponses[keyof EvidenceTopApiV1EvidenceGetResponses];
 
 export type HealthApiV1HealthGetData = {
     body?: never;
@@ -7812,6 +8247,51 @@ export type RankingApiV1RankingGetResponses = {
 };
 
 export type RankingApiV1RankingGetResponse = RankingApiV1RankingGetResponses[keyof RankingApiV1RankingGetResponses];
+
+export type RankingStabilityApiV1RankingStabilityGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/ranking/stability';
+};
+
+export type RankingStabilityApiV1RankingStabilityGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RankingStabilityApiV1RankingStabilityGetError = RankingStabilityApiV1RankingStabilityGetErrors[keyof RankingStabilityApiV1RankingStabilityGetErrors];
+
+export type RankingStabilityApiV1RankingStabilityGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: RankingStability;
+};
+
+export type RankingStabilityApiV1RankingStabilityGetResponse = RankingStabilityApiV1RankingStabilityGetResponses[keyof RankingStabilityApiV1RankingStabilityGetResponses];
 
 export type BacktestFactorsApiV1ResearchBacktestFactorsJobIdGetData = {
     body?: never;

@@ -2,11 +2,13 @@ import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { PlanRequest } from '@/shared/api/generated/types.gen';
-import { getPortfolioPlan } from '@/shared/api/client';
+import { getEvidenceTop, getPortfolioPlan } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
+import { EvidenceTable } from '@/shared/ui/evidence-table';
+import { Folded } from '@/shared/ui/folded';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
@@ -24,6 +26,34 @@ const initial: PlanRequest = {
   holdings_text: '',
   new_capital_eur: 1000,
 };
+
+function PlanEvidenceContent() {
+  const evidence = useQuery({
+    queryKey: ['portfolio', 'evidence'],
+    queryFn: ({ signal }) => getEvidenceTop(true, signal),
+  });
+  return (
+    <>
+      <p className="text-xs text-muted-foreground">
+        Confianza de evidencia BAJA/MEDIA/ALTA según reglas publicadas; no es probabilidad de
+        subida. El detalle de cada candidata está en su ficha.
+      </p>
+      {evidence.isPending && <LoadingState />}
+      {evidence.isError && (
+        <ErrorState error={evidence.error} retry={() => void evidence.refetch()} />
+      )}
+      {evidence.data && <EvidenceTable rows={evidence.data.rows} />}
+    </>
+  );
+}
+
+function PlanEvidence() {
+  return (
+    <Folded title="Evidencia de las candidatas (pesos congelados)">
+      <PlanEvidenceContent />
+    </Folded>
+  );
+}
 
 export function PortfolioPage() {
   const [submitted, setSubmitted] = useState(initial);
@@ -136,6 +166,7 @@ export function PortfolioPage() {
       </form>
       {plan.isPending && <LoadingState />}
       {plan.isError && <ErrorState error={plan.error} retry={() => void plan.refetch()} />}
+      <PlanEvidence />
       {data && (
         <>
           <section className="rounded-xl border bg-card p-5">

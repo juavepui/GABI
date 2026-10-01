@@ -475,8 +475,8 @@ sustituto:
 
 | Página | Sin equivalente en React | Propuesta |
 | --- | --- | --- |
-| Screener, Mi cartera, Ficha | Evidencia por candidata (`evidence_confidence`): Top-20 con confianza BAJA/MEDIA/ALTA, motivos a favor y en contra, factores con Holm, estabilidad SIC y descarga | Migrar: consulta de solo lectura |
-| Screener | Estabilidad del ranking actual ante cambios de 1-2 puntos en los pesos (`rank_stability.analyze`) | Migrar como job |
+| Screener, Mi cartera, Ficha | Evidencia por candidata (`evidence_confidence`): Top-20 con confianza BAJA/MEDIA/ALTA, motivos a favor y en contra, factores con Holm, estabilidad SIC y descarga | Hecho: `GET /evidence` y `/companies/{symbol}/evidence` |
+| Screener | Estabilidad del ranking actual ante cambios de 1-2 puntos en los pesos (`rank_stability.analyze`) | Hecho: `GET /ranking/stability` (1,3 s con la base local; no hace falta un job) |
 | Screener | Avisos de cobertura por bloque con umbral configurable | Migrar en el ranking |
 | Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Migrar junto a los snapshots del Signal Monitor |
 | Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Lectura como consulta; sincronización como job explícito |
@@ -502,4 +502,25 @@ empresas y sin superar el presupuesto. Con la base local el ranking nuevo
 coincide exactamente con `screener.build_screener_table` en las 503 empresas
 (scores, cobertura, volatilidad, drawdown, PER y RSI). Tarda 42,6 s en frío
 frente a 32,8 s del antiguo, con 137 consultas, y `gabi.db` no cambia.
+
+La evidencia por candidata y la estabilidad del ranking actual se consultan en
+`GET /evidence` (Top-20; `frozen=true` usa los pesos congelados en cualquier
+modo, como hacía «Mi cartera»), `GET /companies/{symbol}/evidence`, su descarga
+JSON y `GET /ranking/stability`. Llaman a `evidence_confidence.build` y
+`rank_stability.analyze` sin cambios, sobre el ranking ya cacheado y con los
+pesos del modo. No descargan ni escriben. El resultado se guarda en memoria por
+revisión del ranking y pesos, con una entrada por tipo. Las respuestas proyectan
+lo que mostraba Streamlit: Top-20 por score con cobertura de al menos el 70 %,
+motivos, factores, estabilidad SIC y fases. Los bloques técnicos solo se envían
+en modo Research. La tabla de estabilidad muestra el Top-20 en Investor; en
+Research añade todas las empresas, las métricas y los pesos de cada
+perturbación. Con la base local, la evidencia de las 503 empresas tarda 5,5 s y
+ocuparía 55 MB en JSON, por eso no se envía completa. La estabilidad tarda
+1,3 s. React solo hace estas consultas al abrir su sección. Durante la
+migración se encontró que `evidence_confidence.build` fallaba con datos reales,
+también en Streamlit: el hash canónico del ledger no admitía la fecha
+`next_earnings_date` (`datetime.date`). `safe` la convierte ahora a ISO. Ningún
+hash publicado cambia, porque antes esos valores producían una excepción. La
+captura diaria del registro prospectivo, que calcula la misma huella, queda
+corregida también.
 

@@ -2227,6 +2227,160 @@
         "title": "CapitalAllocation",
         "type": "object"
       },
+      "CompanyEvidence": {
+        "properties": {
+          "collection_stage": {
+            "title": "Collection Stage",
+            "type": "string"
+          },
+          "confidence_level": {
+            "enum": [
+              "BAJA",
+              "MEDIA",
+              "ALTA"
+            ],
+            "title": "Confidence Level",
+            "type": "string"
+          },
+          "evidence_stage": {
+            "title": "Evidence Stage",
+            "type": "string"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceFactor"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "interpretation": {
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "INVESTOR",
+              "RESEARCH"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "reasons_against": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons Against",
+            "type": "array"
+          },
+          "reasons_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons For",
+            "type": "array"
+          },
+          "research_details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Research Details"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "rules_version": {
+            "title": "Rules Version",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "score_coverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Coverage"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "top20_persistence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top20 Persistence"
+          },
+          "validated_score_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validated Score Fraction"
+          },
+          "weighted_data_coverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weighted Data Coverage"
+          }
+        },
+        "required": [
+          "symbol",
+          "revision",
+          "mode",
+          "confidence_level",
+          "score",
+          "score_coverage",
+          "weighted_data_coverage",
+          "reasons_for",
+          "reasons_against",
+          "factors",
+          "validated_score_fraction",
+          "top20_persistence",
+          "collection_stage",
+          "evidence_stage",
+          "rules_version",
+          "interpretation",
+          "research_details"
+        ],
+        "title": "CompanyEvidence",
+        "type": "object"
+      },
       "CompanyResponse": {
         "additionalProperties": false,
         "properties": {
@@ -3600,6 +3754,195 @@
           "independent_advantage_demonstrated"
         ],
         "title": "EstimateCaptureStatus",
+        "type": "object"
+      },
+      "EvidenceFactor": {
+        "properties": {
+          "contribution_points": {
+            "title": "Contribution Points",
+            "type": "number"
+          },
+          "effective_weight": {
+            "title": "Effective Weight",
+            "type": "number"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "mean_ic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Ic"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "p_holm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Holm"
+          },
+          "percentile": {
+            "title": "Percentile",
+            "type": "number"
+          },
+          "sic_division_stability": {
+            "items": {
+              "$ref": "#/components/schemas/SicStability"
+            },
+            "title": "Sic Division Stability",
+            "type": "array"
+          },
+          "statistically_supported": {
+            "title": "Statistically Supported",
+            "type": "boolean"
+          },
+          "supports_candidate": {
+            "title": "Supports Candidate",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "metric",
+          "family",
+          "percentile",
+          "supports_candidate",
+          "effective_weight",
+          "contribution_points",
+          "statistically_supported",
+          "mean_ic",
+          "p_holm",
+          "sic_division_stability"
+        ],
+        "title": "EvidenceFactor",
+        "type": "object"
+      },
+      "EvidenceRow": {
+        "properties": {
+          "confidence_level": {
+            "enum": [
+              "BAJA",
+              "MEDIA",
+              "ALTA"
+            ],
+            "title": "Confidence Level",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "top20_persistence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top20 Persistence"
+          },
+          "validated_score_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validated Score Fraction"
+          },
+          "weighted_data_coverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weighted Data Coverage"
+          }
+        },
+        "required": [
+          "symbol",
+          "score",
+          "weighted_data_coverage",
+          "confidence_level",
+          "top20_persistence",
+          "validated_score_fraction"
+        ],
+        "title": "EvidenceRow",
+        "type": "object"
+      },
+      "EvidenceTop": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "INVESTOR",
+              "RESEARCH"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Weights",
+            "type": "object"
+          }
+        },
+        "required": [
+          "revision",
+          "mode",
+          "weights",
+          "available",
+          "rows"
+        ],
+        "title": "EvidenceTop",
         "type": "object"
       },
       "ExcludedTrial": {
@@ -9252,6 +9595,136 @@
         "title": "RankingResponse",
         "type": "object"
       },
+      "RankingStability": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "companies": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Companies",
+            "type": "array"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "metrics": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "INVESTOR",
+              "RESEARCH"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "perturbations": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Perturbations",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StabilitySummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Weights",
+            "type": "object"
+          }
+        },
+        "required": [
+          "revision",
+          "mode",
+          "weights",
+          "available",
+          "message",
+          "summary",
+          "companies",
+          "metrics",
+          "perturbations"
+        ],
+        "title": "RankingStability",
+        "type": "object"
+      },
       "ResearchLogRequest": {
         "additionalProperties": false,
         "description": "Register one finished V1/V2 backtest in Research Lab.",
@@ -9830,6 +10303,63 @@
           "items"
         ],
         "title": "SearchTrials",
+        "type": "object"
+      },
+      "SicStability": {
+        "properties": {
+          "group": {
+            "title": "Group",
+            "type": "string"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "n_periods": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Periods"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "group"
+        ],
+        "title": "SicStability",
         "type": "object"
       },
       "SignalEvent": {
@@ -10660,6 +11190,56 @@
           "status"
         ],
         "title": "StabilityFit",
+        "type": "object"
+      },
+      "StabilitySummary": {
+        "properties": {
+          "eligible": {
+            "title": "Eligible",
+            "type": "integer"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "interpretation": {
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "omitted_infeasible": {
+            "title": "Omitted Infeasible",
+            "type": "integer"
+          },
+          "perturbations": {
+            "title": "Perturbations",
+            "type": "integer"
+          },
+          "sectors_complete": {
+            "title": "Sectors Complete",
+            "type": "boolean"
+          },
+          "stability_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stability Score"
+          }
+        },
+        "required": [
+          "eligible",
+          "excluded",
+          "perturbations",
+          "omitted_infeasible",
+          "stability_score",
+          "sectors_complete",
+          "interpretation"
+        ],
+        "title": "StabilitySummary",
         "type": "object"
       },
       "StabilityYear": {
@@ -11521,6 +12101,194 @@
         ]
       }
     },
+    "/api/v1/companies/{symbol}/evidence": {
+      "get": {
+        "operationId": "company_evidence_api_v1_companies__symbol__evidence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyEvidence"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Evidence",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/evidence.json": {
+      "get": {
+        "operationId": "company_evidence_download_api_v1_companies__symbol__evidence_json_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Evidence Download",
+        "tags": [
+          "market"
+        ]
+      }
+    },
     "/api/v1/comparison": {
       "get": {
         "operationId": "comparison_api_v1_comparison_get",
@@ -11694,6 +12462,99 @@
           }
         },
         "summary": "Data Status",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/evidence": {
+      "get": {
+        "operationId": "evidence_top_api_v1_evidence_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "frozen",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Frozen",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceTop"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Evidence Top",
         "tags": [
           "market"
         ]
@@ -14914,6 +15775,87 @@
           }
         },
         "summary": "Ranking",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/ranking/stability": {
+      "get": {
+        "operationId": "ranking_stability_api_v1_ranking_stability_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingStability"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Ranking Stability",
         "tags": [
           "market"
         ]

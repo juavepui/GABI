@@ -199,3 +199,29 @@ test('keyboard, semantic accessibility and bounded warm navigation', async ({ pa
     contentType: 'application/json',
   });
 });
+
+test('evidencia del ranking, estabilidad y evidencia de una empresa se calculan al abrirlas', async ({
+  page,
+  request,
+}) => {
+  const top = await (await request.get('http://127.0.0.1:8001/api/v1/evidence')).json();
+  await page.goto('/mercado');
+  await expect(page.getByRole('heading', { name: 'Ranking de empresas' })).toBeVisible();
+  await page.getByText('Evidencia del ranking · confianza de las candidatas del Top-20').click();
+  const table = page.getByRole('table', { name: 'Evidencia del ranking' });
+  await expect(table.getByRole('row')).toHaveCount(top.rows.length + 1);
+  const first = top.rows[0].symbol;
+  await table.getByRole('button', { name: first }).click();
+  const detail = page.getByRole('region', { name: `Evidencia de ${first}` });
+  await expect(detail).toContainText('Confianza de evidencia');
+  await expect(detail.getByRole('table', { name: 'Factores del score' })).toBeVisible();
+  await page.getByText('Estabilidad del ranking · cambios de 1–2 puntos en los pesos').click();
+  await expect(
+    page.getByRole('region', { name: 'Estabilidad del ranking' }).getByText(/perturbaciones/),
+  ).toBeVisible();
+  await page.goto('/mercado/empresas/' + first);
+  await page.getByText('Evidencia de la candidatura').click();
+  await expect(
+    page.getByRole('link', { name: 'Descargar evidencia de la candidata' }),
+  ).toBeVisible();
+});

@@ -17,6 +17,7 @@ import { metric, dateLabel } from '@/shared/lib/format';
 import { useRanking } from './queries';
 import { rankingParams, patchParams, sortOptions, type SortKey } from './params';
 import { Evidence } from './evidence';
+import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
 
 export function MarketPage() {
   const [params, setParams] = useSearchParams();
@@ -437,6 +438,12 @@ export function MarketPage() {
             </div>
           </section>
         )
+      )}
+      {data && (
+        <>
+          <RankingEvidence />
+          <RankingStabilityPanel />
+        </>
       )}
     </>
   );

@@ -3,7 +3,7 @@
 import hashlib
 import json
 import math
-from datetime import datetime
+from datetime import date, datetime
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ def safe(value):
         return None
     if value is pd.NA or value is pd.NaT:
         return None
-    if isinstance(value, (datetime, pd.Timestamp)):
+    if isinstance(value, (datetime, date, pd.Timestamp)):  # Ranking rows carry next-earnings dates.
         return value.isoformat()
     return value
 
