@@ -1263,7 +1263,7 @@
       },
       "BlindCreateRequest": {
         "additionalProperties": false,
-        "description": "The Streamlit creation form; weights in percent.",
+        "description": "A new blind validation; weights in percent.",
         "properties": {
           "n_positions": {
             "maximum": 50.0,
@@ -8497,7 +8497,7 @@
       },
       "ManualExperimentRequest": {
         "additionalProperties": false,
-        "description": "The fields of the Streamlit manual form; 0 in a metric means \"no value\", as before.",
+        "description": "Fields of a manually logged experiment; 0 in a metric means \"no value\", as the legacy log stores it.",
         "properties": {
           "cost_model": {
             "maxLength": 200,
@@ -9263,7 +9263,7 @@
       },
       "PortfolioLabOptions": {
         "additionalProperties": false,
-        "description": "The Streamlit Portfolio Lab form: schemes over the same point-in-time candidates.",
+        "description": "Portfolio Lab options: schemes over the same point-in-time candidates.",
         "properties": {
           "initial_capital": {
             "maximum": 10000000.0,
@@ -15224,6 +15224,24 @@
               "title": "Limit",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "since_hours",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 720,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since Hours"
+            }
           }
         ],
         "responses": {
@@ -16866,6 +16884,16 @@
               "minimum": 0,
               "title": "Offset",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "only_open",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Only Open",
+              "type": "boolean"
             }
           }
         ],

@@ -91,7 +91,7 @@ class BlindJobRequest(BaseModel):
 
 
 class PortfolioLabOptions(BaseModel):
-    """The Streamlit Portfolio Lab form: schemes over the same point-in-time candidates."""
+    """Portfolio Lab options: schemes over the same point-in-time candidates."""
 
     model_config = {"extra": "forbid"}
 

@@ -178,12 +178,6 @@
     "numpy",
     "pandas"
   ],
-  "backend/src/gabi/evidence_ui.py": [
-    "gabi.evidence_confidence",
-    "gabi.ui_helpers.METRIC_INFO",
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/factor_benchmark.py": [
     "gabi.academic_factors",
     "gabi.factor_stability",
@@ -523,12 +517,6 @@
     "subprocess",
     "sys"
   ],
-  "backend/src/gabi/live_ledger_ui.py": [
-    "gabi.live_ledger",
-    "gabi.live_performance",
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/live_performance.py": [
     "exchange_calendars",
     "gabi.config",
@@ -695,11 +683,6 @@
     "pandas",
     "scipy.stats"
   ],
-  "backend/src/gabi/rank_stability_ui.py": [
-    "gabi.rank_stability",
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/repurchase_cash_strategy.py": [
     "gabi.capital_input_audit_v2",
     "gabi.strategy_discovery",
@@ -802,7 +785,6 @@
     "pandas"
   ],
   "backend/src/gabi/sim_portfolios.py": [
-    "backtesting",
     "exchange_calendars",
     "gabi.storage",
     "pandas",
@@ -908,10 +890,6 @@
     "pandas",
     "requests"
   ],
-  "backend/src/gabi/ui_helpers.py": [
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/universe.py": [
     "gabi.config",
     "gabi.historical_pit",
@@ -941,154 +919,6 @@
     "importlib.machinery",
     "os",
     "pathlib",
-    "sys"
-  ],
-  "app/pages/0_Mi_Cartera.py": [
-    "gabi.app_mode",
-    "gabi.evidence_ui",
-    "gabi.screener",
-    "gabi.simple_portfolio",
-    "gabi.ui_helpers.translate_sector",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/10_Carteras_Simuladas.py": [
-    "gabi.data_fetch",
-    "gabi.sim_portfolios",
-    "gabi.storage",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/15_Salud_Datos.py": [
-    "gabi.config",
-    "gabi.data_quality",
-    "gabi.historical_archive",
-    "gabi.identity",
-    "gabi.scoring",
-    "gabi.screener",
-    "gabi.storage",
-    "gabi.ui_helpers.METRIC_INFO",
-    "gabi.ui_helpers.translate_sector",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/16_Signal_Monitor.py": [
-    "gabi.evaluation",
-    "gabi.events_calendar",
-    "gabi.filing_tracker",
-    "gabi.signal_monitor",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/1_Screener.py": [
-    "gabi.app_mode",
-    "gabi.config",
-    "gabi.data_quality",
-    "gabi.evaluation",
-    "gabi.evidence_ui",
-    "gabi.live_ledger_ui",
-    "gabi.rank_stability_ui",
-    "gabi.screener",
-    "gabi.ui_helpers.FRACTION_COLUMNS",
-    "gabi.ui_helpers.METRIC_INFO",
-    "gabi.ui_helpers.build_color_basis",
-    "gabi.ui_helpers.gradient_style",
-    "gabi.ui_helpers.translate_sector",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/2_Ficha_Empresa.py": [
-    "gabi.ai_prompt",
-    "gabi.app_mode",
-    "gabi.config",
-    "gabi.estimates",
-    "gabi.events_calendar",
-    "gabi.evidence_ui",
-    "gabi.filing_tracker",
-    "gabi.insider",
-    "gabi.scoring",
-    "gabi.screener",
-    "gabi.storage",
-    "gabi.ui_helpers.METRIC_INFO",
-    "gabi.ui_helpers.format_metric_value",
-    "gabi.ui_helpers.gradient_style",
-    "gabi.ui_helpers.translate_sector",
-    "pandas",
-    "pathlib",
-    "plotly.graph_objects",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/3_Configuracion.py": [
-    "gabi.app_mode",
-    "gabi.config",
-    "gabi.screener",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/4_Diario_Inversion.py": [
-    "gabi.journal",
-    "gabi.storage",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/5_Panel_Macro.py": [
-    "gabi.config",
-    "gabi.macro",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/6_Comparar_Empresas.py": [
-    "gabi.config",
-    "gabi.screener",
-    "gabi.ui_helpers.METRIC_INFO",
-    "gabi.ui_helpers.build_color_basis",
-    "gabi.ui_helpers.format_metric_value",
-    "gabi.ui_helpers.gradient_style",
-    "gabi.ui_helpers.translate_sector",
-    "pandas",
-    "pathlib",
-    "plotly.graph_objects",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/7_Aprender.py": [
-    "gabi.scoring",
-    "gabi.ui_helpers.METRIC_INFO",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/9_Decisiones.py": [
-    "gabi.data_fetch",
-    "gabi.data_quality",
-    "gabi.decision_engine",
-    "gabi.screener",
-    "gabi.storage",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/streamlit_app.py": [
-    "gabi.app_mode",
-    "gabi.periodic_tasks",
-    "gabi.ui_helpers.inject_custom_css",
-    "pathlib",
-    "streamlit",
     "sys"
   ]
 }

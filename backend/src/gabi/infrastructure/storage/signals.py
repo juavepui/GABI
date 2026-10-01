@@ -187,17 +187,21 @@ class SqliteSignals:
             db.commit()
             return snapshot_id
 
-    def events(self, severity: str | None, limit: int) -> list[dict]:
+    def events(self, severity: str | None, limit: int, since: str | None = None) -> list[dict]:
         db = self._read("signal_events")
         if db is None:
             return []
         with closing(db):
-            query = "SELECT * FROM signal_events"
-            params: tuple = ()
+            conditions, params = [], []
             if severity:
-                query += " WHERE severity=?"
-                params = (severity,)
-            rows = db.execute(query + " ORDER BY detected_at DESC,id DESC LIMIT ?", (*params, limit)).fetchall()
+                conditions.append("severity=?")
+                params.append(severity)
+            if since is not None:  # signal_monitor.list_events(since_hours=...)
+                conditions.append("detected_at>=?")
+                params.append(since)
+            where = " WHERE " + " AND ".join(conditions) if conditions else ""
+            rows = db.execute("SELECT * FROM signal_events" + where + " ORDER BY detected_at DESC,id DESC LIMIT ?",
+                              (*params, limit)).fetchall()
             results = []
             for row in rows:
                 item = dict(row)

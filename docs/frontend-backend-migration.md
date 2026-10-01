@@ -1,5 +1,9 @@
 # Separación local de GABI — inventario y plan F0
 
+> **Documento histórico.** Describe el estado de su fase. Streamlit se retiró en F6
+> ([#68](https://github.com/juavepui/GABI/issues/68)); la interfaz es React y se arranca con
+> `uv run --project backend python -m gabi_cli serve`.
+
 Épica [#61](https://github.com/juavepui/GABI/issues/61). Inventario realizado sobre
 `7821a795e9e44e0ae5b775584dee70b4a17ad995` y preparación de
 [#62](https://github.com/juavepui/GABI/issues/62). La separación física de F1 se

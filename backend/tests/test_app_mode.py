@@ -128,40 +128,6 @@ def test_current_model_status_experimental_for_custom_weights(tmp_path, monkeypa
     assert result["model_id"] == "EXPERIMENTAL"
 
 
-ALL_PAGES = [
-    "pages/7_Aprender.py", "pages/1_Screener.py", "pages/2_Ficha_Empresa.py",
-    "pages/6_Comparar_Empresas.py",
-    "pages/99_Herramienta_Research.py",  # Any page outside INVESTOR_PAGES.
-    "pages/9_Decisiones.py", "pages/10_Carteras_Simuladas.py", "pages/5_Panel_Macro.py",
-    "pages/4_Diario_Inversion.py", "pages/15_Salud_Datos.py", "pages/16_Signal_Monitor.py",
-    "pages/3_Configuracion.py",
-]
-
-
-def test_visible_pages_research_mode_sees_everything():
-    assert app_mode.visible_pages("RESEARCH", ALL_PAGES) == ALL_PAGES
-
-
-def test_visible_pages_investor_mode_excludes_research_tools():
-    visible = app_mode.visible_pages("INVESTOR", ALL_PAGES)
-    for research_only in ("pages/99_Herramienta_Research.py",):
-        assert research_only not in visible
-    for essential in ("pages/1_Screener.py", "pages/2_Ficha_Empresa.py", "pages/9_Decisiones.py",
-                      "pages/4_Diario_Inversion.py", "pages/15_Salud_Datos.py", "pages/16_Signal_Monitor.py"):
-        assert essential in visible
-
-
-def test_visible_pages_preserves_input_order():
-    visible = app_mode.visible_pages("INVESTOR", ALL_PAGES)
-    assert visible == [p for p in ALL_PAGES if p in app_mode.INVESTOR_PAGES]
-
-
-def test_visible_pages_rejects_unknown_mode():
-    try:
-        app_mode.visible_pages("ADMIN", ALL_PAGES)
-        assert False, "debía lanzar ValueError"
-    except ValueError:
-        pass
 
 
 def test_experimental_banner_none_for_frozen_weights():

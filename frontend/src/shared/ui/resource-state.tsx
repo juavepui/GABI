@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { AlertCircle, Database, RotateCw } from 'lucide-react';
 import { Button } from './button';
 import { Skeleton } from './skeleton';
@@ -45,13 +46,11 @@ export function EmptyState({ filtered = false }: { filtered?: boolean }) {
       <p className="max-w-md text-sm text-muted-foreground">
         {filtered
           ? 'Prueba con otra búsqueda o elimina algún filtro.'
-          : 'Carga el universo y actualiza los datos desde Streamlit para empezar.'}
+          : 'Carga el universo y actualiza los datos desde Administración para empezar.'}
       </p>
       {!filtered && (
         <Button asChild variant="outline">
-          <a href="http://localhost:8501" target="_blank" rel="noreferrer">
-            Abrir Streamlit
-          </a>
+          <Link to="/administracion">Ir a Administración</Link>
         </Button>
       )}
     </div>

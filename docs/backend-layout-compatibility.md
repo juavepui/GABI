@@ -1,5 +1,9 @@
 # Entrega F1: estructura y compatibilidad — #63
 
+> **Documento histórico.** Describe el estado de su fase. Streamlit se retiró en F6
+> ([#68](https://github.com/juavepui/GABI/issues/68)); la interfaz es React y se arranca con
+> `uv run --project backend python -m gabi_cli serve`.
+
 El proyecto Python se ha trasladado a `backend/`: paquete, tests, configuración
 de construcción y lockfile. `frontend/` tiene su propio manifiesto de proyecto y delimita el futuro cliente React; aún
 no tiene cliente ni dependencias JavaScript. `app/` conserva Streamlit.

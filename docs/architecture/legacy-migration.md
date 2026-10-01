@@ -11,7 +11,7 @@ reglas al código antiguo sin modificar de golpe cálculos o artefactos publicad
 2. Separar cálculo puro, coordinación e I/O en las capas previstas. Crear el caso
    de uso mínimo y su puerto concreto. Una ruta nueva no llama directamente al
    módulo plano: usa el caso de uso y un puente `infrastructure/legacy` si hace falta.
-3. Migrar un flujo completo. Streamlit y API usan el mismo caso de uso; el nombre
+3. Migrar un flujo completo. Todos los adaptadores usan el mismo caso de uso; el nombre
    legacy puede quedar como fachada que delega en `application`/`domain`. No duplicar
    una fórmula para tener dos implementaciones aparentemente equivalentes.
 4. Verificar paridad y efectos, medir cuando cambie el camino de datos, retirar
@@ -40,7 +40,7 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 | `simple_portfolio`, `capital_allocation`, `rotation_policy`, `broker_costs`, `tax_drag`, `portfolio_metrics` | Dominio Cartera; coordinación de lecturas/escrituras en aplicación | F5: selección, costes y rentabilidades idénticos |
 | `journal`, `decision_engine`, `sim_portfolios`, `signal_monitor`, `evaluation`, `live_ledger` | Aplicación por capacidad y persistencia específica | F5: operaciones, ledger y contratos sin cambios de interpretación |
 | `research_lab`, `blind_validation`, `factor_lab`, `portfolio_lab`, auditorías/backtests/experimentos | Dominio de cálculos; casos de uso Investigación; jobs y artefactos en infraestructura | F6: protocolos, hashes, reservas, resultados y exportaciones |
-| Helpers `*_ui`, `ui_helpers` y `app/pages` | Adaptador Streamlit temporal; presentación React y metadatos de contrato | F3/F5/F6: equivalencia por flujo antes de retirar consumidores |
+| Helpers `*_ui`, `ui_helpers` y `app/pages` | Retirados en F6; presentación React y metadatos de contrato (`domain/market/metric_info.py`) | F6: hecho tras verificar la equivalencia por flujo |
 | `config`, `workspace` y bootstrap de `gabi` | Compatibilidad histórica preservada; settings explícitos para código nuevo | Todas: raíz estable, datos compartidos y cero efectos de importación |
 
 El listado completo de archivos/imports heredados está en
@@ -60,4 +60,5 @@ permanece documentada hasta decidir explícitamente una nueva versión.
 
 Cerrar F6 no significa fingir que no existe ninguna excepción: el código publicado
 conservado se identifica y queda accesible solo mediante sus puentes. La retirada
-de Streamlit exige verificar todos los flujos del inventario F0 y el arranque local.
+de Streamlit se hizo tras verificar todos los flujos del inventario F0 y el arranque local
+([auditoría F6](f6-research.md)).

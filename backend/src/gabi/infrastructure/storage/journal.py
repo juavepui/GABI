@@ -33,14 +33,15 @@ class SqliteJournal:
             return None
         return db
 
-    def list_entries(self, limit: int, offset: int) -> tuple[list[dict], int]:
+    def list_entries(self, limit: int, offset: int, only_open: bool = False) -> tuple[list[dict], int]:
         db = self._read()
         if db is None:
             return [], 0
+        where = " WHERE status='abierta'" if only_open else ""
         with closing(db):
-            total = int(db.execute("SELECT COUNT(*) FROM journal_entries").fetchone()[0])
-            rows = db.execute("SELECT * FROM journal_entries ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
-                              (limit, offset)).fetchall()
+            total = int(db.execute("SELECT COUNT(*) FROM journal_entries" + where).fetchone()[0])
+            rows = db.execute("SELECT * FROM journal_entries" + where +
+                              " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", (limit, offset)).fetchall()
             return [dict(row) for row in rows], total
 
     def get(self, entry_id: int) -> dict | None:

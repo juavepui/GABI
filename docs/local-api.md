@@ -1,6 +1,6 @@
 # API local de GABI — F2–F4 / #64–#66
 
-La API FastAPI comparte el cálculo y los filtros del Screener con Streamlit.
+La API FastAPI es el único acceso de la interfaz a los cálculos de GABI.
 Es una entrega de consulta para Mercado y estado local del modelo. El
 [cliente React](../frontend/README.md) consume este contrato; F4 añade la cola
 persistente para actualizaciones y trabajos largos.
@@ -28,11 +28,7 @@ del checkout requiere también `GABI_PROJECT_ROOT` absoluto, por la compatibilid
 de rutas F1 de los motores publicados. La CI extrae el wheel y verifica sus imports
 y respuestas con una carpeta de datos temporal ausente, fuera del checkout.
 
-Streamlit continúa disponible:
-
-```powershell
-uv run --project backend streamlit run app/streamlit_app.py
-```
+La interfaz React y el worker se arrancan juntos con `uv run --project backend python -m gabi_cli serve`.
 
 ## Contrato v1
 
@@ -145,8 +141,7 @@ los getters legacy que ejecutan DDL. Un `POST /jobs` sí inicializa la base sepa
 de la cola; el worker ejecuta después el comando solicitado. Una base/tabla
 ausente deja ausentes sus datos. SQLite conserva su
 coordinación normal de lectores/WAL; las consultas no modifican registros,
-configuración ni artefactos. El adaptador Streamlit antiguo conserva sus getters
-mientras se migra su administración. Los 18 motores/config congelados y los
+configuración ni artefactos. Los 18 motores/config congelados y los
 artefactos publicados siguen verificables; no se abren holdouts para probar F2.
 
 ## Límites y caché
@@ -187,7 +182,7 @@ Los tests usan bases sintéticas temporales: paridad contra una referencia de
 clases del mismo emisor. Se prohíben red, escrituras de archivos, SQL mutable y
 lectura de columnas ciegas; se comprueban contratos, filtros, límites,
 Investor/Research, errores, CORS, invalidez de históricos corregidos y WAL.
-Las pruebas de arranque Streamlit, arquitectura, tipos y hashes siguen en CI.
+Las pruebas de arquitectura, tipos y hashes siguen en CI.
 
 Medición reproducible, solo con una base temporal sintética:
 

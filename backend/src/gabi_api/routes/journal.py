@@ -16,8 +16,9 @@ def service(request: Request) -> Journal:
 @router.get("", response_model=JournalList)
 def list_entries(journal: Annotated[Journal, Depends(service)],
                  limit: Annotated[int, Query(ge=1, le=100)] = 50,
-                 offset: Annotated[int, Query(ge=0, le=100000)] = 0) -> JournalList:
-    items, total = journal.list(limit, offset)
+                 offset: Annotated[int, Query(ge=0, le=100000)] = 0,
+                 only_open: bool = False) -> JournalList:
+    items, total = journal.list(limit, offset, only_open)
     return JournalList(items=[JournalEntry.model_validate(item) for item in items],
                        total=total, limit=limit, offset=offset)
 

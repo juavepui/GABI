@@ -47,7 +47,6 @@ jobs:
         run: uv run python -m gabi.frozen_research_ci --typecheck
 
       # Los módulos del backend no abren bases ni arrancan workers al importar.
-      # Streamlit se compila aquí y se ejecuta con AppTest y datos aislados en pytest.
       - name: Import smoke test (backend packages)
         run: |
           uv run python -c "
@@ -62,9 +61,6 @@ jobs:
                   count += 1
           print(f'{count} módulos importados OK')
           "
-
-      - name: Compile smoke test (Streamlit app)
-        run: uv run python -m py_compile ../app/streamlit_app.py ../app/pages/*.py
 
       - name: Tests (pytest)
         run: uv run pytest -q

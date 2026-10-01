@@ -577,7 +577,7 @@ export type BenchmarkPeriod = {
 /**
  * BlindCreateRequest
  *
- * The Streamlit creation form; weights in percent.
+ * A new blind validation; weights in percent.
  */
 export type BlindCreateRequest = {
     /**
@@ -4355,7 +4355,7 @@ export type MacroResponse = {
 /**
  * ManualExperimentRequest
  *
- * The fields of the Streamlit manual form; 0 in a metric means "no value", as before.
+ * Fields of a manually logged experiment; 0 in a metric means "no value", as the legacy log stores it.
  */
 export type ManualExperimentRequest = {
     /**
@@ -4792,7 +4792,7 @@ export type PortfolioDaily = {
 /**
  * PortfolioLabOptions
  *
- * The Streamlit Portfolio Lab form: schemes over the same point-in-time candidates.
+ * Portfolio Lab options: schemes over the same point-in-time candidates.
  */
 export type PortfolioLabOptions = {
     /**
@@ -8001,6 +8001,10 @@ export type EventsApiV1MarketSignalsGetData = {
          * Limit
          */
         limit?: number;
+        /**
+         * Since Hours
+         */
+        since_hours?: number | null;
     };
     url: '/api/v1/market/signals';
 };
@@ -8861,6 +8865,10 @@ export type ListEntriesApiV1PortfolioJournalGetData = {
          * Offset
          */
         offset?: number;
+        /**
+         * Only Open
+         */
+        only_open?: boolean;
     };
     url: '/api/v1/portfolio/journal';
 };

@@ -1,5 +1,9 @@
 # F5 · Cartera y Mercado (#67)
 
+> **Documento histórico.** Describe el estado de su fase. Streamlit se retiró en F6
+> ([#68](https://github.com/juavepui/GABI/issues/68)); la interfaz es React y se arranca con
+> `uv run --project backend python -m gabi_cli serve`.
+
 Inventario de sustitución de los ocho recorridos Streamlit de esta fase. React
 usa la API local; los cálculos y decisiones financieras siguen en Python.
 Streamlit permanece operativo durante la transición a F6.

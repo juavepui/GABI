@@ -14,14 +14,13 @@ con los mismos modelos y servicios. No requieren despliegues independientes.
 El backend conserva 111 módulos planos como compatibilidad. F2 ha migrado el cálculo
 y los filtros del Screener a casos de uso/dominio compartidos y añadido la
 [API local de consulta](local-api.md), con SQL de solo lectura y caché por lotes.
-Streamlit continúa operativo. F3 incorpora el [cliente React local](../frontend/README.md)
+F3 incorpora el [cliente React local](../frontend/README.md)
 con Screener, ficha y tipos generados desde OpenAPI. F4 añade la cola SQLite,
 worker local y Administración en [#66](https://github.com/juavepui/GABI/issues/66).
 F5 incorpora [Cartera y los recorridos de Mercado](architecture/f5-portfolio-market.md)
-con el mismo almacenamiento local y cálculos compartidos. Streamlit sigue
-disponible durante F6.
-F6 ha iniciado el [catálogo público de Investigación y el arranque bajo un solo origen](architecture/f6-research.md);
-los laboratorios y la retirada de Streamlit siguen pendientes de equivalencia.
+con el mismo almacenamiento local y cálculos compartidos.
+F6 migra [Investigación, Administración y el arranque bajo un solo origen](architecture/f6-research.md)
+y retira Streamlit tras verificar la equivalencia de cada flujo.
 No se presenta el destino como
 una refactorización ya completada ni se atribuye una mejora de velocidad sin medirla.
 
@@ -34,7 +33,6 @@ de red para cada sección, ni una clase/repositorio por cada tabla o función.
 ```mermaid
 flowchart LR
     R[React: Mercado / Cartera / Investigación / Administración] --> H[API HTTP local]
-    S[Streamlit durante la transición] --> A[Casos de uso Python]
     H --> A
     C[CLI / tareas programadas] --> A
     W[Worker local de jobs] --> A
@@ -244,7 +242,7 @@ comentarios como imports. Las guardas no prueban toda la semántica: callbacks,
 efectos ocultos o fórmulas duplicadas requieren pruebas de comportamiento y revisión.
 
 La deuda plana está enumerada por archivo e import en
-`.github/architecture-legacy.json` (111 módulos backend y 18 archivos Streamlit).
+`.github/architecture-legacy.json` (102 módulos backend tras retirar Streamlit en F6).
 La CI rechaza módulos planos nuevos y dependencias legacy nuevas. Al eliminar
 dependencias se retiran sus excepciones. Compara además el inventario con el primer
 padre Git (`HEAD^`, o base del merge de una PR): ampliar la lista también falla.

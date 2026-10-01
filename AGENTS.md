@@ -52,7 +52,7 @@ delegar en `domain`/`application` nuevos mientras conserva su interfaz pública.
   para aplicar arquitectura: se usan mediante adaptadores o nuevas versiones.
 - Todos los tests usan datos temporales, incluidos pesos, claves y cachés.
   Nunca usar `data/gabi.db`, descargar fuentes o consultar holdouts para validar
-  una refactorización. Mantener Streamlit durante su migración por fases.
+  una refactorización.
 
 ## Verificación y cambios de arquitectura
 

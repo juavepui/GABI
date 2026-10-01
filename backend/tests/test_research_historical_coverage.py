@@ -82,7 +82,7 @@ def test_historical_layer_replaces_identity_counts(tmp_path):
 
 def test_table_columns_keep_streamlit_labels_and_fix_only_documented_units():
     from gabi.application.research.historical_queries import TABLE_COLUMNS
-    from gabi.ui_helpers import FRACTION_COLUMNS, METRIC_INFO
+    from gabi.domain.market.metric_info import FRACTION_COLUMNS, METRIC_INFO
 
     for key, label, unit in TABLE_COLUMNS:
         if key != "resolved_title":
@@ -94,7 +94,7 @@ def test_table_columns_keep_streamlit_labels_and_fix_only_documented_units():
 
 
 def test_historical_table_pages_sorts_and_colours_like_streamlit(tmp_path):
-    from gabi.ui_helpers import build_color_basis
+    from retired_ui_helpers import build_color_basis
 
     job_id = _job(tmp_path)
     df = _table()["table"]

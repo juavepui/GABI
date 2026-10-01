@@ -120,14 +120,3 @@ def test_existing_portfolio_database_is_migrated_without_losing_trades(tmp_path,
     assert len(trades) == 1
     assert trades.iloc[0]["market"] == "XNYS"
     assert trades.iloc[0]["quote_currency"] == "USD"
-
-
-def test_sma_backtest_runs_on_cached_prices(tmp_path, monkeypatch):
-    _db(tmp_path, monkeypatch)
-    dates = pd.date_range("2024-01-01", periods=150, freq="B")
-    closes = [100 + i * .03 + 4 * ((i // 15) % 2) for i in range(150)]
-    _seed("AAA", dates, closes)
-    result = sim_portfolios.sma_backtest("AAA", "2024-01-01", "2024-12-31", 10, 30,
-                                         10000, 1, 10)
-    assert "strategy_return" in result
-    assert len(result["equity_curve"]) == 150

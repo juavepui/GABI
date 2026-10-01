@@ -18,6 +18,8 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await expect(page.getByText('Prueba local de tesis')).toBeVisible();
   await page.getByRole('button', { name: 'Marcar revisada' }).click();
   await expect(page.getByText('Revisada el')).toBeVisible();
+  await page.getByLabel('Mostrar solo entradas abiertas (sin revisar)').check();
+  await expect(page.getByText('Prueba local de tesis')).toHaveCount(0);
 });
 
 test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
@@ -32,7 +34,7 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await expect(page.getByText('FRED', { exact: false }).first()).toBeVisible();
 });
 
-test('Signal Monitor conserva snapshots y compara sin abrir Streamlit', async ({ page }) => {
+test('Signal Monitor conserva snapshots y compara con el ranking en vivo', async ({ page }) => {
   await page.goto('/mercado/senales');
   await expect(page.getByRole('heading', { name: 'Signal Monitor' })).toBeVisible();
   await page.getByRole('button', { name: 'Guardar foto' }).click();
@@ -51,6 +53,13 @@ test('Signal Monitor conserva snapshots y compara sin abrir Streamlit', async ({
   await expect(page.getByText(/pares con datos comparables/)).toBeVisible();
   await page.getByRole('button', { name: 'Guardar comparación y eventos' }).click();
   await expect(page.getByText('Comparación SEC guardada en la base local.')).toBeVisible();
+  const filtered = page.waitForRequest(
+    (request) =>
+      request.url().includes('severity=MATERIAL') && request.url().includes('since_hours=24'),
+  );
+  await page.getByRole('combobox', { name: 'Severidad' }).selectOption('MATERIAL');
+  await page.getByLabel('Últimas N horas').fill('24');
+  await filtered;
 });
 
 test('cartera simulada conserva operaciones y calcula costes con caché local', async ({ page }) => {
@@ -121,5 +130,5 @@ test('aprender: tutorial completo con definiciones de métricas del backend', as
   await page.getByRole('tab', { name: 'Cómo piensa GABI' }).click();
   await expect(page.getByRole('img', { name: /cae un 28 %/ })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Motor V1 frente a V2' })).toContainText('0,111');
-  await expect(page.getByRole('main').getByText(/Streamlit/)).toHaveCount(0);
+  await expect(page.getByText(/Streamlit/)).toHaveCount(0);
 });

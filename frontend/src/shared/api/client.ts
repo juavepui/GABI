@@ -478,8 +478,13 @@ export function getPortfolioPlan(body: PlanRequest, signal?: AbortSignal): Promi
   });
 }
 
-export function getJournal(offset = 0, signal?: AbortSignal): Promise<JournalList> {
-  return get('/api/v1/portfolio/journal?limit=50&offset=' + offset, signal);
+export function getJournal(
+  offset = 0,
+  signal?: AbortSignal,
+  onlyOpen = false,
+): Promise<JournalList> {
+  const filter = onlyOpen ? '&only_open=true' : '';
+  return get('/api/v1/portfolio/journal?limit=50&offset=' + offset + filter, signal);
 }
 export function createJournal(body: JournalCreate): Promise<JournalEntry> {
   return request('/api/v1/portfolio/journal', {
@@ -524,8 +529,14 @@ export function saveSnapshot(body: SaveSnapshot): Promise<Snapshot> {
     body: JSON.stringify(body),
   });
 }
-export function getSignals(signal?: AbortSignal): Promise<SignalEventList> {
-  return get('/api/v1/market/signals', signal);
+export function getSignals(
+  filters: { severity?: string; sinceHours?: number } = {},
+  signal?: AbortSignal,
+): Promise<SignalEventList> {
+  const params = new URLSearchParams({ limit: '200' });
+  if (filters.severity) params.set('severity', filters.severity);
+  if (filters.sinceHours) params.set('since_hours', String(filters.sinceHours));
+  return get('/api/v1/market/signals?' + params.toString(), signal);
 }
 export function compareSignals(body: CompareSignals): Promise<SignalEventList> {
   return request('/api/v1/market/signals/compare', {

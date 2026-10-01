@@ -141,10 +141,11 @@ export function JournalPage() {
   const [params] = useSearchParams();
   const prefill = params.get('symbol') ?? '';
   const [offset, setOffset] = useState(0);
+  const [onlyOpen, setOnlyOpen] = useState(false);
   const queryClient = useQueryClient();
   const entries = useQuery({
-    queryKey: ['portfolio', 'journal', offset],
-    queryFn: ({ signal }) => getJournal(offset, signal),
+    queryKey: ['portfolio', 'journal', offset, onlyOpen],
+    queryFn: ({ signal }) => getJournal(offset, signal, onlyOpen),
   });
   const create = useMutation({
     mutationFn: createJournal,
@@ -184,7 +185,7 @@ export function JournalPage() {
         <h1 className="mt-3 text-3xl font-semibold">Diario de inversión</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Escribe la tesis antes de invertir y revísala después. Las entradas permanecen en la base
-          local que usa Streamlit.
+          local de este equipo.
         </p>
       </header>
       <details className="rounded-xl border bg-card p-5" open={Boolean(prefill)}>
@@ -290,12 +291,25 @@ export function JournalPage() {
       </details>
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Entradas existentes</h2>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={onlyOpen}
+            onChange={(event) => {
+              setOnlyOpen(event.target.checked);
+              setOffset(0);
+            }}
+          />
+          Mostrar solo entradas abiertas (sin revisar)
+        </label>
         {entries.isPending && <LoadingState />}
         {entries.isError && (
           <ErrorState error={entries.error} retry={() => void entries.refetch()} />
         )}
         {entries.data?.items.length === 0 && (
-          <p className="text-sm text-muted-foreground">Todavía no hay tesis.</p>
+          <p className="text-sm text-muted-foreground">
+            {onlyOpen ? 'No hay tesis abiertas.' : 'Todavía no hay tesis.'}
+          </p>
         )}
         {entries.data?.items.map((entry) => (
           <Entry

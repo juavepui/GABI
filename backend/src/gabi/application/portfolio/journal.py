@@ -10,7 +10,7 @@ from gabi.domain.portfolio.journal import compute_expected_value
 
 
 class JournalRepository(Protocol):
-    def list_entries(self, limit: int, offset: int) -> tuple[list[dict], int]: ...
+    def list_entries(self, limit: int, offset: int, only_open: bool = False) -> tuple[list[dict], int]: ...
     def get(self, entry_id: int) -> dict | None: ...
     def create(self, entry: dict) -> int: ...
     def review(self, entry_id: int, review_date: str, review_price: float | None, notes: str) -> bool: ...
@@ -29,8 +29,9 @@ class Journal:
         result["expected_value"] = expected
         return result
 
-    def list(self, limit: int, offset: int) -> tuple[list[dict], int]:
-        rows, total = self.repository.list_entries(limit, offset)
+    def list(self, limit: int, offset: int, only_open: bool = False) -> tuple[list[dict], int]:
+        """`only_open`: the old «Mostrar solo entradas abiertas (sin revisar)»."""
+        rows, total = self.repository.list_entries(limit, offset, only_open)
         return [self.present(row) for row in rows], total
 
     def create(self, entry: dict) -> dict:

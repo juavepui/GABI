@@ -35,27 +35,6 @@ FROZEN_LABEL = "Hipótesis congelada 2026-09-17"
 FROZEN_WEIGHTS = {"value": 0.30, "quality": 0.35, "momentum": 0.25, "risk": 0.10}
 FROZEN_WEIGHTS_TOLERANCE = 1e-6
 
-# Páginas visibles en modo INVESTOR (ruta tal cual la registra
-# streamlit_app.py). No es una lista de "páginas peligrosas que se
-# esconden": es la lista explícita y positiva de lo que hace falta para
-# USAR el modelo -- todo lo demás (herramientas de investigación) queda
-# solo en RESEARCH.
-INVESTOR_PAGES = frozenset({
-    "pages/0_Mi_Cartera.py",
-    "pages/7_Aprender.py",
-    "pages/1_Screener.py",
-    "pages/2_Ficha_Empresa.py",
-    "pages/6_Comparar_Empresas.py",
-    "pages/16_Signal_Monitor.py",
-    "pages/9_Decisiones.py",
-    "pages/10_Carteras_Simuladas.py",
-    "pages/4_Diario_Inversion.py",
-    "pages/15_Salud_Datos.py",
-    "pages/5_Panel_Macro.py",
-    "pages/3_Configuracion.py",
-})
-
-
 def get_mode() -> str:
     """Persistido en disco (no solo session_state de Streamlit) para que un
     usuario junior no tenga que volver a elegir INVESTOR cada vez que abre
@@ -170,17 +149,6 @@ def current_model_status() -> dict:
                                 else "research_lab" if live_forward_active else None),
         "blind_validation_id": blind_validation_id,
     }
-
-
-def visible_pages(mode: str, all_page_paths: list) -> list:
-    """Filtra `all_page_paths` (rutas tal y como las pasa streamlit_app.py
-    a st.Page) según el modo -- RESEARCH ve todas; INVESTOR, solo
-    INVESTOR_PAGES. Preserva el orden de entrada."""
-    if mode not in MODES:
-        raise ValueError(f"mode debe ser uno de {MODES}")
-    if mode == "RESEARCH":
-        return list(all_page_paths)
-    return [p for p in all_page_paths if p in INVESTOR_PAGES]
 
 
 def experimental_banner_message(weights: dict) -> str | None:

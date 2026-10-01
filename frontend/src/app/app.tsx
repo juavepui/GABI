@@ -14,7 +14,6 @@ import {
   BriefcaseBusiness,
   FlaskConical,
   Settings2,
-  ArrowUpRight,
   HardDrive,
   Leaf,
 } from 'lucide-react';
@@ -127,14 +126,6 @@ function Shell() {
             <p className="mt-2 text-[11px] leading-relaxed text-[#c5d8cc]">
               Datos y cálculos permanecen en este equipo.
             </p>
-            <a
-              href="http://localhost:8501"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-1 text-xs font-medium"
-            >
-              Abrir Streamlit <ArrowUpRight size={14} aria-hidden="true" />
-            </a>
           </div>
         </div>
       </aside>

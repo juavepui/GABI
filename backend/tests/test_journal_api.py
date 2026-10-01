@@ -33,6 +33,8 @@ def test_journal_reads_legacy_rows_and_writes_compatible_reviews(tmp_path, monke
         assert review.status_code == 200, review.text
         assert review.json()["status"] == "revisada"
         assert journal.list_entries().set_index("id").loc[entry_id, "review_price"] == 210
+        open_only = api.get("/api/v1/portfolio/journal?only_open=true").json()
+        assert [item["id"] for item in open_only["items"]] == [legacy_id] and open_only["total"] == 1
         assert api.post(f"/api/v1/portfolio/journal/{entry_id}/review", json={}).status_code == 404
         assert api.post(f"/api/v1/portfolio/journal/{entry_id}/delete").status_code == 204
         assert entry_id not in journal.list_entries()["id"].tolist()

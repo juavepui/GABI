@@ -1,7 +1,7 @@
 """Explicit snapshots and comparisons; ordinary reads never create events."""
 
 from collections.abc import Callable
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from math import isfinite
 from typing import Protocol
 
@@ -17,7 +17,7 @@ class SignalRepository(Protocol):
     def snapshots(self) -> list[dict]: ...
     def snapshot(self, snapshot_id: int) -> pd.DataFrame: ...
     def save_snapshot(self, table: pd.DataFrame, as_of_date: str, name: str, top_n: int) -> int: ...
-    def events(self, severity: str | None, limit: int) -> list[dict]: ...
+    def events(self, severity: str | None, limit: int, since: str | None = None) -> list[dict]: ...
     def record(self, events: list[dict], snapshot_id: int) -> None: ...
     def filing_facts(self, symbol: str) -> tuple[pd.DataFrame, str | None]: ...
     def record_filings(self, snapshot_id: int, results: list[dict]) -> int: ...
@@ -30,15 +30,18 @@ FilingsComparator = Callable[[str, pd.DataFrame, str | None], list[dict]]
 class SignalMonitor:
     def __init__(self, repository: SignalRepository, market: MarketRepository,
                  policy: ModelPolicy, today: Callable[[], date], compare: SignalComparator,
-                 compare_filings: FilingsComparator, jobs: Jobs):
+                 compare_filings: FilingsComparator, jobs: Jobs,
+                 now: Callable[[], datetime] = lambda: datetime.now(UTC)):
         self.repository, self.market, self.policy, self.today, self.compare = repository, market, policy, today, compare
-        self.compare_filings, self.jobs = compare_filings, jobs
+        self.compare_filings, self.jobs, self.now = compare_filings, jobs, now
 
     def snapshots(self) -> list[dict]:
         return self.repository.snapshots()
 
-    def events(self, severity: str | None, limit: int) -> list[dict]:
-        return self.repository.events(severity, limit)
+    def events(self, severity: str | None, limit: int, since_hours: int | None = None) -> list[dict]:
+        """Newest events first; `since_hours` is the old «Últimas N horas» window."""
+        since = None if since_hours is None else (self.now() - timedelta(hours=since_hours)).isoformat()
+        return self.repository.events(severity, limit, since)
 
     def save(self, name: str, top_n: int) -> int:
         name = name.strip()

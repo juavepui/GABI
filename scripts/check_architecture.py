@@ -218,7 +218,7 @@ def main() -> int:
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1
-    print("Backend/Streamlit architecture OK; legacy exceptions are explicit and cannot grow silently.")
+    print("Backend architecture OK; legacy exceptions are explicit and cannot grow silently.")
     return 0
 
 

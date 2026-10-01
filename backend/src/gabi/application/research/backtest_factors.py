@@ -29,7 +29,7 @@ def build_factor_contrast(artifact: dict, request: dict, source_sha256: str,
                           run: Callable[[pd.DataFrame, int | None], dict]) -> dict:
     """Serialize each legacy diagnostic separately; a failed part keeps its message, not a guess."""
     if artifact.get("kind") != "backtest_v1":
-        raise ValueError("El contraste Fama-French solo se aplica al backtest V1, como en Streamlit.")
+        raise ValueError("El contraste Fama-French solo se aplica al backtest V1.")
     require_observed_period(artifact["start"], artifact["end"])
     periods = pd.DataFrame(artifact["periods"])
     lags = request["hac_lags"]

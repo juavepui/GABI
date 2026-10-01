@@ -1,4 +1,4 @@
-# Frontend local de GABI — F6 en curso / #68
+# Frontend local de GABI
 
 React + TypeScript + Vite, React Router, shadcn/ui y TanStack Query.
 El Screener y la ficha consultan el backend FastAPI. Los cálculos financieros,
@@ -21,8 +21,23 @@ Abre **http://127.0.0.1:8000**. `serve` escucha solo en loopback, atiende
 React y `/api/v1` en ese origen e inicia el worker. Ctrl+C detiene ambos.
 El build debe repetirse al actualizar el frontend. Los datos permanecen en
 `data/`; el build no los copia. El catálogo de Investigación se lee de los
-metadatos publicados del checkout. Streamlit continúa disponible para los
-recorridos de investigación aún no migrados.
+metadatos publicados del checkout. Es la única interfaz de GABI: Streamlit se
+retiró en F6 (#68).
+
+### Actualizar una instalación
+
+Tras `git pull`, desde la raíz:
+
+```powershell
+uv sync --project backend --locked --all-groups
+npm --prefix frontend ci
+npm --prefix frontend run build
+uv run --project backend python -m gabi_cli serve
+```
+
+`uv sync` también elimina paquetes que ya no se usan (por ejemplo, Streamlit).
+Si las tareas programadas usan otro intérprete, vuelve a ejecutar
+`scripts/programar_tareas.ps1` para registrarlas con el actual.
 
 Para desarrollo con recarga de Vite, usa dos terminales. Primera:
 
@@ -64,8 +79,7 @@ Si ya utilizas el entorno raíz de Windows:
 ```
 
 Para comprobar el build local, usa `npm run build` y `npm run preview`.
-Los servidores se detienen con Ctrl+C. La retirada de Streamlit espera la
-equivalencia de los cinco recorridos F6.
+Los servidores se detienen con Ctrl+C.
 
 ## Flujos disponibles
 
@@ -86,23 +100,15 @@ plan objetivo, diario, ayuda contextual, decisiones experimentales y carteras
 simuladas. [Cobertura y límites de F5](../docs/architecture/f5-portfolio-market.md).
 Investigación muestra el registro de búsquedas publicadas, incluidos ensayos
 fallidos y límites de evidencia, y permite reconstruir un ranking histórico
-observado mediante un job. Los backtests y laboratorios siguen en Streamlit.
-[Cobertura y pasos pendientes de F6](../docs/architecture/f6-research.md).
-Administración permite encolar refrescos incrementales, hasta diez símbolos,
-auditoría de cobertura y un backtest exploratorio de hasta un año. Muestra el
-estado persistente, cancelación cooperativa y resultados verificados por hash.
-El mantenimiento #43/#44 solo lo encola el programador; nunca publica resultados
-ciegos en el cliente. Las claves se configuran localmente y el cliente solo ve
-si están presentes. Los pesos por defecto se editan en Administración cuando el
-modo local ya es Research; Investor los mantiene bloqueados. El cambio de modo
-sigue temporalmente en Streamlit.
-Para esos flujos, conserva esta vía de vuelta desde la raíz:
-
-```powershell
-uv run --project backend streamlit run app/streamlit_app.py
-# O, con el entorno raíz de Windows:
-.venv/Scripts/python.exe -m streamlit run app/streamlit_app.py
-```
+observado mediante un job, ejecutar los backtests V1/V2, Factor Lab, Research
+Lab, validaciones ciegas y Portfolio Lab en modo Research.
+[Auditoría de equivalencia de F6](../docs/architecture/f6-research.md).
+Administración actualiza los datos (50, 150 o todo el universo, con resumen de
+fallos y reintento de los fallidos), guarda las claves locales, cambia el modo
+Investor/Research, edita los pesos en Research y muestra la calidad de los datos.
+Las tareas tienen estado persistente, cancelación cooperativa y resultados
+verificados por hash. El mantenimiento #43/#44 solo lo encola el programador;
+nunca publica resultados ciegos en el cliente.
 
 ## Contrato, arquitectura y comprobaciones
 

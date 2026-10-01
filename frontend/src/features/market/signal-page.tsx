@@ -16,6 +16,7 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
+import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { SnapshotProgress } from './snapshot-progress';
 import { dateLabel } from '@/shared/lib/format';
 
@@ -55,9 +56,11 @@ export function SignalPage() {
     queryKey: ['market', 'snapshots'],
     queryFn: ({ signal }) => getSnapshots(signal),
   });
+  const [severity, setSeverity] = useState('');
+  const [sinceHours, setSinceHours] = useState(24 * 7);
   const signals = useQuery({
-    queryKey: ['market', 'signals'],
-    queryFn: ({ signal }) => getSignals(signal),
+    queryKey: ['market', 'signals', severity, sinceHours],
+    queryFn: ({ signal }) => getSignals({ severity, sinceHours }, signal),
   });
   const [selected, setSelected] = useState<number | null>(null);
   const [filingJobId, setFilingJobId] = useState<string | null>(null);
@@ -366,12 +369,38 @@ export function SignalPage() {
       )}
       <section className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Eventos recientes</h2>
+        <div className="mt-3 flex flex-wrap items-end gap-3 text-sm">
+          <label className="grid gap-1">
+            Severidad
+            <NativeSelect value={severity} onChange={(event) => setSeverity(event.target.value)}>
+              <NativeSelectOption value="">Todas</NativeSelectOption>
+              <NativeSelectOption value="MATERIAL">MATERIAL</NativeSelectOption>
+              <NativeSelectOption value="WATCH">WATCH</NativeSelectOption>
+              <NativeSelectOption value="INFO">INFO</NativeSelectOption>
+            </NativeSelect>
+          </label>
+          <label className="grid gap-1">
+            Últimas N horas
+            <Input
+              className="w-28"
+              type="number"
+              min={1}
+              max={720}
+              value={sinceHours}
+              onChange={(event) =>
+                setSinceHours(Math.min(Math.max(Number(event.target.value) || 1, 1), 720))
+              }
+            />
+          </label>
+        </div>
         {signals.isPending && <LoadingState />}
         {signals.isError && (
           <ErrorState error={signals.error} retry={() => void signals.refetch()} />
         )}
         {signals.data?.items.length === 0 && (
-          <p className="mt-3 text-sm text-muted-foreground">Sin eventos registrados.</p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Sin eventos registrados en esta ventana.
+          </p>
         )}
         <ul className="mt-4 divide-y">
           {signals.data?.items.map((event, index) => (

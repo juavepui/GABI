@@ -1,8 +1,8 @@
 # Backend Python de GABI
 
 Los paquetes `gabi` y `gabi_api` y sus tests residen aquí. Las dependencias siguen
-fijadas en `uv.lock`. Streamlit se conserva en `../app/` durante la transición;
-la [API local de F2](../docs/local-api.md) comparte su ranking y filtros.
+fijadas en `uv.lock`. La [API local](../docs/local-api.md) sirve la interfaz
+React; Streamlit se retiró en F6 (#68).
 
 La [arquitectura vigente](../docs/architecture.md) fija dominio, aplicación,
 infraestructura y adaptadores HTTP/CLI. El [plan legacy](../docs/architecture/legacy-migration.md)
@@ -14,8 +14,7 @@ Desde la raíz del repositorio:
 ```powershell
 uv sync --project backend --locked --all-groups
 uv run --project backend pytest
-uv run --project backend python -m gabi_api.bootstrap
-uv run --project backend streamlit run app/streamlit_app.py
+uv run --project backend python -m gabi_cli serve
 ```
 
 Desde esta carpeta:
@@ -23,8 +22,7 @@ Desde esta carpeta:
 ```powershell
 uv sync --locked --all-groups
 uv run pytest
-uv run python -m gabi_api.bootstrap
-uv run streamlit run ../app/streamlit_app.py
+uv run python -m gabi_cli serve
 uv run python -m gabi.frozen_research_ci --check-frozen
 uv run python -m gabi.frozen_research_ci --typecheck
 uv run python -m gabi.search_ledger --verify

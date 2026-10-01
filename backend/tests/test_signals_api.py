@@ -89,3 +89,24 @@ def test_cached_filings_job_and_earnings_preserve_signal_events(tmp_path):
         with sqlite3.connect(tmp_path / "gabi.db") as db:
             assert db.execute("SELECT COUNT(*) FROM filing_comparisons WHERE symbol='T000'").fetchone()[0] == 1
             assert db.execute("SELECT COUNT(*) FROM filing_metadata WHERE symbol='T000'").fetchone()[0] == 2
+
+
+def test_recent_events_window_and_severity_match_the_old_list(tmp_path, monkeypatch):
+    from gabi import config, signal_monitor
+
+    seed_fixture(tmp_path)
+    now = datetime.now(UTC)
+    with sqlite3.connect(tmp_path / "gabi.db") as db:
+        db.executescript(signal_monitor.SCHEMA)  # As the old monitor, before any comparison.
+        for hours, severity in ((2, "MATERIAL"), (30, "WATCH"), (24 * 10, "MATERIAL")):
+            db.execute("INSERT INTO signal_events (detected_at,symbol,event_type,severity,cause,to_snapshot_id) "
+                       "VALUES (?,?,?,?,?,1)", ((now - timedelta(hours=hours)).isoformat(), f"S{hours}", "x", severity, "test"))
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:
+        week = api.get("/api/v1/market/signals?since_hours=168").json()["items"]
+        material = api.get("/api/v1/market/signals?since_hours=720&severity=MATERIAL").json()["items"]
+        assert api.get("/api/v1/market/signals?since_hours=0").status_code == 422
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    assert [row["symbol"] for row in week] == signal_monitor.list_events(since_hours=168)["symbol"].tolist()
+    assert [row["symbol"] for row in week] == ["S2", "S30"]
+    assert [row["symbol"] for row in material] == ["S2", "S240"]

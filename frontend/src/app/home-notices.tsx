@@ -4,7 +4,7 @@ import { getNotices } from '@/shared/api/client';
 
 const COMMAND = 'python -m gabi.periodic_tasks --run';
 
-/** The old Streamlit portada notices, shown on the landing page. */
+/** Notices shown on the landing page: legal notice, blind rebalances due soon and the #44 state. */
 export function HomeNotices() {
   const notices = useQuery({
     queryKey: ['notices'],

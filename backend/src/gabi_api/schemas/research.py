@@ -828,7 +828,7 @@ class ExperimentBootstrapPreview(BaseModel):
 
 
 class ManualExperimentRequest(BaseModel):
-    """The fields of the Streamlit manual form; 0 in a metric means "no value", as before."""
+    """Fields of a manually logged experiment; 0 in a metric means "no value", as the legacy log stores it."""
 
     model_config = {"extra": "forbid"}
 
@@ -1044,7 +1044,7 @@ class BlindWeights(BaseModel):
 
 
 class BlindCreateRequest(BaseModel):
-    """The Streamlit creation form; weights in percent."""
+    """A new blind validation; weights in percent."""
 
     model_config = {"extra": "forbid"}
 

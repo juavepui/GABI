@@ -495,8 +495,11 @@ sustituto:
 | Carteras simuladas | Actualizar precios de un ticker o de la cartera y el SPY | Hecho: job `sim_prices` con los mismos símbolos y pares de divisas que los botones antiguos |
 | Panel Macro | Próxima publicación del IPC (consulta FRED en cada render) | Retirar: React ya indica que no se obtiene (decisión del propietario, 2026-10-01) |
 
-La retirada de Streamlit (páginas, helpers `_ui`, `ui_helpers` y la dependencia)
-queda pendiente hasta cubrir o descartar explícitamente cada fila.
+Una segunda revisión, control a control de las páginas (no solo botones), encontró
+y migró además el filtro por severidad y ventana de horas de los eventos del
+Signal Monitor (`GET /market/signals?since_hours`, igual que
+`signal_monitor.list_events`) y el filtro «solo entradas abiertas» del Diario
+(`GET /portfolio/journal?only_open`).
 
 Durante la auditoría se encontró que el ranking de React fallaba con la base
 local. Cada lote de 16 empresas leía el histórico completo de precios, que tras
@@ -557,3 +560,22 @@ AAPL, MSFT y NVDA coinciden con `get_earnings_surprises`,
 `latest_estimate_snapshot`, `revision_since` y `filing_tracker.compare_filings`
 (0,01-0,23 s por consulta) y `gabi.db` no cambia.
 
+## Retirada de Streamlit
+
+Con todas las filas de la auditoría hechas o descartadas por el propietario, se
+retiró Streamlit (2026-10-01):
+
+- `app/` (la portada y las 12 páginas), `ui_helpers`, `evidence_ui`,
+  `live_ledger_ui`, `rank_stability_ui` y `app_mode.visible_pages` con sus
+  `INVESTOR_PAGES`. Las definiciones y el formato de métricas viven en
+  `domain/market/metric_info.py`.
+- El backtest de cruce SMA (`sim_portfolios.sma_backtest`), por decisión del
+  propietario, y las dependencias `streamlit`, `plotly` y `backtesting`.
+- Los tests de AppTest y el paso de compilación de la CI. Las comparaciones de
+  paridad siguen frente a copias de referencia en `backend/tests/retired_*.py`.
+- 17 entradas de `.github/architecture-legacy.json`; quedan 102 módulos backend.
+  Las guardas siguen rechazando módulos `_ui`, `ui_helpers`, imports de
+  Streamlit y ficheros nuevos en `app/`.
+- Los textos de React que remitían a Streamlit. La interfaz se arranca con
+  `uv run --project backend python -m gabi_cli serve` (React, API y worker en un
+  solo origen local); la actualización está en el [README del frontend](../../frontend/README.md#actualizar-una-instalación).

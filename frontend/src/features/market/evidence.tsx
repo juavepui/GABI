@@ -35,7 +35,7 @@ export function Evidence({ model, data }: { model: ModelResponse; data: DataResp
         >
           <Clock3 size={18} aria-hidden="true" />
           Datos obsoletos. Último precio: {dateLabel(data.latest_price_date)}. Actualiza la caché
-          desde Streamlit.
+          desde Administración.
         </p>
       )}
       {data.warnings.length > 0 && (

@@ -59,8 +59,10 @@ def save_snapshot(body: SaveSnapshot, monitor: Annotated[SignalMonitor, Depends(
 @router.get("/signals", response_model=SignalEventList)
 def events(monitor: Annotated[SignalMonitor, Depends(service)],
            severity: Literal["INFO", "WATCH", "MATERIAL"] | None = None,
-           limit: Annotated[int, Query(ge=1, le=200)] = 100) -> SignalEventList:
-    return SignalEventList(items=[SignalEvent.model_validate(item) for item in monitor.events(severity, limit)])
+           limit: Annotated[int, Query(ge=1, le=200)] = 100,
+           since_hours: Annotated[int | None, Query(ge=1, le=720)] = None) -> SignalEventList:
+    return SignalEventList(items=[SignalEvent.model_validate(item)
+                                  for item in monitor.events(severity, limit, since_hours)])
 
 
 @router.post("/signals/compare", response_model=SignalEventList)
