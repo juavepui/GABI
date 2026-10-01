@@ -970,14 +970,6 @@
     "streamlit",
     "sys"
   ],
-  "app/pages/13_Blind_Validation.py": [
-    "gabi.blind_validation",
-    "gabi.periodic_tasks",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
   "app/pages/14_Portfolio_Lab.py": [
     "gabi.portfolio_lab",
     "gabi.tail_risk_ui",

@@ -1451,7 +1451,7 @@ resultado a medias y "ajustar un poco" la estrategia**, la tentación exacta que
 ("llevamos seis meses perdiendo, quizá Momentum debería pasar de 25 a 35%..." — en cuanto se hace eso,
 la prueba prospectiva ha muerto, sin que nadie necesite hacer trampa conscientemente).
 
-**`backend/src/gabi/blind_validation.py`** (página 🔒 Blind Forward Validation) convierte esa promesa en algo
+**`backend/src/gabi/blind_validation.py`** (Investigación → Validaciones ciegas en la interfaz React) convierte esa promesa en algo
 real: cada rebalanceo se registra de forma **inmutable** (`UNIQUE(validation_id, rebalance_date)` —
 reintentar el mismo periodo lanza, no sobrescribe) con picks, precios de entrada reales, commit de
 código (`git rev-parse --short HEAD`, reutilizado de `research_lab.py`), y un **hash encadenado con el
@@ -1489,7 +1489,7 @@ trimestre empezara con información ya conocida. Hay una sola orden para todo:
 
 `--run` **se niega a registrar** si todavía no ha llegado la fecha, si SPY o RSP no tienen el último
 cierre, si más de un 5 % del universo no lo tiene o si la cadena de hashes está rota, y explica por qué.
-La página 🔒 Blind Forward Validation aplica la misma regla a su botón, y la portada muestra un aviso
+Investigación → Validaciones ciegas (interfaz React) aplica la misma regla en el backend, y la portada muestra un aviso
 cuando falta una semana o menos para un rebalanceo. Lo hecho queda en `data/periodic_tasks/log.jsonl`.
 
 **Cuándo ejecutarlo**: el día del rebalanceo (el primero es el **21 de diciembre de 2026**), después

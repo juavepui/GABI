@@ -12,7 +12,7 @@ calidad/confianza de los datos. Los pesos del score quedan bloqueados a la
 hipótesis congelada: no hay sliders que tocar por accidente.
 
 RESEARCH: acceso completo, incluida la experimentación (Ranking histórico y
-Factor Lab y Research Lab en React, Blind Forward Validation, Portfolio Lab). Calidad
+Factor Lab, Research Lab y Blind Forward Validation en React, Portfolio Lab). Calidad
 sigue permitiendo experimentar, pero cualquier desviación de los pesos
 congelados queda marcada EXPERIMENTAL de forma visible, nunca silenciosa."""
 import json

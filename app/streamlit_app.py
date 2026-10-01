@@ -44,7 +44,8 @@ def _aviso_rebalanceos():
     for row in pending:
         when = "vencido" if row["dias"] <= 0 else f"en {row['dias']} día(s)"
         st.info(f"🗓️ Rebalanceo de la prueba ciega #{row['id']} ({row['nombre']}) {when}, el {row['proximo']}. "
-                "Ejecuta `python -m gabi.periodic_tasks --run` después del cierre del mercado.", icon="🗓️")
+                "Ejecuta `python -m gabi.periodic_tasks --run` después del cierre del mercado, o regístralo en "
+                "Investigación → Validaciones ciegas (interfaz React).", icon="🗓️")
 
 
 def inicio():
@@ -112,7 +113,6 @@ PAGE_SPECS = [
     ("pages/1_Screener.py", "Screener", "📊"),
     ("pages/2_Ficha_Empresa.py", "Ficha de empresa", "🔍"),
     ("pages/6_Comparar_Empresas.py", "Comparar empresas", "⚖️"),
-    ("pages/13_Blind_Validation.py", "Blind Forward Validation", "🔒"),
     ("pages/14_Portfolio_Lab.py", "Portfolio Lab", "🧮"),
     ("pages/9_Decisiones.py", "Decisiones de cartera", "🧭"),
     ("pages/10_Carteras_Simuladas.py", "Carteras simuladas", "🧪"),
@@ -133,9 +133,10 @@ with st.sidebar:
         format_func=lambda m: "🧭 Investor" if m == "INVESTOR" else "🔬 Research",
         help="**Investor**: aplica la hipótesis congelada -- los pesos del "
              "score quedan bloqueados a la hipótesis congelada, sin sliders que tocar por accidente. "
-             "**Research**: acceso completo (Blind Forward Validation, Portfolio Lab) -- cualquier "
+             "**Research**: acceso completo (Portfolio Lab) -- cualquier "
              "desviación de la hipótesis congelada queda marcada EXPERIMENTAL, nunca silenciosa. El Ranking "
-             "histórico, sus backtests, Factor Lab y Research Lab están en la interfaz React (Investigación).",
+             "histórico, sus backtests, Factor Lab, Research Lab y las validaciones ciegas están en la interfaz "
+             "React (Investigación).",
         horizontal=True,
     )
     app_mode.set_mode(mode)  # persiste para la próxima vez que se abra la app, no solo esta sesión

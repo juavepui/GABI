@@ -405,12 +405,25 @@ momento de ejecutar.
 Las pruebas comparan rendimiento, acumulados y exportación con las expresiones
 antiguas y comprueban el corte en la revisión con datos temporales.
 
+La página Streamlit `13_Blind_Validation.py` se ha retirado. Con una copia
+temporal de las tablas ciegas de la base local, el estado nuevo y
+`blind_validation.get_status` coincidieron sin diferencias para las pruebas 1 y
+3: nombre, estado, desbloqueo, periodos, próximo rebalanceo (2026-12-21),
+días hasta el desbloqueo, integridad y revelado. `data/gabi.db` solo se leyó.
+El rendimiento no se pudo comparar con datos locales porque ambas pruebas siguen
+bloqueadas hasta 2029, como deben. El registro del rebalanceo no se ejecutó con
+la base real porque escribiría, y aún no toca. Ambas paridades están probadas con
+datos temporales. El aviso de rebalanceo de la portada y las instrucciones de
+`docs/prospective-plan/README.md` remiten ahora a Investigación → Validaciones
+ciegas; el plan sellado (`gabi-id1.json`) no cambia. `blind_validation` y
+`periodic_tasks` siguen en uso por el mantenimiento programado.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
 | Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado, auditorías guardadas y registro prospectivo en React | Completado; página Streamlit retirada. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
-| Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
+| Blind Forward Validation | Estado, sellos y planes preregistrados; alta, rebalanceo, ruptura del sello (prohibida con preregistro), rendimiento hasta la última revisión y exportación en React | Completado; página Streamlit retirada. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
 
 Antes de cerrar #68 se comprobarán los 17 recorridos del inventario F0, la

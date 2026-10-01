@@ -131,7 +131,7 @@ def test_current_model_status_experimental_for_custom_weights(tmp_path, monkeypa
 ALL_PAGES = [
     "pages/7_Aprender.py", "pages/1_Screener.py", "pages/2_Ficha_Empresa.py",
     "pages/6_Comparar_Empresas.py",
-    "pages/13_Blind_Validation.py", "pages/14_Portfolio_Lab.py",
+    "pages/14_Portfolio_Lab.py",
     "pages/9_Decisiones.py", "pages/10_Carteras_Simuladas.py", "pages/5_Panel_Macro.py",
     "pages/4_Diario_Inversion.py", "pages/15_Salud_Datos.py", "pages/16_Signal_Monitor.py",
     "pages/3_Configuracion.py",
@@ -144,8 +144,7 @@ def test_visible_pages_research_mode_sees_everything():
 
 def test_visible_pages_investor_mode_excludes_research_tools():
     visible = app_mode.visible_pages("INVESTOR", ALL_PAGES)
-    for research_only in ("pages/13_Blind_Validation.py",
-                          "pages/14_Portfolio_Lab.py"):
+    for research_only in ("pages/14_Portfolio_Lab.py",):
         assert research_only not in visible
     for essential in ("pages/1_Screener.py", "pages/2_Ficha_Empresa.py", "pages/9_Decisiones.py",
                       "pages/4_Diario_Inversion.py", "pages/15_Salud_Datos.py", "pages/16_Signal_Monitor.py"):

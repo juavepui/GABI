@@ -34,7 +34,7 @@ La prueba principal es el IC prospectivo de sección cruzada. Detalle en el
 ## Integridad
 
 - Ambas pruebas deben registrar su próximo rebalanceo el **2026-12-21**, con
-  los precios refrescados antes. Desde la página «Blind Validation» o con
+  los precios refrescados antes. Desde Investigación → Validaciones ciegas (interfaz React) o con
   `blind_validation.record_rebalance`.
 - Las cadenas de hashes (`verify_integrity`) deben estar íntegras en cada
   revisión.
