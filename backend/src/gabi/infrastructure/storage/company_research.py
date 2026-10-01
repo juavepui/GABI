@@ -10,11 +10,15 @@ from gabi.application.errors import QueryError
 
 MAX_SURPRISES = 200
 MAX_ESTIMATES = 5_000
+MAX_INSIDER_ROWS = 10_000
 SURPRISE_COLUMNS = ("earnings_date", "eps_estimate", "eps_reported", "surprise_pct", "price_reaction_pct",
                     "source", "recorded_at")
 ESTIMATE_COLUMNS = ("captured_at", "period", "eps_avg", "eps_low", "eps_high", "eps_analysts", "eps_dispersion_pct",
                     "revenue_avg", "revenue_low", "revenue_high", "revised_up_7d", "revised_down_7d",
                     "revised_up_30d", "revised_down_30d", "source")
+INSIDER_COLUMNS = ("symbol", "cik", "accn", "line_no", "owner_name", "owner_title", "is_officer", "is_director",
+                   "is_ten_pct_owner", "is_10b5_1_plan", "transaction_date", "transaction_code", "acquired_disposed",
+                   "shares", "price_per_share", "shares_owned_after", "filed_date")
 
 
 class SqliteCompanyResearch:
@@ -47,3 +51,12 @@ class SqliteCompanyResearch:
         """As estimates.get_estimate_history: the captures GABI kept, oldest first."""
         return self._frame("estimate_snapshots", ESTIMATE_COLUMNS, "symbol=? AND period=?", (symbol, period),
                            "captured_at ASC", MAX_ESTIMATES)
+
+    def insider_transactions(self, symbol: str) -> pd.DataFrame:
+        """As insider.get_insider_transactions: every cached Form 4 line, newest first."""
+        return self._frame("insider_transactions", INSIDER_COLUMNS, "symbol=?", (symbol,), "transaction_date DESC",
+                           MAX_INSIDER_ROWS)
+
+    def insider_fetched_at(self, symbol: str) -> str | None:
+        frame = self._frame("insider_fetch_meta", ("fetched_at",), "symbol=?", (symbol,), "fetched_at DESC", 1)
+        return None if frame.empty else str(frame["fetched_at"].iloc[0])

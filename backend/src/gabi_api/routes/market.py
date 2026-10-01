@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import Response
 
 from gabi.application.errors import QueryError
+from gabi.application.market.analysis_prompt import AnalysisPrompt
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
@@ -11,12 +12,14 @@ from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
 from gabi_api.schemas.evidence import (
     CompanyEvidence,
     CompanyFilingChanges,
+    CompanyInsiders,
     CompanyResearchResponse,
     EvidenceTop,
     RankingCoverage,
     RankingStability,
 )
 from gabi_api.schemas.market import (
+    AnalysisPromptResponse,
     CompanyResponse,
     ComparisonResponse,
     DataResponse,
@@ -61,6 +64,11 @@ def company_research(symbol: SymbolPath, query: Research) -> dict:
     return query.overview(symbol)
 
 
+@router.get("/companies/{symbol}/insiders", response_model=CompanyInsiders)
+def company_insiders(symbol: SymbolPath, query: Research) -> dict:
+    return query.insiders(symbol)
+
+
 @router.get("/companies/{symbol}/filing-changes", response_model=CompanyFilingChanges)
 def company_filing_changes(symbol: SymbolPath, query: Research) -> dict:
     return query.filing_changes(symbol)
@@ -90,6 +98,12 @@ def company_evidence(symbol: SymbolPath, query: Evidence) -> dict:
 def company_evidence_download(symbol: SymbolPath, query: Evidence) -> Response:
     return Response(query.download(symbol), media_type="application/json",
                     headers={"Content-Disposition": f'attachment; filename="evidence-{symbol.upper()}.json"'})
+
+
+@router.get("/companies/{symbol}/analysis-prompt", response_model=AnalysisPromptResponse)
+def company_analysis_prompt(symbol: SymbolPath, request: Request) -> dict:
+    prompts: AnalysisPrompt = request.app.state.analysis_prompt
+    return prompts.prompt(symbol)
 
 
 @router.get("/learn/metrics", response_model=MetricGlossary)

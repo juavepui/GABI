@@ -5,6 +5,26 @@ export type ClientOptions = {
 };
 
 /**
+ * AnalysisPromptResponse
+ *
+ * Text to paste into an AI assistant; every number in it comes from GABI's deterministic code.
+ */
+export type AnalysisPromptResponse = {
+    /**
+     * Prompt
+     */
+    prompt: string;
+    /**
+     * Revision
+     */
+    revision: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * BacktestCurvePoint
  */
 export type BacktestCurvePoint = {
@@ -1289,6 +1309,58 @@ export type CompanyFilingChanges = {
 };
 
 /**
+ * CompanyInsiders
+ *
+ * Open-market Form 4 activity of the last months; informative, never scored.
+ */
+export type CompanyInsiders = {
+    /**
+     * Distinct Buyers
+     */
+    distinct_buyers: number;
+    /**
+     * Distinct Sellers
+     */
+    distinct_sellers: number;
+    /**
+     * Fetched At
+     */
+    fetched_at: string | null;
+    /**
+     * Has 10B5 1 Only Buys
+     */
+    has_10b5_1_only_buys: boolean;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * N Buys
+     */
+    n_buys: number;
+    /**
+     * N Sells
+     */
+    n_sells: number;
+    /**
+     * Net Value
+     */
+    net_value: number | null;
+    /**
+     * Recent
+     */
+    recent: Array<InsiderTransaction>;
+    /**
+     * Recent Total
+     */
+    recent_total: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * CompanyResearchResponse
  */
 export type CompanyResearchResponse = {
@@ -1380,13 +1452,13 @@ export type CompanyRow = {
 /**
  * CompanySyncRequest
  *
- * Download one company's earnings-surprise history or consensus estimates (the old Ficha buttons).
+ * Download one company's earnings surprises, consensus estimates or Form 4 lines (the old Ficha buttons).
  */
 export type CompanySyncRequest = {
     /**
      * Dataset
      */
-    dataset: 'surprises' | 'estimates';
+    dataset: 'surprises' | 'estimates' | 'insiders';
     /**
      * Symbol
      */
@@ -1515,7 +1587,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -3552,6 +3624,48 @@ export type Identity = {
      * Status
      */
     status: 'resolved' | 'ambiguous' | 'unresolved';
+};
+
+/**
+ * InsiderTransaction
+ */
+export type InsiderTransaction = {
+    /**
+     * Filed Date
+     */
+    filed_date: string | null;
+    /**
+     * Is 10B5 1 Plan
+     */
+    is_10b5_1_plan: number | null;
+    /**
+     * Owner Name
+     */
+    owner_name: string | null;
+    /**
+     * Owner Title
+     */
+    owner_title: string | null;
+    /**
+     * Price Per Share
+     */
+    price_per_share: number | null;
+    /**
+     * Shares
+     */
+    shares: number | null;
+    /**
+     * Transaction Code
+     */
+    transaction_code: string | null;
+    /**
+     * Transaction Date
+     */
+    transaction_date: string | null;
+    /**
+     * Transaction Label
+     */
+    transaction_label: string | null;
 };
 
 /**
@@ -7053,6 +7167,56 @@ export type CompanyApiV1CompaniesSymbolGetResponses = {
 
 export type CompanyApiV1CompaniesSymbolGetResponse = CompanyApiV1CompaniesSymbolGetResponses[keyof CompanyApiV1CompaniesSymbolGetResponses];
 
+export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/analysis-prompt';
+};
+
+export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetError = CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetErrors[keyof CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetErrors];
+
+export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AnalysisPromptResponse;
+};
+
+export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponse = CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses[keyof CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses];
+
 export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetData = {
     body?: never;
     path: {
@@ -7200,6 +7364,56 @@ export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponses = 
 };
 
 export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponse = CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponses[keyof CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponses];
+
+export type CompanyInsidersApiV1CompaniesSymbolInsidersGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/insiders';
+};
+
+export type CompanyInsidersApiV1CompaniesSymbolInsidersGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyInsidersApiV1CompaniesSymbolInsidersGetError = CompanyInsidersApiV1CompaniesSymbolInsidersGetErrors[keyof CompanyInsidersApiV1CompaniesSymbolInsidersGetErrors];
+
+export type CompanyInsidersApiV1CompaniesSymbolInsidersGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyInsiders;
+};
+
+export type CompanyInsidersApiV1CompaniesSymbolInsidersGetResponse = CompanyInsidersApiV1CompaniesSymbolInsidersGetResponses[keyof CompanyInsidersApiV1CompaniesSymbolInsidersGetResponses];
 
 export type CompanyResearchApiV1CompaniesSymbolResearchGetData = {
     body?: never;
@@ -8339,6 +8553,54 @@ export type SaveApiV1PortfolioDecisionsPostResponses = {
 
 export type SaveApiV1PortfolioDecisionsPostResponse = SaveApiV1PortfolioDecisionsPostResponses[keyof SaveApiV1PortfolioDecisionsPostResponses];
 
+export type JobCsvApiV1PortfolioDecisionsJobsJobIdDecisionsCsvGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/jobs/{job_id}/decisions.csv';
+};
+
+export type JobCsvApiV1PortfolioDecisionsJobsJobIdDecisionsCsvGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type JobCsvApiV1PortfolioDecisionsJobsJobIdDecisionsCsvGetError = JobCsvApiV1PortfolioDecisionsJobsJobIdDecisionsCsvGetErrors[keyof JobCsvApiV1PortfolioDecisionsJobsJobIdDecisionsCsvGetErrors];
+
+export type JobCsvApiV1PortfolioDecisionsJobsJobIdDecisionsCsvGetResponses = {
+    /**
+     * Decisiones en CSV
+     */
+    200: unknown;
+};
+
 export type PlanApiV1PortfolioDecisionsPlanIdGetData = {
     body?: never;
     path: {
@@ -8388,6 +8650,54 @@ export type PlanApiV1PortfolioDecisionsPlanIdGetResponses = {
 };
 
 export type PlanApiV1PortfolioDecisionsPlanIdGetResponse = PlanApiV1PortfolioDecisionsPlanIdGetResponses[keyof PlanApiV1PortfolioDecisionsPlanIdGetResponses];
+
+export type PlanCsvApiV1PortfolioDecisionsPlanIdDecisionsCsvGetData = {
+    body?: never;
+    path: {
+        /**
+         * Plan Id
+         */
+        plan_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/{plan_id}/decisions.csv';
+};
+
+export type PlanCsvApiV1PortfolioDecisionsPlanIdDecisionsCsvGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PlanCsvApiV1PortfolioDecisionsPlanIdDecisionsCsvGetError = PlanCsvApiV1PortfolioDecisionsPlanIdDecisionsCsvGetErrors[keyof PlanCsvApiV1PortfolioDecisionsPlanIdDecisionsCsvGetErrors];
+
+export type PlanCsvApiV1PortfolioDecisionsPlanIdDecisionsCsvGetResponses = {
+    /**
+     * Decisiones en CSV
+     */
+    200: unknown;
+};
 
 export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostData = {
     body?: never;

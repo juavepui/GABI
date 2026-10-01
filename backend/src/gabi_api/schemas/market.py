@@ -222,3 +222,11 @@ class MetricGlossary(BaseModel):
 
     blocks: list[GlossaryBlock]
     terms: dict[str, str]
+
+
+class AnalysisPromptResponse(BaseModel):
+    """Text to paste into an AI assistant; every number in it comes from GABI's deterministic code."""
+
+    symbol: str
+    revision: str
+    prompt: str

@@ -22,6 +22,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
+import { SimulationPrices } from './sim-prices';
 
 const SimulationChart = lazy(() => import('./simulation-chart'));
 const number = (value: number | null | undefined, digits = 2) =>
@@ -173,15 +174,12 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
           {number(portfolio.spread_bps)} pb.
         </p>
       </section>
+      <SimulationPrices portfolioId={id} hasTrades={(trades.data?.items.length ?? 0) > 0} />
       <form onSubmit={submit} className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Registrar operación simulada</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Se usa el cierre de la primera sesión. Si faltan precios o cambio en caché, se rechaza sin
-          guardar. Actualiza desde{' '}
-          <Link to="/administracion" className="text-primary underline">
-            Administración
-          </Link>
-          .
+          guardar. Actualiza sus precios en «Precios públicos», más arriba.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <label className="text-sm">

@@ -42,6 +42,12 @@ def test_decision_job_is_experimental_and_saved_in_legacy_table(tmp_path, monkey
         assert saved.json()["decisions"] == result["decisions"]
         assert api.post("/api/v1/portfolio/decisions", json={"job_id": job_id, "name": "Otra"}).json()["id"] == plan_id
         assert decision_engine.load_saved_plan(plan_id).to_dict(orient="records") == result["decisions"]
+        columns = ["symbol", "action", "current_pct", "target_pct", "change_pct", "reason", "score"]
+        expected_csv = decision_engine.load_saved_plan(plan_id)[columns].to_csv(index=False, lineterminator="\n")
+        for path in (f"jobs/{job_id}/decisions.csv", f"{plan_id}/decisions.csv"):
+            csv = api.get(f"/api/v1/portfolio/decisions/{path}")
+            assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv")
+            assert csv.content == expected_csv.encode("utf-8-sig")  # The old download, BOM included.
         assert api.post(f"/api/v1/portfolio/decisions/{plan_id}/rename", json={"name": "Renombrado"}).json()["name"] == "Renombrado"
         assert api.get(f"/api/v1/portfolio/decisions/{plan_id}").json()["name"] == "Renombrado"
         assert api.post(f"/api/v1/portfolio/decisions/{plan_id}/delete").json()["deleted"] is True

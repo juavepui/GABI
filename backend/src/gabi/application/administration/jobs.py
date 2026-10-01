@@ -19,7 +19,7 @@ from gabi.application.research.portfolio_lab import normalize_portfolio_lab
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
                   "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"}
@@ -62,6 +62,9 @@ class JobCommand:
                 raise QueryError("invalid_job", "Indica entre 1 y 10 símbolos distintos.", 422)
             if not all(SYMBOL.fullmatch(symbol) for symbol in self.symbols):
                 raise QueryError("invalid_job", "Los símbolos no son válidos.", 422)
+        elif self.kind == "sim_prices":
+            if len(self.symbols) > 1 or not all(SYMBOL.fullmatch(symbol) for symbol in self.symbols):
+                raise QueryError("invalid_job", "Indica un símbolo válido o ninguno para toda la cartera.", 422)
         elif self.symbols:
             raise QueryError("invalid_job", "Este trabajo no admite símbolos.", 422)
         if self.kind == "backtest":
@@ -144,7 +147,7 @@ class JobCommand:
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
-        if self.kind == "sim_result":
+        if self.kind in {"sim_result", "sim_prices"}:
             if self.portfolio_id is None or not 1 <= self.portfolio_id <= 1_000_000:
                 raise QueryError("invalid_job", "Indica una cartera simulada válida.", 422)
         elif self.portfolio_id is not None:

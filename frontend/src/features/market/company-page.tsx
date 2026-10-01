@@ -10,7 +10,7 @@ import { metric, dateLabel } from '@/shared/lib/format';
 import { useCompany } from './queries';
 import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
-import { CompanyResearch, FilingChanges } from './company-research';
+import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
 import { patchParams } from './params';
 
 const PriceChart = lazy(() => import('./price-chart'));
@@ -307,8 +307,10 @@ export function CompanyPage() {
               </Card>
             </div>
             <FilingChanges symbol={company.symbol} />
-            <div className="mb-6">
+            <div className="mb-6 space-y-3">
               <CompanyResearch symbol={company.symbol} />
+              <Insiders symbol={company.symbol} />
+              <AnalysisPrompt symbol={company.symbol} />
             </div>
             <p className="text-xs text-muted-foreground">
               Consulta generada el {dateLabel(data.generated_at)}. La lectura no inicia descargas ni

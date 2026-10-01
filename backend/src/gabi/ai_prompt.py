@@ -11,7 +11,7 @@ mucho el riesgo de alucinaciones frente a pedirle directamente una predicción
 de precio."""
 import pandas as pd
 
-from .ui_helpers import METRIC_INFO, format_metric_value
+from .domain.market.metric_info import METRIC_INFO, format_metric_value
 
 EXTRACTION_POINTS = [
     "Cambios en el guidance (frente al trimestre/año anterior)",
@@ -29,7 +29,7 @@ EXTRACTION_POINTS = [
 
 def _scores_block(row: pd.Series) -> str:
     if "composite_score" not in row.index or pd.isna(row.get("composite_score")):
-        return "(scores no disponibles todavía — actualiza datos en ⚙️ Configuración)"
+        return "(scores no disponibles todavía — actualiza los datos en Administración)"
     return (
         f"- Composite: {row['composite_score']:.1f}/100\n"
         f"- Value: {row['value_score']:.1f}/100\n"
@@ -40,7 +40,7 @@ def _scores_block(row: pd.Series) -> str:
 
 def _metrics_table(breakdown: pd.DataFrame) -> str:
     if breakdown is None or breakdown.empty:
-        return "(sin métricas calculadas todavía — actualiza datos en ⚙️ Configuración)"
+        return "(sin métricas calculadas todavía — actualiza los datos en Administración)"
     lines = ["| Métrica | Valor | Percentil (vs. sector) |", "|---|---|---|"]
     for _, r in breakdown.iterrows():
         if pd.isna(r.get("value")):
@@ -50,7 +50,7 @@ def _metrics_table(breakdown: pd.DataFrame) -> str:
         pct = f"{r['percentile']:.0f}/100" if pd.notna(r.get("percentile")) else "—"
         lines.append(f"| {label} | {value} | {pct} |")
     if len(lines) == 2:
-        return "(sin métricas calculadas todavía — actualiza datos en ⚙️ Configuración)"
+        return "(sin métricas calculadas todavía — actualiza los datos en Administración)"
     return "\n".join(lines)
 
 
@@ -61,7 +61,7 @@ def _filings_block(row: pd.Series) -> str:
     if pd.notna(row.get("latest_10q_url")):
         lines.append(f"- Último 10-Q ({row.get('latest_10q_date')}): {row['latest_10q_url']}")
     if not lines:
-        lines.append("- (sin enlaces todavía — actualiza datos en ⚙️ Configuración)")
+        lines.append("- (sin enlaces todavía — actualiza los datos en Administración)")
     return "\n".join(lines)
 
 

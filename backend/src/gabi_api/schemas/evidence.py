@@ -167,3 +167,31 @@ class FilingComparison(BaseModel):
 class CompanyFilingChanges(BaseModel):
     symbol: str
     results: list[FilingComparison]
+
+
+class InsiderTransaction(BaseModel):
+    transaction_date: str | None
+    owner_name: str | None
+    owner_title: str | None
+    transaction_code: str | None
+    transaction_label: str | None
+    shares: float | None
+    price_per_share: float | None
+    is_10b5_1_plan: int | None
+    filed_date: str | None
+
+
+class CompanyInsiders(BaseModel):
+    """Open-market Form 4 activity of the last months; informative, never scored."""
+
+    symbol: str
+    months: int
+    fetched_at: str | None
+    n_buys: int
+    n_sells: int
+    distinct_buyers: int
+    distinct_sellers: int
+    net_value: float | None
+    has_10b5_1_only_buys: bool
+    recent: list[InsiderTransaction]
+    recent_total: int

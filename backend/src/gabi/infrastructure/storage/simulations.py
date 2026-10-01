@@ -71,7 +71,7 @@ class SqliteSimulations:
             rows = db.execute("SELECT * FROM sim_trades WHERE portfolio_id=? ORDER BY execution_date,id LIMIT 501",
                               (portfolio_id,)).fetchall()
             if len(rows) > 500:
-                raise QueryError("resource_limit", "La cartera supera 500 operaciones; usa Streamlit para su historial.")
+                raise QueryError("resource_limit", "La cartera supera 500 operaciones.")
             defaults = {"market": "XNYS", "quote_currency": "USD", "fx_rate": 1.0, "fx_fee_bps": 0.0}
             return [defaults | dict(row) for row in rows]
 

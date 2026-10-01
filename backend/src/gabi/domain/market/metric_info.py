@@ -1,5 +1,7 @@
 """Spanish label and plain-language help for every metric GABI shows: the single source for every interface."""
 
+import math
+
 METRIC_INFO = {
     "name": {"label": "Empresa", "help": "Nombre de la empresa."},
     "sector": {"label": "Sector", "help": "Sector GICS al que pertenece la empresa."},
@@ -276,3 +278,34 @@ METRIC_INFO = {
                 "esa dimensión se muestra aparte como Confianza de evidencia (BAJA/MEDIA/ALTA).",
     },
 }
+
+# Columnas cuyo valor crudo es una fracción (0.09 = 9%) — se multiplican por
+# 100 solo para presentarlas en pantalla.
+FRACTION_COLUMNS = {
+    "roe", "roa", "roic", "operating_margin", "gross_margin", "profit_margin",
+    "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
+    "revenue_cagr_3y", "fcf_cagr_3y",
+    "quality_persistence_score", "roic_persistence_mean", "roic_persistence_std",
+    "operating_margin_persistence_mean", "operating_margin_persistence_std", "fcf_conversion_mean",
+    "revenue_per_share_cagr",
+    "implied_fcf_growth", "historical_fcf_cagr", "expectations_gap",
+    "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
+    "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield", "score_coverage",
+}
+
+
+def format_metric_value(metric: str, value) -> str:
+    """Formatea un valor crudo para mostrarlo en una tabla/detalle, en español."""
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return "—"
+    if isinstance(value, bool):
+        return "Sí" if value else "No"
+    if metric == "market_cap":
+        return f"{value / 1e9:.1f} mil M$"
+    if metric in ("avg_volume", "shares_outstanding"):
+        return f"{value / 1e6:.1f}M acciones" + ("/día" if metric == "avg_volume" else "")
+    if metric == "fundamentals_period_end":
+        return str(value)
+    if metric in FRACTION_COLUMNS:
+        return f"{value * 100:.1f}%"
+    return f"{value:.2f}"

@@ -488,6 +488,12 @@ sustituto:
 | Carteras simuladas | Botones de descarga de precios de un ticker o cartera | Usar el job `symbols` existente |
 | Aprender | Tutorial extenso | Hecho: las cuatro pestañas en `/cartera/aprender`; las definiciones de métricas pasan de `ui_helpers` a `domain/market/metric_info.py` y React las lee de `GET /learn/metrics`, que marca las 13 que puntúan (decisión del propietario, 2026-10-01) |
 | Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Hecho: `GET /notices` (solo lectura, 0,1 s, igual que `periodic_tasks.due_soon` y `smallmid_state` con la base local), mostrado en `/mercado` junto al aviso legal de la portada |
+| Ficha | Prompt para analizar con IA (`ai_prompt`) | Hecho: `GET /companies/{symbol}/analysis-prompt`, idéntico a la ficha antigua con la base local; `format_metric_value` pasa a `domain/market/metric_info.py` (revisión final de botones, 2026-10-01) |
+| Ficha | Actividad de insiders (Form 4) y su actualización | Hecho: `GET /companies/{symbol}/insiders` en solo lectura con la fórmula de `insider.summarize_insider_activity`, y `company_sync` con `dataset=insiders` |
+| Ficha | Todos los próximos eventos corporativos | Ya cubierto por «Próximos catalizadores» (`GET /companies/{symbol}/research`) |
+| Decisiones | Descargar decisiones CSV | Hecho: `GET /portfolio/decisions/jobs/{job_id}/decisions.csv` y `/{plan_id}/decisions.csv`, mismas columnas y BOM |
+| Carteras simuladas | Actualizar precios de un ticker o de la cartera y el SPY | Hecho: job `sim_prices` con los mismos símbolos y pares de divisas que los botones antiguos |
+| Panel Macro | Próxima publicación del IPC (consulta FRED en cada render) | Retirar: React ya indica que no se obtiene (decisión del propietario, 2026-10-01) |
 
 La retirada de Streamlit (páginas, helpers `_ui`, `ui_helpers` y la dependencia)
 queda pendiente hasta cubrir o descartar explícitamente cada fila.

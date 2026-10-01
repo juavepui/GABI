@@ -339,6 +339,13 @@ def synthetic_job(command, app):
         return app.state.decisions.generate(command.decision_policy, command.holdings_text)
     if command.kind == "filing_check":
         return app.state.signals.filings(command.snapshot_id)
+    if command.kind == "sim_prices":  # No network: the real symbol rules over a download that always succeeds.
+        from gabi.application.portfolio.sim_prices import refresh_prices
+        from gabi.infrastructure.legacy.sim_prices import fx_symbol
+        from gabi.infrastructure.storage.simulations import SqliteSimulations
+
+        return refresh_prices(SqliteSimulations(Path(app.state.settings.data_dir)), command.portfolio_id,
+                              command.symbols[0] if command.symbols else None, fx_symbol, lambda symbols: {})
     if command.kind == "sim_compare":
         return app.state.simulations.compare()
     if command.kind == "quality":

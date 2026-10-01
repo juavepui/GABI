@@ -224,12 +224,15 @@ def get_insider_fetched_at(symbols: list) -> dict:
     return result
 
 
-def summarize_insider_activity(symbol: str, months: int = 6) -> dict:
+def summarize_insider_activity(symbol: str, months: int = 6, transactions: pd.DataFrame | None = None) -> dict:
     """Resumen de actividad en los últimos `months` meses. Solo cuenta P
     (compra) y S (venta) en mercado abierto — concesiones, ejercicios de
     opciones y donaciones no reflejan una decisión de convicción, así que no
-    cuentan para 'compradores distintos' ni para el valor neto."""
-    df = get_insider_transactions(symbol)
+    cuentan para 'compradores distintos' ni para el valor neto.
+
+    `transactions` permite pasar las filas ya leídas (la API las lee en solo
+    lectura); por defecto se leen de la base como siempre."""
+    df = get_insider_transactions(symbol) if transactions is None else transactions
     empty = {
         "n_buys": 0, "n_sells": 0, "distinct_buyers": 0, "distinct_sellers": 0,
         "net_value": None, "has_10b5_1_only_buys": False, "recent": df,

@@ -17,6 +17,7 @@ from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
+from gabi.application.market.analysis_prompt import AnalysisPrompt
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.glossary import metric_glossary
@@ -43,7 +44,7 @@ from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
-from gabi.infrastructure.legacy.company import LegacyCompanyMath
+from gabi.infrastructure.legacy.company import LegacyCompanyMath, analysis_prompt
 from gabi.infrastructure.legacy.data_update import LegacyKeyWriter
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.evidence import LegacyEvidence
@@ -156,6 +157,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
+    app.state.analysis_prompt = AnalysisPrompt(market, analysis_prompt)
     app.state.metric_glossary = {"blocks": metric_glossary(*metric_blocks()), "terms": glossary_terms()}
     app.state.evidence = EvidenceQueries(market, LegacyEvidence(), LegacyRankingQuality())
     app.state.jobs = jobs

@@ -1,4 +1,6 @@
 import type {
+  AnalysisPromptResponse,
+  CompanyInsiders,
   NoticesResponse,
   MetricGlossary,
   CompanyResponse,
@@ -400,6 +402,22 @@ export function getMetricGlossary(signal?: AbortSignal): Promise<MetricGlossary>
 }
 export function getNotices(signal?: AbortSignal): Promise<NoticesResponse> {
   return get('/api/v1/notices', signal);
+}
+export function getCompanyInsiders(symbol: string, signal?: AbortSignal): Promise<CompanyInsiders> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/insiders', signal);
+}
+export function getAnalysisPrompt(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<AnalysisPromptResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/analysis-prompt', signal);
+}
+export function decisionsCsvUrl(target: { jobId: string } | { planId: number }): string {
+  return (
+    '/api/v1/portfolio/decisions/' +
+    ('jobId' in target ? 'jobs/' + encodeURIComponent(target.jobId) : String(target.planId)) +
+    '/decisions.csv'
+  );
 }
 export function getModel(signal?: AbortSignal): Promise<ModelResponse> {
   return get('/api/v1/model', signal);

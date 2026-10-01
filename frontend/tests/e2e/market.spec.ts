@@ -243,6 +243,14 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toBeVisible();
   await page.getByText('Estimaciones de consenso').click();
   await expect(page.getByText('Sin estimaciones sincronizadas todavía.')).toBeVisible();
+  await page.getByText('Actividad de insiders (SEC Form 4, informativo)').click();
+  await expect(page.getByText(/Sin operaciones de insiders en los últimos 6 meses/)).toBeVisible();
+  await page.getByRole('button', { name: 'Actualizar insiders de esta empresa' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' }).last()).toBeVisible();
+  await page.getByText('Prompt para analizar con IA').click();
+  await expect(page.getByLabel('Prompt para analizar con IA')).toHaveValue(
+    /No recalcules estos números/,
+  );
 });
 
 test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async ({ page }) => {

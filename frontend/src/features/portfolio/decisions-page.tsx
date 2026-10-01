@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import type { DecisionPolicy, SavedDecision } from '@/shared/api/generated/types.gen';
 import {
   createJob,
+  decisionsCsvUrl,
   deleteDecision,
   getDecision,
   getDecisionProgress,
@@ -285,6 +286,13 @@ export function DecisionsPage() {
                 Método: {preview.method}. Efectivo objetivo: {decimal(preview.cash_target_pct)} %.
               </p>
               <DecisionTable decisions={preview.decisions} />
+              <a
+                className="mt-2 inline-block text-sm font-medium text-primary underline"
+                href={decisionsCsvUrl({ jobId: jobId! })}
+                download
+              >
+                Descargar decisiones CSV
+              </a>
               <Button
                 type="button"
                 className="mt-4"
@@ -339,6 +347,13 @@ export function DecisionsPage() {
                   <Badge variant="outline">Experimental</Badge>
                 </p>
                 <DecisionTable decisions={selectedPlan.decisions as Preview['decisions']} />
+                <a
+                  className="mt-2 inline-block text-sm font-medium text-primary underline"
+                  href={decisionsCsvUrl({ planId: selectedPlan.id })}
+                  download
+                >
+                  Descargar decisiones CSV
+                </a>
                 <div className="mt-6 border-t pt-5">
                   <h3 className="font-semibold">Progreso desde el plan</h3>
                   {progress.isPending && <LoadingState />}

@@ -56,3 +56,38 @@ def test_simulations_get_is_inert_and_rejects_uncached_trade(tmp_path):
         })
         assert trade.status_code == 422
         assert api.get(f"/api/v1/portfolio/simulations/{portfolio_id}/trades").json()["items"] == []
+
+
+def test_price_buttons_download_the_old_symbol_sets(tmp_path, monkeypatch):
+    from gabi import data_fetch
+    from gabi.application.errors import QueryError
+
+    seed_fixture(tmp_path)
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+    calls = []
+    monkeypatch.setattr(data_fetch, "fetch_prices_batch",
+                        lambda symbols, period="2y": calls.append((symbols, period)) or {"EURUSD=X": "sin datos"})
+    app = create_app(Settings(tmp_path), today=lambda: TODAY)
+    run = LegacyExecutor(Settings(tmp_path))
+    with TestClient(app) as api:
+        portfolio_id = api.post("/api/v1/portfolio/simulations", json={
+            "name": "Prueba", "initial_cash": 10000, "stock_commission": 1, "spread_bps": 10,
+            "base_currency": "USD"}).json()["id"]
+        ticker = run(JobCommand("sim_prices", ("ASML",), portfolio_id=portfolio_id))
+        assert calls[-1] == (["ASML", "SPY", "EURUSD=X", "GBPUSD=X"], "max")
+        assert (ticker["updated"], ticker["failed"]) == (3, {"EURUSD=X": "sin datos"})
+        try:
+            run(JobCommand("sim_prices", portfolio_id=portfolio_id))
+        except QueryError as error:
+            assert error.status == 409
+        else:
+            raise AssertionError("A portfolio without trades has nothing to update.")
+        api.post(f"/api/v1/portfolio/simulations/{portfolio_id}/trades", json={
+            "symbol": "T000", "asset_type": "STOCK", "side": "BUY", "requested_date": "2026-09-28",
+            "notional": 1000})
+        whole = run(JobCommand("sim_prices", portfolio_id=portfolio_id))
+        assert calls[-1] == (["T000", "SPY"], "max") and whole["symbol"] is None
+    for bad in ({"symbols": ["A", "B"]}, {"symbols": []}):
+        body = {"kind": "sim_prices", "idempotency_key": "sim-prices-bad", **bad}
+        assert TestClient(create_app(Settings(tmp_path))).post("/api/v1/jobs", json=body).status_code == 422

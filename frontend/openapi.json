@@ -1,6 +1,30 @@
 {
   "components": {
     "schemas": {
+      "AnalysisPromptResponse": {
+        "description": "Text to paste into an AI assistant; every number in it comes from GABI's deterministic code.",
+        "properties": {
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "revision",
+          "prompt"
+        ],
+        "title": "AnalysisPromptResponse",
+        "type": "object"
+      },
       "BacktestCurvePoint": {
         "properties": {
           "estrategia": {
@@ -2518,6 +2542,87 @@
         "title": "CompanyFilingChanges",
         "type": "object"
       },
+      "CompanyInsiders": {
+        "description": "Open-market Form 4 activity of the last months; informative, never scored.",
+        "properties": {
+          "distinct_buyers": {
+            "title": "Distinct Buyers",
+            "type": "integer"
+          },
+          "distinct_sellers": {
+            "title": "Distinct Sellers",
+            "type": "integer"
+          },
+          "fetched_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetched At"
+          },
+          "has_10b5_1_only_buys": {
+            "title": "Has 10B5 1 Only Buys",
+            "type": "boolean"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "n_buys": {
+            "title": "N Buys",
+            "type": "integer"
+          },
+          "n_sells": {
+            "title": "N Sells",
+            "type": "integer"
+          },
+          "net_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/InsiderTransaction"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "recent_total": {
+            "title": "Recent Total",
+            "type": "integer"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "months",
+          "fetched_at",
+          "n_buys",
+          "n_sells",
+          "distinct_buyers",
+          "distinct_sellers",
+          "net_value",
+          "has_10b5_1_only_buys",
+          "recent",
+          "recent_total"
+        ],
+        "title": "CompanyInsiders",
+        "type": "object"
+      },
       "CompanyResearchResponse": {
         "properties": {
           "estimate": {
@@ -2709,12 +2814,13 @@
       },
       "CompanySyncRequest": {
         "additionalProperties": false,
-        "description": "Download one company's earnings-surprise history or consensus estimates (the old Ficha buttons).",
+        "description": "Download one company's earnings surprises, consensus estimates or Form 4 lines (the old Ficha buttons).",
         "properties": {
           "dataset": {
             "enum": [
               "surprises",
-              "estimates"
+              "estimates",
+              "insiders"
             ],
             "title": "Dataset",
             "type": "string"
@@ -3083,7 +3189,8 @@
               "portfolio_lab",
               "company_sync",
               "data_update",
-              "data_health"
+              "data_health",
+              "sim_prices"
             ],
             "title": "Kind",
             "type": "string"
@@ -6884,6 +6991,122 @@
           "as_of"
         ],
         "title": "Identity",
+        "type": "object"
+      },
+      "InsiderTransaction": {
+        "properties": {
+          "filed_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed Date"
+          },
+          "is_10b5_1_plan": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is 10B5 1 Plan"
+          },
+          "owner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Name"
+          },
+          "owner_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Title"
+          },
+          "price_per_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Per Share"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "transaction_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Code"
+          },
+          "transaction_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Date"
+          },
+          "transaction_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Label"
+          }
+        },
+        "required": [
+          "transaction_date",
+          "owner_name",
+          "owner_title",
+          "transaction_code",
+          "transaction_label",
+          "shares",
+          "price_per_share",
+          "is_10b5_1_plan",
+          "filed_date"
+        ],
+        "title": "InsiderTransaction",
         "type": "object"
       },
       "JobEvent": {
@@ -13432,6 +13655,101 @@
         ]
       }
     },
+    "/api/v1/companies/{symbol}/analysis-prompt": {
+      "get": {
+        "operationId": "company_analysis_prompt_api_v1_companies__symbol__analysis_prompt_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisPromptResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Analysis Prompt",
+        "tags": [
+          "market"
+        ]
+      }
+    },
     "/api/v1/companies/{symbol}/evidence": {
       "get": {
         "operationId": "company_evidence_api_v1_companies__symbol__evidence_get",
@@ -13710,6 +14028,101 @@
           }
         },
         "summary": "Company Filing Changes",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/insiders": {
+      "get": {
+        "operationId": "company_insiders_api_v1_companies__symbol__insiders_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyInsiders"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Insiders",
         "tags": [
           "market"
         ]
@@ -15866,6 +16279,96 @@
         ]
       }
     },
+    "/api/v1/portfolio/decisions/jobs/{job_id}/decisions.csv": {
+      "get": {
+        "description": "The freshly generated plan, before saving it (the old «Descargar decisiones CSV»).",
+        "operationId": "job_csv_api_v1_portfolio_decisions_jobs__job_id__decisions_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {}
+            },
+            "description": "Decisiones en CSV"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Job Csv",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
     "/api/v1/portfolio/decisions/{plan_id}": {
       "get": {
         "operationId": "plan_api_v1_portfolio_decisions__plan_id__get",
@@ -15954,6 +16457,95 @@
           }
         },
         "summary": "Plan",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/decisions/{plan_id}/decisions.csv": {
+      "get": {
+        "operationId": "plan_csv_api_v1_portfolio_decisions__plan_id__decisions_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Plan Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {}
+            },
+            "description": "Decisiones en CSV"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Plan Csv",
         "tags": [
           "portfolio"
         ]

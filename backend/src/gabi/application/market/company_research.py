@@ -11,7 +11,11 @@ from gabi.application.errors import QueryError
 from gabi.application.research.historical import _json_value
 
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
-DATASETS = ("surprises", "estimates")
+DATASETS = ("surprises", "estimates", "insiders")
+INSIDER_MONTHS = 6
+MAX_INSIDER_SHOWN = 200
+INSIDER_KEYS = ("transaction_date", "owner_name", "owner_title", "transaction_code", "shares",
+                "price_per_share", "is_10b5_1_plan", "filed_date")
 SURPRISE_KEYS = ("earnings_date", "eps_estimate", "eps_reported", "surprise_pct", "price_reaction_pct")
 ESTIMATE_KEYS = ("captured_at", "eps_avg", "eps_low", "eps_high", "eps_analysts", "eps_dispersion_pct",
                  "revised_up_30d", "revised_down_30d", "source")
@@ -20,10 +24,14 @@ ESTIMATE_KEYS = ("captured_at", "eps_avg", "eps_low", "eps_high", "eps_analysts"
 class ResearchStore(Protocol):
     def surprises(self, symbol: str) -> pd.DataFrame: ...
     def estimate_history(self, symbol: str, period: str) -> pd.DataFrame: ...
+    def insider_transactions(self, symbol: str) -> pd.DataFrame: ...
+    def insider_fetched_at(self, symbol: str) -> str | None: ...
 
 
 class CompanyMath(Protocol):
     def revision(self, history: pd.DataFrame, lookback_days: int, as_of: date) -> dict | None: ...
+    def insiders(self, symbol: str, transactions: pd.DataFrame, months: int) -> dict: ...
+    def transaction_labels(self) -> dict[str, str]: ...
 
 
 def normalize_symbol(symbol: str) -> str:
@@ -67,6 +75,22 @@ class CompanyResearch:
             "estimate": None if latest is None else _row(latest, ESTIMATE_KEYS),
             "revision_90d": None if revision is None else {key: _json_value(value) for key, value in revision.items()},
         }
+
+    def insiders(self, symbol: str) -> dict:
+        """The old Ficha «Actividad de insiders (SEC Form 4)»: six-month open-market summary and recent lines."""
+        symbol = normalize_symbol(symbol)
+        summary = self.math.insiders(symbol, self.store.insider_transactions(symbol), INSIDER_MONTHS)
+        recent = summary["recent"]
+        labels = self.math.transaction_labels()
+        rows = [_row(row, INSIDER_KEYS) | {"transaction_label": labels.get(row["transaction_code"],
+                                                                            row["transaction_code"])}
+                for row in recent.head(MAX_INSIDER_SHOWN).to_dict("records")]
+        return {"symbol": symbol, "months": INSIDER_MONTHS, "fetched_at": self.store.insider_fetched_at(symbol),
+                "n_buys": summary["n_buys"], "n_sells": summary["n_sells"],
+                "distinct_buyers": summary["distinct_buyers"], "distinct_sellers": summary["distinct_sellers"],
+                "net_value": _json_value(summary["net_value"]),
+                "has_10b5_1_only_buys": summary["has_10b5_1_only_buys"],
+                "recent": rows, "recent_total": int(len(recent))}
 
     def filing_changes(self, symbol: str) -> dict:
         """Latest 10-K and 10-Q against the previous comparable filing, from cached SEC facts."""

@@ -31,26 +31,35 @@ class DecisionRepository(Protocol):
 
 def parse_holdings(raw: str) -> dict[str, float]:
     if len(raw) > 5000:
-        raise QueryError("invalid_holdings", "Las posiciones superan el lÃ­mite de lectura.", 422)
+        raise QueryError("invalid_holdings", "Las posiciones superan el límite de lectura.", 422)
     result = {}
     for line in raw.splitlines():
         if not line.strip():
             continue
         parts = [part.strip() for part in line.split(",")]
         if len(parts) != 2:
-            raise QueryError("invalid_holdings", "Usa SÃMBOLO,porcentaje por lÃ­nea.", 422)
+            raise QueryError("invalid_holdings", "Usa SÍMBOLO,porcentaje por línea.", 422)
         symbol = parts[0].upper().replace(".", "-")
         try:
             value = float(parts[1])
         except ValueError as exc:
-            raise QueryError("invalid_holdings", "Los porcentajes deben ser numÃ©ricos.", 422) from exc
+            raise QueryError("invalid_holdings", "Los porcentajes deben ser numéricos.", 422) from exc
         if not re.fullmatch(r"[A-Z0-9^][A-Z0-9^\-]{0,19}", symbol) or symbol in result or \
                 not isfinite(value) or value < 0 or value > 100:
-            raise QueryError("invalid_holdings", "SÃ­mbolo o porcentaje duplicado o no vÃ¡lido.", 422)
+            raise QueryError("invalid_holdings", "Símbolo o porcentaje duplicado o no válido.", 422)
         result[symbol] = value
     if len(result) > 100 or sum(result.values()) > 100.001:
         raise QueryError("invalid_holdings", "Las posiciones no pueden superar el 100 %.", 422)
     return result
+
+
+# decision_engine._finish column order: the old «Descargar decisiones CSV» file.
+CSV_COLUMNS = ("symbol", "action", "current_pct", "target_pct", "change_pct", "reason", "score")
+
+
+def decisions_frame(rows: list[dict]) -> pd.DataFrame:
+    """The columns of plan["decisions"], whatever the key order the stored JSON kept."""
+    return pd.DataFrame([{key: row.get(key) for key in CSV_COLUMNS} for row in rows], columns=list(CSV_COLUMNS))
 
 
 class Decisions:
@@ -67,7 +76,7 @@ class Decisions:
         snapshot = self.market.ranking(dict(self.model.frozen_weights), day)
         table = snapshot.table
         if table.empty or len(table) > 1000:
-            raise QueryError("data_unavailable", "No hay un universo local vÃ¡lido para decisiones.", 503)
+            raise QueryError("data_unavailable", "No hay un universo local válido para decisiones.", 503)
         histories = self.repository.histories(table.index.astype(str).tolist())
         try:
             plan = self.calculate(table, histories, holdings, options, day.isoformat())
@@ -96,17 +105,20 @@ class Decisions:
         histories = self.repository.progress_histories(symbols, start)
         return progress(plan["created_at"], plan["decisions"], histories, self.today())
 
-    def save_job(self, job_id: str, name: str) -> dict:
-        name = name.strip()
-        if not name or len(name) > 80:
-            raise QueryError("invalid_name", "El nombre debe tener entre 1 y 80 caracteres.", 422)
+    def job_plan(self, job_id: str) -> dict:
         job = self.jobs.get(job_id)
         if job["kind"] != "decision_plan":
             raise QueryError("invalid_job", "El job no contiene decisiones.", 422)
         plan = self.jobs.result(job_id)
         if plan.get("status") != "EXPERIMENTAL" or not isinstance(plan.get("decisions"), list):
-            raise QueryError("invalid_job", "El resultado del job no es un plan vÃ¡lido.", 422)
-        return self.get(self.repository.save(plan, name, job_id))
+            raise QueryError("invalid_job", "El resultado del job no es un plan válido.", 422)
+        return plan
+
+    def save_job(self, job_id: str, name: str) -> dict:
+        name = name.strip()
+        if not name or len(name) > 80:
+            raise QueryError("invalid_name", "El nombre debe tener entre 1 y 80 caracteres.", 422)
+        return self.get(self.repository.save(self.job_plan(job_id), name, job_id))
 
     def rename(self, plan_id: int, name: str) -> dict:
         name = name.strip()

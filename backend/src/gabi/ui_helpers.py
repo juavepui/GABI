@@ -4,7 +4,11 @@ las tablas. Vive aquí (y no en app/) para que tanto el Screener como la
 Ficha de empresa compartan una única fuente de verdad."""
 import pandas as pd
 
-from gabi.domain.market.metric_info import METRIC_INFO  # noqa: F401 (public name kept)
+from gabi.domain.market.metric_info import (  # noqa: F401 (public names kept)
+    FRACTION_COLUMNS,
+    METRIC_INFO,
+    format_metric_value,
+)
 
 # El indicador nativo de "ejecutando" de Streamlit (data-testid="stStatusWidget")
 # aparece por defecto arriba a la derecha y es fácil no verlo. Streamlit no
@@ -41,20 +45,6 @@ def inject_custom_css():
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
-# Columnas cuyo valor crudo es una fracción (0.09 = 9%) — se multiplican por
-# 100 solo para presentarlas en pantalla.
-FRACTION_COLUMNS = {
-    "roe", "roa", "roic", "operating_margin", "gross_margin", "profit_margin",
-    "revenue_growth_yoy", "earnings_growth_yoy", "revenue_growth_ttm_yoy",
-    "revenue_cagr_3y", "fcf_cagr_3y",
-    "quality_persistence_score", "roic_persistence_mean", "roic_persistence_std",
-    "operating_margin_persistence_mean", "operating_margin_persistence_std", "fcf_conversion_mean",
-    "revenue_per_share_cagr",
-    "implied_fcf_growth", "historical_fcf_cagr", "expectations_gap",
-    "price_vs_sma50", "price_vs_sma200", "momentum_6m", "momentum_12m", "rel_strength_6m",
-    "volatility", "max_drawdown", "alpha", "win_rate_monthly", "dividend_yield", "score_coverage",
-}
-
 # Las 11 categorías estándar GICS (fuente: universe.py).
 SECTOR_ES = {
     "Information Technology": "Tecnología de la información",
@@ -77,23 +67,6 @@ def translate_sector(sector_en):
     if sector_en is None or (isinstance(sector_en, float) and pd.isna(sector_en)):
         return sector_en
     return SECTOR_ES.get(sector_en, sector_en)
-
-
-def format_metric_value(metric: str, value) -> str:
-    """Formatea un valor crudo para mostrarlo en una tabla/detalle, en español."""
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        return "—"
-    if isinstance(value, bool):
-        return "Sí" if value else "No"
-    if metric == "market_cap":
-        return f"{value / 1e9:.1f} mil M$"
-    if metric in ("avg_volume", "shares_outstanding"):
-        return f"{value / 1e6:.1f}M acciones" + ("/día" if metric == "avg_volume" else "")
-    if metric == "fundamentals_period_end":
-        return str(value)
-    if metric in FRACTION_COLUMNS:
-        return f"{value * 100:.1f}%"
-    return f"{value:.2f}"
 
 
 def gradient_style(pct) -> str:

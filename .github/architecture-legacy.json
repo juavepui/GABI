@@ -11,8 +11,6 @@
     "requests"
   ],
   "backend/src/gabi/ai_prompt.py": [
-    "gabi.ui_helpers.METRIC_INFO",
-    "gabi.ui_helpers.format_metric_value",
     "pandas"
   ],
   "backend/src/gabi/app_mode.py": [

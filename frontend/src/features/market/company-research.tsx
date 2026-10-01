@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createJob,
+  getAnalysisPrompt,
   getCompanyFilingChanges,
+  getCompanyInsiders,
   getCompanyResearch,
   getJob,
   getJobResult,
@@ -44,7 +46,7 @@ function SyncButton({
   label,
 }: {
   symbol: string;
-  dataset: 'surprises' | 'estimates';
+  dataset: 'surprises' | 'estimates' | 'insiders';
   label: string;
 }) {
   const queryClient = useQueryClient();
@@ -73,8 +75,10 @@ function SyncButton({
   });
   const synced = result.data?.synced === true;
   useEffect(() => {
-    if (synced) void queryClient.invalidateQueries({ queryKey: ['market', 'research', symbol] });
-  }, [synced, symbol, queryClient]);
+    if (!synced) return;
+    const key = dataset === 'insiders' ? 'insiders' : 'research';
+    void queryClient.invalidateQueries({ queryKey: ['market', key, symbol] });
+  }, [synced, symbol, dataset, queryClient]);
   return (
     <div className="space-y-1">
       <Button
@@ -311,6 +315,168 @@ export function FilingChanges({ symbol }: { symbol: string }) {
       className="mb-6 rounded-xl border bg-card p-5 text-sm"
     >
       <FilingChangesContent symbol={symbol} />
+    </Folded>
+  );
+}
+
+const money = (value: number | null | undefined) =>
+  value == null
+    ? '—'
+    : new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(value);
+
+const INSIDER_COLUMNS = [
+  'Fecha',
+  'Insider',
+  'Cargo',
+  'Operación',
+  'Acciones',
+  'Precio',
+  '¿Plan 10b5-1?',
+];
+
+function InsidersContent({ symbol }: { symbol: string }) {
+  const insiders = useQuery({
+    queryKey: ['market', 'insiders', symbol],
+    queryFn: ({ signal }) => getCompanyInsiders(symbol, signal),
+  });
+  if (insiders.isPending) return <LoadingState />;
+  if (insiders.isError)
+    return <ErrorState error={insiders.error} retry={() => void insiders.refetch()} />;
+  const data = insiders.data;
+  return (
+    <>
+      <p className="text-xs text-muted-foreground">
+        Compras y ventas de directivos y consejeros con sus propias acciones. Una compra en mercado
+        abierto (código P) fuera de un plan 10b5-1 preprogramado es la señal más informativa; ventas
+        y ejercicios de opciones son mucho más rutinarios. Informativo: no entra en el Composite
+        Score.
+      </p>
+      <SyncButton symbol={symbol} dataset="insiders" label="Actualizar insiders de esta empresa" />
+      <dl className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Compras ({data.months} meses)</dt>
+          <dd className="text-lg font-semibold">{data.n_buys}</dd>
+        </div>
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Ventas ({data.months} meses)</dt>
+          <dd className="text-lg font-semibold">{data.n_sells}</dd>
+        </div>
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Neto comprado − vendido</dt>
+          <dd className="text-lg font-semibold">{money(data.net_value)}</dd>
+        </div>
+      </dl>
+      {data.n_buys > 0 && data.has_10b5_1_only_buys && (
+        <p className="text-xs" role="alert">
+          Todas las compras recientes son de un plan 10b5-1 preprogramado: mucho menos informativas
+          que una compra discrecional decidida ahora.
+        </p>
+      )}
+      {data.recent.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs" aria-label="Operaciones de insiders">
+            <thead>
+              <tr className="border-b">
+                {INSIDER_COLUMNS.map((title) => (
+                  <th key={title} className="py-1.5 pr-3 font-medium">
+                    {title}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.recent.map((row, index) => (
+                <tr key={index} className="border-b last:border-0">
+                  <td className="py-1.5 pr-3">{dateLabel(row.transaction_date)}</td>
+                  <td className="py-1.5 pr-3">{row.owner_name ?? '—'}</td>
+                  <td className="py-1.5 pr-3">{row.owner_title ?? '—'}</td>
+                  <td className="py-1.5 pr-3">{row.transaction_label ?? '—'}</td>
+                  <td className="py-1.5 pr-3">{num(row.shares, 0)}</td>
+                  <td className="py-1.5 pr-3">{num(row.price_per_share)}</td>
+                  <td className="py-1.5 pr-3">
+                    {row.is_10b5_1_plan == null ? '—' : row.is_10b5_1_plan ? 'Sí' : 'No'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {data.recent_total > data.recent.length && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Se muestran las {data.recent.length} más recientes de {data.recent_total}.
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs">
+          Sin operaciones de insiders en los últimos {data.months} meses en la caché para esta
+          empresa.
+        </p>
+      )}
+      {data.fetched_at && (
+        <p className="text-xs text-muted-foreground">
+          Última descarga de Form 4: {dateLabel(data.fetched_at.slice(0, 10))}.
+        </p>
+      )}
+    </>
+  );
+}
+
+export function Insiders({ symbol }: { symbol: string }) {
+  return (
+    <Folded title="Actividad de insiders (SEC Form 4, informativo)">
+      <InsidersContent symbol={symbol} />
+    </Folded>
+  );
+}
+
+function AnalysisPromptContent({ symbol }: { symbol: string }) {
+  const [copied, setCopied] = useState(false);
+  const prompt = useQuery({
+    queryKey: ['market', 'analysis-prompt', symbol],
+    queryFn: ({ signal }) => getAnalysisPrompt(symbol, signal),
+  });
+  if (prompt.isPending) return <LoadingState />;
+  if (prompt.isError)
+    return <ErrorState error={prompt.error} retry={() => void prompt.refetch()} />;
+  const text = prompt.data.prompt;
+  return (
+    <>
+      <p className="text-xs text-muted-foreground">
+        Texto para pegar en el asistente de IA que prefieras, junto con los documentos que le añadas
+        (earnings call, guidance, noticias). GABI no llama a ninguna IA. Regla de diseño: la IA
+        nunca calcula métricas financieras; los números vienen siempre de GABI.
+      </p>
+      <textarea
+        readOnly
+        aria-label="Prompt para analizar con IA"
+        className="h-72 w-full rounded-md border bg-muted/30 p-3 font-mono text-xs"
+        value={text}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => void navigator.clipboard?.writeText(text).then(() => setCopied(true))}
+      >
+        {copied ? 'Copiado' : 'Copiar prompt'}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Antes de pegarlo, añade el texto de la earnings call, el guidance y las noticias relevantes
+        donde el prompt lo indica. Sin eso, la IA solo podrá trabajar con los números y los enlaces
+        a los informes oficiales.
+      </p>
+    </>
+  );
+}
+
+export function AnalysisPrompt({ symbol }: { symbol: string }) {
+  return (
+    <Folded title="Prompt para analizar con IA">
+      <AnalysisPromptContent symbol={symbol} />
     </Folded>
   );
 }

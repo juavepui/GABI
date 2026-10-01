@@ -28,6 +28,14 @@ class LegacyExecutor:
             assert command.portfolio_id is not None
             return Simulations(SqliteSimulations(self.settings.data_dir), LegacySimulationMath(), date.today).result(
                 command.portfolio_id, long=True)
+        if command.kind == "sim_prices":
+            from gabi.application.portfolio.sim_prices import refresh_prices
+            from gabi.infrastructure.legacy.sim_prices import fetch_max_history, fx_symbol
+            from gabi.infrastructure.storage.simulations import SqliteSimulations
+
+            assert command.portfolio_id is not None
+            return refresh_prices(SqliteSimulations(self.settings.data_dir), command.portfolio_id,
+                                  command.symbols[0] if command.symbols else None, fx_symbol, fetch_max_history)
         if command.kind == "sim_compare":
             from datetime import date
 

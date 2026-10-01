@@ -65,6 +65,16 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
   await page.getByLabel('Importe cotizado').fill('100');
   await page.getByRole('button', { name: 'Registrar operación' }).click();
   await expect(page.getByText('Operación registrada.')).toBeVisible();
+  const prices = page.getByRole('region', { name: 'Precios públicos' });
+  await prices.getByRole('button', { name: 'Actualizar precios de esta cartera y SPY' }).click();
+  await expect(prices.getByText('Actualizados 2 símbolos; fallos: 0.')).toBeVisible({
+    timeout: 15_000,
+  });
+  await prices.getByLabel('Ticker').fill('asml');
+  await prices.getByRole('button', { name: 'Actualizar precios de este ticker' }).click();
+  await expect(prices.getByText('Actualizados 4 símbolos; fallos: 0.')).toBeVisible({
+    timeout: 15_000,
+  });
   await page.getByRole('button', { name: 'Calcular resultado' }).click();
   await expect(page.getByRole('heading', { name: /Resultado simulado/ })).toBeVisible();
   await page.reload();
@@ -80,11 +90,20 @@ test('decisiones experimentales se calculan en job y persisten con su política'
   await expect(page.getByRole('heading', { name: 'Decisiones de cartera' })).toBeVisible();
   await page.getByRole('button', { name: 'Generar decisiones' }).click();
   await expect(page.getByText(/Método:/)).toBeVisible();
+  const previewCsv = page.getByRole('link', { name: 'Descargar decisiones CSV' });
+  const csv = await page.request.get((await previewCsv.getAttribute('href'))!);
+  expect(csv.ok()).toBe(true);
+  const header = (await csv.text()).replace(/^﻿/, '').split('\n')[0];
+  expect(header).toBe('symbol,action,current_pct,target_pct,change_pct,reason,score');
   await page.getByRole('button', { name: 'Guardar plan' }).click();
   await expect(page.getByText(/Plan #\d+ guardado/)).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Planes anteriores' })).toBeVisible();
   await expect(page.getByText('Progreso desde el plan')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Descargar decisiones CSV' })).toHaveAttribute(
+    'href',
+    /\/api\/v1\/portfolio\/decisions\/\d+\/decisions\.csv$/,
+  );
 });
 
 test('aprender: tutorial completo con definiciones de métricas del backend', async ({ page }) => {

@@ -3,7 +3,7 @@
 import json
 import sqlite3
 from contextlib import closing
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -93,3 +93,54 @@ def test_syncs_are_explicit_jobs_with_their_failure_reason(company, monkeypatch,
                       "reason": "sin respuesta de Yahoo"}
     assert client.post("/api/v1/jobs", json={"kind": "company_sync", "idempotency_key": "company-bad-1",
                                              "company": {"symbol": "T001", "dataset": "prices"}}).status_code == 422
+
+
+def _seed_insiders(root):
+    from gabi import insider
+
+    recent = (datetime.now(UTC) - timedelta(days=30)).date().isoformat()
+    old = "2020-01-02"
+    rows = [("T001", "1", "a1", 1, "Ann", "CEO", 1, 0, 0, 0, recent, "P", "A", 100.0, 50.0, 1000.0, recent),
+            ("T001", "1", "a2", 1, "Bob", "CFO", 1, 0, 0, 1, recent, "S", "D", 40.0, 55.0, 500.0, recent),
+            ("T001", "1", "a3", 1, "Ann", "CEO", 1, 0, 0, 0, recent, "M", "A", 10.0, None, 1010.0, recent),
+            ("T001", "1", "a4", 1, "Old", "Director", 0, 1, 0, 0, old, "P", "A", 5.0, 10.0, 5.0, old)]
+    with closing(sqlite3.connect(root / "gabi.db")) as db:
+        db.executescript(insider.SCHEMA)
+        db.executemany(f"INSERT INTO insider_transactions VALUES ({','.join('?' * 17)})", rows)
+        db.execute("INSERT INTO insider_fetch_meta VALUES ('T001', '2026-09-28T10:00:00+00:00')")
+        db.commit()
+
+
+def test_insiders_match_the_old_ficha_summary_read_only(company):
+    from gabi import insider
+
+    client, root = company
+    _seed_insiders(root)
+    legacy = insider.summarize_insider_activity("T001", months=6)
+    before = (root / "gabi.db").read_bytes()
+    body = client.get("/api/v1/companies/t001/insiders").json()
+    assert (root / "gabi.db").read_bytes() == before
+    assert {key: body[key] for key in ("n_buys", "n_sells", "distinct_buyers", "distinct_sellers", "net_value",
+                                        "has_10b5_1_only_buys")} == {
+        key: legacy[key] for key in ("n_buys", "n_sells", "distinct_buyers", "distinct_sellers", "net_value",
+                                     "has_10b5_1_only_buys")}
+    assert (body["n_buys"], body["n_sells"], body["net_value"]) == (1, 1, 100 * 50.0 - 40 * 55.0)
+    assert [row["transaction_code"] for row in body["recent"]] == legacy["recent"]["transaction_code"].tolist()
+    assert body["recent"][0]["transaction_label"] in insider.TRANSACTION_CODES.values()
+    assert body["recent_total"] == 3 and body["fetched_at"] == "2026-09-28T10:00:00+00:00"
+    assert client.get("/api/v1/companies/T002/insiders").json()["recent"] == []
+
+
+def test_insider_update_is_an_explicit_job_that_ignores_the_cache(company, monkeypatch):
+    from gabi import insider
+
+    client, root = company
+    calls = []
+    monkeypatch.setattr(insider, "ensure_insider_data",
+                        lambda symbols, max_age_hours=None: calls.append((symbols, max_age_hours)) or {"failed": {}})
+    job = client.post("/api/v1/jobs", json={"kind": "company_sync", "idempotency_key": "company-insiders-1",
+                                             "company": {"symbol": "t001", "dataset": "insiders"}})
+    assert job.status_code == 202, job.text
+    assert Worker(SqliteJobs(root), LegacyExecutor(Settings(root)), root).run_once()
+    result = client.get(f"/api/v1/jobs/{job.json()['id']}/result").json()
+    assert calls == [(["T001"], 0)] and result["synced"] is True
