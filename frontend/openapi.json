@@ -2740,6 +2740,19 @@
         "title": "DeleteDecision",
         "type": "object"
       },
+      "DeletedExperiment": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "title": "DeletedExperiment",
+        "type": "object"
+      },
       "Diagnostic": {
         "properties": {
           "classification": {
@@ -6062,6 +6075,133 @@
           "items"
         ],
         "title": "MacroResponse",
+        "type": "object"
+      },
+      "ManualExperimentRequest": {
+        "additionalProperties": false,
+        "description": "The fields of the Streamlit manual form; 0 in a metric means \"no value\", as before.",
+        "properties": {
+          "cost_model": {
+            "maxLength": 200,
+            "title": "Cost Model",
+            "type": "string"
+          },
+          "data_cutoff": {
+            "maxLength": 10,
+            "title": "Data Cutoff",
+            "type": "string"
+          },
+          "data_fingerprint": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Data Fingerprint",
+            "type": "string"
+          },
+          "family": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Family",
+            "type": "string"
+          },
+          "hypothesis_registered": {
+            "title": "Hypothesis Registered",
+            "type": "boolean"
+          },
+          "is_end": {
+            "maxLength": 10,
+            "title": "Is End",
+            "type": "string"
+          },
+          "is_start": {
+            "maxLength": 10,
+            "title": "Is Start",
+            "type": "string"
+          },
+          "max_drawdown": {
+            "default": 0.0,
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "model_id": {
+            "maxLength": 80,
+            "title": "Model Id",
+            "type": "string"
+          },
+          "n_periods": {
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "N Periods",
+            "type": "integer"
+          },
+          "n_positions": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "N Positions",
+            "type": "integer"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "periods_per_year": {
+            "maximum": 366.0,
+            "minimum": 1.0,
+            "title": "Periods Per Year",
+            "type": "number"
+          },
+          "rebalance": {
+            "enum": [
+              "Quarterly",
+              "Semiannual",
+              "Annual",
+              "Monthly"
+            ],
+            "title": "Rebalance",
+            "type": "string"
+          },
+          "sharpe": {
+            "default": 0.0,
+            "title": "Sharpe",
+            "type": "number"
+          },
+          "sortino": {
+            "default": 0.0,
+            "title": "Sortino",
+            "type": "number"
+          },
+          "stage": {
+            "enum": [
+              "RESEARCH",
+              "IN_SAMPLE",
+              "OUT_OF_SAMPLE",
+              "LIVE_FORWARD"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "universe": {
+            "maxLength": 200,
+            "title": "Universe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_id",
+          "n_positions",
+          "rebalance",
+          "universe",
+          "cost_model",
+          "data_cutoff",
+          "is_start",
+          "is_end",
+          "n_periods",
+          "periods_per_year",
+          "stage",
+          "hypothesis_registered"
+        ],
+        "title": "ManualExperimentRequest",
         "type": "object"
       },
       "Metric": {
@@ -13742,6 +13882,95 @@
         "tags": [
           "research"
         ]
+      },
+      "post": {
+        "operationId": "create_experiment_api_v1_research_experiments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualExperimentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Create Experiment",
+        "tags": [
+          "research"
+        ]
       }
     },
     "/api/v1/research/experiments/{experiment_id}": {
@@ -13832,6 +14061,99 @@
           }
         },
         "summary": "Experiment",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/experiments/{experiment_id}/delete": {
+      "post": {
+        "operationId": "delete_experiment_api_v1_research_experiments__experiment_id__delete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedExperiment"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Delete Experiment",
         "tags": [
           "research"
         ]

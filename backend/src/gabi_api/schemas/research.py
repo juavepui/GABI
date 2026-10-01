@@ -2,7 +2,7 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Diagnostic(BaseModel):
@@ -814,3 +814,32 @@ class ExperimentBootstrapPreview(BaseModel):
     experiments: BootstrapExperiments
     message: str | None
     view: BlockBootstrapView | None
+
+
+class ManualExperimentRequest(BaseModel):
+    """The fields of the Streamlit manual form; 0 in a metric means "no value", as before."""
+
+    model_config = {"extra": "forbid"}
+
+    model_id: str = Field(max_length=80)
+    n_positions: int = Field(ge=1, le=100)
+    rebalance: Literal["Quarterly", "Semiannual", "Annual", "Monthly"]
+    universe: str = Field(max_length=200)
+    cost_model: str = Field(max_length=200)
+    family: str = Field(default="", max_length=120)
+    data_cutoff: str = Field(max_length=10)
+    is_start: str = Field(max_length=10)
+    is_end: str = Field(max_length=10)
+    sharpe: float = 0.0
+    sortino: float = 0.0
+    max_drawdown: float = 0.0
+    n_periods: int = Field(ge=1, le=100_000)
+    periods_per_year: float = Field(ge=1, le=366)
+    stage: Literal["RESEARCH", "IN_SAMPLE", "OUT_OF_SAMPLE", "LIVE_FORWARD"]
+    hypothesis_registered: bool
+    data_fingerprint: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=4_000)
+
+
+class DeletedExperiment(BaseModel):
+    deleted: int

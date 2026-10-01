@@ -57,6 +57,8 @@ import type {
   ExperimentTailRisk,
   ExperimentPboPreview,
   ExperimentBootstrapPreview,
+  ManualExperimentRequest,
+  DeletedExperiment,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -154,6 +156,19 @@ export function getExperimentBootstrap(
   signal?: AbortSignal,
 ): Promise<ExperimentBootstrapPreview> {
   return get('/api/v1/research/experiment-bootstrap/' + encodeURIComponent(id), signal);
+}
+export function createExperiment(body: ManualExperimentRequest): Promise<ExperimentDetail> {
+  return request('/api/v1/research/experiments', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function deleteExperiment(id: number): Promise<DeletedExperiment> {
+  return request('/api/v1/research/experiments/' + String(id) + '/delete', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+  });
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);

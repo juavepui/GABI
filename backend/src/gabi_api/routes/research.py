@@ -14,6 +14,7 @@ from gabi.application.research.block_bootstrap_view import present
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.experiment_analysis import distribution_frame
+from gabi.application.research.experiment_commands import ExperimentCommands
 from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
@@ -25,6 +26,7 @@ from gabi_api.schemas.research import (
     BacktestPreview,
     BlindStatuses,
     DeflatedSharpe,
+    DeletedExperiment,
     EstimateAnalysisPreview,
     EstimateCaptureStatus,
     ExperimentBootstrapPreview,
@@ -36,6 +38,7 @@ from gabi_api.schemas.research import (
     HistoricalOutcomes,
     HistoricalPreview,
     HistoricalTable,
+    ManualExperimentRequest,
     PreparationResult,
     PublishedFactors,
     ResearchOverview,
@@ -107,6 +110,23 @@ def experiments(query: Experiments, family: Annotated[str | None, Query(max_leng
                 offset: Annotated[int, Query(ge=0, le=10_000)] = 0,
                 limit: Annotated[int, Query(ge=1, le=200)] = 50) -> dict:
     return query.list(family, stage, offset, limit)
+
+
+def command_service(request: Request) -> ExperimentCommands:
+    return request.app.state.experiment_commands
+
+
+Commands = Annotated[ExperimentCommands, Depends(command_service)]
+
+
+@router.post("/experiments", response_model=ExperimentDetail, status_code=201)
+def create_experiment(body: ManualExperimentRequest, commands: Commands, query: Experiments) -> dict:
+    return query.detail(commands.create(body.model_dump()))
+
+
+@router.post("/experiments/{experiment_id}/delete", response_model=DeletedExperiment)
+def delete_experiment(experiment_id: Annotated[int, Path(ge=1)], commands: Commands) -> dict:
+    return commands.delete(experiment_id)
 
 
 @router.get("/experiments/{experiment_id}", response_model=ExperimentDetail)

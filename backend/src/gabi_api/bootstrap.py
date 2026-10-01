@@ -26,12 +26,14 @@ from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.experiment_commands import ExperimentCommands
 from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.decisions import build_decisions
+from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
 from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
@@ -141,6 +143,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.estimate_queries = estimate_queries
     app.state.experiments = experiments
     app.state.experiment_statistics = experiment_statistics
+    app.state.experiment_commands = ExperimentCommands(LegacyExperimentLog(settings.data_dir),
+                                                       lambda: model_queries.model().mode == "RESEARCH")
     app.state.backtest_diagnostics = backtest_diagnostics
     app.state.historical_queries = historical_queries
     app.state.settings = settings

@@ -86,6 +86,9 @@ def main():
                  "demonstrated_superiority": False}],
             "additional_observed_records": [],
         }), encoding="utf-8")
+        # Legacy writers (Research Lab manual log) use the project config: point it at the fixture only.
+        from gabi import config
+        config.DATA_DIR, config.DB_PATH = root, root / "gabi.db"
         app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published,
                          published_factors_root=root)
 

@@ -5,6 +5,7 @@ import type { ExperimentDetail, ExperimentStage } from '@/shared/api/generated/t
 import { Button } from '@/shared/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { DeleteExperiment, ManualExperimentForm } from './experiment-form';
 import { BootstrapPanel, PboPanel } from './experiment-jobs';
 import { DeflatedSharpePanel, ExperimentTailPanel } from './experiment-statistics';
 
@@ -161,8 +162,8 @@ export function ResearchLabPage() {
           Registro de experimentos de backtesting con su metodología, el commit exacto y el
           resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
           candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real (live
-          forward) pueden confirmarlo. El alta manual, el borrado y las auditorías guardadas siguen
-          en Streamlit durante la migración.
+          forward) pueden confirmarlo. Las auditorías guardadas siguen en Streamlit durante la
+          migración.
         </p>
       </header>
       {experiments.isPending && <LoadingState />}
@@ -186,7 +187,11 @@ export function ResearchLabPage() {
               ))}
             </ul>
           </details>
-          <div className="flex flex-wrap gap-4 text-sm">
+          <div
+            className="flex flex-wrap gap-4 text-sm"
+            role="group"
+            aria-label="Filtros de experimentos"
+          >
             <label className="grid gap-1">
               Familia
               <NativeSelect
@@ -303,6 +308,8 @@ export function ResearchLabPage() {
             </div>
           )}
           {selected > 0 && <Environment id={selected} />}
+          <DeleteExperiment />
+          <ManualExperimentForm stages={data.stages} />
           <DeflatedSharpePanel key={JSON.stringify(data.families)} families={data.families} />
           <ExperimentTailPanel />
           <PboPanel />

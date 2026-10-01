@@ -160,10 +160,16 @@ test('Research Lab lista experimentos y su entorno solo en modo Research', async
     await page.goto('/investigacion/laboratorio');
     const table = page.getByRole('table', { name: 'Experimentos registrados' });
     await expect(table.getByRole('row', { name: /GABI-MF-v1\.0/ })).toContainText('-21.0 %');
-    await page.getByLabel('Fase').selectOption('OUT_OF_SAMPLE');
+    await page
+      .getByRole('group', { name: 'Filtros de experimentos' })
+      .getByLabel('Fase')
+      .selectOption('OUT_OF_SAMPLE');
     await expect(table.getByRole('row')).toHaveCount(2);
     await expect(table).toContainText('Fixture fuera de muestra');
-    await page.getByLabel('Fase').selectOption('');
+    await page
+      .getByRole('group', { name: 'Filtros de experimentos' })
+      .getByLabel('Fase')
+      .selectOption('');
     await page.getByRole('button', { name: 'Ver entorno del experimento 1' }).click();
     const detail = page.getByRole('region', { name: 'Experimento 1' });
     await expect(detail.getByText('0123456789ab')).toBeVisible();
@@ -223,6 +229,36 @@ test('Research Lab calcula PBO y bootstrap por bloques como jobs explícitos', a
     await expect(
       bootResult.getByRole('link', { name: 'Descargar todas las réplicas' }),
     ).toHaveAttribute('href', /distributions\.csv$/);
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});
+
+test('Research Lab registra y elimina experimentos con comandos explícitos', async ({ page }) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/laboratorio');
+    await page.getByText('Registrar experimento manualmente').click();
+    const form = page.getByRole('form', { name: 'Registrar experimento' });
+    await form.getByLabel('Model ID').fill('GABI-MANUAL');
+    await form.getByLabel('Familia (agrupa intentos comparables)').fill('manual-e2e');
+    await form.getByLabel('Sharpe').fill('0.7');
+    await form.getByRole('button', { name: 'Registrar' }).click();
+    const created = page.getByRole('status').filter({ hasText: 'registrado' });
+    await expect(created).toHaveText(/Experimento #\d+ registrado\./);
+    const id = (await created.textContent())!.match(/#(\d+)/)![1];
+    const table = page.getByRole('table', { name: 'Experimentos registrados' });
+    await expect(table.getByRole('row', { name: /GABI-MANUAL/ })).toContainText('manual-e2e');
+    page.once('dialog', (dialog) => void dialog.accept());
+    const remove = page.getByRole('form', { name: 'Eliminar experimento' });
+    await remove.getByLabel('Eliminar experimento por id').fill(id);
+    await remove.getByRole('button', { name: 'Eliminar' }).click();
+    await expect(remove.getByRole('status')).toHaveText(`Experimento #${id} eliminado.`);
+    await expect(table.getByRole('row', { name: /GABI-MANUAL/ })).toHaveCount(0);
   } finally {
     await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
       data: { mode: 'INVESTOR' },

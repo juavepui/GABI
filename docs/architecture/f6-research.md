@@ -289,10 +289,24 @@ de la resolución de coma flotante, el histograma usa un único intervalo en vez
 de fallar. Las pruebas comparan PBO, auditoría, réplicas, CSV y tablas con las
 llamadas antiguas.
 
+El alta manual y el borrado de experimentos son comandos explícitos en modo
+Research: `POST /research/experiments` y `POST
+/research/experiments/{id}/delete`. El alta valida los campos del formulario
+antiguo y construye la misma llamada a `research_lab.log_experiment`: factores
+fijos, huella de datos recortada y 0 en Sharpe, Sortino o drawdown guardado como
+ausencia. Así se conservan el commit, las versiones de dependencias y la huella
+de `uv.lock` que captura el registrador. La escritura pasa por
+`infrastructure/legacy/experiment_log.py`, que usa `log_experiment` y
+`delete_experiment` sin cambios y devuelve 503 si la configuración del proyecto
+no apunta al mismo directorio de datos que la API (la misma guarda que el
+worker). Un formulario inválido no crea la base. React pide confirmación antes
+de borrar. El backend de pruebas e2e apunta esa configuración a su directorio
+temporal.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV y bootstrap por bloques en React; alta, borrado y auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual y borrado en React; auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

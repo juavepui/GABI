@@ -1352,6 +1352,16 @@ export type DeleteDecision = {
 };
 
 /**
+ * DeletedExperiment
+ */
+export type DeletedExperiment = {
+    /**
+     * Deleted
+     */
+    deleted: number;
+};
+
+/**
  * Diagnostic
  */
 export type Diagnostic = {
@@ -3104,6 +3114,86 @@ export type MacroResponse = {
      * Source
      */
     source?: string;
+};
+
+/**
+ * ManualExperimentRequest
+ *
+ * The fields of the Streamlit manual form; 0 in a metric means "no value", as before.
+ */
+export type ManualExperimentRequest = {
+    /**
+     * Cost Model
+     */
+    cost_model: string;
+    /**
+     * Data Cutoff
+     */
+    data_cutoff: string;
+    /**
+     * Data Fingerprint
+     */
+    data_fingerprint?: string;
+    /**
+     * Family
+     */
+    family?: string;
+    /**
+     * Hypothesis Registered
+     */
+    hypothesis_registered: boolean;
+    /**
+     * Is End
+     */
+    is_end: string;
+    /**
+     * Is Start
+     */
+    is_start: string;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown?: number;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * N Periods
+     */
+    n_periods: number;
+    /**
+     * N Positions
+     */
+    n_positions: number;
+    /**
+     * Notes
+     */
+    notes?: string;
+    /**
+     * Periods Per Year
+     */
+    periods_per_year: number;
+    /**
+     * Rebalance
+     */
+    rebalance: 'Quarterly' | 'Semiannual' | 'Annual' | 'Monthly';
+    /**
+     * Sharpe
+     */
+    sharpe?: number;
+    /**
+     * Sortino
+     */
+    sortino?: number;
+    /**
+     * Stage
+     */
+    stage: 'RESEARCH' | 'IN_SAMPLE' | 'OUT_OF_SAMPLE' | 'LIVE_FORWARD';
+    /**
+     * Universe
+     */
+    universe: string;
 };
 
 /**
@@ -7156,6 +7246,51 @@ export type ExperimentsApiV1ResearchExperimentsGetResponses = {
 
 export type ExperimentsApiV1ResearchExperimentsGetResponse = ExperimentsApiV1ResearchExperimentsGetResponses[keyof ExperimentsApiV1ResearchExperimentsGetResponses];
 
+export type CreateExperimentApiV1ResearchExperimentsPostData = {
+    body: ManualExperimentRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/experiments';
+};
+
+export type CreateExperimentApiV1ResearchExperimentsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CreateExperimentApiV1ResearchExperimentsPostError = CreateExperimentApiV1ResearchExperimentsPostErrors[keyof CreateExperimentApiV1ResearchExperimentsPostErrors];
+
+export type CreateExperimentApiV1ResearchExperimentsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ExperimentDetail;
+};
+
+export type CreateExperimentApiV1ResearchExperimentsPostResponse = CreateExperimentApiV1ResearchExperimentsPostResponses[keyof CreateExperimentApiV1ResearchExperimentsPostResponses];
+
 export type ExperimentApiV1ResearchExperimentsExperimentIdGetData = {
     body?: never;
     path: {
@@ -7205,6 +7340,56 @@ export type ExperimentApiV1ResearchExperimentsExperimentIdGetResponses = {
 };
 
 export type ExperimentApiV1ResearchExperimentsExperimentIdGetResponse = ExperimentApiV1ResearchExperimentsExperimentIdGetResponses[keyof ExperimentApiV1ResearchExperimentsExperimentIdGetResponses];
+
+export type DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment Id
+         */
+        experiment_id: number;
+    };
+    query?: never;
+    url: '/api/v1/research/experiments/{experiment_id}/delete';
+};
+
+export type DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostError = DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostErrors[keyof DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostErrors];
+
+export type DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeletedExperiment;
+};
+
+export type DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostResponse = DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostResponses[keyof DeleteExperimentApiV1ResearchExperimentsExperimentIdDeletePostResponses];
 
 export type ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetData = {
     body?: never;
