@@ -102,7 +102,7 @@ test('decisiones experimentales se calculan en job y persisten con su política'
   const previewCsv = page.getByRole('link', { name: 'Descargar decisiones CSV' });
   const csv = await page.request.get((await previewCsv.getAttribute('href'))!);
   expect(csv.ok()).toBe(true);
-  const header = (await csv.text()).replace(/^﻿/, '').split('\n')[0];
+  const header = (await csv.text()).replace(/^\uFEFF/, '').split('\n')[0];
   expect(header).toBe('symbol,action,current_pct,target_pct,change_pct,reason,score');
   await page.getByRole('button', { name: 'Guardar plan' }).click();
   await expect(page.getByText(/Plan #\d+ guardado/)).toBeVisible();
