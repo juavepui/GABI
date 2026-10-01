@@ -3154,6 +3154,24 @@
         "title": "EstimateCaptureStatus",
         "type": "object"
       },
+      "ExcludedTrial": {
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "trial": {
+            "title": "Trial",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trial",
+          "reason"
+        ],
+        "title": "ExcludedTrial",
+        "type": "object"
+      },
       "ExpectedValue": {
         "additionalProperties": false,
         "properties": {
@@ -6459,6 +6477,46 @@
         "title": "OutcomesRequest",
         "type": "object"
       },
+      "OverfittingTrial": {
+        "properties": {
+          "cost_bps": {
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "sharpe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sharpe"
+          },
+          "trial_id": {
+            "title": "Trial Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trial_id",
+          "role",
+          "months",
+          "cost_bps",
+          "sharpe"
+        ],
+        "title": "OverfittingTrial",
+        "type": "object"
+      },
       "PboExperiment": {
         "properties": {
           "data_fingerprint": {
@@ -6526,6 +6584,24 @@
           "n_returns"
         ],
         "title": "PboExperiment",
+        "type": "object"
+      },
+      "PboSensitivity": {
+        "properties": {
+          "pbo": {
+            "title": "Pbo",
+            "type": "number"
+          },
+          "splits": {
+            "title": "Splits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "splits",
+          "pbo"
+        ],
+        "title": "PboSensitivity",
         "type": "object"
       },
       "PeriodQualityWarning": {
@@ -7312,6 +7388,164 @@
         "title": "PublishedSicWindow",
         "type": "object"
       },
+      "RankAggregate": {
+        "properties": {
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          }
+        },
+        "required": [
+          "metric",
+          "mean",
+          "min",
+          "max"
+        ],
+        "title": "RankAggregate",
+        "type": "object"
+      },
+      "RankCompany": {
+        "properties": {
+          "base_rank": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Rank"
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosis"
+          },
+          "rank_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank Max"
+          },
+          "rank_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank Min"
+          },
+          "rank_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank Std"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "top10_inclusion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top10 Inclusion"
+          },
+          "top20_inclusion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top20 Inclusion"
+          },
+          "top30_inclusion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top30 Inclusion"
+          }
+        },
+        "required": [
+          "symbol",
+          "base_rank",
+          "rank_min",
+          "rank_max",
+          "rank_std",
+          "top10_inclusion",
+          "top20_inclusion",
+          "top30_inclusion",
+          "diagnosis"
+        ],
+        "title": "RankCompany",
+        "type": "object"
+      },
       "RankingResponse": {
         "additionalProperties": false,
         "properties": {
@@ -7553,6 +7787,90 @@
         "title": "SaveSnapshot",
         "type": "object"
       },
+      "SavedAuditsOverview": {
+        "properties": {
+          "block_bootstrap": {
+            "title": "Block Bootstrap",
+            "type": "boolean"
+          },
+          "factor_benchmark": {
+            "title": "Factor Benchmark",
+            "type": "boolean"
+          },
+          "factor_stability": {
+            "title": "Factor Stability",
+            "type": "boolean"
+          },
+          "overfitting_audit": {
+            "title": "Overfitting Audit",
+            "type": "boolean"
+          },
+          "rank_stability": {
+            "title": "Rank Stability",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "overfitting_audit",
+          "factor_benchmark",
+          "factor_stability",
+          "block_bootstrap",
+          "rank_stability"
+        ],
+        "title": "SavedAuditsOverview",
+        "type": "object"
+      },
+      "SavedBlockBootstrap": {
+        "properties": {
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/SavedBootstrapDataset"
+            },
+            "title": "Datasets",
+            "type": "array"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "string"
+          },
+          "unavailable": {
+            "items": {
+              "$ref": "#/components/schemas/UnavailableBootstrapDataset"
+            },
+            "title": "Unavailable",
+            "type": "array"
+          },
+          "view": {
+            "$ref": "#/components/schemas/BlockBootstrapView"
+          }
+        },
+        "required": [
+          "datasets",
+          "unavailable",
+          "selected",
+          "view"
+        ],
+        "title": "SavedBlockBootstrap",
+        "type": "object"
+      },
+      "SavedBootstrapDataset": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "SavedBootstrapDataset",
+        "type": "object"
+      },
       "SavedDecision": {
         "additionalProperties": false,
         "properties": {
@@ -7610,6 +7928,123 @@
           "holdings"
         ],
         "title": "SavedDecision",
+        "type": "object"
+      },
+      "SavedOverfittingAudit": {
+        "properties": {
+          "dsr": {
+            "title": "Dsr",
+            "type": "number"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedTrial"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "max_symbols": {
+            "title": "Max Symbols",
+            "type": "integer"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "n_trials": {
+            "title": "N Trials",
+            "type": "integer"
+          },
+          "pbo": {
+            "title": "Pbo",
+            "type": "number"
+          },
+          "pbo_sensitivity": {
+            "items": {
+              "$ref": "#/components/schemas/PboSensitivity"
+            },
+            "title": "Pbo Sensitivity",
+            "type": "array"
+          },
+          "trials": {
+            "items": {
+              "$ref": "#/components/schemas/OverfittingTrial"
+            },
+            "title": "Trials",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pbo",
+          "dsr",
+          "n_trials",
+          "n_obs",
+          "max_symbols",
+          "trials",
+          "pbo_sensitivity",
+          "excluded"
+        ],
+        "title": "SavedOverfittingAudit",
+        "type": "object"
+      },
+      "SavedRankStability": {
+        "properties": {
+          "aggregate": {
+            "items": {
+              "$ref": "#/components/schemas/RankAggregate"
+            },
+            "title": "Aggregate",
+            "type": "array"
+          },
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/RankCompany"
+            },
+            "title": "Companies",
+            "type": "array"
+          },
+          "dates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dates",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "n_dates": {
+            "title": "N Dates",
+            "type": "integer"
+          },
+          "sectors_complete": {
+            "title": "Sectors Complete",
+            "type": "boolean"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "string"
+          },
+          "stability_score": {
+            "title": "Stability Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "stability_score",
+          "n_dates",
+          "aggregate",
+          "dates",
+          "selected",
+          "companies",
+          "sectors_complete",
+          "limitations"
+        ],
+        "title": "SavedRankStability",
         "type": "object"
       },
       "SearchTrial": {
@@ -8958,6 +9393,29 @@
           "tax"
         ],
         "title": "TaxYear",
+        "type": "object"
+      },
+      "UnavailableBootstrapDataset": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "reason"
+        ],
+        "title": "UnavailableBootstrapDataset",
         "type": "object"
       },
       "UndoResult": {
@@ -15036,6 +15494,631 @@
           }
         },
         "summary": "Published Factor Export",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits": {
+      "get": {
+        "operationId": "saved_audits_api_v1_research_saved_audits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedAuditsOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Audits",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits/block-bootstrap": {
+      "get": {
+        "operationId": "saved_block_bootstrap_api_v1_research_saved_audits_block_bootstrap_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dataset",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dataset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedBlockBootstrap"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Block Bootstrap",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits/factor-benchmark": {
+      "get": {
+        "operationId": "saved_factor_benchmark_api_v1_research_saved_audits_factor_benchmark_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactorBenchmark"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Factor Benchmark",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits/factor-stability": {
+      "get": {
+        "operationId": "saved_factor_stability_api_v1_research_saved_audits_factor_stability_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactorStability"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Factor Stability",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits/overfitting": {
+      "get": {
+        "operationId": "saved_overfitting_api_v1_research_saved_audits_overfitting_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedOverfittingAudit"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Overfitting",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits/rank-stability": {
+      "get": {
+        "operationId": "saved_rank_stability_api_v1_research_saved_audits_rank_stability_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 10,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedRankStability"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Rank Stability",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/saved-audits/{audit}/files/{filename}": {
+      "get": {
+        "operationId": "saved_audit_file_api_v1_research_saved_audits__audit__files__filename__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "audit",
+            "required": true,
+            "schema": {
+              "maxLength": 40,
+              "title": "Audit",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "filename",
+            "required": true,
+            "schema": {
+              "maxLength": 60,
+              "title": "Filename",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Saved Audit File",
         "tags": [
           "research"
         ]

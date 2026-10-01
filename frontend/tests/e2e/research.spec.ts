@@ -265,3 +265,34 @@ test('Research Lab registra y elimina experimentos con comandos explícitos', as
     });
   }
 });
+
+test('Research Lab muestra las auditorías guardadas verificadas', async ({ page }) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/laboratorio');
+    const overfitting = page.getByRole('region', { name: 'Auditoría de sobreajuste' });
+    await expect(overfitting.getByText('PBO · variantes a coste fijo')).toBeVisible();
+    await expect(overfitting.getByRole('table', { name: 'Ensayos retrospectivos' })).toContainText(
+      'top10_q',
+    );
+    await page.getByText('Estabilidad temporal FF5 + Momentum · auditoría guardada').click();
+    await expect(page.getByText('Estabilidad temporal de alfa y betas')).toBeVisible();
+    await page.getByText('Benchmark ajustado por beta/factores · auditoría guardada').click();
+    await expect(page.getByText('Benchmark ajustado por beta y factores')).toBeVisible();
+    await page.getByText('Incertidumbre por bloques · diagnóstico guardado').click();
+    await expect(page.getByLabel('Series del diagnóstico')).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Intervalos bootstrap' })).toBeVisible();
+    await page.getByText('Estabilidad histórica · vecindad preregistrada de pesos').click();
+    const ranks = page.getByRole('region', { name: 'Estabilidad histórica del ranking' });
+    await expect(ranks).toContainText('Persistencia media del Top-20');
+    const dates = ranks.getByLabel('Fecha del ranking');
+    await dates.selectOption({ index: 1 });
+    await expect(ranks.getByRole('table', { name: 'Dispersión por empresa' })).toBeVisible();
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});

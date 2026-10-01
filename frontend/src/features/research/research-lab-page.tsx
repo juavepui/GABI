@@ -7,6 +7,7 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { DeleteExperiment, ManualExperimentForm } from './experiment-form';
 import { BootstrapPanel, PboPanel } from './experiment-jobs';
+import { SavedAudits } from './saved-audits';
 import { DeflatedSharpePanel, ExperimentTailPanel } from './experiment-statistics';
 
 const PAGE_SIZE = 50;
@@ -162,7 +163,7 @@ export function ResearchLabPage() {
           Registro de experimentos de backtesting con su metodología, el commit exacto y el
           resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
           candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real (live
-          forward) pueden confirmarlo. Las auditorías guardadas siguen en Streamlit durante la
+          forward) pueden confirmarlo. El registro prospectivo sigue en Streamlit durante la
           migración.
         </p>
       </header>
@@ -314,6 +315,7 @@ export function ResearchLabPage() {
           <ExperimentTailPanel />
           <PboPanel />
           <BootstrapPanel />
+          <SavedAudits />
         </>
       )}
     </div>

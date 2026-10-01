@@ -303,10 +303,31 @@ worker). Un formulario inválido no crea la base. React pide confirmación antes
 de borrar. El backend de pruebas e2e apunta esa configuración a su directorio
 temporal.
 
+Las auditorías guardadas de Research Lab se consultan en modo Research desde
+`GET /research/saved-audits/...`. Son la auditoría retrospectiva de sobreajuste,
+el benchmark ajustado por factores, la estabilidad FF5 + Momentum, el
+diagnóstico de bloques y la estabilidad histórica del ranking. Cada auditoría
+la verifica su lector antiguo sin cambios (`load_audit`/`load_saved`, con sus
+huellas SHA-256) mediante `infrastructure/legacy/saved_audits.py`.
+`FileSavedAudits` guarda el resultado en memoria hasta que cambian la identidad,
+el tamaño o los tiempos de algún fichero de su directorio, con topes de 8 MB
+por fichero y 24 MB por auditoría. Una alteración devuelve 503 solo en esa
+sección, como el aviso de Streamlit. Una auditoría no publicada se oculta.
+Las descargas sirven los ficheros publicados de una lista cerrada y fallan si
+cambian durante la lectura. El bootstrap guardado usa la misma presentación
+que el job. El benchmark y la estabilidad reutilizan los componentes React del
+contraste Fama-French. Medición local, Windows/Python 3.13.7, 20 repeticiones:
+primera verificación 0,014 s para sobreajuste (más 2,6 s de importación del
+módulo antiguo, una vez por proceso), 0,009 s para benchmark, 0,013 s para
+estabilidad, 0,185 s para el bootstrap (3,3 MiB de pico) y 0,215 s para la
+estabilidad del ranking (2,6 MiB); las consultas cacheadas tardan entre 0,6 y
+8 ms de mediana. Las pruebas comparan los valores con los lectores y las tablas
+antiguas, la invalidación al cambiar un fichero y la lista cerrada de descargas.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual y borrado en React; auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado y auditorías guardadas en React; registro prospectivo en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

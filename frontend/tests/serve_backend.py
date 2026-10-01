@@ -90,7 +90,7 @@ def main():
         from gabi import config
         config.DATA_DIR, config.DB_PATH = root, root / "gabi.db"
         app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published,
-                         published_factors_root=root)
+                         published_factors_root=root, saved_audits_root=published_root)
 
         worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command, app), root)
         threading.Thread(target=lambda: work_forever(worker), daemon=True).start()

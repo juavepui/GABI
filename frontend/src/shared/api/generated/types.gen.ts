@@ -1605,6 +1605,20 @@ export type EstimateCaptureStatus = {
 };
 
 /**
+ * ExcludedTrial
+ */
+export type ExcludedTrial = {
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Trial
+     */
+    trial: string;
+};
+
+/**
  * ExpectedValue
  */
 export type ExpectedValue = {
@@ -3328,6 +3342,32 @@ export type OutcomesRequest = {
 };
 
 /**
+ * OverfittingTrial
+ */
+export type OverfittingTrial = {
+    /**
+     * Cost Bps
+     */
+    cost_bps: number;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Role
+     */
+    role: string;
+    /**
+     * Sharpe
+     */
+    sharpe: number | null;
+    /**
+     * Trial Id
+     */
+    trial_id: string;
+};
+
+/**
  * PboExperiment
  */
 export type PboExperiment = {
@@ -3363,6 +3403,20 @@ export type PboExperiment = {
      * Stage
      */
     stage: string;
+};
+
+/**
+ * PboSensitivity
+ */
+export type PboSensitivity = {
+    /**
+     * Pbo
+     */
+    pbo: number;
+    /**
+     * Splits
+     */
+    splits: number;
 };
 
 /**
@@ -3799,6 +3853,70 @@ export type PublishedSicWindow = {
 };
 
 /**
+ * RankAggregate
+ */
+export type RankAggregate = {
+    /**
+     * Max
+     */
+    max: number | null;
+    /**
+     * Mean
+     */
+    mean: number | null;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * Min
+     */
+    min: number | null;
+};
+
+/**
+ * RankCompany
+ */
+export type RankCompany = {
+    /**
+     * Base Rank
+     */
+    base_rank: number | null;
+    /**
+     * Diagnosis
+     */
+    diagnosis: string | null;
+    /**
+     * Rank Max
+     */
+    rank_max: number | null;
+    /**
+     * Rank Min
+     */
+    rank_min: number | null;
+    /**
+     * Rank Std
+     */
+    rank_std: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Top10 Inclusion
+     */
+    top10_inclusion: number | null;
+    /**
+     * Top20 Inclusion
+     */
+    top20_inclusion: number | null;
+    /**
+     * Top30 Inclusion
+     */
+    top30_inclusion: number | null;
+};
+
+/**
  * RankingResponse
  */
 export type RankingResponse = {
@@ -3940,6 +4058,65 @@ export type SaveSnapshot = {
 };
 
 /**
+ * SavedAuditsOverview
+ */
+export type SavedAuditsOverview = {
+    /**
+     * Block Bootstrap
+     */
+    block_bootstrap: boolean;
+    /**
+     * Factor Benchmark
+     */
+    factor_benchmark: boolean;
+    /**
+     * Factor Stability
+     */
+    factor_stability: boolean;
+    /**
+     * Overfitting Audit
+     */
+    overfitting_audit: boolean;
+    /**
+     * Rank Stability
+     */
+    rank_stability: boolean;
+};
+
+/**
+ * SavedBlockBootstrap
+ */
+export type SavedBlockBootstrap = {
+    /**
+     * Datasets
+     */
+    datasets: Array<SavedBootstrapDataset>;
+    /**
+     * Selected
+     */
+    selected: string;
+    /**
+     * Unavailable
+     */
+    unavailable: Array<UnavailableBootstrapDataset>;
+    view: BlockBootstrapView;
+};
+
+/**
+ * SavedBootstrapDataset
+ */
+export type SavedBootstrapDataset = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+};
+
+/**
  * SavedDecision
  */
 export type SavedDecision = {
@@ -3981,6 +4158,82 @@ export type SavedDecision = {
      * Status
      */
     status?: 'EXPERIMENTAL';
+};
+
+/**
+ * SavedOverfittingAudit
+ */
+export type SavedOverfittingAudit = {
+    /**
+     * Dsr
+     */
+    dsr: number;
+    /**
+     * Excluded
+     */
+    excluded: Array<ExcludedTrial>;
+    /**
+     * Max Symbols
+     */
+    max_symbols: number;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * N Trials
+     */
+    n_trials: number;
+    /**
+     * Pbo
+     */
+    pbo: number;
+    /**
+     * Pbo Sensitivity
+     */
+    pbo_sensitivity: Array<PboSensitivity>;
+    /**
+     * Trials
+     */
+    trials: Array<OverfittingTrial>;
+};
+
+/**
+ * SavedRankStability
+ */
+export type SavedRankStability = {
+    /**
+     * Aggregate
+     */
+    aggregate: Array<RankAggregate>;
+    /**
+     * Companies
+     */
+    companies: Array<RankCompany>;
+    /**
+     * Dates
+     */
+    dates: Array<string>;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    /**
+     * N Dates
+     */
+    n_dates: number;
+    /**
+     * Sectors Complete
+     */
+    sectors_complete: boolean;
+    /**
+     * Selected
+     */
+    selected: string;
+    /**
+     * Stability Score
+     */
+    stability_score: number;
 };
 
 /**
@@ -4720,6 +4973,24 @@ export type TaxYear = {
      * Year
      */
     year: number;
+};
+
+/**
+ * UnavailableBootstrapDataset
+ */
+export type UnavailableBootstrapDataset = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Reason
+     */
+    reason: string;
 };
 
 /**
@@ -7849,6 +8120,338 @@ export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetErro
 export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetError = PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetErrors[keyof PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetErrors];
 
 export type PublishedFactorExportApiV1ResearchPublishedFactorsExportsNameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SavedAuditsApiV1ResearchSavedAuditsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/saved-audits';
+};
+
+export type SavedAuditsApiV1ResearchSavedAuditsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedAuditsApiV1ResearchSavedAuditsGetError = SavedAuditsApiV1ResearchSavedAuditsGetErrors[keyof SavedAuditsApiV1ResearchSavedAuditsGetErrors];
+
+export type SavedAuditsApiV1ResearchSavedAuditsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedAuditsOverview;
+};
+
+export type SavedAuditsApiV1ResearchSavedAuditsGetResponse = SavedAuditsApiV1ResearchSavedAuditsGetResponses[keyof SavedAuditsApiV1ResearchSavedAuditsGetResponses];
+
+export type SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Dataset
+         */
+        dataset?: string | null;
+    };
+    url: '/api/v1/research/saved-audits/block-bootstrap';
+};
+
+export type SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetError = SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetErrors[keyof SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetErrors];
+
+export type SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedBlockBootstrap;
+};
+
+export type SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetResponse = SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetResponses[keyof SavedBlockBootstrapApiV1ResearchSavedAuditsBlockBootstrapGetResponses];
+
+export type SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/saved-audits/factor-benchmark';
+};
+
+export type SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetError = SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetErrors[keyof SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetErrors];
+
+export type SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: FactorBenchmark;
+};
+
+export type SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetResponse = SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetResponses[keyof SavedFactorBenchmarkApiV1ResearchSavedAuditsFactorBenchmarkGetResponses];
+
+export type SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/saved-audits/factor-stability';
+};
+
+export type SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetError = SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetErrors[keyof SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetErrors];
+
+export type SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: FactorStability;
+};
+
+export type SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetResponse = SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetResponses[keyof SavedFactorStabilityApiV1ResearchSavedAuditsFactorStabilityGetResponses];
+
+export type SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/saved-audits/overfitting';
+};
+
+export type SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetError = SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetErrors[keyof SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetErrors];
+
+export type SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedOverfittingAudit;
+};
+
+export type SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetResponse = SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetResponses[keyof SavedOverfittingApiV1ResearchSavedAuditsOverfittingGetResponses];
+
+export type SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Date
+         */
+        date?: string | null;
+    };
+    url: '/api/v1/research/saved-audits/rank-stability';
+};
+
+export type SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetError = SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetErrors[keyof SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetErrors];
+
+export type SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedRankStability;
+};
+
+export type SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetResponse = SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetResponses[keyof SavedRankStabilityApiV1ResearchSavedAuditsRankStabilityGetResponses];
+
+export type SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Audit
+         */
+        audit: string;
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/api/v1/research/saved-audits/{audit}/files/{filename}';
+};
+
+export type SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetError = SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetErrors[keyof SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetErrors];
+
+export type SavedAuditFileApiV1ResearchSavedAuditsAuditFilesFilenameGetResponses = {
     /**
      * Successful Response
      */

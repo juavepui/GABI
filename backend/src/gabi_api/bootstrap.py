@@ -31,6 +31,7 @@ from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
+from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
@@ -53,6 +54,7 @@ from gabi.infrastructure.storage.market import ReadOnlyMarket
 from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedLedger
+from gabi.infrastructure.storage.saved_audits import FileSavedAudits
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
 from gabi.infrastructure.storage.weights import FileWeights
@@ -86,7 +88,7 @@ class HealthResponse(BaseModel):
 
 def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today,
                published_ledger: Path | None = None, published_factors_root: Path | None = None,
-               frontend_dist: Path | None = None) -> FastAPI:
+               frontend_dist: Path | None = None, saved_audits_root: Path | None = None) -> FastAPI:
     settings = settings or Settings.from_environment()
     benchmark, risk_free_rate = defaults()
     policy = model_policy()
@@ -143,6 +145,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.estimate_queries = estimate_queries
     app.state.experiments = experiments
     app.state.experiment_statistics = experiment_statistics
+    app.state.saved_audits = SavedAuditQueries(FileSavedAudits(saved_audits_root or settings.data_dir.parent),
+                                               lambda: model_queries.model().mode == "RESEARCH")
     app.state.experiment_commands = ExperimentCommands(LegacyExperimentLog(settings.data_dir),
                                                        lambda: model_queries.model().mode == "RESEARCH")
     app.state.backtest_diagnostics = backtest_diagnostics

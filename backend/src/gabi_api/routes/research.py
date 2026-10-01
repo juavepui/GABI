@@ -20,6 +20,7 @@ from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
+from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi_api.schemas.research import (
     BacktestDiagnosticsResponse,
     BacktestFactorsPreview,
@@ -34,7 +35,9 @@ from gabi_api.schemas.research import (
     ExperimentList,
     ExperimentPboPreview,
     ExperimentTailRisk,
+    FactorBenchmark,
     FactorPreview,
+    FactorStability,
     HistoricalOutcomes,
     HistoricalPreview,
     HistoricalTable,
@@ -42,6 +45,10 @@ from gabi_api.schemas.research import (
     PreparationResult,
     PublishedFactors,
     ResearchOverview,
+    SavedAuditsOverview,
+    SavedBlockBootstrap,
+    SavedOverfittingAudit,
+    SavedRankStability,
     SearchTrials,
 )
 
@@ -182,6 +189,52 @@ def experiment_bootstrap_distributions(job_id: Annotated[str, Path(pattern=r"^[a
         raise QueryError("result_unavailable", "Este bootstrap no tiene réplicas.", 404)
     return Response(distribution_frame(result["distribution"]).to_csv(index=False), media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": 'attachment; filename="block-bootstrap-distributions.csv"'})
+
+
+def saved_audit_service(request: Request) -> SavedAuditQueries:
+    return request.app.state.saved_audits
+
+
+Saved = Annotated[SavedAuditQueries, Depends(saved_audit_service)]
+MEDIA = {".csv": "text/csv; charset=utf-8", ".json": "application/json"}
+
+
+@router.get("/saved-audits", response_model=SavedAuditsOverview)
+def saved_audits(query: Saved) -> dict:
+    return {name.replace("-", "_"): value for name, value in query.overview().items()}
+
+
+@router.get("/saved-audits/overfitting", response_model=SavedOverfittingAudit)
+def saved_overfitting(query: Saved) -> dict:
+    return query.overfitting()
+
+
+@router.get("/saved-audits/factor-benchmark", response_model=FactorBenchmark)
+def saved_factor_benchmark(query: Saved) -> dict:
+    return query.factor_benchmark()
+
+
+@router.get("/saved-audits/factor-stability", response_model=FactorStability)
+def saved_factor_stability(query: Saved) -> dict:
+    return query.factor_stability()
+
+
+@router.get("/saved-audits/block-bootstrap", response_model=SavedBlockBootstrap)
+def saved_block_bootstrap(query: Saved, dataset: Annotated[str | None, Query(max_length=40)] = None) -> dict:
+    return query.block_bootstrap(dataset)
+
+
+@router.get("/saved-audits/rank-stability", response_model=SavedRankStability)
+def saved_rank_stability(query: Saved, date: Annotated[str | None, Query(max_length=10)] = None) -> dict:
+    return query.rank_stability(date)
+
+
+@router.get("/saved-audits/{audit}/files/{filename}")
+def saved_audit_file(audit: Annotated[str, Path(max_length=40)], filename: Annotated[str, Path(max_length=60)],
+                     query: Saved) -> Response:
+    contents = query.download(audit, filename)
+    return Response(contents, media_type=MEDIA.get(filename[filename.rfind("."):], "application/octet-stream"),
+                    headers={"Content-Disposition": f'attachment; filename="gabi-{audit}-{filename}"'})
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

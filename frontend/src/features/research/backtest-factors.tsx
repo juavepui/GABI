@@ -1,7 +1,12 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { cancelJob, createJob, getBacktestFactors, getJob } from '@/shared/api/client';
-import type { BacktestFactorsPreview, StabilityFit } from '@/shared/api/generated/types.gen';
+import type {
+  BacktestFactorsPreview,
+  FactorBenchmark,
+  FactorStability,
+  StabilityFit,
+} from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
@@ -198,8 +203,8 @@ function FactorResult({ result }: { result: BacktestFactorsPreview }) {
           No se pudo calcular el contraste: {result.regression_error}
         </p>
       )}
-      <Stability result={result} />
-      <Benchmark result={result} />
+      <Stability audit={result.stability ?? null} error={result.stability_error} />
+      <Benchmark audit={result.benchmark ?? null} error={result.benchmark_error} />
       <p className="text-xs text-muted-foreground">
         Factores: {result.factors_source.file} ({result.factors_source.first_month} a{' '}
         {result.factors_source.last_month}), SHA-256 {result.factors_source.sha256.slice(0, 12)}… ·
@@ -234,12 +239,17 @@ function fitRow(label: string, fit: StabilityFit) {
   );
 }
 
-function Stability({ result }: { result: BacktestFactorsPreview }) {
+export function Stability({
+  audit,
+  error,
+}: {
+  audit: FactorStability | null;
+  error?: string | null;
+}) {
   const [coefficient, setCoefficient] = useState('alpha');
   const [windowSize, setWindowSize] = useState(16);
-  const audit = result.stability;
   if (!audit) {
-    return <p className="text-muted-foreground">{result.stability_error}</p>;
+    return <p className="text-muted-foreground">{error}</p>;
   }
   const points = audit.rolling
     .filter((fit) => fit.window === windowSize && fit.coef?.[coefficient] != null)
@@ -365,11 +375,16 @@ function Stability({ result }: { result: BacktestFactorsPreview }) {
   );
 }
 
-function Benchmark({ result }: { result: BacktestFactorsPreview }) {
+export function Benchmark({
+  audit,
+  error,
+}: {
+  audit: FactorBenchmark | null;
+  error?: string | null;
+}) {
   const [mode, setMode] = useState<'expanding' | 'in_sample'>('expanding');
-  const audit = result.benchmark;
   if (!audit) {
-    return <p className="text-muted-foreground">{result.benchmark_error}</p>;
+    return <p className="text-muted-foreground">{error}</p>;
   }
   const selected = audit[mode];
   const comparison = {

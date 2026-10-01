@@ -59,6 +59,12 @@ import type {
   ExperimentBootstrapPreview,
   ManualExperimentRequest,
   DeletedExperiment,
+  SavedAuditsOverview,
+  SavedOverfittingAudit,
+  FactorBenchmark,
+  FactorStability,
+  SavedBlockBootstrap,
+  SavedRankStability,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -169,6 +175,35 @@ export function deleteExperiment(id: number): Promise<DeletedExperiment> {
     method: 'POST',
     headers: { Accept: 'application/json' },
   });
+}
+export function getSavedAudits(signal?: AbortSignal): Promise<SavedAuditsOverview> {
+  return get('/api/v1/research/saved-audits', signal);
+}
+export function getSavedOverfitting(signal?: AbortSignal): Promise<SavedOverfittingAudit> {
+  return get('/api/v1/research/saved-audits/overfitting', signal);
+}
+export function getSavedFactorBenchmark(signal?: AbortSignal): Promise<FactorBenchmark> {
+  return get('/api/v1/research/saved-audits/factor-benchmark', signal);
+}
+export function getSavedFactorStability(signal?: AbortSignal): Promise<FactorStability> {
+  return get('/api/v1/research/saved-audits/factor-stability', signal);
+}
+export function getSavedBlockBootstrap(
+  dataset: string,
+  signal?: AbortSignal,
+): Promise<SavedBlockBootstrap> {
+  const query = dataset ? '?dataset=' + encodeURIComponent(dataset) : '';
+  return get('/api/v1/research/saved-audits/block-bootstrap' + query, signal);
+}
+export function getSavedRankStability(
+  date: string,
+  signal?: AbortSignal,
+): Promise<SavedRankStability> {
+  const query = date ? '?date=' + encodeURIComponent(date) : '';
+  return get('/api/v1/research/saved-audits/rank-stability' + query, signal);
+}
+export function savedAuditFile(audit: string, filename: string): string {
+  return '/api/v1/research/saved-audits/' + audit + '/files/' + filename;
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);

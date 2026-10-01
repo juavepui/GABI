@@ -843,3 +843,86 @@ class ManualExperimentRequest(BaseModel):
 
 class DeletedExperiment(BaseModel):
     deleted: int
+
+
+class SavedAuditsOverview(BaseModel):
+    overfitting_audit: bool
+    factor_benchmark: bool
+    factor_stability: bool
+    block_bootstrap: bool
+    rank_stability: bool
+
+
+class OverfittingTrial(BaseModel):
+    trial_id: str
+    role: str
+    months: int
+    cost_bps: float
+    sharpe: float | None
+
+
+class PboSensitivity(BaseModel):
+    splits: int
+    pbo: float
+
+
+class ExcludedTrial(BaseModel):
+    trial: str
+    reason: str
+
+
+class SavedOverfittingAudit(BaseModel):
+    pbo: float
+    dsr: float
+    n_trials: int
+    n_obs: int
+    max_symbols: int
+    trials: list[OverfittingTrial]
+    pbo_sensitivity: list[PboSensitivity]
+    excluded: list[ExcludedTrial]
+
+
+class SavedBootstrapDataset(BaseModel):
+    id: str
+    label: str
+
+
+class UnavailableBootstrapDataset(SavedBootstrapDataset):
+    reason: str
+
+
+class SavedBlockBootstrap(BaseModel):
+    datasets: list[SavedBootstrapDataset]
+    unavailable: list[UnavailableBootstrapDataset]
+    selected: str
+    view: BlockBootstrapView
+
+
+class RankAggregate(BaseModel):
+    metric: str
+    mean: float | None
+    min: float | None
+    max: float | None
+
+
+class RankCompany(BaseModel):
+    symbol: str
+    base_rank: float | None
+    rank_min: float | None
+    rank_max: float | None
+    rank_std: float | None
+    top10_inclusion: float | None
+    top20_inclusion: float | None
+    top30_inclusion: float | None
+    diagnosis: str | None
+
+
+class SavedRankStability(BaseModel):
+    stability_score: float
+    n_dates: int
+    aggregate: list[RankAggregate]
+    dates: list[str]
+    selected: str
+    companies: list[RankCompany]
+    sectors_complete: bool
+    limitations: list[str]
