@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { cancelJob, createJob, getJob } from '@/shared/api/client';
 import type { CreateJobRequest } from '@/shared/api/generated/types.gen';
 
-export function useExperimentJob(prefix: string) {
+export function useJob(prefix: string) {
   const [jobId, setJobId] = useState<string | null>(null);
   const start = useMutation({
     mutationFn: (body: Omit<CreateJobRequest, 'idempotency_key'>) =>

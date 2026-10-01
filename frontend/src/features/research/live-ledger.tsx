@@ -10,7 +10,7 @@ import { Button } from '@/shared/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
-import { useExperimentJob } from './use-experiment-job';
+import { useJob } from '@/shared/api/use-job';
 
 const pct = (value: number | null | undefined) =>
   value == null
@@ -189,7 +189,7 @@ function Report({ jobId }: { jobId: string }) {
 
 function Performance({ versions }: { versions: string[] }) {
   const [version, setVersion] = useState(versions[0]);
-  const state = useExperimentJob('live-forward');
+  const state = useJob('live-forward');
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">

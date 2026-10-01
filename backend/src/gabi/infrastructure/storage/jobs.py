@@ -131,6 +131,8 @@ class SqliteJobs:
             payload["company"] = command.company
         if command.update is not None:
             payload["update"] = command.update
+        if command.health is not None:
+            payload["health"] = command.health
         parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None

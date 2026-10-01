@@ -2994,6 +2994,16 @@
             ],
             "title": "Factor Months"
           },
+          "health": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataHealthRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "holdings_text": {
             "anyOf": [
               {
@@ -3039,7 +3049,8 @@
               "blind_export",
               "portfolio_lab",
               "company_sync",
-              "data_update"
+              "data_update",
+              "data_health"
             ],
             "title": "Kind",
             "type": "string"
@@ -3187,6 +3198,65 @@
           "cash"
         ],
         "title": "CurvePoint",
+        "type": "object"
+      },
+      "DataHealthRequest": {
+        "additionalProperties": false,
+        "description": "The old «Calidad de los datos»: universe, one company, identities or the 2010-2015 archive.",
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "maxLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "scope": {
+            "enum": [
+              "universe",
+              "company",
+              "identities",
+              "archive",
+              "archive_members",
+              "archive_prices"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "title": "DataHealthRequest",
         "type": "object"
       },
       "DataResponse": {

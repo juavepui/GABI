@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlockBootstrapResult } from './block-bootstrap-view';
-import { useExperimentJob } from './use-experiment-job';
+import { useJob } from '@/shared/api/use-job';
 
 const OPTIONS_LIMIT = 200;
 
@@ -15,7 +15,7 @@ const pct = (value: number) =>
     value * 100,
   ) + ' %';
 
-export function JobStatus({ state }: { state: ReturnType<typeof useExperimentJob> }) {
+export function JobStatus({ state }: { state: ReturnType<typeof useJob> }) {
   const { start, job, cancel } = state;
   return (
     <>
@@ -102,7 +102,7 @@ function PboResult({ jobId }: { jobId: string }) {
 export function PboPanel() {
   const experiments = useReturnExperiments();
   const [picked, setPicked] = useState<number[]>([]);
-  const state = useExperimentJob('pbo');
+  const state = useJob('pbo');
   const options = experiments.data ?? [];
   return (
     <section className="rounded-xl border bg-card p-5" aria-label="PBO CSCV">
@@ -191,7 +191,7 @@ export function BootstrapPanel() {
   const experiments = useReturnExperiments();
   const [strategy, setStrategy] = useState(0);
   const [benchmark, setBenchmark] = useState(0);
-  const state = useExperimentJob('bootstrap');
+  const state = useJob('bootstrap');
   const options = experiments.data ?? [];
   const selected = options.find((item) => item.id === strategy);
   const comparable = options.filter(

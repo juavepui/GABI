@@ -181,6 +181,55 @@ def synthetic_factor_contrast(periods, hac_lags):
             "stability": "Diagnóstico temporal no disponible: fixture sin trimestres suficientes",
             "benchmark": "Benchmark trimestral no disponible: fixture sin trimestres suficientes"}
 
+class SyntheticHealth:
+    """Fixed cache state for the data_health job: no legacy reader creates schema in the fixture."""
+
+    def universe(self):
+        return [{"symbol": "T000", "name": "Test Zero"}, {"symbol": "T001", "name": "Test One"}]
+
+    def summary(self, symbols):
+        source = {"coverage": 1.0, "fresh": 0.5, "threshold_hours": 24, "oldest_hours": 30, "have": 2, "total": 2}
+        return {"n_symbols": len(symbols), "cik": {"resolved": 2, "total": 2, "pct": 1.0},
+                "macro": {"n_series": 9, "oldest_hours": 5, "threshold_hours": 24},
+                "structural_limitations": ["Sector point-in-time aproximado."],
+                "sources": {"prices": source | {"label": "Precios (Yahoo)", "oldest_date": "2026-09-28"},
+                            "edgar": source | {"label": "SEC EDGAR", "with_facts_pct": 0.5},
+                            "fred": source | {"label": "FRED", "latest_dates": {"DGS10": "2026-09-29"}}}}
+
+    def recent_errors(self):
+        return [{"source": "yahoo_precio", "symbol": "T001", "reason": "sin precio", "occurred_at": "2026-09-30"}]
+
+    def provenance(self, symbol, as_of):
+        old = {"age_hours": 100, "threshold_hours": 24}
+        return {"symbol": symbol, "cik": "0000000001",
+                "prices": {"latest_date": "2026-09-28", "adjusted_sessions": 250, "age_hours": 24,
+                           "threshold_hours": 120},
+                "fundamentals": old, "insider": {"age_hours": None, "threshold_hours": 24},
+                "edgar": old | {"has_facts": True, "latest_10k_date": "2026-02-01", "latest_10q_date": None},
+                "entity_master": {"status": "approximate", "sector": "Technology", "effective_date": "2026-09-01"}}
+
+    def identity(self, symbol, as_of):
+        return {"resolution": {"status": "resolved", "entity_id": "cik:1", "candidates": ["cik:1"]},
+                "name_candidates": []}
+
+    def identities(self, symbols, as_of):
+        return [{"symbol": s, "status": "resolved" if s == "T000" else "unresolved",
+                 "cik": "1" if s == "T000" else None} for s in symbols]
+
+    def archive_sources(self):
+        return [{"source": "members", "data": "Composición", "rows": 3, "first": "1996-01-02", "last": "2015-12-31"},
+                {"source": "prices", "data": "Precios", "rows": 9, "first": "2008-01-02", "last": "2016-06-30"}]
+
+    def archive_quarterly(self):
+        return [{"date": "2009-12-31", "members": 499}, {"date": "2010-03-31", "members": 500}]
+
+    def archive_members(self, source, as_of):
+        return {"symbols": ["T000", "T001"], "source_date": as_of}
+
+    def archive_prices(self, source, symbol, start, end):
+        return [{"date": "2010-01-04", "close": 10.0, "adj_close": 9.5, "volume": 100}]
+
+
 def synthetic_job(command, app):
     time.sleep(0.5)
     if command.kind == "factor_analysis":
@@ -233,6 +282,10 @@ def synthetic_job(command, app):
         failed = {} if command.update["symbols"] else {"T001": {"fundamentales": "límite de peticiones"}}
         return summarize_update(command.update, symbols, {"price_refreshed": True, "fundamentals_refreshed": 2,
                                                           "edgar_refreshed": 3, "failed": failed})
+    if command.kind == "data_health":  # The real scope rules over a fixed source.
+        from gabi.application.administration.data_health import build_data_health
+
+        return build_data_health(command.health, SyntheticHealth(), TODAY)
     if command.kind == "portfolio_lab":
         from gabi.application.research.portfolio_lab import build_portfolio_lab
 

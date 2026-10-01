@@ -88,7 +88,8 @@ def create_job(body: CreateJobRequest, service: Service) -> dict:
                          body.blind.model_dump() if body.blind else None,
                          body.portfolio_options.model_dump() if body.portfolio_options else None,
                          body.company.model_dump() if body.company else None,
-                         body.update.model_dump() if body.update else None)
+                         body.update.model_dump() if body.update else None,
+                         body.health.model_dump(exclude_none=True) if body.health else None)
     return service.submit(command, body.idempotency_key)
 
 

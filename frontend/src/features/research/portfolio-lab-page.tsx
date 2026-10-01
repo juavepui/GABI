@@ -9,7 +9,7 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { TailRiskTable } from './tail-risk-table';
-import { useExperimentJob } from './use-experiment-job';
+import { useJob } from '@/shared/api/use-job';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -263,7 +263,7 @@ export function PortfolioLabPage() {
   const [schemes, setSchemes] = useState<Scheme[]>(SCHEMES.map(([id]) => id));
   const [mode, setMode] = useState<'fast_dev' | 'validation'>('fast_dev');
   const [sample, setSample] = useState<50 | 100 | 200>(100);
-  const state = useExperimentJob('portfolio-lab');
+  const state = useJob('portfolio-lab');
   const preview = useQuery({
     queryKey: ['research', 'portfolio-lab', state.jobId],
     queryFn: ({ signal }) => getPortfolioLab(state.jobId!, signal),

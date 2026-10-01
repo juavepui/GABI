@@ -5,7 +5,7 @@ import type { BlindStatus } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
-import { useExperimentJob } from './use-experiment-job';
+import { useJob } from '@/shared/api/use-job';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -132,10 +132,10 @@ function ExportResult({ jobId }: { jobId: string }) {
 }
 
 export function BlindActions({ item }: { item: BlindStatus }) {
-  const rebalance = useExperimentJob('blind-rebalance');
-  const performance = useExperimentJob('blind-performance');
-  const exporting = useExperimentJob('blind-export');
-  const done = (state: ReturnType<typeof useExperimentJob>) =>
+  const rebalance = useJob('blind-rebalance');
+  const performance = useJob('blind-performance');
+  const exporting = useJob('blind-export');
+  const done = (state: ReturnType<typeof useJob>) =>
     state.jobId != null && state.job.data?.status === 'succeeded';
   return (
     <div className="mt-4 space-y-3">

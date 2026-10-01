@@ -53,3 +53,63 @@ test('actualizar datos resume los fallos, reintenta los fallidos y guarda claves
   await expect(fred.getByText('Configurada')).toBeVisible();
   await expect(page.getByText('clave-e2e')).toHaveCount(0);
 });
+
+test('calidad de los datos: universo, procedencia, identidades y archivo desde 2010', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  await page.getByRole('link', { name: /Calidad de los datos/ }).click();
+  await expect(page.getByRole('heading', { name: 'Calidad de los datos', level: 1 })).toBeVisible();
+
+  const universe = page.getByRole('region', { name: 'Resumen del universo' });
+  await universe.getByRole('button', { name: 'Comprobar calidad del universo' }).click();
+  const sources = universe.getByRole('table', { name: 'Cobertura y frescura por fuente' });
+  await expect(sources.getByText('Precios (Yahoo)')).toBeVisible({ timeout: 15_000 });
+  await expect(sources.getByText('100 % (2/2)').first()).toBeVisible();
+  await expect(universe.getByText('Sector point-in-time aproximado.')).toBeVisible();
+  await universe.getByText('1 fallos de actualización en los últimos 7 días').click();
+  await expect(universe.getByRole('table', { name: 'Fallos recientes' })).toContainText(
+    'sin precio',
+  );
+
+  const company = page.getByRole('region', { name: 'Procedencia de una empresa' });
+  await company.getByRole('combobox', { name: 'Empresa' }).fill('T000');
+  await company.getByLabel('Fecha de referencia del sector point-in-time').fill('2026-09-28');
+  await company.getByRole('button', { name: 'Ver procedencia' }).click();
+  const provenance = company.getByRole('table', { name: 'Procedencia por fuente' });
+  await expect(provenance.getByText('250 sesiones, última: 2026-09-28')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(provenance.getByText('Aproximado')).toBeVisible();
+  await company.getByText('Diagnóstico de identidad del universo').click();
+  await company.getByRole('button', { name: /Comprobar identidades/ }).click();
+  await expect(company.getByText(/1 símbolos sin CIK acreditado/)).toBeVisible({ timeout: 15_000 });
+
+  const archive = page.getByRole('region', { name: 'Archivo histórico 2010-2015' });
+  await archive.getByRole('button', { name: 'Consultar cobertura del archivo' }).click();
+  await expect(archive.getByRole('table', { name: 'Fuentes del archivo' })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(archive.getByLabel('Fecha de composición archivada')).toHaveAttribute(
+    'min',
+    '2010-01-01',
+  );
+  await archive.getByRole('button', { name: 'Ver miembros del índice' }).click();
+  await expect(
+    archive.getByText(/2 valores en la composición registrada el 2010-01-04/),
+  ).toBeVisible({
+    timeout: 15_000,
+  });
+  await archive.getByRole('button', { name: 'Ver precios del archivo' }).click();
+  await archive.getByText('1 sesiones de ATVI').click();
+  await expect(archive.getByRole('table', { name: 'Precios archivados' })).toContainText('9.5');
+  await archive.getByText('Cobertura trimestral 2010-2015').click();
+  const quarterly = archive.getByRole('table', { name: 'Cobertura trimestral' });
+  await expect(quarterly).toContainText('2010-03-31');
+  await expect(quarterly).not.toContainText('2009-12-31');
+
+  await page.reload();
+  await expect(
+    page.getByRole('table', { name: 'Cobertura y frescura por fuente' }).getByText('SEC EDGAR'),
+  ).toBeVisible({ timeout: 15_000 });
+});

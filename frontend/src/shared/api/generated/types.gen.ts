@@ -1477,6 +1477,7 @@ export type CreateJobRequest = {
      * Factor Months
      */
     factor_months?: 1 | 3 | 6 | 12 | null;
+    health?: DataHealthRequest | null;
     /**
      * Holdings Text
      */
@@ -1488,7 +1489,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -1529,6 +1530,30 @@ export type CurvePoint = {
      * Value
      */
     value: number | null;
+};
+
+/**
+ * DataHealthRequest
+ *
+ * The old «Calidad de los datos»: universe, one company, identities or the 2010-2015 archive.
+ */
+export type DataHealthRequest = {
+    /**
+     * As Of
+     */
+    as_of?: string | null;
+    /**
+     * Scope
+     */
+    scope: 'universe' | 'company' | 'identities' | 'archive' | 'archive_members' | 'archive_prices';
+    /**
+     * Source
+     */
+    source?: string | null;
+    /**
+     * Symbol
+     */
+    symbol?: string | null;
 };
 
 /**

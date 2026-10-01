@@ -40,7 +40,7 @@ import {
   ResearchLabPage,
   ResearchPage,
 } from '@/features/research/index';
-import { AdministrationPage } from '@/features/administration/index';
+import { AdministrationPage, DataHealthPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
 
 const client = new QueryClient({
@@ -173,6 +173,7 @@ function Shell() {
           <Route path="/investigacion/laboratorio" element={<ResearchLabPage />} />
           <Route path="/investigacion/carteras" element={<PortfolioLabPage />} />
           <Route path="/administracion" element={<AdministrationPage />} />
+          <Route path="/administracion/calidad" element={<DataHealthPage />} />
           <Route
             path="*"
             element={

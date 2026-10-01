@@ -165,6 +165,14 @@ class LegacyExecutor:
 
             assert command.company is not None
             return sync_company(command.company["symbol"], command.company["dataset"])
+        if command.kind == "data_health":
+            from datetime import date
+
+            from gabi.application.administration.data_health import build_data_health
+            from gabi.infrastructure.legacy.data_health import LegacyDataHealth
+
+            assert command.health is not None
+            return build_data_health(command.health, LegacyDataHealth(self.settings.data_dir), date.today())
         if command.kind == "data_update":
             from gabi.infrastructure.legacy.data_update import run_data_update
 

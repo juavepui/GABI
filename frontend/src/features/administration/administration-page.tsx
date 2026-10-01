@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, DatabaseZap, RefreshCw, ShieldCheck } from 'lucide-react';
@@ -28,6 +29,7 @@ const names: Record<string, string> = {
   sim_result: 'Resultado de cartera simulada',
   data_update: 'Actualizar datos (Yahoo y SEC)',
   company_sync: 'Sincronizar datos de una empresa',
+  data_health: 'Comprobar calidad de los datos',
 };
 const states: Record<string, string> = {
   queued: 'En espera',
@@ -209,6 +211,9 @@ export function AdministrationPage() {
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Solicita actualizaciones y auditorías. El worker continúa aunque cierres el navegador.
         </p>
+        <Link className="mt-2 inline-block text-sm underline" to="/administracion/calidad">
+          Calidad de los datos: cobertura, frescura, procedencia y archivo histórico
+        </Link>
       </div>
       {error && (
         <p

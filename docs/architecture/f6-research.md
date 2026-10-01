@@ -482,8 +482,8 @@ sustituto:
 | Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Hecho: `GET /companies/{symbol}/research` y job `company_sync` |
 | Ficha | Métricas informativas no puntuadas | Hecho: grupo propio en la ficha |
 | Configuración | Guardar las claves FRED, Tiingo y Nasdaq Data Link; tamaño del universo al actualizar; resumen de fallos y reintento de los fallidos | Hecho: job `data_update` (50, 150 o todo el universo; reintento forzado de los fallidos) y `POST /administration/keys/{source}` (también FMP), que nunca devuelve la clave |
-| Calidad de los datos | Resumen del universo, errores recientes, cobertura por bloque, última observación FRED, procedencia e identidad de una empresa y diagnóstico de identidades | Migrar a Administración |
-| Calidad de los datos | Explorador del archivo histórico 1996-2016 (miembros y precios) | Migrar solo desde 2010: el periodo anterior sigue cerrado por la reserva del #43 (decisión del propietario, 2026-10-01) |
+| Calidad de los datos | Resumen del universo, errores recientes, cobertura por bloque, última observación FRED, procedencia e identidad de una empresa y diagnóstico de identidades | Hecho: `/administracion/calidad` con el job `data_health` (el código antiguo crea el esquema al leer, así que no puede ir en un GET); la cobertura por bloque reutiliza `GET /ranking/coverage`. Con la base local: universo 10 s, empresa 0,1 s, identidades 1,8 s |
+| Calidad de los datos | Explorador del archivo histórico 1996-2016 (miembros y precios) | Hecho, solo 2010-2015: ámbitos `archive`, `archive_members` y `archive_prices` del job `data_health`; fechas anteriores a 2010 rechazadas y cobertura trimestral recortada (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Backtest de cruce SMA de un ticker | Retirar: ejercicio aislado sin relación con la hipótesis (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Botones de descarga de precios de un ticker o cartera | Usar el job `symbols` existente |
 | Aprender | Tutorial extenso | Trasladar el texto a Aprender en React (decisión del propietario, 2026-10-01) |
