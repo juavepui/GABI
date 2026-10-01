@@ -351,10 +351,31 @@ Windows/Python 3.13.7: la verificación nueva tardó 6,9 s frente a 8,1 s de
 repeticiones. El coste crece con el ledger porque cada cambio de la base vuelve
 a verificar la cadena completa, como hacía Streamlit en cada render.
 
+La página Streamlit `11_Research_Lab.py` se ha retirado tras comprobar la
+equivalencia con los 49 experimentos de la base local. La tabla `experiments`
+se copió a una base temporal (`data/gabi.db` solo se leyó y quedó sin cambios)
+y allí se ejecutaron el código antiguo y el nuevo. Coincidieron sin diferencias
+la lista, los filtros por familia y fase y el entorno de cada experimento; PSR,
+DSR, SR*₀ y N en las 36 combinaciones de familia y experimento con Sharpe;
+el riesgo de cola de las 29 series guardadas; PBO, combinaciones y logits de
+las 2 familias con series comparables; y la auditoría y las réplicas (incluido
+el CSV) de los 28 bootstraps elegibles, emparejados con la primera serie de la
+misma frecuencia y fechas. Las auditorías guardadas se comparan en las pruebas
+con los lectores antiguos sobre los artefactos publicados. El live ledger no se
+comparó con datos locales porque la base todavía no tiene registro prospectivo;
+su paridad está probada con datos temporales. Se retiran también
+`block_bootstrap_ui`, `factor_benchmark_ui`, `factor_stability_ui` y
+`rank_stability_ui.render_saved`, que solo usaba esta página, con sus
+excepciones de arquitectura y sus pruebas. Las tablas de `block_bootstrap_ui`
+se conservan como copia de referencia en `backend/tests/` para seguir
+comparando la presentación nueva. `live_ledger_ui`, `rank_stability_ui.render`
+y `tail_risk_ui` siguen en uso por el Screener y Portfolio Lab. La historia
+publicada no se modifica.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado, auditorías guardadas y registro prospectivo en React | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado, auditorías guardadas y registro prospectivo en React | Completado; página Streamlit retirada. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

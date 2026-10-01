@@ -38,20 +38,3 @@ def render(frame: pd.DataFrame, weights: dict, *, mode: str) -> None:
             st.dataframe(rank_stability.perturbations(weights), width="stretch")
             st.download_button("Descargar dispersión por empresa", companies.to_csv(), "rank-stability.csv", "text/csv")
 
-
-def render_saved() -> None:
-    if not (rank_stability.OUTPUT / "resultado.json").exists():
-        return
-    with st.expander("Estabilidad histórica · vecindad preregistrada de pesos"):
-        try:
-            result = rank_stability.load_saved()
-            st.metric("Persistencia media del Top-20 · 57 fechas", f"{result['stability_score']:.1f}%")
-            st.caption("Diagnóstico retrospectivo sin leer rentabilidades. No valida capacidad predictiva ni modifica el modelo.")
-            st.dataframe(pd.DataFrame(result["aggregate"]).T, width="stretch")
-            date = st.selectbox("Fecha del ranking", [r["date"] for r in result["dates"]], key="rs_saved_date")
-            companies = pd.read_csv(rank_stability.OUTPUT / "companies.csv")
-            st.dataframe(companies.loc[companies.date == date], hide_index=True, width="stretch")
-            if not all(r["sectors_complete"] for r in result["dates"]):
-                st.info("Faltan sectores históricos: la concentración sectorial no está acreditada.")
-        except (OSError, ValueError, KeyError) as exc:
-            st.warning(f"Estabilidad histórica no disponible: {exc}")

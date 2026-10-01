@@ -53,7 +53,7 @@ deben duplicar fórmulas de scoring, costes o riesgo.
 | `8_Ranking_Historico.py` | Investigación | `screener_asof`, `multifactor_backtest`, `portfolio_backtest`, `portfolio_metrics`, `factor_benchmark`, `tax_drag` | Backtests y comparaciones largos como jobs; registro de resultados | F6 · retirada tras verificar equivalencia (#68) |
 | `9_Decisiones.py` | Cartera | `decision_engine`, `screener`, `data_quality`, `storage` | Reglas experimentales y decisiones registradas; no envía órdenes | F5 |
 | `10_Carteras_Simuladas.py` | Cartera | `sim_portfolios`, `storage`, `data_fetch` | Simulaciones, operaciones y posiciones persistentes; cálculo largo como job | F5 |
-| `11_Research_Lab.py` | Investigación | `research_lab`, `overfitting_audit`, `stats_rigor`, `block_bootstrap`, `factor_stability` | Protocolos, ensayos, artefactos, fallos y exportaciones | F6 |
+| `11_Research_Lab.py` | Investigación | `research_lab`, `overfitting_audit`, `stats_rigor`, `block_bootstrap`, `factor_stability` | Protocolos, ensayos, artefactos, fallos y exportaciones | F6 · retirada tras verificar equivalencia (#68) |
 | `12_Factor_Lab.py` | Investigación | `factor_lab`, `estimates`, `factor_sector_stability` | Análisis de factores y ventanas sin promoción automática | F6 · retirada tras verificar equivalencia (#68) |
 | `13_Blind_Validation.py` | Investigación | `blind_validation`, `periodic_tasks` | Crear/registrar estudios; sellos y acceso a resultados regulado por protocolo | F6 |
 | `14_Portfolio_Lab.py` | Investigación | `portfolio_lab`, `tail_risk` | Construcciones alternativas y riesgo; experimentos explícitos | F6 |

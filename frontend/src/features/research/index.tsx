@@ -205,8 +205,8 @@ export function ResearchPage() {
           </ul>
           <p className="mt-4 text-xs text-muted-foreground">
             Las reservas ciegas y los resultados aún no publicados no se consultan desde este
-            catálogo. Research Lab, Portfolio Lab y las operaciones de validación ciega siguen
-            disponibles en Streamlit mientras se verifican sus sustitutos.
+            catálogo. Portfolio Lab y las operaciones de validación ciega siguen disponibles en
+            Streamlit mientras se verifican sus sustitutos.
           </p>
         </section>
       )}

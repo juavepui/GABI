@@ -38,23 +38,6 @@ rank_stability_ui.render(pd.DataFrame(), scoring.DEFAULT_WEIGHTS, mode="INVESTOR
     assert "no disponible" in app.info[0].value
 
 
-def test_saved_results_and_date_switch_are_rendered():
-    # Read checked-in audit artifacts only; no actual prices or DB queried.
-    result = rs.load_saved()
-    assert len(result["dates"]) == 57
-    app = AppTest.from_string('''
-from gabi import rank_stability_ui
-rank_stability_ui.render_saved()
-''').run()
-    assert not app.exception
-    assert len(app.dataframe) == 2
-    assert "sectores históricos" in app.info[0].value
-    date = result["dates"][-1]["date"]
-    app.selectbox[0].set_value(date).run()
-    assert not app.exception
-    assert set(app.dataframe[1].value.date) == {date}
-
-
 def test_real_screener_reports_eligibility_before_search_filters(monkeypatch):
     from pathlib import Path
 

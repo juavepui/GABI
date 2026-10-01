@@ -6,9 +6,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from retired_block_bootstrap_ui import fraction_table
 
 from gabi import block_bootstrap, factor_benchmark, factor_stability, overfitting_audit, rank_stability
-from gabi import block_bootstrap_ui as legacy_view
 from gabi.infrastructure.legacy import saved_audits as legacy
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
@@ -71,7 +71,7 @@ def test_block_bootstrap_and_rank_stability_match_saved_artifacts(root):
     audit = saved["datasets"][dataset]
     primary = audit["runs"][str(audit["primary_block"])]
     assert [row["fraction"] for row in boot["view"]["fractions"]] == \
-        legacy_view.fraction_table(primary)["Fracción bootstrap"].tolist()
+        fraction_table(primary)["Fracción bootstrap"].tolist()
     shown = block_bootstrap.interval_table(audit)
     assert [row["observed"] for row in boot["view"]["intervals"]] == pytest.approx(shown["observed"].tolist(),
                                                                                     nan_ok=True)

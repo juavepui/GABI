@@ -12,7 +12,7 @@ calidad/confianza de los datos. Los pesos del score quedan bloqueados a la
 hipótesis congelada: no hay sliders que tocar por accidente.
 
 RESEARCH: acceso completo, incluida la experimentación (Ranking histórico y
-Factor Lab en React, Research Lab, Blind Forward Validation, Portfolio Lab). Calidad
+Factor Lab y Research Lab en React, Blind Forward Validation, Portfolio Lab). Calidad
 sigue permitiendo experimentar, pero cualquier desviación de los pesos
 congelados queda marcada EXPERIMENTAL de forma visible, nunca silenciosa."""
 import json
@@ -194,5 +194,5 @@ def experimental_banner_message(weights: dict) -> str | None:
     return (
         f"🧪 **EXPERIMENTAL** -- estos pesos ({parts}) no son los de la {FROZEN_LABEL}. "
         "Este resultado no es una validación oficial del modelo. Si quieres conservar la "
-        "trazabilidad de lo que pruebes, regístralo en 🔬 Research Lab."
+        "trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
     )

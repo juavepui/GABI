@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from retired_block_bootstrap_ui import comparison_table, fraction_table
 
 from gabi import block_bootstrap, config, stats_rigor
-from gabi import block_bootstrap_ui as legacy_view
 from gabi import research_lab as rl
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.errors import QueryError
@@ -93,11 +93,11 @@ def test_bootstrap_matches_legacy_button_and_view(lab):
     pd.testing.assert_frame_equal(
         pd.DataFrame(shown["intervals"]).drop(columns=["series_label", "metric_label"]),
         block_bootstrap.interval_table(audit), check_dtype=False)
-    legacy_comparison = legacy_view.comparison_table(audit)
+    legacy_comparison = comparison_table(audit)
     assert [row["mean"] for row in shown["comparisons"]] == legacy_comparison["Media"].tolist()
     assert [row["hac_upper"] for row in shown["comparisons"]] == legacy_comparison["HAC superior"].tolist()
     primary = audit["runs"][str(audit["primary_block"])]
-    legacy_fractions = legacy_view.fraction_table(primary)
+    legacy_fractions = fraction_table(primary)
     assert [row["condition"] for row in shown["fractions"]] == legacy_fractions["Condición"].tolist()
     assert [row["fraction"] for row in shown["fractions"]] == legacy_fractions["Fracción bootstrap"].tolist()
     histogram = next(item for item in shown["histograms"] if item["column"] == "vs_benchmark/excess_mean")

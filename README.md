@@ -1348,7 +1348,7 @@ Propuesta del usuario, motivada por algo que esta misma sesión ya hacía a mano
 configuraciones sobre el mismo rango 2016-2025 (top-10/20/30, filtro SMA200, banda de turnover,
 3 frecuencias de rebalanceo, universo 200 vs 500, V1 vs V2), documentando cada vez si el resultado
 era ruido o señal. El Research Lab formaliza esa disciplina: un registro de experimentos
-(`backend/src/gabi/research_lab.py`, tabla `experiments`, página 🔬 Research Lab) con metodología, commit
+(`backend/src/gabi/research_lab.py`, tabla `experiments`, Investigación → Research Lab en la interfaz React) con metodología, commit
 de código exacto y resultado, etiquetado por fase (**RESEARCH** / **IN_SAMPLE** / **OUT_OF_SAMPLE**
 / **LIVE_FORWARD**), y un módulo de rigor estadístico (`backend/src/gabi/stats_rigor.py`) que implementa
 Probabilistic Sharpe Ratio → Deflated Sharpe Ratio → PBO/CSCV → intervalos de confianza bootstrap
@@ -1386,7 +1386,7 @@ familia.
 **Cómo se usa**: desde 🕰️ Ranking histórico, tras ejecutar un backtest (V1 o V2), un botón "📋
 Registrar este experimento en el Research Lab" pre-rellena la metodología y el resultado — la fase
 (RESEARCH/IN_SAMPLE/OUT_OF_SAMPLE/LIVE_FORWARD) es una decisión del usuario sobre su propia
-intención con ese run, no algo que el código pueda inferir. Desde 🔬 Research Lab: tabla de
+intención con ese run, no algo que el código pueda inferir. Desde Research Lab (interfaz React): tabla de
 experimentos filtrable por familia/fase, formulario de registro manual, y las tres secciones de
 cálculo (PSR/DSR, PBO/CSCV, bootstrap) — estas dos últimas solo ofrecen experimentos con serie de
 retornos guardada.

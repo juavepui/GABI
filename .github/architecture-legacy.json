@@ -37,13 +37,6 @@
     "pathlib",
     "scipy.stats"
   ],
-  "backend/src/gabi/block_bootstrap_ui.py": [
-    "gabi.block_bootstrap",
-    "numpy",
-    "pandas",
-    "plotly.graph_objects",
-    "streamlit"
-  ],
   "backend/src/gabi/broker_costs.py": [],
   "backend/src/gabi/capital_allocation.py": [
     "pandas"
@@ -200,12 +193,6 @@
     "pandas",
     "pathlib"
   ],
-  "backend/src/gabi/factor_benchmark_ui.py": [
-    "gabi.factor_benchmark",
-    "gabi.factor_stability",
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/factor_history.py": [
     "gabi.academic_factors",
     "gabi.config",
@@ -243,12 +230,6 @@
     "numpy",
     "pandas",
     "pathlib"
-  ],
-  "backend/src/gabi/factor_stability_ui.py": [
-    "gabi.factor_stability",
-    "pandas",
-    "plotly.graph_objects",
-    "streamlit"
   ],
   "backend/src/gabi/factor_zoo.py": [
     "gabi.config",
@@ -984,25 +965,6 @@
     "gabi.data_fetch",
     "gabi.sim_portfolios",
     "gabi.storage",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/11_Research_Lab.py": [
-    "gabi.block_bootstrap",
-    "gabi.block_bootstrap_ui",
-    "gabi.config",
-    "gabi.factor_benchmark",
-    "gabi.factor_benchmark_ui",
-    "gabi.factor_stability",
-    "gabi.factor_stability_ui",
-    "gabi.live_ledger_ui",
-    "gabi.overfitting_audit",
-    "gabi.rank_stability_ui",
-    "gabi.research_lab",
-    "gabi.stats_rigor",
-    "gabi.tail_risk_ui",
     "pandas",
     "pathlib",
     "streamlit",
