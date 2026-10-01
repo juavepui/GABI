@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from gabi.application.administration.data_update import KeyCommands
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.administration.model import ModelCommands
-from gabi_api.schemas.jobs import CreateJobRequest, JobListResponse, JobResponse, LocalSettingsResponse
+from gabi_api.schemas.jobs import CreateJobRequest, JobListResponse, JobResponse, LocalSettingsResponse, NoticesResponse
 from gabi_api.schemas.market import ModelResponse, model_response
 
 router = APIRouter(prefix="/api/v1", tags=["administration"])
@@ -60,6 +60,11 @@ class KeyRequest(BaseModel):
 
 def key_commands(request: Request) -> KeyCommands:
     return request.app.state.key_commands
+
+
+@router.get("/notices", response_model=NoticesResponse)
+def notices(request: Request) -> dict:
+    return request.app.state.notices.current()
 
 
 @router.get("/administration/settings", response_model=LocalSettingsResponse)

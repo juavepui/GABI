@@ -1520,6 +1520,39 @@
         "title": "BlindPlan",
         "type": "object"
       },
+      "BlindRebalanceNotice": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "due": {
+            "title": "Due",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "due",
+          "days",
+          "overdue"
+        ],
+        "title": "BlindRebalanceNotice",
+        "type": "object"
+      },
       "BlindRebalanceResult": {
         "properties": {
           "job_id": {
@@ -8524,6 +8557,39 @@
         "title": "ModelResponse",
         "type": "object"
       },
+      "NoticesResponse": {
+        "description": "Home notices: blind rebalances due within a week and the state of the #44 analysis.",
+        "properties": {
+          "blind_available": {
+            "title": "Blind Available",
+            "type": "boolean"
+          },
+          "blind_rebalances": {
+            "items": {
+              "$ref": "#/components/schemas/BlindRebalanceNotice"
+            },
+            "title": "Blind Rebalances",
+            "type": "array"
+          },
+          "smallmid": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmallmidNotice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "blind_rebalances",
+          "blind_available",
+          "smallmid"
+        ],
+        "title": "NoticesResponse",
+        "type": "object"
+      },
       "OutcomeResult": {
         "properties": {
           "available": {
@@ -11699,6 +11765,34 @@
           "items"
         ],
         "title": "SimulationTrades",
+        "type": "object"
+      },
+      "SmallmidNotice": {
+        "properties": {
+          "analyzed": {
+            "title": "Analyzed",
+            "type": "boolean"
+          },
+          "data_frozen": {
+            "title": "Data Frozen",
+            "type": "boolean"
+          },
+          "freeze_deadline": {
+            "title": "Freeze Deadline",
+            "type": "string"
+          },
+          "tiingo_complete": {
+            "title": "Tiingo Complete",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data_frozen",
+          "tiingo_complete",
+          "freeze_deadline",
+          "analyzed"
+        ],
+        "title": "SmallmidNotice",
         "type": "object"
       },
       "Snapshot": {
@@ -15518,6 +15612,87 @@
         "summary": "Model",
         "tags": [
           "market"
+        ]
+      }
+    },
+    "/api/v1/notices": {
+      "get": {
+        "operationId": "notices_api_v1_notices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Notices",
+        "tags": [
+          "administration"
         ]
       }
     },

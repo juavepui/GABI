@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException
 from gabi.application.administration.data_update import KeyCommands
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
+from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
@@ -55,6 +56,7 @@ from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, model_policy
 from gabi.infrastructure.legacy.signals import compare_snapshots
 from gabi.infrastructure.legacy.simulations import LegacySimulationMath
+from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
 from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
@@ -75,6 +77,7 @@ from gabi.infrastructure.storage.published_research import FilePublishedLedger
 from gabi.infrastructure.storage.saved_audits import FileSavedAudits
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
+from gabi.infrastructure.storage.smallmid import SmallmidFiles
 from gabi.infrastructure.storage.snapshot_prices import SqliteSnapshotPrices
 from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
@@ -196,6 +199,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.portfolio_lab = PortfolioLabQueries(jobs, LegacyBacktestMath())
     app.state.settings = settings
     app.state.model_commands = model_commands
+    app.state.notices = Notices(blind_validations, SmallmidFiles(settings.data_dir, settings.data_dir.parent,
+                                                               smallmid_freeze_deadline), today)
     app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),
                                          lambda: configured_keys(settings.data_dir))
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],

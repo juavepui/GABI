@@ -487,7 +487,7 @@ sustituto:
 | Carteras simuladas | Backtest de cruce SMA de un ticker | Retirar: ejercicio aislado sin relación con la hipótesis (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Botones de descarga de precios de un ticker o cartera | Usar el job `symbols` existente |
 | Aprender | Tutorial extenso | Hecho: las cuatro pestañas en `/cartera/aprender`; las definiciones de métricas pasan de `ui_helpers` a `domain/market/metric_info.py` y React las lee de `GET /learn/metrics`, que marca las 13 que puntúan (decisión del propietario, 2026-10-01) |
-| Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Migrar al inicio de React |
+| Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Hecho: `GET /notices` (solo lectura, 0,1 s, igual que `periodic_tasks.due_soon` y `smallmid_state` con la base local), mostrado en `/mercado` junto al aviso legal de la portada |
 
 La retirada de Streamlit (páginas, helpers `_ui`, `ui_helpers` y la dependencia)
 queda pendiente hasta cubrir o descartar explícitamente cada fila.

@@ -192,3 +192,26 @@ class JobListResponse(BaseModel):
 class LocalSettingsResponse(BaseModel):
     keys: dict[str, bool]
     scheduler: str = "local"
+
+
+class BlindRebalanceNotice(BaseModel):
+    id: int
+    name: str
+    due: str
+    days: int
+    overdue: bool
+
+
+class SmallmidNotice(BaseModel):
+    data_frozen: bool
+    tiingo_complete: bool
+    freeze_deadline: str
+    analyzed: bool
+
+
+class NoticesResponse(BaseModel):
+    """Home notices: blind rebalances due within a week and the state of the #44 analysis."""
+
+    blind_rebalances: list[BlindRebalanceNotice]
+    blind_available: bool
+    smallmid: SmallmidNotice | None

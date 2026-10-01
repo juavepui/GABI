@@ -244,3 +244,17 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   await page.getByText('Estimaciones de consenso').click();
   await expect(page.getByText('Sin estimaciones sincronizadas todavía.')).toBeVisible();
 });
+
+test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async ({ page }) => {
+  await page.goto('/');
+  const notices = page.getByRole('region', { name: 'Avisos' });
+  await expect(notices.getByText('No es asesoramiento financiero.')).toBeVisible();
+  await expect(
+    notices.getByText(
+      /Rebalanceo de la prueba ciega #1 \(Fixture ciega\) en 2 días, el 2026-10-01/,
+    ),
+  ).toBeVisible();
+  await expect(notices.getByText(/#44/)).toHaveCount(0);
+  await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
+  await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
+});

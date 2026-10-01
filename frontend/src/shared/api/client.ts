@@ -1,4 +1,5 @@
 import type {
+  NoticesResponse,
   MetricGlossary,
   CompanyResponse,
   RankingResponse,
@@ -396,6 +397,9 @@ export function getLocalSettings(signal?: AbortSignal): Promise<LocalSettingsRes
 }
 export function getMetricGlossary(signal?: AbortSignal): Promise<MetricGlossary> {
   return get('/api/v1/learn/metrics', signal);
+}
+export function getNotices(signal?: AbortSignal): Promise<NoticesResponse> {
+  return get('/api/v1/notices', signal);
 }
 export function getModel(signal?: AbortSignal): Promise<ModelResponse> {
   return get('/api/v1/model', signal);

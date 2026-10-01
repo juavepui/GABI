@@ -722,6 +722,32 @@ export type BlindPlan = {
 };
 
 /**
+ * BlindRebalanceNotice
+ */
+export type BlindRebalanceNotice = {
+    /**
+     * Days
+     */
+    days: number;
+    /**
+     * Due
+     */
+    due: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Overdue
+     */
+    overdue: boolean;
+};
+
+/**
  * BlindRebalanceResult
  */
 export type BlindRebalanceResult = {
@@ -4380,6 +4406,23 @@ export type ModelResponse = {
 };
 
 /**
+ * NoticesResponse
+ *
+ * Home notices: blind rebalances due within a week and the state of the #44 analysis.
+ */
+export type NoticesResponse = {
+    /**
+     * Blind Available
+     */
+    blind_available: boolean;
+    /**
+     * Blind Rebalances
+     */
+    blind_rebalances: Array<BlindRebalanceNotice>;
+    smallmid: SmallmidNotice | null;
+};
+
+/**
  * OutcomeResult
  */
 export type OutcomeResult = {
@@ -6124,6 +6167,28 @@ export type SimulationTrades = {
      * Items
      */
     items: Array<SimulationTrade>;
+};
+
+/**
+ * SmallmidNotice
+ */
+export type SmallmidNotice = {
+    /**
+     * Analyzed
+     */
+    analyzed: boolean;
+    /**
+     * Data Frozen
+     */
+    data_frozen: boolean;
+    /**
+     * Freeze Deadline
+     */
+    freeze_deadline: string;
+    /**
+     * Tiingo Complete
+     */
+    tiingo_complete: boolean;
 };
 
 /**
@@ -8138,6 +8203,51 @@ export type ModelApiV1ModelGetResponses = {
 };
 
 export type ModelApiV1ModelGetResponse = ModelApiV1ModelGetResponses[keyof ModelApiV1ModelGetResponses];
+
+export type NoticesApiV1NoticesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notices';
+};
+
+export type NoticesApiV1NoticesGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type NoticesApiV1NoticesGetError = NoticesApiV1NoticesGetErrors[keyof NoticesApiV1NoticesGetErrors];
+
+export type NoticesApiV1NoticesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: NoticesResponse;
+};
+
+export type NoticesApiV1NoticesGetResponse = NoticesApiV1NoticesGetResponses[keyof NoticesApiV1NoticesGetResponses];
 
 export type ListPlansApiV1PortfolioDecisionsGetData = {
     body?: never;

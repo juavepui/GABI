@@ -42,6 +42,7 @@ import {
 } from '@/features/research/index';
 import { AdministrationPage, DataHealthPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
+import { HomeNotices } from './home-notices';
 
 const client = new QueryClient({
   defaultOptions: {
@@ -154,6 +155,7 @@ function Shell() {
         tabIndex={-1}
         className="mx-auto max-w-[1480px] px-4 py-7 focus:outline-none sm:px-6 lg:px-9 lg:py-9"
       >
+        {location.pathname === '/mercado' && <HomeNotices />}
         <Routes>
           <Route path="/" element={<Navigate to="/mercado" replace />} />
           <Route path="/mercado" element={<MarketPage />} />
