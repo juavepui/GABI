@@ -465,3 +465,30 @@ Antes de cerrar #68 se comprobarán los 17 recorridos del inventario F0, la
 paridad de cálculos y persistencia, la recuperación local y los límites de
 memoria/tiempo. Solo entonces se retirarán consumidores y dependencias
 Streamlit sin tocar los motores y artefactos publicados.
+
+## Cierre de F6: auditoría de las páginas Streamlit restantes
+
+Investigación ya no tiene páginas en Streamlit. Antes de retirar Streamlit se
+compararon las 12 páginas restantes y la portada con React y la API (2026-10-01).
+Las fases F2-F5 cubrieron sus recorridos principales, pero quedan funciones sin
+sustituto:
+
+| Página | Sin equivalente en React | Propuesta |
+| --- | --- | --- |
+| Screener, Mi cartera, Ficha | Evidencia por candidata (`evidence_confidence`): Top-20 con confianza BAJA/MEDIA/ALTA, motivos a favor y en contra, factores con Holm, estabilidad SIC y descarga | Migrar: consulta de solo lectura |
+| Screener | Estabilidad del ranking actual ante cambios de 1-2 puntos en los pesos (`rank_stability.analyze`) | Migrar como job |
+| Screener | Avisos de cobertura por bloque con umbral configurable | Migrar en el ranking |
+| Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Migrar junto a los snapshots del Signal Monitor |
+| Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Lectura como consulta; sincronización como job explícito |
+| Ficha | Métricas informativas no puntuadas | Migrar |
+| Configuración | Guardar las claves FRED, Tiingo y Nasdaq Data Link; tamaño del universo al actualizar; resumen de fallos y reintento de los fallidos | Comandos explícitos y jobs existentes |
+| Calidad de los datos | Resumen del universo, errores recientes, cobertura por bloque, última observación FRED, procedencia e identidad de una empresa y diagnóstico de identidades | Migrar a Administración |
+| Calidad de los datos | Explorador del archivo histórico 1996-2016 (miembros y precios) | Migrar solo desde 2010: el periodo anterior sigue cerrado por la reserva del #43 (decisión del propietario, 2026-10-01) |
+| Carteras simuladas | Backtest de cruce SMA de un ticker | Retirar: ejercicio aislado sin relación con la hipótesis (decisión del propietario, 2026-10-01) |
+| Carteras simuladas | Botones de descarga de precios de un ticker o cartera | Usar el job `symbols` existente |
+| Aprender | Tutorial extenso | Trasladar el texto a Aprender en React (decisión del propietario, 2026-10-01) |
+| Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Migrar al inicio de React |
+
+La retirada de Streamlit (páginas, helpers `_ui`, `ui_helpers` y la dependencia)
+queda pendiente hasta cubrir o descartar explícitamente cada fila.
+
