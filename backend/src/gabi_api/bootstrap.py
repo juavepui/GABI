@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
+from gabi.application.administration.data_update import KeyCommands
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.errors import QueryError
@@ -40,6 +41,7 @@ from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
 from gabi.infrastructure.legacy.company import LegacyCompanyMath
+from gabi.infrastructure.legacy.data_update import LegacyKeyWriter
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.evidence import LegacyEvidence
 from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
@@ -61,6 +63,7 @@ from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
+from gabi.infrastructure.storage.keys import configured_keys
 from gabi.infrastructure.storage.live_ledger import SqliteLiveLedger
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
@@ -190,6 +193,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.portfolio_lab = PortfolioLabQueries(jobs, LegacyBacktestMath())
     app.state.settings = settings
     app.state.model_commands = model_commands
+    app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),
+                                         lambda: configured_keys(settings.data_dir))
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],
                        allow_headers=["Accept", "Content-Type"], allow_credentials=False)
 

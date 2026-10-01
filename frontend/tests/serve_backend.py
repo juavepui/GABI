@@ -87,8 +87,13 @@ def main():
             "additional_observed_records": [],
         }), encoding="utf-8")
         # Legacy writers (Research Lab manual log) use the project config: point it at the fixture only.
-        from gabi import config
-        config.DATA_DIR, config.DB_PATH = root, root / "gabi.db"
+        # config computes key/cache paths at import time: rebase every one of them, as conftest does.
+        from gabi import app_mode, config
+        previous_data = config.DATA_DIR
+        for name, value in list(vars(config).items()):
+            if isinstance(value, Path) and value.is_relative_to(previous_data):
+                setattr(config, name, root / value.relative_to(previous_data))
+        app_mode.MODE_PATH = root / "app_mode.json"
         from gabi import live_ledger
         live_ledger._append({"kind": "DECISION", "stage": "LIVE_FORWARD", "created_at": "2026-09-28T22:00:00+00:00",
                              "model_id": "fixture", "model_version": "fixture-model-v1", "market_date": "2026-09-28",
@@ -221,6 +226,13 @@ def synthetic_job(command, app):
     if command.kind == "company_sync":  # No network in tests: report a successful empty sync.
         return {"kind": "company_sync", "symbol": command.company["symbol"],
                 "dataset": command.company["dataset"], "synced": True, "reason": None}
+    if command.kind == "data_update":  # No network in tests: the real summary over a fixed refresh outcome.
+        from gabi.application.administration.data_update import summarize_update
+
+        symbols = command.update["symbols"] or ["T000", "T001", "T002"]
+        failed = {} if command.update["symbols"] else {"T001": {"fundamentales": "límite de peticiones"}}
+        return summarize_update(command.update, symbols, {"price_refreshed": True, "fundamentals_refreshed": 2,
+                                                          "edgar_refreshed": 3, "failed": failed})
     if command.kind == "portfolio_lab":
         from gabi.application.research.portfolio_lab import build_portfolio_lab
 

@@ -1488,7 +1488,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -1510,6 +1510,7 @@ export type CreateJobRequest = {
      * Symbols
      */
     symbols?: Array<string>;
+    update?: DataUpdateRequest | null;
 };
 
 /**
@@ -1566,6 +1567,26 @@ export type DataResponse = {
      * Warnings
      */
     warnings: Array<string>;
+};
+
+/**
+ * DataUpdateRequest
+ *
+ * The old «Actualizar datos»: a universe size (50, 150 or full) or the failed symbols to retry.
+ */
+export type DataUpdateRequest = {
+    /**
+     * Force
+     */
+    force?: boolean;
+    /**
+     * Symbols
+     */
+    symbols?: Array<string> | null;
+    /**
+     * Universe Limit
+     */
+    universe_limit?: 50 | 150 | null;
 };
 
 /**
@@ -3723,6 +3744,16 @@ export type JournalReview = {
      * Review Price
      */
     review_price?: number | null;
+};
+
+/**
+ * KeyRequest
+ */
+export type KeyRequest = {
+    /**
+     * Key
+     */
+    key: string;
 };
 
 /**
@@ -6633,6 +6664,56 @@ export type WeightsRequest = {
      */
     value: number;
 };
+
+export type SaveKeyApiV1AdministrationKeysSourcePostData = {
+    body: KeyRequest;
+    path: {
+        /**
+         * Source
+         */
+        source: string;
+    };
+    query?: never;
+    url: '/api/v1/administration/keys/{source}';
+};
+
+export type SaveKeyApiV1AdministrationKeysSourcePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveKeyApiV1AdministrationKeysSourcePostError = SaveKeyApiV1AdministrationKeysSourcePostErrors[keyof SaveKeyApiV1AdministrationKeysSourcePostErrors];
+
+export type SaveKeyApiV1AdministrationKeysSourcePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: LocalSettingsResponse;
+};
+
+export type SaveKeyApiV1AdministrationKeysSourcePostResponse = SaveKeyApiV1AdministrationKeysSourcePostResponses[keyof SaveKeyApiV1AdministrationKeysSourcePostResponses];
 
 export type SetModeApiV1AdministrationModePostData = {
     body: ModeRequest;

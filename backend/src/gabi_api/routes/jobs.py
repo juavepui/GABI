@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi import Path as ApiPath
 from pydantic import BaseModel, Field
 
+from gabi.application.administration.data_update import KeyCommands
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.administration.model import ModelCommands
 from gabi_api.schemas.jobs import CreateJobRequest, JobListResponse, JobResponse, LocalSettingsResponse
@@ -51,16 +52,25 @@ def save_weights(body: WeightsRequest, service: ModelCommand) -> ModelResponse:
     return model_response(service.save_weights(body.model_dump()))
 
 
-@router.get("/administration/settings", response_model=LocalSettingsResponse)
-def local_settings(local: Local) -> LocalSettingsResponse:
-    import os
+class KeyRequest(BaseModel):
+    model_config = {"extra": "forbid"}
 
-    keys = {name: bool(os.environ.get(env)) or (local.data_dir / filename).is_file()
-            for name, env, filename in (("fred", "", "fred_api_key.txt"),
-                                        ("tiingo", "TIINGO_API_KEY", "tiingo_api_key.txt"),
-                                        ("fmp", "FMP_API_KEY", "fmp_api_key.txt"),
-                                        ("nasdaq", "NASDAQ_DATA_LINK_API_KEY", "nasdaq_data_link_api_key.txt"))}
-    return LocalSettingsResponse(keys=keys)
+    key: str = Field(min_length=1, max_length=200)
+
+
+def key_commands(request: Request) -> KeyCommands:
+    return request.app.state.key_commands
+
+
+@router.get("/administration/settings", response_model=LocalSettingsResponse)
+def local_settings(commands: Annotated[KeyCommands, Depends(key_commands)]) -> LocalSettingsResponse:
+    return LocalSettingsResponse(keys=commands.configured())
+
+
+@router.post("/administration/keys/{source}", response_model=LocalSettingsResponse)
+def save_key(source: Annotated[str, ApiPath(max_length=20)], body: KeyRequest,
+             commands: Annotated[KeyCommands, Depends(key_commands)]) -> LocalSettingsResponse:
+    return LocalSettingsResponse(keys=commands.save(source, body.key))
 
 
 @router.post("/jobs", response_model=JobResponse, status_code=202)
@@ -77,7 +87,8 @@ def create_job(body: CreateJobRequest, service: Service) -> dict:
                          body.live_report.model_dump() if body.live_report else None,
                          body.blind.model_dump() if body.blind else None,
                          body.portfolio_options.model_dump() if body.portfolio_options else None,
-                         body.company.model_dump() if body.company else None)
+                         body.company.model_dump() if body.company else None,
+                         body.update.model_dump() if body.update else None)
     return service.submit(command, body.idempotency_key)
 
 

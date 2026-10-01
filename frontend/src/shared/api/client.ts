@@ -383,6 +383,13 @@ export function getHistoricalOutcomes(
 export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
   return get('/api/v1/jobs/' + encodeURIComponent(id), signal);
 }
+export function saveApiKey(source: string, key: string): Promise<LocalSettingsResponse> {
+  return request('/api/v1/administration/keys/' + encodeURIComponent(source), {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
+  });
+}
 export function getLocalSettings(signal?: AbortSignal): Promise<LocalSettingsResponse> {
   return get('/api/v1/administration/settings', signal);
 }

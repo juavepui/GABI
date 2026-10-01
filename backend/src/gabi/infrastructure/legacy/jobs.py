@@ -165,6 +165,11 @@ class LegacyExecutor:
 
             assert command.company is not None
             return sync_company(command.company["symbol"], command.company["dataset"])
+        if command.kind == "data_update":
+            from gabi.infrastructure.legacy.data_update import run_data_update
+
+            assert command.update is not None
+            return run_data_update(command.update)
         if command.kind == "symbols":
             from gabi import screener
 

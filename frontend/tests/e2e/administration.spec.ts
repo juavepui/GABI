@@ -29,3 +29,27 @@ test('un job local sigue después de recargar y publica un resultado verificable
       page.getByRole('list', { name: 'Cobertura por fuente' }).getByText('2/2'),
     ).toBeVisible();
 });
+
+test('actualizar datos resume los fallos, reintenta los fallidos y guarda claves', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  const update = page.getByRole('region', { name: 'Actualizar datos' });
+  await update.getByRole('combobox', { name: 'Tamaño del universo' }).selectOption('150');
+  await update.getByRole('button', { name: 'Actualizar datos' }).click();
+  const result = update.getByRole('region', { name: 'Resultado de la actualización' });
+  await expect(result.getByText(/Actualización de 3 empresas/)).toBeVisible({ timeout: 15_000 });
+  await expect(result.getByText(/empresas con fallos: 1/)).toBeVisible();
+  await result.getByText('límite de peticiones — 1 empresas').click();
+  await expect(result.getByText('T001', { exact: true })).toBeVisible();
+  await result.getByRole('button', { name: 'Reintentar solo los fallidos' }).click();
+  await expect(result.getByText(/Reintento de 1 empresas/)).toBeVisible({ timeout: 15_000 });
+  await expect(result.getByText('Ninguna empresa ha fallado en esta actualización.')).toBeVisible();
+
+  const fred = page.getByRole('form', { name: 'Clave FRED (panel macro)' });
+  await fred.getByLabel('Nueva clave FRED (panel macro)').fill('clave-e2e');
+  await fred.getByRole('button', { name: 'Guardar' }).click();
+  await expect(fred.getByText('Clave guardada.')).toBeVisible();
+  await expect(fred.getByText('Configurada')).toBeVisible();
+  await expect(page.getByText('clave-e2e')).toHaveCount(0);
+});

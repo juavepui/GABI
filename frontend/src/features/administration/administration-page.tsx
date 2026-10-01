@@ -15,6 +15,8 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { WeightsEditor } from './weights-editor';
 import { ModeSelector } from './mode-selector';
+import { DataUpdate } from './data-update';
+import { KeyEditor } from './key-editor';
 
 const names: Record<string, string> = {
   refresh: 'Actualizar datos del mercado',
@@ -24,6 +26,8 @@ const names: Record<string, string> = {
   maintenance: 'Mantenimiento prospectivo',
   tiingo: 'Descarga histórica Tiingo',
   sim_result: 'Resultado de cartera simulada',
+  data_update: 'Actualizar datos (Yahoo y SEC)',
+  company_sync: 'Sincronizar datos de una empresa',
 };
 const states: Record<string, string> = {
   queued: 'En espera',
@@ -225,6 +229,7 @@ export function AdministrationPage() {
             <CardDescription>Las consultas a esta página no descargan datos.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            <DataUpdate />
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => submit.mutate({ kind: 'refresh' })}
@@ -279,7 +284,8 @@ export function AdministrationPage() {
               Configuración local
             </CardTitle>
             <CardDescription>
-              Solo se indica si existe una clave; nunca se muestran valores o rutas.
+              Solo se indica si existe una clave; nunca se muestran valores o rutas. Guardar una
+              clave la escribe en un fichero local.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -290,16 +296,7 @@ export function AdministrationPage() {
                 No se puede consultar la configuración.
               </p>
             ) : (
-              <ul className="grid grid-cols-2 gap-3 text-sm">
-                {Object.entries(settings.data?.keys ?? {}).map(([source, configured]) => (
-                  <li key={source} className="rounded-md border p-3">
-                    <span className="font-medium uppercase">{source}</span>
-                    <span className="block text-muted-foreground">
-                      {configured ? 'Configurada' : 'Sin clave'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <KeyEditor keys={settings.data?.keys ?? {}} />
             )}
             {model.isLoading ? (
               <p className="mt-4 text-sm text-muted-foreground">Leyendo modelo…</p>

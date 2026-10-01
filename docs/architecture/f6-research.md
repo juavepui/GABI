@@ -481,7 +481,7 @@ sustituto:
 | Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Hecho: `GET /market/snapshots/{id}/progress` y `POST .../rename`, en el Signal Monitor |
 | Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Hecho: `GET /companies/{symbol}/research` y job `company_sync` |
 | Ficha | Métricas informativas no puntuadas | Hecho: grupo propio en la ficha |
-| Configuración | Guardar las claves FRED, Tiingo y Nasdaq Data Link; tamaño del universo al actualizar; resumen de fallos y reintento de los fallidos | Comandos explícitos y jobs existentes |
+| Configuración | Guardar las claves FRED, Tiingo y Nasdaq Data Link; tamaño del universo al actualizar; resumen de fallos y reintento de los fallidos | Hecho: job `data_update` (50, 150 o todo el universo; reintento forzado de los fallidos) y `POST /administration/keys/{source}` (también FMP), que nunca devuelve la clave |
 | Calidad de los datos | Resumen del universo, errores recientes, cobertura por bloque, última observación FRED, procedencia e identidad de una empresa y diagnóstico de identidades | Migrar a Administración |
 | Calidad de los datos | Explorador del archivo histórico 1996-2016 (miembros y precios) | Migrar solo desde 2010: el periodo anterior sigue cerrado por la reserva del #43 (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Backtest de cruce SMA de un ticker | Retirar: ejercicio aislado sin relación con la hipótesis (decisión del propietario, 2026-10-01) |

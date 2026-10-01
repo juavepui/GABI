@@ -3038,7 +3038,8 @@
               "blind_performance",
               "blind_export",
               "portfolio_lab",
-              "company_sync"
+              "company_sync",
+              "data_update"
             ],
             "title": "Kind",
             "type": "string"
@@ -3137,6 +3138,16 @@
             "maxItems": 10,
             "title": "Symbols",
             "type": "array"
+          },
+          "update": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataUpdateRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3241,6 +3252,50 @@
           "warnings"
         ],
         "title": "DataResponse",
+        "type": "object"
+      },
+      "DataUpdateRequest": {
+        "additionalProperties": false,
+        "description": "The old «Actualizar datos»: a universe size (50, 150 or full) or the failed symbols to retry.",
+        "properties": {
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "symbols": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 1000,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbols"
+          },
+          "universe_limit": {
+            "anyOf": [
+              {
+                "enum": [
+                  50,
+                  150
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe Limit"
+          }
+        },
+        "title": "DataUpdateRequest",
         "type": "object"
       },
       "DecisionJobSave": {
@@ -7296,6 +7351,22 @@
           }
         },
         "title": "JournalReview",
+        "type": "object"
+      },
+      "KeyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "KeyRequest",
         "type": "object"
       },
       "LedgerDecision": {
@@ -12645,6 +12716,109 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/administration/keys/{source}": {
+      "post": {
+        "operationId": "save_key_api_v1_administration_keys__source__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "title": "Source",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Save Key",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
     "/api/v1/administration/mode": {
       "post": {
         "operationId": "set_mode_api_v1_administration_mode_post",
