@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory, gettempdir
 
 import uvicorn
 
+from gabi import research_lab
 from gabi.application.research.backtests import build_backtest
 from gabi.domain.research.blind import canonical_payload
 from gabi.infrastructure.jobs.worker import Worker
@@ -47,6 +48,16 @@ def main():
                        (1, "2026-07-01", json.dumps(["SEALED_TICKER"]),
                         json.dumps({"SEALED_TICKER": 100.0}), None,
                         hashlib.sha256(payload.encode()).hexdigest()))
+            db.executescript("DROP TABLE experiments;" + research_lab.SCHEMA)
+            db.execute("INSERT INTO experiments (created_at,model_id,git_commit,hypothesis_registered,stage,family,"
+                       "n_positions,rebalance,sharpe,max_drawdown,periods_per_year,n_periods,returns_json,deps_json,"
+                       "python_version,env_fingerprint,data_fingerprint) "
+                       "VALUES ('2026-09-01','GABI-MF-v1.0','abc1234',0,'RESEARCH','mf-v1',20,'Quarterly',0.61,"
+                       "-0.21,4,3,?,?,'3.13.7','0123456789ab','fixture-data')",
+                       (json.dumps({"2019-03-29": 0.02, "2019-06-28": -0.01, "2019-09-30": 0.03}),
+                        json.dumps({"pandas": "2.3.0", "numpy": "2.2.0"})))
+            db.execute("INSERT INTO experiments (created_at,model_id,hypothesis_registered,stage,family,sharpe,notes) "
+                       "VALUES ('2026-09-02','GABI-MF-v2.0',1,'OUT_OF_SAMPLE','mf-v2',0.4,'Fixture fuera de muestra')")
             db.commit()
         published = root / "published-ledger.json"
         published.write_text(json.dumps({

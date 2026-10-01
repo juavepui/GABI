@@ -614,3 +614,64 @@ class PublishedFactors(BaseModel):
     classified_fraction: float | None
     factors: list[PublishedFactor]
     coverage: list[PublishedSicCoverage]
+
+
+class ExperimentStage(BaseModel):
+    id: str
+    emoji: str
+    label: str
+    help: str
+
+
+class ExperimentSummary(BaseModel):
+    id: int
+    created_at: str
+    model_id: str
+    stage: str
+    family: str | None
+    n_positions: int | None
+    rebalance: str | None
+    sharpe: float | None
+    sortino: float | None
+    max_drawdown: float | None
+    hypothesis_registered: bool
+    git_commit: str | None
+    notes: str | None
+    has_returns: bool
+
+
+class ExperimentList(BaseModel):
+    total: int
+    offset: int
+    items: list[ExperimentSummary]
+    families: list[str]
+    stages: list[ExperimentStage]
+
+
+class ExperimentDependency(BaseModel):
+    package: str
+    version: str
+
+
+class ExperimentDetail(ExperimentSummary):
+    data_cutoff: str | None
+    universe: str | None
+    factors: str | None
+    weights: dict[str, Any] | None
+    cost_model: str | None
+    is_start: str | None
+    is_end: str | None
+    oos_start: str | None
+    oos_end: str | None
+    total_return: float | None
+    annualized_return: float | None
+    periods_per_year: float | None
+    n_periods: int | None
+    python_version: str | None
+    env_fingerprint: str | None
+    data_fingerprint: str | None
+    backtest_job_id: str | None
+    deps: list[ExperimentDependency]
+    returns_count: int
+    returns_first: str | None
+    returns_last: str | None

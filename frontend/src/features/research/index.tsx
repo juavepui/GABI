@@ -69,6 +69,12 @@ export function ResearchPage() {
         >
           Abrir Factor Lab →
         </Link>
+        <Link
+          className="ml-5 mt-3 inline-block text-sm font-medium text-primary underline"
+          to="/investigacion/laboratorio"
+        >
+          Abrir Research Lab →
+        </Link>
       </header>
 
       {(overview.isPending || trials.isPending) && <LoadingState />}
@@ -211,3 +217,4 @@ export function ResearchPage() {
 export { HistoricalPage } from './historical-page';
 export { BlindValidationsPage } from './blind-validations-page';
 export { FactorPage } from './factor-page';
+export { ResearchLabPage } from './research-lab-page';

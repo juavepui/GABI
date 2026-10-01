@@ -26,6 +26,7 @@ from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -40,6 +41,7 @@ from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
+from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.macro import SqliteMacro
@@ -101,6 +103,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     published_factors = PublishedFactorQueries(FilePublishedFactors(published_factors_root or settings.data_dir.parent))
     blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today)
     estimate_queries = EstimateQueries(SqliteEstimateCaptures(settings.data_dir))
+    experiments = ExperimentQueries(SqliteExperiments(settings.data_dir),
+                                    lambda: model_queries.model().mode == "RESEARCH")
     backtest_diagnostics = BacktestDiagnostics(jobs, LegacyBacktestMath())
     historical_queries = HistoricalQueries(jobs, LegacyRankingQuality())
 
@@ -131,6 +135,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.published_factors = published_factors
     app.state.blind_validations = blind_validations
     app.state.estimate_queries = estimate_queries
+    app.state.experiments = experiments
     app.state.backtest_diagnostics = backtest_diagnostics
     app.state.historical_queries = historical_queries
     app.state.settings = settings

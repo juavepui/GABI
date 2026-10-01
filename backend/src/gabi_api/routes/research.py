@@ -12,6 +12,7 @@ from gabi.application.research.backtests import backtest_preview
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
@@ -22,6 +23,8 @@ from gabi_api.schemas.research import (
     BlindStatuses,
     EstimateAnalysisPreview,
     EstimateCaptureStatus,
+    ExperimentDetail,
+    ExperimentList,
     FactorPreview,
     HistoricalOutcomes,
     HistoricalPreview,
@@ -82,6 +85,26 @@ def estimate_service(request: Request) -> EstimateQueries:
 
 
 Estimates = Annotated[EstimateQueries, Depends(estimate_service)]
+
+
+def experiment_service(request: Request) -> ExperimentQueries:
+    return request.app.state.experiments
+
+
+Experiments = Annotated[ExperimentQueries, Depends(experiment_service)]
+
+
+@router.get("/experiments", response_model=ExperimentList)
+def experiments(query: Experiments, family: Annotated[str | None, Query(max_length=200)] = None,
+                stage: Annotated[str | None, Query(max_length=20)] = None,
+                offset: Annotated[int, Query(ge=0, le=10_000)] = 0,
+                limit: Annotated[int, Query(ge=1, le=200)] = 50) -> dict:
+    return query.list(family, stage, offset, limit)
+
+
+@router.get("/experiments/{experiment_id}", response_model=ExperimentDetail)
+def experiment(experiment_id: Annotated[int, Path(ge=1)], query: Experiments) -> dict:
+    return query.detail(experiment_id)
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

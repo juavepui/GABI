@@ -51,6 +51,8 @@ import type {
   PreparationResult,
   HistoricalTable,
   HistoricalOutcomes,
+  ExperimentList,
+  ExperimentDetail,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -109,6 +111,21 @@ export function getHistoricalPreview(
 ): Promise<HistoricalPreview> {
   const query = new URLSearchParams({ coverage_threshold: String(coverageThreshold) });
   return get('/api/v1/research/historical/' + encodeURIComponent(id) + '?' + query, signal);
+}
+export function getExperiments(
+  filters: { family: string; stage: string; offset: number; limit: number },
+  signal?: AbortSignal,
+): Promise<ExperimentList> {
+  const params = new URLSearchParams({
+    offset: String(filters.offset),
+    limit: String(filters.limit),
+  });
+  if (filters.family) params.set('family', filters.family);
+  if (filters.stage) params.set('stage', filters.stage);
+  return get('/api/v1/research/experiments?' + params.toString(), signal);
+}
+export function getExperiment(id: number, signal?: AbortSignal): Promise<ExperimentDetail> {
+  return get('/api/v1/research/experiments/' + String(id), signal);
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);

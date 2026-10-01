@@ -238,10 +238,25 @@ fuentes selladas (`evidence_catalog` y `factor_sector_stability.load_saved`). La
 evaluación de estimaciones no se comparó con datos locales: no hay capturas en el
 periodo observado y su paridad con la fórmula está probada con datos temporales.
 
+Research Lab empieza a migrarse por la lista de experimentos. `GET
+/research/experiments` y `GET /research/experiments/{id}` exigen el modo Research
+local, como la navegación de Streamlit, y leen `experiments` con SQLite en solo
+lectura: no crean la tabla ni añaden columnas como hacía `research_lab` al
+listar. Una base anterior sin las columnas de entorno devuelve esos campos
+vacíos. La lista conserva el orden y los filtros de familia y fase de
+`list_experiments` y pagina en el servidor; no devuelve la serie de retornos,
+solo si existe. El detalle muestra el entorno registrado (Python, huella de
+`uv.lock`, huella de datos y dependencias), la metodología y el número y las
+fechas extremas de la serie, sin recalcular nada. Topes: 5.000 experimentos,
+16.384 caracteres por campo y 2.000.000 por serie; excederlos devuelve 503 sin
+recortar. Las fases se definen ahora en `gabi.domain.research.experiments` y
+`research_lab` las reexporta. Las pruebas comparan ambas respuestas con
+`research_lab.list_experiments`/`get_experiment` sobre datos temporales.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público en React; operaciones antiguas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público y lista de experimentos con su entorno en React; estadísticas, alta, borrado y auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

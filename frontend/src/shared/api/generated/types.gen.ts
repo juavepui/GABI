@@ -1320,6 +1320,278 @@ export type ExpectedValue = {
 };
 
 /**
+ * ExperimentDependency
+ */
+export type ExperimentDependency = {
+    /**
+     * Package
+     */
+    package: string;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
+ * ExperimentDetail
+ */
+export type ExperimentDetail = {
+    /**
+     * Annualized Return
+     */
+    annualized_return: number | null;
+    /**
+     * Backtest Job Id
+     */
+    backtest_job_id: string | null;
+    /**
+     * Cost Model
+     */
+    cost_model: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Data Cutoff
+     */
+    data_cutoff: string | null;
+    /**
+     * Data Fingerprint
+     */
+    data_fingerprint: string | null;
+    /**
+     * Deps
+     */
+    deps: Array<ExperimentDependency>;
+    /**
+     * Env Fingerprint
+     */
+    env_fingerprint: string | null;
+    /**
+     * Factors
+     */
+    factors: string | null;
+    /**
+     * Family
+     */
+    family: string | null;
+    /**
+     * Git Commit
+     */
+    git_commit: string | null;
+    /**
+     * Has Returns
+     */
+    has_returns: boolean;
+    /**
+     * Hypothesis Registered
+     */
+    hypothesis_registered: boolean;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Is End
+     */
+    is_end: string | null;
+    /**
+     * Is Start
+     */
+    is_start: string | null;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown: number | null;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * N Periods
+     */
+    n_periods: number | null;
+    /**
+     * N Positions
+     */
+    n_positions: number | null;
+    /**
+     * Notes
+     */
+    notes: string | null;
+    /**
+     * Oos End
+     */
+    oos_end: string | null;
+    /**
+     * Oos Start
+     */
+    oos_start: string | null;
+    /**
+     * Periods Per Year
+     */
+    periods_per_year: number | null;
+    /**
+     * Python Version
+     */
+    python_version: string | null;
+    /**
+     * Rebalance
+     */
+    rebalance: string | null;
+    /**
+     * Returns Count
+     */
+    returns_count: number;
+    /**
+     * Returns First
+     */
+    returns_first: string | null;
+    /**
+     * Returns Last
+     */
+    returns_last: string | null;
+    /**
+     * Sharpe
+     */
+    sharpe: number | null;
+    /**
+     * Sortino
+     */
+    sortino: number | null;
+    /**
+     * Stage
+     */
+    stage: string;
+    /**
+     * Total Return
+     */
+    total_return: number | null;
+    /**
+     * Universe
+     */
+    universe: string | null;
+    /**
+     * Weights
+     */
+    weights: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
+ * ExperimentList
+ */
+export type ExperimentList = {
+    /**
+     * Families
+     */
+    families: Array<string>;
+    /**
+     * Items
+     */
+    items: Array<ExperimentSummary>;
+    /**
+     * Offset
+     */
+    offset: number;
+    /**
+     * Stages
+     */
+    stages: Array<ExperimentStage>;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
+ * ExperimentStage
+ */
+export type ExperimentStage = {
+    /**
+     * Emoji
+     */
+    emoji: string;
+    /**
+     * Help
+     */
+    help: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+};
+
+/**
+ * ExperimentSummary
+ */
+export type ExperimentSummary = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Family
+     */
+    family: string | null;
+    /**
+     * Git Commit
+     */
+    git_commit: string | null;
+    /**
+     * Has Returns
+     */
+    has_returns: boolean;
+    /**
+     * Hypothesis Registered
+     */
+    hypothesis_registered: boolean;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown: number | null;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * N Positions
+     */
+    n_positions: number | null;
+    /**
+     * Notes
+     */
+    notes: string | null;
+    /**
+     * Rebalance
+     */
+    rebalance: string | null;
+    /**
+     * Sharpe
+     */
+    sharpe: number | null;
+    /**
+     * Sortino
+     */
+    sortino: number | null;
+    /**
+     * Stage
+     */
+    stage: string;
+};
+
+/**
  * FactorBenchmark
  */
 export type FactorBenchmark = {
@@ -6104,6 +6376,118 @@ export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponses = {
 };
 
 export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponse = EstimateCapturesApiV1ResearchEstimateCapturesGetResponses[keyof EstimateCapturesApiV1ResearchEstimateCapturesGetResponses];
+
+export type ExperimentsApiV1ResearchExperimentsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Family
+         */
+        family?: string | null;
+        /**
+         * Stage
+         */
+        stage?: string | null;
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/research/experiments';
+};
+
+export type ExperimentsApiV1ResearchExperimentsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ExperimentsApiV1ResearchExperimentsGetError = ExperimentsApiV1ResearchExperimentsGetErrors[keyof ExperimentsApiV1ResearchExperimentsGetErrors];
+
+export type ExperimentsApiV1ResearchExperimentsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExperimentList;
+};
+
+export type ExperimentsApiV1ResearchExperimentsGetResponse = ExperimentsApiV1ResearchExperimentsGetResponses[keyof ExperimentsApiV1ResearchExperimentsGetResponses];
+
+export type ExperimentApiV1ResearchExperimentsExperimentIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment Id
+         */
+        experiment_id: number;
+    };
+    query?: never;
+    url: '/api/v1/research/experiments/{experiment_id}';
+};
+
+export type ExperimentApiV1ResearchExperimentsExperimentIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ExperimentApiV1ResearchExperimentsExperimentIdGetError = ExperimentApiV1ResearchExperimentsExperimentIdGetErrors[keyof ExperimentApiV1ResearchExperimentsExperimentIdGetErrors];
+
+export type ExperimentApiV1ResearchExperimentsExperimentIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExperimentDetail;
+};
+
+export type ExperimentApiV1ResearchExperimentsExperimentIdGetResponse = ExperimentApiV1ResearchExperimentsExperimentIdGetResponses[keyof ExperimentApiV1ResearchExperimentsExperimentIdGetResponses];
 
 export type FactorPreviewApiV1ResearchFactorsJobIdGetData = {
     body?: never;

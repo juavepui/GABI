@@ -149,3 +149,30 @@ test('resultado posterior del ranking es un job Research con corte observado', a
     });
   }
 });
+
+test('Research Lab lista experimentos y su entorno solo en modo Research', async ({ page }) => {
+  await page.goto('/investigacion/laboratorio');
+  await expect(page.getByText('Research Lab requiere el modo Research local.')).toBeVisible();
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/laboratorio');
+    const table = page.getByRole('table', { name: 'Experimentos registrados' });
+    await expect(table.getByRole('row', { name: /GABI-MF-v1\.0/ })).toContainText('-21.0 %');
+    await page.getByLabel('Fase').selectOption('OUT_OF_SAMPLE');
+    await expect(table.getByRole('row')).toHaveCount(2);
+    await expect(table).toContainText('Fixture fuera de muestra');
+    await page.getByLabel('Fase').selectOption('');
+    await page.getByRole('button', { name: 'Ver entorno del experimento 1' }).click();
+    const detail = page.getByRole('region', { name: 'Experimento 1' });
+    await expect(detail.getByText('0123456789ab')).toBeVisible();
+    await expect(detail.getByText('fixture-data')).toBeVisible();
+    await expect(detail.getByRole('row', { name: /pandas/ })).toContainText('2.3.0');
+    await expect(detail.getByText('3 observaciones, 2019-03-29 – 2019-09-30')).toBeVisible();
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});
