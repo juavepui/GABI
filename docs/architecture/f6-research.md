@@ -486,7 +486,7 @@ sustituto:
 | Calidad de los datos | Explorador del archivo histórico 1996-2016 (miembros y precios) | Hecho, solo 2010-2015: ámbitos `archive`, `archive_members` y `archive_prices` del job `data_health`; fechas anteriores a 2010 rechazadas y cobertura trimestral recortada (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Backtest de cruce SMA de un ticker | Retirar: ejercicio aislado sin relación con la hipótesis (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Botones de descarga de precios de un ticker o cartera | Usar el job `symbols` existente |
-| Aprender | Tutorial extenso | Trasladar el texto a Aprender en React (decisión del propietario, 2026-10-01) |
+| Aprender | Tutorial extenso | Hecho: las cuatro pestañas en `/cartera/aprender`; las definiciones de métricas pasan de `ui_helpers` a `domain/market/metric_info.py` y React las lee de `GET /learn/metrics`, que marca las 13 que puntúan (decisión del propietario, 2026-10-01) |
 | Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Migrar al inicio de React |
 
 La retirada de Streamlit (páginas, helpers `_ui`, `ui_helpers` y la dependencia)

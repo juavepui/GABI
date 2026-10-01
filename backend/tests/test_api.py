@@ -36,7 +36,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
     with TestClient(create_app(Settings(absent), today=lambda: TODAY)) as client:
         assert client.get("/api/v1/health").json()["status"] == "ok"
         contract = client.get("/openapi.json").json()
-        assert set(contract["paths"]) == {"/api/v1/health", "/api/v1/model", "/api/v1/data/status",
+        assert set(contract["paths"]) == {"/api/v1/health", "/api/v1/model", "/api/v1/learn/metrics", "/api/v1/data/status",
                                          "/api/v1/ranking", "/api/v1/companies/{symbol}",
                                          "/api/v1/comparison", "/api/v1/portfolio/plan",
                                          "/api/v1/administration/settings", "/api/v1/administration/weights",

@@ -3126,6 +3126,46 @@ export type FilingRef = {
 };
 
 /**
+ * GlossaryBlock
+ */
+export type GlossaryBlock = {
+    /**
+     * Block
+     */
+    block: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Metrics
+     */
+    metrics: Array<GlossaryMetric>;
+};
+
+/**
+ * GlossaryMetric
+ */
+export type GlossaryMetric = {
+    /**
+     * Help
+     */
+    help: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Scored
+     */
+    scored: boolean;
+};
+
+/**
  * HealthResponse
  */
 export type HealthResponse = {
@@ -4261,6 +4301,24 @@ export type Metric = {
      * Value
      */
     value: number | null;
+};
+
+/**
+ * MetricGlossary
+ *
+ * Plain-language definitions served by the backend, the single source of metric meaning.
+ */
+export type MetricGlossary = {
+    /**
+     * Blocks
+     */
+    blocks: Array<GlossaryBlock>;
+    /**
+     * Terms
+     */
+    terms: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -7561,6 +7619,51 @@ export type JobResultApiV1JobsJobIdResultGetResponses = {
 };
 
 export type JobResultApiV1JobsJobIdResultGetResponse = JobResultApiV1JobsJobIdResultGetResponses[keyof JobResultApiV1JobsJobIdResultGetResponses];
+
+export type MetricGlossaryApiV1LearnMetricsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/learn/metrics';
+};
+
+export type MetricGlossaryApiV1LearnMetricsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type MetricGlossaryApiV1LearnMetricsGetError = MetricGlossaryApiV1LearnMetricsGetErrors[keyof MetricGlossaryApiV1LearnMetricsGetErrors];
+
+export type MetricGlossaryApiV1LearnMetricsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MetricGlossary;
+};
+
+export type MetricGlossaryApiV1LearnMetricsGetResponse = MetricGlossaryApiV1LearnMetricsGetResponses[keyof MetricGlossaryApiV1LearnMetricsGetResponses];
 
 export type SnapshotApiV1MarketMacroGetData = {
     body?: never;

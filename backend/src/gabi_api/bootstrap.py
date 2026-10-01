@@ -18,6 +18,8 @@ from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.errors import QueryError
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
+from gabi.application.market.glossary import metric_glossary
+from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
@@ -50,7 +52,7 @@ from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
 from gabi.infrastructure.legacy.macro import series_metadata
-from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, model_policy
 from gabi.infrastructure.legacy.signals import compare_snapshots
 from gabi.infrastructure.legacy.simulations import LegacySimulationMath
 from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
@@ -151,6 +153,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
+    app.state.metric_glossary = {"blocks": metric_glossary(*metric_blocks()), "terms": glossary_terms()}
     app.state.evidence = EvidenceQueries(market, LegacyEvidence(), LegacyRankingQuality())
     app.state.jobs = jobs
     app.state.portfolio = portfolio

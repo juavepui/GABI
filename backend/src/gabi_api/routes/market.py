@@ -20,6 +20,7 @@ from gabi_api.schemas.market import (
     CompanyResponse,
     ComparisonResponse,
     DataResponse,
+    MetricGlossary,
     ModelResponse,
     PricePoint,
     RankingResponse,
@@ -89,6 +90,11 @@ def company_evidence(symbol: SymbolPath, query: Evidence) -> dict:
 def company_evidence_download(symbol: SymbolPath, query: Evidence) -> Response:
     return Response(query.download(symbol), media_type="application/json",
                     headers={"Content-Disposition": f'attachment; filename="evidence-{symbol.upper()}.json"'})
+
+
+@router.get("/learn/metrics", response_model=MetricGlossary)
+def metric_glossary(request: Request) -> dict:
+    return request.app.state.metric_glossary
 
 
 @router.get("/model", response_model=ModelResponse)

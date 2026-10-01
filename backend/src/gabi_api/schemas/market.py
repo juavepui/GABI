@@ -202,3 +202,23 @@ def ranking_response(result: RankingResult) -> RankingResponse:
                            generated_at=result.snapshot.generated_at, universe_cached_at=result.snapshot.universe_cached_at,
                            revision=result.snapshot.revision, cache_hit=result.snapshot.cache_hit,
                            risk_free_rate=Metric(value=finite(result.snapshot.table.attrs.get("risk_free_rate")), unit=Unit.FRACTION))
+
+
+class GlossaryMetric(BaseModel):
+    key: str
+    label: str
+    help: str
+    scored: bool
+
+
+class GlossaryBlock(BaseModel):
+    block: str
+    label: str
+    metrics: list[GlossaryMetric]
+
+
+class MetricGlossary(BaseModel):
+    """Plain-language definitions served by the backend, the single source of metric meaning."""
+
+    blocks: list[GlossaryBlock]
+    terms: dict[str, str]

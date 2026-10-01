@@ -86,3 +86,21 @@ test('decisiones experimentales se calculan en job y persisten con su política'
   await expect(page.getByRole('heading', { name: 'Planes anteriores' })).toBeVisible();
   await expect(page.getByText('Progreso desde el plan')).toBeVisible();
 });
+
+test('aprender: tutorial completo con definiciones de métricas del backend', async ({ page }) => {
+  await page.goto('/cartera/aprender');
+  await expect(page.getByRole('heading', { name: 'Aprender a usar GABI' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Términos útiles' }).click();
+  const valuation = page.getByRole('region', { name: 'Valoración (¿está cara o barata?)' });
+  await valuation.getByText('PER', { exact: true }).click();
+  await expect(valuation.getByText(/Precio\/Beneficio: veces que el precio/)).toBeVisible();
+  const metrics = page.getByRole('region', { name: 'Métricas que usa GABI' });
+  await metrics.getByText('Value', { exact: true }).click();
+  await expect(metrics.getByText('(puntúa)')).toHaveCount(13); // The 13 metrics that score, across the 4 blocks.
+  await page.getByRole('tab', { name: 'Psicología de la inversión' }).click();
+  await expect(page.getByText('Tres hábitos prácticos')).toBeVisible();
+  await page.getByRole('tab', { name: 'Cómo piensa GABI' }).click();
+  await expect(page.getByRole('img', { name: /cae un 28 %/ })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Motor V1 frente a V2' })).toContainText('0,111');
+  await expect(page.getByRole('main').getByText(/Streamlit/)).toHaveCount(0);
+});

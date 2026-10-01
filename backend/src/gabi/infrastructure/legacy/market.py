@@ -16,3 +16,12 @@ def model_policy() -> ModelPolicy:
 
 def defaults() -> tuple[str, float]:
     return config.BENCHMARK_SYMBOL, config.RISK_FREE_RATE
+
+
+def metric_blocks() -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    """Every metric of each block (as the old Aprender page listed them) and the 13 that score."""
+    blocks = {"value": list(scoring.VALUE_METRICS_LOWER_BETTER),
+              "quality": list(scoring.QUALITY_METRICS_HIGHER_BETTER),
+              "momentum": list(scoring.MOMENTUM_METRICS_HIGHER_BETTER),
+              "risk": list(scoring.RISK_METRICS_LOWER_BETTER) + list(scoring.RISK_METRICS_HIGHER_BETTER)}
+    return blocks, {block: list(keys) for block, keys in scoring.SCORE_METRICS.items()}

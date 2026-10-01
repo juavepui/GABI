@@ -6187,6 +6187,60 @@
         "title": "FilingRef",
         "type": "object"
       },
+      "GlossaryBlock": {
+        "properties": {
+          "block": {
+            "title": "Block",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/GlossaryMetric"
+            },
+            "title": "Metrics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "block",
+          "label",
+          "metrics"
+        ],
+        "title": "GlossaryBlock",
+        "type": "object"
+      },
+      "GlossaryMetric": {
+        "properties": {
+          "help": {
+            "title": "Help",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "help",
+          "scored"
+        ],
+        "title": "GlossaryMetric",
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "api_version": {
@@ -8335,6 +8389,31 @@
           "unit"
         ],
         "title": "Metric",
+        "type": "object"
+      },
+      "MetricGlossary": {
+        "description": "Plain-language definitions served by the backend, the single source of metric meaning.",
+        "properties": {
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/GlossaryBlock"
+            },
+            "title": "Blocks",
+            "type": "array"
+          },
+          "terms": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Terms",
+            "type": "object"
+          }
+        },
+        "required": [
+          "blocks",
+          "terms"
+        ],
+        "title": "MetricGlossary",
         "type": "object"
       },
       "ModeRequest": {
@@ -14437,6 +14516,87 @@
         "summary": "Job Result",
         "tags": [
           "administration"
+        ]
+      }
+    },
+    "/api/v1/learn/metrics": {
+      "get": {
+        "operationId": "metric_glossary_api_v1_learn_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricGlossary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Metric Glossary",
+        "tags": [
+          "market"
         ]
       }
     },
