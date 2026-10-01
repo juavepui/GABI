@@ -1,7 +1,7 @@
-"""Unchanged Research Lab statistics (stats_rigor, portfolio_metrics); no storage access."""
+"""Unchanged Research Lab statistics (stats_rigor, block_bootstrap, portfolio_metrics); no storage access."""
 
 
-class LegacySharpeMath:
+class LegacyExperimentMath:
     @staticmethod
     def psr_from_returns(returns, periods_per_year: float) -> dict:
         from gabi import stats_rigor
@@ -28,3 +28,22 @@ class LegacySharpeMath:
         from gabi import portfolio_metrics
 
         return portfolio_metrics.tail_risk_metrics(returns, horizon=horizon)
+
+    @staticmethod
+    def pbo(matrix, n_splits: int) -> dict:
+        from gabi import stats_rigor
+
+        return stats_rigor.pbo_cscv(matrix, n_splits=n_splits)
+
+    @staticmethod
+    def block_lengths() -> dict:
+        from gabi import block_bootstrap
+
+        return block_bootstrap.BLOCK_LENGTHS
+
+    @staticmethod
+    def bootstrap(matrix, periods_per_year: float):
+        from gabi import block_bootstrap
+
+        return block_bootstrap.analyze_sensitivity(matrix, periods_per_year=periods_per_year, strategy="strategy")
+

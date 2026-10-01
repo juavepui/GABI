@@ -10,8 +10,10 @@ from gabi.application.errors import QueryError
 from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.backtests import backtest_preview
 from gabi.application.research.blind import BlindValidationQueries
+from gabi.application.research.block_bootstrap_view import present
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.experiment_analysis import distribution_frame
 from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
@@ -25,8 +27,10 @@ from gabi_api.schemas.research import (
     DeflatedSharpe,
     EstimateAnalysisPreview,
     EstimateCaptureStatus,
+    ExperimentBootstrapPreview,
     ExperimentDetail,
     ExperimentList,
+    ExperimentPboPreview,
     ExperimentTailRisk,
     FactorPreview,
     HistoricalOutcomes,
@@ -126,6 +130,38 @@ def experiment_tail_risk(experiment_id: Annotated[int, Path(ge=1)], query: Stati
 def deflated_sharpe(query: Statistics, experiment_id: Annotated[int, Query(ge=1)],
                     family: Annotated[str | None, Query(max_length=200)] = None) -> dict:
     return query.deflated_sharpe(experiment_id, family)
+
+
+def _experiment_job(queue: Jobs, job_id: str, kind: str, missing: str) -> tuple[dict, dict]:
+    job = queue.get(job_id)
+    if job["kind"] != kind:
+        raise QueryError("job_not_found", missing, 404)
+    return job, queue.result(job_id)
+
+
+@router.get("/experiment-pbo/{job_id}", response_model=ExperimentPboPreview)
+def experiment_pbo(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job, result = _experiment_job(queue, job_id, "experiment_pbo", "El cálculo PBO no existe.")
+    return result | {"job_id": job_id, "result_sha256": job["result_sha256"]}
+
+
+@router.get("/experiment-bootstrap/{job_id}", response_model=ExperimentBootstrapPreview)
+def experiment_bootstrap(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job, result = _experiment_job(queue, job_id, "experiment_bootstrap", "El bootstrap no existe.")
+    view = (present(result["audit"], distribution_frame(result["distribution"]), result["block_order"])
+            if result["audit"] is not None else None)
+    return {key: result[key] for key in ("status", "independent_advantage_demonstrated", "experiments", "message")
+            } | {"job_id": job_id, "result_sha256": job["result_sha256"], "view": view}
+
+
+@router.get("/experiment-bootstrap/{job_id}/distributions.csv")
+def experiment_bootstrap_distributions(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")],
+                                       queue: Queue) -> Response:
+    _, result = _experiment_job(queue, job_id, "experiment_bootstrap", "El bootstrap no existe.")
+    if result["distribution"] is None:
+        raise QueryError("result_unavailable", "Este bootstrap no tiene réplicas.", 404)
+    return Response(distribution_frame(result["distribution"]).to_csv(index=False), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="block-bootstrap-distributions.csv"'})
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

@@ -119,6 +119,8 @@ class SqliteJobs:
             payload["preparation"] = command.preparation
         if command.outcomes is not None:
             payload["outcomes"] = command.outcomes
+        if command.experiment_analysis is not None:
+            payload["experiment_analysis"] = command.experiment_analysis
         parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None

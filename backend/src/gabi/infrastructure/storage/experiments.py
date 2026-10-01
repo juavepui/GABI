@@ -12,9 +12,9 @@ MAX_TEXT_CHARS = 16_384
 MAX_RETURNS_CHARS = 2_000_000
 
 SUMMARY = ("id", "created_at", "model_id", "stage", "family", "n_positions", "rebalance", "sharpe",
-           "sortino", "max_drawdown", "hypothesis_registered", "git_commit", "notes")
+           "sortino", "max_drawdown", "hypothesis_registered", "git_commit", "notes", "periods_per_year")
 DETAIL = SUMMARY + ("data_cutoff", "universe", "factors", "weights_json", "cost_model", "is_start", "is_end",
-                    "oos_start", "oos_end", "total_return", "annualized_return", "periods_per_year",
+                    "oos_start", "oos_end", "total_return", "annualized_return",
                     "n_periods", "python_version", "env_fingerprint", "data_fingerprint", "deps_json")
 # Columns added by research_lab._ensure_columns after the table was first published.
 LATE_COLUMNS = {"deps_json", "python_version", "env_fingerprint", "data_fingerprint"}

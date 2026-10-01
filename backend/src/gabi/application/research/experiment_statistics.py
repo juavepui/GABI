@@ -7,7 +7,7 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.application.research.backtest_diagnostics import _tail
-from gabi.application.research.experiments import ExperimentStore
+from gabi.application.research.experiments import ExperimentStore, returns_series
 
 # Horizon of one saved observation, from the registered frequency (Research Lab wording).
 TAIL_HORIZONS = {252: "una sesión", 12: "un mes", 4: "un trimestre", 2: "un semestre", 1: "un año"}
@@ -21,15 +21,6 @@ class SharpeMath(Protocol):
     def psr_annualized(self, sharpe: float, n_obs: int, periods_per_year: float, skew: float,
                        kurtosis: float) -> float: ...
     def tail_risk(self, returns: pd.Series, horizon: str) -> dict: ...
-
-
-def returns_series(returns: dict | None) -> pd.Series | None:
-    """The saved series exactly as research_lab.get_experiment rebuilds it."""
-    if not returns:
-        return None
-    series = pd.Series(returns)
-    series.index = pd.to_datetime(series.index)
-    return series.sort_index()
 
 
 class ExperimentStatistics:

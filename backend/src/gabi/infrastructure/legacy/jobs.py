@@ -79,6 +79,15 @@ class LegacyExecutor:
                 return monitor.filings(command.snapshot_id)
             finally:
                 market.close()
+        if command.kind in {"experiment_pbo", "experiment_bootstrap"}:
+            from gabi.application.research.experiment_analysis import build_bootstrap, build_pbo
+            from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
+            from gabi.infrastructure.storage.experiments import SqliteExperiments
+
+            assert command.experiment_analysis is not None
+            build = build_pbo if command.kind == "experiment_pbo" else build_bootstrap
+            return build(SqliteExperiments(self.settings.data_dir), command.experiment_analysis,
+                         LegacyExperimentMath())
         # Published legacy engines keep their immutable project-root config.
         from gabi import config
 

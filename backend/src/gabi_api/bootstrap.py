@@ -32,7 +32,7 @@ from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.decisions import build_decisions
-from gabi.infrastructure.legacy.experiments import LegacySharpeMath
+from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.macro import series_metadata
@@ -108,7 +108,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     experiment_store = SqliteExperiments(settings.data_dir)
     experiments = ExperimentQueries(experiment_store, lambda: model_queries.model().mode == "RESEARCH")
     experiment_statistics = ExperimentStatistics(experiment_store, lambda: model_queries.model().mode == "RESEARCH",
-                                                 LegacySharpeMath())
+                                                 LegacyExperimentMath())
     backtest_diagnostics = BacktestDiagnostics(jobs, LegacyBacktestMath())
     historical_queries = HistoricalQueries(jobs, LegacyRankingQuality())
 

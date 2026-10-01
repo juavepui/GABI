@@ -64,8 +64,18 @@ class OutcomesRequest(BaseModel):
     cost_bps: float = Field(default=0.0, ge=0, le=100)
 
 
+class ExperimentAnalysisRequest(BaseModel):
+    """PBO/CSCV over 2-20 logged experiments, or a block bootstrap of one (optionally paired)."""
+
+    model_config = {"extra": "forbid"}
+
+    experiment_ids: list[int] | None = Field(default=None, min_length=2, max_length=20)
+    experiment_id: int | None = Field(default=None, ge=1)
+    benchmark_id: int | None = Field(default=None, ge=1)
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -82,6 +92,7 @@ class CreateJobRequest(BaseModel):
     factor_contrast: FactorContrastRequest | None = None
     preparation: PreparationRequest | None = None
     outcomes: OutcomesRequest | None = None
+    experiment_analysis: ExperimentAnalysisRequest | None = None
 
 
 class JobEvent(BaseModel):

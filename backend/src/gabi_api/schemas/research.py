@@ -637,6 +637,7 @@ class ExperimentSummary(BaseModel):
     hypothesis_registered: bool
     git_commit: str | None
     notes: str | None
+    periods_per_year: float | None
     has_returns: bool
 
 
@@ -665,7 +666,6 @@ class ExperimentDetail(ExperimentSummary):
     oos_end: str | None
     total_return: float | None
     annualized_return: float | None
-    periods_per_year: float | None
     n_periods: int | None
     python_version: str | None
     env_fingerprint: str | None
@@ -699,3 +699,118 @@ class ExperimentTailRisk(BaseModel):
     horizon: str
     message: str
     series: list[TailSeries]
+
+
+class ExperimentProvenance(BaseModel):
+    id: int
+    model_id: str
+    git_commit: str | None
+    data_fingerprint: str | None
+    stage: str
+    family: str | None
+
+
+class PboExperiment(ExperimentProvenance):
+    label: str
+    n_returns: int
+
+
+class ExperimentPboPreview(BaseModel):
+    job_id: str
+    result_sha256: str
+    status: str
+    independent_advantage_demonstrated: bool
+    experiments: list[PboExperiment]
+    n_common_dates: int
+    first_date: str | None
+    last_date: str | None
+    n_splits: int | None
+    pbo: float | None
+    n_combinations: int | None
+    tied_splits: int | None
+    tie_policy: str | None
+    message: str | None
+
+
+class BootstrapInterval(BaseModel):
+    block_size: int
+    series: str
+    series_label: str
+    metric: str
+    metric_label: str
+    observed: float | None
+    valid_draws: int
+    undefined_draws: int
+    lower: float | None
+    median: float | None
+    upper: float | None
+    bootstrap_mean: float | None
+
+
+class BootstrapFraction(BaseModel):
+    series: str
+    condition: str
+    fraction: float | None
+    valid_draws: int
+    undefined_draws: int
+
+
+class BootstrapComparison(BaseModel):
+    block_size: int
+    series: str
+    mean: float | None
+    bootstrap_lower: float | None
+    bootstrap_upper: float | None
+    hac_lower: float | None
+    hac_upper: float | None
+    hac_lags: int
+    zero_conclusion_differs: bool
+
+
+class HistogramBin(BaseModel):
+    start: float
+    end: float
+    fraction: float
+
+
+class BootstrapHistogram(BaseModel):
+    column: str
+    label: str
+    observed: float | None
+    valid_draws: int
+    lower: float | None
+    upper: float | None
+    bins: list[HistogramBin]
+
+
+class BlockBootstrapView(BaseModel):
+    primary_block: int
+    n_obs: int
+    periods_per_year: int
+    n_boot: int
+    ci: float
+    start: str
+    end: str
+    has_series: bool
+    tail_sparse: bool
+    tail_mass: float
+    limitations: list[str]
+    intervals: list[BootstrapInterval]
+    fractions: list[BootstrapFraction]
+    comparisons: list[BootstrapComparison]
+    histograms: list[BootstrapHistogram]
+
+
+class BootstrapExperiments(BaseModel):
+    strategy: ExperimentProvenance
+    benchmark: ExperimentProvenance | None = None
+
+
+class ExperimentBootstrapPreview(BaseModel):
+    job_id: str
+    result_sha256: str
+    status: str
+    independent_advantage_demonstrated: bool
+    experiments: BootstrapExperiments
+    message: str | None
+    view: BlockBootstrapView | None

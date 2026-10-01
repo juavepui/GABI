@@ -267,10 +267,32 @@ serie acotada y no escriben. PBO/CSCV no es una consulta: con 16 bloques evalúa
 12.870 particiones y tardó unos 28 s con una matriz sintética de 120×5 y otra
 de 2.500×4, así que se ejecutará como job explícito.
 
+PBO/CSCV y el bootstrap por bloques de un experimento son ahora los jobs
+explícitos `experiment_pbo` y `experiment_bootstrap`, en modo Research para
+encolar y para leer. PBO compara de 2 a 20 experimentos con serie guardada:
+une las series por fecha y descarta las que no coinciden, exige 16 fechas
+comunes y usa `n_splits = min(16, (n // 10) * 2 or 2)` con
+`stats_rigor.pbo_cscv`, como el multiselect antiguo. El bootstrap aplica
+`block_bootstrap.analyze_sensitivity` con las longitudes preregistradas, la
+semilla y las 4.096 réplicas por defecto. Exige al menos 30 observaciones y una
+frecuencia con longitudes preregistradas. El benchmark opcional debe tener la
+misma frecuencia y exactamente las mismas fechas; si no, se explica el motivo y
+no se recorta ni se rellena nada. El artefacto añade la procedencia de cada
+experimento (id, modelo, commit y huella de datos) y conserva todas las
+réplicas. Como el worker guarda el JSON con claves ordenadas, las réplicas se
+guardan como lista de columnas y el orden de los bloques se guarda aparte; el
+CSV descargado y las tablas mantienen el orden de la página antigua. Las tablas
+de intervalos, fracciones y HAC y los histogramas se calculan en
+`application/research/block_bootstrap_view.py`, la presentación pura que tenía
+`block_bootstrap_ui`; React solo los dibuja. Con un rango de réplicas por debajo
+de la resolución de coma flotante, el histograma usa un único intervalo en vez
+de fallar. Las pruebas comparan PBO, auditoría, réplicas, CSV y tablas con las
+llamadas antiguas.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR y riesgo de cola en React; PBO/CSCV, bootstrap, alta, borrado y auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV y bootstrap por bloques en React; alta, borrado y auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

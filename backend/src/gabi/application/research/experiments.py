@@ -3,6 +3,8 @@
 from collections.abc import Callable
 from typing import Protocol
 
+import pandas as pd
+
 from gabi.application.errors import QueryError
 from gabi.domain.research.experiments import STAGE_INFO, STAGES
 
@@ -11,6 +13,15 @@ class ExperimentStore(Protocol):
     def list(self, family: str | None, stage: str | None) -> tuple[list[dict], list[str]]: ...
 
     def get(self, experiment_id: int) -> dict | None: ...
+
+
+def returns_series(returns: dict | None) -> pd.Series | None:
+    """The saved series exactly as research_lab.get_experiment rebuilds it."""
+    if not returns:
+        return None
+    series = pd.Series(returns)
+    series.index = pd.to_datetime(series.index)
+    return series.sort_index()
 
 
 def _period_label(key: str) -> str:

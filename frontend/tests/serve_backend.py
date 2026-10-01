@@ -60,6 +60,13 @@ def main():
                        "VALUES ('2026-09-02','GABI-MF-v2.0',1,'OUT_OF_SAMPLE','mf-v2',0.4,'Fixture fuera de muestra')")
             db.execute("INSERT INTO experiments (created_at,model_id,hypothesis_registered,stage,family,sharpe) "
                        "VALUES ('2026-09-03','GABI-MF-v1.1',0,'RESEARCH','mf-v1',0.35)")
+            quarters = [f"{year}-{month:02}-28" for year in range(2010, 2020) for month in (3, 6, 9, 12)]
+            for model_id, drift in (("GABI-PBO-A", 0.02), ("GABI-PBO-B", 0.01)):
+                returns = {day: round(drift + 0.04 * ((i * 7919 + len(model_id) * 31) % 17 - 8) / 8, 6)
+                           for i, day in enumerate(quarters)}
+                db.execute("INSERT INTO experiments (created_at,model_id,hypothesis_registered,stage,sharpe,"
+                           "periods_per_year,n_periods,returns_json) VALUES ('2026-09-04',?,0,'RESEARCH',?,4,40,?)",
+                           (model_id, drift * 20, json.dumps(returns)))
             db.commit()
         published = root / "published-ledger.json"
         published.write_text(json.dumps({
@@ -144,6 +151,14 @@ def synthetic_job(command, app):
                                                     ("2019-01-02", 5, 0.04), ("2019-04-02", 5, 0.06))],
                 "turnover": [{"factor": "value_score", "quantil": 5, "turnover": 0.2}],
                 "skipped": [{"fecha": "2019-07-02", "motivo": "cobertura insuficiente del universo (10/50)"}]}
+    if command.kind in {"experiment_pbo", "experiment_bootstrap"}:
+        from gabi.application.research.experiment_analysis import build_bootstrap, build_pbo
+        from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
+        from gabi.infrastructure.storage.experiments import SqliteExperiments
+
+        build = build_pbo if command.kind == "experiment_pbo" else build_bootstrap
+        return build(SqliteExperiments(Path(app.state.settings.data_dir)), command.experiment_analysis,
+                     LegacyExperimentMath())
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)

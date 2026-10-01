@@ -186,3 +186,46 @@ test('Research Lab lista experimentos y su entorno solo en modo Research', async
     });
   }
 });
+
+test('Research Lab calcula PBO y bootstrap por bloques como jobs explícitos', async ({ page }) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/laboratorio');
+    const pbo = page.getByRole('region', { name: 'PBO CSCV' });
+    await pbo.getByLabel(/GABI-PBO-A/).check();
+    await pbo.getByLabel(/GABI-PBO-B/).check();
+    await pbo.getByRole('button', { name: 'Calcular PBO' }).click();
+    const pboResult = pbo.getByRole('region', { name: 'Resultado PBO' });
+    await expect(pboResult).toContainText('70 combinaciones IS/OOS evaluadas · 8 bloques');
+    await expect(pboResult).toContainText(/PBO \d/);
+    const boot = page.getByRole('region', { name: 'Incertidumbre por bloques' });
+    await boot
+      .getByLabel('Experimento para calcular incertidumbre')
+      .selectOption({ label: '#4 · GABI-PBO-A' });
+    await boot.getByLabel('Serie de comparación (misma frecuencia y fechas)').selectOption({
+      label: '#5 · GABI-PBO-B',
+    });
+    await boot.getByRole('button', { name: 'Calcular distribuciones e intervalos' }).click();
+    const bootResult = boot.getByRole('region', { name: 'Resultado del bootstrap' });
+    await expect(bootResult).toContainText('40 observaciones · 4 por año');
+    await expect(bootResult.getByRole('table', { name: 'Intervalos bootstrap' })).toContainText(
+      'GABI frente a benchmark',
+    );
+    await bootResult
+      .getByRole('combobox', { name: 'Distribución del remuestreo' })
+      .selectOption('vs_benchmark/excess_mean');
+    await expect(
+      bootResult.getByRole('img', { name: /Exceso medio por observación/ }),
+    ).toBeVisible();
+    await bootResult.getByText('Parámetros y descarga reproducible').click();
+    await expect(
+      bootResult.getByRole('link', { name: 'Descargar todas las réplicas' }),
+    ).toHaveAttribute('href', /distributions\.csv$/);
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});

@@ -8,13 +8,14 @@ from typing import Literal, Protocol
 from gabi.application.errors import QueryError
 from gabi.application.research.backtest_factors import normalize_factor_contrast
 from gabi.application.research.backtests import normalize_backtest, normalize_registration
+from gabi.application.research.experiment_analysis import normalize_bootstrap, normalize_pbo
 from gabi.application.research.historical_outcomes import normalize_outcomes
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
-                  "backtest_factors", "historical_outcomes"}
+                  "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap"}
 DERIVED_SOURCES = {"backtest_factors": ("factor_contrast", {"backtest_v1", "backtest_v2"}),
                    "backtest_register": ("research_log", {"backtest_v1", "backtest_v2"}),
                    "historical_outcomes": ("outcomes", {"historical_ranking"})}
@@ -39,6 +40,7 @@ class JobCommand:
     factor_contrast: dict | None = None
     preparation: dict | None = None
     outcomes: dict | None = None
+    experiment_analysis: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -92,6 +94,12 @@ class JobCommand:
             object.__setattr__(self, "outcomes", normalize_outcomes(self.outcomes))
         elif self.outcomes is not None:
             raise QueryError("invalid_job", "Este trabajo no admite evaluación posterior.", 422)
+        if self.kind == "experiment_pbo":
+            object.__setattr__(self, "experiment_analysis", normalize_pbo(self.experiment_analysis))
+        elif self.kind == "experiment_bootstrap":
+            object.__setattr__(self, "experiment_analysis", normalize_bootstrap(self.experiment_analysis))
+        elif self.experiment_analysis is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite análisis de experimentos.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)

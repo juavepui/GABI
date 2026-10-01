@@ -1335,6 +1335,104 @@
         "title": "BlindStatuses",
         "type": "object"
       },
+      "BlockBootstrapView": {
+        "properties": {
+          "ci": {
+            "title": "Ci",
+            "type": "number"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/BootstrapComparison"
+            },
+            "title": "Comparisons",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "fractions": {
+            "items": {
+              "$ref": "#/components/schemas/BootstrapFraction"
+            },
+            "title": "Fractions",
+            "type": "array"
+          },
+          "has_series": {
+            "title": "Has Series",
+            "type": "boolean"
+          },
+          "histograms": {
+            "items": {
+              "$ref": "#/components/schemas/BootstrapHistogram"
+            },
+            "title": "Histograms",
+            "type": "array"
+          },
+          "intervals": {
+            "items": {
+              "$ref": "#/components/schemas/BootstrapInterval"
+            },
+            "title": "Intervals",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "n_boot": {
+            "title": "N Boot",
+            "type": "integer"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "periods_per_year": {
+            "title": "Periods Per Year",
+            "type": "integer"
+          },
+          "primary_block": {
+            "title": "Primary Block",
+            "type": "integer"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          },
+          "tail_mass": {
+            "title": "Tail Mass",
+            "type": "number"
+          },
+          "tail_sparse": {
+            "title": "Tail Sparse",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "primary_block",
+          "n_obs",
+          "periods_per_year",
+          "n_boot",
+          "ci",
+          "start",
+          "end",
+          "has_series",
+          "tail_sparse",
+          "tail_mass",
+          "limitations",
+          "intervals",
+          "fractions",
+          "comparisons",
+          "histograms"
+        ],
+        "title": "BlockBootstrapView",
+        "type": "object"
+      },
       "BlockOutcome": {
         "properties": {
           "block": {
@@ -1363,6 +1461,326 @@
           "outcome"
         ],
         "title": "BlockOutcome",
+        "type": "object"
+      },
+      "BootstrapComparison": {
+        "properties": {
+          "block_size": {
+            "title": "Block Size",
+            "type": "integer"
+          },
+          "bootstrap_lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bootstrap Lower"
+          },
+          "bootstrap_upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bootstrap Upper"
+          },
+          "hac_lags": {
+            "title": "Hac Lags",
+            "type": "integer"
+          },
+          "hac_lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hac Lower"
+          },
+          "hac_upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hac Upper"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "series": {
+            "title": "Series",
+            "type": "string"
+          },
+          "zero_conclusion_differs": {
+            "title": "Zero Conclusion Differs",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "block_size",
+          "series",
+          "mean",
+          "bootstrap_lower",
+          "bootstrap_upper",
+          "hac_lower",
+          "hac_upper",
+          "hac_lags",
+          "zero_conclusion_differs"
+        ],
+        "title": "BootstrapComparison",
+        "type": "object"
+      },
+      "BootstrapExperiments": {
+        "properties": {
+          "benchmark": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/ExperimentProvenance"
+          }
+        },
+        "required": [
+          "strategy"
+        ],
+        "title": "BootstrapExperiments",
+        "type": "object"
+      },
+      "BootstrapFraction": {
+        "properties": {
+          "condition": {
+            "title": "Condition",
+            "type": "string"
+          },
+          "fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fraction"
+          },
+          "series": {
+            "title": "Series",
+            "type": "string"
+          },
+          "undefined_draws": {
+            "title": "Undefined Draws",
+            "type": "integer"
+          },
+          "valid_draws": {
+            "title": "Valid Draws",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "series",
+          "condition",
+          "fraction",
+          "valid_draws",
+          "undefined_draws"
+        ],
+        "title": "BootstrapFraction",
+        "type": "object"
+      },
+      "BootstrapHistogram": {
+        "properties": {
+          "bins": {
+            "items": {
+              "$ref": "#/components/schemas/HistogramBin"
+            },
+            "title": "Bins",
+            "type": "array"
+          },
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower"
+          },
+          "observed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed"
+          },
+          "upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper"
+          },
+          "valid_draws": {
+            "title": "Valid Draws",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "column",
+          "label",
+          "observed",
+          "valid_draws",
+          "lower",
+          "upper",
+          "bins"
+        ],
+        "title": "BootstrapHistogram",
+        "type": "object"
+      },
+      "BootstrapInterval": {
+        "properties": {
+          "block_size": {
+            "title": "Block Size",
+            "type": "integer"
+          },
+          "bootstrap_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bootstrap Mean"
+          },
+          "lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "metric_label": {
+            "title": "Metric Label",
+            "type": "string"
+          },
+          "observed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed"
+          },
+          "series": {
+            "title": "Series",
+            "type": "string"
+          },
+          "series_label": {
+            "title": "Series Label",
+            "type": "string"
+          },
+          "undefined_draws": {
+            "title": "Undefined Draws",
+            "type": "integer"
+          },
+          "upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper"
+          },
+          "valid_draws": {
+            "title": "Valid Draws",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "block_size",
+          "series",
+          "series_label",
+          "metric",
+          "metric_label",
+          "observed",
+          "valid_draws",
+          "undefined_draws",
+          "lower",
+          "median",
+          "upper",
+          "bootstrap_mean"
+        ],
+        "title": "BootstrapInterval",
         "type": "object"
       },
       "CapitalAllocation": {
@@ -1637,6 +2055,16 @@
             ],
             "title": "End"
           },
+          "experiment_analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentAnalysisRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "factor_contrast": {
             "anyOf": [
               {
@@ -1731,7 +2159,9 @@
               "backtest_register",
               "backtest_factors",
               "prepare_history",
-              "historical_outcomes"
+              "historical_outcomes",
+              "experiment_pbo",
+              "experiment_bootstrap"
             ],
             "title": "Kind",
             "type": "string"
@@ -2735,6 +3165,109 @@
         "title": "ExpectedValue",
         "type": "object"
       },
+      "ExperimentAnalysisRequest": {
+        "additionalProperties": false,
+        "description": "PBO/CSCV over 2-20 logged experiments, or a block bootstrap of one (optionally paired).",
+        "properties": {
+          "benchmark_id": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Id"
+          },
+          "experiment_id": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Id"
+          },
+          "experiment_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 20,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Ids"
+          }
+        },
+        "title": "ExperimentAnalysisRequest",
+        "type": "object"
+      },
+      "ExperimentBootstrapPreview": {
+        "properties": {
+          "experiments": {
+            "$ref": "#/components/schemas/BootstrapExperiments"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "view": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BlockBootstrapView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "job_id",
+          "result_sha256",
+          "status",
+          "independent_advantage_demonstrated",
+          "experiments",
+          "message",
+          "view"
+        ],
+        "title": "ExperimentBootstrapPreview",
+        "type": "object"
+      },
       "ExperimentDependency": {
         "properties": {
           "package": {
@@ -3103,6 +3636,7 @@
           "hypothesis_registered",
           "git_commit",
           "notes",
+          "periods_per_year",
           "has_returns",
           "data_cutoff",
           "universe",
@@ -3115,7 +3649,6 @@
           "oos_end",
           "total_return",
           "annualized_return",
-          "periods_per_year",
           "n_periods",
           "python_version",
           "env_fingerprint",
@@ -3169,6 +3702,202 @@
           "stages"
         ],
         "title": "ExperimentList",
+        "type": "object"
+      },
+      "ExperimentPboPreview": {
+        "properties": {
+          "experiments": {
+            "items": {
+              "$ref": "#/components/schemas/PboExperiment"
+            },
+            "title": "Experiments",
+            "type": "array"
+          },
+          "first_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Date"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "last_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Date"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "n_combinations": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Combinations"
+          },
+          "n_common_dates": {
+            "title": "N Common Dates",
+            "type": "integer"
+          },
+          "n_splits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Splits"
+          },
+          "pbo": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pbo"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tie_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tie Policy"
+          },
+          "tied_splits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tied Splits"
+          }
+        },
+        "required": [
+          "job_id",
+          "result_sha256",
+          "status",
+          "independent_advantage_demonstrated",
+          "experiments",
+          "n_common_dates",
+          "first_date",
+          "last_date",
+          "n_splits",
+          "pbo",
+          "n_combinations",
+          "tied_splits",
+          "tie_policy",
+          "message"
+        ],
+        "title": "ExperimentPboPreview",
+        "type": "object"
+      },
+      "ExperimentProvenance": {
+        "properties": {
+          "data_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fingerprint"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "model_id",
+          "git_commit",
+          "data_fingerprint",
+          "stage",
+          "family"
+        ],
+        "title": "ExperimentProvenance",
         "type": "object"
       },
       "ExperimentStage": {
@@ -3276,6 +4005,17 @@
             ],
             "title": "Notes"
           },
+          "periods_per_year": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periods Per Year"
+          },
           "rebalance": {
             "anyOf": [
               {
@@ -3328,6 +4068,7 @@
           "hypothesis_registered",
           "git_commit",
           "notes",
+          "periods_per_year",
           "has_returns"
         ],
         "title": "ExperimentSummary",
@@ -3992,6 +4733,29 @@
           }
         },
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HistogramBin": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "number"
+          },
+          "fraction": {
+            "title": "Fraction",
+            "type": "number"
+          },
+          "start": {
+            "title": "Start",
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "fraction"
+        ],
+        "title": "HistogramBin",
         "type": "object"
       },
       "HistoricalColumn": {
@@ -5553,6 +6317,75 @@
           "top_n"
         ],
         "title": "OutcomesRequest",
+        "type": "object"
+      },
+      "PboExperiment": {
+        "properties": {
+          "data_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fingerprint"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "n_returns": {
+            "title": "N Returns",
+            "type": "integer"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "model_id",
+          "git_commit",
+          "data_fingerprint",
+          "stage",
+          "family",
+          "label",
+          "n_returns"
+        ],
+        "title": "PboExperiment",
         "type": "object"
       },
       "PeriodQualityWarning": {
@@ -12378,6 +13211,283 @@
           }
         },
         "summary": "Estimate Captures",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/experiment-bootstrap/{job_id}": {
+      "get": {
+        "operationId": "experiment_bootstrap_api_v1_research_experiment_bootstrap__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentBootstrapPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Experiment Bootstrap",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/experiment-bootstrap/{job_id}/distributions.csv": {
+      "get": {
+        "operationId": "experiment_bootstrap_distributions_api_v1_research_experiment_bootstrap__job_id__distributions_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Experiment Bootstrap Distributions",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/experiment-pbo/{job_id}": {
+      "get": {
+        "operationId": "experiment_pbo_api_v1_research_experiment_pbo__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentPboPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Experiment Pbo",
         "tags": [
           "research"
         ]

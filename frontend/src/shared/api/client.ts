@@ -55,6 +55,8 @@ import type {
   ExperimentDetail,
   DeflatedSharpe,
   ExperimentTailRisk,
+  ExperimentPboPreview,
+  ExperimentBootstrapPreview,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -143,6 +145,15 @@ export function getExperimentTailRisk(
   signal?: AbortSignal,
 ): Promise<ExperimentTailRisk> {
   return get('/api/v1/research/experiments/' + String(id) + '/tail-risk', signal);
+}
+export function getExperimentPbo(id: string, signal?: AbortSignal): Promise<ExperimentPboPreview> {
+  return get('/api/v1/research/experiment-pbo/' + encodeURIComponent(id), signal);
+}
+export function getExperimentBootstrap(
+  id: string,
+  signal?: AbortSignal,
+): Promise<ExperimentBootstrapPreview> {
+  return get('/api/v1/research/experiment-bootstrap/' + encodeURIComponent(id), signal);
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);

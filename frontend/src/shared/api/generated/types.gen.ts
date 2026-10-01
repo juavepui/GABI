@@ -622,6 +622,72 @@ export type BlindStatuses = {
 };
 
 /**
+ * BlockBootstrapView
+ */
+export type BlockBootstrapView = {
+    /**
+     * Ci
+     */
+    ci: number;
+    /**
+     * Comparisons
+     */
+    comparisons: Array<BootstrapComparison>;
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Fractions
+     */
+    fractions: Array<BootstrapFraction>;
+    /**
+     * Has Series
+     */
+    has_series: boolean;
+    /**
+     * Histograms
+     */
+    histograms: Array<BootstrapHistogram>;
+    /**
+     * Intervals
+     */
+    intervals: Array<BootstrapInterval>;
+    /**
+     * Limitations
+     */
+    limitations: Array<string>;
+    /**
+     * N Boot
+     */
+    n_boot: number;
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Periods Per Year
+     */
+    periods_per_year: number;
+    /**
+     * Primary Block
+     */
+    primary_block: number;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Tail Mass
+     */
+    tail_mass: number;
+    /**
+     * Tail Sparse
+     */
+    tail_sparse: boolean;
+};
+
+/**
  * BlockOutcome
  */
 export type BlockOutcome = {
@@ -638,6 +704,170 @@ export type BlockOutcome = {
      * Symbols
      */
     symbols: Array<string>;
+};
+
+/**
+ * BootstrapComparison
+ */
+export type BootstrapComparison = {
+    /**
+     * Block Size
+     */
+    block_size: number;
+    /**
+     * Bootstrap Lower
+     */
+    bootstrap_lower: number | null;
+    /**
+     * Bootstrap Upper
+     */
+    bootstrap_upper: number | null;
+    /**
+     * Hac Lags
+     */
+    hac_lags: number;
+    /**
+     * Hac Lower
+     */
+    hac_lower: number | null;
+    /**
+     * Hac Upper
+     */
+    hac_upper: number | null;
+    /**
+     * Mean
+     */
+    mean: number | null;
+    /**
+     * Series
+     */
+    series: string;
+    /**
+     * Zero Conclusion Differs
+     */
+    zero_conclusion_differs: boolean;
+};
+
+/**
+ * BootstrapExperiments
+ */
+export type BootstrapExperiments = {
+    benchmark?: ExperimentProvenance | null;
+    strategy: ExperimentProvenance;
+};
+
+/**
+ * BootstrapFraction
+ */
+export type BootstrapFraction = {
+    /**
+     * Condition
+     */
+    condition: string;
+    /**
+     * Fraction
+     */
+    fraction: number | null;
+    /**
+     * Series
+     */
+    series: string;
+    /**
+     * Undefined Draws
+     */
+    undefined_draws: number;
+    /**
+     * Valid Draws
+     */
+    valid_draws: number;
+};
+
+/**
+ * BootstrapHistogram
+ */
+export type BootstrapHistogram = {
+    /**
+     * Bins
+     */
+    bins: Array<HistogramBin>;
+    /**
+     * Column
+     */
+    column: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Lower
+     */
+    lower: number | null;
+    /**
+     * Observed
+     */
+    observed: number | null;
+    /**
+     * Upper
+     */
+    upper: number | null;
+    /**
+     * Valid Draws
+     */
+    valid_draws: number;
+};
+
+/**
+ * BootstrapInterval
+ */
+export type BootstrapInterval = {
+    /**
+     * Block Size
+     */
+    block_size: number;
+    /**
+     * Bootstrap Mean
+     */
+    bootstrap_mean: number | null;
+    /**
+     * Lower
+     */
+    lower: number | null;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * Metric Label
+     */
+    metric_label: string;
+    /**
+     * Observed
+     */
+    observed: number | null;
+    /**
+     * Series
+     */
+    series: string;
+    /**
+     * Series Label
+     */
+    series_label: string;
+    /**
+     * Undefined Draws
+     */
+    undefined_draws: number;
+    /**
+     * Upper
+     */
+    upper: number | null;
+    /**
+     * Valid Draws
+     */
+    valid_draws: number;
 };
 
 /**
@@ -774,6 +1004,7 @@ export type CreateJobRequest = {
      * End
      */
     end?: string | null;
+    experiment_analysis?: ExperimentAnalysisRequest | null;
     factor_contrast?: FactorContrastRequest | null;
     /**
      * Factor Max Symbols
@@ -798,7 +1029,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap';
     outcomes?: OutcomesRequest | null;
     /**
      * Portfolio Id
@@ -1382,6 +1613,54 @@ export type ExpectedValue = {
 };
 
 /**
+ * ExperimentAnalysisRequest
+ *
+ * PBO/CSCV over 2-20 logged experiments, or a block bootstrap of one (optionally paired).
+ */
+export type ExperimentAnalysisRequest = {
+    /**
+     * Benchmark Id
+     */
+    benchmark_id?: number | null;
+    /**
+     * Experiment Id
+     */
+    experiment_id?: number | null;
+    /**
+     * Experiment Ids
+     */
+    experiment_ids?: Array<number> | null;
+};
+
+/**
+ * ExperimentBootstrapPreview
+ */
+export type ExperimentBootstrapPreview = {
+    experiments: BootstrapExperiments;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Message
+     */
+    message: string | null;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Status
+     */
+    status: string;
+    view: BlockBootstrapView | null;
+};
+
+/**
  * ExperimentDependency
  */
 export type ExperimentDependency = {
@@ -1570,6 +1849,98 @@ export type ExperimentList = {
 };
 
 /**
+ * ExperimentPboPreview
+ */
+export type ExperimentPboPreview = {
+    /**
+     * Experiments
+     */
+    experiments: Array<PboExperiment>;
+    /**
+     * First Date
+     */
+    first_date: string | null;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Last Date
+     */
+    last_date: string | null;
+    /**
+     * Message
+     */
+    message: string | null;
+    /**
+     * N Combinations
+     */
+    n_combinations: number | null;
+    /**
+     * N Common Dates
+     */
+    n_common_dates: number;
+    /**
+     * N Splits
+     */
+    n_splits: number | null;
+    /**
+     * Pbo
+     */
+    pbo: number | null;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Tie Policy
+     */
+    tie_policy: string | null;
+    /**
+     * Tied Splits
+     */
+    tied_splits: number | null;
+};
+
+/**
+ * ExperimentProvenance
+ */
+export type ExperimentProvenance = {
+    /**
+     * Data Fingerprint
+     */
+    data_fingerprint: string | null;
+    /**
+     * Family
+     */
+    family: string | null;
+    /**
+     * Git Commit
+     */
+    git_commit: string | null;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Stage
+     */
+    stage: string;
+};
+
+/**
  * ExperimentStage
  */
 export type ExperimentStage = {
@@ -1635,6 +2006,10 @@ export type ExperimentSummary = {
      * Notes
      */
     notes: string | null;
+    /**
+     * Periods Per Year
+     */
+    periods_per_year: number | null;
     /**
      * Rebalance
      */
@@ -2033,6 +2408,24 @@ export type HealthResponse = {
      * Status
      */
     status?: string;
+};
+
+/**
+ * HistogramBin
+ */
+export type HistogramBin = {
+    /**
+     * End
+     */
+    end: number;
+    /**
+     * Fraction
+     */
+    fraction: number;
+    /**
+     * Start
+     */
+    start: number;
 };
 
 /**
@@ -2842,6 +3235,44 @@ export type OutcomesRequest = {
      * Top N
      */
     top_n: number;
+};
+
+/**
+ * PboExperiment
+ */
+export type PboExperiment = {
+    /**
+     * Data Fingerprint
+     */
+    data_fingerprint: string | null;
+    /**
+     * Family
+     */
+    family: string | null;
+    /**
+     * Git Commit
+     */
+    git_commit: string | null;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * N Returns
+     */
+    n_returns: number;
+    /**
+     * Stage
+     */
+    stage: string;
 };
 
 /**
@@ -6460,6 +6891,154 @@ export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponses = {
 };
 
 export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponse = EstimateCapturesApiV1ResearchEstimateCapturesGetResponses[keyof EstimateCapturesApiV1ResearchEstimateCapturesGetResponses];
+
+export type ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/experiment-bootstrap/{job_id}';
+};
+
+export type ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetError = ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetErrors[keyof ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetErrors];
+
+export type ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExperimentBootstrapPreview;
+};
+
+export type ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetResponse = ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetResponses[keyof ExperimentBootstrapApiV1ResearchExperimentBootstrapJobIdGetResponses];
+
+export type ExperimentBootstrapDistributionsApiV1ResearchExperimentBootstrapJobIdDistributionsCsvGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/experiment-bootstrap/{job_id}/distributions.csv';
+};
+
+export type ExperimentBootstrapDistributionsApiV1ResearchExperimentBootstrapJobIdDistributionsCsvGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ExperimentBootstrapDistributionsApiV1ResearchExperimentBootstrapJobIdDistributionsCsvGetError = ExperimentBootstrapDistributionsApiV1ResearchExperimentBootstrapJobIdDistributionsCsvGetErrors[keyof ExperimentBootstrapDistributionsApiV1ResearchExperimentBootstrapJobIdDistributionsCsvGetErrors];
+
+export type ExperimentBootstrapDistributionsApiV1ResearchExperimentBootstrapJobIdDistributionsCsvGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ExperimentPboApiV1ResearchExperimentPboJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/experiment-pbo/{job_id}';
+};
+
+export type ExperimentPboApiV1ResearchExperimentPboJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ExperimentPboApiV1ResearchExperimentPboJobIdGetError = ExperimentPboApiV1ResearchExperimentPboJobIdGetErrors[keyof ExperimentPboApiV1ResearchExperimentPboJobIdGetErrors];
+
+export type ExperimentPboApiV1ResearchExperimentPboJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExperimentPboPreview;
+};
+
+export type ExperimentPboApiV1ResearchExperimentPboJobIdGetResponse = ExperimentPboApiV1ResearchExperimentPboJobIdGetResponses[keyof ExperimentPboApiV1ResearchExperimentPboJobIdGetResponses];
 
 export type DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetData = {
     body?: never;

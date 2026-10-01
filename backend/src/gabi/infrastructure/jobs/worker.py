@@ -87,7 +87,8 @@ class Worker:
                                  job["parameters"].get("research_log"),
                                  job["parameters"].get("factor_contrast"),
                                  job["parameters"].get("preparation"),
-                                 job["parameters"].get("outcomes"))
+                                 job["parameters"].get("outcomes"),
+                                 job["parameters"].get("experiment_analysis"))
             result = self.execute(command)
             if self.store.progress(job_id, token, 90, "Guardando resultado", {"stage": "computed"}):
                 self.store.finish(job_id, token, "cancelled")
