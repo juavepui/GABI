@@ -142,7 +142,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     }
     app = FastAPI(title="GABI local API", version="1.0.0", lifespan=lifespan, responses=errors)
     app.state.market = market
-    app.state.evidence = EvidenceQueries(market, LegacyEvidence())
+    app.state.evidence = EvidenceQueries(market, LegacyEvidence(), LegacyRankingQuality())
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.journal = journal

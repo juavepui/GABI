@@ -18,6 +18,7 @@ import { useRanking } from './queries';
 import { rankingParams, patchParams, sortOptions, type SortKey } from './params';
 import { Evidence } from './evidence';
 import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
+import { CoverageWarnings } from './coverage-warnings';
 
 export function MarketPage() {
   const [params, setParams] = useSearchParams();
@@ -109,6 +110,7 @@ export function MarketPage() {
           ))}
         </div>
       )}
+      <CoverageWarnings />
       <section aria-label="Filtros del ranking" className="mb-5 rounded-xl border bg-card p-4">
         <form key={params.toString()} onSubmit={filter} className="space-y-3">
           <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-[2fr_1.3fr_1fr_auto]">

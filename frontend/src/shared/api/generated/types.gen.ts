@@ -906,6 +906,32 @@ export type BlockBootstrapView = {
 };
 
 /**
+ * BlockCoverage
+ */
+export type BlockCoverage = {
+    /**
+     * Any
+     */
+    any: number;
+    /**
+     * Block
+     */
+    block: string;
+    /**
+     * Complete
+     */
+    complete: number;
+    /**
+     * N Metrics
+     */
+    n_metrics: number;
+    /**
+     * None
+     */
+    none: number;
+};
+
+/**
  * BlockOutcome
  */
 export type BlockOutcome = {
@@ -4928,6 +4954,32 @@ export type RankCompany = {
 };
 
 /**
+ * RankingCoverage
+ */
+export type RankingCoverage = {
+    /**
+     * Blocks
+     */
+    blocks: Array<BlockCoverage>;
+    /**
+     * Revision
+     */
+    revision: string;
+    /**
+     * Threshold
+     */
+    threshold: number;
+    /**
+     * Universe
+     */
+    universe: number;
+    /**
+     * Warnings
+     */
+    warnings: Array<string>;
+};
+
+/**
  * RankingResponse
  */
 export type RankingResponse = {
@@ -8247,6 +8299,56 @@ export type RankingApiV1RankingGetResponses = {
 };
 
 export type RankingApiV1RankingGetResponse = RankingApiV1RankingGetResponses[keyof RankingApiV1RankingGetResponses];
+
+export type RankingCoverageApiV1RankingCoverageGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Threshold
+         */
+        threshold?: number;
+    };
+    url: '/api/v1/ranking/coverage';
+};
+
+export type RankingCoverageApiV1RankingCoverageGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RankingCoverageApiV1RankingCoverageGetError = RankingCoverageApiV1RankingCoverageGetErrors[keyof RankingCoverageApiV1RankingCoverageGetErrors];
+
+export type RankingCoverageApiV1RankingCoverageGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: RankingCoverage;
+};
+
+export type RankingCoverageApiV1RankingCoverageGetResponse = RankingCoverageApiV1RankingCoverageGetResponses[keyof RankingCoverageApiV1RankingCoverageGetResponses];
 
 export type RankingStabilityApiV1RankingStabilityGetData = {
     body?: never;

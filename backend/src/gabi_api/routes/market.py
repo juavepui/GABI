@@ -7,7 +7,7 @@ from gabi.application.errors import QueryError
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
-from gabi_api.schemas.evidence import CompanyEvidence, EvidenceTop, RankingStability
+from gabi_api.schemas.evidence import CompanyEvidence, EvidenceTop, RankingCoverage, RankingStability
 from gabi_api.schemas.market import (
     CompanyResponse,
     ComparisonResponse,
@@ -43,6 +43,11 @@ Evidence = Annotated[EvidenceQueries, Depends(evidence_service)]
 @router.get("/evidence", response_model=EvidenceTop)
 def evidence_top(query: Evidence, frozen: bool = False) -> dict:
     return query.top(frozen=frozen)
+
+
+@router.get("/ranking/coverage", response_model=RankingCoverage)
+def ranking_coverage(query: Evidence, threshold: Annotated[float, Query(ge=0, le=1)] = 0.7) -> dict:
+    return query.coverage(threshold)
 
 
 @router.get("/ranking/stability", response_model=RankingStability)

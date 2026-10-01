@@ -85,3 +85,19 @@ class RankingStability(BaseModel):
     companies: list[dict[str, str | float | int | None]]
     metrics: list[dict[str, str | float | int | None]]
     perturbations: list[dict[str, str | float | int | None]]
+
+
+class BlockCoverage(BaseModel):
+    block: str
+    complete: float
+    any: float
+    none: float
+    n_metrics: int
+
+
+class RankingCoverage(BaseModel):
+    revision: str
+    threshold: float
+    universe: int
+    blocks: list[BlockCoverage]
+    warnings: list[str]

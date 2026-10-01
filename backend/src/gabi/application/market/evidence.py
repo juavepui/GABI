@@ -21,6 +21,11 @@ FACTOR_KEYS = ("metric", "family", "percentile", "supports_candidate", "effectiv
                "statistically_supported", "mean_ic", "p_holm")
 
 
+class RankingQuality(Protocol):
+    def block_coverage(self, table: pd.DataFrame) -> dict: ...
+    def block_warnings(self, blocks: dict, threshold: float) -> list[str]: ...
+
+
 class EvidenceMath(Protocol):
     def evidence(self, table: pd.DataFrame, weights: dict) -> dict[str, dict]: ...
     def stability(self, table: pd.DataFrame, weights: dict) -> tuple[dict, pd.DataFrame, pd.DataFrame]: ...
@@ -32,8 +37,8 @@ def _records(frame: pd.DataFrame, index: str) -> list[dict]:
 
 
 class EvidenceQueries:
-    def __init__(self, market: MarketQueries, math: EvidenceMath):
-        self.market, self.math = market, math
+    def __init__(self, market: MarketQueries, math: EvidenceMath, quality: RankingQuality):
+        self.market, self.math, self.quality = market, math, quality
         self._lock = threading.Lock()
         self._cache: dict[tuple, object] = {}
 
@@ -132,3 +137,15 @@ class EvidenceQueries:
             "metrics": _records(metrics, "perturbation") if research else [],
             "perturbations": _records(self.math.perturbations(weights), "perturbation") if research else [],
         }
+
+    def coverage(self, threshold: float = .70) -> dict:
+        """Share of the whole (unfiltered) ranking with all, some or none of each score block's metrics,
+        and the Screener warnings below `threshold`."""
+        if not 0 <= threshold <= 1:
+            raise QueryError("invalid_request", "El umbral de cobertura debe estar entre 0 y 1.", 422)
+        result = self._ranking(None)
+        blocks = self.quality.block_coverage(result.snapshot.table)
+        return {"revision": result.snapshot.revision, "threshold": threshold, "universe": len(result.snapshot.table),
+                "blocks": [{"block": block} | {key: _json_value(value) for key, value in info.items()}
+                           for block, info in blocks.items()],
+                "warnings": self.quality.block_warnings(blocks, threshold)}

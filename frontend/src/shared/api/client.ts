@@ -78,6 +78,7 @@ import type {
   EvidenceTop,
   CompanyEvidence,
   RankingStability,
+  RankingCoverage,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -268,6 +269,12 @@ export function getCompanyEvidence(symbol: string, signal?: AbortSignal): Promis
 }
 export function companyEvidenceDownload(symbol: string): string {
   return '/api/v1/companies/' + encodeURIComponent(symbol) + '/evidence.json';
+}
+export function getRankingCoverage(
+  threshold: number,
+  signal?: AbortSignal,
+): Promise<RankingCoverage> {
+  return get('/api/v1/ranking/coverage?threshold=' + String(threshold), signal);
 }
 export function getRankingStability(signal?: AbortSignal): Promise<RankingStability> {
   return get('/api/v1/ranking/stability', signal);

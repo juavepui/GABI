@@ -4,7 +4,7 @@ import { getBacktestDiagnostics } from '@/shared/api/client';
 import type { TaxDrag } from '@/shared/api/generated/types.gen';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { CoverageThreshold, WarningText } from './coverage-notes';
+import { CoverageThreshold, WarningText } from '@/shared/ui/coverage';
 import { TailRiskTable } from './tail-risk-table';
 
 const pct = (value: number | null | undefined, digits = 2) =>

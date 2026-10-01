@@ -99,3 +99,15 @@ def test_dates_in_ranking_rows_no_longer_break_the_evidence(market):
     table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
     table.loc[table.index[0], "next_earnings_date"] = date(2026, 10, 28)
     assert evidence_confidence.build(table, dict(app_mode.FROZEN_WEIGHTS))
+
+
+def test_block_coverage_and_warnings_match_the_old_screener(market):
+    from gabi import data_quality
+
+    client, app, root = market
+    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
+    blocks = data_quality.score_block_coverage(table)
+    body = client.get("/api/v1/ranking/coverage", params={"threshold": 0.95}).json()
+    assert {row["block"]: row["complete"] for row in body["blocks"]} == {b: v["complete"] for b, v in blocks.items()}
+    assert body["warnings"] == data_quality.block_coverage_warnings(blocks, 0.95)
+    assert client.get("/api/v1/ranking/coverage", params={"threshold": 2}).status_code == 422

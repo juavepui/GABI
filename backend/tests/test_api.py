@@ -63,7 +63,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                              "/api/v1/portfolio/decisions/{plan_id}/delete",
                                              "/api/v1/research/overview", "/api/v1/research/trials",
                                              "/api/v1/research/historical/{job_id}",
-                                             "/api/v1/evidence", "/api/v1/ranking/stability",
+                                             "/api/v1/evidence", "/api/v1/ranking/stability", "/api/v1/ranking/coverage",
                                              "/api/v1/companies/{symbol}/evidence",
                                              "/api/v1/companies/{symbol}/evidence.json",
                                              "/api/v1/research/blind-validations",

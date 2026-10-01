@@ -477,7 +477,7 @@ sustituto:
 | --- | --- | --- |
 | Screener, Mi cartera, Ficha | Evidencia por candidata (`evidence_confidence`): Top-20 con confianza BAJA/MEDIA/ALTA, motivos a favor y en contra, factores con Holm, estabilidad SIC y descarga | Hecho: `GET /evidence` y `/companies/{symbol}/evidence` |
 | Screener | Estabilidad del ranking actual ante cambios de 1-2 puntos en los pesos (`rank_stability.analyze`) | Hecho: `GET /ranking/stability` (1,3 s con la base local; no hace falta un job) |
-| Screener | Avisos de cobertura por bloque con umbral configurable | Migrar en el ranking |
+| Screener | Avisos de cobertura por bloque con umbral configurable | Hecho: `GET /ranking/coverage` sobre todo el ranking, encima de la tabla de Mercado |
 | Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Migrar junto a los snapshots del Signal Monitor |
 | Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Lectura como consulta; sincronización como job explícito |
 | Ficha | Métricas informativas no puntuadas | Migrar |
