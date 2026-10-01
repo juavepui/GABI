@@ -69,6 +69,8 @@ import type {
   LiveLedgerDecision,
   LiveForwardReport,
   SavedEvaluation,
+  BlindCreateRequest,
+  BlindStatus,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -226,6 +228,20 @@ export function saveLiveEvaluation(jobId: string): Promise<SavedEvaluation> {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ job_id: jobId }),
+  });
+}
+export function createBlindValidation(body: BlindCreateRequest): Promise<BlindStatus> {
+  return request('/api/v1/research/blind-validations', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function breakBlindSeal(id: number, reason: string): Promise<BlindStatus> {
+  return request('/api/v1/research/blind-validations/' + String(id) + '/break-seal', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
   });
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {

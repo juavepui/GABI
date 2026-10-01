@@ -23,7 +23,7 @@ from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
 from gabi.application.portfolio.simulations import Simulations
 from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
-from gabi.application.research.blind import BlindValidationQueries
+from gabi.application.research.blind import BlindCommands, BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
 from gabi.application.research.experiment_commands import ExperimentCommands
@@ -34,6 +34,7 @@ from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedger
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
+from gabi.infrastructure.legacy.blind import LegacyBlindWriter
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
 from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
@@ -46,6 +47,7 @@ from gabi.infrastructure.legacy.signals import compare_snapshots
 from gabi.infrastructure.legacy.simulations import LegacySimulationMath
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
+from gabi.infrastructure.storage.blind_plans import FileBlindPlans
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.experiments import SqliteExperiments
@@ -91,7 +93,8 @@ class HealthResponse(BaseModel):
 
 def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today,
                published_ledger: Path | None = None, published_factors_root: Path | None = None,
-               frontend_dist: Path | None = None, saved_audits_root: Path | None = None) -> FastAPI:
+               frontend_dist: Path | None = None, saved_audits_root: Path | None = None,
+               blind_plans_root: Path | None = None) -> FastAPI:
     settings = settings or Settings.from_environment()
     benchmark, risk_free_rate = defaults()
     policy = model_policy()
@@ -110,7 +113,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     research_catalog = ResearchCatalog(FilePublishedLedger(
         published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"))
     published_factors = PublishedFactorQueries(FilePublishedFactors(published_factors_root or settings.data_dir.parent))
-    blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today)
+    blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today,
+                                               FileBlindPlans(blind_plans_root or settings.data_dir.parent))
     estimate_queries = EstimateQueries(SqliteEstimateCaptures(settings.data_dir))
     experiment_store = SqliteExperiments(settings.data_dir)
     experiments = ExperimentQueries(experiment_store, lambda: model_queries.model().mode == "RESEARCH")
@@ -145,6 +149,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors
     app.state.blind_validations = blind_validations
+    app.state.blind_commands = BlindCommands(blind_validations, LegacyBlindWriter(settings.data_dir),
+                                             lambda: model_queries.model().mode == "RESEARCH")
     app.state.estimate_queries = estimate_queries
     app.state.experiments = experiments
     app.state.experiment_statistics = experiment_statistics

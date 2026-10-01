@@ -44,7 +44,8 @@ def test_blind_status_is_sealed_read_only_and_matches_legacy_hash(tmp_path):
     item = response.json()["items"][0]
     assert item == {"id": 1, "name": "Test", "status": "locked", "unlock_date": "2027-09-17",
                     "n_periods": 1, "next_rebalance_due": "2026-10-01", "days_to_unlock": 352,
-                    "integrity": {"ok": True, "broken_at": None, "n_periods": 1}, "revealed": False}
+                    "integrity": {"ok": True, "broken_at": None, "n_periods": 1}, "revealed": False,
+                    "revealed_through": None, "next_look": None, "rebalance_due": False, "preregistered": None}
     assert "SECRET" not in response.text
     assert "100.0" not in response.text
     assert db_path.read_bytes() == before

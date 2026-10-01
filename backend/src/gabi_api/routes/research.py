@@ -9,7 +9,7 @@ from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
 from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.backtests import backtest_preview
-from gabi.application.research.blind import BlindValidationQueries
+from gabi.application.research.blind import BlindCommands, BlindValidationQueries
 from gabi.application.research.block_bootstrap_view import present
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
@@ -27,7 +27,10 @@ from gabi_api.schemas.research import (
     BacktestDiagnosticsResponse,
     BacktestFactorsPreview,
     BacktestPreview,
+    BlindCreateRequest,
+    BlindStatus,
     BlindStatuses,
+    BreakSealRequest,
     DeflatedSharpe,
     DeletedExperiment,
     EstimateAnalysisPreview,
@@ -281,6 +284,23 @@ def save_live_evaluation(body: SaveEvaluationRequest, commands: LedgerCommands) 
 def live_forward(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
     job, result = _experiment_job(queue, job_id, "live_forward_report", "El informe prospectivo no existe.")
     return result | {"job_id": job_id, "result_sha256": job["result_sha256"]}
+
+
+def blind_commands(request: Request) -> BlindCommands:
+    return request.app.state.blind_commands
+
+
+BlindWrites = Annotated[BlindCommands, Depends(blind_commands)]
+
+
+@router.post("/blind-validations", response_model=BlindStatus, status_code=201)
+def create_blind_validation(body: BlindCreateRequest, commands: BlindWrites) -> dict:
+    return commands.create(body.model_dump())
+
+
+@router.post("/blind-validations/{validation_id}/break-seal", response_model=BlindStatus)
+def break_blind_seal(validation_id: Annotated[int, Path(ge=1)], body: BreakSealRequest, commands: BlindWrites) -> dict:
+    return commands.break_seal(validation_id, body.reason)
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

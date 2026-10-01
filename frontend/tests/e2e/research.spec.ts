@@ -40,6 +40,39 @@ test('validación ciega muestra integridad sin desvelar posiciones', async ({ pa
   await expect(page.getByText('SEALED_TICKER')).toHaveCount(0);
 });
 
+test('validaciones ciegas aplican el preregistro y el alta y el sello son explícitos', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion/validaciones');
+    const first = page.getByRole('article', { name: 'Validación 1' });
+    await expect(first.getByRole('note')).toContainText('Preregistro del #42');
+    await expect(first.getByText('Romper el sello antes de tiempo')).toHaveCount(0);
+    await page.getByText('Crear nueva validación ciega').click();
+    const form = page.getByRole('form', { name: 'Crear validación ciega' });
+    await form.getByLabel('Nombre').fill('Prueba e2e');
+    await form.getByLabel('Fecha de desbloqueo').fill('2030-01-01');
+    await form.getByRole('button', { name: 'Crear validación' }).click();
+    const created = page.getByRole('status').filter({ hasText: 'creada' });
+    await expect(created).toContainText('bloqueada hasta 2030-01-01');
+    const id = (await created.textContent())!.match(/#(\d+)/)![1];
+    const card = page.getByRole('article', { name: `Validación ${id}` });
+    await expect(card).toContainText('Bloqueada');
+    await card.getByText('Romper el sello antes de tiempo').click();
+    await card.getByLabel('Motivo (obligatorio)').fill('prueba de interfaz');
+    page.once('dialog', (dialog) => void dialog.accept());
+    await card.getByRole('button', { name: 'Romper el sello' }).click();
+    await expect(card).toContainText('Sello roto antes de tiempo');
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});
+
 test('Factor Lab muestra el mapa publicado y la cobertura SIC sin recalcularlo', async ({
   page,
 }) => {

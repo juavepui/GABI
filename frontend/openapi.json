@@ -1237,6 +1237,57 @@
         "title": "BenchmarkPeriod",
         "type": "object"
       },
+      "BlindCreateRequest": {
+        "additionalProperties": false,
+        "description": "The Streamlit creation form; weights in percent.",
+        "properties": {
+          "n_positions": {
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "N Positions",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "rebalance_months": {
+            "enum": [
+              1,
+              3,
+              6,
+              12
+            ],
+            "title": "Rebalance Months",
+            "type": "integer"
+          },
+          "start_date": {
+            "maxLength": 10,
+            "title": "Start Date",
+            "type": "string"
+          },
+          "unlock_date": {
+            "maxLength": 10,
+            "title": "Unlock Date",
+            "type": "string"
+          },
+          "weights_pct": {
+            "$ref": "#/components/schemas/BlindWeights"
+          }
+        },
+        "required": [
+          "name",
+          "weights_pct",
+          "n_positions",
+          "rebalance_months",
+          "start_date",
+          "unlock_date"
+        ],
+        "title": "BlindCreateRequest",
+        "type": "object"
+      },
       "BlindIntegrity": {
         "properties": {
           "broken_at": {
@@ -1267,6 +1318,37 @@
         "title": "BlindIntegrity",
         "type": "object"
       },
+      "BlindPlan": {
+        "properties": {
+          "issue": {
+            "title": "Issue",
+            "type": "integer"
+          },
+          "looks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Looks",
+            "type": "array"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issue",
+          "looks",
+          "sha256",
+          "source"
+        ],
+        "title": "BlindPlan",
+        "type": "object"
+      },
       "BlindStatus": {
         "properties": {
           "days_to_unlock": {
@@ -1288,13 +1370,49 @@
             "title": "Name",
             "type": "string"
           },
+          "next_look": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Look"
+          },
           "next_rebalance_due": {
             "title": "Next Rebalance Due",
             "type": "string"
           },
+          "preregistered": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BlindPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rebalance_due": {
+            "title": "Rebalance Due",
+            "type": "boolean"
+          },
           "revealed": {
             "title": "Revealed",
             "type": "boolean"
+          },
+          "revealed_through": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revealed Through"
           },
           "status": {
             "title": "Status",
@@ -1314,7 +1432,11 @@
           "next_rebalance_due",
           "days_to_unlock",
           "integrity",
-          "revealed"
+          "revealed",
+          "revealed_through",
+          "next_look",
+          "rebalance_due",
+          "preregistered"
         ],
         "title": "BlindStatus",
         "type": "object"
@@ -1333,6 +1455,43 @@
           "items"
         ],
         "title": "BlindStatuses",
+        "type": "object"
+      },
+      "BlindWeights": {
+        "additionalProperties": false,
+        "properties": {
+          "momentum": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Momentum",
+            "type": "number"
+          },
+          "quality": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Quality",
+            "type": "number"
+          },
+          "risk": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk",
+            "type": "number"
+          },
+          "value": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "quality",
+          "momentum",
+          "risk"
+        ],
+        "title": "BlindWeights",
         "type": "object"
       },
       "BlockBootstrapView": {
@@ -1781,6 +1940,22 @@
           "bootstrap_mean"
         ],
         "title": "BootstrapInterval",
+        "type": "object"
+      },
+      "BreakSealRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "BreakSealRequest",
         "type": "object"
       },
       "CapitalAllocation": {
@@ -14316,6 +14491,198 @@
           }
         },
         "summary": "Blind Validations",
+        "tags": [
+          "research"
+        ]
+      },
+      "post": {
+        "operationId": "create_blind_validation_api_v1_research_blind_validations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlindCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlindStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Create Blind Validation",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/blind-validations/{validation_id}/break-seal": {
+      "post": {
+        "operationId": "break_blind_seal_api_v1_research_blind_validations__validation_id__break_seal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "validation_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Validation Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreakSealRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlindStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Break Blind Seal",
         "tags": [
           "research"
         ]

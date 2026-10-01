@@ -372,6 +372,28 @@ comparando la presentación nueva. `live_ledger_ui`, `rank_stability_ui.render`
 y `tail_risk_ui` siguen en uso por el Screener y Portfolio Lab. La historia
 publicada no se modifica.
 
+Las validaciones ciegas aplican ahora en el backend las reglas de sus
+preregistros. `FileBlindPlans` lee los planes publicados: el de la prueba de
+GABI (id 1, #42, `docs/prospective-plan/gabi-id1.json`) y el de la hipótesis de
+valor (id 3, #43, `docs/value-hypothesis/preregistro.json`). Verifica sus huellas
+con `prospective_plan.plan_hash` y `value_hypothesis.spec_hash` sin cambios y
+los guarda en memoria hasta que cambia el fichero. Un plan alterado bloquea con
+503 cualquier consulta u orden ciega, en vez de dejar de aplicar sus reglas.
+La política es la función pura `disclosure` del dominio:
+- Sin preregistro: el rendimiento se revela en la fecha de desbloqueo o si el sello se rompe, como en Streamlit.
+- Con preregistro: solo a partir de su primera revisión y calculado hasta la última revisión alcanzada. En el #43 los trimestres posteriores siguen ocultos hasta 2032 y 2036.
+- Un sello roto antes de esta regla seguiría visible, porque ocultarlo falsearía lo que ya se vio.
+
+El estado indica el plan, su huella, la próxima revisión y si toca registrar.
+El alta (`POST /research/blind-validations`) valida el formulario antiguo y
+llama a `blind_validation.create_validation` sin cambios. Romper el sello
+(`POST .../{id}/break-seal`) exige motivo y modo Research, y la API lo rechaza
+con 403 en las pruebas preregistradas, por decisión del propietario
+(2026-10-01). Ambas órdenes usan la misma guarda de directorio de datos que el
+resto de escrituras heredadas. Con la base local, las pruebas 1 y 3 aparecen
+bloqueadas, ligadas a su preregistro y con la cadena íntegra, y `gabi.db` no
+cambia.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |

@@ -95,7 +95,8 @@ def main():
                              "status": "SIGNAL", "top_n": ["T000", "T001"], "sources": {}, "git_commit": "abc1234",
                              "data_fingerprint": "fixture-inputs", "configuration": {"weights": {}}})
         app = create_app(Settings(root), today=lambda: TODAY, published_ledger=published,
-                         published_factors_root=root, saved_audits_root=published_root)
+                         published_factors_root=root, saved_audits_root=published_root,
+                         blind_plans_root=published_root)
 
         worker = Worker(SqliteJobs(root), lambda command: synthetic_job(command, app), root)
         threading.Thread(target=lambda: work_forever(worker), daemon=True).start()

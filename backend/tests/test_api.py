@@ -64,6 +64,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                              "/api/v1/research/overview", "/api/v1/research/trials",
                                              "/api/v1/research/historical/{job_id}",
                                              "/api/v1/research/blind-validations",
+                                             "/api/v1/research/blind-validations/{validation_id}/break-seal",
                                              "/api/v1/research/experiments",
                                              "/api/v1/research/experiments/{experiment_id}",
                                              "/api/v1/research/experiments/{experiment_id}/delete",

@@ -555,6 +555,35 @@ export type BenchmarkPeriod = {
 };
 
 /**
+ * BlindCreateRequest
+ *
+ * The Streamlit creation form; weights in percent.
+ */
+export type BlindCreateRequest = {
+    /**
+     * N Positions
+     */
+    n_positions: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Rebalance Months
+     */
+    rebalance_months: 1 | 3 | 6 | 12;
+    /**
+     * Start Date
+     */
+    start_date: string;
+    /**
+     * Unlock Date
+     */
+    unlock_date: string;
+    weights_pct: BlindWeights;
+};
+
+/**
  * BlindIntegrity
  */
 export type BlindIntegrity = {
@@ -570,6 +599,28 @@ export type BlindIntegrity = {
      * Ok
      */
     ok: boolean;
+};
+
+/**
+ * BlindPlan
+ */
+export type BlindPlan = {
+    /**
+     * Issue
+     */
+    issue: number;
+    /**
+     * Looks
+     */
+    looks: Array<string>;
+    /**
+     * Sha256
+     */
+    sha256: string;
+    /**
+     * Source
+     */
+    source: string;
 };
 
 /**
@@ -594,13 +645,26 @@ export type BlindStatus = {
      */
     name: string;
     /**
+     * Next Look
+     */
+    next_look: string | null;
+    /**
      * Next Rebalance Due
      */
     next_rebalance_due: string;
+    preregistered: BlindPlan | null;
+    /**
+     * Rebalance Due
+     */
+    rebalance_due: boolean;
     /**
      * Revealed
      */
     revealed: boolean;
+    /**
+     * Revealed Through
+     */
+    revealed_through: string | null;
     /**
      * Status
      */
@@ -619,6 +683,28 @@ export type BlindStatuses = {
      * Items
      */
     items: Array<BlindStatus>;
+};
+
+/**
+ * BlindWeights
+ */
+export type BlindWeights = {
+    /**
+     * Momentum
+     */
+    momentum: number;
+    /**
+     * Quality
+     */
+    quality: number;
+    /**
+     * Risk
+     */
+    risk: number;
+    /**
+     * Value
+     */
+    value: number;
 };
 
 /**
@@ -868,6 +954,16 @@ export type BootstrapInterval = {
      * Valid Draws
      */
     valid_draws: number;
+};
+
+/**
+ * BreakSealRequest
+ */
+export type BreakSealRequest = {
+    /**
+     * Reason
+     */
+    reason: string;
 };
 
 /**
@@ -7509,6 +7605,101 @@ export type BlindValidationsApiV1ResearchBlindValidationsGetResponses = {
 };
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetResponse = BlindValidationsApiV1ResearchBlindValidationsGetResponses[keyof BlindValidationsApiV1ResearchBlindValidationsGetResponses];
+
+export type CreateBlindValidationApiV1ResearchBlindValidationsPostData = {
+    body: BlindCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/research/blind-validations';
+};
+
+export type CreateBlindValidationApiV1ResearchBlindValidationsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CreateBlindValidationApiV1ResearchBlindValidationsPostError = CreateBlindValidationApiV1ResearchBlindValidationsPostErrors[keyof CreateBlindValidationApiV1ResearchBlindValidationsPostErrors];
+
+export type CreateBlindValidationApiV1ResearchBlindValidationsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: BlindStatus;
+};
+
+export type CreateBlindValidationApiV1ResearchBlindValidationsPostResponse = CreateBlindValidationApiV1ResearchBlindValidationsPostResponses[keyof CreateBlindValidationApiV1ResearchBlindValidationsPostResponses];
+
+export type BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostData = {
+    body: BreakSealRequest;
+    path: {
+        /**
+         * Validation Id
+         */
+        validation_id: number;
+    };
+    query?: never;
+    url: '/api/v1/research/blind-validations/{validation_id}/break-seal';
+};
+
+export type BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostError = BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostErrors[keyof BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostErrors];
+
+export type BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: BlindStatus;
+};
+
+export type BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostResponse = BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostResponses[keyof BreakBlindSealApiV1ResearchBlindValidationsValidationIdBreakSealPostResponses];
 
 export type EstimateAnalysisPreviewApiV1ResearchEstimateAnalysisJobIdGetData = {
     body?: never;

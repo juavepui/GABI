@@ -156,6 +156,13 @@ class BlindIntegrity(BaseModel):
     n_periods: int
 
 
+class BlindPlan(BaseModel):
+    issue: int
+    looks: list[str]
+    sha256: str
+    source: str
+
+
 class BlindStatus(BaseModel):
     id: int
     name: str
@@ -166,6 +173,10 @@ class BlindStatus(BaseModel):
     days_to_unlock: int
     integrity: BlindIntegrity
     revealed: bool
+    revealed_through: str | None
+    next_look: str | None
+    rebalance_due: bool
+    preregistered: BlindPlan | None
 
 
 class BlindStatuses(BaseModel):
@@ -1021,3 +1032,31 @@ class SavedEvaluation(BaseModel):
     seq: int
     record_hash: str
     report_sha256: str
+
+
+class BlindWeights(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    value: float = Field(ge=0, le=100)
+    quality: float = Field(ge=0, le=100)
+    momentum: float = Field(ge=0, le=100)
+    risk: float = Field(ge=0, le=100)
+
+
+class BlindCreateRequest(BaseModel):
+    """The Streamlit creation form; weights in percent."""
+
+    model_config = {"extra": "forbid"}
+
+    name: str = Field(min_length=1, max_length=200)
+    weights_pct: BlindWeights
+    n_positions: int = Field(ge=1, le=50)
+    rebalance_months: Literal[1, 3, 6, 12]
+    start_date: str = Field(max_length=10)
+    unlock_date: str = Field(max_length=10)
+
+
+class BreakSealRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    reason: str = Field(min_length=1, max_length=2_000)
