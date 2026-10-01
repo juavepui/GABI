@@ -1143,6 +1143,36 @@ export type CapitalAllocation = {
 };
 
 /**
+ * CompanyEvent
+ */
+export type CompanyEvent = {
+    /**
+     * Days Until
+     */
+    days_until: number;
+    /**
+     * Event Date
+     */
+    event_date: string;
+    /**
+     * Event Type
+     */
+    event_type: 'earnings' | 'ex_dividend' | 'dividend_payment';
+    /**
+     * Is Estimate
+     */
+    is_estimate: boolean;
+    /**
+     * Range End
+     */
+    range_end: string | null;
+    /**
+     * Source
+     */
+    source: string;
+};
+
+/**
  * CompanyEvidence
  */
 export type CompanyEvidence = {
@@ -1219,6 +1249,45 @@ export type CompanyEvidence = {
 };
 
 /**
+ * CompanyFilingChanges
+ */
+export type CompanyFilingChanges = {
+    /**
+     * Results
+     */
+    results: Array<FilingComparison>;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * CompanyResearchResponse
+ */
+export type CompanyResearchResponse = {
+    estimate: ConsensusEstimate | null;
+    /**
+     * Events
+     */
+    events: Array<CompanyEvent>;
+    /**
+     * Revision 90D
+     */
+    revision_90d: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Surprises
+     */
+    surprises: Array<EarningsSurprise>;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * CompanyResponse
  */
 export type CompanyResponse = {
@@ -1283,6 +1352,22 @@ export type CompanyRow = {
 };
 
 /**
+ * CompanySyncRequest
+ *
+ * Download one company's earnings-surprise history or consensus estimates (the old Ficha buttons).
+ */
+export type CompanySyncRequest = {
+    /**
+     * Dataset
+     */
+    dataset: 'surprises' | 'estimates';
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * CompareSignals
  */
 export type CompareSignals = {
@@ -1325,11 +1410,54 @@ export type ComparisonResponse = {
 };
 
 /**
+ * ConsensusEstimate
+ */
+export type ConsensusEstimate = {
+    /**
+     * Captured At
+     */
+    captured_at: string;
+    /**
+     * Eps Analysts
+     */
+    eps_analysts: number | null;
+    /**
+     * Eps Avg
+     */
+    eps_avg: number | null;
+    /**
+     * Eps Dispersion Pct
+     */
+    eps_dispersion_pct: number | null;
+    /**
+     * Eps High
+     */
+    eps_high: number | null;
+    /**
+     * Eps Low
+     */
+    eps_low: number | null;
+    /**
+     * Revised Down 30D
+     */
+    revised_down_30d: number | null;
+    /**
+     * Revised Up 30D
+     */
+    revised_up_30d: number | null;
+    /**
+     * Source
+     */
+    source: string;
+};
+
+/**
  * CreateJobRequest
  */
 export type CreateJobRequest = {
     backtest_options?: BacktestOptions | null;
     blind?: BlindJobRequest | null;
+    company?: CompanySyncRequest | null;
     decision_policy?: DecisionPolicy | null;
     /**
      * End
@@ -1360,7 +1488,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -1768,6 +1896,32 @@ export type EarningsList = {
      * Items
      */
     items: Array<EarningsEvent>;
+};
+
+/**
+ * EarningsSurprise
+ */
+export type EarningsSurprise = {
+    /**
+     * Earnings Date
+     */
+    earnings_date: string;
+    /**
+     * Eps Estimate
+     */
+    eps_estimate: number | null;
+    /**
+     * Eps Reported
+     */
+    eps_reported: number | null;
+    /**
+     * Price Reaction Pct
+     */
+    price_reaction_pct: number | null;
+    /**
+     * Surprise Pct
+     */
+    surprise_pct: number | null;
 };
 
 /**
@@ -2840,6 +2994,40 @@ export type Filing = {
 };
 
 /**
+ * FilingChange
+ */
+export type FilingChange = {
+    /**
+     * Abs Change
+     */
+    abs_change: number | null;
+    /**
+     * Current Value
+     */
+    current_value: number | null;
+    /**
+     * Direction
+     */
+    direction: string;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * Pct Change
+     */
+    pct_change: number | null;
+    /**
+     * Previous Value
+     */
+    previous_value: number | null;
+    /**
+     * Severity
+     */
+    severity: string;
+};
+
+/**
  * FilingCheckSaved
  */
 export type FilingCheckSaved = {
@@ -2851,6 +3039,44 @@ export type FilingCheckSaved = {
      * Recorded
      */
     recorded: boolean;
+};
+
+/**
+ * FilingComparison
+ */
+export type FilingComparison = {
+    current: FilingRef | null;
+    /**
+     * Form
+     */
+    form: string;
+    previous: FilingRef | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Rows
+     */
+    rows: Array<FilingChange>;
+};
+
+/**
+ * FilingRef
+ */
+export type FilingRef = {
+    /**
+     * Filed Date
+     */
+    filed_date: string | null;
+    /**
+     * Period End
+     */
+    period_end: string | null;
+    /**
+     * Url
+     */
+    url: string | null;
 };
 
 /**
@@ -6695,6 +6921,106 @@ export type CompanyEvidenceDownloadApiV1CompaniesSymbolEvidenceJsonGetResponses 
      */
     200: unknown;
 };
+
+export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/filing-changes';
+};
+
+export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetError = CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetErrors[keyof CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetErrors];
+
+export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyFilingChanges;
+};
+
+export type CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponse = CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponses[keyof CompanyFilingChangesApiV1CompaniesSymbolFilingChangesGetResponses];
+
+export type CompanyResearchApiV1CompaniesSymbolResearchGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/research';
+};
+
+export type CompanyResearchApiV1CompaniesSymbolResearchGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyResearchApiV1CompaniesSymbolResearchGetError = CompanyResearchApiV1CompaniesSymbolResearchGetErrors[keyof CompanyResearchApiV1CompaniesSymbolResearchGetErrors];
+
+export type CompanyResearchApiV1CompaniesSymbolResearchGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyResearchResponse;
+};
+
+export type CompanyResearchApiV1CompaniesSymbolResearchGetResponse = CompanyResearchApiV1CompaniesSymbolResearchGetResponses[keyof CompanyResearchApiV1CompaniesSymbolResearchGetResponses];
 
 export type ComparisonApiV1ComparisonGetData = {
     body?: never;

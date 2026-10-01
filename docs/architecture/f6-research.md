@@ -479,8 +479,8 @@ sustituto:
 | Screener | Estabilidad del ranking actual ante cambios de 1-2 puntos en los pesos (`rank_stability.analyze`) | Hecho: `GET /ranking/stability` (1,3 s con la base local; no hace falta un job) |
 | Screener | Avisos de cobertura por bloque con umbral configurable | Hecho: `GET /ranking/coverage` sobre todo el ranking, encima de la tabla de Mercado |
 | Screener | Seguimiento de rankings guardados: progreso frente al SPY, curva, detalle por empresa, 6 y 12 meses y cambio de nombre | Hecho: `GET /market/snapshots/{id}/progress` y `POST .../rename`, en el Signal Monitor |
-| Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Lectura como consulta; sincronización como job explícito |
-| Ficha | Métricas informativas no puntuadas | Migrar |
+| Ficha | Historial de sorpresas de resultados y estimaciones de consenso, con su sincronización | Hecho: `GET /companies/{symbol}/research` y job `company_sync` |
+| Ficha | Métricas informativas no puntuadas | Hecho: grupo propio en la ficha |
 | Configuración | Guardar las claves FRED, Tiingo y Nasdaq Data Link; tamaño del universo al actualizar; resumen de fallos y reintento de los fallidos | Comandos explícitos y jobs existentes |
 | Calidad de los datos | Resumen del universo, errores recientes, cobertura por bloque, última observación FRED, procedencia e identidad de una empresa y diagnóstico de identidades | Migrar a Administración |
 | Calidad de los datos | Explorador del archivo histórico 1996-2016 (miembros y precios) | Migrar solo desde 2010: el periodo anterior sigue cerrado por la reserva del #43 (decisión del propietario, 2026-10-01) |
@@ -537,4 +537,17 @@ no un histórico reservado, así que no hay corte de periodo, como en Streamlit.
 Con la base local, los tres rankings guardados coinciden exactamente con
 `snapshot_progress` y la curva antigua (unos 0,2 s cada uno) y `gabi.db` no
 cambia.
+
+La ficha de React incluye ahora lo que faltaba de la página antigua:
+- **Catalizadores:** todos los próximos eventos fechados (resultados, ex-dividendo y pago), parseados con `events_calendar.parse_corporate_events` sobre el registro de fundamentales cacheado.
+- **Métricas informativas no puntuadas:** beta calculada, alfa, meses positivos, beta de Yahoo, rentabilidad por dividendo y volumen.
+- **Sorpresas y estimaciones:** el historial de sorpresas de resultados y la última captura de consenso del trimestre con su revisión a 90 días (`estimates.compute_revision` sin cambios). Se leen en solo lectura con topes de 200 y 5.000 filas, sin crear las tablas que antes inicializaba la lectura.
+- **Filings:** los cambios del último 10-K y 10-Q frente al anterior, con la misma comparación sobre hechos SEC cacheados que usa el Signal Monitor.
+
+`GET /companies/{symbol}/research` y `/filing-changes` no descargan nada. Las
+sincronizaciones de sorpresas y estimaciones, que sí usan la red, son el job
+explícito `company_sync` y devuelven el motivo si fallan. Con la base local,
+AAPL, MSFT y NVDA coinciden con `get_earnings_surprises`,
+`latest_estimate_snapshot`, `revision_since` y `filing_tracker.compare_filings`
+(0,01-0,23 s por consulta) y `gabi.db` no cambia.
 

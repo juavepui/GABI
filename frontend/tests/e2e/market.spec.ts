@@ -229,3 +229,18 @@ test('evidencia del ranking, estabilidad y evidencia de una empresa se calculan 
     page.getByRole('link', { name: 'Descargar evidencia de la candidata' }),
   ).toBeVisible();
 });
+
+test('la ficha muestra catalizadores, métricas informativas, filings y sincroniza bajo demanda', async ({
+  page,
+}) => {
+  await page.goto('/mercado/empresas/T001');
+  await expect(page.getByText('Otras métricas (informativas, no puntuadas)')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Próximos catalizadores' })).toBeVisible();
+  await page.getByText('Qué cambió respecto al filing anterior').click();
+  await expect(page.getByText(/^10-K/)).toBeVisible();
+  await page.getByText('Historial de sorpresas de resultados').click();
+  await page.getByRole('button', { name: 'Sincronizar historial de resultados' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toBeVisible();
+  await page.getByText('Estimaciones de consenso').click();
+  await expect(page.getByText('Sin estimaciones sincronizadas todavía.')).toBeVisible();
+});

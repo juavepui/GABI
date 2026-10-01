@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.errors import QueryError
+from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
@@ -38,6 +39,7 @@ from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
+from gabi.infrastructure.legacy.company import LegacyCompanyMath
 from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.evidence import LegacyEvidence
 from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
@@ -53,6 +55,7 @@ from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.blind_plans import FileBlindPlans
+from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.experiments import SqliteExperiments
@@ -151,6 +154,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.journal = journal
     app.state.macro = macro
     app.state.signals = signals
+    app.state.company_research = CompanyResearch(
+        SqliteCompanyResearch(settings.data_dir), repository.company_events,
+        lambda symbol: signals.compare_filings(symbol, *signals.repository.filing_facts(symbol)),
+        LegacyCompanyMath(), today)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         LegacySnapshotMath(), today)

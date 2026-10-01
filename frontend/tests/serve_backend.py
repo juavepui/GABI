@@ -218,6 +218,9 @@ def synthetic_job(command, app):
         from gabi.infrastructure.legacy.live_ledger import run_live_report
 
         return run_live_report(command.live_report["model_version"])
+    if command.kind == "company_sync":  # No network in tests: report a successful empty sync.
+        return {"kind": "company_sync", "symbol": command.company["symbol"],
+                "dataset": command.company["dataset"], "synced": True, "reason": None}
     if command.kind == "portfolio_lab":
         from gabi.application.research.portfolio_lab import build_portfolio_lab
 

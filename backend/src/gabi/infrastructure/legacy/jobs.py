@@ -160,6 +160,11 @@ class LegacyExecutor:
 
             assert command.research_log is not None
             return register_backtest(self.settings.data_dir, command.research_log)
+        if command.kind == "company_sync":
+            from gabi.infrastructure.legacy.company import sync_company
+
+            assert command.company is not None
+            return sync_company(command.company["symbol"], command.company["dataset"])
         if command.kind == "symbols":
             from gabi import screener
 

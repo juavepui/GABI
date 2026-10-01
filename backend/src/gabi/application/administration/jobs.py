@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from gabi.application.errors import QueryError
+from gabi.application.market.company_research import normalize_company_sync
 from gabi.application.research.backtest_factors import normalize_factor_contrast
 from gabi.application.research.backtests import normalize_backtest, normalize_registration
 from gabi.application.research.blind import normalize_blind_job
@@ -16,7 +17,7 @@ from gabi.application.research.portfolio_lab import normalize_portfolio_lab
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
                   "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"}
@@ -49,6 +50,7 @@ class JobCommand:
     live_report: dict | None = None
     blind: dict | None = None
     portfolio_options: dict | None = None
+    company: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -123,6 +125,10 @@ class JobCommand:
                                normalize_portfolio_lab(self.start, self.end, self.portfolio_options))
         elif self.portfolio_options is not None:
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Portfolio Lab.", 422)
+        if self.kind == "company_sync":
+            object.__setattr__(self, "company", normalize_company_sync(self.company))
+        elif self.company is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite sincronización de una empresa.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)

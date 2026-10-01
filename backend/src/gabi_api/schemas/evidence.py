@@ -101,3 +101,69 @@ class RankingCoverage(BaseModel):
     universe: int
     blocks: list[BlockCoverage]
     warnings: list[str]
+
+
+class CompanyEvent(BaseModel):
+    event_type: Literal["earnings", "ex_dividend", "dividend_payment"]
+    event_date: str
+    range_end: str | None
+    is_estimate: bool
+    days_until: int
+    source: str
+
+
+class EarningsSurprise(BaseModel):
+    earnings_date: str
+    eps_estimate: float | None
+    eps_reported: float | None
+    surprise_pct: float | None
+    price_reaction_pct: float | None
+
+
+class ConsensusEstimate(BaseModel):
+    captured_at: str
+    eps_avg: float | None
+    eps_low: float | None
+    eps_high: float | None
+    eps_analysts: int | None
+    eps_dispersion_pct: float | None
+    revised_up_30d: int | None
+    revised_down_30d: int | None
+    source: str
+
+
+class CompanyResearchResponse(BaseModel):
+    symbol: str
+    events: list[CompanyEvent]
+    surprises: list[EarningsSurprise]
+    estimate: ConsensusEstimate | None
+    revision_90d: dict[str, Any] | None
+
+
+class FilingRef(BaseModel):
+    filed_date: str | None
+    period_end: str | None
+    url: str | None
+
+
+class FilingChange(BaseModel):
+    metric: str
+    previous_value: float | None
+    current_value: float | None
+    abs_change: float | None
+    pct_change: float | None
+    severity: str
+    direction: str
+
+
+class FilingComparison(BaseModel):
+    form: str
+    reason: str | None
+    current: FilingRef | None
+    previous: FilingRef | None
+    rows: list[FilingChange]
+
+
+class CompanyFilingChanges(BaseModel):
+    symbol: str
+    results: list[FilingComparison]

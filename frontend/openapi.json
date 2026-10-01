@@ -2260,6 +2260,56 @@
         "title": "CapitalAllocation",
         "type": "object"
       },
+      "CompanyEvent": {
+        "properties": {
+          "days_until": {
+            "title": "Days Until",
+            "type": "integer"
+          },
+          "event_date": {
+            "title": "Event Date",
+            "type": "string"
+          },
+          "event_type": {
+            "enum": [
+              "earnings",
+              "ex_dividend",
+              "dividend_payment"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "is_estimate": {
+            "title": "Is Estimate",
+            "type": "boolean"
+          },
+          "range_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Range End"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_type",
+          "event_date",
+          "range_end",
+          "is_estimate",
+          "days_until",
+          "source"
+        ],
+        "title": "CompanyEvent",
+        "type": "object"
+      },
       "CompanyEvidence": {
         "properties": {
           "collection_stage": {
@@ -2414,6 +2464,80 @@
         "title": "CompanyEvidence",
         "type": "object"
       },
+      "CompanyFilingChanges": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/FilingComparison"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "results"
+        ],
+        "title": "CompanyFilingChanges",
+        "type": "object"
+      },
+      "CompanyResearchResponse": {
+        "properties": {
+          "estimate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsensusEstimate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "revision_90d": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision 90D"
+          },
+          "surprises": {
+            "items": {
+              "$ref": "#/components/schemas/EarningsSurprise"
+            },
+            "title": "Surprises",
+            "type": "array"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "events",
+          "surprises",
+          "estimate",
+          "revision_90d"
+        ],
+        "title": "CompanyResearchResponse",
+        "type": "object"
+      },
       "CompanyResponse": {
         "additionalProperties": false,
         "properties": {
@@ -2550,6 +2674,31 @@
         "title": "CompanyRow",
         "type": "object"
       },
+      "CompanySyncRequest": {
+        "additionalProperties": false,
+        "description": "Download one company's earnings-surprise history or consensus estimates (the old Ficha buttons).",
+        "properties": {
+          "dataset": {
+            "enum": [
+              "surprises",
+              "estimates"
+            ],
+            "title": "Dataset",
+            "type": "string"
+          },
+          "symbol": {
+            "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]{0,19}$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "dataset"
+        ],
+        "title": "CompanySyncRequest",
+        "type": "object"
+      },
       "CompareSignals": {
         "additionalProperties": false,
         "properties": {
@@ -2622,6 +2771,108 @@
         "title": "ComparisonResponse",
         "type": "object"
       },
+      "ConsensusEstimate": {
+        "properties": {
+          "captured_at": {
+            "title": "Captured At",
+            "type": "string"
+          },
+          "eps_analysts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Analysts"
+          },
+          "eps_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Avg"
+          },
+          "eps_dispersion_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Dispersion Pct"
+          },
+          "eps_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps High"
+          },
+          "eps_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Low"
+          },
+          "revised_down_30d": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revised Down 30D"
+          },
+          "revised_up_30d": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revised Up 30D"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "captured_at",
+          "eps_avg",
+          "eps_low",
+          "eps_high",
+          "eps_analysts",
+          "eps_dispersion_pct",
+          "revised_up_30d",
+          "revised_down_30d",
+          "source"
+        ],
+        "title": "ConsensusEstimate",
+        "type": "object"
+      },
       "CreateJobRequest": {
         "properties": {
           "backtest_options": {
@@ -2638,6 +2889,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/BlindJobRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompanySyncRequest"
               },
               {
                 "type": "null"
@@ -2776,7 +3037,8 @@
               "blind_rebalance",
               "blind_performance",
               "blind_export",
-              "portfolio_lab"
+              "portfolio_lab",
+              "company_sync"
             ],
             "title": "Kind",
             "type": "string"
@@ -3511,6 +3773,67 @@
           "items"
         ],
         "title": "EarningsList",
+        "type": "object"
+      },
+      "EarningsSurprise": {
+        "properties": {
+          "earnings_date": {
+            "title": "Earnings Date",
+            "type": "string"
+          },
+          "eps_estimate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Estimate"
+          },
+          "eps_reported": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Reported"
+          },
+          "price_reaction_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Reaction Pct"
+          },
+          "surprise_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surprise Pct"
+          }
+        },
+        "required": [
+          "earnings_date",
+          "eps_estimate",
+          "eps_reported",
+          "surprise_pct",
+          "price_reaction_pct"
+        ],
+        "title": "EarningsSurprise",
         "type": "object"
       },
       "ErrorDetail": {
@@ -5547,6 +5870,77 @@
         "title": "Filing",
         "type": "object"
       },
+      "FilingChange": {
+        "properties": {
+          "abs_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abs Change"
+          },
+          "current_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Value"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "pct_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Change"
+          },
+          "previous_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Value"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "previous_value",
+          "current_value",
+          "abs_change",
+          "pct_change",
+          "severity",
+          "direction"
+        ],
+        "title": "FilingChange",
+        "type": "object"
+      },
       "FilingCheckSaved": {
         "additionalProperties": false,
         "properties": {
@@ -5567,6 +5961,105 @@
           "events"
         ],
         "title": "FilingCheckSaved",
+        "type": "object"
+      },
+      "FilingComparison": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FilingRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "form": {
+            "title": "Form",
+            "type": "string"
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FilingRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/FilingChange"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "form",
+          "reason",
+          "current",
+          "previous",
+          "rows"
+        ],
+        "title": "FilingComparison",
+        "type": "object"
+      },
+      "FilingRef": {
+        "properties": {
+          "filed_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed Date"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "filed_date",
+          "period_end",
+          "url"
+        ],
+        "title": "FilingRef",
         "type": "object"
       },
       "HealthResponse": {
@@ -12705,6 +13198,196 @@
           }
         },
         "summary": "Company Evidence Download",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/filing-changes": {
+      "get": {
+        "operationId": "company_filing_changes_api_v1_companies__symbol__filing_changes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFilingChanges"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Filing Changes",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/research": {
+      "get": {
+        "operationId": "company_research_api_v1_companies__symbol__research_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Research",
         "tags": [
           "market"
         ]

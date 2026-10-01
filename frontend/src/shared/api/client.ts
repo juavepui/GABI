@@ -81,6 +81,8 @@ import type {
   RankingCoverage,
   SnapshotProgress,
   SnapshotRenamed,
+  CompanyResearchResponse,
+  CompanyFilingChanges,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -287,6 +289,18 @@ export function renameSnapshot(id: number, name: string): Promise<SnapshotRename
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   });
+}
+export function getCompanyResearch(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyResearchResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/research', signal);
+}
+export function getCompanyFilingChanges(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyFilingChanges> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/filing-changes', signal);
 }
 export function getRankingStability(signal?: AbortSignal): Promise<RankingStability> {
   return get('/api/v1/ranking/stability', signal);

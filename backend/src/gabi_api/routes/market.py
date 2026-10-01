@@ -4,10 +4,18 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import Response
 
 from gabi.application.errors import QueryError
+from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
-from gabi_api.schemas.evidence import CompanyEvidence, EvidenceTop, RankingCoverage, RankingStability
+from gabi_api.schemas.evidence import (
+    CompanyEvidence,
+    CompanyFilingChanges,
+    CompanyResearchResponse,
+    EvidenceTop,
+    RankingCoverage,
+    RankingStability,
+)
 from gabi_api.schemas.market import (
     CompanyResponse,
     ComparisonResponse,
@@ -38,6 +46,23 @@ def evidence_service(request: Request) -> EvidenceQueries:
 
 
 Evidence = Annotated[EvidenceQueries, Depends(evidence_service)]
+
+
+def research_service(request: Request) -> CompanyResearch:
+    return request.app.state.company_research
+
+
+Research = Annotated[CompanyResearch, Depends(research_service)]
+
+
+@router.get("/companies/{symbol}/research", response_model=CompanyResearchResponse)
+def company_research(symbol: SymbolPath, query: Research) -> dict:
+    return query.overview(symbol)
+
+
+@router.get("/companies/{symbol}/filing-changes", response_model=CompanyFilingChanges)
+def company_filing_changes(symbol: SymbolPath, query: Research) -> dict:
+    return query.filing_changes(symbol)
 
 
 @router.get("/evidence", response_model=EvidenceTop)

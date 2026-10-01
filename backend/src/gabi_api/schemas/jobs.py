@@ -104,8 +104,17 @@ class PortfolioLabOptions(BaseModel):
     max_symbols: Literal[50, 100, 200] | None = None
 
 
+class CompanySyncRequest(BaseModel):
+    """Download one company's earnings-surprise history or consensus estimates (the old Ficha buttons)."""
+
+    model_config = {"extra": "forbid"}
+
+    symbol: str = Field(pattern=r"^[A-Za-z0-9^][A-Za-z0-9^.\-]{0,19}$")
+    dataset: Literal["surprises", "estimates"]
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -126,6 +135,7 @@ class CreateJobRequest(BaseModel):
     live_report: LiveReportRequest | None = None
     blind: BlindJobRequest | None = None
     portfolio_options: PortfolioLabOptions | None = None
+    company: CompanySyncRequest | None = None
 
 
 class JobEvent(BaseModel):

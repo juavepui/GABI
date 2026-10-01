@@ -10,6 +10,7 @@ import { metric, dateLabel } from '@/shared/lib/format';
 import { useCompany } from './queries';
 import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
+import { CompanyResearch, FilingChanges } from './company-research';
 import { patchParams } from './params';
 
 const PriceChart = lazy(() => import('./price-chart'));
@@ -39,6 +40,17 @@ const groups = [
       ['momentum_12m', 'Momentum · 12 meses'],
       ['volatility', 'Volatilidad'],
       ['max_drawdown', 'Máximo drawdown'],
+    ],
+  },
+  {
+    name: 'Otras métricas (informativas, no puntuadas)',
+    keys: [
+      ['beta_calc', 'Beta calculada frente al SPY'],
+      ['alpha', 'Alfa (CAPM)'],
+      ['win_rate_monthly', 'Meses positivos'],
+      ['beta', 'Beta (Yahoo)'],
+      ['dividend_yield', 'Rentabilidad por dividendo'],
+      ['avg_volume', 'Volumen medio'],
     ],
   },
 ] as const;
@@ -293,6 +305,10 @@ export function CompanyPage() {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+            <FilingChanges symbol={company.symbol} />
+            <div className="mb-6">
+              <CompanyResearch symbol={company.symbol} />
             </div>
             <p className="text-xs text-muted-foreground">
               Consulta generada el {dateLabel(data.generated_at)}. La lectura no inicia descargas ni

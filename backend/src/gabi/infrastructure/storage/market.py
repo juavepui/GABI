@@ -279,6 +279,22 @@ class ReadOnlyMarket:
                 grouped[symbol].append(tuple(claim))
         return {symbol: resolve_claims(claims, today) for symbol, claims in grouped.items()}
 
+    def company_events(self, symbol: str, today: date) -> list[dict]:
+        """Dated corporate events parsed from the cached fundamentals record (no download)."""
+        with self.lock:
+            try:
+                self.connect()
+                self.discover()
+                record = self.fundamentals((symbol,)).get(symbol)
+                if not record:
+                    return []
+                return self.calculators.events(symbol, record.get("info", {}), record.get("fetched_at", ""),
+                                               today=today)
+            except QueryError:
+                raise
+            except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
+                raise QueryError("data_read_error", "No se pueden consultar los datos de la empresa.") from exc
+
     def price_history(self, symbol: str, limit: int, revision: str) -> pd.DataFrame:
         with self.lock:
             try:
