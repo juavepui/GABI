@@ -1096,3 +1096,73 @@ class BlindExport(BaseModel):
     validation_id: int
     revealed_through: str | None
     experiment_id: int
+
+
+class PortfolioLabParams(BaseModel):
+    months: int
+    top_n: int
+    initial_capital: float
+    schemes: list[str]
+    mode: str
+    max_symbols: int | None
+
+
+class PortfolioDaily(BaseModel):
+    anualizado: float | None = None
+    vol_anualizada: float | None = None
+    sharpe: float | None = None
+    sortino: float | None = None
+    max_drawdown: float | None = None
+
+
+class PortfolioPeriod(BaseModel):
+    fecha: str
+    hasta: str
+    turnover_pct: float | None
+    comision_pagada: float | None
+
+
+class PortfolioScheme(BaseModel):
+    id: str
+    label: str
+    periods: list[PortfolioPeriod]
+    daily: PortfolioDaily
+    turnover_medio: float | None
+    comision_total: float | None
+    hhi: float | None
+    tracking_error: float | None
+    top3_contribution_to_risk: float | None
+    last_weights: dict[str, float | None]
+    contribution_to_risk: dict[str, float | None]
+
+
+class PortfolioScenario(BaseModel):
+    tipo: Literal["retorno", "volatilidad"]
+    base: str
+    impacto_pct: float | None = None
+    vol_base: float | None = None
+    vol_escenario: float | None = None
+
+
+class PortfolioSkip(BaseModel):
+    fecha: str
+    motivo: str
+
+
+class PortfolioLabPreview(BaseModel):
+    job_id: str
+    result_sha256: str
+    status: str
+    independent_advantage_demonstrated: bool
+    start: str
+    end: str
+    options: PortfolioLabParams
+    mode: str
+    skipped: list[PortfolioSkip]
+    labels: dict[str, str]
+    scenario_labels: dict[str, str]
+    scenario_ground: dict[str, str]
+    schemes: list[PortfolioScheme]
+    scenarios: dict[str, dict[str, PortfolioScenario]]
+    curve: list[dict[str, str | float | None]]
+    tail: BacktestTail

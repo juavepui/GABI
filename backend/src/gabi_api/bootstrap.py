@@ -31,6 +31,7 @@ from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedgerQueries
+from gabi.application.research.portfolio_lab_queries import PortfolioLabQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -170,6 +171,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                                                        lambda: model_queries.model().mode == "RESEARCH")
     app.state.backtest_diagnostics = backtest_diagnostics
     app.state.historical_queries = historical_queries
+    app.state.portfolio_lab = PortfolioLabQueries(jobs, LegacyBacktestMath())
     app.state.settings = settings
     app.state.model_commands = model_commands
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],

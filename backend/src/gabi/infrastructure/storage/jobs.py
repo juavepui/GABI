@@ -125,6 +125,8 @@ class SqliteJobs:
             payload["live_report"] = command.live_report
         if command.blind is not None:
             payload["blind"] = command.blind
+        if command.portfolio_options is not None:
+            payload["portfolio_options"] = command.portfolio_options
         parameters = json.dumps(payload, sort_keys=True)
         with self.connection(write=True) as db:
             assert db is not None

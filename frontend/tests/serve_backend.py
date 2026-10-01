@@ -128,6 +128,40 @@ def synthetic_backtest_v1(start, end, options):
 
 
 
+def synthetic_portfolio_lab(start, end, options):
+    import numpy as np
+    import pandas as pd
+
+    from gabi import portfolio_lab
+
+    days = pd.bdate_range("2019-01-02", periods=60)
+    rng = np.random.default_rng(7)
+    schemes = {}
+    for i, scheme in enumerate(options["schemes"]):
+        nav = pd.Series(options["initial_capital"] * np.cumprod(1 + rng.normal(0.0004 * (i + 1), 0.01, len(days))),
+                        index=days)
+        schemes[scheme] = {
+            "label": portfolio_lab.SCHEME_LABELS[scheme], "nav_curve": nav,
+            "periods": pd.DataFrame([{"fecha": "2019-01-02", "hasta": "2019-04-02", "turnover_pct": 100.0,
+                                      "comision_pagada": 2.0}]),
+            "daily": {"anualizado": 0.08 + i / 100, "vol_anualizada": 0.15, "sharpe": 0.5, "sortino": 0.7,
+                      "max_drawdown": -0.1},
+            "turnover_medio": 100.0, "comision_total": 2.0, "tracking_error": 0.05, "hhi": 0.5,
+            "top3_contribution_to_risk": 1.0, "last_weights": {"T000": 0.6, "T001": 0.4},
+            "contribution_to_risk": {"T000": 0.7, "T001": 0.3},
+        }
+    scenarios = {scheme: {name: ({"tipo": "volatilidad", "vol_base": 0.15, "vol_escenario": 0.3,
+                                  "base": portfolio_lab.SCENARIO_GROUND[name]} if name == "vol_x2" else
+                                 {"tipo": "retorno", "impacto_pct": -0.1,
+                                  "base": portfolio_lab.SCENARIO_GROUND[name]})
+                          for name in portfolio_lab.SCENARIOS} for scheme in options["schemes"]}
+    spy = pd.Series(options["initial_capital"] * np.cumprod(1 + rng.normal(0.0003, 0.01, len(days))), index=days)
+    return {"schemes": schemes, "scenarios": scenarios, "nav_curve_spy": spy, "mode": options["mode"],
+            "skipped": [{"fecha": "2019-04-02", "motivo": "cobertura insuficiente del universo (10/50)"}],
+            "labels": dict(portfolio_lab.SCHEME_LABELS), "scenario_labels": dict(portfolio_lab.SCENARIO_LABELS),
+            "scenario_ground": dict(portfolio_lab.SCENARIO_GROUND)}
+
+
 def synthetic_factor_contrast(periods, hac_lags):
     names = ["alpha", "Mkt-RF", "SMB", "HML", "RMW", "CMA", "Mom"]
     values = dict(zip(names, (0.004, 1.02, 0.1, -0.05, 0.2, 0.03, 0.08)))
@@ -184,6 +218,10 @@ def synthetic_job(command, app):
         from gabi.infrastructure.legacy.live_ledger import run_live_report
 
         return run_live_report(command.live_report["model_version"])
+    if command.kind == "portfolio_lab":
+        from gabi.application.research.portfolio_lab import build_portfolio_lab
+
+        return build_portfolio_lab(command.start, command.end, command.portfolio_options, synthetic_portfolio_lab)
     if command.kind == "backtest_v1":
         return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                               synthetic_backtest_v1)

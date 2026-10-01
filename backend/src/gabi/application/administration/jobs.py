@@ -12,13 +12,14 @@ from gabi.application.research.blind import normalize_blind_job
 from gabi.application.research.experiment_analysis import normalize_bootstrap, normalize_pbo
 from gabi.application.research.historical_outcomes import normalize_outcomes
 from gabi.application.research.live_ledger import normalize_live_report
+from gabi.application.research.portfolio_lab import normalize_portfolio_lab
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
-                  "live_forward_report", "blind_rebalance", "blind_performance", "blind_export"}
+                  "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"}
 BLIND_KINDS = {"blind_rebalance", "blind_performance", "blind_export"}
 DERIVED_SOURCES = {"backtest_factors": ("factor_contrast", {"backtest_v1", "backtest_v2"}),
                    "backtest_register": ("research_log", {"backtest_v1", "backtest_v2"}),
@@ -47,6 +48,7 @@ class JobCommand:
     experiment_analysis: dict | None = None
     live_report: dict | None = None
     blind: dict | None = None
+    portfolio_options: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -80,6 +82,8 @@ class JobCommand:
         elif self.kind in {"backtest_v1", "backtest_v2"}:
             object.__setattr__(self, "backtest_options",
                                normalize_backtest(self.kind, self.start, self.end, self.backtest_options))
+        elif self.kind == "portfolio_lab":
+            pass  # Its dates are validated with its options below.
         elif self.kind == "prepare_history":
             object.__setattr__(self, "preparation", normalize_preparation(self.start, self.end, self.preparation))
         elif self.start is not None or self.end is not None:
@@ -114,6 +118,11 @@ class JobCommand:
             object.__setattr__(self, "blind", normalize_blind_job(self.blind))
         elif self.blind is not None:
             raise QueryError("invalid_job", "Este trabajo no admite validación ciega.", 422)
+        if self.kind == "portfolio_lab":
+            object.__setattr__(self, "portfolio_options",
+                               normalize_portfolio_lab(self.start, self.end, self.portfolio_options))
+        elif self.portfolio_options is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite parámetros de Portfolio Lab.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)
@@ -176,7 +185,7 @@ class Jobs:
         if job["kind"] in {"maintenance", "tiingo"}:
             raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
         if job["kind"] in {"backtest", "historical_ranking", "factor_analysis", "backtest_v1", "backtest_v2",
-                           "prepare_history"}:
+                           "prepare_history", "portfolio_lab"}:
             parameters = job["parameters"]
             if job["kind"] == "historical_ranking" and parameters.get("end") is not None:
                 raise QueryError("reserved_period", "Este resultado no corresponde a una sola fecha observada.", 403)

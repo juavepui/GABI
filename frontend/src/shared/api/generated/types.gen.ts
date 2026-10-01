@@ -1258,13 +1258,14 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
      * Portfolio Id
      */
     portfolio_id?: number | null;
+    portfolio_options?: PortfolioLabOptions | null;
     preparation?: PreparationRequest | null;
     research_log?: ResearchLogRequest | null;
     /**
@@ -4057,6 +4058,283 @@ export type PlanResponse = {
      * Target
      */
     target: Array<TargetPosition>;
+};
+
+/**
+ * PortfolioDaily
+ */
+export type PortfolioDaily = {
+    /**
+     * Anualizado
+     */
+    anualizado?: number | null;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown?: number | null;
+    /**
+     * Sharpe
+     */
+    sharpe?: number | null;
+    /**
+     * Sortino
+     */
+    sortino?: number | null;
+    /**
+     * Vol Anualizada
+     */
+    vol_anualizada?: number | null;
+};
+
+/**
+ * PortfolioLabOptions
+ *
+ * The Streamlit Portfolio Lab form: schemes over the same point-in-time candidates.
+ */
+export type PortfolioLabOptions = {
+    /**
+     * Initial Capital
+     */
+    initial_capital: number;
+    /**
+     * Max Symbols
+     */
+    max_symbols?: 50 | 100 | 200 | null;
+    /**
+     * Mode
+     */
+    mode: 'validation' | 'fast_dev';
+    /**
+     * Months
+     */
+    months: 1 | 3 | 6 | 12;
+    /**
+     * Schemes
+     */
+    schemes: Array<'equal_weight' | 'inverse_vol' | 'min_variance' | 'score_weighted' | 'score_constrained' | 'risk_parity'>;
+    /**
+     * Top N
+     */
+    top_n: number;
+};
+
+/**
+ * PortfolioLabParams
+ */
+export type PortfolioLabParams = {
+    /**
+     * Initial Capital
+     */
+    initial_capital: number;
+    /**
+     * Max Symbols
+     */
+    max_symbols: number | null;
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Schemes
+     */
+    schemes: Array<string>;
+    /**
+     * Top N
+     */
+    top_n: number;
+};
+
+/**
+ * PortfolioLabPreview
+ */
+export type PortfolioLabPreview = {
+    /**
+     * Curve
+     */
+    curve: Array<{
+        [key: string]: string | number | null;
+    }>;
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: boolean;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Labels
+     */
+    labels: {
+        [key: string]: string;
+    };
+    /**
+     * Mode
+     */
+    mode: string;
+    options: PortfolioLabParams;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Scenario Ground
+     */
+    scenario_ground: {
+        [key: string]: string;
+    };
+    /**
+     * Scenario Labels
+     */
+    scenario_labels: {
+        [key: string]: string;
+    };
+    /**
+     * Scenarios
+     */
+    scenarios: {
+        [key: string]: {
+            [key: string]: PortfolioScenario;
+        };
+    };
+    /**
+     * Schemes
+     */
+    schemes: Array<PortfolioScheme>;
+    /**
+     * Skipped
+     */
+    skipped: Array<PortfolioSkip>;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Status
+     */
+    status: string;
+    tail: BacktestTail;
+};
+
+/**
+ * PortfolioPeriod
+ */
+export type PortfolioPeriod = {
+    /**
+     * Comision Pagada
+     */
+    comision_pagada: number | null;
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Hasta
+     */
+    hasta: string;
+    /**
+     * Turnover Pct
+     */
+    turnover_pct: number | null;
+};
+
+/**
+ * PortfolioScenario
+ */
+export type PortfolioScenario = {
+    /**
+     * Base
+     */
+    base: string;
+    /**
+     * Impacto Pct
+     */
+    impacto_pct?: number | null;
+    /**
+     * Tipo
+     */
+    tipo: 'retorno' | 'volatilidad';
+    /**
+     * Vol Base
+     */
+    vol_base?: number | null;
+    /**
+     * Vol Escenario
+     */
+    vol_escenario?: number | null;
+};
+
+/**
+ * PortfolioScheme
+ */
+export type PortfolioScheme = {
+    /**
+     * Comision Total
+     */
+    comision_total: number | null;
+    /**
+     * Contribution To Risk
+     */
+    contribution_to_risk: {
+        [key: string]: number | null;
+    };
+    daily: PortfolioDaily;
+    /**
+     * Hhi
+     */
+    hhi: number | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Last Weights
+     */
+    last_weights: {
+        [key: string]: number | null;
+    };
+    /**
+     * Periods
+     */
+    periods: Array<PortfolioPeriod>;
+    /**
+     * Top3 Contribution To Risk
+     */
+    top3_contribution_to_risk: number | null;
+    /**
+     * Tracking Error
+     */
+    tracking_error: number | null;
+    /**
+     * Turnover Medio
+     */
+    turnover_medio: number | null;
+};
+
+/**
+ * PortfolioSkip
+ */
+export type PortfolioSkip = {
+    /**
+     * Fecha
+     */
+    fecha: string;
+    /**
+     * Motivo
+     */
+    motivo: string;
 };
 
 /**
@@ -9046,6 +9324,56 @@ export type OverviewApiV1ResearchOverviewGetResponses = {
 };
 
 export type OverviewApiV1ResearchOverviewGetResponse = OverviewApiV1ResearchOverviewGetResponses[keyof OverviewApiV1ResearchOverviewGetResponses];
+
+export type PortfolioLabApiV1ResearchPortfolioLabJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/portfolio-lab/{job_id}';
+};
+
+export type PortfolioLabApiV1ResearchPortfolioLabJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PortfolioLabApiV1ResearchPortfolioLabJobIdGetError = PortfolioLabApiV1ResearchPortfolioLabJobIdGetErrors[keyof PortfolioLabApiV1ResearchPortfolioLabJobIdGetErrors];
+
+export type PortfolioLabApiV1ResearchPortfolioLabJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PortfolioLabPreview;
+};
+
+export type PortfolioLabApiV1ResearchPortfolioLabJobIdGetResponse = PortfolioLabApiV1ResearchPortfolioLabJobIdGetResponses[keyof PortfolioLabApiV1ResearchPortfolioLabJobIdGetResponses];
 
 export type PreparationApiV1ResearchPreparationsJobIdGetData = {
     body?: never;

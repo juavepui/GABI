@@ -36,6 +36,7 @@ import {
   BlindValidationsPage,
   FactorPage,
   HistoricalPage,
+  PortfolioLabPage,
   ResearchLabPage,
   ResearchPage,
 } from '@/features/research/index';
@@ -170,6 +171,7 @@ function Shell() {
           <Route path="/investigacion/validaciones" element={<BlindValidationsPage />} />
           <Route path="/investigacion/factores" element={<FactorPage />} />
           <Route path="/investigacion/laboratorio" element={<ResearchLabPage />} />
+          <Route path="/investigacion/carteras" element={<PortfolioLabPage />} />
           <Route path="/administracion" element={<AdministrationPage />} />
           <Route
             path="*"

@@ -2588,7 +2588,8 @@
               "live_forward_report",
               "blind_rebalance",
               "blind_performance",
-              "blind_export"
+              "blind_export",
+              "portfolio_lab"
             ],
             "title": "Kind",
             "type": "string"
@@ -2625,6 +2626,16 @@
               }
             ],
             "title": "Portfolio Id"
+          },
+          "portfolio_options": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PortfolioLabOptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "preparation": {
             "anyOf": [
@@ -7809,6 +7820,551 @@
           "status"
         ],
         "title": "PlanResponse",
+        "type": "object"
+      },
+      "PortfolioDaily": {
+        "properties": {
+          "anualizado": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anualizado"
+          },
+          "max_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown"
+          },
+          "sharpe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sharpe"
+          },
+          "sortino": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sortino"
+          },
+          "vol_anualizada": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Anualizada"
+          }
+        },
+        "title": "PortfolioDaily",
+        "type": "object"
+      },
+      "PortfolioLabOptions": {
+        "additionalProperties": false,
+        "description": "The Streamlit Portfolio Lab form: schemes over the same point-in-time candidates.",
+        "properties": {
+          "initial_capital": {
+            "maximum": 10000000.0,
+            "minimum": 1000.0,
+            "title": "Initial Capital",
+            "type": "number"
+          },
+          "max_symbols": {
+            "anyOf": [
+              {
+                "enum": [
+                  50,
+                  100,
+                  200
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Symbols"
+          },
+          "mode": {
+            "enum": [
+              "validation",
+              "fast_dev"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "months": {
+            "enum": [
+              1,
+              3,
+              6,
+              12
+            ],
+            "title": "Months",
+            "type": "integer"
+          },
+          "schemes": {
+            "items": {
+              "enum": [
+                "equal_weight",
+                "inverse_vol",
+                "min_variance",
+                "score_weighted",
+                "score_constrained",
+                "risk_parity"
+              ],
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Schemes",
+            "type": "array"
+          },
+          "top_n": {
+            "maximum": 50.0,
+            "minimum": 2.0,
+            "title": "Top N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "months",
+          "top_n",
+          "initial_capital",
+          "schemes",
+          "mode"
+        ],
+        "title": "PortfolioLabOptions",
+        "type": "object"
+      },
+      "PortfolioLabParams": {
+        "properties": {
+          "initial_capital": {
+            "title": "Initial Capital",
+            "type": "number"
+          },
+          "max_symbols": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Symbols"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "schemes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Schemes",
+            "type": "array"
+          },
+          "top_n": {
+            "title": "Top N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "months",
+          "top_n",
+          "initial_capital",
+          "schemes",
+          "mode",
+          "max_symbols"
+        ],
+        "title": "PortfolioLabParams",
+        "type": "object"
+      },
+      "PortfolioLabPreview": {
+        "properties": {
+          "curve": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Curve",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "independent_advantage_demonstrated": {
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Labels",
+            "type": "object"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/PortfolioLabParams"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "scenario_ground": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Scenario Ground",
+            "type": "object"
+          },
+          "scenario_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Scenario Labels",
+            "type": "object"
+          },
+          "scenarios": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/PortfolioScenario"
+              },
+              "type": "object"
+            },
+            "title": "Scenarios",
+            "type": "object"
+          },
+          "schemes": {
+            "items": {
+              "$ref": "#/components/schemas/PortfolioScheme"
+            },
+            "title": "Schemes",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSkip"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tail": {
+            "$ref": "#/components/schemas/BacktestTail"
+          }
+        },
+        "required": [
+          "job_id",
+          "result_sha256",
+          "status",
+          "independent_advantage_demonstrated",
+          "start",
+          "end",
+          "options",
+          "mode",
+          "skipped",
+          "labels",
+          "scenario_labels",
+          "scenario_ground",
+          "schemes",
+          "scenarios",
+          "curve",
+          "tail"
+        ],
+        "title": "PortfolioLabPreview",
+        "type": "object"
+      },
+      "PortfolioPeriod": {
+        "properties": {
+          "comision_pagada": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comision Pagada"
+          },
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "hasta": {
+            "title": "Hasta",
+            "type": "string"
+          },
+          "turnover_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Pct"
+          }
+        },
+        "required": [
+          "fecha",
+          "hasta",
+          "turnover_pct",
+          "comision_pagada"
+        ],
+        "title": "PortfolioPeriod",
+        "type": "object"
+      },
+      "PortfolioScenario": {
+        "properties": {
+          "base": {
+            "title": "Base",
+            "type": "string"
+          },
+          "impacto_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impacto Pct"
+          },
+          "tipo": {
+            "enum": [
+              "retorno",
+              "volatilidad"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          },
+          "vol_base": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Base"
+          },
+          "vol_escenario": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Escenario"
+          }
+        },
+        "required": [
+          "tipo",
+          "base"
+        ],
+        "title": "PortfolioScenario",
+        "type": "object"
+      },
+      "PortfolioScheme": {
+        "properties": {
+          "comision_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comision Total"
+          },
+          "contribution_to_risk": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Contribution To Risk",
+            "type": "object"
+          },
+          "daily": {
+            "$ref": "#/components/schemas/PortfolioDaily"
+          },
+          "hhi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hhi"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_weights": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Last Weights",
+            "type": "object"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/PortfolioPeriod"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "top3_contribution_to_risk": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top3 Contribution To Risk"
+          },
+          "tracking_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Error"
+          },
+          "turnover_medio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Medio"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "periods",
+          "daily",
+          "turnover_medio",
+          "comision_total",
+          "hhi",
+          "tracking_error",
+          "top3_contribution_to_risk",
+          "last_weights",
+          "contribution_to_risk"
+        ],
+        "title": "PortfolioScheme",
+        "type": "object"
+      },
+      "PortfolioSkip": {
+        "properties": {
+          "fecha": {
+            "title": "Fecha",
+            "type": "string"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fecha",
+          "motivo"
+        ],
+        "title": "PortfolioSkip",
         "type": "object"
       },
       "PreparationFailure": {
@@ -17257,6 +17813,99 @@
           }
         },
         "summary": "Overview",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/portfolio-lab/{job_id}": {
+      "get": {
+        "operationId": "portfolio_lab_api_v1_research_portfolio_lab__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioLabPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Portfolio Lab",
         "tags": [
           "research"
         ]

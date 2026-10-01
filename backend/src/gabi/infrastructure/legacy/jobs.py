@@ -133,6 +133,13 @@ class LegacyExecutor:
             assert command.backtest_options is not None
             return build_backtest(command.kind, command.start, command.end, command.backtest_options,
                                   run_backtest_v1 if command.kind == "backtest_v1" else run_backtest_v2)
+        if command.kind == "portfolio_lab":
+            from gabi.application.research.portfolio_lab import build_portfolio_lab
+            from gabi.infrastructure.legacy.portfolio_lab import run_portfolio_lab
+
+            assert command.start is not None and command.end is not None
+            assert command.portfolio_options is not None
+            return build_portfolio_lab(command.start, command.end, command.portfolio_options, run_portfolio_lab)
         if command.kind == "historical_outcomes":
             from gabi.infrastructure.legacy.historical import run_outcomes
 

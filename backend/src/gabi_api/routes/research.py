@@ -20,6 +20,7 @@ from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.historical_queries import HistoricalQueries
 from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedgerQueries
+from gabi.application.research.portfolio_lab_queries import PortfolioLabQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.domain.research.live_ledger import canonical
@@ -53,6 +54,7 @@ from gabi_api.schemas.research import (
     LiveLedgerDecision,
     LiveLedgerOverview,
     ManualExperimentRequest,
+    PortfolioLabPreview,
     PreparationResult,
     PublishedFactors,
     ResearchOverview,
@@ -322,6 +324,16 @@ def blind_performance(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], q
 def blind_export(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
     _, result = _experiment_job(queue, job_id, "blind_export", "La exportación no existe.")
     return result | {"job_id": job_id}
+
+
+def portfolio_lab_service(request: Request) -> PortfolioLabQueries:
+    return request.app.state.portfolio_lab
+
+
+@router.get("/portfolio-lab/{job_id}", response_model=PortfolioLabPreview)
+def portfolio_lab(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")],
+                  query: Annotated[PortfolioLabQueries, Depends(portfolio_lab_service)]) -> dict:
+    return query.preview(job_id)
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

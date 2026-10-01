@@ -66,6 +66,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                              "/api/v1/research/blind-validations",
                                              "/api/v1/research/blind-validations/{validation_id}/break-seal",
                                              "/api/v1/research/blind-rebalances/{job_id}",
+                                             "/api/v1/research/portfolio-lab/{job_id}",
                                              "/api/v1/research/blind-performance/{job_id}",
                                              "/api/v1/research/blind-exports/{job_id}",
                                              "/api/v1/research/experiments",

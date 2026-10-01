@@ -418,13 +418,32 @@ datos temporales. El aviso de rebalanceo de la portada y las instrucciones de
 ciegas; el plan sellado (`gabi-id1.json`) no cambia. `blind_validation` y
 `periodic_tasks` siguen en uso por el mantenimiento programado.
 
+Portfolio Lab se ejecuta ahora como el job `portfolio_lab` en modo Research.
+Tiene los mismos parámetros que el formulario antiguo: periodo, rebalanceo,
+posiciones, capital, esquemas, y modo `validation` o `fast_dev` con 50/100/200
+empresas. Llama a `portfolio_lab.run_portfolio_lab` sin cambios. Como los
+backtests V1/V2, el periodo se limita al histórico observado del S&P 500
+(2010-01-01 a 2025-07-02), al encolar y al leer. Streamlit permitía llegar hasta
+hoy y leer precios posteriores al corte de las reservas. El artefacto, con hash
+y límites de 200 periodos y 5.000 puntos, guarda por esquema las métricas
+diarias, turnover, coste, HHI, tracking error, top-3 de contribución al riesgo,
+pesos y contribuciones del último rebalanceo y la curva de capital, además de
+los escenarios, los saltados y la curva del SPY. Los esquemas se guardan como
+lista para conservar su orden en el JSON de claves ordenadas.
+`GET /research/portfolio-lab/{id}` añade el riesgo de cola diario de cada curva
+con `returns_from_nav` y `tail_risk_metrics`, como `tail_risk_ui.render_nav`.
+React presenta la comparativa, las curvas, la concentración del riesgo y los
+stress tests, con la base real o heurística de cada escenario. Las pruebas
+comparan el artefacto con la llamada directa al motor sobre datos temporales:
+métricas, curvas, pesos, contribuciones, escenarios, saltados y riesgo de cola.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
 | Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado, auditorías guardadas y registro prospectivo en React | Completado; página Streamlit retirada. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado, sellos y planes preregistrados; alta, rebalanceo, ruptura del sello (prohibida con preregistro), rendimiento hasta la última revisión y exportación en React | Completado; página Streamlit retirada. |
-| Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |
+| Portfolio Lab | Job Research con artefacto completo y hash; comparativa, curvas, riesgo de cola, concentración y stress tests en React | Verificar con la base local y retirar la página Streamlit. |
 
 Antes de cerrar #68 se comprobarán los 17 recorridos del inventario F0, la
 paridad de cálculos y persistencia, la recuperación local y los límites de

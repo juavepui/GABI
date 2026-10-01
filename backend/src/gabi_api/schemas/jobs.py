@@ -90,8 +90,22 @@ class BlindJobRequest(BaseModel):
     validation_id: int = Field(ge=1, le=1_000_000)
 
 
+class PortfolioLabOptions(BaseModel):
+    """The Streamlit Portfolio Lab form: schemes over the same point-in-time candidates."""
+
+    model_config = {"extra": "forbid"}
+
+    months: Literal[1, 3, 6, 12]
+    top_n: int = Field(ge=2, le=50)
+    initial_capital: float = Field(ge=1_000, le=10_000_000)
+    schemes: list[Literal["equal_weight", "inverse_vol", "min_variance", "score_weighted", "score_constrained",
+                          "risk_parity"]] = Field(min_length=1, max_length=6)
+    mode: Literal["validation", "fast_dev"]
+    max_symbols: Literal[50, 100, 200] | None = None
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -111,6 +125,7 @@ class CreateJobRequest(BaseModel):
     experiment_analysis: ExperimentAnalysisRequest | None = None
     live_report: LiveReportRequest | None = None
     blind: BlindJobRequest | None = None
+    portfolio_options: PortfolioLabOptions | None = None
 
 
 class JobEvent(BaseModel):

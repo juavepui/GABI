@@ -370,3 +370,31 @@ test('Research Lab verifica el registro prospectivo y guarda evaluaciones explí
     });
   }
 });
+
+test('Portfolio Lab compara esquemas en un job Research dentro del periodo observado', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  await page.getByRole('button', { name: 'Activar Research' }).click();
+  await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
+  try {
+    await page.goto('/investigacion');
+    await page.getByRole('link', { name: 'Abrir Portfolio Lab' }).click();
+    await page.getByLabel('Risk Parity').uncheck();
+    await page.getByRole('button', { name: 'Ejecutar Portfolio Lab' }).click();
+    const result = page.getByRole('region', { name: 'Resultado de Portfolio Lab' });
+    const table = result.getByRole('table', { name: 'Comparativa por esquema' });
+    await expect(table.getByRole('row')).toHaveCount(6);
+    await expect(table.getByRole('row', { name: /^Equal Weight/ })).toContainText('8,0 %');
+    await expect(result.getByText('1 periodo(s) saltado(s)')).toBeVisible();
+    await result.getByRole('combobox', { name: 'Esquema' }).selectOption('min_variance');
+    await expect(result.getByText(/T000, T001.*100,0 %/)).toBeVisible();
+    await expect(result.getByRole('table', { name: 'Stress tests' })).toContainText('30,0 %');
+    await result.getByText('Riesgo de cola · comparar esquemas y SPY').click();
+    await expect(result.getByText('SPY (buy & hold)').first()).toBeVisible();
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});
