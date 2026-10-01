@@ -253,10 +253,24 @@ recortar. Las fases se definen ahora en `gabi.domain.research.experiments` y
 `research_lab` las reexporta. Las pruebas comparan ambas respuestas con
 `research_lab.list_experiments`/`get_experiment` sobre datos temporales.
 
+PSR/DSR y el riesgo de cola de una serie guardada son consultas en modo
+Research: `GET /research/experiment-statistics/deflated-sharpe` y `GET
+/research/experiments/{id}/tail-risk`. Usan los mismos datos que la página
+antigua: N es el número de experimentos con Sharpe de la familia elegida (todos
+si no hay familias); asimetría y curtosis salen de la serie si existe, y si no
+se usa la aproximación normal; los periodos por año valen 4 y las
+observaciones 36 cuando faltan. El horizonte de cola sigue a la frecuencia
+registrada. Las fórmulas son `stats_rigor` y `portfolio_metrics` sin cambios,
+mediante `infrastructure/legacy/experiments.py`; las pruebas comparan valores
+exactos con las expresiones de la página. Son cálculos en memoria sobre una
+serie acotada y no escriben. PBO/CSCV no es una consulta: con 16 bloques evalúa
+12.870 particiones y tardó unos 28 s con una matriz sintética de 120×5 y otra
+de 2.500×4, así que se ejecutará como job explícito.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
-| Research Lab | Catálogo público y lista de experimentos con su entorno en React; estadísticas, alta, borrado y auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
+| Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR y riesgo de cola en React; PBO/CSCV, bootstrap, alta, borrado y auditorías guardadas en Streamlit | Ensayos operativos, artefactos, estadísticas y exportaciones con reglas de reserva. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado y verificación de sellos en React; operaciones y resultados en Streamlit | Alta, rebalanceos y revelación protegidos por API y preregistro. |
 | Portfolio Lab | Streamlit | Construcciones y riesgo mediante jobs con costes idénticos. |

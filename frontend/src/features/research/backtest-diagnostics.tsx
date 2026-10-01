@@ -1,46 +1,20 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getBacktestDiagnostics } from '@/shared/api/client';
-import type { TailSeries, TaxDrag } from '@/shared/api/generated/types.gen';
+import type { TaxDrag } from '@/shared/api/generated/types.gen';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { CoverageThreshold, WarningText } from './coverage-notes';
+import { TailRiskTable } from './tail-risk-table';
 
 const pct = (value: number | null | undefined, digits = 2) =>
   value == null
     ? '—'
     : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value * 100) + ' %';
-const num = (value: number | null | undefined, digits = 3) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
 const eur = (value: number | null | undefined) =>
   value == null
     ? '—'
     : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value) + ' €';
-
-function tailWarnings(row: TailSeries): string[] {
-  const summary = row.summary;
-  if (!summary) return [];
-  return (
-    [
-      ['95', summary.level_95],
-      ['99', summary.level_99],
-    ] as const
-  ).flatMap(([level, tail]) =>
-    tail.status === 'empty'
-      ? [`${row.name}: no hay retornos para estimar la cola al ${level} %.`]
-      : tail.status === 'below_resolution'
-        ? [
-            `${row.name} · ${level} %: masa de cola ${num(tail.tail_mass, 2)} < 1 observación. VaR y ES coinciden con la peor pérdida observada; el extremo no está resuelto por la muestra.`,
-          ]
-        : tail.status === 'sparse'
-          ? [
-              `${row.name} · ${level} %: cola escasa (${num(tail.tail_mass, 2)} observaciones equivalentes). El resultado depende de muy pocos retornos.`,
-            ]
-          : [],
-  );
-}
 
 function TaxColumn({ label, tax }: { label: string; tax: TaxDrag }) {
   return (
@@ -114,66 +88,7 @@ export function BacktestDiagnostics({ jobId, v1 }: { jobId: string; v1: boolean 
         {tail.horizon == null ? (
           <p className="mt-2 text-muted-foreground">{tail.message}</p>
         ) : (
-          <>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Horizonte: {tail.horizon}. Estimaciones históricas sin anualizar; pérdidas positivas,
-              ganancias negativas.
-            </p>
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-xs">
-                <thead>
-                  <tr className="border-b text-muted-foreground">
-                    <th className="py-2">Cartera</th>
-                    <th>n</th>
-                    <th>VaR 95 %</th>
-                    <th>ES/CVaR 95 %</th>
-                    <th>VaR 99 %</th>
-                    <th>ES/CVaR 99 %</th>
-                    <th>Asimetría</th>
-                    <th>Exceso de curtosis</th>
-                    <th>Masa de cola 95 %</th>
-                    <th>Masa de cola 99 %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tail.series.map((row) =>
-                    row.summary ? (
-                      <tr key={row.name} className="border-b last:border-0">
-                        <td className="py-2">{row.name}</td>
-                        <td>{row.summary.n_obs}</td>
-                        <td>{pct(row.summary.level_95.var)}</td>
-                        <td>{pct(row.summary.level_95.expected_shortfall)}</td>
-                        <td>{pct(row.summary.level_99.var)}</td>
-                        <td>{pct(row.summary.level_99.expected_shortfall)}</td>
-                        <td>{num(row.summary.skewness)}</td>
-                        <td>{num(row.summary.excess_kurtosis)}</td>
-                        <td>{num(row.summary.level_95.tail_mass, 2)}</td>
-                        <td>{num(row.summary.level_99.tail_mass, 2)}</td>
-                      </tr>
-                    ) : (
-                      <tr key={row.name} className="border-b last:border-0">
-                        <td className="py-2">{row.name}</td>
-                        <td colSpan={9} className="text-destructive">
-                          No disponible: {row.error}
-                        </td>
-                      </tr>
-                    ),
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <ul className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-400">
-              {tail.series.flatMap(tailWarnings).map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
-            <p className="mt-2 text-xs text-muted-foreground">
-              VaR es el umbral de pérdidas; ES/CVaR promedia la peor masa del 5 % o 1 %, ponderando
-              la frontera. Asimetría negativa indica cola izquierda; exceso de curtosis normal = 0.
-              La masa de cola no cuenta eventos independientes. Estas cifras describen la muestra y
-              no limitan las pérdidas futuras. {tail.message}
-            </p>
-          </>
+          <TailRiskTable horizon={tail.horizon} series={tail.series} message={tail.message} />
         )}
       </details>
       {data.tax && (

@@ -675,3 +675,27 @@ class ExperimentDetail(ExperimentSummary):
     returns_count: int
     returns_first: str | None
     returns_last: str | None
+
+
+class DeflatedSharpe(BaseModel):
+    experiment_id: int
+    model_id: str
+    family: str | None
+    sharpe: float
+    n_obs: int
+    periods_per_year: float
+    skew: float
+    kurtosis: float
+    moments: Literal["returns", "normal_approximation"]
+    psr: float
+    dsr: float
+    sr0_benchmark: float
+    n_trials: int
+    trial_ids: list[int]
+
+
+class ExperimentTailRisk(BaseModel):
+    experiment_id: int
+    horizon: str
+    message: str
+    series: list[TailSeries]

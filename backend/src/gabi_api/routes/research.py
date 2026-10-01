@@ -12,6 +12,7 @@ from gabi.application.research.backtests import backtest_preview
 from gabi.application.research.blind import BlindValidationQueries
 from gabi.application.research.catalog import ResearchCatalog
 from gabi.application.research.estimates import EstimateQueries
+from gabi.application.research.experiment_statistics import ExperimentStatistics
 from gabi.application.research.experiments import ExperimentQueries
 from gabi.application.research.factors import quantile_means
 from gabi.application.research.historical_queries import HistoricalQueries
@@ -21,10 +22,12 @@ from gabi_api.schemas.research import (
     BacktestFactorsPreview,
     BacktestPreview,
     BlindStatuses,
+    DeflatedSharpe,
     EstimateAnalysisPreview,
     EstimateCaptureStatus,
     ExperimentDetail,
     ExperimentList,
+    ExperimentTailRisk,
     FactorPreview,
     HistoricalOutcomes,
     HistoricalPreview,
@@ -105,6 +108,24 @@ def experiments(query: Experiments, family: Annotated[str | None, Query(max_leng
 @router.get("/experiments/{experiment_id}", response_model=ExperimentDetail)
 def experiment(experiment_id: Annotated[int, Path(ge=1)], query: Experiments) -> dict:
     return query.detail(experiment_id)
+
+
+def statistics_service(request: Request) -> ExperimentStatistics:
+    return request.app.state.experiment_statistics
+
+
+Statistics = Annotated[ExperimentStatistics, Depends(statistics_service)]
+
+
+@router.get("/experiments/{experiment_id}/tail-risk", response_model=ExperimentTailRisk)
+def experiment_tail_risk(experiment_id: Annotated[int, Path(ge=1)], query: Statistics) -> dict:
+    return query.tail_risk(experiment_id)
+
+
+@router.get("/experiment-statistics/deflated-sharpe", response_model=DeflatedSharpe)
+def deflated_sharpe(query: Statistics, experiment_id: Annotated[int, Query(ge=1)],
+                    family: Annotated[str | None, Query(max_length=200)] = None) -> dict:
+    return query.deflated_sharpe(experiment_id, family)
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

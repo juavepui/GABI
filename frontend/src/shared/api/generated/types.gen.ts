@@ -1049,6 +1049,68 @@ export type DecisionSummary = {
 };
 
 /**
+ * DeflatedSharpe
+ */
+export type DeflatedSharpe = {
+    /**
+     * Dsr
+     */
+    dsr: number;
+    /**
+     * Experiment Id
+     */
+    experiment_id: number;
+    /**
+     * Family
+     */
+    family: string | null;
+    /**
+     * Kurtosis
+     */
+    kurtosis: number;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Moments
+     */
+    moments: 'returns' | 'normal_approximation';
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * N Trials
+     */
+    n_trials: number;
+    /**
+     * Periods Per Year
+     */
+    periods_per_year: number;
+    /**
+     * Psr
+     */
+    psr: number;
+    /**
+     * Sharpe
+     */
+    sharpe: number;
+    /**
+     * Skew
+     */
+    skew: number;
+    /**
+     * Sr0 Benchmark
+     */
+    sr0_benchmark: number;
+    /**
+     * Trial Ids
+     */
+    trial_ids: Array<number>;
+};
+
+/**
  * DeleteDecision
  */
 export type DeleteDecision = {
@@ -1589,6 +1651,28 @@ export type ExperimentSummary = {
      * Stage
      */
     stage: string;
+};
+
+/**
+ * ExperimentTailRisk
+ */
+export type ExperimentTailRisk = {
+    /**
+     * Experiment Id
+     */
+    experiment_id: number;
+    /**
+     * Horizon
+     */
+    horizon: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Series
+     */
+    series: Array<TailSeries>;
 };
 
 /**
@@ -6377,6 +6461,60 @@ export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponses = {
 
 export type EstimateCapturesApiV1ResearchEstimateCapturesGetResponse = EstimateCapturesApiV1ResearchEstimateCapturesGetResponses[keyof EstimateCapturesApiV1ResearchEstimateCapturesGetResponses];
 
+export type DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Experiment Id
+         */
+        experiment_id: number;
+        /**
+         * Family
+         */
+        family?: string | null;
+    };
+    url: '/api/v1/research/experiment-statistics/deflated-sharpe';
+};
+
+export type DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetError = DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetErrors[keyof DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetErrors];
+
+export type DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: DeflatedSharpe;
+};
+
+export type DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetResponse = DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetResponses[keyof DeflatedSharpeApiV1ResearchExperimentStatisticsDeflatedSharpeGetResponses];
+
 export type ExperimentsApiV1ResearchExperimentsGetData = {
     body?: never;
     path?: never;
@@ -6488,6 +6626,56 @@ export type ExperimentApiV1ResearchExperimentsExperimentIdGetResponses = {
 };
 
 export type ExperimentApiV1ResearchExperimentsExperimentIdGetResponse = ExperimentApiV1ResearchExperimentsExperimentIdGetResponses[keyof ExperimentApiV1ResearchExperimentsExperimentIdGetResponses];
+
+export type ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment Id
+         */
+        experiment_id: number;
+    };
+    query?: never;
+    url: '/api/v1/research/experiments/{experiment_id}/tail-risk';
+};
+
+export type ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetError = ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetErrors[keyof ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetErrors];
+
+export type ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExperimentTailRisk;
+};
+
+export type ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetResponse = ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetResponses[keyof ExperimentTailRiskApiV1ResearchExperimentsExperimentIdTailRiskGetResponses];
 
 export type FactorPreviewApiV1ResearchFactorsJobIdGetData = {
     body?: never;

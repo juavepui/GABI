@@ -170,6 +170,16 @@ test('Research Lab lista experimentos y su entorno solo en modo Research', async
     await expect(detail.getByText('fixture-data')).toBeVisible();
     await expect(detail.getByRole('row', { name: /pandas/ })).toContainText('2.3.0');
     await expect(detail.getByText('3 observaciones, 2019-03-29 – 2019-09-30')).toBeVisible();
+    const dsr = page.getByRole('region', { name: 'Probabilistic y Deflated Sharpe' });
+    await dsr.getByLabel('Experimento a evaluar').selectOption('1');
+    const dsrResult = dsr.getByRole('region', { name: 'Resultado PSR y DSR' });
+    await expect(dsrResult).toContainText('Con N=2 intentos probados en la familia «mf-v1»');
+    await expect(dsrResult).toContainText('asimetría y curtosis estimadas');
+    await page.getByText('Riesgo de cola · serie guardada de un experimento').click();
+    await page.getByLabel('Experimento con retornos').selectOption('1');
+    await expect(
+      page.getByRole('region', { name: 'Riesgo de cola del experimento' }),
+    ).toContainText('Horizonte: un trimestre.');
   } finally {
     await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
       data: { mode: 'INVESTOR' },

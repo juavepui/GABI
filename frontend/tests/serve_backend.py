@@ -58,6 +58,8 @@ def main():
                         json.dumps({"pandas": "2.3.0", "numpy": "2.2.0"})))
             db.execute("INSERT INTO experiments (created_at,model_id,hypothesis_registered,stage,family,sharpe,notes) "
                        "VALUES ('2026-09-02','GABI-MF-v2.0',1,'OUT_OF_SAMPLE','mf-v2',0.4,'Fixture fuera de muestra')")
+            db.execute("INSERT INTO experiments (created_at,model_id,hypothesis_registered,stage,family,sharpe) "
+                       "VALUES ('2026-09-03','GABI-MF-v1.1',0,'RESEARCH','mf-v1',0.35)")
             db.commit()
         published = root / "published-ledger.json"
         published.write_text(json.dumps({

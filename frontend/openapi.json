@@ -2204,6 +2204,98 @@
         "title": "DecisionSummary",
         "type": "object"
       },
+      "DeflatedSharpe": {
+        "properties": {
+          "dsr": {
+            "title": "Dsr",
+            "type": "number"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "integer"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "kurtosis": {
+            "title": "Kurtosis",
+            "type": "number"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "moments": {
+            "enum": [
+              "returns",
+              "normal_approximation"
+            ],
+            "title": "Moments",
+            "type": "string"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "n_trials": {
+            "title": "N Trials",
+            "type": "integer"
+          },
+          "periods_per_year": {
+            "title": "Periods Per Year",
+            "type": "number"
+          },
+          "psr": {
+            "title": "Psr",
+            "type": "number"
+          },
+          "sharpe": {
+            "title": "Sharpe",
+            "type": "number"
+          },
+          "skew": {
+            "title": "Skew",
+            "type": "number"
+          },
+          "sr0_benchmark": {
+            "title": "Sr0 Benchmark",
+            "type": "number"
+          },
+          "trial_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Trial Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "model_id",
+          "family",
+          "sharpe",
+          "n_obs",
+          "periods_per_year",
+          "skew",
+          "kurtosis",
+          "moments",
+          "psr",
+          "dsr",
+          "sr0_benchmark",
+          "n_trials",
+          "trial_ids"
+        ],
+        "title": "DeflatedSharpe",
+        "type": "object"
+      },
       "DeleteDecision": {
         "additionalProperties": false,
         "properties": {
@@ -3239,6 +3331,37 @@
           "has_returns"
         ],
         "title": "ExperimentSummary",
+        "type": "object"
+      },
+      "ExperimentTailRisk": {
+        "properties": {
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "integer"
+          },
+          "horizon": {
+            "title": "Horizon",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/TailSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "horizon",
+          "message",
+          "series"
+        ],
+        "title": "ExperimentTailRisk",
         "type": "object"
       },
       "FactorBenchmark": {
@@ -12260,6 +12383,116 @@
         ]
       }
     },
+    "/api/v1/research/experiment-statistics/deflated-sharpe": {
+      "get": {
+        "operationId": "deflated_sharpe_api_v1_research_experiment_statistics_deflated_sharpe_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "family",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Family"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeflatedSharpe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Deflated Sharpe",
+        "tags": [
+          "research"
+        ]
+      }
+    },
     "/api/v1/research/experiments": {
       "get": {
         "operationId": "experiments_api_v1_research_experiments_get",
@@ -12489,6 +12722,99 @@
           }
         },
         "summary": "Experiment",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/experiments/{experiment_id}/tail-risk": {
+      "get": {
+        "operationId": "experiment_tail_risk_api_v1_research_experiments__experiment_id__tail_risk_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentTailRisk"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Experiment Tail Risk",
         "tags": [
           "research"
         ]
