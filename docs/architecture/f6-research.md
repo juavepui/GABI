@@ -394,6 +394,17 @@ resto de escrituras heredadas. Con la base local, las pruebas 1 y 3 aparecen
 bloqueadas, ligadas a su preregistro y con la cadena íntegra, y `gabi.db` no
 cambia.
 
+Registrar un rebalanceo, calcular el rendimiento revelado y exportarlo a
+Research Lab son ahora los jobs `blind_rebalance`, `blind_performance` y
+`blind_export`, en modo Research. El worker vuelve a aplicar las reglas en el
+momento de ejecutar.
+- **Rebalanceo:** solo se registra si toca, con la cadena íntegra y con precios del último cierre (`periodic_tasks.prices_fresh`). En Streamlit las dos últimas condiciones solo desactivaban el botón. El registro siempre es con fecha de hoy y usa `blind_validation.record_rebalance` sin cambios. El resultado nunca incluye posiciones ni precios, solo fecha, número de posiciones y hash.
+- **Rendimiento:** solo se calcula si `disclosure` lo permite. `get_status` y `export_to_research_lab` aceptan ahora un corte opcional `as_of`: solo cuentan los rebalanceos anteriores y el último periodo se valora en esa fecha. Sin corte se comportan como antes. Con preregistro, el corte es la última revisión alcanzada. El capital acumulado repite el `cumprod` con ausencias como cero de la página antigua.
+- **Exportación:** falla si la validación sigue bloqueada.
+
+Las pruebas comparan rendimiento, acumulados y exportación con las expresiones
+antiguas y comprueban el corte en la revisión con datos temporales.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |

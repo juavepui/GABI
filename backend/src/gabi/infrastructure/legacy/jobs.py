@@ -11,8 +11,9 @@ from gabi.infrastructure.settings import Settings
 
 
 class LegacyExecutor:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, blind_plans_root: Path | None = None):
         self.settings = settings
+        self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
     def __call__(self, command: JobCommand) -> dict:
         if command.kind == "quality":
@@ -93,6 +94,11 @@ class LegacyExecutor:
 
         if config.DATA_DIR.resolve() != self.settings.data_dir.resolve():
             raise RuntimeError("El worker y la API no usan el mismo directorio de datos.")
+        if command.kind in {"blind_rebalance", "blind_performance", "blind_export"}:
+            from gabi.infrastructure.legacy.blind import run_blind_job
+
+            assert command.blind is not None
+            return run_blind_job(command.kind, self.settings.data_dir, self.blind_plans_root, command.blind)
         if command.kind == "live_forward_report":
             from gabi.infrastructure.legacy.live_ledger import run_live_report
 

@@ -28,6 +28,9 @@ from gabi_api.schemas.research import (
     BacktestFactorsPreview,
     BacktestPreview,
     BlindCreateRequest,
+    BlindExport,
+    BlindPerformance,
+    BlindRebalanceResult,
     BlindStatus,
     BlindStatuses,
     BreakSealRequest,
@@ -301,6 +304,24 @@ def create_blind_validation(body: BlindCreateRequest, commands: BlindWrites) -> 
 @router.post("/blind-validations/{validation_id}/break-seal", response_model=BlindStatus)
 def break_blind_seal(validation_id: Annotated[int, Path(ge=1)], body: BreakSealRequest, commands: BlindWrites) -> dict:
     return commands.break_seal(validation_id, body.reason)
+
+
+@router.get("/blind-rebalances/{job_id}", response_model=BlindRebalanceResult)
+def blind_rebalance(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    _, result = _experiment_job(queue, job_id, "blind_rebalance", "El registro del rebalanceo no existe.")
+    return result | {"job_id": job_id}
+
+
+@router.get("/blind-performance/{job_id}", response_model=BlindPerformance)
+def blind_performance(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    job, result = _experiment_job(queue, job_id, "blind_performance", "El rendimiento ciego no existe.")
+    return result | {"job_id": job_id, "result_sha256": job["result_sha256"]}
+
+
+@router.get("/blind-exports/{job_id}", response_model=BlindExport)
+def blind_export(job_id: Annotated[str, Path(pattern=r"^[a-f0-9]{32}$")], queue: Queue) -> dict:
+    _, result = _experiment_job(queue, job_id, "blind_export", "La exportación no existe.")
+    return result | {"job_id": job_id}
 
 
 @router.get("/blind-validations", response_model=BlindStatuses)

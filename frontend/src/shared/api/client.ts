@@ -71,6 +71,9 @@ import type {
   SavedEvaluation,
   BlindCreateRequest,
   BlindStatus,
+  BlindRebalanceResult,
+  BlindPerformance,
+  BlindExport,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -243,6 +246,15 @@ export function breakBlindSeal(id: number, reason: string): Promise<BlindStatus>
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason }),
   });
+}
+export function getBlindRebalance(id: string, signal?: AbortSignal): Promise<BlindRebalanceResult> {
+  return get('/api/v1/research/blind-rebalances/' + encodeURIComponent(id), signal);
+}
+export function getBlindPerformance(id: string, signal?: AbortSignal): Promise<BlindPerformance> {
+  return get('/api/v1/research/blind-performance/' + encodeURIComponent(id), signal);
+}
+export function getBlindExport(id: string, signal?: AbortSignal): Promise<BlindExport> {
+  return get('/api/v1/research/blind-exports/' + encodeURIComponent(id), signal);
 }
 export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
   return get('/api/v1/research/blind-validations', signal);

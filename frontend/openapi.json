@@ -1288,6 +1288,41 @@
         "title": "BlindCreateRequest",
         "type": "object"
       },
+      "BlindExport": {
+        "properties": {
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "integer"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "revealed_through": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revealed Through"
+          },
+          "validation_id": {
+            "title": "Validation Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "validation_id",
+          "revealed_through",
+          "experiment_id"
+        ],
+        "title": "BlindExport",
+        "type": "object"
+      },
       "BlindIntegrity": {
         "properties": {
           "broken_at": {
@@ -1316,6 +1351,142 @@
           "n_periods"
         ],
         "title": "BlindIntegrity",
+        "type": "object"
+      },
+      "BlindJobRequest": {
+        "additionalProperties": false,
+        "description": "One blind validation: record today's due rebalance, compute revealed performance or export it.",
+        "properties": {
+          "validation_id": {
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Validation Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "validation_id"
+        ],
+        "title": "BlindJobRequest",
+        "type": "object"
+      },
+      "BlindPerformance": {
+        "properties": {
+          "cumulative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cumulative"
+          },
+          "cumulative_spy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cumulative Spy"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/BlindPeriod"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "revealed": {
+            "title": "Revealed",
+            "type": "boolean"
+          },
+          "revealed_through": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revealed Through"
+          },
+          "validation_id": {
+            "title": "Validation Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "result_sha256",
+          "validation_id",
+          "revealed",
+          "revealed_through",
+          "periods",
+          "cumulative",
+          "cumulative_spy"
+        ],
+        "title": "BlindPerformance",
+        "type": "object"
+      },
+      "BlindPeriod": {
+        "properties": {
+          "capital": {
+            "title": "Capital",
+            "type": "number"
+          },
+          "capital_spy": {
+            "title": "Capital Spy",
+            "type": "number"
+          },
+          "rebalance_date": {
+            "title": "Rebalance Date",
+            "type": "string"
+          },
+          "retorno": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retorno"
+          },
+          "retorno_spy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retorno Spy"
+          }
+        },
+        "required": [
+          "rebalance_date",
+          "retorno",
+          "retorno_spy",
+          "capital",
+          "capital_spy"
+        ],
+        "title": "BlindPeriod",
         "type": "object"
       },
       "BlindPlan": {
@@ -1347,6 +1518,73 @@
           "source"
         ],
         "title": "BlindPlan",
+        "type": "object"
+      },
+      "BlindRebalanceResult": {
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "n_positions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Positions"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rebalance_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rebalance Date"
+          },
+          "record_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Hash"
+          },
+          "recorded": {
+            "title": "Recorded",
+            "type": "boolean"
+          },
+          "validation_id": {
+            "title": "Validation Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "validation_id",
+          "recorded"
+        ],
+        "title": "BlindRebalanceResult",
         "type": "object"
       },
       "BlindStatus": {
@@ -2209,6 +2447,16 @@
               }
             ]
           },
+          "blind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BlindJobRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "decision_policy": {
             "anyOf": [
               {
@@ -2337,7 +2585,10 @@
               "historical_outcomes",
               "experiment_pbo",
               "experiment_bootstrap",
-              "live_forward_report"
+              "live_forward_report",
+              "blind_rebalance",
+              "blind_performance",
+              "blind_export"
             ],
             "title": "Kind",
             "type": "string"
@@ -14410,6 +14661,285 @@
           }
         },
         "summary": "Backtest Diagnostics",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/blind-exports/{job_id}": {
+      "get": {
+        "operationId": "blind_export_api_v1_research_blind_exports__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlindExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Blind Export",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/blind-performance/{job_id}": {
+      "get": {
+        "operationId": "blind_performance_api_v1_research_blind_performance__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlindPerformance"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Blind Performance",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/v1/research/blind-rebalances/{job_id}": {
+      "get": {
+        "operationId": "blind_rebalance_api_v1_research_blind_rebalances__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-f0-9]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlindRebalanceResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Blind Rebalance",
         "tags": [
           "research"
         ]

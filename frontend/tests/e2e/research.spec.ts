@@ -54,6 +54,7 @@ test('validaciones ciegas aplican el preregistro y el alta y el sello son explí
     await page.getByText('Crear nueva validación ciega').click();
     const form = page.getByRole('form', { name: 'Crear validación ciega' });
     await form.getByLabel('Nombre').fill('Prueba e2e');
+    await form.getByLabel('Fecha de inicio').fill('2026-01-02');
     await form.getByLabel('Fecha de desbloqueo').fill('2030-01-01');
     await form.getByRole('button', { name: 'Crear validación' }).click();
     const created = page.getByRole('status').filter({ hasText: 'creada' });
@@ -66,6 +67,17 @@ test('validaciones ciegas aplican el preregistro y el alta y el sello son explí
     page.once('dialog', (dialog) => void dialog.accept());
     await card.getByRole('button', { name: 'Romper el sello' }).click();
     await expect(card).toContainText('Sello roto antes de tiempo');
+    await card.getByRole('button', { name: 'Registrar rebalanceo de hoy' }).click();
+    await expect(
+      card.getByRole('status').filter({ hasText: 'registrado e inmutable' }),
+    ).toContainText('2 posiciones');
+    await card.getByRole('button', { name: 'Calcular rendimiento' }).click();
+    await expect(
+      card.getByText('Desbloqueada, pero todavía no hay ningún rebalanceo'),
+    ).toBeVisible();
+    await card.getByRole('button', { name: 'Exportar al Research Lab' }).click();
+    await expect(card.getByText(/Exportado como experimento #\d+/)).toBeVisible();
+    await expect(first.getByRole('button', { name: 'Calcular rendimiento' })).toHaveCount(0);
   } finally {
     await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
       data: { mode: 'INVESTOR' },
@@ -210,6 +222,8 @@ test('Research Lab lista experimentos y su entorno solo en modo Research', async
     await expect(detail.getByRole('row', { name: /pandas/ })).toContainText('2.3.0');
     await expect(detail.getByText('3 observaciones, 2019-03-29 – 2019-09-30')).toBeVisible();
     const dsr = page.getByRole('region', { name: 'Probabilistic y Deflated Sharpe' });
+    // Other tests add families (e.g. an exported blind validation); choose this one explicitly.
+    await dsr.getByLabel('Familia de intentos (define N)').selectOption('mf-v1');
     await dsr.getByLabel('Experimento a evaluar').selectOption('1');
     const dsrResult = dsr.getByRole('region', { name: 'Resultado PSR y DSR' });
     await expect(dsrResult).toContainText('Con N=2 intentos probados en la familia «mf-v1»');

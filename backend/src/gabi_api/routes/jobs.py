@@ -74,7 +74,8 @@ def create_job(body: CreateJobRequest, service: Service) -> dict:
                          body.preparation.model_dump(exclude_none=True) if body.preparation else None,
                          body.outcomes.model_dump() if body.outcomes else None,
                          body.experiment_analysis.model_dump(exclude_none=True) if body.experiment_analysis else None,
-                         body.live_report.model_dump() if body.live_report else None)
+                         body.live_report.model_dump() if body.live_report else None,
+                         body.blind.model_dump() if body.blind else None)
     return service.submit(command, body.idempotency_key)
 
 

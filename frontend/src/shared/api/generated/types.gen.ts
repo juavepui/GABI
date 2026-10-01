@@ -584,6 +584,28 @@ export type BlindCreateRequest = {
 };
 
 /**
+ * BlindExport
+ */
+export type BlindExport = {
+    /**
+     * Experiment Id
+     */
+    experiment_id: number;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Revealed Through
+     */
+    revealed_through: string | null;
+    /**
+     * Validation Id
+     */
+    validation_id: number;
+};
+
+/**
  * BlindIntegrity
  */
 export type BlindIntegrity = {
@@ -599,6 +621,82 @@ export type BlindIntegrity = {
      * Ok
      */
     ok: boolean;
+};
+
+/**
+ * BlindJobRequest
+ *
+ * One blind validation: record today's due rebalance, compute revealed performance or export it.
+ */
+export type BlindJobRequest = {
+    /**
+     * Validation Id
+     */
+    validation_id: number;
+};
+
+/**
+ * BlindPerformance
+ */
+export type BlindPerformance = {
+    /**
+     * Cumulative
+     */
+    cumulative: number | null;
+    /**
+     * Cumulative Spy
+     */
+    cumulative_spy: number | null;
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Periods
+     */
+    periods: Array<BlindPeriod>;
+    /**
+     * Result Sha256
+     */
+    result_sha256: string;
+    /**
+     * Revealed
+     */
+    revealed: boolean;
+    /**
+     * Revealed Through
+     */
+    revealed_through: string | null;
+    /**
+     * Validation Id
+     */
+    validation_id: number;
+};
+
+/**
+ * BlindPeriod
+ */
+export type BlindPeriod = {
+    /**
+     * Capital
+     */
+    capital: number;
+    /**
+     * Capital Spy
+     */
+    capital_spy: number;
+    /**
+     * Rebalance Date
+     */
+    rebalance_date: string;
+    /**
+     * Retorno
+     */
+    retorno: number | null;
+    /**
+     * Retorno Spy
+     */
+    retorno_spy: number | null;
 };
 
 /**
@@ -621,6 +719,40 @@ export type BlindPlan = {
      * Source
      */
     source: string;
+};
+
+/**
+ * BlindRebalanceResult
+ */
+export type BlindRebalanceResult = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * N Positions
+     */
+    n_positions?: number | null;
+    /**
+     * Reason
+     */
+    reason?: string | null;
+    /**
+     * Rebalance Date
+     */
+    rebalance_date?: string | null;
+    /**
+     * Record Hash
+     */
+    record_hash?: string | null;
+    /**
+     * Recorded
+     */
+    recorded: boolean;
+    /**
+     * Validation Id
+     */
+    validation_id: number;
 };
 
 /**
@@ -1095,6 +1227,7 @@ export type ComparisonResponse = {
  */
 export type CreateJobRequest = {
     backtest_options?: BacktestOptions | null;
+    blind?: BlindJobRequest | null;
     decision_policy?: DecisionPolicy | null;
     /**
      * End
@@ -1125,7 +1258,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -7560,6 +7693,156 @@ export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponse
 };
 
 export type BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponse = BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponses[keyof BacktestDiagnosticsApiV1ResearchBacktestsJobIdDiagnosticsGetResponses];
+
+export type BlindExportApiV1ResearchBlindExportsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/blind-exports/{job_id}';
+};
+
+export type BlindExportApiV1ResearchBlindExportsJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BlindExportApiV1ResearchBlindExportsJobIdGetError = BlindExportApiV1ResearchBlindExportsJobIdGetErrors[keyof BlindExportApiV1ResearchBlindExportsJobIdGetErrors];
+
+export type BlindExportApiV1ResearchBlindExportsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BlindExport;
+};
+
+export type BlindExportApiV1ResearchBlindExportsJobIdGetResponse = BlindExportApiV1ResearchBlindExportsJobIdGetResponses[keyof BlindExportApiV1ResearchBlindExportsJobIdGetResponses];
+
+export type BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/blind-performance/{job_id}';
+};
+
+export type BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetError = BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetErrors[keyof BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetErrors];
+
+export type BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BlindPerformance;
+};
+
+export type BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetResponse = BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetResponses[keyof BlindPerformanceApiV1ResearchBlindPerformanceJobIdGetResponses];
+
+export type BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/research/blind-rebalances/{job_id}';
+};
+
+export type BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetError = BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetErrors[keyof BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetErrors];
+
+export type BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BlindRebalanceResult;
+};
+
+export type BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetResponse = BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetResponses[keyof BlindRebalanceApiV1ResearchBlindRebalancesJobIdGetResponses];
 
 export type BlindValidationsApiV1ResearchBlindValidationsGetData = {
     body?: never;

@@ -168,6 +168,18 @@ def synthetic_job(command, app):
         build = build_pbo if command.kind == "experiment_pbo" else build_bootstrap
         return build(SqliteExperiments(Path(app.state.settings.data_dir)), command.experiment_analysis,
                      LegacyExperimentMath())
+    if command.kind in {"blind_rebalance", "blind_performance", "blind_export"}:
+        from gabi import blind_validation
+        from gabi.application.research import blind
+
+        queries, validation_id = app.state.blind_validations, command.blind["validation_id"]
+        if command.kind == "blind_rebalance":  # The ranking rebuild is replaced; the rules are real.
+            return blind.run_rebalance(queries, validation_id, lambda: True, lambda vid: {
+                "rebalance_date": TODAY.isoformat(), "symbols": ["T000", "T001"], "record_hash": "f" * 64})
+        if command.kind == "blind_performance":
+            return blind.run_performance(queries, validation_id, lambda vid, through: blind_validation.get_status(
+                vid, reveal=True, as_of=through))
+        return blind.run_export(queries, validation_id, blind_validation.export_to_research_lab)
     if command.kind == "live_forward_report":
         from gabi.infrastructure.legacy.live_ledger import run_live_report
 

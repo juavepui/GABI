@@ -82,8 +82,16 @@ class LiveReportRequest(BaseModel):
     model_version: str = Field(pattern=r"^[A-Za-z0-9._:-]{1,128}$")
 
 
+class BlindJobRequest(BaseModel):
+    """One blind validation: record today's due rebalance, compute revealed performance or export it."""
+
+    model_config = {"extra": "forbid"}
+
+    validation_id: int = Field(ge=1, le=1_000_000)
+
+
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -102,6 +110,7 @@ class CreateJobRequest(BaseModel):
     outcomes: OutcomesRequest | None = None
     experiment_analysis: ExperimentAnalysisRequest | None = None
     live_report: LiveReportRequest | None = None
+    blind: BlindJobRequest | None = None
 
 
 class JobEvent(BaseModel):

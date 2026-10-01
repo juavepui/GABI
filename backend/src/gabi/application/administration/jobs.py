@@ -8,16 +8,18 @@ from typing import Literal, Protocol
 from gabi.application.errors import QueryError
 from gabi.application.research.backtest_factors import normalize_factor_contrast
 from gabi.application.research.backtests import normalize_backtest, normalize_registration
+from gabi.application.research.blind import normalize_blind_job
 from gabi.application.research.experiment_analysis import normalize_bootstrap, normalize_pbo
 from gabi.application.research.historical_outcomes import normalize_outcomes
 from gabi.application.research.live_ledger import normalize_live_report
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
-                  "live_forward_report"}
+                  "live_forward_report", "blind_rebalance", "blind_performance", "blind_export"}
+BLIND_KINDS = {"blind_rebalance", "blind_performance", "blind_export"}
 DERIVED_SOURCES = {"backtest_factors": ("factor_contrast", {"backtest_v1", "backtest_v2"}),
                    "backtest_register": ("research_log", {"backtest_v1", "backtest_v2"}),
                    "historical_outcomes": ("outcomes", {"historical_ranking"})}
@@ -44,6 +46,7 @@ class JobCommand:
     outcomes: dict | None = None
     experiment_analysis: dict | None = None
     live_report: dict | None = None
+    blind: dict | None = None
 
     def __post_init__(self) -> None:
         if self.kind == "symbols":
@@ -107,6 +110,10 @@ class JobCommand:
             object.__setattr__(self, "live_report", normalize_live_report(self.live_report))
         elif self.live_report is not None:
             raise QueryError("invalid_job", "Este trabajo no admite informe prospectivo.", 422)
+        if self.kind in BLIND_KINDS:
+            object.__setattr__(self, "blind", normalize_blind_job(self.blind))
+        elif self.blind is not None:
+            raise QueryError("invalid_job", "Este trabajo no admite validación ciega.", 422)
         if self.kind != "factor_analysis" and any(value is not None for value in
                                                   (self.factor_months, self.factor_mode, self.factor_max_symbols)):
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de Factor Lab.", 422)

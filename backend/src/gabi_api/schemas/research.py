@@ -1060,3 +1060,39 @@ class BreakSealRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
     reason: str = Field(min_length=1, max_length=2_000)
+
+
+class BlindRebalanceResult(BaseModel):
+    job_id: str
+    validation_id: int
+    recorded: bool
+    reason: str | None = None
+    rebalance_date: str | None = None
+    n_positions: int | None = None
+    record_hash: str | None = None
+
+
+class BlindPeriod(BaseModel):
+    rebalance_date: str
+    retorno: float | None
+    retorno_spy: float | None
+    capital: float
+    capital_spy: float
+
+
+class BlindPerformance(BaseModel):
+    job_id: str
+    result_sha256: str
+    validation_id: int
+    revealed: bool
+    revealed_through: str | None
+    periods: list[BlindPeriod]
+    cumulative: float | None
+    cumulative_spy: float | None
+
+
+class BlindExport(BaseModel):
+    job_id: str
+    validation_id: int
+    revealed_through: str | None
+    experiment_id: int

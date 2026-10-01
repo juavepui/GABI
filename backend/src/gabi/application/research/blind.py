@@ -130,3 +130,58 @@ class BlindCommands:
             raise QueryError("seal_not_locked", "Esta validación ya no está bloqueada.", 409)
         self.writer.break_seal(validation_id, reason)
         return self.queries.item(validation_id)
+
+
+def normalize_blind_job(options: dict | None) -> dict:
+    validation_id = (options or {}).get("validation_id")
+    if set(options or {}) != {"validation_id"} or isinstance(validation_id, bool) or not isinstance(validation_id, int) \
+            or not 1 <= validation_id <= 1_000_000:
+        raise QueryError("invalid_job", "Indica una validación ciega válida.", 422)
+    return {"validation_id": validation_id}
+
+
+def run_rebalance(queries: BlindValidationQueries, validation_id: int, prices_fresh: Callable[[], bool],
+                  record: Callable[[int], dict]) -> dict:
+    """Record today's rebalance only when due, with an intact chain and fresh prices (#46).
+
+    The result never includes positions or prices: they stay sealed in the database."""
+    item = queries.item(validation_id)
+    base = {"kind": "blind_rebalance", "validation_id": validation_id, "recorded": False}
+    if not item["integrity"]["ok"]:
+        return base | {"reason": f"La cadena de hashes se rompe en {item['integrity']['broken_at']}; revisar."}
+    if not item["rebalance_due"]:
+        return base | {"reason": f"El próximo rebalanceo toca el {item['next_rebalance_due']}."}
+    if not prices_fresh():
+        return base | {"reason": "Los precios no son del último cierre del mercado (o falta RSP). "
+                                 "Actualiza los datos antes de registrar."}
+    result = record(validation_id)
+    return base | {"recorded": True, "rebalance_date": result["rebalance_date"],
+                   "n_positions": len(result["symbols"]), "record_hash": result["record_hash"]}
+
+
+def run_performance(queries: BlindValidationQueries, validation_id: int,
+                    status: Callable[[int, str | None], dict]) -> dict:
+    """Performance as the old page showed it once revealed, cut at the last preregistered review."""
+    item = queries.item(validation_id)
+    base = {"kind": "blind_performance", "validation_id": validation_id, "revealed": item["revealed"],
+            "revealed_through": item["revealed_through"], "periods": [], "cumulative": None,
+            "cumulative_spy": None}
+    if not item["revealed"]:
+        return base
+    periods = (status(validation_id, item["revealed_through"]).get("performance") or {}).get("periods") or []
+    capital = capital_spy = 1.0
+    for period in periods:  # Streamlit compounded missing returns as 0 (fillna(0)).
+        capital *= 1 + (period["retorno"] or 0)
+        capital_spy *= 1 + (period["retorno_spy"] or 0)
+        period["capital"], period["capital_spy"] = capital, capital_spy
+    return base | {"periods": periods, "cumulative": capital - 1 if periods else None,
+                   "cumulative_spy": capital_spy - 1 if periods else None}
+
+
+def run_export(queries: BlindValidationQueries, validation_id: int,
+               export: Callable[[int, str | None], int]) -> dict:
+    item = queries.item(validation_id)
+    if not item["revealed"]:
+        raise ValueError("Esta validación sigue bloqueada; no se puede exportar.")
+    return {"kind": "blind_export", "validation_id": validation_id, "revealed_through": item["revealed_through"],
+            "experiment_id": export(validation_id, item["revealed_through"])}

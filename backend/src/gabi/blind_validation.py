@@ -241,11 +241,16 @@ def _mark_to_market_return(symbols: list, entry_prices: dict, as_of_ts: pd.Times
     return float(sum(rets) / len(rets)) if rets else None
 
 
-def get_status(validation_id: int, reveal: bool = False) -> dict:
+def get_status(validation_id: int, reveal: bool = False, as_of: str | None = None) -> dict:
     """Sin rendimiento (ninguna clave de retorno/Sharpe) mientras
     `status == 'locked'` y no se haya llegado a `unlock_date`, salvo que se
     pase `reveal=True` explícitamente -- por defecto la UI nunca lo hace sin
-    que el usuario pase antes por `break_seal_early`."""
+    que el usuario pase antes por `break_seal_early`.
+
+    `as_of` (por defecto hoy) corta el rendimiento en esa fecha: solo cuentan
+    los rebalanceos anteriores y el último periodo se valora a esa fecha. Así
+    una prueba con revisiones preregistradas solo muestra hasta su última
+    revisión alcanzada."""
     with storage.get_connection() as conn:
         _ensure_schema(conn)
         validation = _get_validation_row(conn, validation_id)
@@ -275,14 +280,16 @@ def get_status(validation_id: int, reveal: bool = False) -> dict:
         base["performance"] = None
         return base
 
+    end = as_of or date.today().isoformat()
+    shown = periods if as_of is None else [period for period in periods if period["rebalance_date"] < as_of]
     spy_history = storage.get_prices_multi(["SPY"]).get("SPY", pd.DataFrame())
     period_returns = []
-    for i, period in enumerate(periods):
+    for i, period in enumerate(shown):
         symbols = json.loads(period["symbols_json"])
         entry_prices = json.loads(period["entry_prices_json"])
         rebalance_ts = pd.Timestamp(period["rebalance_date"])
-        as_of_ts = (pd.Timestamp(periods[i + 1]["rebalance_date"]) if i + 1 < len(periods)
-                   else pd.Timestamp(date.today()))
+        as_of_ts = (pd.Timestamp(shown[i + 1]["rebalance_date"]) if i + 1 < len(shown)
+                   else pd.Timestamp(end))
         ret = _mark_to_market_return(symbols, entry_prices, as_of_ts)
         spy_entry = _last_price_on_or_before(spy_history, rebalance_ts)
         spy_ret = (_mark_to_market_return(["SPY"], {"SPY": spy_entry}, as_of_ts)
@@ -313,7 +320,7 @@ def list_validations() -> pd.DataFrame:
         return pd.read_sql_query("SELECT * FROM blind_validations ORDER BY id DESC", conn)
 
 
-def export_to_research_lab(validation_id: int) -> int:
+def export_to_research_lab(validation_id: int, as_of: str | None = None) -> int:
     with storage.get_connection() as conn:
         _ensure_schema(conn)
         validation = _get_validation_row(conn, validation_id)
@@ -321,7 +328,7 @@ def export_to_research_lab(validation_id: int) -> int:
         raise ValueError(f"No existe la validación #{validation_id}.")
     if not _is_revealed(validation):
         raise ValueError("Esta validación sigue bloqueada -- no se puede exportar sin desbloquear antes.")
-    status = get_status(validation_id, reveal=True)
+    status = get_status(validation_id, reveal=True, as_of=as_of)
     perf = status.get("performance")
     returns = None
     if perf and perf["periods"]:
@@ -335,8 +342,9 @@ def export_to_research_lab(validation_id: int) -> int:
         universe="S&P 500 en vivo (hoy)", factors="Value/Quality/Momentum/Risk", weights=weights,
         n_positions=validation["n_positions"], rebalance=f"Every {validation['rebalance_months']}mo",
         cost_model="Sin coste (mark-to-market de precios reales, no una cartera ejecutada)",
-        is_start=validation["start_date"], is_end=date.today().isoformat(),
-        family=f"blind_validation_{validation_id}", n_periods=status["n_periods"], returns=returns,
+        is_start=validation["start_date"], is_end=as_of or date.today().isoformat(),
+        family=f"blind_validation_{validation_id}",
+        n_periods=status["n_periods"] if as_of is None else len(perf["periods"]) if perf else 0, returns=returns,
         notes=f"Blind Forward Validation '{validation['name']}' -- estado {validation['status']}, "
              f"desbloqueo {validation['unlock_date']}.",
         result={"broken_early_reason": validation.get("broken_early_reason")},

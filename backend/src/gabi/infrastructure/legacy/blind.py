@@ -24,3 +24,23 @@ class LegacyBlindWriter:
 
     def break_seal(self, validation_id: int, reason: str) -> None:
         self._module().break_seal_early(validation_id, reason)
+
+
+def run_blind_job(kind: str, data_dir: Path, plans_root: Path, options: dict) -> dict:
+    """Worker only (its LegacyExecutor checks the data directory): rebalance, performance or export."""
+    from datetime import date
+
+    from gabi import blind_validation, periodic_tasks
+    from gabi.application.research import blind
+    from gabi.infrastructure.storage.blind import SqliteBlindStore
+    from gabi.infrastructure.storage.blind_plans import FileBlindPlans
+
+    queries = blind.BlindValidationQueries(SqliteBlindStore(data_dir), date.today, FileBlindPlans(plans_root))
+    validation_id = options["validation_id"]
+    if kind == "blind_rebalance":
+        return blind.run_rebalance(queries, validation_id, periodic_tasks.prices_fresh,
+                                   blind_validation.record_rebalance)
+    if kind == "blind_performance":
+        return blind.run_performance(queries, validation_id, lambda vid, through: blind_validation.get_status(
+            vid, reveal=True, as_of=through))
+    return blind.run_export(queries, validation_id, blind_validation.export_to_research_lab)
