@@ -1503,7 +1503,7 @@ encenderlo.
 
 Cuarta propuesta del usuario, la más grande de las cuatro. Hasta ahora todo el backtesting asumía
 implícitamente que repartir el capital a partes iguales entre las candidatas del ranking ("Equal Weight")
-era "la" forma de construir la cartera. **`backend/src/gabi/portfolio_lab.py`** (página 🧮 Portfolio Lab) compara,
+era "la" forma de construir la cartera. **`backend/src/gabi/portfolio_lab.py`** (Investigación → Portfolio Lab en la interfaz React) compara,
 sin declarar ganador de antemano, seis esquemas sobre las MISMAS candidatas de cada rebalanceo: **Equal
 Weight, Inverse Volatility, Minimum Variance, Score-weighted, Score + risk constrained y Risk Parity** —
 con rentabilidad, volatilidad, drawdown, turnover, coste, concentración (HHI), contribution-to-risk y

@@ -113,7 +113,6 @@ PAGE_SPECS = [
     ("pages/1_Screener.py", "Screener", "📊"),
     ("pages/2_Ficha_Empresa.py", "Ficha de empresa", "🔍"),
     ("pages/6_Comparar_Empresas.py", "Comparar empresas", "⚖️"),
-    ("pages/14_Portfolio_Lab.py", "Portfolio Lab", "🧮"),
     ("pages/9_Decisiones.py", "Decisiones de cartera", "🧭"),
     ("pages/10_Carteras_Simuladas.py", "Carteras simuladas", "🧪"),
     ("pages/5_Panel_Macro.py", "Panel Macro", "🌐"),
@@ -133,10 +132,10 @@ with st.sidebar:
         format_func=lambda m: "🧭 Investor" if m == "INVESTOR" else "🔬 Research",
         help="**Investor**: aplica la hipótesis congelada -- los pesos del "
              "score quedan bloqueados a la hipótesis congelada, sin sliders que tocar por accidente. "
-             "**Research**: acceso completo (Portfolio Lab) -- cualquier "
-             "desviación de la hipótesis congelada queda marcada EXPERIMENTAL, nunca silenciosa. El Ranking "
-             "histórico, sus backtests, Factor Lab, Research Lab y las validaciones ciegas están en la interfaz "
-             "React (Investigación).",
+             "**Research**: permite pesos experimentales -- cualquier desviación de la hipótesis congelada "
+             "queda marcada EXPERIMENTAL, nunca silenciosa. Las herramientas de investigación (Ranking "
+             "histórico y backtests, Factor Lab, Research Lab, validaciones ciegas y Portfolio Lab) están en "
+             "la interfaz React (Investigación).",
         horizontal=True,
     )
     app_mode.set_mode(mode)  # persiste para la próxima vez que se abra la app, no solo esta sesión

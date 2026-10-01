@@ -885,11 +885,6 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/tail_risk_ui.py": [
-    "gabi.portfolio_metrics",
-    "pandas",
-    "streamlit"
-  ],
   "backend/src/gabi/tax_drag.py": [
     "pandas"
   ],
@@ -965,14 +960,6 @@
     "gabi.data_fetch",
     "gabi.sim_portfolios",
     "gabi.storage",
-    "pandas",
-    "pathlib",
-    "streamlit",
-    "sys"
-  ],
-  "app/pages/14_Portfolio_Lab.py": [
-    "gabi.portfolio_lab",
-    "gabi.tail_risk_ui",
     "pandas",
     "pathlib",
     "streamlit",

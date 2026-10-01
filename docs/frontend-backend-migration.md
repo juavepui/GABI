@@ -56,7 +56,7 @@ deben duplicar fórmulas de scoring, costes o riesgo.
 | `11_Research_Lab.py` | Investigación | `research_lab`, `overfitting_audit`, `stats_rigor`, `block_bootstrap`, `factor_stability` | Protocolos, ensayos, artefactos, fallos y exportaciones | F6 · retirada tras verificar equivalencia (#68) |
 | `12_Factor_Lab.py` | Investigación | `factor_lab`, `estimates`, `factor_sector_stability` | Análisis de factores y ventanas sin promoción automática | F6 · retirada tras verificar equivalencia (#68) |
 | `13_Blind_Validation.py` | Investigación | `blind_validation`, `periodic_tasks` | Crear/registrar estudios; sellos y acceso a resultados regulado por protocolo | F6 · retirada tras verificar equivalencia (#68) |
-| `14_Portfolio_Lab.py` | Investigación | `portfolio_lab`, `tail_risk` | Construcciones alternativas y riesgo; experimentos explícitos | F6 |
+| `14_Portfolio_Lab.py` | Investigación | `portfolio_lab`, `tail_risk` | Construcciones alternativas y riesgo; experimentos explícitos | F6 · retirada tras verificar equivalencia (#68) |
 | `15_Salud_Datos.py` | Administración | `data_quality`, `historical_archive`, `identity`, `storage` | Frescura, cobertura, identidad y archivo; auditorías largas como jobs | F4 |
 | `16_Signal_Monitor.py` | Mercado | `signal_monitor`, `filing_tracker`, `events_calendar`, `evaluation` | Cambios de señal/eventos y consultas externas explícitas | F5 |
 

@@ -437,13 +437,29 @@ stress tests, con la base real o heurística de cada escenario. Las pruebas
 comparan el artefacto con la llamada directa al motor sobre datos temporales:
 métricas, curvas, pesos, contribuciones, escenarios, saltados y riesgo de cola.
 
+La página Streamlit `14_Portfolio_Lab.py` se ha retirado tras comprobar la
+equivalencia con la base local. La llamada directa a `run_portfolio_lab` y el
+camino del job coincidieron sin diferencias en métricas, curvas de los seis
+esquemas y del SPY, turnover, costes, pesos, contribuciones al riesgo,
+escenarios y saltados. Casos: muestra de 200 empresas del 2015-05-02 al
+2016-02-02 (2 periodos, 161 s frente a 160 s) y de 100 del 2015-08-02 al
+2016-02-02 (1 periodo, 42 s frente a 42 s), con `gabi.db` sin cambios y red
+bloqueada. Con la base actual el motor salta casi todos los periodos: lo hace en
+cuanto una de las 20 candidatas no tiene precio de entrada, y en 2012-2015
+faltan a menudo tickers desaparecidos (DISCA, DTV, WLP, GGP…). Es la misma regla
+del motor antiguo. Por eso no se comparó el modo `validation` con el universo
+completo, cuyos periodos de prueba se saltaban todos. Se retira también
+`tail_risk_ui`, que ya no tiene consumidores, con su excepción de arquitectura.
+Streamlit ya no tiene páginas exclusivas de Research; el modo sigue gobernando
+los pesos experimentales.
+
 | Recorrido F0 | Estado F6 | Paso pendiente para equivalencia |
 | --- | --- | --- |
 | Ranking histórico | Ranking por fecha con cobertura y tabla completa, preparación de datos, resultado posterior y bloques, backtests V1/V2, registro en Research Lab, riesgo de cola, drag fiscal y Fama-French en React, con artefactos y hash | Completado; página Streamlit retirada. |
 | Research Lab | Catálogo público, lista de experimentos con su entorno, PSR/DSR, riesgo de cola, PBO/CSCV, bootstrap por bloques, alta manual, borrado, auditorías guardadas y registro prospectivo en React | Completado; página Streamlit retirada. |
 | Factor Lab | Motor existente como job y resumen en React, con artefacto completo y hash, quintiles, periodos saltados y glosario; mapa publicado, diagnóstico SIC, cobertura y evaluación explícita de estimaciones en React | Completado; página Streamlit retirada. |
 | Blind Forward Validation | Estado, sellos y planes preregistrados; alta, rebalanceo, ruptura del sello (prohibida con preregistro), rendimiento hasta la última revisión y exportación en React | Completado; página Streamlit retirada. |
-| Portfolio Lab | Job Research con artefacto completo y hash; comparativa, curvas, riesgo de cola, concentración y stress tests en React | Verificar con la base local y retirar la página Streamlit. |
+| Portfolio Lab | Job Research con artefacto completo y hash; comparativa, curvas, riesgo de cola, concentración y stress tests en React | Completado; página Streamlit retirada. |
 
 Antes de cerrar #68 se comprobarán los 17 recorridos del inventario F0, la
 paridad de cálculos y persistencia, la recuperación local y los límites de
