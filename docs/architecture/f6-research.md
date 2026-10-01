@@ -492,3 +492,14 @@ sustituto:
 La retirada de Streamlit (páginas, helpers `_ui`, `ui_helpers` y la dependencia)
 queda pendiente hasta cubrir o descartar explícitamente cada fila.
 
+Durante la auditoría se encontró que el ranking de React fallaba con la base
+local. Cada lote de 16 empresas leía el histórico completo de precios, que tras
+el relleno profundo llega a 16.292 sesiones por empresa, y superaba el
+presupuesto de 160.000 filas. Los indicadores de riesgo usan todo el histórico,
+igual que el Screener antiguo, así que no se acota la ventana. Los lotes se
+forman ahora con un recuento previo por empresa: son consecutivos, de hasta 16
+empresas y sin superar el presupuesto. Con la base local el ranking nuevo
+coincide exactamente con `screener.build_screener_table` en las 503 empresas
+(scores, cobertura, volatilidad, drawdown, PER y RSI). Tarda 42,6 s en frío
+frente a 32,8 s del antiguo, con 137 consultas, y `gabi.db` no cambia.
+

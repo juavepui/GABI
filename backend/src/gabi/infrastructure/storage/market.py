@@ -36,9 +36,29 @@ class SqlInputs:
             if values and values[0][0] is not None:
                 self.risk_free_rate = float(values[0][0]) / 100
 
+    def _spans(self) -> Iterator[tuple[int, int]]:
+        """Consecutive universe slices within the symbol and price-row budgets.
+
+        Full histories are read (the risk metrics use all of them, as the Streamlit screener did); a
+        deep backfill only makes the slices smaller instead of exceeding the row budget."""
+        settings = self.owner.settings
+        counts = self.owner.price_counts(tuple(self.universe["symbol"]))
+        start, rows = 0, 0
+        for position, symbol in enumerate(self.universe["symbol"]):
+            size = counts.get(str(symbol), 0)
+            if size > settings.max_price_rows_per_batch:
+                raise QueryError("resource_limit", "El histórico de una empresa supera el presupuesto de lectura.")
+            if position > start and (position - start >= settings.batch_size
+                                     or rows + size > settings.max_price_rows_per_batch):
+                yield start, position
+                start, rows = position, 0
+            rows += size
+        if start < len(self.universe):
+            yield start, len(self.universe)
+
     def batches(self) -> Iterator[MarketBatch]:
-        for start in range(0, len(self.universe), self.owner.settings.batch_size):
-            frame = self.universe.iloc[start:start + self.owner.settings.batch_size]
+        for start, end in self._spans():
+            frame = self.universe.iloc[start:end]
             symbols = tuple(frame["symbol"])
             yield MarketBatch(frame, self.owner.fundamentals(symbols),
                               self.owner.prices(symbols, self.owner.settings.max_price_rows_per_batch),
@@ -198,6 +218,18 @@ class ReadOnlyMarket:
                 raise
             except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
                 raise QueryError("data_read_error", "No se pueden consultar los datos locales cacheados.") from exc
+
+    def price_counts(self, symbols: tuple[str, ...]) -> dict[str, int]:
+        if not symbols or "prices" not in self.tables:
+            return {}
+        counts: dict[str, int] = {}
+        for start in range(0, len(symbols), 500):  # Below SQLite's host-parameter limit.
+            chunk = symbols[start:start + 500]
+            placeholders = ",".join("?" * len(chunk))
+            counts.update((str(symbol), int(count)) for symbol, count in self.rows(
+                f"SELECT symbol,COUNT(*) FROM prices WHERE symbol IN ({placeholders}) GROUP BY symbol",
+                chunk, len(chunk)))
+        return counts
 
     def prices(self, symbols: tuple[str, ...], maximum: int) -> dict[str, pd.DataFrame]:
         if not symbols or "prices" not in self.tables:

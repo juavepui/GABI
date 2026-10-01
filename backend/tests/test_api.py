@@ -313,6 +313,21 @@ def test_limits_fail_without_truncating_financial_metrics(api):
     assert not repository.cache
 
 
+def test_deep_histories_make_smaller_batches_with_identical_rankings(api):
+    """A full-history backfill (16k sessions per firm locally) must not exceed the row budget."""
+    client, repository, _ = api
+    expected = client.get("/api/v1/ranking", params={"limit": 100}).json()["items"]
+    repository.cache.clear()
+    symbols = tuple(row[0] for row in repository.rows("SELECT DISTINCT symbol FROM prices"))
+    longest = max(repository.price_counts(symbols).values())
+    repository.settings = replace(repository.settings, max_price_rows_per_batch=longest * 2)
+    queries = repository.query_count
+    response = client.get("/api/v1/ranking", params={"limit": 100})
+    assert response.status_code == 200
+    assert response.json()["items"] == expected
+    assert repository.query_count - queries > len(expected) // 2  # Batches of at most two firms.
+
+
 def test_stale_empty_and_corrupt_are_distinct(api):
     client, repository, root = api
     repository.close()
