@@ -3609,6 +3609,99 @@ export type HistoricalTableRow = {
 };
 
 /**
+ * HomeLastUpdate
+ */
+export type HomeLastUpdate = {
+    /**
+     * Finished At
+     */
+    finished_at: string | null;
+    /**
+     * Kind
+     */
+    kind: string;
+};
+
+/**
+ * HomeResponse
+ *
+ * The home page. `ranking_ready=False`: the frozen ranking is not cached yet (ask again with compute).
+ */
+export type HomeResponse = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    data: DataResponse | null;
+    last_update: HomeLastUpdate | null;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Ranking Ready
+     */
+    ranking_ready: boolean;
+    steps: HomeSteps;
+    /**
+     * Target
+     */
+    target: Array<HomeTarget>;
+    /**
+     * Target Positions
+     */
+    target_positions: number;
+};
+
+/**
+ * HomeSteps
+ */
+export type HomeSteps = {
+    /**
+     * Data Loaded
+     */
+    data_loaded: boolean | null;
+    /**
+     * Fred Key
+     */
+    fred_key: boolean;
+    /**
+     * Universe
+     */
+    universe: boolean;
+    /**
+     * Updated
+     */
+    updated: boolean;
+};
+
+/**
+ * HomeTarget
+ */
+export type HomeTarget = {
+    /**
+     * Composite Score
+     */
+    composite_score: number;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Weight Pct
+     */
+    weight_pct: number;
+};
+
+/**
  * Identity
  */
 export type Identity = {
@@ -7782,6 +7875,56 @@ export type HealthApiV1HealthGetResponses = {
 };
 
 export type HealthApiV1HealthGetResponse = HealthApiV1HealthGetResponses[keyof HealthApiV1HealthGetResponses];
+
+export type HomeApiV1HomeGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Compute
+         */
+        compute?: boolean;
+    };
+    url: '/api/v1/home';
+};
+
+export type HomeApiV1HomeGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HomeApiV1HomeGetError = HomeApiV1HomeGetErrors[keyof HomeApiV1HomeGetErrors];
+
+export type HomeApiV1HomeGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HomeResponse;
+};
+
+export type HomeApiV1HomeGetResponse = HomeApiV1HomeGetResponses[keyof HomeApiV1HomeGetResponses];
 
 export type ListJobsApiV1JobsGetData = {
     body?: never;

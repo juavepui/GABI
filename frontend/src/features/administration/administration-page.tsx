@@ -19,26 +19,8 @@ import { DataUpdate } from './data-update';
 import { KeyEditor } from './key-editor';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { ProgressBar } from '@/shared/ui/progress-bar';
+import { JOB_STATES, jobName } from '@/shared/lib/jobs';
 
-const names: Record<string, string> = {
-  refresh: 'Actualizar datos del mercado',
-  symbols: 'Descargar símbolos indicados',
-  quality: 'Auditar cobertura local',
-  backtest: 'Backtest exploratorio',
-  maintenance: 'Mantenimiento prospectivo',
-  tiingo: 'Descarga histórica Tiingo',
-  sim_result: 'Resultado de cartera simulada',
-  data_update: 'Actualizar datos (Yahoo y SEC)',
-  company_sync: 'Sincronizar datos de una empresa',
-  data_health: 'Comprobar calidad de los datos',
-};
-const states: Record<string, string> = {
-  queued: 'En espera',
-  running: 'En curso',
-  succeeded: 'Completado',
-  failed: 'Fallido',
-  cancelled: 'Cancelado',
-};
 const sourceNames: Record<string, string> = {
   prices: 'Precios',
   fundamentals: 'Fundamentales',
@@ -62,17 +44,17 @@ function JobRow({
     refetchInterval: activity && job.status === 'running' ? 3000 : false,
   });
   return (
-    <li className="rounded-lg border p-4" aria-label={names[job.kind] ?? job.kind}>
+    <li className="rounded-lg border p-4" aria-label={jobName(job.kind)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-medium">{names[job.kind] ?? job.kind}</p>
+          <p className="font-medium">{jobName(job.kind)}</p>
           <p className="text-xs text-muted-foreground">
             {new Date(job.created_at).toLocaleString('es-ES')} ·{' '}
             {job.origin === 'scheduler' ? 'Programador' : 'Manual'}
           </p>
         </div>
         <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
-          {states[job.status] ?? job.status}
+          {JOB_STATES[job.status] ?? job.status}
         </span>
       </div>
       {['queued', 'running'].includes(job.status) ? (

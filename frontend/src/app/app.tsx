@@ -1,14 +1,6 @@
 import { useEffect, useRef } from 'react';
-import {
-  BrowserRouter,
-  Navigate,
-  NavLink,
-  Route,
-  Routes,
-  useLocation,
-  Link,
-} from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, NavLink, Route, Routes, useLocation, Link } from 'react-router-dom';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   ChartNoAxesCombined,
   BriefcaseBusiness,
@@ -16,6 +8,7 @@ import {
   Settings2,
   HardDrive,
   Leaf,
+  House,
 } from 'lucide-react';
 import {
   MarketPage,
@@ -41,9 +34,26 @@ import {
 } from '@/features/research/index';
 import { AdministrationPage, DataHealthPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
-import { HomeNotices } from './home-notices';
+import { HomePage } from './home-page';
+import { JobsIndicator } from './jobs-indicator';
+import { rememberLaunch } from './job-launches';
 
-const client = new QueryClient({
+// Any mutation that returns a job (it was queued or cancelled) refreshes the job lists at once,
+// so the header indicator shows it without waiting for its next poll.
+const isJob = (value: unknown) =>
+  typeof value === 'object' &&
+  value !== null &&
+  'kind' in value &&
+  'status' in value &&
+  'phase' in value;
+const client: QueryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onSuccess: (data) => {
+      if (!isJob(data)) return;
+      rememberLaunch(data);
+      void client.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 30_000,
@@ -54,6 +64,7 @@ const client = new QueryClient({
   },
 });
 const navigation = [
+  { path: '/', label: 'Inicio', icon: House },
   { path: '/cartera', label: 'Cartera', icon: BriefcaseBusiness },
   { path: '/mercado', label: 'Mercado', icon: ChartNoAxesCombined },
   { path: '/investigacion', label: 'Investigación', icon: FlaskConical },
@@ -80,8 +91,8 @@ function Shell() {
       </a>
       <aside className="bg-primary text-primary-foreground lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-60 lg:flex-col">
         <Link
-          to="/mercado"
-          aria-label="GABI, inicio de Mercado"
+          to="/"
+          aria-label="GABI, inicio"
           className="flex items-center gap-3 px-5 py-5 lg:px-7 lg:py-8"
         >
           <span className="flex size-10 items-center justify-center rounded-xl bg-white/10">
@@ -105,6 +116,7 @@ function Shell() {
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.path === '/'}
               className={({ isActive }) =>
                 'flex shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ' +
                 (isActive
@@ -132,13 +144,17 @@ function Shell() {
       <header className="flex h-16 items-center justify-between gap-3 border-b bg-card px-5 lg:px-9">
         <p className="text-xs text-muted-foreground">
           GABI <span className="mx-2 text-border">/</span>{' '}
-          {navigation.find((item) => location.pathname.startsWith(item.path))?.label ??
-            'Navegación'}
+          {navigation.find((item) =>
+            item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path),
+          )?.label ?? 'Navegación'}
         </p>
-        <span className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-[11px] font-medium">
-          <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
-          Entorno local
-        </span>
+        <div className="flex items-center gap-2">
+          <JobsIndicator />
+          <span className="hidden items-center gap-2 rounded-full border bg-background px-3 py-1 text-[11px] font-medium sm:inline-flex">
+            <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
+            Entorno local
+          </span>
+        </div>
       </header>
       <main
         id="contenido"
@@ -146,9 +162,8 @@ function Shell() {
         tabIndex={-1}
         className="mx-auto max-w-[1480px] px-4 py-7 focus:outline-none sm:px-6 lg:px-9 lg:py-9"
       >
-        {location.pathname === '/mercado' && <HomeNotices />}
         <Routes>
-          <Route path="/" element={<Navigate to="/mercado" replace />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/mercado" element={<MarketPage />} />
           <Route path="/mercado/empresas/:symbol" element={<CompanyPage />} />
           <Route path="/mercado/comparar" element={<ComparisonPage />} />

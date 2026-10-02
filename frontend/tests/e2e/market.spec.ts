@@ -275,3 +275,24 @@ test('un sistema en modo oscuro no oscurece los avisos del tema claro', async ({
   await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(247, 248, 245)');
   await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
 });
+
+test('la portada resume datos, cartera objetivo y primeros pasos sin descargar nada', async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.method() + ' ' + request.url()));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Tu GABI hoy' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Inicio', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  const data = page.getByRole('region', { name: 'Estado de los datos' });
+  await expect(data.getByText('Empresas puntuadas')).toBeVisible({ timeout: 30_000 });
+  const target = page.getByRole('region', { name: 'Cartera objetivo de hoy' });
+  await expect(target.getByRole('listitem').first()).toBeVisible();
+  // The home page itself only reads: no POST (no job, no download).
+  expect(requests.filter((line) => line.startsWith('POST'))).toEqual([]);
+  await target.getByRole('link', { name: 'Ver la cartera y repartir capital' }).click();
+  await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
+});

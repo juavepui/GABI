@@ -182,14 +182,33 @@ class ReadOnlyMarket:
             raise ValueError("Invalid or duplicate ticker")
         return frame
 
+    def _key(self, revision: str, weights: dict[str, float], today: date) -> tuple:
+        return (revision, today.isoformat(), tuple(sorted(weights.items())), self.benchmark_symbol,
+                self.risk_free_rate, self.policy.frozen_id)
+
+    def cached_ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot | None:
+        """The cached snapshot while it is fresh. Never computes; None while another request computes it."""
+        if not self.lock.acquire(blocking=False):
+            return None
+        try:
+            self.connect()
+            key = self._key(self.token(self.small_file("sp500_constituents.csv")), weights, today)
+            existing = self.cache.get(key)
+            if existing and monotonic() - existing[0] < self.settings.cache_seconds:
+                return replace(existing[1], cache_hit=True)
+            return None
+        except (OSError, ValueError, sqlite3.Error, QueryError):
+            return None
+        finally:
+            self.lock.release()
+
     def ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot:
         with self.lock:
             try:
                 self.connect()
                 raw = self.small_file("sp500_constituents.csv")
                 revision = self.token(raw)
-                key = (revision, today.isoformat(), tuple(sorted(weights.items())), self.benchmark_symbol,
-                       self.risk_free_rate, self.policy.frozen_id)
+                key = self._key(revision, weights, today)
                 existing = self.cache.get(key)
                 if existing and monotonic() - existing[0] < self.settings.cache_seconds:
                     self.cache.move_to_end(key)

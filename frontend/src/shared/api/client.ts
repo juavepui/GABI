@@ -1,4 +1,5 @@
 import type {
+  HomeResponse,
   TrialDetail,
   AnalysisPromptResponse,
   CompanyInsiders,
@@ -403,6 +404,9 @@ export function getLocalSettings(signal?: AbortSignal): Promise<LocalSettingsRes
 }
 export function getMetricGlossary(signal?: AbortSignal): Promise<MetricGlossary> {
   return get('/api/v1/learn/metrics', signal);
+}
+export function getHome(compute: boolean, signal?: AbortSignal): Promise<HomeResponse> {
+  return get('/api/v1/home' + (compute ? '?compute=true' : ''), signal);
 }
 export function getNotices(signal?: AbortSignal): Promise<NoticesResponse> {
   return get('/api/v1/notices', signal);

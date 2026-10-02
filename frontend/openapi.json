@@ -6948,6 +6948,176 @@
         "title": "HistoricalTableRow",
         "type": "object"
       },
+      "HomeLastUpdate": {
+        "properties": {
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "finished_at"
+        ],
+        "title": "HomeLastUpdate",
+        "type": "object"
+      },
+      "HomeResponse": {
+        "description": "The home page. `ranking_ready=False`: the frozen ranking is not cached yet (ask again with compute).",
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_update": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeLastUpdate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "ranking_ready": {
+            "title": "Ranking Ready",
+            "type": "boolean"
+          },
+          "steps": {
+            "$ref": "#/components/schemas/HomeSteps"
+          },
+          "target": {
+            "items": {
+              "$ref": "#/components/schemas/HomeTarget"
+            },
+            "title": "Target",
+            "type": "array"
+          },
+          "target_positions": {
+            "title": "Target Positions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "as_of",
+          "model_id",
+          "ranking_ready",
+          "data",
+          "target",
+          "target_positions",
+          "last_update",
+          "steps"
+        ],
+        "title": "HomeResponse",
+        "type": "object"
+      },
+      "HomeSteps": {
+        "properties": {
+          "data_loaded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Loaded"
+          },
+          "fred_key": {
+            "title": "Fred Key",
+            "type": "boolean"
+          },
+          "universe": {
+            "title": "Universe",
+            "type": "boolean"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "fred_key",
+          "universe",
+          "data_loaded",
+          "updated"
+        ],
+        "title": "HomeSteps",
+        "type": "object"
+      },
+      "HomeTarget": {
+        "properties": {
+          "composite_score": {
+            "title": "Composite Score",
+            "type": "number"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "weight_pct": {
+            "title": "Weight Pct",
+            "type": "number"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "sector",
+          "composite_score",
+          "weight_pct"
+        ],
+        "title": "HomeTarget",
+        "type": "object"
+      },
       "Identity": {
         "additionalProperties": false,
         "properties": {
@@ -14838,6 +15008,100 @@
           }
         },
         "summary": "Health",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/home": {
+      "get": {
+        "description": "Read-only. Without `compute` it never builds the ranking; with it, it builds the frozen one if needed.",
+        "operationId": "home_api_v1_home_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "compute",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Compute",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Home",
         "tags": [
           "administration"
         ]

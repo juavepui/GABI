@@ -5,8 +5,10 @@ from fastapi import Path as ApiPath
 from pydantic import BaseModel, Field
 
 from gabi.application.administration.data_update import KeyCommands
+from gabi.application.administration.home import HomeQueries
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.administration.model import ModelCommands
+from gabi_api.schemas.home import HomeResponse
 from gabi_api.schemas.jobs import CreateJobRequest, JobListResponse, JobResponse, LocalSettingsResponse, NoticesResponse
 from gabi_api.schemas.market import ModelResponse, model_response
 
@@ -60,6 +62,13 @@ class KeyRequest(BaseModel):
 
 def key_commands(request: Request) -> KeyCommands:
     return request.app.state.key_commands
+
+
+@router.get("/home", response_model=HomeResponse)
+def home(request: Request, compute: bool = False) -> dict:
+    """Read-only. Without `compute` it never builds the ranking; with it, it builds the frozen one if needed."""
+    queries: HomeQueries = request.app.state.home
+    return queries.summary(compute)
 
 
 @router.get("/notices", response_model=NoticesResponse)

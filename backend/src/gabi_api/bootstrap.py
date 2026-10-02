@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from gabi.application.administration.data_update import KeyCommands
+from gabi.application.administration.home import HomeQueries
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
@@ -204,6 +205,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.portfolio_lab = PortfolioLabQueries(jobs, LegacyBacktestMath())
     app.state.settings = settings
     app.state.model_commands = model_commands
+    app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
+                                 lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today)
     app.state.notices = Notices(blind_validations, SmallmidFiles(settings.data_dir, settings.data_dir.parent,
                                                                smallmid_freeze_deadline), today)
     app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),

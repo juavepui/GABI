@@ -113,3 +113,24 @@ test('calidad de los datos: universo, procedencia, identidades y archivo desde 2
     page.getByRole('table', { name: 'Cobertura y frescura por fuente' }).getByText('SEC EDGAR'),
   ).toBeVisible({ timeout: 15_000 });
 });
+
+test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra pantalla', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  const update = page.getByRole('region', { name: 'Actualizar datos' });
+  await update.getByRole('button', { name: 'Actualizar datos' }).click();
+  // Leave the page that launched it: the header keeps track of the job.
+  await page.getByRole('link', { name: 'Mercado', exact: true }).first().click();
+  const toast = page.getByRole('status', { name: 'Avisos de trabajos' });
+  await expect(toast.getByText('Actualizar datos (Yahoo y SEC)')).toBeVisible({ timeout: 15_000 });
+  await expect(toast.getByText(/Completado/)).toBeVisible();
+  await page.getByRole('button', { name: /^Trabajos:/ }).click();
+  const panel = page.getByRole('region', { name: 'Trabajos locales' });
+  await expect(panel.getByText('Recientes')).toBeVisible();
+  await expect(panel.getByText('Actualizar datos (Yahoo y SEC)').first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+  await toast.getByRole('button', { name: 'Cerrar aviso' }).first().click();
+  await expect(toast.getByText('Actualizar datos (Yahoo y SEC)')).toHaveCount(0);
+});

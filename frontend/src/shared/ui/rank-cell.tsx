@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 
 /** Background for a ranked cell: 0 = worst (red) .. 1 = best (green); the position comes from the backend. */
-export function rankStyle(position: number | null | undefined) {
+function rankStyle(position: number | null | undefined) {
   if (position == null) return undefined;
   return { backgroundColor: `hsl(${Math.round(position * 120)}, 70%, 87%)` };
 }
 
-export function rankTitle(position: number | null | undefined, scope: string) {
+function rankTitle(position: number | null | undefined, scope: string) {
   if (position === 1) return 'El mejor ' + scope;
   if (position === 0) return 'El peor ' + scope;
   return undefined;
