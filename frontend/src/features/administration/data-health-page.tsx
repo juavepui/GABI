@@ -9,6 +9,7 @@ import { ErrorState } from '@/shared/ui/resource-state';
 import { DateField, HealthStatus, RunButton, Section, Table } from './data-health';
 import { age, pct, useHealthJob, useToday, type Row } from './data-health-job';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Term } from '@/shared/ui/term';
 
 type SourceSummary = {
   label: string;
@@ -130,7 +131,9 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
           )}
           <dl className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-md border p-3">
-              <dt className="text-xs text-muted-foreground">CIK resueltos (SEC)</dt>
+              <dt className="text-xs text-muted-foreground">
+                <Term k="cik">CIK</Term> resueltos (SEC)
+              </dt>
               <dd className="text-lg font-semibold">
                 {data.summary.cik
                   ? `${pct(data.summary.cik.pct)} (${data.summary.cik.resolved}/${data.summary.cik.total})`

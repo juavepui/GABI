@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMetricGlossary } from '@/shared/api/client';
 import { ErrorState } from '@/shared/ui/resource-state';
@@ -53,6 +53,7 @@ const TABS = [
   ['estrategias', 'Estrategias de inversión'],
   ['psicologia', 'Psicología de la inversión'],
   ['gabi', 'Cómo piensa GABI'],
+  ['glosario', 'Glosario'],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -377,8 +378,48 @@ function HowGabiThinks() {
   );
 }
 
+function Glossary() {
+  const glossary = useQuery({
+    queryKey: ['learn', 'metrics'],
+    queryFn: ({ signal }) => getMetricGlossary(signal),
+    staleTime: Infinity,
+  });
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (glossary.data && hash) document.getElementById(hash.slice(1))?.scrollIntoView();
+  }, [glossary.data, hash]);
+  if (glossary.isError)
+    return <ErrorState error={glossary.error} retry={() => void glossary.refetch()} />;
+  return (
+    <div className="space-y-3">
+      <p className="text-sm">
+        Los términos técnicos que aparecen en GABI, con la misma definición que muestra el icono ⓘ
+        junto a cada uno.
+      </p>
+      <dl className="divide-y rounded-xl border bg-card">
+        {glossary.data?.glossary.map((entry) => (
+          <div
+            key={entry.key}
+            id={'termino-' + entry.key}
+            className={'scroll-mt-24 p-4 ' + (hash === '#termino-' + entry.key ? 'bg-accent' : '')}
+          >
+            <dt className="font-semibold">{entry.term}</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {entry.definition}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export function LearnPage() {
-  const [tab, setTab] = useState<Tab>('inicio');
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('tab');
+  const tab: Tab = TABS.some(([id]) => id === requested) ? (requested as Tab) : 'inicio';
+  const setTab = (next: Tab) =>
+    setParams(next === 'inicio' ? {} : { tab: next }, { replace: true });
   return (
     <div className="space-y-6">
       <PageHeader
@@ -418,6 +459,7 @@ export function LearnPage() {
       >
         {tab === 'inicio' && <Start />}
         {tab === 'terminos' && <Terms />}
+        {tab === 'glosario' && <Glossary />}
         {tab === 'estrategias' && <Strategies />}
         {tab === 'psicologia' && <Psychology />}
         {tab === 'gabi' && <HowGabiThinks />}

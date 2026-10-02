@@ -14,6 +14,7 @@ import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
+import { Term } from '@/shared/ui/term';
 
 const PAGE_SIZE = 50;
 
@@ -131,6 +132,12 @@ function Environment({ id }: { id: number }) {
   );
 }
 
+const COLUMN_TERMS: Record<string, string> = {
+  Sharpe: 'sharpe_ratio',
+  Sortino: 'sortino_ratio',
+  'Máx. drawdown': 'max_drawdown',
+};
+
 export function ResearchLabPage() {
   const [params, setParams] = useSearchParams();
   const family = params.get('family') ?? '';
@@ -159,6 +166,7 @@ export function ResearchLabPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
+        eyebrow="Registro de experimentos"
         title="Research Lab"
         description={
           <>
@@ -250,7 +258,7 @@ export function ResearchLabPage() {
                       'Notas',
                     ].map((label) => (
                       <th key={label} className="px-3 py-2 font-medium">
-                        {label}
+                        {COLUMN_TERMS[label] ? <Term k={COLUMN_TERMS[label]}>{label}</Term> : label}
                       </th>
                     ))}
                   </tr>

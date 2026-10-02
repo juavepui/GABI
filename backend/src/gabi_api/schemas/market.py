@@ -219,11 +219,18 @@ class GlossaryBlock(BaseModel):
     metrics: list[GlossaryMetric]
 
 
+class GlossaryTerm(BaseModel):
+    key: str
+    term: str
+    definition: str
+
+
 class MetricGlossary(BaseModel):
     """Plain-language definitions served by the backend, the single source of metric meaning."""
 
     blocks: list[GlossaryBlock]
     terms: dict[str, str]
+    glossary: list[GlossaryTerm]
 
 
 class AnalysisPromptResponse(BaseModel):

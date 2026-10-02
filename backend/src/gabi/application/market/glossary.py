@@ -1,6 +1,7 @@
 """The Aprender metric glossary: each block's metrics, whether they score, and their plain-language help."""
 
 from gabi.domain.market.metric_info import METRIC_INFO
+from gabi.domain.research.glossary import glossary
 
 BLOCK_LABELS = {"value": "Value", "quality": "Quality", "momentum": "Momentum", "risk": "Risk"}
 
@@ -16,3 +17,8 @@ def metric_glossary(blocks: dict[str, list[str]], scored: dict[str, list[str]]) 
 def terms(keys: tuple[str, ...] = ("pe", "ev_ebitda", "volatility", "max_drawdown")) -> dict[str, str]:
     """Glossary terms whose definition is the metric help itself (PER, EV/EBITDA, volatility, drawdown)."""
     return {key: METRIC_INFO[key]["help"] for key in keys}
+
+
+def technical_terms() -> list[dict[str, str]]:
+    """Research statistics, data concepts and the main metrics, for the ⓘ hints and Aprender."""
+    return glossary(METRIC_INFO)

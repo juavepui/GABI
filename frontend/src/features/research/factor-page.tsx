@@ -10,6 +10,7 @@ import { EstimateCaptures } from './estimate-captures';
 import { FactorGlossary, FactorQuantiles, SkippedPeriods } from './factor-details';
 import { formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Term } from '@/shared/ui/term';
 
 const format = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
@@ -60,6 +61,7 @@ export function FactorPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
+        eyebrow="¿El score ordena los retornos futuros?"
         title="Factor Lab"
         description={
           <>
@@ -219,7 +221,9 @@ export function FactorPage() {
                   <tr className="border-b text-xs text-muted-foreground">
                     <th className="py-2">Factor</th>
                     <th>Horizonte</th>
-                    <th>IC medio</th>
+                    <th>
+                      <Term k="rank_ic">IC medio</Term>
+                    </th>
                     <th>ICIR</th>
                     <th>Q máximo − Q1</th>
                     <th>Periodos</th>

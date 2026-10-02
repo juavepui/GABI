@@ -127,6 +127,7 @@ export function SignalPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/mercado', label: 'Mercado' }}
+        eyebrow="Seguimiento de cambios del ranking"
         title="Signal Monitor"
         description={
           <>

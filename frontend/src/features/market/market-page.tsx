@@ -24,6 +24,7 @@ import { GitCompareArrows, Globe, Radar } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
+import { Term } from '@/shared/ui/term';
 
 /** 0-100 points (score, coverage or a sector percentile, 100 = best) as a 0..1 colour position. */
 const score = (value: number | null | undefined) => (value == null ? null : value / 100);
@@ -413,9 +414,10 @@ export function MarketPage() {
                 </DataTable>
                 <div className="px-5 pb-1">
                   <RankLegend>
-                    Score y cobertura ponderada de 0 (rojo) a 100 (verde). El PER se colorea por su
-                    percentil dentro del sector: verde es un PER bajo frente a sus comparables, no
-                    un PER bajo en absoluto.
+                    <Term k="composite_score">Score</Term> y{' '}
+                    <Term k="confidence">cobertura ponderada</Term> de 0 (rojo) a 100 (verde). El
+                    PER se colorea por su <Term k="percentile">percentil dentro del sector</Term>:
+                    verde es un PER bajo frente a sus comparables, no un PER bajo en absoluto.
                   </RankLegend>
                 </div>
               </>

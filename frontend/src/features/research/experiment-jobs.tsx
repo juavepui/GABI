@@ -9,6 +9,7 @@ import { BlockBootstrapResult } from './block-bootstrap-view';
 import { useJob } from '@/shared/api/use-job';
 import { ProgressBar } from '@/shared/ui/progress-bar';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { Term } from '@/shared/ui/term';
 
 const OPTIONS_LIMIT = 200;
 
@@ -111,7 +112,9 @@ export function PboPanel() {
   const options = experiments.data ?? [];
   return (
     <section className="rounded-xl border bg-card p-5" aria-label="PBO CSCV">
-      <h2 className="text-lg font-semibold">PBO / CSCV (Probability of Backtest Overfitting)</h2>
+      <h2 className="text-lg font-semibold">
+        <Term k="pbo">Probabilidad de sobreajuste (PBO)</Term>
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Elige la mejor variante dentro de una muestra y comprueba si esa elección se sostiene fuera
         de ella. Requiere retornos observados sobre las mismas fechas de al menos 2 experimentos:
@@ -207,7 +210,9 @@ export function BootstrapPanel() {
   );
   return (
     <section className="rounded-xl border bg-card p-5" aria-label="Incertidumbre por bloques">
-      <h2 className="text-lg font-semibold">Incertidumbre por bloques temporales</h2>
+      <h2 className="text-lg font-semibold">
+        <Term k="block_bootstrap">Incertidumbre por bloques temporales</Term>
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Distribuciones de rentabilidad, riesgo y exceso frente a un benchmark sobre las mismas
         fechas. Método y sensibilidad fijados de antemano; no se optimizan pesos ni se repiten

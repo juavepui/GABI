@@ -21,7 +21,7 @@ from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
-from gabi.application.market.glossary import metric_glossary
+from gabi.application.market.glossary import metric_glossary, technical_terms
 from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
@@ -162,7 +162,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.market = market
     app.state.metric_directions = metric_directions()
     app.state.analysis_prompt = AnalysisPrompt(market, analysis_prompt)
-    app.state.metric_glossary = {"blocks": metric_glossary(*metric_blocks()), "terms": glossary_terms()}
+    app.state.metric_glossary = {"blocks": metric_glossary(*metric_blocks()), "terms": glossary_terms(),
+                                 "glossary": technical_terms()}
     app.state.evidence = EvidenceQueries(market, LegacyEvidence(), LegacyRankingQuality())
     app.state.jobs = jobs
     app.state.portfolio = portfolio

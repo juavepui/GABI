@@ -14,6 +14,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { Benchmark, Stability } from './backtest-factors';
 import { BlockBootstrapResult } from './block-bootstrap-view';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { Term } from '@/shared/ui/term';
 
 const pct = (value: number | null | undefined, digits = 1) =>
   formatPercent(value, { digits, fixed: true });
@@ -48,11 +49,15 @@ function Overfitting() {
     <div role="region" aria-label="Auditoría de sobreajuste" className="space-y-3">
       <dl className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg border p-3">
-          <dt className="text-xs text-muted-foreground">PBO · variantes a coste fijo</dt>
+          <dt className="text-xs text-muted-foreground">
+            <Term k="pbo">PBO</Term> · variantes a coste fijo
+          </dt>
           <dd className="text-xl font-semibold">{pct(data.pbo)}</dd>
         </div>
         <div className="rounded-lg border p-3">
-          <dt className="text-xs text-muted-foreground">DSR · Top-20 trimestral</dt>
+          <dt className="text-xs text-muted-foreground">
+            <Term k="dsr">DSR</Term> · Top-20 trimestral
+          </dt>
           <dd className="text-xl font-semibold">{pct(data.dsr)}</dd>
         </div>
         <div className="rounded-lg border p-3">

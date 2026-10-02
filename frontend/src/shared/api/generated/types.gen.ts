@@ -3280,6 +3280,24 @@ export type GlossaryMetric = {
 };
 
 /**
+ * GlossaryTerm
+ */
+export type GlossaryTerm = {
+    /**
+     * Definition
+     */
+    definition: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Term
+     */
+    term: string;
+};
+
+/**
  * HealthResponse
  */
 export type HealthResponse = {
@@ -4562,6 +4580,10 @@ export type MetricGlossary = {
      * Blocks
      */
     blocks: Array<GlossaryBlock>;
+    /**
+     * Glossary
+     */
+    glossary: Array<GlossaryTerm>;
     /**
      * Terms
      */

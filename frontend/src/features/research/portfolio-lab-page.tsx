@@ -11,6 +11,7 @@ import { TailRiskTable } from './tail-risk-table';
 import { useJob } from '@/shared/api/use-job';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Term } from '@/shared/ui/term';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -92,7 +93,9 @@ function Result({ data }: { data: PortfolioLabPreview }) {
                 <th>Máx. drawdown</th>
                 <th>Turnover medio (%)</th>
                 <th>Coste total</th>
-                <th>HHI</th>
+                <th>
+                  <Term k="hhi">HHI</Term>
+                </th>
                 <th>Top-3 contribución al riesgo</th>
                 <th>Tracking error vs SPY</th>
               </tr>
@@ -281,6 +284,7 @@ export function PortfolioLabPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
+        eyebrow="Comparar formas de repartir el capital"
         title="Portfolio Lab"
         description={
           <>

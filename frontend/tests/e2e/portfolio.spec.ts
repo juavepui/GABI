@@ -140,3 +140,23 @@ test('aprender: tutorial completo con definiciones de métricas del backend', as
   await expect(page.getByRole('table', { name: 'Motor V1 frente a V2' })).toContainText('0,111');
   await expect(page.getByText(/Streamlit/)).toHaveCount(0);
 });
+
+test('el icono ⓘ explica un término y lleva al glosario de Aprender', async ({ page }) => {
+  await page.goto('/mercado');
+  const hint = page.getByRole('button', { name: 'Qué es percentil dentro del sector' });
+  await hint.click();
+  const tip = page.locator('[data-term-tip]');
+  await expect(tip).toContainText('Percentil sectorial');
+  await expect(tip).toContainText('frente a las de su mismo sector');
+  await page.keyboard.press('Escape');
+  await expect(tip).toHaveCount(0);
+  await hint.click();
+  await tip.getByRole('link', { name: 'Más en Aprender' }).click();
+  await expect(page).toHaveURL(/\/cartera\/aprender\?tab=glosario#termino-percentile$/);
+  await expect(page.getByRole('tab', { name: 'Glosario' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(page.locator('#termino-percentile')).toContainText('Percentil sectorial');
+  await expect(page.locator('#termino-psr')).toContainText('Probabilistic Sharpe Ratio');
+});

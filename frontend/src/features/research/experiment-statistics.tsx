@@ -5,6 +5,7 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { TailRiskTable } from './tail-risk-table';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { Term } from '@/shared/ui/term';
 
 // Selectors read one bounded page; the backend recomputes N from the whole family.
 const OPTIONS_LIMIT = 200;
@@ -80,7 +81,13 @@ export function DeflatedSharpePanel({ families }: { families: string[] }) {
   const options = (rows.data?.items ?? []).filter((item) => item.sharpe != null);
   return (
     <section className="rounded-xl border bg-card p-5" aria-label="Probabilistic y Deflated Sharpe">
-      <h2 className="text-lg font-semibold">Probabilistic / Deflated Sharpe Ratio</h2>
+      <h2 className="flex flex-wrap items-center gap-x-3 text-lg font-semibold">
+        <Term k="psr">PSR</Term>
+        <Term k="dsr">DSR</Term>
+        <span className="text-sm font-normal text-muted-foreground">
+          ¿El Sharpe resiste el tamaño de la muestra y la búsqueda?
+        </span>
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         PSR: probabilidad de que el Sharpe observado sea genuinamente positivo y no ruido de
         muestreo. DSR: lo mismo, pero comparando con el Sharpe máximo que cabría esperar por azar

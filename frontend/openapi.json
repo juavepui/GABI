@@ -6417,6 +6417,29 @@
         "title": "GlossaryMetric",
         "type": "object"
       },
+      "GlossaryTerm": {
+        "properties": {
+          "definition": {
+            "title": "Definition",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "term": {
+            "title": "Term",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "term",
+          "definition"
+        ],
+        "title": "GlossaryTerm",
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "api_version": {
@@ -8863,6 +8886,13 @@
             "title": "Blocks",
             "type": "array"
           },
+          "glossary": {
+            "items": {
+              "$ref": "#/components/schemas/GlossaryTerm"
+            },
+            "title": "Glossary",
+            "type": "array"
+          },
           "terms": {
             "additionalProperties": {
               "type": "string"
@@ -8873,7 +8903,8 @@
         },
         "required": [
           "blocks",
-          "terms"
+          "terms",
+          "glossary"
         ],
         "title": "MetricGlossary",
         "type": "object"
