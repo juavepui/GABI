@@ -13,6 +13,7 @@ import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { ResearchModeNotice } from '@/shared/ui/research-mode';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -448,9 +449,7 @@ export function PortfolioLabPage() {
           Ejecutar Portfolio Lab
         </Button>
         {model.data && model.data.mode !== 'RESEARCH' && (
-          <p className="text-sm text-muted-foreground sm:col-span-3">
-            Portfolio Lab requiere el modo Research (Administración → Activar Research).
-          </p>
+          <ResearchModeNotice action="Portfolio Lab" className="sm:col-span-3" />
         )}
       </form>
       <JobStatus state={state} />

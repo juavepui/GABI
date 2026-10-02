@@ -18,7 +18,10 @@ test('Investigación distingue ensayos fallidos de reservas pendientes', async (
 
 test('ranking histórico se calcula en un job y muestra identidad y cobertura', async ({ page }) => {
   await page.goto('/investigacion');
-  await page.getByRole('link', { name: /^Ranking histórico/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('link', { name: /^Ranking histórico/ })
+    .click();
   await expect(page.getByRole('heading', { name: 'Ranking histórico' })).toBeVisible();
   await page.getByRole('button', { name: 'Calcular ranking' }).click();
   await expect(page.getByRole('heading', { name: 'Ranking a 2019-01-02' })).toBeVisible();
@@ -38,7 +41,10 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
 
 test('validación ciega muestra integridad sin desvelar posiciones', async ({ page }) => {
   await page.goto('/investigacion');
-  await page.getByRole('link', { name: /^Validaciones ciegas/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('link', { name: /^Validaciones ciegas/ })
+    .click();
   await expect(page.getByRole('heading', { name: 'Validaciones ciegas' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '#1 · Fixture ciega' })).toBeVisible();
   await expect(page.getByText('Íntegra')).toBeVisible();
@@ -109,7 +115,10 @@ test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ 
   await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
   try {
     await page.goto('/investigacion');
-    await page.getByRole('link', { name: /^Factor Lab/ }).click();
+    await page
+      .getByRole('main')
+      .getByRole('link', { name: /^Factor Lab/ })
+      .click();
     await expect(page.getByRole('heading', { name: 'Factor Lab' })).toBeVisible();
     await page.getByRole('button', { name: 'Ejecutar Factor Lab' }).click();
     await expect(page.getByRole('heading', { name: 'Resumen de factores' })).toBeVisible();
@@ -395,7 +404,10 @@ test('Portfolio Lab compara esquemas en un job Research dentro del periodo obser
   await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
   try {
     await page.goto('/investigacion');
-    await page.getByRole('link', { name: /^Portfolio Lab/ }).click();
+    await page
+      .getByRole('main')
+      .getByRole('link', { name: /^Portfolio Lab/ })
+      .click();
     await page.getByLabel('Risk Parity').uncheck();
     await page.getByRole('button', { name: 'Ejecutar Portfolio Lab' }).click();
     const result = page.getByRole('region', { name: 'Resultado de Portfolio Lab' });
@@ -413,4 +425,24 @@ test('Portfolio Lab compara esquemas en un job Research dentro del periodo obser
       data: { mode: 'INVESTOR' },
     });
   }
+});
+
+test('el menú muestra los apartados de la sección y lleva al modo Research', async ({ page }) => {
+  await page.goto('/investigacion/factores');
+  const sub = page.getByRole('list', { name: 'Apartados de Investigación' });
+  await expect(sub.getByRole('link', { name: 'Factor Lab' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await sub.getByRole('link', { name: 'Ranking histórico' }).click();
+  await expect(page.getByRole('heading', { name: 'Ranking histórico', level: 1 })).toBeVisible();
+  await page.goto('/investigacion/carteras');
+  await page
+    .getByRole('main')
+    .getByRole('link', { name: 'Activar el modo Research' })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/administracion#modo$/);
+  await expect(page.locator('#modo')).toContainText('Modo de trabajo · Investor');
+  await expect(page.getByRole('button', { name: 'Activar Research' })).toBeInViewport();
 });

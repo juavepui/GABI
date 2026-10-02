@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatPercent } from '@/shared/lib/format';
+import { ResearchModeNotice } from '@/shared/ui/research-mode';
 
 const signedPct = (value: number | null | undefined) =>
   value == null ? '—' : (value > 0 ? '+' : '') + formatPercent(value, { digits: 1, fixed: true });
@@ -90,11 +91,7 @@ export function HistoricalOutcomes({
         equiponderada y SPY. Los símbolos sin precio completo se excluyen y se indican. Solo se
         calculan horizontes cuyos precios quedan dentro del periodo observado hasta el 2025-07-02.
       </p>
-      {!researchAllowed && (
-        <p className="text-muted-foreground">
-          Activa el modo Research en Administración para calcular retornos posteriores.
-        </p>
-      )}
+      {!researchAllowed && <ResearchModeNotice action="Calcular retornos posteriores" />}
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
         <label className="text-xs font-medium">
           Primeras candidatas

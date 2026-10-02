@@ -10,6 +10,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber } from '@/shared/lib/format';
+import { ResearchModeNotice } from '@/shared/ui/research-mode';
 
 export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean }) {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -72,9 +73,7 @@ export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean
         Evaluar revisiones hasta julio de 2025
       </Button>
       {!researchAllowed && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Activa el modo Research para ejecutar el análisis.
-        </p>
+        <ResearchModeNotice action="El análisis de estimaciones" className="mt-2" />
       )}
       {start.isError && <ErrorState error={start.error} retry={() => start.mutate()} />}
       {job.isError && <ErrorState error={job.error} retry={() => void job.refetch()} />}

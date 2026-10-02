@@ -63,6 +63,39 @@ const client: QueryClient = new QueryClient({
     },
   },
 });
+// Sub-sections of each section, shown under it in the sidebar while it is active.
+const subsections: Record<string, { path: string; label: string }[]> = {
+  '/mercado': [
+    { path: '/mercado', label: 'Ranking' },
+    { path: '/mercado/comparar', label: 'Comparar empresas' },
+    { path: '/mercado/macro', label: 'Panel macro' },
+    { path: '/mercado/senales', label: 'Signal Monitor' },
+  ],
+  '/cartera': [
+    { path: '/cartera', label: 'Cartera objetivo' },
+    { path: '/cartera/diario', label: 'Diario de inversión' },
+    { path: '/cartera/aprender', label: 'Aprender' },
+    { path: '/cartera/simuladas', label: 'Carteras simuladas' },
+    { path: '/cartera/decisiones', label: 'Decisiones' },
+  ],
+  '/investigacion': [
+    { path: '/investigacion', label: 'Ensayos registrados' },
+    { path: '/investigacion/historico', label: 'Ranking histórico' },
+    { path: '/investigacion/validaciones', label: 'Validaciones ciegas' },
+    { path: '/investigacion/factores', label: 'Factor Lab' },
+    { path: '/investigacion/laboratorio', label: 'Research Lab' },
+    { path: '/investigacion/carteras', label: 'Portfolio Lab' },
+  ],
+  '/administracion': [
+    { path: '/administracion', label: 'Datos y modelo' },
+    { path: '/administracion/calidad', label: 'Calidad de los datos' },
+  ],
+};
+const subLink = ({ isActive }: { isActive: boolean }) =>
+  'block shrink-0 rounded-md px-3 py-1.5 text-[13px] transition-colors ' +
+  (isActive
+    ? 'bg-white/15 font-semibold text-white'
+    : 'text-[#c5d8cc] hover:bg-white/10 hover:text-white');
 const navigation = [
   { path: '/', label: 'Inicio', icon: House },
   { path: '/cartera', label: 'Cartera', icon: BriefcaseBusiness },
@@ -72,15 +105,18 @@ const navigation = [
 ];
 function Shell() {
   const location = useLocation();
+  const section = Object.keys(subsections).find((path) => location.pathname.startsWith(path));
   const main = useRef<HTMLElement>(null);
   const previous = useRef(location.pathname);
   useEffect(() => {
     if (previous.current !== location.pathname) {
       previous.current = location.pathname;
+      // A link with an anchor (e.g. /administracion#modo) scrolls to it itself; do not undo that.
+      if (location.hash) return;
       main.current?.focus();
       window.scrollTo(0, 0);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.hash]);
   return (
     <div className="min-h-screen lg:pl-60">
       <a
@@ -113,22 +149,49 @@ function Shell() {
           className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:px-4"
         >
           {navigation.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) =>
-                'flex shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ' +
-                (isActive
-                  ? 'bg-[#dceaca] font-semibold text-[#183e32]'
-                  : 'text-[#d5e3da] hover:bg-white/10')
-              }
-            >
-              <item.icon size={18} aria-hidden="true" />
-              {item.label}
-            </NavLink>
+            <div key={item.path} className="contents lg:block">
+              <NavLink
+                to={item.path}
+                end={item.path === '/'}
+                className={({ isActive }) =>
+                  'flex shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ' +
+                  (isActive
+                    ? 'bg-[#dceaca] font-semibold text-[#183e32]'
+                    : 'text-[#d5e3da] hover:bg-white/10')
+                }
+              >
+                <item.icon size={18} aria-hidden="true" />
+                {item.label}
+              </NavLink>
+              {item.path === section && subsections[item.path] && (
+                <ul
+                  aria-label={'Apartados de ' + item.label}
+                  className="ml-6 mt-1 mb-2 hidden space-y-0.5 border-l border-white/15 pl-2 lg:block"
+                >
+                  {subsections[item.path].map((sub) => (
+                    <li key={sub.path}>
+                      <NavLink to={sub.path} end className={subLink}>
+                        {sub.label}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ))}
         </nav>
+        {section && subsections[section] && (
+          <nav
+            aria-label="Apartados de la sección"
+            className="flex gap-1 overflow-x-auto px-3 pb-3 lg:hidden"
+          >
+            {subsections[section].map((sub) => (
+              <NavLink key={sub.path} to={sub.path} end className={subLink}>
+                {sub.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
         <div className="mt-auto hidden px-5 pb-6 lg:block">
           <div className="rounded-xl border border-white/15 bg-white/5 p-4">
             <p className="flex items-center gap-2 text-xs font-medium">

@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { AlertCircle, Database, RotateCw } from 'lucide-react';
 import { Button } from './button';
 import { Skeleton } from './skeleton';
+import { ResearchModeLink } from './research-mode';
+import { ApiError } from '@/shared/api/client';
 
 export function LoadingState() {
   return (
@@ -29,10 +31,13 @@ export function ErrorState({ error, retry }: { error: Error; retry: () => void }
           ? 'Comprueba que la API local esté en marcha y vuelve a intentarlo.'
           : error.message}
       </p>
-      <Button variant="outline" onClick={retry}>
-        <RotateCw aria-hidden="true" />
-        Reintentar
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {error instanceof ApiError && error.code === 'research_required' && <ResearchModeLink />}
+        <Button variant="outline" onClick={retry}>
+          <RotateCw aria-hidden="true" />
+          Reintentar
+        </Button>
+      </div>
     </section>
   );
 }

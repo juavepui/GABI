@@ -11,6 +11,7 @@ import { BacktestRegister } from './backtest-register';
 import { PrepareData } from './prepare-data';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { ResearchModeNotice } from '@/shared/ui/research-mode';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
@@ -136,12 +137,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
           ? 'V1 cobra un coste plano de compra y venta sobre cada posición nueva y compara con el universo equiponderado y el SPY. Los universos de 50 o 100 empresas son pruebas parciales.'
           : 'V2 opera con acciones y caja, comisión fija y spread sobre los ajustes reales, SPY comprado y mantenido y curva diaria. Solo el universo completo es citable; la muestra rápida sirve para iterar.'}
       </p>
-      {!researchAllowed && (
-        <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-          Activa el modo Research en Administración para ejecutar backtests. El servidor los bloquea
-          en modo Investor.
-        </p>
-      )}
+      {!researchAllowed && <ResearchModeNotice action="Ejecutar backtests" />}
       <form
         onSubmit={submit}
         className="grid gap-4 rounded-xl border bg-card p-5 sm:grid-cols-2 lg:grid-cols-4"

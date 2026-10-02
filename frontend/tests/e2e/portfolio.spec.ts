@@ -7,7 +7,10 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.getByLabel('Posiciones actuales (SÍMBOLO,euros; una por línea)').fill('T000,100');
   await page.getByRole('button', { name: 'Calcular plan' }).click();
   await expect(page.getByRole('heading', { name: 'Dónde aportar capital nuevo' })).toBeVisible();
-  await page.getByRole('link', { name: /^Diario de inversión/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('link', { name: /^Diario de inversión/ })
+    .click();
   await page.getByText('Nueva tesis').click();
   await page.getByLabel('Símbolo').fill('T000');
   await page.getByLabel('Precio entrada (USD)').fill('100');

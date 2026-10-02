@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { cancelJob, createJob, getFactorPreview, getJob, getModel } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -11,6 +10,7 @@ import { FactorGlossary, FactorQuantiles, SkippedPeriods } from './factor-detail
 import { formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
+import { ResearchModeNotice } from '@/shared/ui/research-mode';
 
 const format = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
@@ -82,15 +82,7 @@ export function FactorPage() {
       <FactorGlossary />
       <PublishedFactorMap />
       <EstimateCaptures researchAllowed={model.data?.mode === 'RESEARCH'} />
-      {model.data?.mode === 'INVESTOR' && (
-        <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
-          Para ejecutar Factor Lab, activa el modo Research en{' '}
-          <Link className="font-medium text-primary underline" to="/administracion">
-            Administración
-          </Link>
-          . El servidor bloqueará el trabajo mientras esté activo el modo Investor.
-        </p>
-      )}
+      {model.data?.mode === 'INVESTOR' && <ResearchModeNotice action="Ejecutar Factor Lab" />}
       <form
         onSubmit={submit}
         className="grid gap-4 rounded-xl border bg-card p-5 sm:grid-cols-2 lg:grid-cols-5"

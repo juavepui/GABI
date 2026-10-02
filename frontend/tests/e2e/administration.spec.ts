@@ -58,7 +58,10 @@ test('calidad de los datos: universo, procedencia, identidades y archivo desde 2
   page,
 }) => {
   await page.goto('/administracion');
-  await page.getByRole('link', { name: /Calidad de los datos/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('link', { name: /Calidad de los datos/ })
+    .click();
   await expect(page.getByRole('heading', { name: 'Calidad de los datos', level: 1 })).toBeVisible();
 
   const universe = page.getByRole('region', { name: 'Resumen del universo' });
