@@ -1,6 +1,7 @@
 """The home page answers at once from the cache, builds the frozen ranking only on request and never writes."""
 
 import hashlib
+import sqlite3
 import threading
 
 import pytest
@@ -65,3 +66,32 @@ def test_last_update_reports_the_latest_successful_data_job(home):
     body = client.get("/api/v1/home").json()
     assert body["last_update"] == {"kind": "data_update", "finished_at": "2026-09-28T09:00:00"}
     assert body["steps"]["updated"] is True
+
+
+def test_serve_warm_up_fills_both_rankings_read_only(home):
+    from gabi_cli.bootstrap import warm_rankings
+
+    client, app, root = home
+    before = _files(root)
+    warm_rankings(app)
+    assert client.get("/api/v1/home").json()["ranking_ready"] is True
+    assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is True
+    assert _files(root) == before
+
+
+def test_warm_up_without_data_does_not_raise(tmp_path):
+    from gabi_cli.bootstrap import warm_rankings
+
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as client:
+        warm_rankings(client.app)
+        assert client.get("/api/v1/home").json()["ranking_ready"] in (True, False)
+
+
+def test_cache_outlives_idle_minutes_and_still_follows_the_data_revision(home):
+    client, app, root = home
+    assert app.state.settings.cache_seconds >= 3600
+    assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is False
+    assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is True
+    with sqlite3.connect(root / "gabi.db") as db:  # Any write changes the revision and invalidates the entry.
+        db.execute("CREATE TABLE IF NOT EXISTS touch (x)")
+    assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is False

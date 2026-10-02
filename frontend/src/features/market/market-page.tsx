@@ -243,7 +243,13 @@ export function MarketPage() {
         </form>
       </section>
       {result.isPending ? (
-        <LoadingState />
+        <div>
+          <LoadingState />
+          <p className="mt-2 text-center text-sm text-muted-foreground">
+            Calculando el ranking con tu caché local. Si GABI acaba de arrancar o han cambiado los
+            datos, la primera consulta puede tardar alrededor de un minuto; después es inmediata.
+          </p>
+        </div>
       ) : result.isError ? (
         <ErrorState error={result.error} retry={() => void result.refetch()} />
       ) : (

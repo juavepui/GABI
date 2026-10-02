@@ -12,7 +12,8 @@ class Settings:
     max_benchmark_rows: int = 10_000
     max_small_file_bytes: int = 1_000_000
     cache_entries: int = 4
-    cache_seconds: int = 300
+    # The key already changes with date, weights, universe and SQLite revision; this is only an upper bound.
+    cache_seconds: int = 12 * 3600
     cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173")
 
     def __post_init__(self) -> None:

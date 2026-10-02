@@ -8,7 +8,8 @@ const WIDTH = 288;
 
 /**
  * A technical term with an ⓘ button that shows its definition (from the backend glossary) and a link
- * to the full glossary in Aprender. Toggletip pattern: the text is announced through a live region.
+ * to the full glossary in Aprender. The live region only exists while the hint is open, so pages with
+ * many terms do not carry empty status regions.
  */
 export function Term({ k, children }: { k: string; children: ReactNode }) {
   const id = useId();
@@ -72,8 +73,8 @@ export function Term({ k, children }: { k: string; children: ReactNode }) {
       >
         <Info size={13} aria-hidden="true" />
       </button>
-      <span id={id} role="status" aria-live="polite">
-        {position && (
+      {position && (
+        <span id={id} role="status" aria-live="polite">
           <span
             data-term-tip
             style={{ left: position.left, top: position.top, width: WIDTH }}
@@ -91,8 +92,8 @@ export function Term({ k, children }: { k: string; children: ReactNode }) {
               Más en Aprender
             </Link>
           </span>
-        )}
-      </span>
+        </span>
+      )}
     </span>
   );
 }

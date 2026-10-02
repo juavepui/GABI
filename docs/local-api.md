@@ -154,7 +154,7 @@ las métricas. La respuesta de precios de una ficha admite 1..1000 barras.
 CSV/JSON de configuración y cada estado fundamental tienen límite de 1 MB;
 no se recorren, copian ni hashean los aproximadamente 83 GB de `data/`.
 
-La caché del proceso conserva hasta cuatro rankings durante cinco minutos.
+La caché del proceso conserva hasta cuatro rankings durante un máximo de doce horas.
 Su clave incluye fecha actual (eventos/frescura), pesos, modelo/versionado del
 caso de uso, benchmark/configuración, contenido del universo y revisión SQLite.
 Filtros/paginación se aplican después sobre la misma base. La revisión usa
@@ -173,6 +173,21 @@ un SHA-256 propio antes de abrir el artefacto.
 Un candado local serializa el cálculo frío y evita duplicarlo en peticiones
 simultáneas; no se arrancan workers desde GET. Es un cálculo de pantalla, no un
 backtest, y su primer acceso aún puede tardar segundos con históricos grandes.
+
+El plazo es solo una cota: la validez la decide la clave, que cambia con la fecha,
+los pesos, el universo y la revisión SQLite. Antes era de cinco minutos y, sin
+cambios en los datos, dejar GABI unos minutos sin uso obligaba a recalcular el
+ranking entero (#73). `gabi_cli serve` además calcula en segundo plano, al
+arrancar, el ranking congelado (portada y Cartera) y el del modelo activo
+(Mercado); es de solo lectura, no retrasa el arranque y, sin datos, no hace nada.
+
+Medición con la base local completa (2026-10-02, solo lectura y sin red):
+
+| Situación | Antes | Después |
+| --- | ---: | ---: |
+| Primera visita a Mercado tras arrancar | 65,3 s | 0,21 s tras el precalentamiento (45 s en segundo plano) |
+| Siguientes visitas | 0,24 s | 0,21 s |
+| Tras 6 minutos sin uso ni cambios de datos | 58,0 s | 0,12 s |
 
 ## Verificación y medición
 

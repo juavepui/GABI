@@ -7,17 +7,28 @@ import argparse
 import os
 import subprocess
 import sys
+import threading
 import time
 from datetime import date
 from pathlib import Path
 
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
+from gabi.domain.market.selection import RankingFilter
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
+
+
+def warm_rankings(app) -> None:
+    """Read-only: build the frozen ranking (home, cartera) and the active model's one (Mercado)."""
+    try:
+        app.state.home.summary(compute=True)
+        app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)
+    except QueryError:
+        pass  # No cached data yet: the pages show their own empty state.
 
 
 def main() -> None:
@@ -36,9 +47,11 @@ def main() -> None:
         if not (dist / "index.html").is_file():
             parser.error("Falta el build React; ejecuta npm --prefix frontend run build.")
         worker_process = subprocess.Popen([sys.executable, "-m", "gabi_cli", "worker"])
+        app = create_app(settings, frontend_dist=dist)
+        # The first ranking takes about a minute with a full cache: compute it while the server starts.
+        threading.Thread(target=warm_rankings, args=(app,), name="gabi-warm-ranking", daemon=True).start()
         try:
-            uvicorn.run(create_app(settings, frontend_dist=dist), host="127.0.0.1", port=8000,
-                        access_log=False)
+            uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False)
         finally:
             worker_process.terminate()
             try:
