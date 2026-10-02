@@ -1,13 +1,8 @@
 import type { TailSeries } from '@/shared/api/generated/types.gen';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
-const pct = (value: number | null | undefined, digits = 2) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value * 100) + ' %';
-const num = (value: number | null | undefined, digits = 3) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+const pct = (value: number | null | undefined, digits = 2) => formatPercent(value, { digits });
+const num = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
 function tailWarnings(row: TailSeries): string[] {
   const summary = row.summary;

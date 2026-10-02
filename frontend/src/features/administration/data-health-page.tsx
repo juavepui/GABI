@@ -8,6 +8,7 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
 import { DateField, HealthStatus, RunButton, Section, Table } from './data-health';
 import { age, pct, useHealthJob, useToday, type Row } from './data-health-job';
+import { PageHeader } from '@/shared/ui/page-header';
 
 type SourceSummary = {
   label: string;
@@ -579,17 +580,12 @@ export function DataHealthPage() {
   const universe = useHealthJob<UniverseHealth>('health-universe', 'universe');
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-          Administración
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Calidad de los datos</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Cobertura, frescura y procedencia de cada fuente: no solo qué score produce un símbolo,
-          sino con qué calidad de dato se calculó. Nada se descarga: cada comprobación es un trabajo
-          local que lee la caché.
-        </p>
-      </div>
+      <PageHeader
+        back={{ to: '/administracion', label: 'Administración' }}
+        eyebrow="Administración"
+        title="Calidad de los datos"
+        description="Cobertura, frescura y procedencia de cada fuente: no solo qué score produce un símbolo, sino con qué calidad de dato se calculó. Nada se descarga: cada comprobación es un trabajo local que lee la caché."
+      />
       <UniverseSection state={universe} />
       <BlockCoverage />
       <CompanySection universe={universe.result.data?.universe ?? []} />

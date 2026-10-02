@@ -6,18 +6,13 @@ import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { useJob } from '@/shared/api/use-job';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
 );
 const pct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', {
-        maximumFractionDigits: 1,
-        minimumFractionDigits: 1,
-        signDisplay: 'always',
-      }).format(value * 100) + ' %';
+  formatPercent(value, { digits: 1, fixed: true, signed: true });
 
 function RebalanceResult({ jobId }: { jobId: string }) {
   const queryClient = useQueryClient();
@@ -106,8 +101,8 @@ function PerformanceResult({ jobId }: { jobId: string }) {
               <td className="py-1.5">{period.rebalance_date}</td>
               <td>{pct(period.retorno)}</td>
               <td>{pct(period.retorno_spy)}</td>
-              <td>{period.capital.toFixed(4)}</td>
-              <td>{period.capital_spy.toFixed(4)}</td>
+              <td>{formatNumber(period.capital, { digits: 4, fixed: true })}</td>
+              <td>{formatNumber(period.capital_spy, { digits: 4, fixed: true })}</td>
             </tr>
           ))}
         </tbody>

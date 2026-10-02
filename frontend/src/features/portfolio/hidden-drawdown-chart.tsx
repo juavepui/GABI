@@ -8,6 +8,7 @@ import {
   YAxis,
 } from 'recharts';
 import { hiddenDrawdown } from './learn-content';
+import { formatNumber } from '@/shared/lib/format';
 
 export default function HiddenDrawdownChart() {
   return (
@@ -22,7 +23,7 @@ export default function HiddenDrawdownChart() {
           <XAxis dataKey="day" tick={{ fontSize: 11 }} minTickGap={40} />
           <YAxis domain={[60, 110]} width={40} tick={{ fontSize: 11 }} />
           <Tooltip
-            formatter={(value) => Number(value).toFixed(1)}
+            formatter={(value) => formatNumber(Number(value), { digits: 1, fixed: true })}
             labelFormatter={(d) => `Sesión ${d}`}
           />
           <Line dataKey="value" name="Capital (ejemplo sintético)" dot={false} stroke="#2563eb" />

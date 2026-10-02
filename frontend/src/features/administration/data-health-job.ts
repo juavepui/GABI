@@ -3,14 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { getJobResult, getJobs } from '@/shared/api/client';
 import type { DataHealthRequest } from '@/shared/api/generated/types.gen';
 import { useJob } from '@/shared/api/use-job';
+import { formatPercent } from '@/shared/lib/format';
 
 export type Cell = string | number | boolean | null | undefined;
 export type Row = Record<string, Cell>;
 
-export const pct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value * 100) + ' %';
+export const pct = (value: number | null | undefined) => formatPercent(value, { digits: 0 });
 
 export function age(hours: number | null | undefined) {
   if (hours == null) return '—';

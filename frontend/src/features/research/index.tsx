@@ -7,6 +7,8 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { TrialDetail } from './trial-detail';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { ChartPie, FlaskConical, History, Lock, Ruler } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/page-header';
+import { DataTable } from '@/shared/ui/data-table';
 
 const PAGE_SIZE = 25;
 
@@ -46,16 +48,11 @@ export function ResearchPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Evidencia publicada
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold">Investigación</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Registro de búsquedas y resultados publicados. Los ensayos retrospectivos no son una
-          validación independiente. GABI todavía no ha demostrado una estrategia neta claramente
-          superior al S&amp;P 500.
-        </p>
+      <PageHeader
+        eyebrow="Evidencia publicada"
+        title="Investigación"
+        description="Registro de búsquedas y resultados publicados. Los ensayos retrospectivos no son una validación independiente. GABI todavía no ha demostrado una estrategia neta claramente superior al S&P 500."
+      >
         <SectionLinks
           label="Herramientas de Investigación"
           links={[
@@ -96,7 +93,7 @@ export function ResearchPage() {
             },
           ]}
         />
-      </header>
+      </PageHeader>
 
       {(overview.isPending || trials.isPending) && <LoadingState />}
       {overview.isError && (
@@ -155,7 +152,7 @@ export function ResearchPage() {
               </select>
             </label>
           </div>
-          <div className="mt-5 overflow-x-auto">
+          <DataTable label="Tabla de ensayos" className="mt-5">
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
                 <tr className="border-b text-xs text-muted-foreground">
@@ -218,7 +215,7 @@ export function ResearchPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTable>
           <div className="mt-5 flex items-center gap-3">
             <Button
               variant="outline"

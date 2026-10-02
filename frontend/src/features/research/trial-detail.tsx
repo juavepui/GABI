@@ -4,6 +4,7 @@ import { BadgeCheck, CircleAlert } from 'lucide-react';
 import { getResearchTrial } from '@/shared/api/client';
 import type { TrialDetail as Detail, TrialRow } from '@/shared/api/generated/types.gen';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 
 const TrialReturnsChart = lazy(() => import('./trial-returns-chart'));
 
@@ -12,16 +13,9 @@ function format(row: TrialRow): string {
   if (value == null || value === '') return '—';
   if (unit === 'boolean' || typeof value === 'boolean') return value ? 'Sí' : 'No';
   if (typeof value === 'string') return value;
-  const number = (digits: number) =>
-    new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
-  if (unit === 'fraction')
-    return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value * 100) + ' %';
-  if (unit === 'USD')
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(value);
+  const number = (digits: number) => formatNumber(value, { digits });
+  if (unit === 'fraction') return formatPercent(value, { digits: 2 });
+  if (unit === 'USD') return formatMoney(value);
   if (unit === 'count') return number(0);
   return number(Math.abs(value) < 1 ? 4 : 3);
 }

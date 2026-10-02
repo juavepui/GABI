@@ -12,7 +12,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { dateLabel } from '@/shared/lib/format';
+import { dateLabel, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 
 const EVENT_LABELS: Record<string, string> = {
   earnings: 'Earnings',
@@ -28,16 +28,8 @@ const FILING_LABELS: Record<string, string> = {
   cash: 'Caja',
   roic: 'ROIC',
 };
-const num = (value: number | null | undefined, digits = 2) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
-const pct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1, signDisplay: 'always' }).format(
-        value * 100,
-      ) + ' %';
+const num = (value: number | null | undefined, digits = 2) => formatNumber(value, { digits });
+const pct = (value: number | null | undefined) => formatPercent(value, { digits: 1, signed: true });
 
 /** Explicit network sync of one company's dataset, as the old Ficha buttons, run by the worker. */
 function SyncButton({
@@ -319,14 +311,7 @@ export function FilingChanges({ symbol }: { symbol: string }) {
   );
 }
 
-const money = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-      }).format(value);
+const money = (value: number | null | undefined) => formatMoney(value);
 
 const INSIDER_COLUMNS = [
   'Fecha',

@@ -9,6 +9,7 @@ import {
 } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatNumber } from '@/shared/lib/format';
 
 export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean }) {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -120,7 +121,7 @@ export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean
                   {preview.data.summary.map((row) => (
                     <tr className="border-b" key={row.horizonte}>
                       <td>{row.horizonte} meses</td>
-                      <td>{row.ic_mean == null ? '—' : row.ic_mean.toFixed(3)}</td>
+                      <td>{formatNumber(row.ic_mean, { digits: 3, fixed: true })}</td>
                       <td>{row.n_periods}</td>
                     </tr>
                   ))}

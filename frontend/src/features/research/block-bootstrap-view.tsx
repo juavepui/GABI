@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import type { BlockBootstrapView } from '@/shared/api/generated/types.gen';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
-const num = (value: number | null | undefined, digits = 4) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
-const pct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(value * 100) + ' %';
+const num = (value: number | null | undefined, digits = 4) => formatNumber(value, { digits });
+const pct = (value: number | null | undefined) => formatPercent(value, { digits: 1 });
 
 function Histogram({ view, column }: { view: BlockBootstrapView; column: string }) {
   const item = view.histograms.find((entry) => entry.column === column);

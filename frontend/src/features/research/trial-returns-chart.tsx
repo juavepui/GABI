@@ -9,9 +9,9 @@ import {
   YAxis,
 } from 'recharts';
 import type { TrialPoint } from '@/shared/api/generated/types.gen';
+import { formatPercent } from '@/shared/lib/format';
 
-const percent = (value: number) =>
-  new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(value * 100) + ' %';
+const percent = (value: number) => formatPercent(value, { digits: 1 });
 
 /** Published return of each period, as it is in the artifact (no compounding here). */
 export default function TrialReturnsChart({ points }: { points: TrialPoint[] }) {

@@ -13,11 +13,12 @@ import {
 } from 'lucide-react';
 import { getHome } from '@/shared/api/client';
 import type { HomeResponse } from '@/shared/api/generated/types.gen';
-import { dateLabel } from '@/shared/lib/format';
+import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { HomeNotices } from './home-notices';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const WARNINGS: Record<string, string> = {
   incomplete_coverage: 'faltan precios, fundamentales o datos SEC de algunas empresas',
@@ -26,8 +27,6 @@ const WARNINGS: Record<string, string> = {
   sec_stale: 'hay datos SEC de hace más de 14 días',
   universe_stale: 'la lista del S&P 500 tiene más de 7 días',
 };
-
-const number = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 
 function Step({
   done,
@@ -215,7 +214,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
                 />
               </span>
               <span className="w-10 text-right text-xs tabular-nums">
-                {number.format(row.composite_score)}
+                {formatNumber(row.composite_score, { digits: 1 })}
               </span>
             </li>
           ))}
@@ -224,7 +223,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
       {home.target.length > shown.length && (
         <p className="mt-2 text-xs text-muted-foreground">
           y {home.target.length - shown.length} más, con un{' '}
-          {number.format(home.target[0].weight_pct)} % cada una.
+          {formatNumber(home.target[0].weight_pct, { digits: 1 })} % cada una.
         </p>
       )}
       <Button asChild size="sm" className="mt-4">
@@ -253,14 +252,11 @@ export function HomePage() {
   const data = home.data;
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Inicio</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Tu GABI hoy</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Estado de tus datos, la cartera objetivo y lo que tienes pendiente. Todo se calcula con la
-          caché local; nada se descarga sin que lo pidas.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Inicio"
+        title="Tu GABI hoy"
+        description="Estado de tus datos, la cartera objetivo y lo que tienes pendiente. Todo se calcula con la caché local; nada se descarga sin que lo pidas."
+      />
       <HomeNotices />
       {home.isPending && <LoadingState />}
       {home.isError && <ErrorState error={home.error} retry={() => void home.refetch()} />}

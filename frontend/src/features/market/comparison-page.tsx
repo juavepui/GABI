@@ -4,11 +4,11 @@ import { getComparison } from '@/shared/api/client';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Button } from '@/shared/ui/button';
 import { CompanyPicker } from '@/shared/ui/company-picker';
-import { BackLink } from '@/shared/ui/section-links';
 import { metric } from '@/shared/lib/format';
 import { useRanking } from './queries';
 import { Evidence } from './evidence';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const fields = [
   ['composite_score', 'Composite Score'],
@@ -46,14 +46,16 @@ export function ComparisonPage() {
   }
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/mercado">Mercado</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Comparar empresas</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Busca entre dos y cinco empresas por símbolo o nombre. Todas las métricas y unidades
-          proceden del mismo ranking que el Screener.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/mercado', label: 'Mercado' }}
+        title="Comparar empresas"
+        description={
+          <>
+            Busca entre dos y cinco empresas por símbolo o nombre. Todas las métricas y unidades
+            proceden del mismo ranking que el Screener.
+          </>
+        }
+      />
       <section aria-label="Selección de empresas" className="rounded-xl border bg-card p-5">
         {universe.isPending && <LoadingState />}
         {universe.isError && (

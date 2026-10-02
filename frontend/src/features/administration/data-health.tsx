@@ -4,6 +4,7 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
 import type { Row, useHealthJob } from './data-health-job';
 import { ProgressBar } from '@/shared/ui/progress-bar';
+import { DataTable } from '@/shared/ui/data-table';
 
 export function Table({
   label,
@@ -15,7 +16,7 @@ export function Table({
   rows: Row[];
 }) {
   return (
-    <div className="overflow-x-auto">
+    <DataTable label={'Tabla: ' + label}>
       <table className="w-full text-left text-xs" aria-label={label}>
         <thead>
           <tr className="border-b">
@@ -38,7 +39,7 @@ export function Table({
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTable>
   );
 }
 

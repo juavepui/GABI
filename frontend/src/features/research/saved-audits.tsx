@@ -13,18 +13,11 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { Benchmark, Stability } from './backtest-factors';
 import { BlockBootstrapResult } from './block-bootstrap-view';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 const pct = (value: number | null | undefined, digits = 1) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits,
-      }).format(value * 100) + ' %';
-const num = (value: number | null | undefined, digits = 3) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+  formatPercent(value, { digits, fixed: true });
+const num = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
 function Section({
   title,

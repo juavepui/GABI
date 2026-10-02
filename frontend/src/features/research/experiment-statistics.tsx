@@ -4,18 +4,13 @@ import { getDeflatedSharpe, getExperimentTailRisk, getExperiments } from '@/shar
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { TailRiskTable } from './tail-risk-table';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 // Selectors read one bounded page; the backend recomputes N from the whole family.
 const OPTIONS_LIMIT = 200;
 
-const pct = (value: number) =>
-  new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(
-    value * 100,
-  ) + ' %';
-const num = (value: number) =>
-  new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(
-    value,
-  );
+const pct = (value: number) => formatPercent(value, { digits: 1, fixed: true });
+const num = (value: number) => formatNumber(value, { digits: 2, fixed: true });
 
 function DeflatedSharpeResult({ id, family }: { id: number; family: string }) {
   const result = useQuery({

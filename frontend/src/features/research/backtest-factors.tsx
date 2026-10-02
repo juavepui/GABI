@@ -10,6 +10,7 @@ import type {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 const RollingChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.RollingChart })),
@@ -35,12 +36,8 @@ const LABELS: Record<string, string> = {
   spy_beta: 'SPY ajustado por beta',
   ff6: 'FF5 + Momentum sin alfa',
 };
-const num = (value: number | null | undefined, digits = 3) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
-const pct = (value: number | null | undefined, digits = 2) =>
-  value == null ? '—' : num(value * 100, digits) + ' %';
+const num = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
+const pct = (value: number | null | undefined, digits = 2) => formatPercent(value, { digits });
 const signed = (value: number | null | undefined, digits = 2) =>
   value == null ? '—' : (value > 0 ? '+' : '') + num(value, digits);
 

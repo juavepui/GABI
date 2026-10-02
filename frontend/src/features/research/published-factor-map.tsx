@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getPublishedFactors } from '@/shared/api/client';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatNumber } from '@/shared/lib/format';
 
 const labels: Record<string, string> = {
   pe: 'PER',
@@ -18,10 +19,7 @@ const labels: Record<string, string> = {
   volatility: 'Volatilidad',
   max_drawdown: 'Caída máxima',
 };
-const number = (value: number | null, digits = 3) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+const number = (value: number | null, digits = 3) => formatNumber(value, { digits });
 const percentage = (value: number | null) => (value == null ? '—' : number(value * 100, 1) + ' %');
 const exportBase = '/api/v1/research/published-factors/exports/';
 

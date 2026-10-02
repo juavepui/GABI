@@ -1,10 +1,49 @@
 import type { Metric } from '@/shared/api/generated/types.gen';
 
-const number = (value: number, digits = 2) =>
-  new Intl.NumberFormat('es-ES', {
+export type NumberOptions = {
+  /** Decimal places; maximum unless `fixed`. */
+  digits?: number;
+  /** Always show `digits` decimals (1,50 instead of 1,5). */
+  fixed?: boolean;
+  /** Always show the sign (+1,5). */
+  signed?: boolean;
+};
+
+/** Every number GABI shows goes through here: Spanish separators and «—» for an absent value. */
+export function formatNumber(
+  value: number | null | undefined,
+  { digits = 2, fixed = false, signed = false }: NumberOptions = {},
+): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return new Intl.NumberFormat('es-ES', {
     maximumFractionDigits: digits,
-    minimumFractionDigits: digits,
+    minimumFractionDigits: fixed ? digits : 0,
+    signDisplay: signed ? 'always' : 'auto',
   }).format(value);
+}
+
+/** A fraction (0,091) shown as a percentage (9,1 %). */
+export function formatPercent(
+  fraction: number | null | undefined,
+  options: NumberOptions = {},
+): string {
+  if (fraction == null || Number.isNaN(fraction)) return '—';
+  return formatNumber(fraction * 100, { digits: 1, ...options }) + ' %';
+}
+
+export function formatMoney(
+  value: number | null | undefined,
+  { currency = 'USD', digits = 0 }: { currency?: string; digits?: number } = {},
+): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: digits,
+  }).format(value);
+}
+
+const number = (value: number, digits = 2) => formatNumber(value, { digits, fixed: true });
 export function metric(value: Metric | undefined, compact = false): string {
   if (value?.value == null) return '—';
   if (value.unit === 'fraction') return number(value.value * 100, 1) + ' %';

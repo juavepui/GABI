@@ -19,7 +19,7 @@ import { Badge } from '@/shared/ui/badge';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { SnapshotProgress } from './snapshot-progress';
 import { dateLabel } from '@/shared/lib/format';
-import { BackLink } from '@/shared/ui/section-links';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const labels: Record<string, string> = {
   top_n_entry: 'Entra en el Top',
@@ -125,14 +125,16 @@ export function SignalPage() {
   const options = snapshots.data?.items ?? [];
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/mercado">Mercado</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Signal Monitor</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Compara el ranking cacheado con una foto anterior. Los eventos son cambios de datos y
-          nunca órdenes de compra o venta.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/mercado', label: 'Mercado' }}
+        title="Signal Monitor"
+        description={
+          <>
+            Compara el ranking cacheado con una foto anterior. Los eventos son cambios de datos y
+            nunca órdenes de compra o venta.
+          </>
+        }
+      />
       <form onSubmit={saveCurrent} className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Guardar snapshot del ranking</h2>
         <p className="mt-1 text-sm text-muted-foreground">

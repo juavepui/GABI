@@ -5,15 +5,10 @@ import type { OutcomeResult } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatPercent } from '@/shared/lib/format';
 
 const signedPct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : (value > 0 ? '+' : '') +
-      new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(
-        value * 100,
-      ) +
-      ' %';
+  value == null ? '—' : (value > 0 ? '+' : '') + formatPercent(value, { digits: 1, fixed: true });
 
 function OutcomeLine({ label, outcome }: { label: string; outcome: OutcomeResult }) {
   if (outcome.status === 'reserved') {

@@ -1,11 +1,8 @@
 import type { EvidenceRow } from '@/shared/api/generated/types.gen';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
-const pct = (value: number | null | undefined, digits = 0) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value * 100) + ' %';
-const points = (value: number | null | undefined) =>
-  value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(value);
+const pct = (value: number | null | undefined, digits = 0) => formatPercent(value, { digits });
+const points = (value: number | null | undefined) => formatNumber(value, { digits: 1 });
 
 /** Top-20 evidence of the ranking: categories from published rules, never a probability of gains. */
 export function EvidenceTable({

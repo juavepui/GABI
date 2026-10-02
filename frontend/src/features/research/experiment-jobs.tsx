@@ -8,13 +8,11 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlockBootstrapResult } from './block-bootstrap-view';
 import { useJob } from '@/shared/api/use-job';
 import { ProgressBar } from '@/shared/ui/progress-bar';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 const OPTIONS_LIMIT = 200;
 
-const pct = (value: number) =>
-  new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(
-    value * 100,
-  ) + ' %';
+const pct = (value: number) => formatPercent(value, { digits: 1, fixed: true });
 
 export function JobStatus({ state }: { state: ReturnType<typeof useJob> }) {
   const { start, job, cancel } = state;
@@ -64,7 +62,7 @@ function useReturnExperiments() {
 
 function label(item: ExperimentSummary): string {
   return item.sharpe != null
-    ? `#${item.id} · ${item.model_id} · Sharpe ${item.sharpe.toFixed(2)}`
+    ? `#${item.id} · ${item.model_id} · Sharpe ${formatNumber(item.sharpe, { digits: 2, fixed: true })}`
     : `#${item.id} · ${item.model_id}`;
 }
 

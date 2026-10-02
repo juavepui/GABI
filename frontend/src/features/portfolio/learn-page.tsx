@@ -16,7 +16,7 @@ import {
   STRATEGIES,
   STRATEGIES_INTRO,
 } from './learn-content';
-import { BackLink } from '@/shared/ui/section-links';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const HiddenDrawdownChart = lazy(() => import('./hidden-drawdown-chart'));
 
@@ -381,16 +381,18 @@ export function LearnPage() {
   const [tab, setTab] = useState<Tab>('inicio');
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/cartera">Cartera</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Aprender a usar GABI</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por qué,
-          los errores mentales más comunes al invertir dinero real y cómo funciona GABI por dentro,
-          con el rigor que hay (y el que no hay) detrás de sus números. No sustituye a un buen
-          libro, pero es un punto de partida conectado con el resto de la aplicación.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/cartera', label: 'Cartera' }}
+        title="Aprender a usar GABI"
+        description={
+          <>
+            Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por qué,
+            los errores mentales más comunes al invertir dinero real y cómo funciona GABI por
+            dentro, con el rigor que hay (y el que no hay) detrás de sus números. No sustituye a un
+            buen libro, pero es un punto de partida conectado con el resto de la aplicación.
+          </>
+        }
+      />
       <div role="tablist" aria-label="Secciones de Aprender" className="flex flex-wrap gap-2">
         {TABS.map(([id, label]) => (
           <button

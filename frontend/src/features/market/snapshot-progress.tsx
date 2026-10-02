@@ -4,18 +4,12 @@ import { getSnapshotProgress, renameSnapshot } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 const SnapshotCurve = lazy(() => import('./snapshot-curve'));
 const pct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', {
-        maximumFractionDigits: 1,
-        minimumFractionDigits: 1,
-        signDisplay: 'always',
-      }).format(value * 100) + ' %';
-const price = (value: number | null | undefined) =>
-  value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);
+  formatPercent(value, { digits: 1, fixed: true, signed: true });
+const price = (value: number | null | undefined) => formatNumber(value, { digits: 2 });
 
 function Rename({ id, name }: { id: number; name: string }) {
   const queryClient = useQueryClient();

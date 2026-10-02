@@ -18,7 +18,8 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
-import { BackLink } from '@/shared/ui/section-links';
+import { formatNumber } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const DecisionChart = lazy(() => import('./decision-chart'));
 
@@ -48,8 +49,7 @@ function isPreview(value: unknown): value is Preview {
     'coverage' in value,
   );
 }
-const decimal = (value: number | null | undefined) =>
-  value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);
+const decimal = (value: number | null | undefined) => formatNumber(value, { digits: 2 });
 
 function DecisionTable({ decisions }: { decisions: Preview['decisions'] }) {
   if (!decisions.length)
@@ -198,14 +198,16 @@ export function DecisionsPage() {
   const selectedPlan: SavedDecision | undefined = saved.data;
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/cartera">Cartera</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Decisiones de cartera</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Política experimental de gestión de riesgo; usa scores congelados, pero no equivale al
-          Top‑20 validado ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/cartera', label: 'Cartera' }}
+        title="Decisiones de cartera"
+        description={
+          <>
+            Política experimental de gestión de riesgo; usa scores congelados, pero no equivale al
+            Top‑20 validado ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
+          </>
+        }
+      />
       <form onSubmit={submit} className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Nuevo plan</h2>
         <p className="mt-1 text-sm text-muted-foreground">

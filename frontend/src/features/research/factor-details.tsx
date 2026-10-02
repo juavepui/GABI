@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import type { FactorPreview } from '@/shared/api/generated/types.gen';
+import { formatPercent } from '@/shared/lib/format';
 
-const percent = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value * 100) + ' %';
+const percent = (value: number | null | undefined) => formatPercent(value, { digits: 2 });
 
 export function FactorGlossary() {
   return (

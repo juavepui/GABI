@@ -22,13 +22,11 @@ import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
 import { SimulationPrices } from './sim-prices';
-import { BackLink } from '@/shared/ui/section-links';
+import { formatNumber } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const SimulationChart = lazy(() => import('./simulation-chart'));
-const number = (value: number | null | undefined, digits = 2) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+const number = (value: number | null | undefined, digits = 2) => formatNumber(value, { digits });
 const optional = (form: FormData, name: string) =>
   form.get(name) === '' ? null : Number(form.get(name));
 function resultShape(value: unknown): value is SimulationResult {
@@ -402,14 +400,16 @@ export function SimulationsPage() {
   }
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/cartera">Cartera</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Carteras simuladas</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Operaciones hipotéticas con costes y divisas. No se envían órdenes ni se descargan precios
-          al abrir la pantalla.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/cartera', label: 'Cartera' }}
+        title="Carteras simuladas"
+        description={
+          <>
+            Operaciones hipotéticas con costes y divisas. No se envían órdenes ni se descargan
+            precios al abrir la pantalla.
+          </>
+        }
+      />
       <details className="rounded-xl border bg-card p-5">
         <summary className="cursor-pointer font-semibold">Crear cartera simulada</summary>
         <form onSubmit={submit} className="mt-5 grid gap-3 sm:grid-cols-3">

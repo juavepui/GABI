@@ -21,6 +21,12 @@ import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
 import { CoverageWarnings } from './coverage-warnings';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { GitCompareArrows, Globe, Radar } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/page-header';
+import { DataTable } from '@/shared/ui/data-table';
+import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
+
+/** 0-100 points (score, coverage or a sector percentile, 100 = best) as a 0..1 colour position. */
+const score = (value: number | null | undefined) => (value == null ? null : value / 100);
 
 export function MarketPage() {
   const [params, setParams] = useSearchParams();
@@ -50,15 +56,22 @@ export function MarketPage() {
   }
   return (
     <>
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Mercado / Screener
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Explora el universo</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Compara empresas con los datos y el modelo de tu instalación local.
-          </p>
+      <div className="mb-7">
+        <PageHeader
+          eyebrow="Mercado / Screener"
+          title="Explora el universo"
+          description="Compara empresas con los datos y el modelo de tu instalación local."
+          actions={
+            <Button
+              variant="outline"
+              disabled={result.isFetching}
+              onClick={() => void result.refetch()}
+            >
+              <RotateCw className={result.isFetching ? 'animate-spin' : ''} aria-hidden="true" />
+              Consultar caché
+            </Button>
+          }
+        >
           <SectionLinks
             label="Apartados de Mercado"
             links={[
@@ -85,15 +98,7 @@ export function MarketPage() {
               },
             ]}
           />
-        </div>
-        <Button
-          variant="outline"
-          disabled={result.isFetching}
-          onClick={() => void result.refetch()}
-        >
-          <RotateCw className={result.isFetching ? 'animate-spin' : ''} aria-hidden="true" />
-          Consultar caché
-        </Button>
+        </PageHeader>
       </div>
       {data && <Evidence model={data.model} data={data.data} />}
       {data && (
@@ -297,102 +302,123 @@ export function MarketPage() {
             {!data.items.length ? (
               <EmptyState filtered={data.data.status !== 'empty'} />
             ) : (
-              <div className="overflow-x-auto" tabIndex={0} aria-label="Tabla desplazable">
-                <table className="w-full min-w-[770px] text-left text-sm">
-                  <caption className="sr-only">
-                    Ranking del modelo local. Posición global antes de filtros.
-                  </caption>
-                  <thead className="bg-muted/60 text-xs text-muted-foreground">
-                    <tr>
-                      <th scope="col" className="p-4 pl-5">
-                        Pos.
-                      </th>
-                      {(
-                        [
-                          ['name', 'Empresa'],
-                          ['price', 'Precio · USD'],
-                          ['composite_score', 'Score'],
-                          ['confidence', 'Cobertura ponderada'],
-                          ['market_cap', 'Capitalización'],
-                          ['pe', 'PER'],
-                        ] as const
-                      ).map(([key, label]) => (
-                        <th
-                          scope="col"
-                          key={key}
-                          aria-sort={
-                            query.order_by === key
-                              ? query.direction === 'desc'
-                                ? 'descending'
-                                : 'ascending'
-                              : 'none'
-                          }
-                          className="p-4"
-                        >
-                          <button
-                            className="flex items-center gap-1 whitespace-nowrap"
-                            onClick={() => sort(key)}
-                          >
-                            {label}
-                            {query.order_by === key &&
-                              (query.direction === 'desc' ? (
-                                <ArrowDown size={12} aria-hidden="true" />
-                              ) : (
-                                <ArrowUp size={12} aria-hidden="true" />
-                              ))}
-                          </button>
+              <>
+                <DataTable label="Tabla desplazable">
+                  <table className="w-full min-w-[770px] text-left text-sm">
+                    <caption className="sr-only">
+                      Ranking del modelo local. Posición global antes de filtros.
+                    </caption>
+                    <thead className="bg-muted/60 text-xs text-muted-foreground">
+                      <tr>
+                        <th scope="col" className="p-4 pl-5">
+                          Pos.
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.items.map((row) => (
-                      <tr
-                        key={row.symbol}
-                        className="border-t transition-colors hover:bg-accent/35"
-                      >
-                        <td className="p-4 pl-5 text-xs tabular-nums text-muted-foreground">
-                          {row.rank}
-                        </td>
-                        <th scope="row" className="max-w-72 p-4 font-normal">
-                          <Link
-                            to={
-                              '/mercado/empresas/' +
-                              encodeURIComponent(row.symbol) +
-                              '?' +
-                              params.toString()
+                        {(
+                          [
+                            ['name', 'Empresa'],
+                            ['price', 'Precio · USD'],
+                            ['composite_score', 'Score'],
+                            ['confidence', 'Cobertura ponderada'],
+                            ['market_cap', 'Capitalización'],
+                            ['pe', 'PER'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <th
+                            scope="col"
+                            key={key}
+                            aria-sort={
+                              query.order_by === key
+                                ? query.direction === 'desc'
+                                  ? 'descending'
+                                  : 'ascending'
+                                : 'none'
                             }
-                            className="inline-flex flex-col gap-1 rounded-sm"
+                            className={'p-4' + (key === 'name' ? '' : ' num')}
                           >
-                            <span className="font-semibold text-primary">
-                              {row.symbol}
-                              <span className="ml-2 font-normal text-foreground">
-                                {row.name ?? 'Nombre no disponible'}
-                              </span>
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {row.sector ?? 'Sin sector'}
-                            </span>
-                          </Link>
-                        </th>
-                        <td className="p-4 whitespace-nowrap tabular-nums">
-                          {metric(row.metrics.price)}
-                        </td>
-                        <td className="p-4 tabular-nums">
-                          <span className="rounded-md bg-secondary px-2 py-1 font-semibold">
-                            {metric(row.metrics.composite_score)}
-                          </span>
-                        </td>
-                        <td className="p-4 tabular-nums">{metric(row.metrics.confidence)}</td>
-                        <td className="p-4 whitespace-nowrap tabular-nums">
-                          {metric(row.metrics.market_cap, true)}
-                        </td>
-                        <td className="p-4 tabular-nums">{metric(row.metrics.pe)}</td>
+                            <button
+                              className="flex items-center gap-1 whitespace-nowrap"
+                              onClick={() => sort(key)}
+                            >
+                              {label}
+                              {query.order_by === key &&
+                                (query.direction === 'desc' ? (
+                                  <ArrowDown size={12} aria-hidden="true" />
+                                ) : (
+                                  <ArrowUp size={12} aria-hidden="true" />
+                                ))}
+                            </button>
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {data.items.map((row) => (
+                        <tr
+                          key={row.symbol}
+                          className="border-t transition-colors hover:bg-accent/35"
+                        >
+                          <td className="p-4 pl-5 text-xs tabular-nums text-muted-foreground">
+                            {row.rank}
+                          </td>
+                          <th scope="row" className="max-w-72 p-4 font-normal">
+                            <Link
+                              to={
+                                '/mercado/empresas/' +
+                                encodeURIComponent(row.symbol) +
+                                '?' +
+                                params.toString()
+                              }
+                              className="inline-flex flex-col gap-1 rounded-sm"
+                            >
+                              <span className="font-semibold text-primary">
+                                {row.symbol}
+                                <span className="ml-2 font-normal text-foreground">
+                                  {row.name ?? 'Nombre no disponible'}
+                                </span>
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {row.sector ?? 'Sin sector'}
+                              </span>
+                            </Link>
+                          </th>
+                          <td className="num p-4 whitespace-nowrap">{metric(row.metrics.price)}</td>
+                          <RankCell
+                            className="num p-4 font-semibold"
+                            position={score(row.metrics.composite_score?.value)}
+                            scope="del universo"
+                          >
+                            {metric(row.metrics.composite_score)}
+                          </RankCell>
+                          <RankCell
+                            className="num p-4"
+                            position={score(row.metrics.confidence?.value)}
+                            scope="del universo"
+                          >
+                            {metric(row.metrics.confidence)}
+                          </RankCell>
+                          <td className="num p-4 whitespace-nowrap">
+                            {metric(row.metrics.market_cap, true)}
+                          </td>
+                          <RankCell
+                            className="num p-4"
+                            position={score(row.metrics.pe_pct?.value)}
+                            scope="de su sector"
+                          >
+                            {metric(row.metrics.pe)}
+                          </RankCell>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </DataTable>
+                <div className="px-5 pb-1">
+                  <RankLegend>
+                    Score y cobertura ponderada de 0 (rojo) a 100 (verde). El PER se colorea por su
+                    percentil dentro del sector: verde es un PER bajo frente a sus comparables, no
+                    un PER bajo en absoluto.
+                  </RankLegend>
+                </div>
+              </>
             )}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4 text-xs text-muted-foreground">
               <p>

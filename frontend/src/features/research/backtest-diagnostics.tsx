@@ -6,15 +6,11 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { CoverageThreshold, WarningText } from '@/shared/ui/coverage';
 import { TailRiskTable } from './tail-risk-table';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
-const pct = (value: number | null | undefined, digits = 2) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value * 100) + ' %';
+const pct = (value: number | null | undefined, digits = 2) => formatPercent(value, { digits });
 const eur = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value) + ' €';
+  value == null ? '—' : formatNumber(value, { digits: 0 }) + ' €';
 
 function TaxColumn({ label, tax }: { label: string; tax: TaxDrag }) {
   return (

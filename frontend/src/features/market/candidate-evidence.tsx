@@ -10,6 +10,7 @@ import { EvidenceTable } from '@/shared/ui/evidence-table';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 // The 13 scored metrics (scoring.SCORE_METRICS), with the labels of the old pages.
 const METRIC_LABELS: Record<string, string> = {
@@ -28,14 +29,8 @@ const METRIC_LABELS: Record<string, string> = {
   max_drawdown: 'Máximo drawdown',
 };
 const label = (metric: string) => METRIC_LABELS[metric] ?? metric;
-const num = (value: number | null | undefined, digits = 1) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
-const pct = (value: number | null | undefined, digits = 0) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value * 100) + ' %';
+const num = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });
+const pct = (value: number | null | undefined, digits = 0) => formatPercent(value, { digits });
 
 export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
   const [sicMetric, setSicMetric] = useState('');

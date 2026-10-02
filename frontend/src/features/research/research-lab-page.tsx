@@ -10,18 +10,18 @@ import { BootstrapPanel, PboPanel } from './experiment-jobs';
 import { LiveLedgerSection } from './live-ledger';
 import { SavedAudits } from './saved-audits';
 import { DeflatedSharpePanel, ExperimentTailPanel } from './experiment-statistics';
-import { BackLink } from '@/shared/ui/section-links';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
+import { DataTable } from '@/shared/ui/data-table';
 
 const PAGE_SIZE = 50;
 
-function decimal(value: number | null | undefined, digits = 2): string {
-  return value === null || value === undefined ? '—' : value.toFixed(digits);
-}
+const decimal = (value: number | null | undefined, digits = 2) =>
+  formatNumber(value, { digits, fixed: true });
 
-function percent(value: number | null | undefined): string {
-  return value === null || value === undefined ? '—' : `${(value * 100).toFixed(1)} %`;
-}
+const percent = (value: number | null | undefined) =>
+  formatPercent(value, { digits: 1, fixed: true });
 
 function stageLabel(stages: ExperimentStage[], id: string): string {
   const stage = stages.find((item) => item.id === id);
@@ -157,16 +157,18 @@ export function ResearchLabPage() {
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/investigacion">Investigación</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Research Lab</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Registro de experimentos de backtesting con su metodología, el commit exacto y el
-          resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
-          candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real (live
-          forward) pueden confirmarlo.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/investigacion', label: 'Investigación' }}
+        title="Research Lab"
+        description={
+          <>
+            Registro de experimentos de backtesting con su metodología, el commit exacto y el
+            resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
+            candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real
+            (live forward) pueden confirmarlo.
+          </>
+        }
+      />
       {experiments.isPending && <LoadingState />}
       {experiments.isError && (
         <ErrorState error={experiments.error} retry={() => void experiments.refetch()} />
@@ -228,7 +230,7 @@ export function ResearchLabPage() {
               Ranking histórico tras ejecutar un backtest.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border bg-card">
+            <DataTable label="Tabla de experimentos" className="rounded-xl border bg-card">
               <table className="w-full text-left text-sm" aria-label="Experimentos registrados">
                 <thead>
                   <tr className="border-b">
@@ -303,7 +305,7 @@ export function ResearchLabPage() {
                 experimentos del filtro, no solo los de esta página. Una caída máxima más cercana a
                 cero es mejor. Comparar experimentos de familias distintas no los hace equivalentes.
               </RankLegend>
-            </div>
+            </DataTable>
           )}
           {pages > 1 && (
             <div className="flex items-center gap-3 text-sm">

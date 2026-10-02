@@ -11,13 +11,9 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { useJob } from '@/shared/api/use-job';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
-const pct = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(
-        value * 100,
-      ) + ' %';
+const pct = (value: number | null | undefined) => formatPercent(value, { digits: 2, fixed: true });
 
 function Decision({ seq }: { seq: number }) {
   const query = useQuery({
@@ -152,7 +148,7 @@ function Report({ jobId }: { jobId: string }) {
                 <td>{pct(row.gross_return)}</td>
                 <td>{pct(row.cost_fraction)}</td>
                 <td>{pct(row.net_return)}</td>
-                <td>{row.nav == null ? '—' : row.nav.toFixed(4)}</td>
+                <td>{formatNumber(row.nav, { digits: 4, fixed: true })}</td>
               </tr>
             ))}
           </tbody>

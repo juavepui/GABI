@@ -6,13 +6,12 @@ import { createJournal, deleteJournal, getJournal, reviewJournal } from '@/share
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
-import { dateLabel } from '@/shared/lib/format';
-import { BackLink } from '@/shared/ui/section-links';
+import { dateLabel, formatNumber } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const numberOrNull = (value: FormDataEntryValue | null) =>
   value == null || String(value).trim() === '' ? null : Number(value);
-const money = (value: number | null | undefined) =>
-  value == null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);
+const money = (value: number | null | undefined) => formatNumber(value, { digits: 2 });
 
 function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void }) {
   const review = useMutation({
@@ -179,14 +178,16 @@ export function JournalPage() {
   }
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/cartera">Cartera objetivo</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Diario de inversión</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Escribe la tesis antes de invertir y revísala después. Las entradas permanecen en la base
-          local de este equipo.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/cartera', label: 'Cartera objetivo' }}
+        title="Diario de inversión"
+        description={
+          <>
+            Escribe la tesis antes de invertir y revísala después. Las entradas permanecen en la
+            base local de este equipo.
+          </>
+        }
+      />
       <details className="rounded-xl border bg-card p-5" open={Boolean(prefill)}>
         <summary className="cursor-pointer font-semibold">Nueva tesis</summary>
         <form onSubmit={submit} className="mt-5 space-y-4">

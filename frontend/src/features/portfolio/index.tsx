@@ -11,17 +11,15 @@ import { EvidenceTable } from '@/shared/ui/evidence-table';
 import { Folded } from '@/shared/ui/folded';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { Compass, FlaskRound, GraduationCap, NotebookPen } from 'lucide-react';
+import { formatMoney, formatNumber } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
 export { DecisionsPage } from './decisions-page';
 
-const euro = (value: number) =>
-  new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
-const decimal = (value: number | null | undefined, digits = 1) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+const euro = (value: number) => formatMoney(value, { currency: 'EUR', digits: 2 });
+const decimal = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });
 const initial: PlanRequest = {
   n_positions: 20,
   capital_eur: 1000,
@@ -76,15 +74,11 @@ export function PortfolioPage() {
   const data = plan.data;
   return (
     <div className="space-y-6">
-      <header>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Cartera / Plan
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Mi cartera objetivo</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Selección Top-N con los pesos congelados y cobertura mínima del 70 %. El cálculo y reparto
-          de capital se hacen en Python sobre la caché local. No se envían órdenes.
-        </p>
+      <PageHeader
+        eyebrow="Cartera / Plan"
+        title="Mi cartera objetivo"
+        description="Selección Top-N con los pesos congelados y cobertura mínima del 70 %. El cálculo y reparto de capital se hacen en Python sobre la caché local. No se envían órdenes."
+      >
         <SectionLinks
           label="Apartados de Cartera"
           links={[
@@ -118,7 +112,7 @@ export function PortfolioPage() {
             },
           ]}
         />
-      </header>
+      </PageHeader>
       <form onSubmit={submit} className="rounded-xl border bg-card p-5">
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="text-sm font-medium">

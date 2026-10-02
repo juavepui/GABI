@@ -4,6 +4,7 @@ import { getHistoricalTable } from '@/shared/api/client';
 import type { HistoricalColumn } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { formatNumber } from '@/shared/lib/format';
 
 const PAGE = 100;
 const SECTOR_ES: Record<string, string> = {
@@ -20,11 +21,7 @@ const SECTOR_ES: Record<string, string> = {
   Materials: 'Materiales',
 };
 
-const fixed = (value: number, digits: number) =>
-  new Intl.NumberFormat('es-ES', {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: digits,
-  }).format(value);
+const fixed = (value: number, digits: number) => formatNumber(value, { digits, fixed: true });
 
 function format(column: HistoricalColumn, value: number | string | null | undefined): string {
   if (value == null) return '—';

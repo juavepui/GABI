@@ -9,20 +9,15 @@ import { BacktestDiagnostics } from './backtest-diagnostics';
 import { BacktestFactors } from './backtest-factors';
 import { BacktestRegister } from './backtest-register';
 import { PrepareData } from './prepare-data';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
 type Engine = 'backtest_v1' | 'backtest_v2';
 
 const selectClass = 'mt-1.5 block h-10 w-full rounded-md border bg-background px-2 text-sm';
-const pct = (value: number | null | undefined, digits = 1) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value * 100) + ' %';
-const num = (value: number | null | undefined, digits = 2) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+const pct = (value: number | null | undefined, digits = 1) => formatPercent(value, { digits });
+const num = (value: number | null | undefined, digits = 2) => formatNumber(value, { digits });
 const SERIES = { estrategia: 'Estrategia', universo_ew: 'Universo equiponderado', spy: 'SPY' };
 
 function Field({ label, children }: { label: string; children: ReactNode }) {

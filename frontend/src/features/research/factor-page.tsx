@@ -8,12 +8,10 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { PublishedFactorMap } from './published-factor-map';
 import { EstimateCaptures } from './estimate-captures';
 import { FactorGlossary, FactorQuantiles, SkippedPeriods } from './factor-details';
-import { BackLink } from '@/shared/ui/section-links';
+import { formatNumber } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
 
-const format = (value: number | null | undefined, digits = 3) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: digits }).format(value);
+const format = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
 export function FactorPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
@@ -60,15 +58,17 @@ export function FactorPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/investigacion">Investigación</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Factor Lab</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Estudia si cada score ordena los retornos futuros mediante Rank IC, quintiles y rotación.
-          Son resultados retrospectivos exploratorios; no prueban una ventaja neta frente al S&amp;P
-          500.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/investigacion', label: 'Investigación' }}
+        title="Factor Lab"
+        description={
+          <>
+            Estudia si cada score ordena los retornos futuros mediante Rank IC, quintiles y
+            rotación. Son resultados retrospectivos exploratorios; no prueban una ventaja neta
+            frente al S&amp;P 500.
+          </>
+        }
+      />
       <FactorGlossary />
       <PublishedFactorMap />
       <EstimateCaptures researchAllowed={model.data?.mode === 'RESEARCH'} />

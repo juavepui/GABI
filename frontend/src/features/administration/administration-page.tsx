@@ -20,6 +20,7 @@ import { KeyEditor } from './key-editor';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { ProgressBar } from '@/shared/ui/progress-bar';
 import { JOB_STATES, jobName } from '@/shared/lib/jobs';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const sourceNames: Record<string, string> = {
   prices: 'Precios',
@@ -181,14 +182,11 @@ export function AdministrationPage() {
   }
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-          Operación local
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Administración</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Solicita actualizaciones y auditorías. El worker continúa aunque cierres el navegador.
-        </p>
+      <PageHeader
+        eyebrow="Operación local"
+        title="Administración"
+        description="Solicita actualizaciones y auditorías. El worker continúa aunque cierres el navegador."
+      >
         <SectionLinks
           label="Apartados de Administración"
           links={[
@@ -201,7 +199,7 @@ export function AdministrationPage() {
             },
           ]}
         />
-      </div>
+      </PageHeader>
       {error && (
         <p
           role="alert"

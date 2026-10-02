@@ -1,14 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getMacro } from '@/shared/api/client';
-import { dateLabel } from '@/shared/lib/format';
+import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
-import { BackLink } from '@/shared/ui/section-links';
+import { PageHeader } from '@/shared/ui/page-header';
 
-const value = (amount: number | null) =>
-  amount == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(amount);
+const value = (amount: number | null) => formatNumber(amount, { digits: 2 });
 
 export function MacroPage() {
   const query = useQuery({
@@ -17,18 +14,20 @@ export function MacroPage() {
   });
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/mercado">Mercado</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Panel macro</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Contexto para las tesis del{' '}
-          <Link className="text-primary underline" to="/cartera/diario">
-            diario de inversión
-          </Link>
-          . Estas series FRED no intervienen en el score de empresas. La consulta solo lee datos
-          descargados en este equipo.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/mercado', label: 'Mercado' }}
+        title="Panel macro"
+        description={
+          <>
+            Contexto para las tesis del{' '}
+            <Link className="text-primary underline" to="/cartera/diario">
+              diario de inversión
+            </Link>
+            . Estas series FRED no intervienen en el score de empresas. La consulta solo lee datos
+            descargados en este equipo.
+          </>
+        }
+      />
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} retry={() => void query.refetch()} />}
       {query.data && (

@@ -9,7 +9,8 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { TailRiskTable } from './tail-risk-table';
 import { useJob } from '@/shared/api/use-job';
-import { BackLink } from '@/shared/ui/section-links';
+import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -26,23 +27,11 @@ const SCHEMES = [
 type Scheme = (typeof SCHEMES)[number][0];
 
 const pct = (value: number | null | undefined, digits = 1) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits,
-      }).format(value * 100) + ' %';
+  formatPercent(value, { digits, fixed: true });
 const num = (value: number | null | undefined, digits = 2) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits,
-      }).format(value);
+  formatNumber(value, { digits, fixed: true });
 const usd = (value: number | null | undefined) =>
-  value == null
-    ? '—'
-    : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value) + ' $';
+  value == null ? '—' : formatNumber(value, { digits: 0 }) + ' $';
 
 function Result({ data }: { data: PortfolioLabPreview }) {
   const [riskScheme, setRiskScheme] = useState(data.schemes[0]?.id ?? '');
@@ -290,16 +279,18 @@ export function PortfolioLabPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <BackLink to="/investigacion">Investigación</BackLink>
-        <h1 className="mt-3 text-3xl font-semibold">Portfolio Lab</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Con las mismas candidatas de cada rebalanceo, compara seis formas de repartir el capital,
-          sin declarar ganador de antemano. Fíjate en el HHI y en la contribución al riesgo de las 3
-          mayores posiciones, no solo en el número de posiciones: 20 empresas no significan 20
-          fuentes de riesgo.
-        </p>
-      </header>
+      <PageHeader
+        back={{ to: '/investigacion', label: 'Investigación' }}
+        title="Portfolio Lab"
+        description={
+          <>
+            Con las mismas candidatas de cada rebalanceo, compara seis formas de repartir el
+            capital, sin declarar ganador de antemano. Fíjate en el HHI y en la contribución al
+            riesgo de las 3 mayores posiciones, no solo en el número de posiciones: 20 empresas no
+            significan 20 fuentes de riesgo.
+          </>
+        }
+      />
       <details className="rounded-xl border bg-card p-4 text-sm">
         <summary className="cursor-pointer font-medium">Qué significa cada esquema</summary>
         <ul className="mt-2 space-y-1">

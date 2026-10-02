@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { saveWeights } from '@/shared/api/client';
 import type { ModelResponse, WeightsRequest } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
+import { formatNumber } from '@/shared/lib/format';
 
 const fields = [
   ['value', 'Valor'],
@@ -13,11 +14,13 @@ const fields = [
 
 export function WeightsEditor({ model }: { model: ModelResponse }) {
   const client = useQueryClient();
+  // Percent with two decimals for the inputs (a value to edit, not a text to show).
+  const percent = (fraction: number | undefined) => Math.round((fraction ?? 0) * 10000) / 100;
   const [draft, setDraft] = useState<WeightsRequest>(() => ({
-    value: Number(((model.weights.value ?? 0) * 100).toFixed(2)),
-    quality: Number(((model.weights.quality ?? 0) * 100).toFixed(2)),
-    momentum: Number(((model.weights.momentum ?? 0) * 100).toFixed(2)),
-    risk: Number(((model.weights.risk ?? 0) * 100).toFixed(2)),
+    value: percent(model.weights.value),
+    quality: percent(model.weights.quality),
+    momentum: percent(model.weights.momentum),
+    risk: percent(model.weights.risk),
   }));
   const save = useMutation({
     mutationFn: saveWeights,
@@ -66,7 +69,8 @@ export function WeightsEditor({ model }: { model: ModelResponse }) {
       {model.mode === 'RESEARCH' ? (
         <>
           <p className="text-xs text-muted-foreground">
-            Total: {total.toFixed(2)} %. Solo se guardan si suman 100 %.
+            Total: {formatNumber(total, { digits: 2, fixed: true })} %. Solo se guardan si suman 100
+            %.
           </p>
           <Button
             type="submit"

@@ -237,7 +237,8 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   await expect(page.getByText('Otras métricas (informativas, no puntuadas)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Próximos catalizadores' })).toBeVisible();
   await page.getByText('Qué cambió respecto al filing anterior').click();
-  await expect(page.getByText(/^10-K/)).toBeVisible();
+  const changes = page.locator('details', { hasText: 'Qué cambió respecto al filing anterior' });
+  await expect(changes.getByText(/^10-K/).first()).toBeVisible();
   await page.getByText('Historial de sorpresas de resultados').click();
   await page.getByRole('button', { name: 'Sincronizar historial de resultados' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toBeVisible();
@@ -295,4 +296,25 @@ test('la portada resume datos, cartera objetivo y primeros pasos sin descargar n
   expect(requests.filter((line) => line.startsWith('POST'))).toEqual([]);
   await target.getByRole('link', { name: 'Ver la cartera y repartir capital' }).click();
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
+});
+
+test('la tabla de Mercado colorea por percentil, fija la cabecera y alinea números', async ({
+  page,
+}) => {
+  await page.goto('/mercado?limit=100');
+  const scroll = page.getByRole('region', { name: 'Tabla desplazable' });
+  const firstRow = scroll.locator('tbody tr').first();
+  await expect(firstRow).toBeVisible({ timeout: 30_000 });
+  // The score cell is coloured (red to green) and right-aligned; prices are not coloured.
+  const scoreCell = firstRow.locator('td').nth(2);
+  await expect(scoreCell).toHaveCSS('text-align', 'right');
+  expect(await scoreCell.evaluate((cell) => getComputedStyle(cell).backgroundColor)).toMatch(
+    /^rgb\(/,
+  );
+  await expect(page.getByText(/percentil dentro del sector/)).toBeVisible();
+  // Scrolling the table keeps its header row in view.
+  await scroll.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+  const header = scroll.locator('thead th').first();
+  const [headerBox, regionBox] = await Promise.all([header.boundingBox(), scroll.boundingBox()]);
+  expect(Math.abs((headerBox?.y ?? 0) - (regionBox?.y ?? 0))).toBeLessThan(4);
 });
