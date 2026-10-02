@@ -10,6 +10,7 @@ import { useJob } from '@/shared/api/use-job';
 import { ProgressBar } from '@/shared/ui/progress-bar';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { Term } from '@/shared/ui/term';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 const OPTIONS_LIMIT = 200;
 
@@ -115,12 +116,12 @@ export function PboPanel() {
       <h2 className="text-lg font-semibold">
         <Term k="pbo">Probabilidad de sobreajuste (PBO)</Term>
       </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <HowToRead className="mt-1">
         Elige la mejor variante dentro de una muestra y comprueba si esa elección se sostiene fuera
         de ella. Requiere retornos observados sobre las mismas fechas de al menos 2 experimentos:
         solo los registrados con su serie de retornos. Se ejecuta como trabajo explícito porque con
         16 bloques evalúa 12.870 particiones.
-      </p>
+      </HowToRead>
       {experiments.isError && (
         <ErrorState error={experiments.error} retry={() => void experiments.refetch()} />
       )}

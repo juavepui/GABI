@@ -263,20 +263,24 @@ export function BlindValidationsPage() {
         back={{ to: '/investigacion', label: 'Investigación' }}
         title="Validaciones ciegas"
         description={
+          <>Seguimiento hacia delante con el resultado sellado hasta su fecha de desbloqueo.</>
+        }
+        guide={
           <>
-            Cada rebalanceo queda registrado de forma inmutable (posiciones, precios y hash
-            encadenado) y el rendimiento frente al SPY queda oculto hasta la fecha de desbloqueo.
-            Esta vista no muestra posiciones ni precios. El backend aplica la fecha de desbloqueo y
-            las revisiones de cada preregistro; ocultar un botón no basta.
+            <p>
+              Cada rebalanceo queda registrado de forma inmutable (posiciones, precios y hash
+              encadenado) y el rendimiento frente al SPY queda oculto hasta la fecha de desbloqueo.
+              Esta vista no muestra posiciones ni precios. El backend aplica la fecha de desbloqueo
+              y las revisiones de cada preregistro; ocultar un botón no basta.
+            </p>
+            <p>
+              Ver el resultado a medias es la forma más humana de arruinar una prueba prospectiva:
+              en cuanto se ajusta la estrategia por lo visto, la prueba deja de servir, aunque nadie
+              haga trampa a propósito.
+            </p>
           </>
         }
-      >
-        <p className="mt-3 max-w-3xl rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300">
-          Ver el resultado a medias es la forma más humana de arruinar una prueba prospectiva: en
-          cuanto se ajusta la estrategia por lo visto, la prueba deja de servir, aunque nadie haga
-          trampa a propósito.
-        </p>
-      </PageHeader>
+      ></PageHeader>
       <CreateValidation />
       {validations.isPending && <LoadingState />}
       {validations.isError && (

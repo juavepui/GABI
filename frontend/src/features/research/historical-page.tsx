@@ -53,11 +53,14 @@ export function HistoricalPage() {
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
         title="Ranking histórico"
-        description={
+        description={<>Reconstruye el S&amp;P 500 en una fecha pasada ya observada.</>}
+        guide={
           <>
-            Reconstruye el S&amp;P 500 en una fecha ya observada. El cálculo usa el motor histórico
-            existente y se ejecuta en el worker; no crea una validación independiente ni consulta
-            las reservas prospectivas o anteriores a 2010.
+            <p>
+              Reconstruye el S&amp;P 500 en una fecha ya observada. El cálculo usa el motor
+              histórico existente y se ejecuta en el worker; no crea una validación independiente ni
+              consulta las reservas prospectivas o anteriores a 2010.
+            </p>
           </>
         }
       />

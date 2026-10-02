@@ -203,8 +203,16 @@ export function DecisionsPage() {
         title="Decisiones de cartera"
         description={
           <>
-            Política experimental de gestión de riesgo; usa scores congelados, pero no equivale al
-            Top‑20 validado ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
+            Plan experimental de compra y venta con reglas de riesgo propias. No demuestra ventaja
+            frente al S&amp;P 500.
+          </>
+        }
+        guide={
+          <>
+            <p>
+              Política experimental de gestión de riesgo; usa scores congelados, pero no equivale al
+              Top‑20 validado ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
+            </p>
           </>
         }
       />

@@ -1,5 +1,6 @@
 import type { TailSeries } from '@/shared/api/generated/types.gen';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 const pct = (value: number | null | undefined, digits = 2) => formatPercent(value, { digits });
 const num = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
@@ -90,12 +91,12 @@ export function TailRiskTable({
           <li key={warning}>{warning}</li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <HowToRead className="mt-2">
         VaR es el umbral de pérdidas; ES/CVaR promedia la peor masa del 5 % o 1 %, ponderando la
         frontera. Asimetría negativa indica cola izquierda; exceso de curtosis normal = 0. La masa
         de cola no cuenta eventos independientes. Estas cifras describen la muestra y no limitan las
         pérdidas futuras. {message}
-      </p>
+      </HowToRead>
     </>
   );
 }

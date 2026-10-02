@@ -12,6 +12,7 @@ import { useJob } from '@/shared/api/use-job';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -118,12 +119,12 @@ function Result({ data }: { data: PortfolioLabPreview }) {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <HowToRead className="mt-2">
           HHI (Herfindahl-Hirschman) = Σwᵢ²: 1/N es el mínimo con N posiciones equiponderadas y 1 es
           todo en una sola. Top-3 contribución al riesgo = fracción de la varianza total de la
           cartera (no del capital) que explican las 3 posiciones con más riesgo, con los pesos del
           último rebalanceo.
-        </p>
+        </HowToRead>
       </div>
       <div>
         <h2 className="text-lg font-semibold">Curvas de capital</h2>
@@ -195,12 +196,12 @@ function Result({ data }: { data: PortfolioLabPreview }) {
       </div>
       <div>
         <h2 className="text-lg font-semibold">Stress tests</h2>
-        <p className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300">
+        <HowToRead className="mt-2">
           No son pronósticos: son shocks arbitrarios con supuestos simples, aplicados a los pesos
           del último rebalanceo de cada esquema. Los escenarios con base real usan beta y sector de
           precios reales; los marcados como heurística usan una tabla por sector sin calibrar y son
           solo orientativos.
-        </p>
+        </HowToRead>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-xs" aria-label="Stress tests">
             <thead>
@@ -286,12 +287,15 @@ export function PortfolioLabPage() {
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="Comparar formas de repartir el capital"
         title="Portfolio Lab"
-        description={
+        description={<>Compara seis formas de repartir el capital entre las mismas candidatas.</>}
+        guide={
           <>
-            Con las mismas candidatas de cada rebalanceo, compara seis formas de repartir el
-            capital, sin declarar ganador de antemano. Fíjate en el HHI y en la contribución al
-            riesgo de las 3 mayores posiciones, no solo en el número de posiciones: 20 empresas no
-            significan 20 fuentes de riesgo.
+            <p>
+              Con las mismas candidatas de cada rebalanceo, compara seis formas de repartir el
+              capital, sin declarar ganador de antemano. Fíjate en el HHI y en la contribución al
+              riesgo de las 3 mayores posiciones, no solo en el número de posiciones: 20 empresas no
+              significan 20 fuentes de riesgo.
+            </p>
           </>
         }
       />

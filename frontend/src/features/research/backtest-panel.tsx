@@ -10,6 +10,7 @@ import { BacktestFactors } from './backtest-factors';
 import { BacktestRegister } from './backtest-register';
 import { PrepareData } from './prepare-data';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
@@ -106,11 +107,11 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
         <h2 id="backtest-heading" className="text-2xl font-semibold">
           Backtest multifactor por rebalanceos
         </h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+        <HowToRead className="mt-2">
           Reconstruye el ranking en cada fecha con SEC EDGAR y la composición histórica del índice,
           solo dentro del periodo observado de 2010 a julio de 2025. Un periodo sin cobertura se
           salta y se lista. Es un ensayo retrospectivo: no demuestra ventaja frente al S&amp;P 500.
-        </p>
+        </HowToRead>
       </div>
       <div className="flex gap-2" role="group" aria-label="Motor del backtest">
         <Button

@@ -10,6 +10,7 @@ import { DateField, HealthStatus, RunButton, Section, Table } from './data-healt
 import { age, pct, useHealthJob, useToday, type Row } from './data-health-job';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 type SourceSummary = {
   label: string;
@@ -467,12 +468,12 @@ function ArchiveSection() {
   const priceSource = data?.sources.find((row) => row.data === 'Precios')?.source;
   return (
     <Section title="Archivo histórico 2010-2015">
-      <p className="text-xs text-muted-foreground">
+      <HowToRead>
         Fuentes históricas descargadas para investigación. Solo se exploran 2010-2015: el periodo
         anterior sigue cerrado por la reserva del #43. Los precios archivados conservan los ajustes
         de su fuente y requieren validar la identidad de cada empresa antes de usarlos en un
         backtest. Los fundamentales estructurados de SEC empiezan en 2009.
-      </p>
+      </HowToRead>
       <RunButton running={archive.running} onClick={() => archive.run({ scope: 'archive' })}>
         Consultar cobertura del archivo
       </RunButton>
@@ -587,7 +588,16 @@ export function DataHealthPage() {
         back={{ to: '/administracion', label: 'Administración' }}
         eyebrow="Administración"
         title="Calidad de los datos"
-        description="Cobertura, frescura y procedencia de cada fuente: no solo qué score produce un símbolo, sino con qué calidad de dato se calculó. Nada se descarga: cada comprobación es un trabajo local que lee la caché."
+        description={<>Cobertura, frescura y procedencia de cada fuente de datos.</>}
+        guide={
+          <>
+            <p>
+              Cobertura, frescura y procedencia de cada fuente: no solo qué score produce un
+              símbolo, sino con qué calidad de dato se calculó. Nada se descarga: cada comprobación
+              es un trabajo local que lee la caché.
+            </p>
+          </>
+        }
       />
       <UniverseSection state={universe} />
       <BlockCoverage />

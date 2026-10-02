@@ -77,7 +77,20 @@ export function PortfolioPage() {
       <PageHeader
         eyebrow="Cartera / Plan"
         title="Mi cartera objetivo"
-        description="Selección Top-N con los pesos congelados y cobertura mínima del 70 %. El cálculo y reparto de capital se hacen en Python sobre la caché local. No se envían órdenes."
+        description={
+          <>
+            Las candidatas de la hipótesis congelada y cómo repartir tu capital. No se envían
+            órdenes.
+          </>
+        }
+        guide={
+          <>
+            <p>
+              Selección Top-N con los pesos congelados y cobertura mínima del 70 %. El cálculo y
+              reparto de capital se hacen en Python sobre la caché local. No se envían órdenes.
+            </p>
+          </>
+        }
       >
         <SectionLinks
           label="Apartados de Cartera"

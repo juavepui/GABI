@@ -168,12 +168,15 @@ export function ResearchLabPage() {
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="Registro de experimentos"
         title="Research Lab"
-        description={
+        description={<>Experimentos de backtesting con su metodología, commit y resultado.</>}
+        guide={
           <>
-            Registro de experimentos de backtesting con su metodología, el commit exacto y el
-            resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
-            candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real
-            (live forward) pueden confirmarlo.
+            <p>
+              Registro de experimentos de backtesting con su metodología, el commit exacto y el
+              resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
+              candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real
+              (live forward) pueden confirmarlo.
+            </p>
           </>
         }
       />

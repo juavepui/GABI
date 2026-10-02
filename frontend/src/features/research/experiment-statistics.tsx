@@ -6,6 +6,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { TailRiskTable } from './tail-risk-table';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { Term } from '@/shared/ui/term';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 // Selectors read one bounded page; the backend recomputes N from the whole family.
 const OPTIONS_LIMIT = 200;
@@ -88,12 +89,12 @@ export function DeflatedSharpePanel({ families }: { families: string[] }) {
           ¿El Sharpe resiste el tamaño de la muestra y la búsqueda?
         </span>
       </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <HowToRead className="mt-1">
         PSR: probabilidad de que el Sharpe observado sea genuinamente positivo y no ruido de
         muestreo. DSR: lo mismo, pero comparando con el Sharpe máximo que cabría esperar por azar
         entre todos los intentos de la familia elegida; corrige por haber probado varias
         configuraciones.
-      </p>
+      </HowToRead>
       <div className="mt-4 flex flex-wrap gap-4 text-sm">
         {families.length > 0 && (
           <label className="grid gap-1">

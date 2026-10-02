@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 const RollingChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.RollingChart })),
@@ -85,12 +86,12 @@ export function BacktestFactors({
       <summary className="cursor-pointer font-medium">
         Contraste con factores académicos (Fama-French 5 + Momentum)
       </summary>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <HowToRead className="mt-2">
         ¿Lo que hace la estrategia es distinto de las primas de factor documentadas (mercado,
         tamaño, value, calidad, inversión y momentum de la Kenneth French Data Library)? Se
         regresiona el retorno de la estrategia contra esos seis factores; el alfa es lo que queda
         sin explicar. Usa la copia local de los factores y solo la descarga si no existe.
-      </p>
+      </HowToRead>
       <form onSubmit={submit} className="mt-3 flex flex-wrap items-end gap-3">
         <label className="flex items-center gap-2 text-xs font-medium">
           <input
@@ -357,12 +358,12 @@ export function Stability({
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <HowToRead>
         Contribución = suma de (exceso de retorno − exposición a factores con betas globales) / n
         total. Las filas suman el alfa trimestral global; no son alfas por episodio.
         insufficient_data significa que no se estiman alfa y betas locales con tan pocas
         observaciones.
-      </p>
+      </HowToRead>
       <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
         {audit.limitations.map((item) => (
           <li key={item}>{item}</li>

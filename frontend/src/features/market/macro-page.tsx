@@ -17,14 +17,17 @@ export function MacroPage() {
       <PageHeader
         back={{ to: '/mercado', label: 'Mercado' }}
         title="Panel macro"
-        description={
+        description={<>Contexto macroeconómico para tus tesis; no interviene en el score.</>}
+        guide={
           <>
-            Contexto para las tesis del{' '}
-            <Link className="text-primary underline" to="/cartera/diario">
-              diario de inversión
-            </Link>
-            . Estas series FRED no intervienen en el score de empresas. La consulta solo lee datos
-            descargados en este equipo.
+            <p>
+              Contexto para las tesis del{' '}
+              <Link className="text-primary underline" to="/cartera/diario">
+                diario de inversión
+              </Link>
+              . Estas series FRED no intervienen en el score de empresas. La consulta solo lee datos
+              descargados en este equipo.
+            </p>
           </>
         }
       />

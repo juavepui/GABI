@@ -425,12 +425,15 @@ export function LearnPage() {
       <PageHeader
         back={{ to: '/cartera', label: 'Cartera' }}
         title="Aprender a usar GABI"
-        description={
+        description={<>Vocabulario, estrategias, psicología y cómo piensa GABI por dentro.</>}
+        guide={
           <>
-            Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por qué,
-            los errores mentales más comunes al invertir dinero real y cómo funciona GABI por
-            dentro, con el rigor que hay (y el que no hay) detrás de sus números. No sustituye a un
-            buen libro, pero es un punto de partida conectado con el resto de la aplicación.
+            <p>
+              Para cuando estás empezando: vocabulario, formas de pensar sobre qué comprar y por
+              qué, los errores mentales más comunes al invertir dinero real y cómo funciona GABI por
+              dentro, con el rigor que hay (y el que no hay) detrás de sus números. No sustituye a
+              un buen libro, pero es un punto de partida conectado con el resto de la aplicación.
+            </p>
           </>
         }
       />

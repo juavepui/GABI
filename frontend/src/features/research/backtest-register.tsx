@@ -4,6 +4,7 @@ import { createJob, getJob, getJobResult } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 type Stage = 'RESEARCH' | 'IN_SAMPLE' | 'OUT_OF_SAMPLE' | 'LIVE_FORWARD';
 
@@ -64,12 +65,12 @@ export function BacktestRegister({ sourceJobId }: { sourceJobId: string }) {
       <summary className="cursor-pointer font-medium">
         Registrar este experimento en Research Lab
       </summary>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <HowToRead className="mt-2">
         Guarda los parámetros, métricas y la serie de retornos del artefacto verificado, con su hash
         y la huella de los datos locales. La huella recorre todas las tablas de la base y puede
         tardar más de diez minutos; se calcula al registrar, no al terminar el backtest. Cada
         backtest solo se puede registrar una vez, para no inflar el recuento de ensayos.
-      </p>
+      </HowToRead>
       <form onSubmit={submit} className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="text-xs font-medium">
           Fase

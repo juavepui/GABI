@@ -255,7 +255,15 @@ export function HomePage() {
       <PageHeader
         eyebrow="Inicio"
         title="Tu GABI hoy"
-        description="Estado de tus datos, la cartera objetivo y lo que tienes pendiente. Todo se calcula con la caché local; nada se descarga sin que lo pidas."
+        description={<>Estado de tus datos, la cartera objetivo y lo que tienes pendiente.</>}
+        guide={
+          <>
+            <p>
+              Estado de tus datos, la cartera objetivo y lo que tienes pendiente. Todo se calcula
+              con la caché local; nada se descarga sin que lo pidas.
+            </p>
+          </>
+        }
       />
       <HomeNotices />
       {home.isPending && <LoadingState />}

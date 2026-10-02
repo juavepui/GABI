@@ -65,9 +65,17 @@ export function FactorPage() {
         title="Factor Lab"
         description={
           <>
-            Estudia si cada score ordena los retornos futuros mediante Rank IC, quintiles y
-            rotación. Son resultados retrospectivos exploratorios; no prueban una ventaja neta
-            frente al S&amp;P 500.
+            ¿Ordena cada score los retornos futuros? Resultados exploratorios, sin ventaja
+            demostrada.
+          </>
+        }
+        guide={
+          <>
+            <p>
+              Estudia si cada score ordena los retornos futuros mediante Rank IC, quintiles y
+              rotación. Son resultados retrospectivos exploratorios; no prueban una ventaja neta
+              frente al S&amp;P 500.
+            </p>
           </>
         }
       />

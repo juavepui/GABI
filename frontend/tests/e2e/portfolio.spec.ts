@@ -39,7 +39,12 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await page.goto('/mercado/macro');
   await expect(page.getByRole('heading', { name: 'Panel macro' })).toBeVisible();
   await expect(page.getByText('Treasury 10 años')).toBeVisible();
-  await expect(page.getByText('FRED', { exact: false }).first()).toBeVisible();
+  // One line stays visible; the full explanation is folded under «Cómo leer esta página».
+  await expect(page.getByText('no interviene en el score')).toBeVisible();
+  const guide = page.getByText(/Estas series FRED no intervienen/);
+  await expect(guide).toBeHidden();
+  await page.getByText('Cómo leer esta página').click();
+  await expect(guide).toBeVisible();
 });
 
 test('Signal Monitor conserva snapshots y compara con el ranking en vivo', async ({ page }) => {

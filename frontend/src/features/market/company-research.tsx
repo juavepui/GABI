@@ -13,6 +13,7 @@ import { Button } from '@/shared/ui/button';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateLabel, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { HowToRead } from '@/shared/ui/how-to-read';
 
 const EVENT_LABELS: Record<string, string> = {
   earnings: 'Earnings',
@@ -183,11 +184,11 @@ export function CompanyResearch({ symbol }: { symbol: string }) {
         )}
       </Folded>
       <Folded title="Estimaciones de consenso (experimental, no puntuado)">
-        <p className="text-xs text-muted-foreground">
+        <HowToRead>
           Consenso de analistas de Yahoo Finance, sin licencia formal. Yahoo no ofrece un histórico
           point-in-time: GABI guarda cada captura con su fecha real, así que el histórico propio
           solo crece hacia delante. No entra en el score sin validación explícita en Investigación.
-        </p>
+        </HowToRead>
         <SyncButton symbol={symbol} dataset="estimates" label="Sincronizar estimaciones" />
         {estimate == null ? (
           <p className="text-muted-foreground">Sin estimaciones sincronizadas todavía.</p>
@@ -334,12 +335,12 @@ function InsidersContent({ symbol }: { symbol: string }) {
   const data = insiders.data;
   return (
     <>
-      <p className="text-xs text-muted-foreground">
+      <HowToRead>
         Compras y ventas de directivos y consejeros con sus propias acciones. Una compra en mercado
         abierto (código P) fuera de un plan 10b5-1 preprogramado es la señal más informativa; ventas
         y ejercicios de opciones son mucho más rutinarios. Informativo: no entra en el Composite
         Score.
-      </p>
+      </HowToRead>
       <SyncButton symbol={symbol} dataset="insiders" label="Actualizar insiders de esta empresa" />
       <dl className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-md border p-3">

@@ -51,7 +51,21 @@ export function ResearchPage() {
       <PageHeader
         eyebrow="Evidencia publicada"
         title="Investigación"
-        description="Registro de búsquedas y resultados publicados. Los ensayos retrospectivos no son una validación independiente. GABI todavía no ha demostrado una estrategia neta claramente superior al S&P 500."
+        description={
+          <>
+            Ensayos registrados y sus resultados, incluidos los fallidos. GABI todavía no ha
+            demostrado una estrategia neta claramente superior al S&amp;P 500.
+          </>
+        }
+        guide={
+          <>
+            <p>
+              Registro de búsquedas y resultados publicados. Los ensayos retrospectivos no son una
+              validación independiente. GABI todavía no ha demostrado una estrategia neta claramente
+              superior al S&P 500.
+            </p>
+          </>
+        }
       >
         <SectionLinks
           label="Herramientas de Investigación"
