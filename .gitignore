@@ -24,6 +24,7 @@ data/fmp_api_key.txt
 data/app_mode.json
 data/overfitting_audit/
 data/full_universe_audit/
+data/jobs/
 data/historical_validation_2010_2015/
 data/revalidation_2011_2025/
 data/r3_e6/
