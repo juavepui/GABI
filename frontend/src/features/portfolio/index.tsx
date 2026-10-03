@@ -187,7 +187,7 @@ export function PortfolioPage() {
       <PlanEvidence />
       {data && (
         <>
-          <section className="rounded-xl border bg-card p-5">
+          <section aria-label="Cartera objetivo" className="rounded-xl border bg-card p-5">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl font-semibold">Objetivo · {data.target.length} posiciones</h2>
               <Badge variant={data.status === 'FROZEN' ? 'secondary' : 'outline'}>
@@ -204,13 +204,13 @@ export function PortfolioPage() {
               <p className="mt-5 text-sm">Ninguna empresa supera hoy el umbral de cobertura.</p>
             ) : (
               <div className="mt-5 overflow-x-auto">
-                <table className="w-full min-w-[680px] text-left text-sm">
+                <table className="w-full text-left text-xs sm:min-w-[680px] sm:text-sm">
                   <thead className="border-b text-xs text-muted-foreground">
                     <tr>
                       <th className="pb-3">Empresa</th>
-                      <th className="pb-3">Score</th>
-                      <th className="pb-3">Cobertura</th>
-                      <th className="pb-3">Precio USD</th>
+                      <th className="hidden pb-3 sm:table-cell">Score</th>
+                      <th className="hidden pb-3 sm:table-cell">Cobertura</th>
+                      <th className="hidden pb-3 sm:table-cell">Precio USD</th>
                       <th className="pb-3">Peso</th>
                       <th className="pb-3">Importe</th>
                     </tr>
@@ -226,14 +226,31 @@ export function PortfolioPage() {
                             {row.symbol}
                           </Link>
                           <span className="ml-2 text-muted-foreground">{row.name}</span>
+                          <details className="mt-1 sm:hidden">
+                            <summary className="cursor-pointer text-primary">
+                              Más datos de {row.symbol}
+                            </summary>
+                            <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
+                              <dt>Score</dt>
+                              <dd className="text-right">{decimal(row.score_points)}</dd>
+                              <dt>Cobertura</dt>
+                              <dd className="text-right">
+                                {row.score_coverage_fraction == null
+                                  ? '—'
+                                  : decimal(row.score_coverage_fraction * 100, 0) + ' %'}
+                              </dd>
+                              <dt>Precio USD</dt>
+                              <dd className="text-right">{decimal(row.price_usd, 2)}</dd>
+                            </dl>
+                          </details>
                         </td>
-                        <td>{decimal(row.score_points)}</td>
-                        <td>
+                        <td className="hidden sm:table-cell">{decimal(row.score_points)}</td>
+                        <td className="hidden sm:table-cell">
                           {row.score_coverage_fraction == null
                             ? '—'
                             : decimal(row.score_coverage_fraction * 100, 0) + ' %'}
                         </td>
-                        <td>{decimal(row.price_usd, 2)}</td>
+                        <td className="hidden sm:table-cell">{decimal(row.price_usd, 2)}</td>
                         <td>{decimal(row.weight_percent, 1)} %</td>
                         <td>{euro(row.amount_eur)}</td>
                       </tr>

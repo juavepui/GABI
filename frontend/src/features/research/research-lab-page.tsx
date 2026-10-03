@@ -10,7 +10,7 @@ import { BootstrapPanel, PboPanel } from './experiment-jobs';
 import { LiveLedgerSection } from './live-ledger';
 import { SavedAudits } from './saved-audits';
 import { DeflatedSharpePanel, ExperimentTailPanel } from './experiment-statistics';
-import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
+import { RankCell, RankLegend, RankValue } from '@/shared/ui/rank-cell';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
@@ -241,82 +241,171 @@ export function ResearchLabPage() {
               Ranking histórico tras ejecutar un backtest.
             </p>
           ) : (
-            <DataTable label="Tabla de experimentos" className="rounded-xl border bg-card">
-              <table className="w-full text-left text-sm" aria-label="Experimentos registrados">
-                <thead>
-                  <tr className="border-b">
-                    {[
-                      'id',
-                      'Modelo',
-                      'Fase',
-                      'Familia',
-                      'Posiciones',
-                      'Rebalanceo',
-                      'Sharpe',
-                      'Sortino',
-                      'Máx. drawdown',
-                      'Hipótesis previa',
-                      'Commit',
-                      'Retornos',
-                      'Notas',
-                    ].map((label) => (
-                      <th key={label} className="px-3 py-2 font-medium">
-                        {COLUMN_TERMS[label] ? <Term k={COLUMN_TERMS[label]}>{label}</Term> : label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item) => (
-                    <tr
-                      key={item.id}
-                      className={item.id === selected ? 'border-b bg-muted' : 'border-b'}
-                    >
-                      <td className="px-3 py-2">
+            <>
+              <div className="space-y-3 sm:hidden" aria-label="Experimentos registrados">
+                {data.items.map((item) => (
+                  <article
+                    className="rounded-xl border bg-card p-4 text-sm"
+                    key={item.id}
+                    aria-label={`Experimento ${item.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
                         <button
                           type="button"
-                          className="text-primary underline"
-                          aria-label={`Ver entorno del experimento ${item.id}`}
+                          className="font-semibold text-primary underline"
                           onClick={() => update({ experiment: String(item.id) })}
                         >
-                          #{item.id}
+                          Experimento #{item.id}
                         </button>
-                      </td>
-                      <td className="px-3 py-2">{item.model_id}</td>
-                      <td className="px-3 py-2">{stageLabel(data.stages, item.stage)}</td>
-                      <td className="px-3 py-2">{item.family ?? '—'}</td>
-                      <td className="px-3 py-2">{item.n_positions ?? '—'}</td>
-                      <td className="px-3 py-2">{item.rebalance ?? '—'}</td>
-                      {(
-                        [
-                          ['sharpe', decimal(item.sharpe)],
-                          ['sortino', decimal(item.sortino)],
-                          ['max_drawdown', percent(item.max_drawdown)],
-                        ] as const
-                      ).map(([metric, text]) => (
-                        <RankCell
-                          key={metric}
-                          className="px-3 py-2"
-                          position={data.positions[metric]?.[String(item.id)]}
+                        <p className="mt-1 break-words">{item.model_id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {stageLabel(data.stages, item.stage)}
+                        </p>
+                      </div>
+                      <div className="text-right text-xs">
+                        <span className="block text-muted-foreground">Sharpe</span>
+                        <RankValue
+                          position={data.positions.sharpe?.[String(item.id)]}
                           scope="de los experimentos del filtro"
                         >
-                          {text}
-                        </RankCell>
+                          {decimal(item.sharpe)}
+                        </RankValue>
+                      </div>
+                    </div>
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-primary">
+                        Más datos del experimento
+                      </summary>
+                      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <dt>Familia</dt>
+                        <dd className="text-right">{item.family ?? '—'}</dd>
+                        <dt>Posiciones</dt>
+                        <dd className="text-right">{item.n_positions ?? '—'}</dd>
+                        <dt>Rebalanceo</dt>
+                        <dd className="text-right">{item.rebalance ?? '—'}</dd>
+                        <dt>Sortino</dt>
+                        <dd className="text-right">
+                          <RankValue
+                            position={data.positions.sortino?.[String(item.id)]}
+                            scope="de los experimentos del filtro"
+                          >
+                            {decimal(item.sortino)}
+                          </RankValue>
+                        </dd>
+                        <dt>Máx. drawdown</dt>
+                        <dd className="text-right">
+                          <RankValue
+                            position={data.positions.max_drawdown?.[String(item.id)]}
+                            scope="de los experimentos del filtro"
+                          >
+                            {percent(item.max_drawdown)}
+                          </RankValue>
+                        </dd>
+                        <dt>Hipótesis previa</dt>
+                        <dd className="text-right">{item.hypothesis_registered ? 'Sí' : 'No'}</dd>
+                        <dt>Retornos</dt>
+                        <dd className="text-right">{item.has_returns ? 'Sí' : '—'}</dd>
+                        <dt>Commit</dt>
+                        <dd className="break-all text-right font-mono">{item.git_commit ?? '—'}</dd>
+                        <dt>Notas</dt>
+                        <dd className="break-words text-right">{item.notes ?? '—'}</dd>
+                      </dl>
+                    </details>
+                  </article>
+                ))}
+              </div>
+              <DataTable
+                label="Tabla de experimentos"
+                className="hidden rounded-xl border bg-card sm:block"
+              >
+                <table className="w-full text-left text-sm" aria-label="Experimentos registrados">
+                  <thead>
+                    <tr className="border-b">
+                      {[
+                        'id',
+                        'Modelo',
+                        'Fase',
+                        'Familia',
+                        'Posiciones',
+                        'Rebalanceo',
+                        'Sharpe',
+                        'Sortino',
+                        'Máx. drawdown',
+                        'Hipótesis previa',
+                        'Commit',
+                        'Retornos',
+                        'Notas',
+                      ].map((label) => (
+                        <th key={label} className="px-3 py-2 font-medium">
+                          {COLUMN_TERMS[label] ? (
+                            <Term k={COLUMN_TERMS[label]}>{label}</Term>
+                          ) : (
+                            label
+                          )}
+                        </th>
                       ))}
-                      <td className="px-3 py-2">{item.hypothesis_registered ? 'Sí' : 'No'}</td>
-                      <td className="px-3 py-2 font-mono">{item.git_commit ?? '—'}</td>
-                      <td className="px-3 py-2">{item.has_returns ? 'Sí' : '—'}</td>
-                      <td className="max-w-xs px-3 py-2 break-words">{item.notes ?? ''}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <RankLegend>
-                Sharpe, Sortino y caída máxima, de rojo (peor) a verde (mejor) entre todos los
-                experimentos del filtro, no solo los de esta página. Una caída máxima más cercana a
-                cero es mejor. Comparar experimentos de familias distintas no los hace equivalentes.
-              </RankLegend>
-            </DataTable>
+                  </thead>
+                  <tbody>
+                    {data.items.map((item) => (
+                      <tr
+                        key={item.id}
+                        className={item.id === selected ? 'border-b bg-muted' : 'border-b'}
+                      >
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            className="text-primary underline"
+                            aria-label={`Ver entorno del experimento ${item.id}`}
+                            onClick={() => update({ experiment: String(item.id) })}
+                          >
+                            #{item.id}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2">{item.model_id}</td>
+                        <td className="px-3 py-2">{stageLabel(data.stages, item.stage)}</td>
+                        <td className="px-3 py-2">{item.family ?? '—'}</td>
+                        <td className="px-3 py-2">{item.n_positions ?? '—'}</td>
+                        <td className="px-3 py-2">{item.rebalance ?? '—'}</td>
+                        {(
+                          [
+                            ['sharpe', decimal(item.sharpe)],
+                            ['sortino', decimal(item.sortino)],
+                            ['max_drawdown', percent(item.max_drawdown)],
+                          ] as const
+                        ).map(([metric, text]) => (
+                          <RankCell
+                            key={metric}
+                            className="px-3 py-2"
+                            position={data.positions[metric]?.[String(item.id)]}
+                            scope="de los experimentos del filtro"
+                          >
+                            {text}
+                          </RankCell>
+                        ))}
+                        <td className="px-3 py-2">{item.hypothesis_registered ? 'Sí' : 'No'}</td>
+                        <td className="px-3 py-2 font-mono">{item.git_commit ?? '—'}</td>
+                        <td className="px-3 py-2">{item.has_returns ? 'Sí' : '—'}</td>
+                        <td className="max-w-xs px-3 py-2 break-words">{item.notes ?? ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <RankLegend>
+                  Sharpe, Sortino y caída máxima, de rojo (peor) a verde (mejor) entre todos los
+                  experimentos del filtro, no solo los de esta página. Una caída máxima más cercana
+                  a cero es mejor. Comparar experimentos de familias distintas no los hace
+                  equivalentes.
+                </RankLegend>
+              </DataTable>
+              <div className="sm:hidden">
+                <RankLegend>
+                  Sharpe, Sortino y caída máxima se comparan entre los experimentos del filtro.
+                  Comparar familias distintas no las hace equivalentes.
+                </RankLegend>
+              </div>
+            </>
           )}
           {pages > 1 && (
             <div className="flex items-center gap-3 text-sm">

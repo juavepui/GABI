@@ -311,13 +311,13 @@ export function MarketPage() {
             ) : (
               <>
                 <DataTable label="Tabla desplazable">
-                  <table className="w-full min-w-[770px] text-left text-sm">
+                  <table className="w-full text-left text-sm sm:min-w-[770px]">
                     <caption className="sr-only">
                       Ranking del modelo local. Posición global antes de filtros.
                     </caption>
                     <thead className="bg-muted/60 text-xs text-muted-foreground">
                       <tr>
-                        <th scope="col" className="p-4 pl-5">
+                        <th scope="col" className="p-2 sm:p-4 sm:pl-5">
                           Pos.
                         </th>
                         {(
@@ -340,7 +340,13 @@ export function MarketPage() {
                                   : 'ascending'
                                 : 'none'
                             }
-                            className={'p-4' + (key === 'name' ? '' : ' num')}
+                            className={
+                              'p-2 sm:p-4' +
+                              (key === 'name' ? '' : ' num') +
+                              (key === 'name' || key === 'composite_score'
+                                ? ''
+                                : ' hidden sm:table-cell')
+                            }
                           >
                             <button
                               className="flex items-center gap-1 whitespace-nowrap"
@@ -364,10 +370,10 @@ export function MarketPage() {
                           key={row.symbol}
                           className="border-t transition-colors hover:bg-accent/35"
                         >
-                          <td className="p-4 pl-5 text-xs tabular-nums text-muted-foreground">
+                          <td className="p-2 text-xs tabular-nums text-muted-foreground sm:p-4 sm:pl-5">
                             {row.rank}
                           </td>
-                          <th scope="row" className="max-w-72 p-4 font-normal">
+                          <th scope="row" className="max-w-72 p-2 font-normal sm:p-4">
                             <Link
                               to={
                                 '/mercado/empresas/' +
@@ -387,27 +393,46 @@ export function MarketPage() {
                                 {row.sector ?? 'Sin sector'}
                               </span>
                             </Link>
+                            <details className="mt-2 text-xs sm:hidden">
+                              <summary className="cursor-pointer text-primary">
+                                Más métricas de {row.symbol}
+                              </summary>
+                              <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-foreground">
+                                <dt>Precio USD</dt>
+                                <dd className="text-right">{metric(row.metrics.price)}</dd>
+                                <dt>Cobertura</dt>
+                                <dd className="text-right">{metric(row.metrics.confidence)}</dd>
+                                <dt>Capitalización</dt>
+                                <dd className="text-right">
+                                  {metric(row.metrics.market_cap, true)}
+                                </dd>
+                                <dt>PER</dt>
+                                <dd className="text-right">{metric(row.metrics.pe)}</dd>
+                              </dl>
+                            </details>
                           </th>
-                          <td className="num p-4 whitespace-nowrap">{metric(row.metrics.price)}</td>
+                          <td className="num hidden whitespace-nowrap p-4 sm:table-cell">
+                            {metric(row.metrics.price)}
+                          </td>
                           <RankCell
-                            className="num p-4 font-semibold"
+                            className="num p-2 font-semibold sm:p-4"
                             position={score(row.metrics.composite_score?.value)}
                             scope="del universo"
                           >
                             {metric(row.metrics.composite_score)}
                           </RankCell>
                           <RankCell
-                            className="num p-4"
+                            className="num hidden p-4 sm:table-cell"
                             position={score(row.metrics.confidence?.value)}
                             scope="del universo"
                           >
                             {metric(row.metrics.confidence)}
                           </RankCell>
-                          <td className="num p-4 whitespace-nowrap">
+                          <td className="num hidden whitespace-nowrap p-4 sm:table-cell">
                             {metric(row.metrics.market_cap, true)}
                           </td>
                           <RankCell
-                            className="num p-4"
+                            className="num hidden p-4 sm:table-cell"
                             position={score(row.metrics.pe_pct?.value)}
                             scope="de su sector"
                           >

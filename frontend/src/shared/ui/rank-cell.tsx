@@ -37,6 +37,27 @@ export function RankCell({
   );
 }
 
+/** Same backend position as RankCell, for compact mobile records. */
+export function RankValue({
+  position,
+  scope,
+  children,
+}: {
+  position: number | null | undefined;
+  scope: string;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className="rounded px-1.5 py-0.5 tabular-nums text-foreground"
+      style={rankStyle(position)}
+      title={rankTitle(position, scope)}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function RankLegend({ children }: { children: ReactNode }) {
   return (
     <p className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

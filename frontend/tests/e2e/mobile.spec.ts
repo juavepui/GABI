@@ -6,6 +6,12 @@ test('responsive navigation, filters, table and company on narrow screens', asyn
 }, testInfo) => {
   await page.goto('/mercado?search=BRK');
   await expect(page.locator('tbody tr')).toHaveCount(2);
+  const ranking = page.getByRole('region', { name: 'Ranking de empresas' });
+  await expect(ranking.getByText('Más métricas de BRK-B')).toBeVisible();
+  await ranking.getByText('Más métricas de BRK-B').click();
+  await expect(
+    ranking.locator('details[open] dt').filter({ hasText: 'Capitalización' }),
+  ).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBeTruthy();
@@ -44,4 +50,67 @@ test('responsive navigation, filters, table and company on narrow screens', asyn
   await expect(page).toHaveURL(/search=BRK/);
   await page.getByRole('link', { name: 'Administración', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
+});
+
+test('comparison shows one company per mobile card with its full metric detail', async ({
+  page,
+}) => {
+  await page.goto('/mercado/comparar?symbols=T000&symbols=T001');
+  const cards = page.locator('[aria-label="Comparación por empresa"]');
+  await expect(cards.getByRole('article')).toHaveCount(2);
+  await expect(cards.getByText('Composite Score')).toHaveCount(2);
+  await cards.getByText('Todas las métricas de T000').click();
+  await expect(
+    cards
+      .getByRole('article')
+      .first()
+      .locator('details[open] dt')
+      .filter({ hasText: 'Precio / valor contable' }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
+});
+
+test('Research Lab shows essential experiment data and an expandable detail on mobile', async ({
+  page,
+}) => {
+  await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+    data: { mode: 'RESEARCH' },
+  });
+  try {
+    await page.goto('/investigacion/laboratorio');
+    const cards = page.locator('div[aria-label="Experimentos registrados"]');
+    const first = cards.getByRole('article').first();
+    await expect(first).toContainText('Sharpe');
+    await first.getByText('Más datos del experimento').click();
+    await expect(first.getByText('Máx. drawdown')).toBeVisible();
+    const select = first.getByRole('button', { name: /Experimento #/ });
+    const id = (await select.textContent())!.match(/\d+/)![0];
+    await select.click();
+    await expect(page.getByRole('region', { name: `Experimento ${id}` })).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    ).toBeTruthy();
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});
+
+test('portfolio target keeps weights visible and expands secondary metrics on mobile', async ({
+  page,
+}) => {
+  await page.goto('/cartera');
+  const target = page.getByRole('region', { name: 'Cartera objetivo' });
+  const detail = target.getByText(/^Más datos de/).first();
+  await expect(detail).toBeVisible();
+  await detail.click();
+  await expect(target.locator('details[open] dt').filter({ hasText: 'Precio USD' })).toBeVisible();
+  await expect(target.getByRole('columnheader', { name: 'Peso' })).toBeVisible();
+  await expect(target.getByRole('columnheader', { name: 'Importe' })).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
 });
