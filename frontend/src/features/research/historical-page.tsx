@@ -11,6 +11,7 @@ import { HistoricalOutcomes } from './historical-outcomes';
 import { HistoricalTable } from './historical-table';
 import { PrepareData } from './prepare-data';
 import { PageHeader } from '@/shared/ui/page-header';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
@@ -90,8 +91,8 @@ export function HistoricalPage() {
       >
         <label className="text-xs font-medium">
           Empresas a preparar para {asOf}
-          <select
-            className="mt-1.5 block h-10 rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5"
             value={prepareLimit ?? 'all'}
             onChange={(event) =>
               setPrepareLimit(
@@ -102,7 +103,7 @@ export function HistoricalPage() {
             <option value={15}>Prueba rápida (15 empresas)</option>
             <option value={50}>Medio (50 empresas)</option>
             <option value="all">Completo</option>
-          </select>
+          </NativeSelect>
         </label>
         <PrepareData
           label="Preparar datos que falten para esta fecha"

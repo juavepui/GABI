@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getPublishedFactors } from '@/shared/api/client';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber } from '@/shared/lib/format';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const labels: Record<string, string> = {
   pe: 'PER',
@@ -97,8 +98,8 @@ export function PublishedFactorMap() {
           <>
             <label className="mt-4 block text-sm font-medium">
               Señal · estabilidad por industria
-              <select
-                className="mt-1.5 block h-10 w-full max-w-sm rounded-md border bg-background px-2 text-sm"
+              <NativeSelect
+                className="mt-1.5 w-full max-w-sm"
                 value={factor.metric}
                 onChange={(event) => setSelected(event.target.value)}
               >
@@ -107,7 +108,7 @@ export function PublishedFactorMap() {
                     {labels[row.metric] ?? row.metric}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[770px] text-left text-sm">

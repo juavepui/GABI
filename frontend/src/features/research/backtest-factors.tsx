@@ -12,6 +12,7 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const RollingChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.RollingChart })),
@@ -290,8 +291,8 @@ export function Stability({
       <div className="flex flex-wrap gap-3">
         <label className="text-xs font-medium">
           Coeficiente
-          <select
-            className="mt-1.5 block h-10 rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5"
             value={coefficient}
             onChange={(event) => setCoefficient(event.target.value)}
           >
@@ -300,12 +301,12 @@ export function Stability({
                 {name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <label className="text-xs font-medium">
           Ventana (trimestres)
-          <select
-            className="mt-1.5 block h-10 rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5"
             value={windowSize}
             onChange={(event) => setWindowSize(Number(event.target.value))}
           >
@@ -314,7 +315,7 @@ export function Stability({
                 {value}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
       {points.length === 0 ? (

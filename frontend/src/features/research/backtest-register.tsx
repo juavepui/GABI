@@ -5,6 +5,8 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { NativeSelect } from '@/shared/ui/native-select';
+import { Textarea } from '@/shared/ui/textarea';
 
 type Stage = 'RESEARCH' | 'IN_SAMPLE' | 'OUT_OF_SAMPLE' | 'LIVE_FORWARD';
 
@@ -74,8 +76,8 @@ export function BacktestRegister({ sourceJobId }: { sourceJobId: string }) {
       <form onSubmit={submit} className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="text-xs font-medium">
           Fase
-          <select
-            className="mt-1.5 block h-10 w-full rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5 w-full"
             value={stage}
             onChange={(event) => setStage(event.target.value as Stage)}
           >
@@ -84,7 +86,7 @@ export function BacktestRegister({ sourceJobId }: { sourceJobId: string }) {
                 {item.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <label className="text-xs font-medium">
           Familia (agrupa intentos comparables)
@@ -105,8 +107,8 @@ export function BacktestRegister({ sourceJobId }: { sourceJobId: string }) {
         </label>
         <label className="text-xs font-medium sm:col-span-2">
           Notas
-          <textarea
-            className="mt-1.5 block min-h-20 w-full rounded-md border bg-background p-2 text-sm"
+          <Textarea
+            className="mt-1.5 min-h-20 w-full"
             maxLength={2000}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}

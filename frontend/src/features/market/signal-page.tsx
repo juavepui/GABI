@@ -189,7 +189,7 @@ export function SignalPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label className="text-sm">
               Snapshot de referencia
-              <select
+              <NativeSelect
                 name="snapshot_id"
                 value={selected ?? options[0].id}
                 onChange={(event) => {
@@ -203,7 +203,7 @@ export function SignalPage() {
                     {item.name} · {dateLabel(item.as_of_date)}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             <label className="text-sm">
               Cambio mínimo de rank

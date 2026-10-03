@@ -9,6 +9,7 @@ import { SectionLinks } from '@/shared/ui/section-links';
 import { ChartPie, FlaskConical, History, Lock, Ruler } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const PAGE_SIZE = 25;
 
@@ -152,8 +153,8 @@ export function ResearchPage() {
             </div>
             <label className="text-xs font-medium">
               Familia
-              <select
-                className="mt-1.5 block h-10 min-w-48 rounded-md border bg-background px-2 text-sm"
+              <NativeSelect
+                className="mt-1.5 min-w-48"
                 value={family}
                 onChange={(event) => changeFilter(event.target.value)}
               >
@@ -163,7 +164,7 @@ export function ResearchPage() {
                     {item}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
           </div>
           <DataTable label="Tabla de ensayos" className="mt-5">

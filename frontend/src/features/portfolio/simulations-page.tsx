@@ -24,6 +24,7 @@ import { Badge } from '@/shared/ui/badge';
 import { SimulationPrices } from './sim-prices';
 import { formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const SimulationChart = lazy(() => import('./simulation-chart'));
 const number = (value: number | null | undefined, digits = 2) => formatNumber(value, { digits });
@@ -186,20 +187,17 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
           </label>
           <label className="text-sm">
             Instrumento
-            <select
-              name="asset_type"
-              className="mt-1 h-9 w-full rounded-md border bg-background px-2"
-            >
+            <NativeSelect name="asset_type" className="mt-1 w-full">
               <option value="STOCK">Acción</option>
               <option value="ETF">ETF</option>
-            </select>
+            </NativeSelect>
           </label>
           <label className="text-sm">
             Lado
-            <select name="side" className="mt-1 h-9 w-full rounded-md border bg-background px-2">
+            <NativeSelect name="side" className="mt-1 w-full">
               <option value="BUY">Comprar</option>
               <option value="SELL">Vender</option>
-            </select>
+            </NativeSelect>
           </label>
           <label className="text-sm">
             Fecha
@@ -211,22 +209,19 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
           </label>
           <label className="text-sm">
             Mercado
-            <select name="market" className="mt-1 h-9 w-full rounded-md border bg-background px-2">
+            <NativeSelect name="market" className="mt-1 w-full">
               {['XNYS', 'XETR', 'XLON', 'XMAD', 'XPAR'].map((market) => (
                 <option key={market}>{market}</option>
               ))}
-            </select>
+            </NativeSelect>
           </label>
           <label className="text-sm">
             Divisa cotizada
-            <select
-              name="quote_currency"
-              className="mt-1 h-9 w-full rounded-md border bg-background px-2"
-            >
+            <NativeSelect name="quote_currency" className="mt-1 w-full">
               <option>USD</option>
               <option>EUR</option>
               <option>GBP</option>
-            </select>
+            </NativeSelect>
           </label>
           <label className="text-sm">
             Cambio manual (opcional)
@@ -431,13 +426,10 @@ export function SimulationsPage() {
           </label>
           <label className="text-sm">
             Divisa base
-            <select
-              name="base_currency"
-              className="mt-1 h-9 w-full rounded-md border bg-background px-2"
-            >
+            <NativeSelect name="base_currency" className="mt-1 w-full">
               <option>USD</option>
               <option>EUR</option>
-            </select>
+            </NativeSelect>
           </label>
           <label className="text-sm">
             Comisión acción
@@ -496,8 +488,8 @@ export function SimulationsPage() {
         <>
           <label className="block text-sm font-medium">
             Cartera activa
-            <select
-              className="mt-1 block h-9 w-full max-w-sm rounded-md border bg-background px-2"
+            <NativeSelect
+              className="mt-1 w-full max-w-sm"
               value={current.id}
               onChange={(event) => setActive(Number(event.target.value))}
             >
@@ -506,7 +498,7 @@ export function SimulationsPage() {
                   {item.name} (#{item.id})
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </label>
           <Workspace key={current.id} portfolio={current} />
         </>

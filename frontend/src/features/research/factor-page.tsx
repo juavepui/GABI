@@ -11,6 +11,7 @@ import { formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const format = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
@@ -113,8 +114,8 @@ export function FactorPage() {
         </label>
         <label className="text-xs font-medium">
           Rebalanceo
-          <select
-            className="mt-1.5 block h-10 w-full rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5 w-full"
             value={months}
             onChange={(event) => setMonths(Number(event.target.value) as 1 | 3 | 6 | 12)}
           >
@@ -123,24 +124,24 @@ export function FactorPage() {
                 Cada {value} meses
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <label className="text-xs font-medium">
           Modo
-          <select
-            className="mt-1.5 block h-10 w-full rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5 w-full"
             value={mode}
             onChange={(event) => setMode(event.target.value as 'fast_dev' | 'validation')}
           >
             <option value="fast_dev">Muestra rápida</option>
             <option value="validation">Universo completo</option>
-          </select>
+          </NativeSelect>
         </label>
         {mode === 'fast_dev' && (
           <label className="text-xs font-medium">
             Empresas de muestra
-            <select
-              className="mt-1.5 block h-10 w-full rounded-md border bg-background px-2 text-sm"
+            <NativeSelect
+              className="mt-1.5 w-full"
               value={maxSymbols}
               onChange={(event) => setMaxSymbols(Number(event.target.value) as 50 | 100 | 200)}
             >
@@ -149,7 +150,7 @@ export function FactorPage() {
                   {value}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </label>
         )}
         <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-5">

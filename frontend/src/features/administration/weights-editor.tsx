@@ -4,6 +4,7 @@ import { saveWeights } from '@/shared/api/client';
 import type { ModelResponse, WeightsRequest } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { formatNumber } from '@/shared/lib/format';
+import { Input } from '@/shared/ui/input';
 
 const fields = [
   ['value', 'Valor'],
@@ -51,7 +52,7 @@ export function WeightsEditor({ model }: { model: ModelResponse }) {
         {fields.map(([key, label]) => (
           <label key={key} className="text-xs">
             {label} (%)
-            <input
+            <Input
               type="number"
               min="0"
               max="100"
@@ -61,7 +62,7 @@ export function WeightsEditor({ model }: { model: ModelResponse }) {
               onChange={(event) =>
                 setDraft((current) => ({ ...current, [key]: Number(event.target.value) }))
               }
-              className="mt-1 w-full rounded-md border bg-background p-2 text-sm"
+              className="mt-1"
             />
           </label>
         ))}

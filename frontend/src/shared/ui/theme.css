@@ -45,28 +45,38 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
-* {
-  border-color: var(--border);
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  min-width: 320px;
-}
-button,
-input,
-select {
-  font: inherit;
-}
-button,
-a,
-input,
-select {
-  touch-action: manipulation;
-}
-:focus-visible {
-  outline: 2px solid #56825d;
-  outline-offset: 3px;
+/* Element defaults go in the base layer: unlayered rules would beat every Tailwind utility
+   (text-sm, border-*, outline-none) whatever their specificity. */
+@layer base {
+  * {
+    border-color: var(--border);
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+  }
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+  button,
+  a,
+  input,
+  select {
+    touch-action: manipulation;
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary);
+  }
+  :focus-visible {
+    outline: 2px solid #56825d;
+    outline-offset: 3px;
+  }
 }
 
 /* Shared data tables (DataTable): the header row stays visible while the table scrolls,

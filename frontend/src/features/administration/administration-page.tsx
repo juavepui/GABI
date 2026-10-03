@@ -21,6 +21,7 @@ import { SectionLinks } from '@/shared/ui/section-links';
 import { ProgressBar } from '@/shared/ui/progress-bar';
 import { JOB_STATES, jobName } from '@/shared/lib/jobs';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Input } from '@/shared/ui/input';
 
 const sourceNames: Record<string, string> = {
   prices: 'Precios',
@@ -250,9 +251,9 @@ export function AdministrationPage() {
                 Descargar símbolos concretos
               </label>
               <div className="flex gap-2">
-                <input
+                <Input
                   id="symbols"
-                  className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                  className="flex-1"
                   value={symbols}
                   onChange={(event) => setSymbols(event.target.value)}
                   placeholder="SPY, RSP"
@@ -324,25 +325,25 @@ export function AdministrationPage() {
           >
             <label className="text-sm">
               Desde
-              <input
+              <Input
                 type="date"
                 min="2010-01-01"
                 max="2025-07-02"
                 value={start}
                 onChange={(event) => setStart(event.target.value)}
-                className="mt-1 block rounded-md border bg-background p-2"
+                className="mt-1 w-auto"
                 required
               />
             </label>
             <label className="text-sm">
               Hasta
-              <input
+              <Input
                 type="date"
                 min="2010-01-01"
                 max="2025-07-02"
                 value={end}
                 onChange={(event) => setEnd(event.target.value)}
-                className="mt-1 block rounded-md border bg-background p-2"
+                className="mt-1 w-auto"
                 required
               />
             </label>

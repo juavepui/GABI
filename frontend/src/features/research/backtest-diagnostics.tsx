@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getBacktestDiagnostics } from '@/shared/api/client';
 import type { TaxDrag } from '@/shared/api/generated/types.gen';
+import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { CoverageThreshold, WarningText } from '@/shared/ui/coverage';
@@ -115,9 +116,9 @@ export function BacktestDiagnostics({ jobId, v1 }: { jobId: string; v1: boolean 
                 onChange={(event) => setCapital(Number(event.target.value))}
               />
             </label>
-            <button className="h-10 rounded-md border px-3 text-sm" type="submit">
+            <Button variant="outline" type="submit">
               Recalcular
-            </button>
+            </Button>
           </form>
           {data.tax.error ? (
             <p className="mt-3 text-muted-foreground">

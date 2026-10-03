@@ -13,6 +13,7 @@ import { SectionLinks } from '@/shared/ui/section-links';
 import { Compass, FlaskRound, GraduationCap, NotebookPen } from 'lucide-react';
 import { formatMoney, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Textarea } from '@/shared/ui/textarea';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
@@ -170,13 +171,13 @@ export function PortfolioPage() {
         <label className="mt-4 block text-sm font-medium" htmlFor="holdings">
           Posiciones actuales (SÍMBOLO,euros; una por línea)
         </label>
-        <textarea
+        <Textarea
           id="holdings"
           name="holdings_text"
           maxLength={5000}
           rows={3}
           placeholder={'AAPL,300\nMSFT,200'}
-          className="mt-1.5 w-full rounded-md border bg-background p-3 text-sm"
+          className="mt-1.5 w-full"
         />
         <Button className="mt-4" type="submit" disabled={plan.isFetching}>
           Calcular plan

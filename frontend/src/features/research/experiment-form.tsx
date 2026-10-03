@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState } from '@/shared/ui/resource-state';
+import { Textarea } from '@/shared/ui/textarea';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -161,8 +162,8 @@ export function ManualExperimentForm({ stages }: { stages: ExperimentStage[] }) 
         </label>
         <label className="grid gap-1 sm:col-span-3">
           Notas
-          <textarea
-            className="min-h-20 rounded-md border bg-transparent p-2"
+          <Textarea
+            className="min-h-20"
             value={form.notes ?? ''}
             onChange={(event) => set('notes', event.target.value)}
           />

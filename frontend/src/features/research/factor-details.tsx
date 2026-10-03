@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FactorPreview } from '@/shared/api/generated/types.gen';
 import { formatPercent } from '@/shared/lib/format';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const percent = (value: number | null | undefined) => formatPercent(value, { digits: 2 });
 
@@ -62,8 +63,8 @@ export function FactorQuantiles({
       <div className="mt-3 flex flex-wrap gap-4">
         <label className="text-xs font-medium">
           Factor
-          <select
-            className="mt-1.5 block h-10 rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5"
             value={factor}
             onChange={(event) => setFactor(event.target.value)}
           >
@@ -72,12 +73,12 @@ export function FactorQuantiles({
                 {value}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <label className="text-xs font-medium">
           Horizonte
-          <select
-            className="mt-1.5 block h-10 rounded-md border bg-background px-2 text-sm"
+          <NativeSelect
+            className="mt-1.5"
             value={horizon}
             onChange={(event) => setHorizon(Number(event.target.value))}
           >
@@ -86,7 +87,7 @@ export function FactorQuantiles({
                 {value} meses
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
       {quantiles.length === 0 ? (

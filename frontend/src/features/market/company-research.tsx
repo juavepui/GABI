@@ -14,6 +14,7 @@ import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateLabel, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { Textarea } from '@/shared/ui/textarea';
 
 const EVENT_LABELS: Record<string, string> = {
   earnings: 'Earnings',
@@ -436,10 +437,10 @@ function AnalysisPromptContent({ symbol }: { symbol: string }) {
         (earnings call, guidance, noticias). GABI no llama a ninguna IA. Regla de diseño: la IA
         nunca calcula métricas financieras; los números vienen siempre de GABI.
       </p>
-      <textarea
+      <Textarea
         readOnly
         aria-label="Prompt para analizar con IA"
-        className="h-72 w-full rounded-md border bg-muted/30 p-3 font-mono text-xs"
+        className="h-72 w-full bg-muted/30 font-mono text-xs"
         value={text}
       />
       <Button

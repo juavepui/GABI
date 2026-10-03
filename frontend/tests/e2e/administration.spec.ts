@@ -137,3 +137,23 @@ test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra p
   await toast.getByRole('button', { name: 'Cerrar aviso' }).first().click();
   await expect(toast.getByText('Actualizar datos (Yahoo y SEC)')).toHaveCount(0);
 });
+
+test('botones, campos y desplegables comparten tamaño de letra y altura', async ({ page }) => {
+  await page.goto('/administracion');
+  await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
+  const sizes = await page.evaluate(() => {
+    const read = (selector: string) =>
+      [...document.querySelectorAll<HTMLElement>(`main ${selector}`)].map((element) => ({
+        font: getComputedStyle(element).fontSize,
+        height: Math.round(element.getBoundingClientRect().height),
+      }));
+    return {
+      buttons: read('[data-slot="button"][data-size="default"]'),
+      selects: read('[data-slot="native-select"]'),
+    };
+  });
+  expect(sizes.buttons.length).toBeGreaterThan(3);
+  expect(new Set(sizes.buttons.map((size) => size.font))).toEqual(new Set(['14px']));
+  expect(new Set(sizes.buttons.map((size) => size.height))).toEqual(new Set([36]));
+  expect(new Set(sizes.selects.map((size) => size.font))).toEqual(new Set(['14px']));
+});

@@ -8,6 +8,8 @@ import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import { NativeSelect } from '@/shared/ui/native-select';
+import { Textarea } from '@/shared/ui/textarea';
 
 const numberOrNull = (value: FormDataEntryValue | null) =>
   value == null || String(value).trim() === '' ? null : Number(value);
@@ -204,14 +206,11 @@ export function JournalPage() {
             </label>
             <label className="text-sm">
               Horizonte
-              <select
-                name="horizon"
-                className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
-              >
+              <NativeSelect name="horizon" className="mt-1 w-full">
                 <option>Medio (6-12 meses)</option>
                 <option>Corto (&lt;6 meses)</option>
                 <option>Largo (&gt;12 meses)</option>
-              </select>
+              </NativeSelect>
             </label>
             <label className="text-sm">
               Precio entrada (USD)
@@ -220,12 +219,7 @@ export function JournalPage() {
           </div>
           <label className="block text-sm">
             Tesis
-            <textarea
-              name="thesis"
-              maxLength={5000}
-              rows={3}
-              className="mt-1 w-full rounded-md border bg-background p-2"
-            />
+            <Textarea name="thesis" maxLength={5000} rows={3} className="mt-1 w-full" />
           </label>
           <div className="grid gap-3 sm:grid-cols-3">
             {(['bear', 'base', 'bull'] as const).map((key, index) => (

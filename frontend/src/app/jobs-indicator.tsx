@@ -148,7 +148,7 @@ export function JobsIndicator() {
           aria-controls={panelId}
           onClick={() => setOpen(!open)}
           className={
-            'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ' +
+            'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ' +
             (active.length
               ? 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
               : 'bg-background hover:bg-muted')

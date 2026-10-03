@@ -8,6 +8,7 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlindActions } from './blind-actions';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Textarea } from '@/shared/ui/textarea';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -163,8 +164,8 @@ function BreakSeal({ item }: { item: BlindStatus }) {
       >
         <label className="grid gap-1">
           Motivo (obligatorio)
-          <textarea
-            className="min-h-16 rounded-md border bg-transparent p-2"
+          <Textarea
+            className="min-h-16"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
           />

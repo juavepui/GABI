@@ -12,12 +12,13 @@ import { PrepareData } from './prepare-data';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
+import { NativeSelect } from '@/shared/ui/native-select';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
 type Engine = 'backtest_v1' | 'backtest_v2';
 
-const selectClass = 'mt-1.5 block h-10 w-full rounded-md border bg-background px-2 text-sm';
+const selectClass = 'mt-1.5 w-full';
 const pct = (value: number | null | undefined, digits = 1) => formatPercent(value, { digits });
 const num = (value: number | null | undefined, digits = 2) => formatNumber(value, { digits });
 const SERIES = { estrategia: 'Estrategia', universo_ew: 'Universo equiponderado', spy: 'SPY' };
@@ -165,7 +166,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
           />
         </Field>
         <Field label="Rebalanceo">
-          <select
+          <NativeSelect
             className={selectClass}
             value={months}
             onChange={(event) => setMonths(Number(event.target.value) as 1 | 3 | 6 | 12)}
@@ -175,7 +176,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
                 Cada {value} meses
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </Field>
         <Field label="Empresas por periodo">
           <Input
@@ -216,7 +217,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
               />
             </Field>
             <Field label="Universo">
-              <select
+              <NativeSelect
                 className={selectClass}
                 value={universe}
                 onChange={(event) => setUniverse(Number(event.target.value) as 50 | 100 | 500)}
@@ -226,24 +227,24 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
                     {value} empresas
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </Field>
           </>
         ) : (
           <>
             <Field label="Modo">
-              <select
+              <NativeSelect
                 className={selectClass}
                 value={mode}
                 onChange={(event) => setMode(event.target.value as 'fast_dev' | 'validation')}
               >
                 <option value="fast_dev">Muestra rápida</option>
                 <option value="validation">Universo completo</option>
-              </select>
+              </NativeSelect>
             </Field>
             {mode === 'fast_dev' && (
               <Field label="Empresas de muestra">
-                <select
+                <NativeSelect
                   className={selectClass}
                   value={sample}
                   onChange={(event) => setSample(Number(event.target.value) as 50 | 100 | 200)}
@@ -253,7 +254,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
                       {value}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </Field>
             )}
             <Field label="Capital inicial ($)">

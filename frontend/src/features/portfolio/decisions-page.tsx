@@ -20,6 +20,8 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
 import { formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import { NativeSelect } from '@/shared/ui/native-select';
+import { Textarea } from '@/shared/ui/textarea';
 
 const DecisionChart = lazy(() => import('./decision-chart'));
 
@@ -243,12 +245,12 @@ export function DecisionsPage() {
         </label>
         <label className="mt-4 block text-sm">
           Posiciones actuales (SÍMBOLO,porcentaje; una por línea)
-          <textarea
+          <Textarea
             name="holdings_text"
             rows={3}
             maxLength={5000}
             placeholder={'AAPL,3\nMSFT,4'}
-            className="mt-1 block w-full rounded-md border bg-background p-3"
+            className="mt-1 w-full"
           />
         </label>
         <label className="mt-4 block text-sm">
@@ -335,8 +337,8 @@ export function DecisionsPage() {
           <>
             <label className="mt-4 block text-sm">
               Plan guardado
-              <select
-                className="mt-1 block w-full max-w-lg rounded-md border bg-background p-2"
+              <NativeSelect
+                className="mt-1 w-full max-w-lg"
                 value={active}
                 onChange={(event) => setSelected(Number(event.target.value))}
               >
@@ -345,7 +347,7 @@ export function DecisionsPage() {
                     {item.name} · #{item.id}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             {saved.isPending && <LoadingState />}
             {saved.isError && <ErrorState error={saved.error} retry={() => void saved.refetch()} />}
