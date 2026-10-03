@@ -138,6 +138,21 @@ const COLUMN_TERMS: Record<string, string> = {
   'Máx. drawdown': 'max_drawdown',
 };
 
+const LONG_NOTES = 120;
+
+/** Long notes (lists of hashes, amendments) fold to two lines so each row keeps a readable height. */
+function ExperimentNotes({ text }: { text: string | null | undefined }) {
+  if (!text) return null;
+  if (text.length <= LONG_NOTES) return <span className="[overflow-wrap:anywhere]">{text}</span>;
+  return (
+    <details className="group">
+      <summary className="line-clamp-2 cursor-pointer list-none [overflow-wrap:anywhere] group-open:line-clamp-none">
+        {text}
+      </summary>
+    </details>
+  );
+}
+
 export function ResearchLabPage() {
   const [params, setParams] = useSearchParams();
   const family = params.get('family') ?? '';
@@ -387,7 +402,9 @@ export function ResearchLabPage() {
                         <td className="px-3 py-2">{item.hypothesis_registered ? 'Sí' : 'No'}</td>
                         <td className="px-3 py-2 font-mono">{item.git_commit ?? '—'}</td>
                         <td className="px-3 py-2">{item.has_returns ? 'Sí' : '—'}</td>
-                        <td className="max-w-xs px-3 py-2 break-words">{item.notes ?? ''}</td>
+                        <td className="w-72 min-w-56 px-3 py-2">
+                          <ExperimentNotes text={item.notes} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
