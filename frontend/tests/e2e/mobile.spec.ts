@@ -154,3 +154,26 @@ test('portfolio target keeps weights visible and expands secondary metrics on mo
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
 });
+
+test('en móvil la pestaña activa queda a la vista y ninguna sección desborda', async ({ page }) => {
+  const inView = async (name: string, menu: string) => {
+    const link = page
+      .getByRole('navigation', { name: menu })
+      .getByRole('link', { name, exact: true });
+    const box = (await link.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+  };
+  await page.goto('/investigacion/laboratorio');
+  await expect(page.getByRole('heading', { name: 'Research Lab' })).toBeVisible();
+  await inView('Investigación', 'Navegación principal');
+  await inView('Research Lab', 'Apartados de la sección');
+  const top = await page.locator('main').evaluate((main) => main.getBoundingClientRect().top);
+  expect(top).toBeLessThanOrEqual(200);
+  for (const path of ['/', '/mercado', '/cartera', '/investigacion/historico', '/administracion']) {
+    await page.goto(path);
+    await expect(page.locator('main h1')).toBeVisible();
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width, path).toBeLessThanOrEqual(390);
+  }
+});

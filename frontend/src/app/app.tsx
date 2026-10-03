@@ -151,6 +151,16 @@ function Shell() {
   const location = useLocation();
   const section = Object.keys(subsections).find((path) => location.pathname.startsWith(path));
   const main = useRef<HTMLElement>(null);
+  const mainNav = useRef<HTMLElement>(null);
+  const subNav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // On narrow screens the menus scroll sideways: bring the active section and sub-page into view.
+    for (const nav of [mainNav.current, subNav.current]) {
+      const active = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!nav || !active || nav.scrollWidth <= nav.clientWidth) continue;
+      nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
+    }
+  }, [location.pathname]);
   const previous = useRef(location.pathname);
   useEffect(() => {
     if (previous.current !== location.pathname) {
@@ -173,14 +183,14 @@ function Shell() {
         <Link
           to="/"
           aria-label="GABI, inicio"
-          className="flex items-center gap-3 px-5 py-5 lg:px-7 lg:py-8"
+          className="flex items-center gap-3 px-5 py-3 lg:px-7 lg:py-8"
         >
-          <span className="flex size-10 items-center justify-center rounded-xl bg-white/10">
-            <Leaf size={24} aria-hidden="true" />
+          <span className="flex size-8 items-center justify-center rounded-xl bg-white/10 lg:size-10">
+            <Leaf size={20} aria-hidden="true" />
           </span>
           <span>
-            <span className="block text-xl font-semibold tracking-[0.14em]">GABI</span>
-            <span className="block text-[11px] tracking-wide text-[#c5d8cc]">
+            <span className="block text-lg font-semibold tracking-[0.14em] lg:text-xl">GABI</span>
+            <span className="hidden text-[11px] tracking-wide text-[#c5d8cc] lg:block">
               Análisis con evidencia
             </span>
           </span>
@@ -190,7 +200,8 @@ function Shell() {
         </p>
         <nav
           aria-label="Navegación principal"
-          className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:px-4"
+          ref={mainNav}
+          className="relative flex gap-1 overflow-x-auto px-3 pb-2 lg:flex-col lg:px-4 lg:pb-3"
         >
           {navigation.map((item) => (
             <div key={item.path} className="contents lg:block">
@@ -198,7 +209,7 @@ function Shell() {
                 to={item.path}
                 end={item.path === '/'}
                 className={({ isActive }) =>
-                  'flex shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ' +
+                  'flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors lg:py-3 ' +
                   (isActive
                     ? 'bg-[#dceaca] font-semibold text-[#183e32]' +
                       // With its sub-sections listed below, the sub-section carries the highlight.
@@ -228,8 +239,9 @@ function Shell() {
         </nav>
         {section && subsections[section] && (
           <nav
+            ref={subNav}
             aria-label="Apartados de la sección"
-            className="flex gap-1 overflow-x-auto px-3 pb-3 lg:hidden"
+            className="relative flex gap-1 overflow-x-auto px-3 pb-2 lg:hidden"
           >
             {subsections[section].map((sub) => (
               <NavLink key={sub.path} to={sub.path} end className={subLink}>
@@ -250,7 +262,7 @@ function Shell() {
           </div>
         </div>
       </aside>
-      <header className="flex h-16 items-center justify-between gap-3 border-b bg-card px-5 lg:px-9">
+      <header className="flex h-12 items-center justify-between gap-3 border-b bg-card px-5 lg:h-16 lg:px-9">
         <Breadcrumb pathname={location.pathname} section={section} />
         <div className="flex items-center gap-2">
           <JobsIndicator />
