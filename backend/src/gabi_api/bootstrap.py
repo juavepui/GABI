@@ -126,7 +126,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     jobs = Jobs(SqliteJobs(settings.data_dir), lambda: model_queries.model().mode == "RESEARCH")
     portfolio = PortfolioQueries(repository, policy, today)
     journal = Journal(SqliteJournal(settings.data_dir))
-    macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata())
+    macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata(),
+                         lambda: bool(configured_keys(settings.data_dir).get("fred")))
     signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
                             compare_snapshots, compare_cached, jobs)
     simulations = Simulations(SqliteSimulations(settings.data_dir), LegacySimulationMath(), today)

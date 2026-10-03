@@ -42,6 +42,19 @@ export function MacroPage() {
       {query.isError && <ErrorState error={query.error} retry={() => void query.refetch()} />}
       {query.data && (
         <>
+          {!query.data.fred_key_configured && (
+            <p
+              role="note"
+              className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              Sin clave de FRED: estas series son las que ya estaban guardadas en este equipo y no
+              se pueden actualizar. Guarda la clave gratuita en{' '}
+              <Link className="underline" to="/administracion">
+                Administración
+              </Link>{' '}
+              para refrescarlas.
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {query.data.items.map((item) => (
               <article key={item.series_id} className="rounded-xl border bg-card p-5">

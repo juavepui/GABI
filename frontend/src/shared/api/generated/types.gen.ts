@@ -4482,6 +4482,10 @@ export type MacroResponse = {
      */
     affects_score?: boolean;
     /**
+     * Fred Key Configured
+     */
+    fred_key_configured: boolean;
+    /**
      * Items
      */
     items: Array<MacroPoint>;

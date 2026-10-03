@@ -1,5 +1,6 @@
 """Cached macro context; a query never contacts FRED."""
 
+from collections.abc import Callable
 from datetime import date, timedelta
 from typing import Protocol
 
@@ -16,8 +17,9 @@ class MacroRepository(Protocol):
 
 
 class MacroQueries:
-    def __init__(self, repository: MacroRepository, metadata: dict[str, dict]):
-        self.repository, self.metadata = repository, metadata
+    def __init__(self, repository: MacroRepository, metadata: dict[str, dict],
+                 key_configured: Callable[[], bool] = lambda: False):
+        self.repository, self.metadata, self.key_configured = repository, metadata, key_configured
 
     def snapshot(self) -> list[dict]:
         rows = []

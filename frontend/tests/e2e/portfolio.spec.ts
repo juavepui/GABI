@@ -91,6 +91,10 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
   await page.getByRole('button', { name: 'Registrar operación' }).click();
   await expect(page.getByText('Operación registrada.')).toBeVisible();
   const prices = page.getByRole('region', { name: 'Precios públicos' });
+  await expect(
+    prices.getByRole('button', { name: 'Actualizar precios de este ticker' }),
+  ).toBeDisabled();
+  await expect(prices.getByText('Escribe un ticker para descargar sus precios.')).toBeVisible();
   await prices.getByRole('button', { name: 'Actualizar precios de esta cartera y SPY' }).click();
   await expect(prices.getByText('Actualizados 2 símbolos; fallos: 0.')).toBeVisible({
     timeout: 15_000,

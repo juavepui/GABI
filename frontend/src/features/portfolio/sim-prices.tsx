@@ -38,6 +38,12 @@ export function SimulationPrices({
   const run = (symbols: string[]) =>
     start.mutate({ kind: 'sim_prices', portfolio_id: portfolioId, symbols });
   const failed = Object.entries(result.data?.failed ?? {});
+  const reasons = running
+    ? ['Hay una descarga en curso; los botones vuelven cuando termine.']
+    : [
+        !symbol && 'Escribe un ticker para descargar sus precios.',
+        !hasTrades && 'La cartera aún no tiene operaciones: registra una para descargar las suyas.',
+      ].filter((reason): reason is string => Boolean(reason));
   return (
     <section className="rounded-xl border bg-card p-5" aria-label="Precios públicos">
       <h2 className="text-lg font-semibold">Precios públicos</h2>
@@ -62,6 +68,16 @@ export function SimulationPrices({
           Actualizar precios de esta cartera y SPY
         </Button>
       </div>
+      {reasons.length > 0 && (
+        <ul
+          className="mt-2 text-xs text-muted-foreground"
+          aria-label="Por qué hay botones desactivados"
+        >
+          {reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      )}
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {job.data && job.data.status !== 'succeeded' && (
         <div className="mt-3">

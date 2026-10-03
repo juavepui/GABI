@@ -8733,6 +8733,10 @@
             "title": "Affects Score",
             "type": "boolean"
           },
+          "fred_key_configured": {
+            "title": "Fred Key Configured",
+            "type": "boolean"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/MacroPoint"
@@ -8747,7 +8751,8 @@
           }
         },
         "required": [
-          "items"
+          "items",
+          "fred_key_configured"
         ],
         "title": "MacroResponse",
         "type": "object"

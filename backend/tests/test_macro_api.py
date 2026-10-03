@@ -46,3 +46,10 @@ def test_macro_publishes_unambiguous_units_and_the_fed_balance_in_dollars(tmp_pa
     assert rows["WALCL"]["change_3m"] == 10_124e6
     assert (rows["T10Y2Y"]["unit"], rows["T10Y2Y"]["change_unit"]) == ("p. p.", "p. p.")
     assert (rows["BAMLH0A0HYM2"]["unit"], rows["BAMLH0A0HYM2"]["change_unit"]) == ("%", "p. p.")
+
+
+def test_macro_says_whether_the_cached_series_can_be_refreshed(tmp_path):
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        assert api.get("/api/v1/market/macro").json()["fred_key_configured"] is False
+        (tmp_path / "fred_api_key.txt").write_text("clave-temporal", encoding="utf-8")
+        assert api.get("/api/v1/market/macro").json()["fred_key_configured"] is True

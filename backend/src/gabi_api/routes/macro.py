@@ -14,4 +14,5 @@ def service(request: Request) -> MacroQueries:
 
 @router.get("/macro", response_model=MacroResponse)
 def snapshot(queries: Annotated[MacroQueries, Depends(service)]) -> MacroResponse:
-    return MacroResponse(items=[MacroPoint.model_validate(row) for row in queries.snapshot()])
+    return MacroResponse(items=[MacroPoint.model_validate(row) for row in queries.snapshot()],
+                         fred_key_configured=queries.key_configured())

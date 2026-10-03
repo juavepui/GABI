@@ -18,3 +18,4 @@ class MacroResponse(WireModel):
     items: list[MacroPoint]
     source: str = "FRED local cache"
     affects_score: bool = False
+    fred_key_configured: bool  # without it the cached series cannot be refreshed
