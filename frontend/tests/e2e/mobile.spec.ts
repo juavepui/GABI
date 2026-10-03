@@ -1,6 +1,46 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test('home summarizes local data and portfolio without horizontal scrolling on mobile', async ({
+  page,
+}) => {
+  const writes: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() !== 'GET') writes.push(request.method() + ' ' + request.url());
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Tu GABI hoy' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Avisos' })).toContainText(
+    'No es asesoramiento financiero.',
+  );
+  const data = page.getByRole('region', { name: 'Estado de los datos' });
+  await expect(data.getByText('Empresas puntuadas')).toBeVisible({ timeout: 30_000 });
+  const target = page.getByRole('region', { name: 'Cartera objetivo de hoy' });
+  await expect(target.getByRole('listitem').first()).toBeVisible();
+  expect(writes).toEqual([]);
+  const layout = await page.evaluate(() => ({
+    viewport: innerWidth,
+    width: document.documentElement.scrollWidth,
+    oversized: Array.from(document.querySelectorAll('body *'))
+      .filter((element) => element.getBoundingClientRect().right > innerWidth + 1)
+      .map((element) => ({
+        tag: element.tagName,
+        className: typeof element.className === 'string' ? element.className : '',
+        label: element.getAttribute('aria-label'),
+        left: Math.round(element.getBoundingClientRect().left),
+        right: Math.round(element.getBoundingClientRect().right),
+      }))
+      .slice(0, 12),
+  }));
+  expect(layout.width, JSON.stringify(layout.oversized)).toBeLessThanOrEqual(layout.viewport);
+  await page.setViewportSize({ width: 320, height: 640 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
+  await target.getByRole('link', { name: 'Ver la cartera y repartir capital' }).click();
+  await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
+});
+
 test('responsive navigation, filters, table and company on narrow screens', async ({
   page,
 }, testInfo) => {

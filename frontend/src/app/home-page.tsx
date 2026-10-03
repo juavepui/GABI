@@ -113,7 +113,7 @@ function FirstSteps({ home }: { home: HomeResponse }) {
 function DataCard({ home, computing }: { home: HomeResponse; computing: boolean }) {
   const data = home.data;
   return (
-    <section className="rounded-xl border bg-card p-5" aria-label="Estado de los datos">
+    <section className="min-w-0 rounded-xl border bg-card p-5" aria-label="Estado de los datos">
       <h2 className="text-lg font-semibold">Estado de los datos</h2>
       {data ? (
         <>
@@ -182,7 +182,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
 function TargetCard({ home }: { home: HomeResponse }) {
   const shown = home.target.slice(0, 8);
   return (
-    <section className="rounded-xl border bg-card p-5" aria-label="Cartera objetivo de hoy">
+    <section className="min-w-0 rounded-xl border bg-card p-5" aria-label="Cartera objetivo de hoy">
       <h2 className="text-lg font-semibold">Cartera objetivo de hoy</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Hipótesis congelada {home.model_id}: las {home.target_positions} candidatas elegibles con
