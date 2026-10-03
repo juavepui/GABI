@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, CalendarDays, ShieldCheck } from 'lucide-react';
+import { ExternalLink, CalendarDays, ShieldCheck } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
@@ -12,6 +12,7 @@ import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
 import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
 import { patchParams } from './params';
+import { BackLink } from '@/shared/ui/section-links';
 
 const PriceChart = lazy(() => import('./price-chart'));
 const groups = [
@@ -65,12 +66,9 @@ export function CompanyPage() {
   const company = data?.company;
   return (
     <>
-      <Button asChild variant="link" className="mb-5 h-auto p-0">
-        <Link to={'/mercado?' + back.toString()}>
-          <ArrowLeft aria-hidden="true" />
-          Volver al Screener
-        </Link>
-      </Button>
+      <div className="mb-3">
+        <BackLink to={'/mercado?' + back.toString()}>Ranking</BackLink>
+      </div>
       {result.isPending ? (
         <LoadingState />
       ) : result.isError ? (

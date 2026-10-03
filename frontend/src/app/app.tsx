@@ -103,6 +103,50 @@ const navigation = [
   { path: '/investigacion', label: 'Investigación', icon: FlaskConical },
   { path: '/administracion', label: 'Administración', icon: Settings2 },
 ];
+/** «GABI / Sección / Apartado»: where the page sits, with links back up. */
+function Breadcrumb({ pathname, section }: { pathname: string; section?: string }) {
+  const item = navigation.find((entry) =>
+    entry.path === '/' ? pathname === '/' : pathname.startsWith(entry.path),
+  );
+  const sub = section ? subsections[section].find((entry) => entry.path === pathname) : undefined;
+  const symbol = /^\/mercado\/empresas\/([^/]+)/.exec(pathname)?.[1];
+  const trail: { label: string; to?: string }[] = [{ label: 'GABI', to: '/' }];
+  if (item) trail.push({ label: item.label, to: item.path });
+  if (sub) trail.push({ label: sub.label });
+  if (symbol)
+    trail.push({ label: 'Ranking', to: '/mercado' }, { label: decodeURIComponent(symbol) });
+  if (!item) trail.push({ label: 'Navegación' });
+  return (
+    <nav aria-label="Ruta" className="min-w-0 truncate text-xs text-muted-foreground">
+      <ol className="flex items-center">
+        {trail.map((step, index) => {
+          const last = index === trail.length - 1;
+          return (
+            <li key={step.label + index} className="flex min-w-0 items-center">
+              {index > 0 && (
+                <span className="mx-2 text-border" aria-hidden="true">
+                  /
+                </span>
+              )}
+              {step.to && !last ? (
+                <Link to={step.to} className="hover:text-foreground hover:underline">
+                  {step.label}
+                </Link>
+              ) : (
+                <span
+                  className={last ? 'truncate text-foreground' : ''}
+                  aria-current={last ? 'page' : undefined}
+                >
+                  {step.label}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
 function Shell() {
   const location = useLocation();
   const section = Object.keys(subsections).find((path) => location.pathname.startsWith(path));
@@ -156,7 +200,9 @@ function Shell() {
                 className={({ isActive }) =>
                   'flex shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ' +
                   (isActive
-                    ? 'bg-[#dceaca] font-semibold text-[#183e32]'
+                    ? 'bg-[#dceaca] font-semibold text-[#183e32]' +
+                      // With its sub-sections listed below, the sub-section carries the highlight.
+                      (subsections[item.path] ? ' lg:bg-transparent lg:text-white' : '')
                     : 'text-[#d5e3da] hover:bg-white/10')
                 }
               >
@@ -205,12 +251,7 @@ function Shell() {
         </div>
       </aside>
       <header className="flex h-16 items-center justify-between gap-3 border-b bg-card px-5 lg:px-9">
-        <p className="text-xs text-muted-foreground">
-          GABI <span className="mx-2 text-border">/</span>{' '}
-          {navigation.find((item) =>
-            item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path),
-          )?.label ?? 'Navegación'}
-        </p>
+        <Breadcrumb pathname={location.pathname} section={section} />
         <div className="flex items-center gap-2">
           <JobsIndicator />
           <span className="hidden items-center gap-2 rounded-full border bg-background px-3 py-1 text-[11px] font-medium sm:inline-flex">

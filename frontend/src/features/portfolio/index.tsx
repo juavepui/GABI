@@ -101,28 +101,24 @@ export function PortfolioPage() {
               label: 'Diario de inversión',
               description: 'Tesis antes de comprar y revisión',
               icon: NotebookPen,
-              tone: 'amber',
             },
             {
               to: '/cartera/aprender',
               label: 'Aprender',
               description: 'Términos, estrategias y cómo piensa GABI',
               icon: GraduationCap,
-              tone: 'emerald',
             },
             {
               to: '/cartera/simuladas',
               label: 'Carteras simuladas',
               description: 'Operaciones hipotéticas frente a SPY',
               icon: FlaskRound,
-              tone: 'sky',
             },
             {
               to: '/cartera/decisiones',
               label: 'Decisiones',
               description: 'Plan experimental de compra y venta',
               icon: Compass,
-              tone: 'violet',
             },
           ]}
         />

@@ -86,7 +86,7 @@ test('responsive navigation, filters, table and company on narrow screens', asyn
   }));
   expect(layout.document, JSON.stringify(layout.oversized)).toBeLessThanOrEqual(layout.viewport);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.getByRole('link', { name: 'Volver al Screener' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Ranking', exact: true }).click();
   await expect(page).toHaveURL(/search=BRK/);
   await page.getByRole('link', { name: 'Administración', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();

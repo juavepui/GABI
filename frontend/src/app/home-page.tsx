@@ -302,35 +302,30 @@ export function HomePage() {
               label: 'Mercado',
               description: 'Ranking, fichas, comparación y macro',
               icon: ChartNoAxesCombined,
-              tone: 'sky',
             },
             {
               to: '/cartera',
               label: 'Cartera',
               description: 'Cartera objetivo, diario y decisiones',
               icon: BriefcaseBusiness,
-              tone: 'emerald',
             },
             {
               to: '/investigacion',
               label: 'Investigación',
               description: 'Ensayos, backtests y laboratorios',
               icon: FlaskConical,
-              tone: 'violet',
             },
             {
               to: '/cartera/aprender',
               label: 'Aprender',
               description: 'Términos y cómo piensa GABI',
               icon: GraduationCap,
-              tone: 'amber',
             },
             {
               to: '/administracion',
               label: 'Administración',
               description: 'Datos, claves, modo y calidad',
               icon: Settings2,
-              tone: 'teal',
             },
           ]}
         />

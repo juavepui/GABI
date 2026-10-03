@@ -2,60 +2,29 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, type LucideIcon } from 'lucide-react';
 
-export type Tone = 'emerald' | 'sky' | 'amber' | 'violet' | 'rose' | 'teal';
-
-const TONES: Record<Tone, { tile: string; icon: string }> = {
-  emerald: {
-    tile: 'border-emerald-200 bg-emerald-50 hover:border-emerald-400 hover:bg-emerald-100',
-    icon: 'bg-emerald-600 text-white',
-  },
-  sky: {
-    tile: 'border-sky-200 bg-sky-50 hover:border-sky-400 hover:bg-sky-100',
-    icon: 'bg-sky-600 text-white',
-  },
-  amber: {
-    tile: 'border-amber-200 bg-amber-50 hover:border-amber-400 hover:bg-amber-100',
-    icon: 'bg-amber-500 text-white',
-  },
-  violet: {
-    tile: 'border-violet-200 bg-violet-50 hover:border-violet-400 hover:bg-violet-100',
-    icon: 'bg-violet-600 text-white',
-  },
-  rose: {
-    tile: 'border-rose-200 bg-rose-50 hover:border-rose-400 hover:bg-rose-100',
-    icon: 'bg-rose-600 text-white',
-  },
-  teal: {
-    tile: 'border-teal-200 bg-teal-50 hover:border-teal-400 hover:bg-teal-100',
-    icon: 'bg-teal-600 text-white',
-  },
-};
-
 export type SectionLink = {
   to: string;
   label: string;
   description: string;
   icon: LucideIcon;
-  tone: Tone;
 };
 
-/** The sub-sections of a page as coloured buttons with an icon and one line of context. */
+/** The sub-sections of a page as buttons with an icon and one line of context, in the app's palette. */
 export function SectionLinks({ links, label }: { links: SectionLink[]; label: string }) {
   return (
     <nav aria-label={label} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {links.map(({ to, label: title, description, icon: Icon, tone }) => (
+      {links.map(({ to, label: title, description, icon: Icon }) => (
         <Link
           key={to}
           to={to}
           className={
             'group flex items-center gap-3 rounded-xl border p-3.5 shadow-sm transition-all ' +
             'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 ' +
-            'focus-visible:ring-primary ' +
-            TONES[tone].tile
+            'focus-visible:ring-primary border-border bg-card hover:border-primary/40 hover:bg-accent'
           }
         >
           <span
-            className={'grid size-10 shrink-0 place-items-center rounded-lg ' + TONES[tone].icon}
+            className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent text-primary"
             aria-hidden="true"
           >
             <Icon size={20} />

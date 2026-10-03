@@ -196,7 +196,6 @@ export function AdministrationPage() {
               label: 'Calidad de los datos',
               description: 'Cobertura, frescura, procedencia y archivo histórico',
               icon: ShieldCheck,
-              tone: 'teal',
             },
           ]}
         />

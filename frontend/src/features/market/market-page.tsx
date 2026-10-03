@@ -81,21 +81,18 @@ export function MarketPage() {
                 label: 'Comparar empresas',
                 description: 'De dos a cinco, lado a lado',
                 icon: GitCompareArrows,
-                tone: 'sky',
               },
               {
                 to: '/mercado/macro',
                 label: 'Panel macro',
                 description: 'Tipos, inflación, curva y crédito',
                 icon: Globe,
-                tone: 'amber',
               },
               {
                 to: '/mercado/senales',
                 label: 'Signal Monitor',
                 description: 'Rankings guardados y cambios',
                 icon: Radar,
-                tone: 'violet',
               },
             ]}
           />

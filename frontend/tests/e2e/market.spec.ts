@@ -67,7 +67,7 @@ test('real API: filters, full-universe sorting, pagination, company and reload p
     page.getByText('Ver datos del gráfico (63 sesiones)', { exact: true }),
   ).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('company-desktop.png'), fullPage: true });
-  await page.getByRole('link', { name: 'Volver al Screener' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Ranking', exact: true }).click();
   await expect(page).toHaveURL(rankingUrl);
   await expect(rows).toHaveCount(2);
   await page.getByRole('button', { name: 'Restablecer' }).click();
@@ -170,9 +170,12 @@ test('keyboard, semantic accessibility and bounded warm navigation', async ({ pa
   await page.getByRole('link', { name: /T000.*Company/ }).click();
   await expect(page.getByRole('heading', { name: 'Company T000', exact: true })).toBeVisible();
   await expect(page.getByText(/Ver datos del gráfico/)).toBeVisible();
+  const trail = page.getByRole('navigation', { name: 'Ruta' });
+  await expect(trail).toHaveText(/GABI\s*\/\s*Mercado\s*\/\s*Ranking\s*\/\s*T000/);
+  await expect(trail.getByText('T000')).toHaveAttribute('aria-current', 'page');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const warmStart = Date.now();
-  await page.getByRole('link', { name: 'Volver al Screener' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Ranking', exact: true }).click();
   await expect(page.locator('tbody tr')).toHaveCount(15);
   const warmMs = Date.now() - warmStart;
   const warmHeap = await session.send('Runtime.getHeapUsage');
@@ -317,4 +320,17 @@ test('la tabla de Mercado colorea por percentil, fija la cabecera y alinea núme
   const header = scroll.locator('thead th').first();
   const [headerBox, regionBox] = await Promise.all([header.boundingBox(), scroll.boundingBox()]);
   expect(Math.abs((headerBox?.y ?? 0) - (regionBox?.y ?? 0))).toBeLessThan(4);
+});
+
+test('la ruta muestra el apartado y el menú resalta solo el apartado activo', async ({ page }) => {
+  await page.goto('/mercado/macro');
+  await expect(page.getByRole('navigation', { name: 'Ruta' })).toHaveText(
+    /GABI\s*\/\s*Mercado\s*\/\s*Panel macro/,
+  );
+  const menu = page.getByRole('navigation', { name: 'Navegación principal' });
+  const section = menu.getByRole('link', { name: 'Mercado', exact: true });
+  const sub = menu.getByRole('link', { name: 'Panel macro' });
+  const background = (element: Element) => getComputedStyle(element).backgroundColor;
+  expect(await section.evaluate(background)).toBe('rgba(0, 0, 0, 0)');
+  expect(await sub.evaluate(background)).not.toBe('rgba(0, 0, 0, 0)');
 });

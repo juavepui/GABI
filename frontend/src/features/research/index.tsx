@@ -77,35 +77,30 @@ export function ResearchPage() {
               label: 'Ranking histórico',
               description: 'Rankings pasados y backtests V1/V2',
               icon: History,
-              tone: 'sky',
             },
             {
               to: '/investigacion/validaciones',
               label: 'Validaciones ciegas',
               description: 'Seguimiento sellado hacia delante',
               icon: Lock,
-              tone: 'rose',
             },
             {
               to: '/investigacion/factores',
               label: 'Factor Lab',
               description: '¿El score ordena el retorno futuro?',
               icon: Ruler,
-              tone: 'amber',
             },
             {
               to: '/investigacion/laboratorio',
               label: 'Research Lab',
               description: 'Experimentos, PSR/DSR y PBO',
               icon: FlaskConical,
-              tone: 'violet',
             },
             {
               to: '/investigacion/carteras',
               label: 'Portfolio Lab',
               description: 'Esquemas de ponderación y estrés',
               icon: ChartPie,
-              tone: 'emerald',
             },
           ]}
         />
