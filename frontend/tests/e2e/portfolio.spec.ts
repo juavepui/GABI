@@ -152,6 +152,7 @@ test('aprender: tutorial completo con definiciones de métricas del backend', as
 test('el icono ⓘ explica un término y lleva al glosario de Aprender', async ({ page }) => {
   await page.goto('/mercado');
   const hint = page.getByRole('button', { name: 'Qué es percentil dentro del sector' });
+  await hint.scrollIntoViewIfNeeded();
   await hint.click();
   const tip = page.locator('[data-term-tip]');
   await expect(tip).toContainText('Percentil sectorial');

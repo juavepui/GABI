@@ -83,7 +83,7 @@ test('empty filters, missing values, stale data and empty cache have distinct st
   await expect(page.getByText('No hay empresas con estos filtros')).toBeVisible();
   await page.goto('/mercado?search=EMPTY&hide_no_data=false');
   await expect(page.locator('tbody tr')).toHaveCount(1);
-  await expect(page.locator('tbody tr').getByText('—')).toHaveCount(4);
+  await expect(page.locator('tbody tr > td').getByText('—')).toHaveCount(4);
   const payload: RankingResponse = await (
     await request.get('http://127.0.0.1:8001/api/v1/ranking')
   ).json();
