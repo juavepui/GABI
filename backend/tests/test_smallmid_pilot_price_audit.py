@@ -2,9 +2,15 @@
 
 import csv
 import json
+import runpy
 from pathlib import Path
 
-from scripts.audit_smallmid_pilot_prices import accepted_source, audit
+_AUDIT = runpy.run_path(
+    str(Path(__file__).resolve().parents[2] / "scripts/audit_smallmid_pilot_prices.py"),
+    run_name="smallmid_pilot_audit",
+)
+accepted_source = _AUDIT["accepted_source"]
+audit = _AUDIT["audit"]
 
 
 def _write_csv(path: Path, rows: list[dict[str, str]]) -> None:
@@ -26,6 +32,11 @@ def test_price_gate_requires_a_level_pass_and_rejects_conflicts() -> None:
     assert accepted_source([row | {"outcome": "missing"}], "2017-06-30", "2017-09-30", False) is None
     assert accepted_source([row, row | {"outcome": "failed"}], "2017-06-30", "2017-09-30", False) is None
     assert accepted_source([row | {"hasta": "2017-07-01"}], "2017-06-30", "2017-09-30", False) is None
+    kaggle = row | {"fuente": "kaggle"}
+    assert accepted_source([kaggle], "2017-06-30", "2017-09-30", False) is None
+    assert accepted_source([kaggle], "2017-06-30", "2017-09-30", True) == "kaggle"
+    kaggle_2022 = kaggle | {"desde": "2020-01-01", "hasta": "2022-12-31", "float_date": "2022-01-01"}
+    assert accepted_source([kaggle_2022], "2022-06-30", "2022-06-30", True) is None
 
 
 def test_audit_distinguishes_listing_from_validated_price_and_uses_temp_files(tmp_path: Path) -> None:
