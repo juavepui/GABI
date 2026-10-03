@@ -11,7 +11,7 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { useJob } from '@/shared/api/use-job';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 
 const pct = (value: number | null | undefined) => formatPercent(value, { digits: 2, fixed: true });
 
@@ -111,9 +111,9 @@ function Report({ jobId }: { jobId: string }) {
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        Corte {data.as_of}. Primera decisión de cada sesión de entrada, incluso sin señal; apertura
-        posterior al registro. Cartera equiponderada con 10 pb/lado sobre lo negociado, separada de
-        los backtests y de la prueba ciega.
+        Corte {dateText(data.as_of)}. Primera decisión de cada sesión de entrada, incluso sin señal;
+        apertura posterior al registro. Cartera equiponderada con 10 pb/lado sobre lo negociado,
+        separada de los backtests y de la prueba ciega.
       </p>
       <div className="overflow-x-auto">
         <table
@@ -141,7 +141,7 @@ function Report({ jobId }: { jobId: string }) {
                 <td>{row.status}</td>
                 <td>{row.entry}</td>
                 <td>
-                  {row.end} ({row.end_basis === 'open' ? 'apertura' : 'cierre'})
+                  {dateText(row.end)} ({row.end_basis === 'open' ? 'apertura' : 'cierre'})
                 </td>
                 <td>{row.requested}</td>
                 <td>{row.missing.length ? row.missing.join(', ') : '—'}</td>
@@ -289,7 +289,7 @@ export function LiveLedgerSection() {
                         </button>
                       </td>
                       <td>{row.stage}</td>
-                      <td>{row.market_date}</td>
+                      <td>{dateText(row.market_date)}</td>
                       <td>{row.status}</td>
                       <td>{row.candidates}</td>
                       <td className="font-mono">{row.git_commit ?? '—'}</td>

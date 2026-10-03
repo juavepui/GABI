@@ -24,7 +24,7 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
     .click();
   await expect(page.getByRole('heading', { name: 'Ranking histórico' })).toBeVisible();
   await page.getByRole('button', { name: 'Calcular ranking' }).click();
-  await expect(page.getByRole('heading', { name: 'Ranking a 2019-01-02' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ranking a 02 ene 2019' })).toBeVisible();
   const table = page.getByRole('table', { name: 'Métricas reconstruidas' });
   await page.getByLabel('Ocultar empresas sin ningún dato reconstruido').uncheck();
   await expect(table.getByRole('row', { name: /T000/ })).toContainText('72,50');
@@ -69,7 +69,7 @@ test('validaciones ciegas aplican el preregistro y el alta y el sello son explí
     await form.getByLabel('Fecha de desbloqueo').fill('2030-01-01');
     await form.getByRole('button', { name: 'Crear validación' }).click();
     const created = page.getByRole('status').filter({ hasText: 'creada' });
-    await expect(created).toContainText('bloqueada hasta 2030-01-01');
+    await expect(created).toContainText('bloqueada hasta 01 ene 2030');
     const id = (await created.textContent())!.match(/#(\d+)/)![1];
     const card = page.getByRole('article', { name: `Validación ${id}` });
     await expect(card).toContainText('Bloqueada');

@@ -8,7 +8,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlockBootstrapResult } from './block-bootstrap-view';
 import { useJob } from '@/shared/api/use-job';
 import { ProgressBar } from '@/shared/ui/progress-bar';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { Term } from '@/shared/ui/term';
 import { HowToRead } from '@/shared/ui/how-to-read';
 
@@ -91,7 +91,8 @@ function PboResult({ jobId }: { jobId: string }) {
           </p>
           <p className="text-xs text-muted-foreground">
             {data.n_combinations} combinaciones IS/OOS evaluadas · {data.n_splits} bloques ·{' '}
-            {data.n_common_dates} fechas comunes ({data.first_date} – {data.last_date}).
+            {data.n_common_dates} fechas comunes ({dateText(data.first_date)} –{' '}
+            {dateText(data.last_date)}).
           </p>
         </>
       )}

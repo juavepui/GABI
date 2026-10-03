@@ -5,7 +5,7 @@ import type { OutcomeResult } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { formatPercent } from '@/shared/lib/format';
+import { dateText, formatPercent } from '@/shared/lib/format';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 
 const signedPct = (value: number | null | undefined) =>
@@ -15,15 +15,15 @@ function OutcomeLine({ label, outcome }: { label: string; outcome: OutcomeResult
   if (outcome.status === 'reserved') {
     return (
       <li>
-        {label}: <strong>reservado</strong>. La ventana acaba el {outcome.end_date} y sus precios
-        pertenecen al periodo posterior al corte observado; no se consultan.
+        {label}: <strong>reservado</strong>. La ventana acaba el {dateText(outcome.end_date)} y sus
+        precios pertenecen al periodo posterior al corte observado; no se consultan.
       </li>
     );
   }
   if (outcome.status === 'pending') {
     return (
       <li>
-        {label}: pendiente hasta {outcome.end_date}
+        {label}: pendiente hasta {dateText(outcome.end_date)}
       </li>
     );
   }
@@ -181,7 +181,7 @@ export function HistoricalOutcomes({
                     <tr key={row.block} className="border-b last:border-0">
                       <td className="py-2">{row.block}</td>
                       {row.outcome.status === 'reserved' ? (
-                        <td colSpan={3}>reservado (acaba el {row.outcome.end_date})</td>
+                        <td colSpan={3}>reservado (acaba el {dateText(row.outcome.end_date)})</td>
                       ) : (
                         <>
                           <td>{signedPct(row.outcome.portfolio_return)}</td>

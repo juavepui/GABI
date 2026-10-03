@@ -12,7 +12,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { dateLabel, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateLabel, dateText, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Textarea } from '@/shared/ui/textarea';
 
@@ -173,7 +173,7 @@ export function CompanyResearch({ symbol }: { symbol: string }) {
             <tbody>
               {data.surprises.map((row) => (
                 <tr key={row.earnings_date} className="border-b last:border-0">
-                  <td className="py-1">{row.earnings_date}</td>
+                  <td className="py-1">{dateText(row.earnings_date)}</td>
                   <td>{num(row.eps_estimate)}</td>
                   <td>{num(row.eps_reported)}</td>
                   <td>{num(row.surprise_pct, 1)}</td>
@@ -228,7 +228,7 @@ export function CompanyResearch({ symbol }: { symbol: string }) {
               </div>
             </dl>
             <p className="text-xs text-muted-foreground">
-              Capturado el {estimate.captured_at} · fuente: {estimate.source}
+              Capturado el {dateText(estimate.captured_at)} · fuente: {estimate.source}
             </p>
             <p className="text-xs text-muted-foreground">
               {revision?.change != null
@@ -261,7 +261,7 @@ function FilingChangesContent({ symbol }: { symbol: string }) {
           <p className="font-medium">
             {result.form}
             {result.previous && result.current
-              ? `: ${result.previous.filed_date} → ${result.current.filed_date}`
+              ? `: ${dateText(result.previous.filed_date)} → ${dateText(result.current.filed_date)}`
               : ''}
           </p>
           {result.rows.length === 0 ? (

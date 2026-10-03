@@ -4,7 +4,7 @@ import { getSnapshotProgress, renameSnapshot } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 
 const SnapshotCurve = lazy(() => import('./snapshot-curve'));
 const pct = (value: number | null | undefined) =>
@@ -53,7 +53,7 @@ export function SnapshotProgress({ id }: { id: number }) {
     >
       <div>
         <h2 className="text-lg font-semibold">
-          Progreso desde {data.as_of_date} hasta hoy · {data.name}
+          Progreso desde {dateText(data.as_of_date)} hasta hoy · {data.name}
         </h2>
         <p className="text-xs text-muted-foreground">
           Guardado el {data.created_at.replace('T', ' a las ')} · {data.candidates} candidatas
@@ -63,7 +63,7 @@ export function SnapshotProgress({ id }: { id: number }) {
       {data.stale && (
         <p role="status" className="text-muted-foreground">
           {data.data_as_of
-            ? `Los precios en caché solo llegan hasta el ${data.data_as_of}, la misma fecha (o anterior) en que se guardó este ranking: todavía no hay ningún día nuevo que comparar. Actualiza los datos en Administración.`
+            ? `Los precios en caché solo llegan hasta el ${dateText(data.data_as_of)}, la misma fecha (o anterior) en que se guardó este ranking: todavía no hay ningún día nuevo que comparar. Actualiza los datos en Administración.`
             : 'Todavía no hay ningún precio cacheado para estas empresas. Actualiza los datos en Administración.'}
         </p>
       )}
@@ -102,7 +102,7 @@ export function SnapshotProgress({ id }: { id: number }) {
             <thead>
               <tr className="border-b text-muted-foreground">
                 <th className="py-2">Ticker</th>
-                <th>Precio {data.as_of_date}</th>
+                <th>Precio {dateText(data.as_of_date)}</th>
                 <th>Precio hoy</th>
                 <th>Retorno</th>
               </tr>
@@ -128,7 +128,7 @@ export function SnapshotProgress({ id }: { id: number }) {
           {data.horizons.map((horizon) => (
             <li key={horizon.months}>
               {horizon.status === 'pending'
-                ? `${horizon.months} meses: pendiente hasta ${horizon.end_date}`
+                ? `${horizon.months} meses: pendiente hasta ${dateText(horizon.end_date)}`
                 : `${horizon.months} meses: candidatas ${pct(horizon.portfolio_return)} · SPY ${pct(horizon.benchmark_return)} · cobertura ${horizon.available}/${horizon.requested}`}
               {horizon.status === 'incomplete' && (
                 <span className="block text-xs text-muted-foreground">

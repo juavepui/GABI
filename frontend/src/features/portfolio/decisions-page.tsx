@@ -18,7 +18,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
-import { formatNumber } from '@/shared/lib/format';
+import { dateText, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Textarea } from '@/shared/ui/textarea';
@@ -290,8 +290,8 @@ export function DecisionsPage() {
           {preview && (
             <>
               <p className="mt-3 text-sm">
-                Fecha {preview.as_of} · {preview.coverage.scored}/{preview.coverage.universe} scores
-                · {preview.coverage.prices} precios cacheados.
+                Fecha {dateText(preview.as_of)} · {preview.coverage.scored}/
+                {preview.coverage.universe} scores · {preview.coverage.prices} precios cacheados.
               </p>
               <p className="mt-2 text-sm">
                 Método: {preview.method}. Efectivo objetivo: {decimal(preview.cash_target_pct)} %.

@@ -7,7 +7,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { PublishedFactorMap } from './published-factor-map';
 import { EstimateCaptures } from './estimate-captures';
 import { FactorGlossary, FactorQuantiles, SkippedPeriods } from './factor-details';
-import { formatNumber } from '@/shared/lib/format';
+import { dateText, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
@@ -197,7 +197,7 @@ export function FactorPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="text-xl font-semibold">Resumen de factores</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {preview.data.start} a {preview.data.end} ·{' '}
+            {dateText(preview.data.start)} a {dateText(preview.data.end)} ·{' '}
             {preview.data.mode === 'validation' ? 'Universo completo' : 'Muestra rápida'}
             {' · '}
             {preview.data.skipped_count} periodos saltados.

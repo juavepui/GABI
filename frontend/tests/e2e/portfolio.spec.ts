@@ -103,7 +103,7 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
   await page.getByRole('button', { name: 'Calcular resultado' }).click();
   await expect(page.getByRole('heading', { name: /Resultado simulado/ })).toBeVisible();
   await page.reload();
-  await expect(page.getByText('2026-09-28 · BUY · T000')).toBeVisible();
+  await expect(page.getByText('28 sept 2026 · BUY · T000')).toBeVisible();
   await page.getByRole('button', { name: 'Calcular comparación' }).click();
   await expect(page.getByRole('row', { name: /Prueba de simulación/ })).toBeVisible();
 });

@@ -10,7 +10,7 @@ import type {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { NativeSelect } from '@/shared/ui/native-select';
 
@@ -432,8 +432,8 @@ export function Benchmark({
       ) : (
         <>
           <p className="text-xs text-muted-foreground">
-            {comparison.n_obs} trimestres: {comparison.start} → {comparison.end}. Todas las curvas
-            parten de 1 en la misma fecha.
+            {comparison.n_obs} trimestres: {dateText(comparison.start)} → {dateText(comparison.end)}
+            . Todas las curvas parten de 1 en la misma fecha.
           </p>
           <Suspense fallback={<p>Preparando gráfico…</p>}>
             <WealthChart points={points} series={series} labels={LABELS} />

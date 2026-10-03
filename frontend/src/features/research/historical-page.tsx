@@ -12,6 +12,7 @@ import { HistoricalTable } from './historical-table';
 import { PrepareData } from './prepare-data';
 import { PageHeader } from '@/shared/ui/page-header';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { dateText } from '@/shared/lib/format';
 
 export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
@@ -90,7 +91,7 @@ export function HistoricalPage() {
         aria-label="Preparar datos de la fecha"
       >
         <label className="text-xs font-medium">
-          Empresas a preparar para {asOf}
+          Empresas a preparar para {dateText(asOf)}
           <NativeSelect
             className="mt-1.5"
             value={prepareLimit ?? 'all'}
@@ -141,7 +142,7 @@ export function HistoricalPage() {
       {preview.isError && <ErrorState error={preview.error} retry={() => void preview.refetch()} />}
       {preview.data && (
         <section className="rounded-xl border bg-card p-5">
-          <h2 className="text-xl font-semibold">Ranking a {preview.data.as_of}</h2>
+          <h2 className="text-xl font-semibold">Ranking a {dateText(preview.data.as_of)}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {preview.data.total} empresas en el orden original del motor. El JSON completo se
             conserva con hash {preview.data.result_sha256.slice(0, 12)}…

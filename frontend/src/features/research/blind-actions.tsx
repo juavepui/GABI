@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { useJob } from '@/shared/api/use-job';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 
 const WealthChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.WealthChart })),
@@ -31,8 +31,8 @@ function RebalanceResult({ jobId }: { jobId: string }) {
   const data = result.data;
   return data.recorded ? (
     <p role="status" className="mt-2 text-sm">
-      Rebalanceo del {data.rebalance_date} registrado e inmutable — {data.n_positions} posiciones,
-      hash {data.record_hash?.slice(0, 12)}…
+      Rebalanceo del {dateText(data.rebalance_date)} registrado e inmutable — {data.n_positions}{' '}
+      posiciones, hash {data.record_hash?.slice(0, 12)}…
     </p>
   ) : (
     <p role="status" className="mt-2 text-sm text-amber-700 dark:text-amber-400">
@@ -98,7 +98,7 @@ function PerformanceResult({ jobId }: { jobId: string }) {
         <tbody>
           {data.periods.map((period) => (
             <tr key={period.rebalance_date} className="border-b last:border-0">
-              <td className="py-1.5">{period.rebalance_date}</td>
+              <td className="py-1.5">{dateText(period.rebalance_date)}</td>
               <td>{pct(period.retorno)}</td>
               <td>{pct(period.retorno_spy)}</td>
               <td>{formatNumber(period.capital, { digits: 4, fixed: true })}</td>

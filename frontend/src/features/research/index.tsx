@@ -10,6 +10,7 @@ import { ChartPie, FlaskConical, History, Lock, Ruler } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { dateText } from '@/shared/lib/format';
 
 const PAGE_SIZE = 25;
 
@@ -134,7 +135,9 @@ export function ResearchPage() {
           </div>
           <div className="rounded-xl border bg-card p-5">
             <p className="text-xs text-muted-foreground">Estado del catálogo</p>
-            <p className="mt-2 text-lg font-semibold">Publicado · {overview.data.as_of}</p>
+            <p className="mt-2 text-lg font-semibold">
+              Publicado · {dateText(overview.data.as_of)}
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {overview.data.diagnostics.length} grupos diagnósticos separados
             </p>

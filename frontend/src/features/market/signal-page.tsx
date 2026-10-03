@@ -18,7 +18,7 @@ import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { SnapshotProgress } from './snapshot-progress';
-import { dateLabel } from '@/shared/lib/format';
+import { dateLabel, dateText } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 
 const labels: Record<string, string> = {
@@ -360,7 +360,7 @@ export function SignalPage() {
                     {event.symbol}
                   </Link>
                   <span>
-                    {event.event_date} · {event.days_until} días ·{' '}
+                    {dateText(event.event_date)} · {event.days_until} días ·{' '}
                     {event.is_estimate ? 'Estimada' : 'Confirmada'}
                   </span>
                 </li>

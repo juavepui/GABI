@@ -4444,6 +4444,10 @@ export type MacroPoint = {
      */
     change_3m: number | null;
     /**
+     * Change Unit
+     */
+    change_unit: string;
+    /**
      * Help
      */
     help: string;

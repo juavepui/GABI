@@ -80,7 +80,7 @@ test('calidad de los datos: universo, procedencia, identidades y archivo desde 2
   await company.getByLabel('Fecha de referencia del sector point-in-time').fill('2026-09-28');
   await company.getByRole('button', { name: 'Ver procedencia' }).click();
   const provenance = company.getByRole('table', { name: 'Procedencia por fuente' });
-  await expect(provenance.getByText('250 sesiones, última: 2026-09-28')).toBeVisible({
+  await expect(provenance.getByText('250 sesiones, última: 28 sept 2026')).toBeVisible({
     timeout: 15_000,
   });
   await expect(provenance.getByText('Aproximado')).toBeVisible();

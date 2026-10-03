@@ -11,6 +11,7 @@ import { age, pct, useHealthJob, useToday, type Row } from './data-health-job';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { dateText } from '@/shared/lib/format';
 
 type SourceSummary = {
   label: string;
@@ -309,8 +310,9 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
       {data && p && entity && (
         <div className="space-y-3" role="region" aria-label={`Procedencia de ${data.symbol}`}>
           <p>
-            Identidad a {data.as_of}: <strong>{data.identity.resolution.status}</strong> · entidad:{' '}
-            {data.identity.resolution.entity_id ?? 'sin acreditar'} · CIK: {p.cik ?? 'no resuelto'}
+            Identidad a {dateText(data.as_of)}: <strong>{data.identity.resolution.status}</strong> ·
+            entidad: {data.identity.resolution.entity_id ?? 'sin acreditar'} · CIK:{' '}
+            {p.cik ?? 'no resuelto'}
           </p>
           {data.identity.resolution.candidates.length > 0 && (
             <p className="text-xs">
@@ -335,7 +337,7 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
                 'Precios (Yahoo)',
                 p.prices,
                 p.prices.latest_date
-                  ? `${p.prices.adjusted_sessions} sesiones, última: ${p.prices.latest_date}`
+                  ? `${p.prices.adjusted_sessions} sesiones, última: ${dateText(p.prices.latest_date)}`
                   : 'sin precios en caché',
               ),
               sourceRow('Fundamentales (Yahoo)', p.fundamentals),
@@ -415,7 +417,7 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
           <>
             <p className="text-xs">
               {identities.result.data.without_cik} símbolos sin CIK acreditado a{' '}
-              {identities.result.data.as_of}.
+              {dateText(identities.result.data.as_of)}.
             </p>
             <Table
               label="Identidades por fecha"

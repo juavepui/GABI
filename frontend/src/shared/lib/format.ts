@@ -18,7 +18,7 @@ export function formatNumber(
   return new Intl.NumberFormat('es-ES', {
     maximumFractionDigits: digits,
     minimumFractionDigits: fixed ? digits : 0,
-    signDisplay: signed ? 'always' : 'auto',
+    signDisplay: signed ? 'exceptZero' : 'auto',
   }).format(value);
 }
 
@@ -43,22 +43,32 @@ export function formatMoney(
   }).format(value);
 }
 
+const SCALES: [number, string][] = [
+  [1e12, 'billones'],
+  [1e9, 'mil M'],
+  [1e6, 'M'],
+];
+/** Large amounts in Spanish words (4,82 billones US$, 14 mil M US$), never the ambiguous «B».
+ *  Plain spaces so the label can wrap in narrow cards. */
+export function formatCompactMoney(
+  value: number | null | undefined,
+  { currency = 'USD' }: { currency?: string } = {},
+): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  const scale = SCALES.find(([size]) => Math.abs(value) >= size);
+  if (!scale) return formatMoney(value, { currency, digits: 2 }).replace(/[\u00a0\u202f]/g, ' ');
+  const symbol = currency === 'USD' ? 'US$' : currency === 'EUR' ? '€' : currency;
+  return `${formatNumber(value / scale[0], { digits: 2 })} ${scale[1]} ${symbol}`;
+}
+
 const number = (value: number, digits = 2) => formatNumber(value, { digits, fixed: true });
 export function metric(value: Metric | undefined, compact = false): string {
   if (value?.value == null) return '—';
   if (value.unit === 'fraction') return number(value.value * 100, 1) + ' %';
   if (value.unit === 'percent') return number(value.value, 1) + ' %';
   if (value.unit === 'count') return number(value.value, 0);
-  if (value.unit === 'USD') {
-    const formatted = new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'USD',
-      notation: compact ? 'compact' : 'standard',
-      maximumFractionDigits: 2,
-    }).format(value.value);
-    // Compact currency labels must wrap in narrow cards; Intl uses no-break spaces.
-    return compact ? formatted.replace(/[\u00a0\u202f]/g, ' ') : formatted;
-  }
+  if (value.unit === 'USD')
+    return compact ? formatCompactMoney(value.value) : formatMoney(value.value, { digits: 2 });
   return number(value.value, 1);
 }
 export function dateLabel(value: string | null | undefined): string {
@@ -72,4 +82,10 @@ export function dateLabel(value: string | null | undefined): string {
         year: 'numeric',
         timeZone: 'UTC',
       }).format(date);
+}
+
+/** An ISO date (or timestamp) in the common format; any other text is shown as it comes. */
+export function dateText(value: string | null | undefined): string {
+  if (!value) return '—';
+  return /^\d{4}-\d{2}-\d{2}/.test(value) ? dateLabel(value.slice(0, 10)) : value;
 }

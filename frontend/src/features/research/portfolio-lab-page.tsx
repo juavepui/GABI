@@ -9,7 +9,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { TailRiskTable } from './tail-risk-table';
 import { useJob } from '@/shared/api/use-job';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
 import { HowToRead } from '@/shared/ui/how-to-read';
@@ -59,7 +59,7 @@ function Result({ data }: { data: PortfolioLabPreview }) {
   return (
     <section className="space-y-6" role="region" aria-label="Resultado de Portfolio Lab">
       <p className="text-sm text-muted-foreground">
-        {data.start} a {data.end} ·{' '}
+        {dateText(data.start)} a {dateText(data.end)} ·{' '}
         {data.mode === 'validation'
           ? 'Universo completo'
           : `Muestra de ${data.options.max_symbols} empresas`}{' '}

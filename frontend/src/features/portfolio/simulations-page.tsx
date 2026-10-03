@@ -22,7 +22,7 @@ import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
 import { SimulationPrices } from './sim-prices';
-import { formatNumber } from '@/shared/lib/format';
+import { dateText, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { NativeSelect } from '@/shared/ui/native-select';
 
@@ -271,7 +271,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
           {trades.data?.items.map((trade) => (
             <li key={trade.id} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
               <span>
-                {trade.execution_date} · {trade.side} · {trade.symbol}
+                {dateText(trade.execution_date)} · {trade.side} · {trade.symbol}
               </span>
               <span>
                 {number(trade.notional)} {trade.quote_currency} · comisión{' '}
@@ -555,8 +555,8 @@ export function SimulationsPage() {
                     {compareResult.data.items.map((row) => (
                       <tr key={row.id} className="border-b last:border-0">
                         <td className="py-2">{row.name}</td>
-                        <td>{row.from_date}</td>
-                        <td>{row.to_date}</td>
+                        <td>{dateText(row.from_date)}</td>
+                        <td>{dateText(row.to_date)}</td>
                         <td>{row.return == null ? '—' : number(row.return * 100) + ' %'}</td>
                         <td>
                           {row.benchmark_return == null

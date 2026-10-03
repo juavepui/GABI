@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getMacro } from '@/shared/api/client';
-import { dateLabel, formatNumber } from '@/shared/lib/format';
+import { dateLabel, formatCompactMoney, formatNumber } from '@/shared/lib/format';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { PageHeader } from '@/shared/ui/page-header';
 
-const value = (amount: number | null) => formatNumber(amount, { digits: 2 });
+/** A level or a change in the unit the API publishes; dollars read as «billones US$». */
+function amount(value: number | null, unit: string, signed = false): string {
+  if (unit === 'USD') {
+    const text = formatCompactMoney(value);
+    return signed && value != null && value > 0 ? '+' + text : text;
+  }
+  return formatNumber(value, { digits: 2, signed }) + ' ' + unit;
+}
 
 export function MacroPage() {
   const query = useQuery({
@@ -40,15 +47,21 @@ export function MacroPage() {
               <article key={item.series_id} className="rounded-xl border bg-card p-5">
                 <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
                 <p className="mt-3 text-2xl font-semibold tabular-nums">
-                  {value(item.latest_value)}{' '}
-                  <span className="text-sm font-normal">{item.unit}</span>
+                  {item.unit === 'USD' ? (
+                    amount(item.latest_value, item.unit)
+                  ) : (
+                    <>
+                      {formatNumber(item.latest_value, { digits: 2 })}{' '}
+                      <span className="text-sm font-normal">{item.unit}</span>
+                    </>
+                  )}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {item.latest_value == null
                     ? 'Sin dato local'
                     : 'Dato a ' + dateLabel(item.latest_date)}
                   {item.change_3m != null &&
-                    ' · Cambio frente a 3 meses: ' + value(item.change_3m) + ' ' + item.unit}
+                    ' · Cambio frente a 3 meses: ' + amount(item.change_3m, item.change_unit, true)}
                 </p>
                 <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{item.help}</p>
               </article>

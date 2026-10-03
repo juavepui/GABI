@@ -9,6 +9,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BlindActions } from './blind-actions';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
+import { dateText } from '@/shared/lib/format';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -129,7 +130,7 @@ function CreateValidation() {
       {create.isError && <ErrorState error={create.error} retry={() => create.reset()} />}
       {create.data && (
         <p className="mt-3" role="status">
-          Validación #{create.data.id} creada — bloqueada hasta {create.data.unlock_date}.
+          Validación #{create.data.id} creada — bloqueada hasta {dateText(create.data.unlock_date)}.
         </p>
       )}
     </details>
@@ -215,7 +216,7 @@ function Validation({ item }: { item: BlindStatus }) {
         <div>
           <dt className="text-muted-foreground">Desbloqueo</dt>
           <dd>
-            {item.unlock_date}
+            {dateText(item.unlock_date)}
             {!item.revealed && item.days_to_unlock > 0
               ? ` · faltan ${item.days_to_unlock} días`
               : ''}
@@ -223,7 +224,9 @@ function Validation({ item }: { item: BlindStatus }) {
         </div>
         <div>
           <dt className="text-muted-foreground">Cadena de sellos</dt>
-          <dd>{item.integrity.ok ? 'Íntegra' : `Alterada desde ${item.integrity.broken_at}`}</dd>
+          <dd>
+            {item.integrity.ok ? 'Íntegra' : `Alterada desde ${dateText(item.integrity.broken_at)}`}
+          </dd>
         </div>
       </dl>
       {plan && (

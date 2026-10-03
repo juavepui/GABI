@@ -9,7 +9,7 @@ import { BacktestDiagnostics } from './backtest-diagnostics';
 import { BacktestFactors } from './backtest-factors';
 import { BacktestRegister } from './backtest-register';
 import { PrepareData } from './prepare-data';
-import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { NativeSelect } from '@/shared/ui/native-select';
@@ -354,7 +354,7 @@ function BacktestResult({ result }: { result: BacktestPreview }) {
     >
       <div>
         <h3 className="text-xl font-semibold">
-          {v2 ? 'Resultado V2' : 'Resultado V1'} · {result.start} a {result.end}
+          {v2 ? 'Resultado V2' : 'Resultado V1'} · {dateText(result.start)} a {dateText(result.end)}
         </h3>
         <p className="mt-2 text-sm text-muted-foreground">
           Rebalanceo cada {result.months} meses · {result.top_n} empresas · umbral de rotación{' '}
