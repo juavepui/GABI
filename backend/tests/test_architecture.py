@@ -105,3 +105,12 @@ def test_editing_the_baseline_cannot_whitelist_new_debt():
 def test_baseline_can_only_shrink_when_modules_or_dependencies_are_retired():
     previous = {"old.py": ["gabi.storage", "streamlit"], "retired.py": []}
     assert GUARD["baseline_growth"](previous, {"old.py": ["gabi.storage"]}) == []
+
+
+def test_retired_streamlit_cannot_return_as_import_or_dependency(tmp_path):
+    write(tmp_path, ".github/architecture-legacy.json", json.dumps({"backend/src/gabi/old.py": ["streamlit"]}))
+    write(tmp_path, "backend/src/gabi/old.py", "import streamlit\n")
+    write(tmp_path, "backend/pyproject.toml", '[project]\ndependencies = ["streamlit>=1"]\n')
+    errors = GUARD["check"](tmp_path)
+    assert any("Streamlit import was retired" in error for error in errors)
+    assert any("Streamlit dependency was retired" in error for error in errors)

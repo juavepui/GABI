@@ -246,6 +246,8 @@ La deuda plana está enumerada por archivo e import en
 La CI rechaza módulos planos nuevos y dependencias legacy nuevas. Al eliminar
 dependencias se retiran sus excepciones. Compara además el inventario con el primer
 padre Git (`HEAD^`, o base del merge de una PR): ampliar la lista también falla.
+Tras F6, la misma guarda rechaza cualquier import de Streamlit en el backend y
+su declaración como dependencia Python, incluso dentro de los módulos legacy.
 La primera introducción crea el inventario; después solo puede disminuir.
 Los ciclos íntegramente legacy se conservan
 temporalmente; cualquier ciclo que incorpore una capa nueva falla. No existe una

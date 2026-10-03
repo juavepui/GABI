@@ -4,8 +4,10 @@ import argparse
 import ast
 import importlib.util
 import json
+import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -141,12 +143,26 @@ def check(root: Path) -> list[str]:
     modules = {source_module(path, source): path for path in files if path.is_relative_to(source)}
     graph: dict[str, set[str]] = {name: set() for name in modules}
     errors = []
+    project_file = root / "backend/pyproject.toml"
+    if project_file.exists():
+        project = tomllib.loads(project_file.read_text(encoding="utf-8"))
+        requirements = list(project.get("project", {}).get("dependencies", []))
+        requirements.extend(requirement for group in project.get("dependency-groups", {}).values()
+                            for requirement in group)
+        requirements.extend(requirement for group in project.get("project", {}).get("optional-dependencies", {}).values()
+                            for requirement in group)
+        if any(re.split(r"[\s\[<>=!~;]", requirement, maxsplit=1)[0].lower().replace("_", "-") == "streamlit"
+               for requirement in requirements):
+            errors.append("backend/pyproject.toml: Streamlit dependency was retired; use React")
     current_legacy = set()
     for path in files:
         relative = path.relative_to(root).as_posix()
         module = source_module(path, source) if path.is_relative_to(source) else "app." + path.stem
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
         dependencies = imports(tree, module, path.name == "__init__.py")
+        for target, line in dependencies:
+            if target.split(".")[0] == "streamlit":
+                errors.append(f"{relative}:{line}: Streamlit import was retired; use React")
         own = layer(module)
         if own == "legacy":
             current_legacy.add(relative)
