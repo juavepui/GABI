@@ -99,6 +99,8 @@ class DataResponse(WireModel):
     scored_count: int
     latest_price_date: date | None
     warnings: list[str]
+    last_session: date | None = None  # last closed NYSE session; null when not checked
+    prices_current: bool | None = None  # at most 5 % of the universe lacks that session's close
 
 
 class RankingResponse(WireModel):

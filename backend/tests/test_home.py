@@ -3,6 +3,7 @@
 import hashlib
 import sqlite3
 import threading
+from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -95,3 +96,14 @@ def test_cache_outlives_idle_minutes_and_still_follows_the_data_revision(home):
     with sqlite3.connect(root / "gabi.db") as db:  # Any write changes the revision and invalidates the entry.
         db.execute("CREATE TABLE IF NOT EXISTS touch (x)")
     assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is False
+
+
+@pytest.mark.parametrize(("behind", "current"), [(0, True), (1, False)])
+def test_home_says_whether_prices_include_the_last_closed_session(tmp_path, behind, current):
+    seed_fixture(tmp_path, companies=30)
+    session = TODAY + timedelta(days=behind)
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY, session=lambda: session)) as client:
+        data = client.get("/api/v1/home", params={"compute": "true"}).json()["data"]
+        assert data["status"] == "ready"  # The 7-day ranking tolerance alone would call both «ready».
+        assert data["last_session"] == session.isoformat() and data["prices_current"] is current
+        assert client.get("/api/v1/data/status").json()["prices_current"] is current

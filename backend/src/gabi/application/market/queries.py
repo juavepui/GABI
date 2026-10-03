@@ -7,6 +7,7 @@ import pandas as pd
 
 from gabi.application.administration.model import ModelQueries, ModelState
 from gabi.application.errors import QueryError
+from gabi.domain.market.freshness import prices_current
 from gabi.domain.market.selection import RankingFilter, RankingSort, filter_ranking, sort_ranking
 
 
@@ -30,6 +31,8 @@ class DataState:
     scored_count: int
     latest_price_date: date | None
     warnings: list[str]
+    last_session: date | None = None  # last closed NYSE session; None: not checked
+    prices_current: bool | None = None
 
 
 @dataclass
@@ -49,7 +52,7 @@ class MarketRepository(Protocol):
     def close(self) -> None: ...
 
 
-def describe_data(snapshot: RankingSnapshot, today: date) -> DataState:
+def describe_data(snapshot: RankingSnapshot, today: date, last_session: date | None = None) -> DataState:
     table = snapshot.table
     sources = snapshot.table.attrs.get("sources", {})
     dates = [date.fromisoformat(meta["price_date"]) for sym, meta in sources.items()
@@ -75,12 +78,18 @@ def describe_data(snapshot: RankingSnapshot, today: date) -> DataState:
         status = "stale"
     else:
         status = "ready"
-    return DataState(status, len(table), prices, fundamentals, sec, scored, max(dates) if dates else None, warnings)
+    current = None
+    if last_session is not None and not table.empty:
+        current = prices_current([date.fromisoformat(value) if (value := sources.get(sym, {}).get("price_date")) else None
+                                  for sym in table.index], last_session)
+    return DataState(status, len(table), prices, fundamentals, sec, scored, max(dates) if dates else None, warnings,
+                     last_session, current)
 
 
 class MarketQueries:
-    def __init__(self, repository: MarketRepository, models: ModelQueries, today: Callable[[], date]):
-        self.repository, self.models, self.today = repository, models, today
+    def __init__(self, repository: MarketRepository, models: ModelQueries, today: Callable[[], date],
+                 last_session: Callable[[], date] | None = None):
+        self.repository, self.models, self.today, self.last_session = repository, models, today, last_session
 
     def model(self, override: dict[str, float] | None = None) -> ModelState:
         return self.models.model(override)
@@ -94,7 +103,8 @@ class MarketQueries:
         today = self.today()
         snapshot = self.repository.ranking(model.weights, today)
         filtered = sort_ranking(filter_ranking(snapshot.table, filters), order)
-        return RankingResult(snapshot, model, describe_data(snapshot, today), filtered.iloc[offset:offset + limit],
+        session = self.last_session() if self.last_session else None
+        return RankingResult(snapshot, model, describe_data(snapshot, today, session), filtered.iloc[offset:offset + limit],
                              len(filtered), offset, limit)
 
     def company(self, symbol: str, bars: int = 252) -> tuple[RankingResult, pd.DataFrame]:

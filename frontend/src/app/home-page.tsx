@@ -118,10 +118,18 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
       {data ? (
         <>
           <p className="mt-2 text-sm">
-            {data.status === 'ready' && (
+            {data.status === 'ready' && data.prices_current === true && (
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">
                 Al día
               </span>
+            )}
+            {data.status === 'ready' && data.prices_current === false && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900">
+                Falta el último cierre
+              </span>
+            )}
+            {data.status === 'ready' && data.prices_current == null && (
+              <span className="rounded-full bg-muted px-2 py-0.5">Listos para el ranking</span>
             )}
             {data.status === 'stale' && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900">
@@ -144,6 +152,12 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
               <dd className="font-semibold">{dateLabel(data.latest_price_date)}</dd>
             </div>
           </dl>
+          {data.prices_current === false && data.last_session && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Última sesión cerrada en NYSE: {dateLabel(data.last_session)}. Actualiza los datos
+              para incluir su cierre.
+            </p>
+          )}
           {data.warnings.length > 0 && (
             <ul className="mt-3 list-disc pl-5 text-xs text-muted-foreground">
               {data.warnings.map((warning) => (

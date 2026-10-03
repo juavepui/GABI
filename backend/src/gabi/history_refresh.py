@@ -10,21 +10,17 @@ import sqlite3
 from datetime import UTC, datetime, timedelta
 from io import StringIO
 
-import exchange_calendars as xcals
 import pandas as pd
 import requests
 import yfinance as yf
 
 from . import config, data_fetch, edgar, macro, storage, universe
+from .domain.market import freshness
 from .membership_extension import LEDGER_PATH, extend_membership, symbols
 
 
 def last_completed_session(now: datetime) -> str:
-    calendar = xcals.get_calendar("XNYS")
-    session = calendar.date_to_session(now.date().isoformat(), direction="previous")
-    if calendar.session_close(session) > pd.Timestamp(now):
-        session = calendar.previous_session(session)
-    return session.date().isoformat()
+    return freshness.last_completed_session(now).isoformat()
 
 
 def period_symbols(history: pd.DataFrame, start: str, end: str) -> list[str]:

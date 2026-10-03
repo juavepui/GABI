@@ -3424,6 +3424,18 @@
             "title": "Fundamentals Available",
             "type": "integer"
           },
+          "last_session": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Session"
+          },
           "latest_price_date": {
             "anyOf": [
               {
@@ -3439,6 +3451,17 @@
           "prices_available": {
             "title": "Prices Available",
             "type": "integer"
+          },
+          "prices_current": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prices Current"
           },
           "scored_count": {
             "title": "Scored Count",

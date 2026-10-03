@@ -456,7 +456,6 @@
     "requests"
   ],
   "backend/src/gabi/history_refresh.py": [
-    "exchange_calendars",
     "gabi.config",
     "gabi.data_fetch",
     "gabi.edgar",

@@ -1671,6 +1671,10 @@ export type DataResponse = {
      */
     fundamentals_available: number;
     /**
+     * Last Session
+     */
+    last_session?: string | null;
+    /**
      * Latest Price Date
      */
     latest_price_date: string | null;
@@ -1678,6 +1682,10 @@ export type DataResponse = {
      * Prices Available
      */
     prices_available: number;
+    /**
+     * Prices Current
+     */
+    prices_current?: boolean | null;
     /**
      * Scored Count
      */

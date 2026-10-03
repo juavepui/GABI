@@ -25,8 +25,8 @@ class HomeJobs(Protocol):
 class HomeQueries:
     def __init__(self, market: HomeMarket, policy: ModelPolicy, jobs: HomeJobs,
                  configured_keys: Callable[[], dict[str, bool]], universe_present: Callable[[], bool],
-                 today: Callable[[], date]):
-        self.market, self.policy, self.jobs = market, policy, jobs
+                 today: Callable[[], date], last_session: Callable[[], date] | None = None):
+        self.market, self.policy, self.jobs, self.last_session = market, policy, jobs, last_session
         self.configured_keys, self.universe_present, self.today = configured_keys, universe_present, today
 
     def summary(self, compute: bool = False) -> dict:
@@ -47,7 +47,7 @@ class HomeQueries:
         }
         if snapshot is None:
             return result
-        data = describe_data(snapshot, today)
+        data = describe_data(snapshot, today, self.last_session() if self.last_session else None)
         result["data"] = asdict(data)
         result["steps"]["data_loaded"] = data.scored_count > 0
         target = target_portfolio(snapshot.table, FROZEN_POSITIONS)

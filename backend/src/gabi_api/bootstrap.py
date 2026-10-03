@@ -1,7 +1,7 @@
 """The only HTTP composition root. Importing it never opens application data."""
 from collections.abc import Callable
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +43,7 @@ from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedger
 from gabi.application.research.portfolio_lab_queries import PortfolioLabQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
+from gabi.domain.market.freshness import last_completed_session
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
 from gabi.infrastructure.legacy.company import LegacyCompanyMath, analysis_prompt
@@ -113,13 +114,14 @@ class HealthResponse(BaseModel):
 def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today,
                published_ledger: Path | None = None, published_factors_root: Path | None = None,
                frontend_dist: Path | None = None, saved_audits_root: Path | None = None,
-               blind_plans_root: Path | None = None) -> FastAPI:
+               blind_plans_root: Path | None = None, session: Callable[[], date] | None = None) -> FastAPI:
     settings = settings or Settings.from_environment()
+    session = session or (lambda: last_completed_session(datetime.now(UTC)))
     benchmark, risk_free_rate = defaults()
     policy = model_policy()
     repository = ReadOnlyMarket(settings, calculators(), policy, benchmark, risk_free_rate)
     model_queries = ModelQueries(repository, policy)
-    market = MarketQueries(repository, model_queries, today)
+    market = MarketQueries(repository, model_queries, today, session)
     model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir), FileMode(settings.data_dir))
     jobs = Jobs(SqliteJobs(settings.data_dir), lambda: model_queries.model().mode == "RESEARCH")
     portfolio = PortfolioQueries(repository, policy, today)
@@ -207,7 +209,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.settings = settings
     app.state.model_commands = model_commands
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
-                                 lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today)
+                                 lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session)
     app.state.notices = Notices(blind_validations, SmallmidFiles(settings.data_dir, settings.data_dir.parent,
                                                                smallmid_freeze_deadline), today)
     app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),
