@@ -115,7 +115,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
           salta y se lista. Es un ensayo retrospectivo: no demuestra ventaja frente al S&amp;P 500.
         </HowToRead>
       </div>
-      <div className="flex gap-2" role="group" aria-label="Motor del backtest">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Motor del backtest">
         <Button
           type="button"
           variant={engine === 'backtest_v1' ? 'default' : 'outline'}

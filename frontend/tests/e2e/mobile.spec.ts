@@ -173,6 +173,10 @@ test('en móvil la pestaña activa queda a la vista y ninguna sección desborda'
   for (const path of ['/', '/mercado', '/cartera', '/investigacion/historico', '/administracion']) {
     await page.goto(path);
     await expect(page.locator('main h1')).toBeVisible();
+    // A wide font makes the check the same on every system (Linux CI lacks Inter and Segoe UI).
+    await page.addStyleTag({
+      content: "* { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }",
+    });
     const width = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(width, path).toBeLessThanOrEqual(390);
   }
