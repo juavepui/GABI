@@ -39,7 +39,8 @@ def sync_company(symbol: str, dataset: str) -> dict:
 
 
 def analysis_prompt(table: pd.DataFrame, symbol: str) -> str:
-    """ai_prompt.build_analysis_prompt over the ranking row and scoring.explain_row, as the old Ficha."""
-    from gabi import ai_prompt, scoring
+    """The prompt text over the ranking row and scoring.explain_row, as the old Ficha."""
+    from gabi import scoring
+    from gabi.application.market.prompt_text import build_analysis_prompt
 
-    return ai_prompt.build_analysis_prompt(table.loc[symbol], scoring.explain_row(table, symbol), symbol)
+    return build_analysis_prompt(table.loc[symbol], scoring.explain_row(table, symbol), symbol)

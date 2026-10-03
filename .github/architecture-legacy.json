@@ -10,9 +10,6 @@
     "pandas",
     "requests"
   ],
-  "backend/src/gabi/ai_prompt.py": [
-    "pandas"
-  ],
   "backend/src/gabi/app_mode.py": [
     "gabi.blind_validation",
     "gabi.config",
@@ -489,10 +486,6 @@
     "pandas",
     "requests"
   ],
-  "backend/src/gabi/journal.py": [
-    "gabi.storage.get_connection",
-    "pandas"
-  ],
   "backend/src/gabi/legacy_filings.py": [
     "gabi.historical_archive",
     "gabi.sec_history.DIRECTORY",
@@ -789,7 +782,6 @@
     "pandas",
     "quantstats"
   ],
-  "backend/src/gabi/simple_portfolio.py": [],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",
     "gabi.factor_stability",

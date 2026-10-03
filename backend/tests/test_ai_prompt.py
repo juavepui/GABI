@@ -5,7 +5,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import ai_prompt
+from gabi.application.market import prompt_text as ai_prompt
 
 
 def _row(**overrides):

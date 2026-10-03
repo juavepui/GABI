@@ -11,7 +11,7 @@ casos de uso y adaptadores separados; un cliente React por capacidades; SQLite
 y archivos compartidos en `data/`. API y worker son procesos del mismo backend,
 con los mismos modelos y servicios. No requieren despliegues independientes.
 
-El backend conserva 102 módulos planos como compatibilidad. F2 ha migrado el cálculo
+El backend conserva 99 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. F2 ha migrado el cálculo
 y los filtros del Screener a casos de uso/dominio compartidos y añadido la
 [API local de consulta](local-api.md), con SQL de solo lectura y caché por lotes.
 F3 incorpora el [cliente React local](../frontend/README.md)
@@ -242,7 +242,7 @@ comentarios como imports. Las guardas no prueban toda la semántica: callbacks,
 efectos ocultos o fórmulas duplicadas requieren pruebas de comportamiento y revisión.
 
 La deuda plana está enumerada por archivo e import en
-`.github/architecture-legacy.json` (102 módulos backend tras retirar Streamlit en F6).
+`.github/architecture-legacy.json` (99 módulos backend tras F7.1, #87).
 La CI rechaza módulos planos nuevos y dependencias legacy nuevas. Al eliminar
 dependencias se retiran sus excepciones. Compara además el inventario con el primer
 padre Git (`HEAD^`, o base del merge de una PR): ampliar la lista también falla.

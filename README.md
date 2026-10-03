@@ -1735,7 +1735,7 @@ anterior a 2016**.
 ## Capa de IA: generador de prompt (no llamada a API)
 
 En la ficha de empresa hay una sección "🤖 Prompt para analizar con IA"
-(`backend/src/gabi/ai_prompt.py`) que construye un prompt listo para pegar en el
+(`backend/src/gabi/application/market/prompt_text.py`) que construye un prompt listo para pegar en el
 asistente que prefieras (Claude, ChatGPT...). Regla de diseño explícita:
 **la IA nunca calcula métricas financieras** — los números del prompt salen
 siempre de `scoring.py`/`metrics.py`/`edgar.py` (código determinista sobre

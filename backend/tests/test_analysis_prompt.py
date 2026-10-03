@@ -6,7 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import ai_prompt, app_mode, scoring
+from gabi import app_mode, scoring
+from gabi.application.market import prompt_text as ai_prompt
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 

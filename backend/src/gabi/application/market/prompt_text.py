@@ -11,7 +11,7 @@ mucho el riesgo de alucinaciones frente a pedirle directamente una predicción
 de precio."""
 import pandas as pd
 
-from .domain.market.metric_info import METRIC_INFO, format_metric_value
+from gabi.domain.market.metric_info import METRIC_INFO, format_metric_value
 
 EXTRACTION_POINTS = [
     "Cambios en el guidance (frente al trimestre/año anterior)",
