@@ -17,6 +17,10 @@ Una interrupción tras el commit SQLite y antes del ancla requiere revisión exp
 
 `reproduce_decision(seq)` verifica la huella de entradas y reproduce scores/ranking desde los bloques y pesos congelados, sin usar las fuentes actuales. No reconstruye métricas crudas desde una copia histórica de todos los proveedores. Las huellas de código normalizan LF/CRLF y el registro también conserva versiones de dependencias y entorno.
 
+Desde #88 el informe LIVE_FORWARD vive en `gabi.domain.research.live_performance`. Su fichero
+forma parte de los hashes de código del modelo, así que las decisiones registradas a partir de
+ese cambio llevan una `model_version` nueva y el informe no las mezcla con las anteriores.
+
 La consulta está en Screener y Research Lab. Permite ver decisiones, comprobar su reproducción, seleccionar una versión y descargar el informe prospectivo. Guardar el informe añade EVALUATION con su huella; visualizar no crea decisiones. RETROSPECTIVE y OOS no se mezclan con LIVE_FORWARD.
 
 El informe sigue la primera decisión de cada sesión de entrada, incluidos fallos y ausencia de señal. Entra en la primera apertura XNYS posterior al timestamp, mantiene una cartera equiponderada por tramos no solapados, calcula la deriva de pesos y aplica 10 pb/lado sobre lo negociado. El último tramo termina en el cierre elegido; SPY se valora en las mismas fechas, con coste inicial. El reporte conserva precios ajustados utilizados, fechas, entidad atribuida cuando existe y huella de resultados. La falta de precio exacto o la identidad desconocida de un ticker reciclado bloquea la acumulación; no se descarta la empresa ni se inventa retorno cero.

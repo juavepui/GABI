@@ -445,16 +445,6 @@
     "subprocess",
     "sys"
   ],
-  "backend/src/gabi/live_performance.py": [
-    "exchange_calendars",
-    "gabi.config",
-    "gabi.history_refresh.last_completed_session",
-    "gabi.identity",
-    "gabi.live_ledger",
-    "gabi.storage",
-    "numpy",
-    "pandas"
-  ],
   "backend/src/gabi/macro.py": [
     "gabi.config",
     "gabi.data_fetch._classify_error",

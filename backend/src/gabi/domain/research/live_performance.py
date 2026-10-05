@@ -1,11 +1,13 @@
 """Prospective paper portfolio from frozen decisions, never overlapping cohorts."""
 
+from collections.abc import Callable
+from datetime import datetime
+
 import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, identity, live_ledger, storage
-from .history_refresh import last_completed_session
+from gabi.domain.research.live_ledger import fingerprint
 
 
 def entry_session(timestamp: str) -> str:
@@ -30,10 +32,16 @@ def _price(history: pd.DataFrame, date: str, opening: bool) -> float | None:
     return float(value * adjusted / close)
 
 
-def report(*, model_version: str | None = None, as_of: str | None = None) -> dict:
-    all_events = live_ledger.events()
-    cutoff = as_of or last_completed_session(live_ledger._now())
-    if cutoff > last_completed_session(live_ledger._now()):
+def report(all_events: list[dict], now: datetime, last_session: str, benchmark_history: pd.DataFrame,
+           history: Callable[[str, dict], pd.DataFrame], *, benchmark_symbol: str,
+           model_version: str | None = None, as_of: str | None = None) -> dict:
+    """Paper portfolio of the frozen LIVE_FORWARD decisions up to ``as_of`` (default: the last closed session).
+
+    ``history(symbol, payload)`` returns the adjusted prices attributed to the decision's issuer
+    (empty when a recycled ticker cannot be attributed); ``now`` and ``last_session`` are injected.
+    """
+    cutoff = as_of or last_session
+    if cutoff > last_session:
         raise ValueError("No se evalúan cierres futuros.")
     calendar = xcals.get_calendar("XNYS")
     if not calendar.is_session(cutoff):
@@ -56,7 +64,6 @@ def report(*, model_version: str | None = None, as_of: str | None = None) -> dic
     drift: dict[str, float] = {}
     intervals, prices_used = [], []
     benchmark_entry = benchmark_last = None
-    benchmark_history = storage.get_prices(config.BENCHMARK_SYMBOL)
     for i, (date, event) in enumerate(schedule):
         payload = event["payload"]
         end = schedule[i + 1][0] if i + 1 < len(schedule) else cutoff
@@ -66,13 +73,8 @@ def report(*, model_version: str | None = None, as_of: str | None = None) -> dic
         gross, ratios, missing = 1. - sum(weights.values()), {}, []
         for symbol, weight in weights.items():
             owner = payload.get("sources", {}).get(symbol, {}).get("entity_id")
-            if owner:
-                history = identity.price_history(symbol, payload["market_date"], entity_id=owner)
-            elif identity.has_aliases(symbol):
-                history = pd.DataFrame()  # never attribute a recycled/migrated ticker to an unknown old issuer
-            else:
-                history = storage.get_prices(symbol)
-            start_price, end_price = _price(history, date, True), _price(history, end, end_open)
+            prices = history(symbol, payload)
+            start_price, end_price = _price(prices, date, True), _price(prices, end, end_open)
             prices_used.append({"seq": event["seq"], "symbol": symbol, "entry_date": date, "end_date": end,
                                 "entry_adjusted_open": start_price, "end_adjusted_price": end_price,
                                 "entity_id": owner, "identity_status": "attributed" if owner else "unverified ticker"})
@@ -96,7 +98,7 @@ def report(*, model_version: str | None = None, as_of: str | None = None) -> dic
         if benchmark_entry is None and i == 0:
             benchmark_entry = bench_a
         benchmark_last = bench_b
-        prices_used.append({"seq": event["seq"], "symbol": config.BENCHMARK_SYMBOL, "entry_date": date,
+        prices_used.append({"seq": event["seq"], "symbol": benchmark_symbol, "entry_date": date,
                             "end_date": end, "entry_adjusted_open": bench_a, "end_adjusted_price": bench_b})
         intervals.append({"seq": event["seq"], "record_hash": event["record_hash"], "status": payload["status"],
                           "entry": date, "end": end, "end_basis": "open" if end_open else "close",
@@ -105,12 +107,12 @@ def report(*, model_version: str | None = None, as_of: str | None = None) -> dic
                           "nav": nav if complete else None})
     benchmark = (.999 * benchmark_last / benchmark_entry - 1) if benchmark_entry and benchmark_last else None
     result = {"stage": "LIVE_FORWARD", "model_version": model_version, "available_versions": versions,
-              "as_of": cutoff, "generated_at": live_ledger._now().isoformat(), "intervals": intervals,
+              "as_of": cutoff, "generated_at": now.isoformat(), "intervals": intervals,
               "complete": complete and bool(intervals), "cumulative_return": nav - 1 if complete and intervals else None,
               "benchmark_return": benchmark, "prices_used": prices_used,
               "policy": "first decision per next-open session; equal weights; 10 bp/side on traded asset notional; missing blocks accumulation",
               "limitations": ["Paper portfolio, not execution or the frozen quarterly backtest.",
                               "Current revised prices for outcomes; original decision remains frozen.",
                               "A positive cumulative return is not independent predictive confirmation."]}
-    result["outcome_data_fingerprint"] = live_ledger.fingerprint(prices_used)
+    result["outcome_data_fingerprint"] = fingerprint(prices_used)
     return result

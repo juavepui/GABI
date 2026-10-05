@@ -6,8 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gabi import app_mode, live_performance, periodic_tasks, screener, storage
+from gabi import app_mode, periodic_tasks, screener, storage
 from gabi import live_ledger as ledger
+from gabi.domain.research.live_performance import entry_session
+from gabi.infrastructure.legacy.live_ledger import live_report
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
 
@@ -87,7 +89,7 @@ def test_stages_cannot_backdate_live_forward():
         ledger.append_decision(payload(), created_at="2010-01-01T22:00:00+00:00")
     event = ledger.append_decision(payload(), stage="RETROSPECTIVE", created_at="2010-01-01T22:00:00+00:00")
     assert event["payload"]["stage"] == "RETROSPECTIVE"
-    assert live_performance.report(as_of="2024-01-10")["cumulative_return"] is None
+    assert live_report(as_of="2024-01-10")["cumulative_return"] is None
 
 
 def panel():
@@ -204,7 +206,7 @@ def test_prospective_nav_uses_next_open_costs_nonoverlapping_intervals_and_drift
     seed("A", [10, 12], [10, 12])
     seed("B", [12, 12], [12, 15])
     seed("SPY", [100, 105], [100, 110])
-    report = live_performance.report(as_of="2024-01-10")
+    report = live_report(as_of="2024-01-10")
     assert report["complete"]
     assert report["cumulative_return"] == pytest.approx(.999 * 1.2 * .998 * 1.25 - 1)
     assert report["benchmark_return"] == pytest.approx(.999 * 1.1 - 1)
@@ -223,7 +225,7 @@ def test_first_failed_decision_for_entry_session_is_not_replaced_by_favorable_re
     ledger.append_decision(payload(picks=["B"], market="2024-01-09"))
     monkeypatch.setattr(ledger, "_now", lambda: NOW)
     seed("B", [12, 12], [12, 15])
-    report = live_performance.report(as_of="2024-01-10")
+    report = live_report(as_of="2024-01-10")
     assert len(report["intervals"]) == 1
     assert report["cumulative_return"] == 0
     assert report["intervals"][0]["seq"] == 1
@@ -232,7 +234,7 @@ def test_first_failed_decision_for_entry_session_is_not_replaced_by_favorable_re
 def test_missing_firm_blocks_performance_instead_of_removing_it(monkeypatch):
     decisions(monkeypatch)
     seed("B", [12, 12], [12, 15])
-    report = live_performance.report(as_of="2024-01-10")
+    report = live_report(as_of="2024-01-10")
     assert not report["complete"] and report["cumulative_return"] is None
     assert report["intervals"][0]["missing"] == ["A"]
     assert report["intervals"][1]["nav"] is None
@@ -242,7 +244,7 @@ def test_different_models_require_explicit_selection():
     ledger.append_decision(payload(version="a"))
     ledger.append_decision(payload(version="b"))
     with pytest.raises(ValueError, match="varias versiones"):
-        live_performance.report()
+        live_report()
 
 
 def test_unknown_issuer_cannot_use_a_recycled_ticker(monkeypatch):
@@ -251,14 +253,14 @@ def test_unknown_issuer_cannot_use_a_recycled_ticker(monkeypatch):
     decisions(monkeypatch)
     seed("A", [10, 12], [10, 12])
     identity.add_alias(identity.ensure_entity("2"), "A", "2024-01-09", source="new issuer")
-    report = live_performance.report(as_of="2024-01-10")
+    report = live_report(as_of="2024-01-10")
     assert report["intervals"][0]["missing"] == ["A"]
 
 
 def test_entry_calendar_handles_weekend_and_dst():
-    assert live_performance.entry_session("2024-03-08T22:00:00+00:00") == "2024-03-11"
-    assert live_performance.entry_session("2024-03-11T13:00:00+00:00") == "2024-03-11"
-    assert live_performance.entry_session("2024-03-11T13:31:00+00:00") == "2024-03-12"
+    assert entry_session("2024-03-08T22:00:00+00:00") == "2024-03-11"
+    assert entry_session("2024-03-11T13:00:00+00:00") == "2024-03-11"
+    assert entry_session("2024-03-11T13:31:00+00:00") == "2024-03-12"
 
 
 def test_malformed_payload_is_reported_as_integrity_failure():
@@ -275,9 +277,9 @@ def test_revised_outcome_prices_change_report_but_not_original_decision(monkeypa
     seed("A", [10, 12], [10, 12])
     seed("B", [12, 12], [12, 15])
     first = ledger.events()[0]
-    a = live_performance.report(as_of="2024-01-10")
+    a = live_report(as_of="2024-01-10")
     seed("B", [12, 12], [12, 18])
-    b = live_performance.report(as_of="2024-01-10")
+    b = live_report(as_of="2024-01-10")
     assert a["outcome_data_fingerprint"] != b["outcome_data_fingerprint"]
     assert a["cumulative_return"] != b["cumulative_return"]
     assert ledger.events()[0] == first

@@ -8,10 +8,11 @@ import pytest
 from fastapi.testclient import TestClient
 from test_live_ledger import NOW, decisions, panel, payload, seed, setup_capture
 
-from gabi import config, live_performance
+from gabi import config
 from gabi import live_ledger as ledger
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
+from gabi.infrastructure.legacy.live_ledger import live_report
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
@@ -79,7 +80,7 @@ def test_report_job_matches_live_performance_and_evaluation_is_appended_once(mon
     seed("A", [10, 12], [10, 12])
     seed("B", [12, 12], [12, 15])
     seed("SPY", [100, 105], [100, 110])
-    expected = live_performance.report(model_version="model-v1")
+    expected = live_report(model_version="model-v1")
     with TestClient(create_app(Settings(config.DATA_DIR))) as client:
         job = client.post("/api/v1/jobs", json={"kind": "live_forward_report", "idempotency_key": "live-report-1",
                                                  "live_report": {"model_version": "model-v1"}}).json()

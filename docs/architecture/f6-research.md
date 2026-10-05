@@ -336,7 +336,8 @@ verificación y la reproducción de una decisión se han movido sin cambios a
 nombres públicos. El detalle de una decisión comprueba su fila contra el hash
 verificado, reproduce scores y ranking desde los bloques congelados y permite
 descargar el evento canónico. El rendimiento LIVE_FORWARD es el job explícito
-`live_forward_report`, que llama a `live_performance.report` sin cambios para
+`live_forward_report`, que llama a `live_performance.report` sin cambios (desde #88 en
+`domain/research/live_performance`, con lecturas inyectadas) para
 una versión de modelo. «Guardar evaluación como evento nuevo» es `POST
 /research/live-ledger/evaluations`: relee el informe verificado de ese job y
 llama a `live_ledger.save_evaluation`, con la misma guarda de directorio de
