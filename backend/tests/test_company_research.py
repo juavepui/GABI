@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import config, estimates, events_calendar, filing_tracker
+from gabi import config, estimates, events_calendar
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
@@ -67,12 +67,15 @@ def test_overview_matches_the_old_ficha_without_writing(company):
     assert empty["surprises"] == [] and empty["estimate"] is None and empty["revision_90d"] is None
 
 
-def test_filing_changes_match_filing_tracker(company):
-    client, _ = company
+def test_filing_changes_match_the_cached_comparison(company):
+    from gabi.infrastructure.legacy.filings import compare_cached
+    from gabi.infrastructure.storage.signals import SqliteSignals
+
+    client, root = company
     body = client.get("/api/v1/companies/T001/filing-changes").json()
+    expected = {result["form"]: result for result in compare_cached("T001", *SqliteSignals(root).filing_facts("T001"))}
     for result in body["results"]:
-        legacy = filing_tracker.compare_filings("T001", result["form"])
-        assert [row["metric"] for row in result["rows"]] == [row["metric"] for row in legacy["rows"]]
+        assert [row["metric"] for row in result["rows"]] == [row["metric"] for row in expected[result["form"]]["rows"]]
         assert result["reason"] is not None or result["rows"]  # An empty comparison always says why.
 
 

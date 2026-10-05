@@ -557,7 +557,8 @@ La ficha de React incluye ahora lo que faltaba de la página antigua:
 sincronizaciones de sorpresas y estimaciones, que sí usan la red, son el job
 explícito `company_sync` y devuelven el motivo si fallan. Con la base local,
 AAPL, MSFT y NVDA coinciden con `get_earnings_surprises`,
-`latest_estimate_snapshot`, `revision_since` y `filing_tracker.compare_filings`
+`latest_estimate_snapshot`, `revision_since` y `filing_tracker.compare_filings` (retirado en
+#88; su regla pura es hoy `domain/market/filings`)
 (0,01-0,23 s por consulta) y `gabi.db` no cambia.
 
 ## Retirada de Streamlit

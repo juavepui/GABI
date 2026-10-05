@@ -220,11 +220,6 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/filing_tracker.py": [
-    "gabi.edgar",
-    "gabi.storage",
-    "pandas"
-  ],
   "backend/src/gabi/full_universe_audit.py": [
     "exchange_calendars",
     "gabi.config",
