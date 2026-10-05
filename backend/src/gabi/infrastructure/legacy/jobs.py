@@ -73,9 +73,9 @@ class LegacyExecutor:
 
             from gabi.application.administration.jobs import Jobs
             from gabi.application.market.signals import SignalMonitor
+            from gabi.domain.market.signals import compare_snapshots
             from gabi.infrastructure.legacy.filings import compare_cached
             from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
-            from gabi.infrastructure.legacy.signals import compare_snapshots
             from gabi.infrastructure.storage.jobs import SqliteJobs
             from gabi.infrastructure.storage.market import ReadOnlyMarket
             from gabi.infrastructure.storage.signals import SqliteSignals

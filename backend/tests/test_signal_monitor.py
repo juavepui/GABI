@@ -1,17 +1,10 @@
-import sys
-from pathlib import Path
+import sqlite3
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
-from gabi import config, evaluation, signal_monitor, storage
-
-
-def _isolate_db(tmp_path, monkeypatch):
-    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
-    monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+from gabi.domain.market import signals as signal_monitor
+from gabi.infrastructure.storage.signals import SqliteSignals
 
 
 def _table(rows: dict) -> pd.DataFrame:
@@ -151,85 +144,37 @@ def test_severities_are_only_the_three_allowed_values():
     assert {e["severity"] for e in events} <= set(signal_monitor.SEVERITIES)
 
 
-def test_record_events_is_idempotent_on_repeated_calls(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
+def _rows(tmp_path):
+    with sqlite3.connect(tmp_path / "gabi.db") as db:
+        return db.execute("SELECT from_snapshot_id,to_snapshot_id,symbol,event_type FROM signal_events").fetchall()
+
+
+def test_record_events_is_idempotent_on_repeated_calls(tmp_path):
     events = signal_monitor.compare_snapshots(
         BASE_PREV, BASE_PREV.assign(composite_score=lambda d: d["composite_score"] - 15), top_n=3)
     assert events  # sanity
-
-    signal_monitor.record_events(events, from_snapshot_id=1, to_snapshot_id=None)
-    signal_monitor.record_events(events, from_snapshot_id=1, to_snapshot_id=None)  # repetido
-
-    with storage.get_connection() as conn:
-        conn.executescript(signal_monitor.SCHEMA)
-        n = conn.execute("SELECT COUNT(*) FROM signal_events").fetchone()[0]
-    assert n == len(events)  # no se duplicó por llamar dos veces
+    store = SqliteSignals(tmp_path)
+    store.record(events, 1)
+    store.record(events, 1)  # repetido
+    assert len(_rows(tmp_path)) == len(events)  # no se duplicó por llamar dos veces
 
 
-def test_record_events_noop_for_empty_list(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
-    signal_monitor.record_events([], from_snapshot_id=1, to_snapshot_id=None)
-    assert signal_monitor.list_events().empty
+def test_record_events_noop_for_empty_list(tmp_path):
+    SqliteSignals(tmp_path).record([], 1)
+    assert not (tmp_path / "gabi.db").exists()
+    assert SqliteSignals(tmp_path).events(None, 200) == []
 
 
-def test_list_events_filters_by_severity_and_since_hours(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
+def test_list_events_filters_by_severity_and_since(tmp_path):
     events = [
         {"symbol": "AAA", "event_type": "score_change", "severity": "MATERIAL",
          "previous_value": 90.0, "new_value": 70.0, "cause": "test"},
         {"symbol": "BBB", "event_type": "sector_change", "severity": "WATCH",
          "previous_value": "Tech", "new_value": "Salud", "cause": "test"},
     ]
-    signal_monitor.record_events(events, from_snapshot_id=1, to_snapshot_id=None)
-
-    all_events = signal_monitor.list_events()
-    assert len(all_events) == 2
-    material_only = signal_monitor.list_events(severity="MATERIAL")
-    assert len(material_only) == 1
-    assert material_only.iloc[0]["symbol"] == "AAA"
-
-    future_only = signal_monitor.list_events(since_hours=-1)  # ventana que ya pasó
-    assert future_only.empty
-
-
-def test_run_comparison_without_saved_snapshot_returns_reason_not_crash(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
-    result = signal_monitor.run_comparison()
-    assert result["events"] == []
-    assert result["snapshot_id"] is None
-    assert result["reason"]
-
-
-def test_run_comparison_uses_latest_snapshot_and_persists_events(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
-    old_table = pd.DataFrame({
-        "composite_score": [90.0, 80.0], "score_coverage": [1.0, 1.0],
-        "confidence": [100.0, 90.0], "sector": ["Tech", "Salud"],
-    }, index=["AAA", "BBB"])
-    snapshot_id = evaluation.save_snapshot(old_table, "2024-01-01", top_n=2)
-    assert snapshot_id
-
-    class _FakeNotifier(signal_monitor.Notifier):
-        def __init__(self):
-            self.received = []
-
-        def notify(self, event):
-            self.received.append(event)
-
-    live_table = pd.DataFrame({
-        "composite_score": [55.0, 90.0], "score_coverage": [1.0, 1.0],
-        "confidence": [100.0, 90.0], "sector": ["Tech", "Salud"],
-    }, index=["AAA", "BBB"])
-    import gabi.screener as screener_mod
-    monkeypatch.setattr(screener_mod, "get_universe", lambda limit=None: pd.DataFrame({"symbol": ["AAA", "BBB"]}))
-    monkeypatch.setattr(screener_mod, "build_screener_table", lambda uni, weights=None, progress_cb=None: live_table)
-
-    fake = _FakeNotifier()
-    result = signal_monitor.run_comparison(notifiers=[fake])
-
-    assert result["snapshot_id"] == snapshot_id
-    assert result["events"]
-    assert fake.received == result["events"]  # el notificador recibió exactamente los eventos generados
-
-    persisted = signal_monitor.list_events()
-    assert len(persisted) == len(result["events"])
+    store = SqliteSignals(tmp_path)
+    store.record(events, 1)
+    assert len(store.events(None, 200)) == 2
+    material_only = store.events("MATERIAL", 200)
+    assert [(e["symbol"], e["previous_value"], e["new_value"]) for e in material_only] == [("AAA", 90.0, 70.0)]
+    assert store.events(None, 200, since="9999-01-01") == []

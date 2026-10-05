@@ -701,13 +701,6 @@
     "requests",
     "sqlite3"
   ],
-  "backend/src/gabi/signal_monitor.py": [
-    "gabi.evaluation",
-    "gabi.scoring",
-    "gabi.screener",
-    "gabi.storage",
-    "pandas"
-  ],
   "backend/src/gabi/sim_portfolios.py": [
     "exchange_calendars",
     "gabi.storage",

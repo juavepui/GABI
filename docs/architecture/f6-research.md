@@ -498,7 +498,7 @@ sustituto:
 Una segunda revisión, control a control de las páginas (no solo botones), encontró
 y migró además el filtro por severidad y ventana de horas de los eventos del
 Signal Monitor (`GET /market/signals?since_hours`, igual que
-`signal_monitor.list_events`) y el filtro «solo entradas abiertas» del Diario
+`signal_monitor.list_events`, retirado en #88) y el filtro «solo entradas abiertas» del Diario
 (`GET /portfolio/journal?only_open`).
 
 Durante la auditoría se encontró que el ranking de React fallaba con la base
