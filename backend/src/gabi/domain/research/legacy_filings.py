@@ -3,34 +3,10 @@
 A pinned review contract supplies table, units and exact reporting periods.
 The parser never guesses these from nearby prose or promotes an unreviewed table.
 """
-import hashlib
-import html as html_std
-import json
 import re
 from datetime import date
-from pathlib import Path
 
-from lxml import html
-
-from . import historical_archive
-from .sec_history import DIRECTORY, download
-
-TABLES = re.compile(r"<table\b[^>]*>.*?</table\s*>", re.I | re.S)
 NUMBER = re.compile(r"\(\s*-?\d[\d,]*(?:\.\d+)?\s*\)|-?\d[\d,]*(?:\.\d+)?|--|[—–\x97]")
-
-
-def table_lines(source: str) -> list[list[str]]:
-    tables = []
-    for match in TABLES.finditer(source):
-        markup = match.group()
-        if re.search(r"<tr\b", markup, re.I):
-            node = html.fromstring(markup)
-            lines = [" ".join(row.text_content().split()) for row in node.xpath(".//tr")]
-        else:
-            text = html_std.unescape(re.sub(r"<[^>]+>", " ", markup))
-            lines = [" ".join(line.split()) for line in text.splitlines() if line.strip()]
-        tables.append(lines)
-    return tables
 
 
 def values_after_label(line: str, label: str) -> list[float] | None:
@@ -53,11 +29,9 @@ def values_after_label(line: str, label: str) -> list[float] | None:
     return values or None
 
 
-def extract_reviewed(content: bytes, contract: dict) -> list[dict]:
-    if hashlib.sha256(content).hexdigest() != contract["sha256"]:
-        raise ValueError("Filing differs from the reviewed document")
+def reviewed_rows(tables: list[list[str]], contract: dict) -> list[dict]:
+    """Rows of the reviewed tables (text lines per table) of a filing whose hash was already checked."""
     date.fromisoformat(contract["filed_date"])
-    tables = table_lines(content.decode(contract.get("encoding", "cp1252"), errors="replace"))
     rows: dict = {}
     for spec in contract["tables"]:
         lines = tables[spec["index"]]
@@ -90,25 +64,3 @@ def extract_reviewed(content: bytes, contract: dict) -> list[dict]:
             if abs(balance["Assets"] - balance["Liabilities"] - balance["StockholdersEquity"]) > 1:
                 raise ValueError("Reviewed balance sheet does not reconcile")
     return list(rows.values())
-
-
-def run_pilot() -> dict:
-    manifest = Path(__file__).with_name("resources") / "legacy_filings_pilot.json"
-    report = {}
-    for contract in json.loads(manifest.read_text(encoding="utf-8")):
-        path = download(contract["url"], DIRECTORY / "legacy" / contract["filename"])
-        rows = extract_reviewed(path.read_bytes(), contract)
-        source = "legacy-reviewed:" + contract["accn"]
-        historical_archive.register_source(source, {"url": contract["url"], "sha256": contract["sha256"],
-                                                    "review": "table/units/periods and transcription checks",
-                                                    "start": "1996-01-01", "end_exclusive": "2009-01-01"})
-        historical_archive.import_sec_facts(source, contract["symbol"], contract["cik"], rows, source_url=contract["url"])
-        report[contract["symbol"]] = {"rows": len(rows), "checks": len(contract["checks"]),
-                                      "filed_date": contract["filed_date"], "url": contract["url"], "status": "passed"}
-    (DIRECTORY / "legacy_pilot_report.json").write_text(json.dumps(report, indent=2) + "\n")
-    print(json.dumps(report, indent=2))
-    return report
-
-
-if __name__ == "__main__":
-    run_pilot()

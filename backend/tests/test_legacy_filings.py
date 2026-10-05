@@ -2,7 +2,8 @@ import hashlib
 
 import pytest
 
-from gabi.legacy_filings import extract_reviewed, values_after_label
+from gabi.domain.research.legacy_filings import values_after_label
+from gabi.infrastructure.providers.sec_filings import extract_reviewed
 
 
 def test_signed_cash_flow_and_ambiguous_labels():

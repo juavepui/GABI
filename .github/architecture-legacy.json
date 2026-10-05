@@ -486,13 +486,6 @@
     "pandas",
     "requests"
   ],
-  "backend/src/gabi/legacy_filings.py": [
-    "gabi.historical_archive",
-    "gabi.sec_history.DIRECTORY",
-    "gabi.sec_history.download",
-    "lxml",
-    "pathlib"
-  ],
   "backend/src/gabi/live_ledger.py": [
     "gabi.app_mode",
     "gabi.config",

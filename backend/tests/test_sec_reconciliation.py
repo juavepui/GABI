@@ -33,7 +33,7 @@ def test_command_writes_unmatched_rows_and_summary(tmp_path):
     import json
     import sqlite3
 
-    from gabi.infrastructure.legacy.sec_reconciliation import directory, run
+    from gabi.infrastructure.legacy.sec_validation import directory, run_reconciliation
 
     with sqlite3.connect(tmp_path / 'gabi.db') as conn:
         conn.executescript("""
@@ -49,7 +49,7 @@ def test_command_writes_unmatched_rows_and_summary(tmp_path):
                 'val': 100, 'filed_date': '2009-11-01'}
         conn.execute("INSERT INTO entity_observations VALUES (1, 'edgar_facts', ?)", (json.dumps(fact),))
     directory(tmp_path).mkdir(parents=True)
-    summary = run(tmp_path)
+    summary = run_reconciliation(tmp_path)
     assert summary['comparison'] == {'matches': 1, 'no_exact_context': 1}
     assert json.loads((directory(tmp_path) / 'reconciliation.json').read_text()) == summary
     assert pd.read_csv(directory(tmp_path) / 'sec-unmatched.csv').val.tolist() == [7]
