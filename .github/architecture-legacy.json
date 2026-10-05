@@ -804,11 +804,6 @@
   ],
   "backend/src/gabi/valuation_expectations.py": [],
   "backend/src/gabi/value_hypothesis.py": [
-    "gabi.blind_validation",
-    "gabi.config",
-    "gabi.factor_stability",
-    "gabi.prospective_plan",
-    "gabi.research_lab",
     "gabi.scoring"
   ],
   "backend/src/gabi/variant_validation.py": [

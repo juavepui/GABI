@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from gabi.domain.research import value_hypothesis as hypothesis
+
 GABI_PLAN = Path("docs") / "prospective-plan" / "gabi-id1.json"
 VALUE_PLAN = Path("docs") / "value-hypothesis" / "preregistro.json"
 
@@ -28,11 +30,11 @@ def gabi_plan(root: Path) -> dict:
 
 
 def value_plan(root: Path) -> dict:
-    from gabi import value_hypothesis
+    from gabi.infrastructure.legacy.value_hypothesis import specification
 
     record = _read(root / VALUE_PLAN)
     digest = hashlib.sha256(json.dumps(record["spec"], sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-    if digest != record["sha256"] or value_hypothesis.spec_hash() != record["sha256"]:
+    if digest != record["sha256"] or hypothesis.spec_hash(specification()) != record["sha256"]:
         raise ValueError("El preregistro de la hipótesis de valor no coincide con su huella.")
     return {"validation_id": int(record["blind_validation_id"]), "issue": record["spec"]["issue"],
             "looks": [look["fecha"] for look in record["plan_secuencial"]["looks"]],

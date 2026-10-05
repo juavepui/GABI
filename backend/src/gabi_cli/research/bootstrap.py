@@ -97,6 +97,14 @@ def rotation_experiment(settings: Settings, args: argparse.Namespace) -> None:
         args.output or settings.data_dir.parent / "docs" / "rotation-experiment", args.resume)
 
 
+def value_hypothesis(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.value_hypothesis import preregister
+
+    record = preregister(settings.data_dir.parent / "docs" / "value-hypothesis")
+    print(json.dumps({"sha256": record["sha256"], "blind_validation_id": record["blind_validation_id"],
+                      "plan": record["plan_secuencial"]}, ensure_ascii=False, indent=2))
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -158,6 +166,9 @@ def main(argv: list[str]) -> None:
     command.add_argument("--output", type=Path, help="Por defecto docs/rotation-experiment; usar un directorio nuevo")
     command.add_argument("--resume", action="store_true")
     command.set_defaults(run=rotation_experiment)
+    command = commands.add_parser("value-hypothesis", help="Preregistro de la hipótesis de valor (#43); comprueba uno existente")
+    command.add_argument("--preregister", action="store_true", required=True)
+    command.set_defaults(run=value_hypothesis)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")
