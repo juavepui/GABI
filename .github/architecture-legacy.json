@@ -236,12 +236,6 @@
     "gabi.storage",
     "pandas"
   ],
-  "backend/src/gabi/frozen_research_ci.py": [
-    "gabi.config",
-    "mypy",
-    "pathlib",
-    "sys"
-  ],
   "backend/src/gabi/full_universe_audit.py": [
     "exchange_calendars",
     "gabi.config",

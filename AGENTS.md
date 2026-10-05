@@ -63,7 +63,7 @@ uv run --project backend python scripts/check_architecture.py
 npm --prefix frontend run lint:architecture
 npm --prefix frontend run test:architecture
 uv run --project backend ruff check .
-uv run --project backend python -m gabi.frozen_research_ci --check-frozen
+uv run --project backend python -m gabi_cli research frozen --check-frozen
 ```
 
 Ejecutar los tests pertinentes y los controles de tipos/contrato del código

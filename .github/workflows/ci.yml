@@ -35,7 +35,7 @@ jobs:
         run: uv run python ../scripts/check_architecture.py --baseline-base HEAD^
 
       - name: Verify frozen research engines
-        run: uv run python -m gabi.frozen_research_ci --check-frozen
+        run: uv run python -m gabi_cli research frozen --check-frozen
 
       - name: Verify published search ledger
         run: uv run python -m gabi_cli research ledger --verify
@@ -44,7 +44,7 @@ jobs:
         run: uv run ruff check ..
 
       - name: Type check (mypy)
-        run: uv run python -m gabi.frozen_research_ci --typecheck
+        run: uv run python -m gabi_cli research frozen --typecheck
 
       # Los módulos del backend no abren bases ni arrancan workers al importar.
       - name: Import smoke test (backend packages)

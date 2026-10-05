@@ -85,7 +85,7 @@ def test_relative_data_override_is_rejected_before_io(tmp_path):
 
 
 def test_mypy_relocation_only_normalizes_backend_package_paths():
-    from gabi import frozen_research_ci as ci
+    from gabi.infrastructure import frozen_research as ci
 
     record = ci.load_baseline()[0]
     for prefix in ("backend/", ci.BACKEND.as_posix() + "/"):
@@ -95,7 +95,7 @@ def test_mypy_relocation_only_normalizes_backend_package_paths():
 
 
 def test_all_published_engines_and_original_config_remain_byte_identical():
-    from gabi import frozen_research_ci as ci
+    from gabi.infrastructure import frozen_research as ci
 
     ci.verify_relocated_engines()
 

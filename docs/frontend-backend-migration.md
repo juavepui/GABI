@@ -107,7 +107,7 @@ consulta lenta debe apoyarse en resultados cacheados o en un job explícito.
 | `DATA_DIR`, `DB_PATH`, caches y ficheros de claves | Seguir usando `GABI/data`; no duplicar/mover los aproximadamente 83,2 GB declarados por el usuario; no enviar claves al cliente |
 | Imports manuales `parents[1]/src` y `parents[2]/src` en `app/` | Importar el backend instalado y comprobar las 17 páginas de transición |
 | `pyproject.toml`, `uv.lock`, wheel `src/gabi` y `tests/` | Proyecto Python en backend, lock actualizado, instalación editable y ejecución desde raíz/backend |
-| `frozen_research_ci.ROOT/FROZEN` y `.github/mypy-baseline.json` | Traducir rutas con control explícito; conservar hashes exactos de los tres motores y los 25 diagnósticos antiguos |
+| `frozen_research_ci.ROOT/FROZEN` (hoy `gabi.infrastructure.frozen_research`, ADR 0002) y `.github/mypy-baseline.json` | Traducir rutas con control explícito; conservar hashes exactos de los tres motores y los 25 diagnósticos antiguos |
 | Manifiestos con claves `src/gabi/...` y `data/...` | Resolver aliases históricos a rutas físicas nuevas sin modificar el JSON sellado ni sus huellas |
 | Hashes de código/inputs de los motores de investigación | Mantener bytes normalizados y semántica; una adaptación necesaria se versiona y no reesella evidencia anterior |
 | `live_ledger.capture_config` y git diff sobre `src/gabi` | Capturar el código trasladado y conservar lectura de registros anteriores, sin afirmar identidad si cambió código |

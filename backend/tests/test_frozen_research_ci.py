@@ -2,14 +2,14 @@ import json
 
 import pytest
 
-from gabi import frozen_research_ci as ci
+from gabi.infrastructure import frozen_research as ci
 
 
 def copy_engines(root, endings="\n"):
     for relative in ci.FROZEN:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        text = (ci.ROOT / relative).read_text(encoding="utf-8")
+        text = (ci.BACKEND / relative).read_text(encoding="utf-8")
         target.write_bytes(text.replace("\n", endings).encode("utf-8"))
 
 

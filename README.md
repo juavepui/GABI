@@ -293,8 +293,8 @@ data/              misma caché SQLite + CSVs + claves locales
 ```bash
 uv run --project backend pytest
 uv run --project backend ruff check .     # linting
-uv run --project backend python -m gabi.frozen_research_ci --check-frozen
-uv run --project backend python -m gabi.frozen_research_ci --typecheck  # mypy global + baseline exacto
+uv run --project backend python -m gabi_cli research frozen --check-frozen
+uv run --project backend python -m gabi_cli research frozen --typecheck  # mypy global + baseline exacto
 ```
 
 Estos checks se ejecutan también en CI (GitHub Actions) en cada push/PR a

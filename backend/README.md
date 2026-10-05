@@ -23,8 +23,8 @@ Desde esta carpeta:
 uv sync --locked --all-groups
 uv run pytest
 uv run python -m gabi_cli serve
-uv run python -m gabi.frozen_research_ci --check-frozen
-uv run python -m gabi.frozen_research_ci --typecheck
+uv run python -m gabi_cli research frozen --check-frozen
+uv run python -m gabi_cli research frozen --typecheck
 uv run python -m gabi_cli research ledger --verify
 ```
 

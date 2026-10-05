@@ -5,6 +5,7 @@ Usage: python -m gabi_cli research <command> [arguments]
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from gabi.infrastructure.settings import Settings
@@ -48,6 +49,21 @@ def ledger(settings: Settings, args: argparse.Namespace) -> None:
         print(json.dumps(search_ledger.write(root, args.write)["counts"]))
 
 
+def frozen(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure import frozen_research
+
+    try:
+        if args.check_frozen:
+            frozen_research.verify_frozen()
+            frozen_research.verify_relocated_engines()
+            print(f"{len(frozen_research.FROZEN)} frozen CI engines and 18 relocated published engines/config verified.")
+        else:
+            sys.exit(frozen_research.typecheck())
+    except (OSError, ValueError, KeyError) as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)
+
+
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="python -m gabi_cli research", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -66,5 +82,10 @@ def main(argv: list[str]) -> None:
     actions.add_argument("--write", type=Path, help="Destino nuevo; nunca sobrescribe un registro publicado")
     actions.add_argument("--verify", action="store_true")
     command.set_defaults(run=ledger)
+    command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
+    actions = command.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--check-frozen", action="store_true")
+    actions.add_argument("--typecheck", action="store_true")
+    command.set_defaults(run=frozen)
     args = parser.parse_args(argv)
     args.run(Settings.from_environment(), args)

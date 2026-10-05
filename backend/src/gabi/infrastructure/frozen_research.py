@@ -2,19 +2,18 @@
 
 The exact 25 pre-existing diagnostics are recorded, not broad error categories.
 Every invocation still runs mypy on the entire package with the normal config.
+Paths are those of the installed checkout: ``backend`` holds ``src/gabi`` and the
+engine manifest, its parent holds ``.github``.
 """
 
-import argparse
 import hashlib
 import json
 import sys
 from collections import Counter
 from pathlib import Path
 
-from . import config
-
-ROOT = config.BASE_DIR
-BACKEND = Path(ROOT) / "backend"
+BACKEND = Path(__file__).resolve().parents[3]
+ROOT = BACKEND.parent
 FROZEN = {
     "src/gabi/tail_effect_test.py": "2c1216b53b7f45d4d57ef5e5cf8252771891fd816523ad917396079f5fc6fda3",
     "src/gabi/factor_zoo.py": "7783e6885410c6c89d374e3ce9251f565b5d1b810c9fff387b768f82e454ee07",
@@ -22,18 +21,18 @@ FROZEN = {
 }
 
 
-def verify_frozen(root: Path = ROOT) -> None:
+def verify_frozen(backend: Path = BACKEND) -> None:
     for relative, expected in FROZEN.items():
         # Git may use CRLF on Windows. Only line endings are normalized.
-        actual = hashlib.sha256((root / relative).read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+        actual = hashlib.sha256((backend / relative).read_text(encoding="utf-8").encode("utf-8")).hexdigest()
         if actual != expected:
             raise ValueError(f"Frozen research engine changed: {relative}; review its archived evidence and CI baseline.")
 
 
-def verify_relocated_engines(root: Path = ROOT) -> None:
-    manifest = json.loads((root / "backend" / "legacy-engine-hashes.json").read_text(encoding="utf-8"))
+def verify_relocated_engines(backend: Path = BACKEND) -> None:
+    manifest = json.loads((backend / "legacy-engine-hashes.json").read_text(encoding="utf-8"))
     for name, expected in manifest.items():
-        actual = hashlib.sha256((root / "src" / "gabi" / name).read_text(encoding="utf-8").encode()).hexdigest()
+        actual = hashlib.sha256((backend / "src" / "gabi" / name).read_text(encoding="utf-8").encode()).hexdigest()
         if actual != expected:
             raise ValueError(f"Relocated published engine changed: {name}; preserve/version its archived evidence.")
 
@@ -84,21 +83,3 @@ def typecheck() -> int:
         return 1
     print(f"mypy checked backend/src: no new diagnostics; {len(baseline)} exact historical diagnostics in unchanged frozen engines.")
     return 0
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    actions = parser.add_mutually_exclusive_group(required=True)
-    actions.add_argument("--check-frozen", action="store_true")
-    actions.add_argument("--typecheck", action="store_true")
-    args = parser.parse_args()
-    try:
-        if args.check_frozen:
-            verify_frozen()
-            verify_relocated_engines()
-            print(f"{len(FROZEN)} frozen CI engines and 18 relocated published engines/config verified.")
-        else:
-            sys.exit(typecheck())
-    except (OSError, ValueError, KeyError) as exc:
-        print(str(exc), file=sys.stderr)
-        sys.exit(1)
