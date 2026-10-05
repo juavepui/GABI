@@ -7,19 +7,10 @@ mirarlo aquí la contaminaría. Para la sección cruzada se usan escenarios de I
 y la dispersión mínima teórica del IC con N empresas.
 """
 
-import argparse
-import json
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from . import config, stats_rigor
-from . import factor_stability as fs
-
-REVALIDATION = config.BASE_DIR / "docs" / "historical-revalidation-2011-2025"
-OUTPUT = config.BASE_DIR / "docs" / "power-analysis"
 ALPHA = 0.05  # unilateral: la hipótesis es que GABI supera, no que difiere
 POWER = 0.80
 YEARS = (10, 14.25, 20, 25)
@@ -45,10 +36,9 @@ def power_at(mean: float, sd: float, quarters: float) -> float:
     return float(norm.cdf(mean / sd * np.sqrt(quarters) - norm.ppf(1 - ALPHA)))
 
 
-def observed_series() -> dict[str, pd.Series]:
+def observed_series(periods: pd.DataFrame, bench: pd.DataFrame) -> dict[str, pd.Series]:
     """Excesos trimestrales ya publicados en el #35 (V1 Top-20, serie continua acreditada)."""
-    periods = pd.read_csv(REVALIDATION / "acreditado-38-continua" / "v1-top20-periods.csv").dropna(subset=["retorno"])
-    bench = pd.read_csv(REVALIDATION / "acreditado-38-continua" / "benchmarks-by-period.csv")
+    periods = periods.dropna(subset=["retorno"])
     merged = periods.merge(bench[["fecha", "universo_elegible_ew"]], on="fecha", how="left")
     recent = merged[merged.fecha >= "2016-01-02"]
     return {"vs_spy_2011_2025": merged.retorno - merged.spy,
@@ -57,10 +47,10 @@ def observed_series() -> dict[str, pd.Series]:
             "vs_universo_2016_2025": (recent.retorno - recent.universo_elegible_ew).dropna()}
 
 
-def portfolio_tests() -> list[dict]:
+def portfolio_tests(series: dict[str, pd.Series]) -> list[dict]:
     rows = []
-    for name, series in observed_series().items():
-        mean, sd, n = float(series.mean()), float(series.std(ddof=1)), len(series)
+    for name, values in series.items():
+        mean, sd, n = float(values.mean()), float(values.std(ddof=1)), len(values)
         rows.append({"prueba": name, "trimestres": n, "exceso_medio": mean, "desviacion": sd,
                      "ir_anual": mean / sd * 2, "t": mean / sd * np.sqrt(n),
                      "potencia_actual": power_at(mean, sd, n),
@@ -80,46 +70,27 @@ def cross_section_tests() -> list[dict]:
     return rows
 
 
-def multiple_testing() -> dict:
+def multiple_testing(expected_max_sharpe: float) -> dict:
     """Listón de Sharpe esperable por azar con las configuraciones documentadas (DSR)."""
-    prior = json.loads((config.BASE_DIR / "docs" / "overfitting-audit" / "audit.json").read_text(encoding="utf-8"))
-    sharpes = [s["sharpe_anualizado"] for s in prior["including_cost_sensitivity"]["trial_statistics"].values()]
-    sr0 = stats_rigor.expected_max_sharpe(sharpes, n_trials=DOCUMENTED_TRIALS)
-    return {"n_trials": DOCUMENTED_TRIALS, "sharpe_maximo_esperado_por_azar_anual": sr0,
+    return {"n_trials": DOCUMENTED_TRIALS, "sharpe_maximo_esperado_por_azar_anual": expected_max_sharpe,
             "nota": "El DSR compara el Sharpe elegido con este listón, no con 0: con más configuraciones "
                     "probadas, más alto el listón. Cada prueba nueva lo sube."}
 
 
-def prospective() -> dict:
+def prospective(series: dict[str, pd.Series]) -> dict:
     """Años prospectivos para una conclusión con el efecto de la serie continua, solos o combinados."""
-    series = observed_series()["vs_spy_2011_2025"]
-    mean, sd = float(series.mean()), float(series.std(ddof=1))
+    values = series["vs_spy_2011_2025"]
+    mean, sd = float(values.mean()), float(values.std(ddof=1))
     needed = quarters_needed(mean, sd)
-    retro = len(series)
+    retro = len(values)
     return {"supuesto": "el efecto futuro igual al observado 2011-2025 (optimista si hubo sobreajuste)",
             "anios_prospectivos_solos_80": needed / 4,
             "anios_prospectivos_si_se_combinan_con_2011_2025_80": max(0.0, (needed - retro) / 4),
             "advertencia": "Combinar exige una regla fijada de antemano y tratar 2016-2025 como muestra de diseño (#42)."}
 
 
-def run() -> dict:
-    report = {"issue": 39, "alpha_unilateral": ALPHA, "potencia_objetivo": POWER,
-              "cartera": portfolio_tests(), "seccion_cruzada": cross_section_tests(),
-              "multiples_pruebas": multiple_testing(), "prospectiva": prospective(),
-              "code_sha256": fs.content_hash(Path(__file__)),
-              "inputs_sha256": {p.name: fs.content_hash(p) for p in (
-                  REVALIDATION / "acreditado-38-continua" / "v1-top20-periods.csv",
-                  REVALIDATION / "acreditado-38-continua" / "benchmarks-by-period.csv")}}
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    (OUTPUT / "power.json").write_text(json.dumps(fs._json_safe(report), ensure_ascii=False, indent=2) + "\n",
-                                       encoding="utf-8")
-    return report
-
-
-def main() -> None:
-    argparse.ArgumentParser(description=__doc__).parse_args()
-    print(json.dumps(fs._json_safe(run()), ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()
+def report(periods: pd.DataFrame, bench: pd.DataFrame, expected_max_sharpe: float) -> dict:
+    series = observed_series(periods, bench)
+    return {"issue": 39, "alpha_unilateral": ALPHA, "potencia_objetivo": POWER,
+            "cartera": portfolio_tests(series), "seccion_cruzada": cross_section_tests(),
+            "multiples_pruebas": multiple_testing(expected_max_sharpe), "prospectiva": prospective(series)}

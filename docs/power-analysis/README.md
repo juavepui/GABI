@@ -1,8 +1,11 @@
 # Análisis de potencia: cuánta evidencia hace falta para descartar la suerte (#39)
 
 Entrada: resultados ya publicados del #35 (serie continua acreditada, V1
-Top-20). Salida completa en [power.json](power.json); código en
-`gabi.power_analysis`. Prueba **unilateral** (α = 5 %), porque la hipótesis es
+Top-20). Salida completa en [power.json](power.json), producida con
+`python -m gabi.power_analysis` en el commit 1283bf5 (su `code_sha256` es el de ese
+fichero). Desde ADR 0002 se reproduce con `python -m gabi_cli research power-analysis`;
+las fórmulas están en `gabi.domain.research.power_analysis` y dan el mismo informe salvo
+`code_sha256`, que pasa a ser el del módulo nuevo. Prueba **unilateral** (α = 5 %), porque la hipótesis es
 que GABI supera, y potencia objetivo del 80 %.
 
 ## Resumen

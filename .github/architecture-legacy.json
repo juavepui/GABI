@@ -610,15 +610,6 @@
     "numpy",
     "pandas"
   ],
-  "backend/src/gabi/power_analysis.py": [
-    "gabi.config",
-    "gabi.factor_stability",
-    "gabi.stats_rigor",
-    "numpy",
-    "pandas",
-    "pathlib",
-    "scipy.stats"
-  ],
   "backend/src/gabi/price_sync.py": [
     "gabi.data_fetch._classify_error",
     "gabi.data_fetch.normalize_symbol",
