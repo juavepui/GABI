@@ -61,3 +61,9 @@ por comando; desaparecen cuando el núcleo migre. Los nombres antiguos que
 verifican evidencia sellada permanecen como adaptadores finos, enumerados en
 el inventario, hasta que la verificación pueda citar la ruta nueva sin tocar el
 documento sellado.
+
+`rotation_experiment` es la excepción explícita: su ejecución parchea los motores
+antiguos de backtest y apunta la configuración antigua a una copia de trabajo del
+snapshot congelado. Trasladar eso a las capas nuevas introduciría el patrón que
+este repositorio prohíbe, así que el subcomando delega en el módulo antiguo a través
+de un puente y el módulo sigue en el inventario hasta que #90 libere esos motores.

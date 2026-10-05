@@ -90,6 +90,13 @@ def tenk_extraction(settings: Settings, args: argparse.Namespace) -> None:
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
+def rotation_experiment(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.rotation_experiment import run
+
+    run(args.cache or settings.data_dir / "full_universe_audit",
+        args.output or settings.data_dir.parent / "docs" / "rotation-experiment", args.resume)
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -146,6 +153,11 @@ def main(argv: list[str]) -> None:
     command = commands.add_parser("tenk-extraction", help="Piloto de extracción de 10-K sin XBRL (#41); descarga de SEC")
     command.add_argument("--subset", choices=["ajuste", "reserva"])
     command.set_defaults(run=tenk_extraction)
+    command = commands.add_parser("rotation-experiment", help="Experimento de rotación sobre los rankings congelados (sin descargas)")
+    command.add_argument("--cache", type=Path, help="Por defecto <datos>/full_universe_audit")
+    command.add_argument("--output", type=Path, help="Por defecto docs/rotation-experiment; usar un directorio nuevo")
+    command.add_argument("--resume", action="store_true")
+    command.set_defaults(run=rotation_experiment)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")

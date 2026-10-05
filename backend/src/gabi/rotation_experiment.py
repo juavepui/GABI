@@ -1,9 +1,8 @@
 """Execute the three previously declared rotation policies on frozen full-universe data.
 
 No downloads, parameter search, live recommendations or blind-validation reads.
-Run: python -m gabi.rotation_experiment
+Run: python -m gabi_cli research rotation-experiment (ADR 0002)
 """
-import argparse
 import json
 import shutil
 from datetime import UTC, datetime
@@ -220,15 +219,3 @@ def execute(cache: Path, output: Path, *, resume: bool = False) -> dict:
     print(summary.to_string(index=False), flush=True)
     return report
 
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cache", type=Path, default=config.DATA_DIR / "full_universe_audit")
-    parser.add_argument("--output", type=Path, default=config.BASE_DIR / "docs/rotation-experiment")
-    parser.add_argument("--resume", action="store_true")
-    args = parser.parse_args()
-    execute(args.cache, args.output, resume=args.resume)
-
-
-if __name__ == "__main__":
-    main()
