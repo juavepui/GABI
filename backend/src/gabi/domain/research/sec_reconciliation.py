@@ -1,12 +1,9 @@
 """Reconcile SEC NUM values with exact issuer facts, retaining unmatched evidence."""
-import json
-
 import numpy as np
 import pandas as pd
 
-from . import config, storage
-from .historical_coverage import read_facts
-from .sec_history import DIRECTORY
+NOTES = ("NUM dates/quarters rounded only for reconciliation; original dates retained in exact facts. "
+         "Values may be reported more than once in an accession.")
 
 
 def rounded_periods(frame: pd.DataFrame) -> pd.DataFrame:
@@ -37,19 +34,5 @@ def compare(bulk: pd.DataFrame, exact: pd.DataFrame) -> pd.DataFrame:
     return indexed.drop(columns="row_id")
 
 
-def run() -> dict:
-    with storage.get_connection() as conn:
-        bulk = pd.read_sql_query("SELECT s.cik,f.* FROM sec_bulk_facts f JOIN sec_bulk_submissions s USING(accn)", conn)
-    frames = [frame.assign(cik=cik) for cik, frame in read_facts(config.DB_PATH).items()]
-    exact = pd.concat(frames, ignore_index=True)
-    result = compare(bulk, exact)
-    result[result.comparison != "matches"].to_csv(DIRECTORY / "sec-unmatched.csv", index=False)
-    summary = {"bulk_facts": len(result), "comparison": result.comparison.value_counts().to_dict(),
-               "notes": "NUM dates/quarters rounded only for reconciliation; original dates retained in exact facts. Values may be reported more than once in an accession."}
-    (DIRECTORY / "reconciliation.json").write_text(json.dumps(summary, indent=2) + "\n")
-    print(json.dumps(summary, indent=2))
-    return summary
-
-
-if __name__ == "__main__":
-    run()
+def summary(result: pd.DataFrame) -> dict:
+    return {"bulk_facts": len(result), "comparison": result.comparison.value_counts().to_dict(), "notes": NOTES}

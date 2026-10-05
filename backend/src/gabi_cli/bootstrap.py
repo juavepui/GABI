@@ -1,6 +1,6 @@
 """Queue scheduled tasks and run the separate local worker.
 
-Usage: python -m gabi_cli serve | worker | schedule daily | schedule tiingo
+Usage: python -m gabi_cli serve | worker | schedule daily | schedule tiingo | research <command>
 """
 
 import argparse
@@ -32,6 +32,11 @@ def warm_rankings(app) -> None:
 
 
 def main() -> None:
+    if sys.argv[1:2] == ["research"]:
+        from gabi_cli.research.bootstrap import main as research
+
+        research(sys.argv[2:])
+        return
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["serve", "worker", "schedule"])
     parser.add_argument("kind", nargs="?", choices=["daily", "tiingo"])

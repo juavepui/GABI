@@ -761,14 +761,6 @@
     "requests",
     "sqlite3"
   ],
-  "backend/src/gabi/sec_reconciliation.py": [
-    "gabi.config",
-    "gabi.historical_coverage.read_facts",
-    "gabi.sec_history.DIRECTORY",
-    "gabi.storage",
-    "numpy",
-    "pandas"
-  ],
   "backend/src/gabi/signal_monitor.py": [
     "gabi.evaluation",
     "gabi.scoring",

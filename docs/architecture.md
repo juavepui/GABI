@@ -70,6 +70,7 @@ backend/src/
   gabi_cli/
     bootstrap.py
     commands/                       # adaptadores CLI/worker/scheduler
+    research/bootstrap.py           # comandos de investigación reproducibles (ADR 0002)
 backend/tests/
 ```
 
@@ -242,7 +243,7 @@ comentarios como imports. Las guardas no prueban toda la semántica: callbacks,
 efectos ocultos o fórmulas duplicadas requieren pruebas de comportamiento y revisión.
 
 La deuda plana está enumerada por archivo e import en
-`.github/architecture-legacy.json` (99 módulos backend tras F7.1, #87).
+`.github/architecture-legacy.json` (98 módulos backend; #87 y comandos de investigación de #89, ADR 0002).
 La CI rechaza módulos planos nuevos y dependencias legacy nuevas. Al eliminar
 dependencias se retiran sus excepciones. Compara además el inventario con el primer
 padre Git (`HEAD^`, o base del merge de una PR): ampliar la lista también falla.

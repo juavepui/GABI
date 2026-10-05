@@ -196,13 +196,17 @@ Evidencia de esta ejecución:
 .venv/Scripts/python.exe -m gabi.sec_history --instances 10000
 .venv/Scripts/python.exe -m gabi.sec_history --instances 10000 --quarterly
 .venv/Scripts/python.exe -m gabi.legacy_filings
-.venv/Scripts/python.exe -m gabi.sec_reconciliation
+.venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
 .venv/Scripts/python.exe -m gabi.sec_history --companyfacts-gaps
-.venv/Scripts/python.exe -m gabi.sec_reconciliation
+.venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
 .venv/Scripts/python.exe -m gabi.sec_history --instances 10000 --unmatched
-.venv/Scripts/python.exe -m gabi.sec_reconciliation
+.venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
 .venv/Scripts/python.exe -m gabi.historical_coverage
 ```
+
+La conciliación SEC se produjo originalmente con `python -m gabi.sec_reconciliation`
+(último commit de ese módulo: 1283bf5); desde ADR 0002 el mismo cálculo se ejecuta
+con `python -m gabi_cli research sec-reconciliation` y escribe los mismos ficheros.
 
 Primero se crea una copia consistente de SQLite. Los ZIP y documentos descargados
 tienen hash y URL registrados; las descargas pueden reanudarse. Los datos se
