@@ -11,12 +11,12 @@ from gabi import (
     data_quality,
     edgar,
     entity_master,
-    entity_migration,
     identity,
     multifactor_backtest,
     screener_asof,
     storage,
 )
+from gabi.infrastructure.legacy import entity_migration
 
 
 @pytest.fixture(autouse=True)
@@ -247,3 +247,25 @@ def test_missing_snapshot_fields_are_stored_as_null():
     frame = identity.observations(entity, "sector")
     assert pd.isna(frame.iloc[0]["sector"])
     assert pd.isna(frame.iloc[0]["name"])
+
+
+def test_research_command_backs_up_migrates_and_reports_on_the_configured_database(tmp_path):
+    import json
+    import os
+    import sqlite3
+    import subprocess
+
+    data = tmp_path / "data"
+    data.mkdir()
+    sqlite3.connect(data / "gabi.db").close()
+    pd.DataFrame([{"date": "2019-01-01", "tickers": "FB,UNKNOWN"}]).to_csv(data / "sp500_historical_membership.csv", index=False)
+    pd.DataFrame({"symbol": ["META"], "cik": ["1326801"]}).to_csv(data / "sec_cik_map.csv", index=False)
+    report = tmp_path / "coverage.json"
+    result = subprocess.run([sys.executable, "-m", "gabi_cli", "research", "entity-migration", "--migrate", "--report", str(report)],
+                            env={**os.environ, "GABI_DATA_DIR": str(data), "PYTHONUTF8": "1"},
+                            capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode == 0, result.stderr
+    assert (data / "gabi.db.before-identity.bak").exists()
+    written = json.loads(report.read_text(encoding="utf-8"))
+    assert written["recovered_symbols"] == ["FB"] and written["after_unmapped_pct"] == 50
+    assert len(written["history_sha256"]) == 64

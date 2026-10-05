@@ -124,17 +124,6 @@
     "gabi.storage",
     "pandas"
   ],
-  "backend/src/gabi/entity_migration.py": [
-    "gabi.config",
-    "gabi.historical_ticker_corrections.WLP_END",
-    "gabi.historical_ticker_corrections.WLP_SOURCES",
-    "gabi.historical_ticker_corrections.WLP_START",
-    "gabi.identity",
-    "gabi.storage",
-    "pandas",
-    "pathlib",
-    "sqlite3"
-  ],
   "backend/src/gabi/estimates.py": [
     "concurrent.futures",
     "exchange_calendars",

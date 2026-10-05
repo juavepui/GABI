@@ -1,8 +1,9 @@
 import pandas as pd
 import pytest
 
-from gabi import config, entity_migration, historical_archive, identity, universe
+from gabi import config, historical_archive, identity, universe
 from gabi import historical_membership as membership
+from gabi.infrastructure.legacy import entity_migration
 
 
 def _frame(rows):

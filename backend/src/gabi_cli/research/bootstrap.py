@@ -49,6 +49,30 @@ def ledger(settings: Settings, args: argparse.Namespace) -> None:
         print(json.dumps(search_ledger.write(root, args.write)["counts"]))
 
 
+def entity_migration(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy import entity_migration as migration
+
+    if args.attribute_symbol and not all((args.entity_id, args.dataset, args.source)):
+        raise SystemExit("Attribution requires --entity-id, --dataset and --source evidence")
+    if args.submissions_json and not all((args.candidate_symbol, args.historical_name, args.source)):
+        raise SystemExit("Candidate import requires --candidate-symbol, --historical-name and --source")
+    if args.migrate or args.activate_reviewed_symbol or args.attribute_symbol or args.submissions_json:
+        migration.backup_once(settings.data_dir / "gabi.db")
+    if args.migrate:
+        print(json.dumps(migration.migrate(), indent=2))
+    if args.activate_reviewed_symbol:
+        print(json.dumps(migration.activate(args.activate_reviewed_symbol)))
+    if args.attribute_symbol:
+        print(migration.attribute_legacy(args.attribute_symbol, args.entity_id, args.dataset, source=args.source,
+                                         start=args.start, end=args.end))
+    if args.submissions_json:
+        print(migration.import_candidates(args.candidate_symbol, args.historical_name, args.submissions_json, args.source))
+    if args.report:
+        report = migration.write_report(args.history or settings.data_dir / "sp500_historical_membership.csv",
+                                        args.cik_map or settings.data_dir / "sec_cik_map.csv", args.report)
+        print(json.dumps(report, indent=2))
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -82,6 +106,22 @@ def main(argv: list[str]) -> None:
     actions.add_argument("--write", type=Path, help="Destino nuevo; nunca sobrescribe un registro publicado")
     actions.add_argument("--verify", action="store_true")
     command.set_defaults(run=ledger)
+    command = commands.add_parser("entity-migration", help="Migración aditiva de identidad y cobertura histórica (base de GABI_DATA_DIR)")
+    command.add_argument("--migrate", action="store_true")
+    command.add_argument("--activate-reviewed-symbol", help="Activate only a specifically reviewed ticker interval")
+    command.add_argument("--report", type=Path)
+    command.add_argument("--history", type=Path, help="Por defecto <datos>/sp500_historical_membership.csv")
+    command.add_argument("--cik-map", type=Path, help="Por defecto <datos>/sec_cik_map.csv")
+    command.add_argument("--attribute-symbol")
+    command.add_argument("--entity-id")
+    command.add_argument("--dataset", choices=["prices", "splits", "fundamentals", "edgar_facts"])
+    command.add_argument("--source")
+    command.add_argument("--start")
+    command.add_argument("--end")
+    command.add_argument("--submissions-json", type=Path)
+    command.add_argument("--candidate-symbol")
+    command.add_argument("--historical-name")
+    command.set_defaults(run=entity_migration)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")

@@ -138,7 +138,7 @@ adquirente y adquirida ni se usan como fundamental histórico conocido entonces.
 ## Uso y límites temporales
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.entity_migration --activate-reviewed-symbol WLP
+.venv/Scripts/python.exe -m gabi_cli research entity-migration --activate-reviewed-symbol WLP
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-candidate-instances 2000 --output data/identity-fetch.json
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --build-intervals --output data/identity-before-names.json
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-issuer-names 100 --output data/identity-names.json

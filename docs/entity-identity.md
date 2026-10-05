@@ -26,7 +26,7 @@ Los límites abiertos requieren mantenimiento; registrar una nueva compañía co
 el mismo ticker provoca ambigüedad hasta acreditar el fin de la anterior.
 
 La semilla revisada contiene WLP→ANTM, FB→META y ANTM→ELV, con fechas y enlaces de evidencia
-en `entity_migration.KNOWN_ALIASES`. No es un catálogo exhaustivo de cambios.
+en `gabi.infrastructure.legacy.entity_migration.KNOWN_ALIASES`. No es un catálogo exhaustivo de cambios.
 
 ```python
 from gabi import identity
@@ -89,7 +89,7 @@ excepción a acciones.
 Con la aplicación cerrada, ejecutar desde el proyecto:
 
 ```powershell
-uv run python -m gabi.entity_migration --migrate
+uv run python -m gabi_cli research entity-migration --migrate
 ```
 
 Antes de migrar una base existente, el CLI crea una copia SQLite consistente
@@ -104,7 +104,7 @@ Los datos legacy no tienen CIK por fila: atribuir todo el histórico al último
 redescargar por CIK o atribuir explícitamente después de verificar la procedencia:
 
 ```powershell
-uv run python -m gabi.entity_migration --attribute-symbol META --entity-id cik:0001326801 --dataset prices --source "archivo/proveedor y evidencia revisada"
+uv run python -m gabi_cli research entity-migration --attribute-symbol META --entity-id cik:0001326801 --dataset prices --source "archivo/proveedor y evidencia revisada"
 ```
 
 `--start` inclusivo y `--end` exclusivo permiten limitar el intervalo de datos.
@@ -132,7 +132,7 @@ nombre histórico conocido, normalizando mayúsculas y puntuación. Guarda una
 candidata auditable, nunca un alias confirmado. Se puede importar un JSON local:
 
 ```powershell
-uv run python -m gabi.entity_migration --submissions-json submissions.json --candidate-symbol OLD --historical-name "Nombre histórico" --source "URL del JSON SEC"
+uv run python -m gabi_cli research entity-migration --submissions-json submissions.json --candidate-symbol OLD --historical-name "Nombre histórico" --source "URL del JSON SEC"
 ```
 
 La portada de un filing con CIK y ticker permite `import_filing_identity` para
@@ -182,8 +182,13 @@ continuos en la base operativa.
 Para repetir sobre una base de auditoría nueva:
 
 ```powershell
-uv run python -m gabi.entity_migration --db data/identity-audit.db --migrate --report docs/identity-coverage.json
+$env:GABI_DATA_DIR = "<ruta absoluta de la copia de auditoría>"   # contiene gabi.db
+uv run python -m gabi_cli research entity-migration --migrate --report docs/identity-coverage.json --history data/sp500_historical_membership.csv --cik-map data/sec_cik_map.csv
 ```
+
+Hasta ADR 0002 el comando era `python -m gabi.entity_migration` (último commit 1283bf5) y
+aceptaba `--db`, que redirigía la configuración global a otro fichero. El comando nuevo
+usa siempre `gabi.db` de `GABI_DATA_DIR`; la lógica y la salida son las mismas.
 
 Calidad de los datos permite diagnosticar por fecha entidades sin CIK,
 resoluciones ambiguas y candidatas por nombre. Los tests usan SQLite temporal y
