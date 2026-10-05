@@ -1,18 +1,33 @@
-import sys
 from datetime import date
-from pathlib import Path
 
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
-from gabi import config, estimates, storage
+from gabi import config, storage
+from gabi.domain.research import estimates
+from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+from gabi.infrastructure.storage.estimates import SqliteEstimateAnalysis, store_estimate_snapshot
 
 
 def _isolate_db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+
+
+def _history(tmp_path, symbol, period="0q"):
+    return SqliteCompanyResearch(tmp_path).estimate_history(symbol, period)
+
+
+def _evaluate(tmp_path, cutoff=date(2025, 7, 2), **kwargs):
+    import exchange_calendars as xcals
+
+    from gabi import factor_lab
+
+    reader = SqliteEstimateAnalysis(tmp_path, cutoff)
+    return estimates.evaluate_estimate_revision_signal(
+        cutoff=cutoff, batch_loader=reader.batches, snapshot_loader=reader.rows, price_loader=reader.prices_for_sessions,
+        sessions=lambda as_of, months: factor_lab._entry_exit_sessions(xcals.get_calendar("XNYS"), as_of, months),
+        forward_returns=factor_lab._forward_returns, **kwargs)
 
 
 def _earnings_estimate_df():
@@ -67,8 +82,8 @@ def test_store_and_get_estimate_history_roundtrip(tmp_path, monkeypatch):
     rows = estimates.parse_estimate_snapshot(
         "AAPL", _earnings_estimate_df(), _revenue_estimate_df(), _eps_revisions_df(), "2026-09-21T12:00:00+00:00",
     )
-    estimates.store_estimate_snapshot(rows)
-    history = estimates.get_estimate_history("AAPL", period="0q")
+    store_estimate_snapshot(tmp_path, rows)
+    history = _history(tmp_path, "AAPL")
     assert len(history) == 1
     assert history.iloc[0]["eps_avg"] == 1.98
 
@@ -78,34 +93,29 @@ def test_store_estimate_snapshot_is_idempotent_on_reinsert(tmp_path, monkeypatch
     rows = estimates.parse_estimate_snapshot(
         "AAPL", _earnings_estimate_df(), _revenue_estimate_df(), _eps_revisions_df(), "2026-09-21T12:00:00+00:00",
     )
-    estimates.store_estimate_snapshot(rows)
-    estimates.store_estimate_snapshot(rows)
-    assert len(estimates.get_estimate_history("AAPL", period="0q")) == 1
+    store_estimate_snapshot(tmp_path, rows)
+    store_estimate_snapshot(tmp_path, rows)
+    assert len(_history(tmp_path, "AAPL")) == 1
 
 
 def test_store_estimate_snapshot_empty_list_is_noop(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
-    estimates.store_estimate_snapshot([])
-    assert estimates.get_estimate_history("AAPL").empty
+    store_estimate_snapshot(tmp_path, [])
+    assert not (tmp_path / "gabi.db").exists()
+    assert _history(tmp_path, "AAPL").empty
 
 
-def test_latest_estimate_snapshot_returns_none_without_history(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
-    assert estimates.latest_estimate_snapshot("AAPL") is None
-
-
-def test_latest_estimate_snapshot_returns_most_recent_capture(tmp_path, monkeypatch):
+def test_history_ends_with_the_most_recent_capture(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
     old = estimates.parse_estimate_snapshot("AAPL", _earnings_estimate_df(), pd.DataFrame(), pd.DataFrame(),
                                             "2026-08-01T00:00:00+00:00")
     new = estimates.parse_estimate_snapshot("AAPL", _earnings_estimate_df(), pd.DataFrame(), pd.DataFrame(),
                                             "2026-09-21T00:00:00+00:00")
-    estimates.store_estimate_snapshot(old + new)
-    latest = estimates.latest_estimate_snapshot("AAPL", period="0q")
-    assert latest["captured_at"] == "2026-09-21T00:00:00+00:00"
+    store_estimate_snapshot(tmp_path, old + new)
+    assert _history(tmp_path, "AAPL").iloc[-1]["captured_at"] == "2026-09-21T00:00:00+00:00"
 
 
-def _seed_history(symbol, capture_dates_eps):
+def _seed_history(tmp_path, symbol, capture_dates_eps):
     rows = []
     for captured_at, eps_avg in capture_dates_eps:
         rows.append({
@@ -115,7 +125,7 @@ def _seed_history(symbol, capture_dates_eps):
             "revised_up_7d": 0, "revised_down_7d": 0, "revised_up_30d": 0, "revised_down_30d": 0,
             "source": estimates.SOURCE,
         })
-    estimates.store_estimate_snapshot(rows)
+    store_estimate_snapshot(tmp_path, rows)
 
 
 def test_compute_revision_none_without_old_enough_baseline():
@@ -124,14 +134,14 @@ def test_compute_revision_none_without_old_enough_baseline():
 
 
 def test_compute_revision_none_with_empty_history():
-    assert estimates.compute_revision(pd.DataFrame(), lookback_days=30) is None
-    assert estimates.compute_revision(None, lookback_days=30) is None
+    assert estimates.compute_revision(pd.DataFrame(), lookback_days=30, as_of=date(2026, 9, 21)) is None
+    assert estimates.compute_revision(None, lookback_days=30, as_of=date(2026, 9, 21)) is None
 
 
 def test_compute_revision_computes_change_from_own_captured_history(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
-    _seed_history("AAPL", [("2026-06-01T00:00:00+00:00", 2.00), ("2026-09-20T00:00:00+00:00", 2.20)])
-    history = estimates.get_estimate_history("AAPL", period="0q")
+    _seed_history(tmp_path, "AAPL", [("2026-06-01T00:00:00+00:00", 2.00), ("2026-09-20T00:00:00+00:00", 2.20)])
+    history = _history(tmp_path, "AAPL")
     result = estimates.compute_revision(history, lookback_days=90, as_of=date(2026, 9, 21))
     assert result is not None
     assert round(result["change"], 4) == 0.20
@@ -144,34 +154,33 @@ def test_compute_revision_ignores_captures_after_as_of_no_look_ahead(tmp_path, m
     pasado': una captura fechada DESPUES de `as_of` no debe usarse como si
     fuera la 'ultima conocida' en ese momento."""
     _isolate_db(tmp_path, monkeypatch)
-    _seed_history("AAPL", [
+    _seed_history(tmp_path, "AAPL", [
         ("2026-01-01T00:00:00+00:00", 1.50),
         ("2026-04-01T00:00:00+00:00", 1.80),
         ("2026-12-01T00:00:00+00:00", 5.00),  # "futuro" respecto al as_of usado abajo
     ])
-    history = estimates.get_estimate_history("AAPL", period="0q")
+    history = _history(tmp_path, "AAPL")
     result = estimates.compute_revision(history, lookback_days=60, as_of=date(2026, 4, 15))
     assert result is not None
     assert result["current_eps_avg"] == 1.80  # NO 5.00 -- esa captura es "futura" respecto a as_of
     assert result["current_captured_at"] == "2026-04-01T00:00:00+00:00"
 
 
-def test_revision_since_reads_from_storage(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
-    _seed_history("MSFT", [("2026-06-01T00:00:00+00:00", 3.00), ("2026-09-20T00:00:00+00:00", 3.30)])
-    result = estimates.revision_since("MSFT", lookback_days=90, as_of=date(2026, 9, 21))
+def test_revision_over_the_stored_history(tmp_path):
+    _seed_history(tmp_path, "MSFT", [("2026-06-01T00:00:00+00:00", 3.00), ("2026-09-20T00:00:00+00:00", 3.30)])
+    result = estimates.compute_revision(_history(tmp_path, "MSFT"), 90, as_of=date(2026, 9, 21))
     assert result is not None
     assert round(result["change_pct"], 4) == 0.10
 
 
 def test_evaluate_estimate_revision_signal_insufficient_data_when_empty(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
-    result = estimates.evaluate_estimate_revision_signal()
+    result = _evaluate(tmp_path)
     assert result["status"] == "insufficient_data"
     assert result["batches_available"] == 0
 
 
-def _seed_estimate_batch(captured_at, symbols_ranks):
+def _seed_estimate_batch(tmp_path, captured_at, symbols_ranks):
     rows = []
     for symbol, rank in symbols_ranks:
         rows.append({
@@ -181,7 +190,7 @@ def _seed_estimate_batch(captured_at, symbols_ranks):
             "revised_up_7d": 0, "revised_down_7d": 0, "revised_up_30d": rank, "revised_down_30d": 0,
             "source": estimates.SOURCE,
         })
-    estimates.store_estimate_snapshot(rows)
+    store_estimate_snapshot(tmp_path, rows)
 
 
 def _seed_growth_prices(symbols_ranks, business_days):
@@ -204,9 +213,9 @@ def test_evaluate_estimate_revision_signal_detects_monotonic_signal(tmp_path, mo
 
     captured_dates = ["2024-01-03", "2024-01-18", "2024-02-02", "2024-02-20", "2024-03-06", "2024-03-21"]
     for d in captured_dates:
-        _seed_estimate_batch(f"{d}T00:00:00+00:00", symbols_ranks)
+        _seed_estimate_batch(tmp_path, f"{d}T00:00:00+00:00", symbols_ranks)
 
-    result = estimates.evaluate_estimate_revision_signal(horizons_months=(1,), n_quantiles=2)
+    result = _evaluate(tmp_path, horizons_months=(1,), n_quantiles=2)
     assert result["status"] == "ok"
     row = result["summary"].iloc[0]
     assert row["ic_mean"] == pytest.approx(1.0, rel=0.02)
@@ -219,9 +228,9 @@ def test_evaluate_estimate_revision_signal_insufficient_when_too_few_batches(tmp
     symbols_ranks = [(chr(ord("A") + i), i) for i in range(8)]
     business_days = pd.date_range("2024-01-01", periods=60, freq="B")
     _seed_growth_prices(symbols_ranks, business_days)
-    _seed_estimate_batch("2024-01-03T00:00:00+00:00", symbols_ranks)
-    _seed_estimate_batch("2024-01-18T00:00:00+00:00", symbols_ranks)
+    _seed_estimate_batch(tmp_path, "2024-01-03T00:00:00+00:00", symbols_ranks)
+    _seed_estimate_batch(tmp_path, "2024-01-18T00:00:00+00:00", symbols_ranks)
 
-    result = estimates.evaluate_estimate_revision_signal(horizons_months=(1,), n_quantiles=2)
+    result = _evaluate(tmp_path, horizons_months=(1,), n_quantiles=2)
     assert result["status"] == "insufficient_data"
     assert result["batches_available"] == 2

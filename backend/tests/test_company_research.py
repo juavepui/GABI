@@ -5,14 +5,18 @@ import sqlite3
 from contextlib import closing
 from datetime import UTC, date, datetime, timedelta
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import config, estimates, events_calendar
+from gabi import config, events_calendar
+from gabi.domain.research import estimates
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy import estimates as estimate_sync
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.estimates import store_estimate_snapshot
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
 
@@ -39,7 +43,7 @@ def company():
     base = {"symbol": "T001", "period": "0q", "eps_low": 1.0, "eps_high": 1.4, "eps_analysts": 12,
             "revenue_avg": None, "revenue_low": None, "revenue_high": None, "revised_up_7d": 1, "revised_down_7d": 0,
             "revised_up_30d": 3, "revised_down_30d": 1, "source": estimates.SOURCE}
-    estimates.store_estimate_snapshot([
+    store_estimate_snapshot(root, [
         base | {"captured_at": "2026-05-01T09:00:00+00:00", "eps_avg": 1.1, "eps_dispersion_pct": .3},
         base | {"captured_at": "2026-09-20T09:00:00+00:00", "eps_avg": 1.2, "eps_dispersion_pct": .33}])
     with TestClient(create_app(Settings(root), today=lambda: TODAY)) as client:
@@ -59,9 +63,10 @@ def test_overview_matches_the_old_ficha_without_writing(company):
     legacy = events_calendar.get_earnings_surprises("T001")
     assert [row["earnings_date"] for row in body["surprises"]] == legacy["earnings_date"].tolist()
     assert body["surprises"][1]["price_reaction_pct"] is None
-    latest = estimates.latest_estimate_snapshot("T001")
-    assert body["estimate"]["eps_avg"] == latest["eps_avg"] and body["estimate"]["captured_at"] == latest["captured_at"]
-    assert body["revision_90d"] == estimates.revision_since("T001", 90, as_of=TODAY)
+    assert body["estimate"]["eps_avg"] == 1.2 and body["estimate"]["captured_at"] == "2026-09-20T09:00:00+00:00"
+    captures = pd.DataFrame({"captured_at": ["2026-05-01T09:00:00+00:00", "2026-09-20T09:00:00+00:00"],
+                             "eps_avg": [1.1, 1.2]})
+    assert body["revision_90d"] == estimates.compute_revision(captures, 90, as_of=TODAY)
     assert (root / "gabi.db").read_bytes() == before
     empty = client.get("/api/v1/companies/T002/research").json()
     assert empty["surprises"] == [] and empty["estimate"] is None and empty["revision_90d"] is None
@@ -83,9 +88,9 @@ def test_filing_changes_match_the_cached_comparison(company):
                                                  ("estimates", "sync_estimates")])
 def test_syncs_are_explicit_jobs_with_their_failure_reason(company, monkeypatch, dataset, target):
     client, root = company
-    module = events_calendar if dataset == "surprises" else estimates
+    module = events_calendar if dataset == "surprises" else estimate_sync
     calls = []
-    monkeypatch.setattr(module, target, lambda symbols: calls.append(symbols) or {"T001": "sin respuesta de Yahoo"})
+    monkeypatch.setattr(module, target, lambda *args: calls.append(args[-1]) or {"T001": "sin respuesta de Yahoo"})
     job = client.post("/api/v1/jobs", json={"kind": "company_sync", "idempotency_key": f"company-{dataset}-1",
                                              "company": {"symbol": "t001", "dataset": dataset}})
     assert job.status_code == 202, job.text

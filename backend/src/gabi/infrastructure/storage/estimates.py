@@ -101,3 +101,38 @@ class SqliteEstimateAnalysis:
     def prices_for_sessions(self, symbols: list[str], first: str, last: str) -> dict:
         require_observed_period(first, last)
         return self.prices(symbols, first, last)
+
+
+SNAPSHOTS = """
+CREATE TABLE IF NOT EXISTS estimate_snapshots (
+    symbol TEXT NOT NULL,
+    captured_at TEXT NOT NULL,
+    period TEXT NOT NULL,
+    eps_avg REAL, eps_low REAL, eps_high REAL, eps_analysts INTEGER,
+    eps_dispersion_pct REAL,
+    revenue_avg REAL, revenue_low REAL, revenue_high REAL,
+    revised_up_7d INTEGER, revised_down_7d INTEGER,
+    revised_up_30d INTEGER, revised_down_30d INTEGER,
+    source TEXT NOT NULL,
+    PRIMARY KEY (symbol, captured_at, period)
+);
+"""
+
+
+def store_estimate_snapshot(data_dir: Path, rows: list[dict]) -> None:
+    """Explicit write of one capture (``captured_at`` is the real capture time); replaces the same key."""
+    if not rows:
+        return
+    with closing(sqlite3.connect(data_dir / "gabi.db", timeout=30)) as db:
+        db.executescript(SNAPSHOTS)
+        db.executemany(
+            "INSERT OR REPLACE INTO estimate_snapshots "
+            "(symbol, captured_at, period, eps_avg, eps_low, eps_high, eps_analysts, eps_dispersion_pct, "
+            "revenue_avg, revenue_low, revenue_high, revised_up_7d, revised_down_7d, revised_up_30d, "
+            "revised_down_30d, source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [(r["symbol"], r["captured_at"], r["period"], r["eps_avg"], r["eps_low"], r["eps_high"],
+              r["eps_analysts"], r["eps_dispersion_pct"], r["revenue_avg"], r["revenue_low"], r["revenue_high"],
+              r["revised_up_7d"], r["revised_down_7d"], r["revised_up_30d"], r["revised_down_30d"], r["source"])
+             for r in rows],
+        )
+        db.commit()

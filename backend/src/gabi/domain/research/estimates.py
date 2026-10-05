@@ -16,7 +16,7 @@ reconstruya el consenso de una fecha pasada -- hacerlo sería inventar
 datos (la Nota del objetivo original: "aparcar antes que introducir un
 dataset engañoso").
 
-Lo que SÍ hace este módulo es capturar esa foto en cada sincronización y
+Lo que SÍ hace GABI es capturar esa foto en cada sincronización y
 guardarla con `captured_at` (la fecha real de captura -- no la del
 periodo que describe): así se construye un archivo point-in-time GENUINO,
 que solo empieza a existir desde la primera vez que se ejecuta.
@@ -25,33 +25,17 @@ reales ya separadas en el tiempo -- con pocas capturas acumuladas (el caso
 de hoy, recién añadido) devuelve status="insufficient_data" en vez de
 forzar un resultado con datos insuficientes: es el comportamiento
 correcto, no un bug ni un TODO pendiente."""
-import concurrent.futures as cf
-from datetime import UTC, date, datetime
+from datetime import date
 
 import numpy as np
 import pandas as pd
 from scipy import stats as scipy_stats
 
-from . import factor_lab, storage
-from .data_fetch import _classify_error, normalize_symbol
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS estimate_snapshots (
-    symbol TEXT NOT NULL,
-    captured_at TEXT NOT NULL,
-    period TEXT NOT NULL,
-    eps_avg REAL, eps_low REAL, eps_high REAL, eps_analysts INTEGER,
-    eps_dispersion_pct REAL,
-    revenue_avg REAL, revenue_low REAL, revenue_high REAL,
-    revised_up_7d INTEGER, revised_down_7d INTEGER,
-    revised_up_30d INTEGER, revised_down_30d INTEGER,
-    source TEXT NOT NULL,
-    PRIMARY KEY (symbol, captured_at, period)
-);
-"""
-
 PERIODS = ("0q", "+1q", "0y", "+1y")
 SOURCE = "Yahoo Finance (eps_trend/eps_revisions/earnings_estimate/revenue_estimate)"
+MIN_BATCHES = 6
+MIN_SPAN_DAYS = 60
+MIN_SYMBOLS_PER_BATCH = 20
 
 
 def _safe_float(value) -> float | None:
@@ -114,52 +98,16 @@ def parse_estimate_snapshot(
     return rows
 
 
-def store_estimate_snapshot(rows: list):
-    if not rows:
-        return
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        conn.executemany(
-            "INSERT OR REPLACE INTO estimate_snapshots "
-            "(symbol, captured_at, period, eps_avg, eps_low, eps_high, eps_analysts, eps_dispersion_pct, "
-            "revenue_avg, revenue_low, revenue_high, revised_up_7d, revised_down_7d, revised_up_30d, "
-            "revised_down_30d, source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            [(r["symbol"], r["captured_at"], r["period"], r["eps_avg"], r["eps_low"], r["eps_high"],
-              r["eps_analysts"], r["eps_dispersion_pct"], r["revenue_avg"], r["revenue_low"], r["revenue_high"],
-              r["revised_up_7d"], r["revised_down_7d"], r["revised_up_30d"], r["revised_down_30d"], r["source"])
-             for r in rows],
-        )
-        conn.commit()
-
-
-def get_estimate_history(symbol: str, period: str = "0q") -> pd.DataFrame:
-    """El archivo point-in-time REAL acumulado por GABI para `symbol` --
-    empieza vacío y solo crece hacia delante desde la primera sincronización."""
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        return pd.read_sql_query(
-            "SELECT * FROM estimate_snapshots WHERE symbol=? AND period=? ORDER BY captured_at ASC",
-            conn, params=(symbol, period),
-        )
-
-
-def latest_estimate_snapshot(symbol: str, period: str = "0q") -> dict | None:
-    history = get_estimate_history(symbol, period=period)
-    return history.iloc[-1].to_dict() if not history.empty else None
-
-
-def compute_revision(history: pd.DataFrame, lookback_days: int, *, as_of: date | None = None) -> dict | None:
+def compute_revision(history: pd.DataFrame, lookback_days: int, *, as_of: date) -> dict | None:
     """Pura: cambio del EPS medio de consenso entre la captura más reciente
     (en/antes de `as_of`) y la primera captura ANTERIOR a `as_of -
     lookback_days` -- construido SOLO con capturas reales de `history`
-    (get_estimate_history), nunca con las columnas relativas de yfinance.
+    (el historial de capturas de GABI), nunca con las columnas relativas de yfinance.
     None si no hay una captura lo bastante antigua todavía -- es el estado
     honesto mientras el archivo propio de GABI no tenga suficiente
     profundidad, no un error."""
     if history is None or history.empty:
         return None
-    if as_of is None:
-        as_of = date.today()
     h = history.copy()
     h["captured_date"] = pd.to_datetime(h["captured_at"]).dt.date
     h = h[h["captured_date"] <= as_of]
@@ -182,101 +130,24 @@ def compute_revision(history: pd.DataFrame, lookback_days: int, *, as_of: date |
     }
 
 
-def revision_since(symbol: str, lookback_days: int, *, period: str = "0q", as_of: date | None = None) -> dict | None:
-    return compute_revision(get_estimate_history(symbol, period=period), lookback_days, as_of=as_of)
-
-
-def _fetch_estimate_snapshot_attempt(symbol: str) -> dict:
-    t_symbol = normalize_symbol(symbol)
-    import yfinance as yf
-    t = yf.Ticker(t_symbol)
-    return {
-        "earnings_estimate": t.earnings_estimate, "revenue_estimate": t.revenue_estimate,
-        "eps_revisions": t.eps_revisions,
-    }
-
-
-def sync_estimates(symbols: list, max_workers: int = 6, progress_cb=None) -> dict:
-    """Descarga (red) earnings_estimate/revenue_estimate/eps_revisions por
-    símbolo y los persiste con un ÚNICO `captured_at` compartido por toda la
-    llamada -- así todas las filas de esta sincronización forman un batch
-    cross-seccional genuino (mismo instante de captura), que es lo que
-    evaluate_estimate_revision_signal() necesita para comparar símbolos
-    entre sí de forma honesta. Manual, no forma parte de 'Actualizar
-    datos' -- mismo criterio que filing_tracker/events_calendar."""
-    failed: dict = {}
-    total = len(symbols)
-    if total == 0:
-        return failed
-    captured_at = datetime.now(UTC).isoformat()
-    with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = {ex.submit(_fetch_estimate_snapshot_attempt, s): s for s in symbols}
-        done = 0
-        for fut in cf.as_completed(futures):
-            sym = futures[fut]
-            done += 1
-            try:
-                raw = fut.result()
-                rows = parse_estimate_snapshot(
-                    sym, raw["earnings_estimate"], raw["revenue_estimate"], raw["eps_revisions"], captured_at,
-                )
-                store_estimate_snapshot(rows)
-            except Exception as exc:
-                _, reason = _classify_error(exc, service="Yahoo Finance")
-                failed[sym] = reason
-            if progress_cb:
-                progress_cb(done, total)
-    return failed
-
-
-def _capture_batches(period: str) -> pd.DataFrame:
-    """Cada `captured_at` distinto que exista en estimate_snapshots para
-    `period`, con el número de símbolos que tiene esa foto -- ninguna fecha
-    aquí es inventada, son literalmente los `sync_estimates()` ya
-    ejecutados en el pasado."""
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        return pd.read_sql_query(
-            "SELECT captured_at, COUNT(DISTINCT symbol) AS n_symbols FROM estimate_snapshots "
-            "WHERE period=? GROUP BY captured_at ORDER BY captured_at ASC", conn, params=(period,),
-        )
-
-
-def _snapshot_rows(period: str, captures: list[str]) -> pd.DataFrame:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        return pd.read_sql_query(
-            "SELECT symbol, captured_at, revised_up_30d, revised_down_30d FROM estimate_snapshots "
-            "WHERE period=? AND captured_at IN ({})".format(",".join("?" * len(captures))),
-            conn, params=[period, *captures],
-        )
-
-
-def _legacy_prices(symbols: list[str], first: str, last: str) -> dict:
-    return storage.get_prices_multi(symbols)
-
-
-MIN_BATCHES = 6
-MIN_SPAN_DAYS = 60
-MIN_SYMBOLS_PER_BATCH = 20
-
-
 def evaluate_estimate_revision_signal(
     period: str = "0q", horizons_months=(1, 3), n_quantiles: int = 5,
     min_batches: int = MIN_BATCHES, min_span_days: int = MIN_SPAN_DAYS,
-    *, cutoff: date | None = None, batch_loader=None, snapshot_loader=None, price_loader=None,
+    *, cutoff: date, batch_loader, snapshot_loader, price_loader, sessions, forward_returns,
 ) -> dict:
     """Rank IC cross-seccional de `net_revision_30d` (revisiones al alza
     menos a la baja en los últimos 30 días, tal cual las da Yahoo en el
     momento de cada captura) contra el retorno FUTURO real -- SOLO sobre
-    `captured_at` que de verdad se ejecutaron (_capture_batches), igual que
+    `captured_at` que de verdad se ejecutaron (``batch_loader``), igual que
     factor_lab.run_factor_analysis pero sin reconstruir nada del pasado.
+
+    Los lectores, el calendario (``sessions(as_of, meses) -> (entrada, salida)``) y
+    los retornos (``forward_returns(precios, símbolos, entrada, salida)``) se inyectan.
 
     Devuelve {"status": "insufficient_data", ...} si todavía no hay
     suficientes capturas separadas en el tiempo -- el estado esperado
     mientras el archivo propio de GABI es joven, no un fallo."""
-    cutoff = cutoff or date.today()
-    batches = (batch_loader or _capture_batches)(period)
+    batches = batch_loader(period)
     batches = batches[batches["captured_at"].str[:10] <= cutoff.isoformat()]
     usable = batches[batches["n_symbols"] >= MIN_SYMBOLS_PER_BATCH]
     span_days = 0
@@ -293,7 +164,7 @@ def evaluate_estimate_revision_signal(
             ),
         }
 
-    raw = (snapshot_loader or _snapshot_rows)(period, usable["captured_at"].tolist())
+    raw = snapshot_loader(period, usable["captured_at"].tolist())
     raw["net_revision_30d"] = raw["revised_up_30d"] - raw["revised_down_30d"]
     raw = raw[raw["net_revision_30d"].notna()]
 
@@ -305,25 +176,22 @@ def evaluate_estimate_revision_signal(
         as_of_ts = pd.Timestamp(captured_at).tz_localize(None).normalize()
         if as_of_ts > pd.Timestamp(cutoff):
             continue
-        calendar = None
-        sessions = []
+        windows = []
         for horizon in horizons_months:
             try:
-                import exchange_calendars as xcals
-                calendar = calendar or xcals.get_calendar(factor_lab._CALENDAR)
-                entry, exit_session = factor_lab._entry_exit_sessions(calendar, as_of_ts, horizon)
+                entry, exit_session = sessions(as_of_ts, horizon)
             except Exception:
                 continue
             if exit_session > pd.Timestamp(cutoff):
                 continue
-            sessions.append((horizon, entry, exit_session))
-        if not sessions:
+            windows.append((horizon, entry, exit_session))
+        if not windows:
             continue
-        first = min(entry for _, entry, _ in sessions).date().isoformat()
-        last = max(exit_session for _, _, exit_session in sessions).date().isoformat()
-        histories = (price_loader or _legacy_prices)(group["symbol"].tolist(), first, last)
-        for horizon, entry, exit_session in sessions:
-            fwd = factor_lab._forward_returns(histories, group["symbol"], entry, exit_session)
+        first = min(entry for _, entry, _ in windows).date().isoformat()
+        last = max(exit_session for _, _, exit_session in windows).date().isoformat()
+        histories = price_loader(group["symbol"].tolist(), first, last)
+        for horizon, entry, exit_session in windows:
+            fwd = forward_returns(histories, group["symbol"], entry, exit_session)
             if len(fwd) < n_quantiles * 4:
                 continue
             merged = group.set_index("symbol").loc[group.set_index("symbol").index.isin(fwd)].copy()

@@ -1,15 +1,16 @@
-"""Company research formulas and explicit downloads through the unchanged estimates/events_calendar."""
+"""Company research formulas and the explicit per-company downloads (estimates, surprises, insiders)."""
 
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
+
+from gabi.domain.research import estimates
 
 
 class LegacyCompanyMath:
     @staticmethod
     def revision(history: pd.DataFrame, lookback_days: int, as_of: date) -> dict | None:
-        from gabi import estimates
-
         return estimates.compute_revision(history, lookback_days, as_of=as_of)
 
     @staticmethod
@@ -25,15 +26,17 @@ class LegacyCompanyMath:
         return dict(insider.TRANSACTION_CODES)
 
 
-def sync_company(symbol: str, dataset: str) -> dict:
+def sync_company(data_dir: Path, symbol: str, dataset: str) -> dict:
     """Worker only: the per-company network syncs of the old Ficha buttons."""
-    from gabi import estimates, events_calendar, insider
+    from gabi import events_calendar, insider
+    from gabi.infrastructure.legacy.estimates import sync_estimates
 
     if dataset == "insiders":  # «Actualizar insiders de esta empresa»: the latest Form 4, ignoring the 24 h cache.
         failed = insider.ensure_insider_data([symbol], max_age_hours=0)["failed"]
+    elif dataset == "surprises":
+        failed = events_calendar.sync_earnings_surprises([symbol])
     else:
-        sync = events_calendar.sync_earnings_surprises if dataset == "surprises" else estimates.sync_estimates
-        failed = sync([symbol])
+        failed = sync_estimates(data_dir, [symbol])
     return {"kind": "company_sync", "symbol": symbol, "dataset": dataset, "synced": not failed,
             "reason": str(failed.get(symbol)) if failed else None}
 

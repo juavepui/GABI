@@ -8,8 +8,9 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from gabi import config, estimates
+from gabi import config, factor_lab, storage
 from gabi.application.errors import QueryError
+from gabi.domain.research import estimates
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.estimates import run_estimate_analysis
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
@@ -17,6 +18,29 @@ from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.estimates import SqliteEstimateAnalysis
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
+
+
+def _unbounded(path, cutoff):
+    """The retired module's own readers: every capture and the full price history, no observed cut."""
+    import exchange_calendars as xcals
+
+    def batches(period):
+        with closing(sqlite3.connect(path)) as db:
+            return pd.read_sql_query("SELECT captured_at, COUNT(DISTINCT symbol) AS n_symbols FROM estimate_snapshots "
+                                     "WHERE period=? GROUP BY captured_at ORDER BY captured_at ASC", db, params=(period,))
+
+    def rows(period, captures):
+        with closing(sqlite3.connect(path)) as db:
+            return pd.read_sql_query(
+                "SELECT symbol, captured_at, revised_up_30d, revised_down_30d FROM estimate_snapshots "
+                "WHERE period=? AND captured_at IN ({})".format(",".join("?" * len(captures))), db,
+                params=[period, *captures])
+
+    return estimates.evaluate_estimate_revision_signal(
+        cutoff=cutoff, batch_loader=batches, snapshot_loader=rows,
+        price_loader=lambda symbols, first, last: storage.get_prices_multi(symbols),
+        sessions=lambda as_of, months: factor_lab._entry_exit_sessions(xcals.get_calendar("XNYS"), as_of, months),
+        forward_returns=factor_lab._forward_returns)
 
 
 def _seed(root, *, future=False):
@@ -55,7 +79,7 @@ def test_bounded_analysis_matches_legacy_formula_without_future_reads(tmp_path, 
     path = _seed(tmp_path, future=True)
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", path)
-    legacy = estimates.evaluate_estimate_revision_signal(cutoff=date(2025, 7, 2))
+    legacy = _unbounded(path, date(2025, 7, 2))
     after_legacy = path.read_bytes()
     bounded = run_estimate_analysis(tmp_path, date(2025, 7, 2))
     assert legacy["status"] == bounded["status"] == "ok"

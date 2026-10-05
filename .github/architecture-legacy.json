@@ -124,18 +124,6 @@
     "gabi.storage",
     "pandas"
   ],
-  "backend/src/gabi/estimates.py": [
-    "concurrent.futures",
-    "exchange_calendars",
-    "gabi.data_fetch._classify_error",
-    "gabi.data_fetch.normalize_symbol",
-    "gabi.factor_lab",
-    "gabi.storage",
-    "numpy",
-    "pandas",
-    "scipy",
-    "yfinance"
-  ],
   "backend/src/gabi/evaluation.py": [
     "gabi.storage",
     "pandas"
