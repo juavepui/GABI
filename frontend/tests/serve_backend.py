@@ -137,7 +137,7 @@ def synthetic_portfolio_lab(start, end, options):
     import numpy as np
     import pandas as pd
 
-    from gabi import portfolio_lab
+    from gabi.domain.research import portfolio_lab
 
     days = pd.bdate_range("2019-01-02", periods=60)
     rng = np.random.default_rng(7)

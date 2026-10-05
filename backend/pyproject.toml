@@ -73,9 +73,7 @@ module = [
     "gabi.multifactor_backtest",
     "gabi.blind_validation",
     "gabi.decision_engine",
-    "gabi.portfolio_lab",
     "gabi.factor_lab",
-    "gabi.sim_portfolios",
 ]
 ignore_errors = true
 

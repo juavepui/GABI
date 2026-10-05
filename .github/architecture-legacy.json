@@ -532,22 +532,6 @@
     "gabi.universe",
     "pandas"
   ],
-  "backend/src/gabi/portfolio_lab.py": [
-    "exchange_calendars",
-    "gabi.broker_costs",
-    "gabi.decision_engine",
-    "gabi.edgar",
-    "gabi.multifactor_backtest",
-    "gabi.portfolio_backtest",
-    "gabi.portfolio_metrics",
-    "gabi.screener_asof",
-    "gabi.storage",
-    "gabi.universe",
-    "numpy",
-    "pandas",
-    "pypfopt",
-    "scipy.optimize"
-  ],
   "backend/src/gabi/portfolio_metrics.py": [
     "gabi.config",
     "numpy",

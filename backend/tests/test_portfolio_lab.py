@@ -1,14 +1,20 @@
-import sys
-from pathlib import Path
+from datetime import date
 
 import numpy as np
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, storage
+from gabi import broker_costs, config, decision_engine, screener_asof, storage, universe
 from gabi import portfolio_backtest as pb
-from gabi import portfolio_lab as pl
+from gabi.application.research.portfolio_lab_engine import run_portfolio_lab
+from gabi.domain.research import portfolio_lab as pl
+from gabi.infrastructure.legacy.portfolio_lab import LegacyPortfolioLabSources
+
+
+def _run(start, end, **options):
+    """The engine with the original module's sources and default commission."""
+    return run_portfolio_lab(start, end, LegacyPortfolioLabSources(), date.today(),
+                             commission_usd=broker_costs.STOCK_FEE_USD, **options)
 
 
 def _seed_prices(dates, symbol_closes):
@@ -76,7 +82,7 @@ def test_weights_inverse_vol_sums_to_one_and_nonnegative():
 def test_weights_min_variance_sums_to_one_and_nonnegative():
     histories = {"AAA": _history(list(_synthetic_walk(300, 0.005, seed=1))),
                 "BBB": _history(list(_synthetic_walk(300, 0.03, seed=2)))}
-    weights = pl._weights_min_variance(["AAA", "BBB"], histories)
+    weights = pl._weights_min_variance(["AAA", "BBB"], histories, decision_engine._risk_weights)
     assert sum(weights.values()) == pytest.approx(1.0, rel=1e-6)
     assert all(w >= 0 for w in weights.values())
 
@@ -113,7 +119,7 @@ def test_weights_risk_parity_sums_to_one_and_nonnegative():
 def test_min_variance_favors_the_lower_volatility_asset():
     histories = {"LOW": _history(list(_synthetic_walk(300, 0.003, seed=10))),
                 "HIGH": _history(list(_synthetic_walk(300, 0.04, seed=11)))}
-    weights = pl._weights_min_variance(["LOW", "HIGH"], histories)
+    weights = pl._weights_min_variance(["LOW", "HIGH"], histories, decision_engine._risk_weights)
     assert weights["LOW"] > weights["HIGH"]
     assert weights["LOW"] > 0.5  # concentra fuertemente en el activo de baja volatilidad
 
@@ -125,7 +131,7 @@ def test_risk_parity_equalizes_risk_contribution_not_dollar_weight():
     # Risk Parity da MAS peso en $ al activo de baja volatilidad para igualar el riesgo...
     assert weights["LOW"] > weights["HIGH"]
     # ...pero MENOS concentrado que Minimum Variance, que no le importa la contribucion, solo minimizar varianza total
-    mv_weights = pl._weights_min_variance(["LOW", "HIGH"], histories)
+    mv_weights = pl._weights_min_variance(["LOW", "HIGH"], histories, decision_engine._risk_weights)
     assert weights["LOW"] < mv_weights["LOW"]
     # y las CONTRIBUCIONES al riesgo deben quedar aproximadamente igualadas (50/50), a diferencia de Min Variance
     from pypfopt import risk_models
@@ -192,17 +198,17 @@ def test_scenario_unknown_raises():
 
 def test_run_portfolio_lab_rejects_validation_mode_with_max_symbols():
     with pytest.raises(ValueError, match="validation"):
-        pl.run_portfolio_lab("2023-01-02", "2023-07-02", mode="validation", max_symbols=200)
+        _run("2023-01-02", "2023-07-02", mode="validation", max_symbols=200)
 
 
 def test_run_portfolio_lab_rejects_fast_dev_mode_without_max_symbols():
     with pytest.raises(ValueError, match="fast_dev"):
-        pl.run_portfolio_lab("2023-01-02", "2023-07-02", mode="fast_dev", max_symbols=None)
+        _run("2023-01-02", "2023-07-02", mode="fast_dev", max_symbols=None)
 
 
 def test_run_portfolio_lab_rejects_unknown_scheme():
     with pytest.raises(ValueError, match="[Ee]squemas"):
-        pl.run_portfolio_lab("2023-01-02", "2023-07-02", mode="fast_dev", max_symbols=50, schemes=("bogus",))
+        _run("2023-01-02", "2023-07-02", mode="fast_dev", max_symbols=50, schemes=("bogus",))
 
 
 def test_run_portfolio_lab_produces_all_requested_schemes(tmp_path, monkeypatch):
@@ -215,13 +221,13 @@ def test_run_portfolio_lab_produces_all_requested_schemes(tmp_path, monkeypatch)
     closes_b = list(100.0 + np.cumsum(np.random.default_rng(2).normal(0, 0.5, len(dates))))
     closes_spy = [100.0] * len(dates)
     _seed_prices(dates, [("AAA", closes_a), ("BBB", closes_b), ("SPY", closes_spy)])
-    monkeypatch.setattr(pl.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA", "BBB"], "note": ""})
-    monkeypatch.setattr(pl.screener_asof, "build_ranking_as_of",
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
                         lambda day, symbols: {"table": pd.DataFrame(
                             {"composite_score": [80, 60], "score_coverage": [.9, .9], "sector": ["Tech", "Health"]},
                             index=["AAA", "BBB"])})
-    result = pl.run_portfolio_lab("2023-01-02", "2023-07-02", months=3, top_n=2, initial_capital=10_000.0,
+    result = _run("2023-01-02", "2023-07-02", months=3, top_n=2, initial_capital=10_000.0,
                                   schemes=("equal_weight", "inverse_vol"))
     assert set(result["schemes"]) == {"equal_weight", "inverse_vol"}
     for scheme, data in result["schemes"].items():
@@ -254,13 +260,13 @@ def test_run_portfolio_lab_point_in_time_ignores_future_price_spike(tmp_path, mo
         closes_b[i] = max(closes_b[i], 1.0)
     closes_spy = [100.0] * n
     _seed_prices(dates, [("AAA", closes_a), ("BBB", closes_b), ("SPY", closes_spy)])
-    monkeypatch.setattr(pl.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA", "BBB"], "note": ""})
-    monkeypatch.setattr(pl.screener_asof, "build_ranking_as_of",
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
                         lambda day, symbols: {"table": pd.DataFrame(
                             {"composite_score": [80, 60], "score_coverage": [.9, .9], "sector": ["Tech", "Health"]},
                             index=["AAA", "BBB"])})
-    result = pl.run_portfolio_lab("2023-01-02", "2023-07-02", months=3, top_n=2, initial_capital=10_000.0,
+    result = _run("2023-01-02", "2023-07-02", months=3, top_n=2, initial_capital=10_000.0,
                                   schemes=("inverse_vol",))
     weights = result["schemes"]["inverse_vol"]["last_weights"]
     # con volatilidad historica CASI IDENTICA (mismo daily_std) antes del pico futuro,

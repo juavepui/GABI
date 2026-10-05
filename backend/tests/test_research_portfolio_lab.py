@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
-from test_portfolio_lab import _seed_prices
+from test_portfolio_lab import _run, _seed_prices
 
-from gabi import config, portfolio_metrics
-from gabi import portfolio_lab as pl
+from gabi import config, portfolio_metrics, screener_asof, universe
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.errors import QueryError
+from gabi.domain.research import portfolio_lab as pl
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
@@ -28,9 +28,9 @@ def market(monkeypatch):
     _seed_prices(dates, [("AAA", list(100.0 + np.cumsum(np.random.default_rng(1).normal(0, .5, len(dates))))),
                          ("BBB", list(100.0 + np.cumsum(np.random.default_rng(2).normal(0, .5, len(dates))))),
                          ("SPY", list(100.0 + np.cumsum(np.random.default_rng(3).normal(0, .3, len(dates)))))])
-    monkeypatch.setattr(pl.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA", "BBB"], "note": ""})
-    monkeypatch.setattr(pl.screener_asof, "build_ranking_as_of",
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
                         lambda day, symbols: {"table": pd.DataFrame(
                             {"composite_score": [80, 60], "score_coverage": [.9, .9], "sector": ["Tech", "Health"]},
                             index=["AAA", "BBB"])})
@@ -47,7 +47,7 @@ def _run_job(client, start, end, options, key):
 
 
 def test_job_reproduces_the_streamlit_run_exactly(market):
-    expected = pl.run_portfolio_lab("2023-01-02", "2023-07-02", months=3, top_n=2, initial_capital=10_000.0,
+    expected = _run("2023-01-02", "2023-07-02", months=3, top_n=2, initial_capital=10_000.0,
                                     max_symbols=50, mode="fast_dev", schemes=pl.SCHEMES)
     with TestClient(create_app(Settings(config.DATA_DIR))) as client:
         job_id = _run_job(client, "2023-01-02", "2023-07-02", OPTIONS, "portfolio-lab-1")

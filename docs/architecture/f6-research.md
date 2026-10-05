@@ -421,7 +421,8 @@ ciegas; el plan sellado (`gabi-id1.json`) no cambia. `blind_validation` y
 Portfolio Lab se ejecuta ahora como el job `portfolio_lab` en modo Research.
 Tiene los mismos parámetros que el formulario antiguo: periodo, rebalanceo,
 posiciones, capital, esquemas, y modo `validation` o `fast_dev` con 50/100/200
-empresas. Llama a `portfolio_lab.run_portfolio_lab` sin cambios. Como los
+empresas. Llama a `portfolio_lab.run_portfolio_lab` sin cambios (desde #88, el mismo bucle en
+`application/research/portfolio_lab_engine` con fuentes inyectadas). Como los
 backtests V1/V2, el periodo se limita al histórico observado del S&P 500
 (2010-01-01 a 2025-07-02), al encolar y al leer. Streamlit permitía llegar hasta
 hoy y leer precios posteriores al corte de las reservas. El artefacto, con hash
