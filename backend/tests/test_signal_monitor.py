@@ -178,3 +178,13 @@ def test_list_events_filters_by_severity_and_since(tmp_path):
     material_only = store.events("MATERIAL", 200)
     assert [(e["symbol"], e["previous_value"], e["new_value"]) for e in material_only] == [("AAA", 90.0, 70.0)]
     assert store.events(None, 200, since="9999-01-01") == []
+
+
+def test_stored_no_snapshot_sentinel_reads_back_as_absent(tmp_path):
+    event = {"symbol": "AAA", "event_type": "score_change", "severity": "MATERIAL",
+             "previous_value": 90.0, "new_value": 70.0, "cause": "test"}
+    store = SqliteSignals(tmp_path)
+    store.record([event], 4)
+    assert _rows(tmp_path) == [(4, 0, "AAA", "score_change")]
+    item = store.events(None, 200)[0]
+    assert (item["from_snapshot_id"], item["to_snapshot_id"]) == (4, None)

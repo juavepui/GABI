@@ -205,6 +205,9 @@ class SqliteSignals:
             results = []
             for row in rows:
                 item = dict(row)
+                for key in ("from_snapshot_id", "to_snapshot_id"):
+                    # 0 only stands in for "no snapshot" so that UNIQUE deduplicates (SQLite: NULL != NULL).
+                    item[key] = item[key] or None
                 item["previous_value"] = json.loads(item["previous_value"]) if item["previous_value"] else None
                 item["new_value"] = json.loads(item["new_value"]) if item["new_value"] else None
                 results.append(item)
