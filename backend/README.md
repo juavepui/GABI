@@ -25,7 +25,7 @@ uv run pytest
 uv run python -m gabi_cli serve
 uv run python -m gabi.frozen_research_ci --check-frozen
 uv run python -m gabi.frozen_research_ci --typecheck
-uv run python -m gabi.search_ledger --verify
+uv run python -m gabi_cli research ledger --verify
 ```
 
 Los datos por defecto están en `GABI/data`, independientemente del directorio

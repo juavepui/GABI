@@ -37,6 +37,17 @@ def historical_sec_audit(settings: Settings, args: argparse.Namespace) -> None:
     print(json.dumps(values, ensure_ascii=False, indent=2))
 
 
+def ledger(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.storage import search_ledger
+
+    root = settings.data_dir.parent
+    if args.verify:
+        search_ledger.verify(root)
+        print("Published search ledger and source fingerprints verified (history remains incomplete).")
+    else:
+        print(json.dumps(search_ledger.write(root, args.write)["counts"]))
+
+
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="python -m gabi_cli research", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -50,5 +61,10 @@ def main(argv: list[str]) -> None:
     command.add_argument("--csv", type=Path, help="Por defecto docs/historical-sec-2010-2015.csv")
     command.add_argument("--json", type=Path, help="Por defecto docs/historical-sec-2010-2015.json")
     command.set_defaults(run=historical_sec_audit)
+    command = commands.add_parser("ledger", help="Verifica el registro de búsquedas publicado o escribe una revisión nueva")
+    actions = command.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--write", type=Path, help="Destino nuevo; nunca sobrescribe un registro publicado")
+    actions.add_argument("--verify", action="store_true")
+    command.set_defaults(run=ledger)
     args = parser.parse_args(argv)
     args.run(Settings.from_environment(), args)

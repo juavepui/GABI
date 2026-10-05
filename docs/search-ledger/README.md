@@ -61,11 +61,14 @@ rescatar una ventana favorable. #60 sigue abierta.
 ## Verificación
 
 ```powershell
-uv run python -m gabi.search_ledger --verify
+uv run python -m gabi_cli research ledger --verify
 ```
 
 Comprueba exactamente el registro y sus fuentes publicadas, sin red ni snapshots
 de precios. CI ejecuta esta verificación. Para una revisión explícita se puede
 escribir un destino nuevo con `--write RUTA`; el comando rechaza sobrescribir
-un registro existente. El catálogo tiene alcance declarado y no promete recuperar
+un registro existente. El registro se escribió con `python -m gabi.search_ledger --write`
+(último commit de ese módulo: 1283bf5); desde ADR 0002 el mismo cálculo vive en
+`gabi.domain.research.search_ledger` y produce exactamente el registro publicado.
+El catálogo tiene alcance declarado y no promete recuperar
 ensayos que nunca se registraron.

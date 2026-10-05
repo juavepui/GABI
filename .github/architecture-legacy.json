@@ -722,10 +722,6 @@
     "gabi.valuation_expectations.expectations_metrics",
     "pandas"
   ],
-  "backend/src/gabi/search_ledger.py": [
-    "gabi.config",
-    "pathlib"
-  ],
   "backend/src/gabi/sec_history.py": [
     "gabi.config",
     "gabi.edgar",

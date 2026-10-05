@@ -38,7 +38,7 @@ jobs:
         run: uv run python -m gabi.frozen_research_ci --check-frozen
 
       - name: Verify published search ledger
-        run: uv run python -m gabi.search_ledger --verify
+        run: uv run python -m gabi_cli research ledger --verify
 
       - name: Lint (ruff)
         run: uv run ruff check ..

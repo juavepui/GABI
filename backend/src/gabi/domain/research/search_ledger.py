@@ -4,14 +4,11 @@ This catalog preserves the historical 34-entry convention; it does not certify
 an exhaustive search count or recalculate any published result or correction.
 """
 
-import argparse
 import hashlib
 import json
-from pathlib import Path
+from collections.abc import Callable
 
-from . import config
-
-OUTPUT = config.BASE_DIR / "docs" / "search-ledger" / "ledger.json"
+PUBLISHED = "docs/search-ledger/ledger.json"
 DIAGNOSTICS = (
     "factor-history", "tail-effect-test", "factor-zoo", "placebo-engine",
     "cross-section-test", "block-bootstrap", "rank-stability", "evidence-confidence",
@@ -24,13 +21,16 @@ def fingerprint(value: object) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
-def build(root: Path = config.BASE_DIR) -> dict:
-    """Read only explicitly named, already published repository artifacts."""
+def build(load: Callable[[str], str]) -> dict:
+    """Read only explicitly named, already published repository artifacts.
+
+    ``load`` returns the UTF-8 text of a repository-relative path; it is called once per source.
+    """
     sources: dict[str, str] = {}
     documents: dict[str, dict] = {}
 
     def pin(name: str) -> str:
-        content = (root / name).read_text(encoding="utf-8")
+        content = load(name)
         sources[name] = hashlib.sha256(content.encode("utf-8")).hexdigest()
         return content
 
@@ -174,28 +174,6 @@ def build(root: Path = config.BASE_DIR) -> dict:
     }
 
 
-def verify(path: Path = OUTPUT, root: Path = config.BASE_DIR) -> None:
-    published = json.loads(path.read_text(encoding="utf-8"))
-    if published != build(root):
+def verify(published: dict, load: Callable[[str], str]) -> None:
+    if published != build(load):
         raise ValueError("Search ledger or its published sources changed; publish an explicit new revision.")
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    actions = parser.add_mutually_exclusive_group(required=True)
-    actions.add_argument("--write", type=Path, help="New destination; never overwrites a published ledger")
-    actions.add_argument("--verify", action="store_true")
-    args = parser.parse_args()
-    if args.verify:
-        verify()
-        print("Published search ledger and source fingerprints verified (history remains incomplete).")
-    else:
-        ledger = build()
-        args.write.parent.mkdir(parents=True, exist_ok=True)
-        with args.write.open("x", encoding="utf-8", newline="\n") as stream:
-            stream.write(json.dumps(ledger, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
-        print(json.dumps(ledger["counts"]))
-
-
-if __name__ == "__main__":
-    main()
