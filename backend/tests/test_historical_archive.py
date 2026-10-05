@@ -1,8 +1,10 @@
+import json
+
 import pandas as pd
 import pytest
 
 from gabi import config, edgar, historical_archive, identity, storage
-from gabi.historical_backfill import overlaps_membership
+from gabi.domain.research.historical_backfill import overlaps_membership
 
 
 @pytest.fixture
@@ -71,3 +73,14 @@ def test_sec_issuer_data_does_not_certify_candidate_ticker(db):
     with storage.get_connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM historical_facts").fetchone()[0] == 1
         assert conn.execute("SELECT source FROM entity_observations").fetchone()[0] == "https://www.sec.gov/original.xml"
+
+
+def test_price_archive_import_refuses_a_file_that_differs_from_the_pinned_hash(tmp_path):
+    from gabi.infrastructure.legacy.historical_backfill import MANIFEST, import_price_archive
+
+    item = json.loads(MANIFEST.read_text(encoding="utf-8"))["sources"]["prices"]
+    folder = tmp_path / "history_refresh" / "1996_2015"
+    folder.mkdir(parents=True)
+    (folder / item["filename"]).write_text("symbol,date\nAAA,2010-01-04\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="hash mismatch"):
+        import_price_archive(tmp_path, "2010-01-01", "2011-01-01")

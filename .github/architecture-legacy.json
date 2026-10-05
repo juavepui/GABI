@@ -247,21 +247,6 @@
     "numpy",
     "pandas"
   ],
-  "backend/src/gabi/historical_backfill.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.historical_archive",
-    "gabi.history_refresh.database_coverage",
-    "gabi.history_refresh.last_completed_session",
-    "gabi.history_refresh.period_symbols",
-    "gabi.storage",
-    "pandas",
-    "pathlib",
-    "requests",
-    "sqlite3",
-    "sys",
-    "yfinance"
-  ],
   "backend/src/gabi/historical_coverage.py": [
     "exchange_calendars",
     "gabi.config",

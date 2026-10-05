@@ -98,8 +98,11 @@ la cobertura, la composición por fecha y los precios archivados. Las tablas
 procedencia explícita. Los hechos por CIK también están en `entity_observations`.
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.historical_backfill
+.venv/Scripts/python.exe -m gabi_cli research historical-backfill
 ```
+
+La ejecución publicada usó `python -m gabi.historical_backfill` (último commit 1283bf5);
+desde ADR 0002 es el mismo código como subcomando de `gabi_cli research`.
 
 El comando descarga CSV/JSON gratuitos, comprueba hashes y crea una copia
 consistente de SQLite antes de escribir. La ejecución y sus respuestas originales

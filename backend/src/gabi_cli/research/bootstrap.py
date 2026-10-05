@@ -73,6 +73,15 @@ def entity_migration(settings: Settings, args: argparse.Namespace) -> None:
         print(json.dumps(report, indent=2))
 
 
+def historical_backfill(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy import historical_backfill as backfill
+
+    if args.import_prices:
+        print(json.dumps(backfill.import_price_archive(settings.data_dir, *args.import_prices)))
+    else:
+        backfill.run(settings.data_dir)
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -122,6 +131,10 @@ def main(argv: list[str]) -> None:
     command.add_argument("--candidate-symbol")
     command.add_argument("--historical-name")
     command.set_defaults(run=entity_migration)
+    command = commands.add_parser("historical-backfill", help="Archivo gratuito 1996-2015: descarga fuentes fijadas e importa (escritura explícita)")
+    command.add_argument("--import-prices", nargs=2, metavar=("START", "END"),
+                         help="Solo importa el archivo de precios ya descargado para [START, END) (#34)")
+    command.set_defaults(run=historical_backfill)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")

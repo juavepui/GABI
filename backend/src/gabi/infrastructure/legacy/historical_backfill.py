@@ -1,56 +1,24 @@
 """Free 1996-2015 source archive and conservative additions to operational data.
 
-Run with python -m gabi.historical_backfill. Inputs are pinned CSV/JSON, never
-remote code or pickle. The existing post-2015 membership and audit stay intact.
+Run with ``python -m gabi_cli research historical-backfill``. Inputs are pinned CSV/JSON,
+never remote code or pickle. The existing post-2015 membership and audit stay intact.
+An explicit write: it downloads, backs SQLite up and imports into the configured database.
 """
-import hashlib
 import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
-import requests
 import yfinance as yf
 
-from . import config, edgar, historical_archive, storage
-from .history_refresh import database_coverage, last_completed_session, period_symbols
+from gabi import edgar, historical_archive, storage
+from gabi.domain.research.historical_backfill import overlaps_membership
+from gabi.historical_membership import historical_backfill_manifest
+from gabi.history_refresh import database_coverage, last_completed_session, period_symbols
+from gabi.infrastructure.providers.pinned_files import download_pinned, matches
 
-MANIFEST = Path(__file__).with_name("resources") / "historical_sources_1996_2015.json"
-
-
-def download_pinned(item: dict, directory: Path) -> Path:
-    path = directory / item["filename"]
-    if path.exists():
-        with path.open("rb") as existing:
-            if hashlib.file_digest(existing, "sha256").hexdigest() == item["sha256"]:
-                return path
-    temporary = path.with_suffix(".part")
-    with requests.get(item["url"], stream=True, timeout=(20, 90)) as response:
-        response.raise_for_status()
-        with temporary.open("wb") as output:
-            for chunk in response.iter_content(1024 * 1024):
-                output.write(chunk)
-    with temporary.open("rb") as source:
-        if hashlib.file_digest(source, "sha256").hexdigest() != item["sha256"]:
-            raise ValueError(f"Source hash mismatch: {item['filename']}")
-    temporary.replace(path)
-    return path
-
-
-def overlaps_membership(prices: pd.DatetimeIndex, history: pd.DataFrame, symbol: str, end: str) -> bool:
-    history = history[history["date"] < end].sort_values("date")
-    dates = history["date"].tolist() + [end]
-    present = [symbol in {s.replace(".", "-") for s in tickers.split(",")} for tickers in history["tickers"]]
-    first = None
-    for i, member in enumerate(present + [False]):
-        if member and first is None:
-            first = dates[i]
-        if not member and first is not None:
-            if ((prices >= pd.Timestamp(first)) & (prices < pd.Timestamp(dates[i]))).any():
-                return True
-            first = None
-    return False
+MANIFEST = historical_backfill_manifest()
 
 
 def fetch_missing_history(symbol: str, history: pd.DataFrame, end: str) -> int:
@@ -70,9 +38,9 @@ def fetch_missing_history(symbol: str, history: pd.DataFrame, end: str) -> int:
     return len(frame)
 
 
-def run() -> dict:
+def run(data_dir: Path) -> dict:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    directory = config.DATA_DIR / "history_refresh" / "1996_2015"
+    directory = data_dir / "history_refresh" / "1996_2015"
     directory.mkdir(parents=True, exist_ok=True)
     files = {key: download_pinned(item, directory) for key, item in manifest["sources"].items()}
     now = datetime.now(UTC)
@@ -119,7 +87,7 @@ def run() -> dict:
     report["blocked_operational_imports"] = blocked
     report["before_old_coverage"] = {"symbols_with_prices": len(targets & old_prices), "symbols_with_facts": len(targets & old_facts)}
     report["yahoo"] = {"updated": {}, "failed": {}}
-    yf.set_tz_cache_location(str(config.DATA_DIR / "history_refresh" / "yfinance_cache"))
+    yf.set_tz_cache_location(str(data_dir / "history_refresh" / "yfinance_cache"))
     completed_end = (pd.Timestamp(last_completed_session(now)) + pd.Timedelta(days=1)).date().isoformat()
     for symbol in sorted(set(safe) & set(live) - old_prices):
         try:
@@ -176,7 +144,7 @@ def run() -> dict:
     return report
 
 
-def import_price_archive(start: str, end: str) -> dict:
+def import_price_archive(data_dir: Path, start: str, end: str) -> dict:
     """Import the pinned FINSABER file for ``[start, end)`` and every symbol (#34).
 
     #26 imported it only up to 2016 and for 2010-2015 members. The rows stay
@@ -185,10 +153,9 @@ def import_price_archive(start: str, end: str) -> dict:
     """
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     item = manifest["sources"]["prices"]
-    path = config.DATA_DIR / "history_refresh" / "1996_2015" / item["filename"]
-    with path.open("rb") as source:
-        if hashlib.file_digest(source, "sha256").hexdigest() != item["sha256"]:
-            raise ValueError(f"Source hash mismatch: {item['filename']}")
+    path = data_dir / "history_refresh" / "1996_2015" / item["filename"]
+    if not matches(path, item["sha256"]):
+        raise ValueError(f"Source hash mismatch: {item['filename']}")
     counts = {"accepted": 0, "rejected": 0}
     for chunk in pd.read_csv(path, chunksize=200000, dtype={"symbol": str, "date": str}):
         symbols = set(chunk["symbol"].dropna().str.replace(".", "-", regex=False))
@@ -197,10 +164,3 @@ def import_price_archive(start: str, end: str) -> dict:
             counts[key] += value
     return {"source_id": manifest["price_source_id"], "window": [start, end], **counts}
 
-
-if __name__ == "__main__":
-    import sys
-    if sys.argv[1:2] == ["--import-prices"]:
-        print(json.dumps(import_price_archive(sys.argv[2], sys.argv[3])))
-    else:
-        run()
