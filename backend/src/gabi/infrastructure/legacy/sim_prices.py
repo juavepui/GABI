@@ -1,10 +1,4 @@
-"""Price downloads of the simulated portfolios through the unchanged sim_portfolios and data_fetch."""
-
-
-def fx_symbol(quote_currency: str, base_currency: str) -> str | None:
-    from gabi import sim_portfolios
-
-    return sim_portfolios.fx_symbol(quote_currency, base_currency)
+"""Price downloads of the simulated portfolios through the unchanged data_fetch."""
 
 
 def fetch_max_history(symbols: list[str]) -> dict:

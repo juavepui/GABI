@@ -1107,7 +1107,7 @@ archivada). Ese motor nuevo es **`backend/src/gabi/portfolio_backtest.py`** +
 `backend/tests/test_portfolio_metrics.py`).
 
 **Qué hace distinto**, reutilizando la misma convención de coste ya validada en
-`sim_portfolios.py` (Carteras Simuladas — comisión fija en dólares + spread proporcional,
+`domain/portfolio/simulation.py` (Carteras Simuladas, antes `sim_portfolios.py` — comisión fija en dólares + spread proporcional,
 calibrada en `broker_costs.py`) en vez de inventar un modelo nuevo:
 
 - **Contabilidad real por acciones + caja**, no un % agregado. En cada rebalanceo se
@@ -1121,7 +1121,7 @@ calibrada en `broker_costs.py`) en vez de inventar un modelo nuevo:
 - **SPY como comprar-y-mantener de verdad** (`buy_and_hold_curve`): coste real de entrada
   una sola vez, nunca más — corrige directamente el fallo señalado.
 - **Curva NAV diaria genuina** (`_daily_segment`): walk-forward día a día valorando
-  `caja + Σ(acciones × adj_close)`, igual que `sim_portfolios.portfolio_history()` — no
+  `caja + Σ(acciones × adj_close)`, igual que `simulation.history()` de Carteras Simuladas — no
   una curva agregada reescalada a posteriori. Además, a diferencia de V1, un periodo
   saltado por falta de cobertura ya no deja un hueco en la curva: la cartera sigue
   flotando con lo que ya tenía en vez de desaparecer del análisis.

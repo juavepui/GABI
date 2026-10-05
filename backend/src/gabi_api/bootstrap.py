@@ -58,7 +58,6 @@ from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
 from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
-from gabi.infrastructure.legacy.simulations import LegacySimulationMath
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
 from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
 from gabi.infrastructure.settings import Settings
@@ -130,7 +129,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
     signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
                             compare_snapshots, compare_cached, jobs)
-    simulations = Simulations(SqliteSimulations(settings.data_dir), LegacySimulationMath(), today)
+    simulations = Simulations(SqliteSimulations(settings.data_dir), today)
     decisions = Decisions(repository, SqliteDecisions(settings.data_dir), policy, today, build_decisions, jobs)
     ledger_path = published_ledger or settings.data_dir.parent / "docs" / "search-ledger" / "ledger.json"
     ledger = FilePublishedLedger(ledger_path)

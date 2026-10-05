@@ -1,10 +1,13 @@
+import pandas as pd
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import config, sim_portfolios
+from gabi import config
 from gabi.application.administration.jobs import JobCommand
+from gabi.domain.portfolio import simulation
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.simulations import SqliteSimulations
 from gabi_api.bootstrap import create_app
 
 
@@ -21,17 +24,20 @@ def test_simulations_share_legacy_tables_costs_and_replay(tmp_path, monkeypatch)
         })
         assert created.status_code == 201, created.text
         portfolio_id = created.json()["id"]
-        assert int(sim_portfolios.list_portfolios().iloc[0]["id"]) == portfolio_id
+        store = SqliteSimulations(tmp_path)
+        assert store.portfolios()[0]["id"] == portfolio_id
         trade = api.post(f"/api/v1/portfolio/simulations/{portfolio_id}/trades", json={
             "symbol": "T000", "asset_type": "STOCK", "side": "BUY",
             "requested_date": "2026-09-28", "notional": 1000,
         })
         assert trade.status_code == 201, trade.text
         assert trade.json()["commission"] == 1
-        assert len(sim_portfolios.list_trades(portfolio_id)) == 1
+        assert len(store.trades(portfolio_id)) == 1
         result = api.get(f"/api/v1/portfolio/simulations/{portfolio_id}/result")
         assert result.status_code == 200, result.text
-        expected = sim_portfolios.summarize(sim_portfolios.portfolio_history(portfolio_id))
+        trades = pd.DataFrame(store.trades(portfolio_id))
+        prices = store.prices(["T000", "SPY"], "2026-09-01")
+        expected = simulation.summarize(simulation.history(store.portfolio(portfolio_id), trades, prices, TODAY))
         assert result.json()["summary"]["return"] == expected["return"]
         assert result.json()["summary"]["benchmark_return"] == expected["benchmark_return"]
         assert result.json()["status"] == "EXPERIMENTAL"
@@ -40,7 +46,7 @@ def test_simulations_share_legacy_tables_costs_and_replay(tmp_path, monkeypatch)
         assert comparison["items"][0]["return"] == expected["return"]
         assert comparison["items"][0]["benchmark_return"] == expected["benchmark_return"]
         assert api.post(f"/api/v1/portfolio/simulations/{portfolio_id}/undo").json()["undone"] is True
-        assert sim_portfolios.list_trades(portfolio_id).empty
+        assert store.trades(portfolio_id) == []
 
 
 def test_simulations_get_is_inert_and_rejects_uncached_trade(tmp_path):

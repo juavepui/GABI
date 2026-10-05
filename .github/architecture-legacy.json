@@ -684,12 +684,6 @@
     "requests",
     "sqlite3"
   ],
-  "backend/src/gabi/sim_portfolios.py": [
-    "exchange_calendars",
-    "gabi.storage",
-    "pandas",
-    "quantstats"
-  ],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",
     "gabi.factor_stability",

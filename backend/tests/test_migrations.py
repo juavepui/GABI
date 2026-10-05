@@ -14,7 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, decision_engine, evaluation, research_lab, sim_portfolios, storage
+from gabi import config, decision_engine, evaluation, research_lab, storage
+from gabi.infrastructure.storage.simulations import SqliteSimulations
 
 
 def _isolate_db(tmp_path, monkeypatch):
@@ -139,13 +140,13 @@ def test_sim_portfolios_migrates_portfolios_and_trades_tables(tmp_path, monkeypa
         )
         conn.commit()
 
-    portfolios = sim_portfolios.list_portfolios()
-    trades = sim_portfolios.list_trades(1)
+    portfolios = SqliteSimulations(tmp_path).portfolios()
+    trades = SqliteSimulations(tmp_path).trades(1)
 
     assert len(portfolios) == 1
-    assert portfolios.iloc[0]["name"] == "Cartera vieja"  # dato antiguo intacto
-    assert portfolios.iloc[0]["base_currency"] == "USD"  # columna nueva, con su DEFAULT aplicado
+    assert portfolios[0]["name"] == "Cartera vieja"  # dato antiguo intacto
+    assert portfolios[0]["base_currency"] == "USD"  # columna nueva, con su DEFAULT aplicado
 
     assert len(trades) == 1
-    assert trades.iloc[0]["symbol"] == "AAA"  # dato antiguo intacto
-    assert trades.iloc[0]["market"] == "XNYS"  # columna nueva, con su DEFAULT aplicado
+    assert trades[0]["symbol"] == "AAA"  # dato antiguo intacto
+    assert trades[0]["market"] == "XNYS"  # columna nueva, con su DEFAULT aplicado

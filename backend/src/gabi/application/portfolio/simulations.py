@@ -1,4 +1,4 @@
-"""Local simulated trades, using the same replay and cost rules as Streamlit."""
+"""Local simulated trades, with the replay and cost rules of domain.portfolio.simulation."""
 
 import re
 from collections.abc import Callable
@@ -9,6 +9,7 @@ from typing import Protocol
 import pandas as pd
 
 from gabi.application.errors import QueryError
+from gabi.domain.portfolio import simulation
 from gabi.domain.portfolio.simulation import MARKETS, execution_quote
 
 
@@ -22,17 +23,9 @@ class SimulationRepository(Protocol):
     def undo_last(self, portfolio_id: int, expected_id: int) -> bool: ...
 
 
-class SimulationMath(Protocol):
-    def replay(self, portfolio: dict, trades: pd.DataFrame, histories: dict) -> tuple[float, dict]: ...
-    def fx_symbol(self, quote_currency: str, base_currency: str) -> str | None: ...
-    def fx_at(self, histories: dict, quote_currency: str, base_currency: str, day: str) -> float: ...
-    def history(self, portfolio: dict, trades: pd.DataFrame, histories: dict) -> dict: ...
-    def summarize(self, result: dict) -> dict: ...
-
-
 class Simulations:
-    def __init__(self, repository: SimulationRepository, math: SimulationMath, today: Callable[[], date]):
-        self.repository, self.math, self.today = repository, math, today
+    def __init__(self, repository: SimulationRepository, today: Callable[[], date]):
+        self.repository, self.today = repository, today
 
     def portfolios(self) -> list[dict]:
         return self.repository.portfolios()
@@ -84,12 +77,12 @@ class Simulations:
         history = self.repository.prices([symbol], requested.isoformat()).get(symbol, pd.DataFrame())
         try:
             quote = execution_quote(history, requested.isoformat(), payload["market"], self.today())
-            pair = self.math.fx_symbol(payload["quote_currency"], portfolio["base_currency"])
+            pair = simulation.fx_symbol(payload["quote_currency"], portfolio["base_currency"])
             if pair:
                 rate = payload["fx_rate"]
                 if rate is None:
                     fx = self.repository.prices([pair], (date.fromisoformat(quote["date"]) - timedelta(days=7)).isoformat())
-                    rate = self.math.fx_at(fx, payload["quote_currency"], portfolio["base_currency"], quote["date"])
+                    rate = simulation.fx_at(fx, payload["quote_currency"], portfolio["base_currency"], quote["date"])
             else:
                 rate, fx_fee = 1.0, 0.0
             if not isfinite(rate) or rate <= 0:
@@ -106,7 +99,7 @@ class Simulations:
             symbols = combined["symbol"].unique().tolist()
             start = min(combined["execution_date"])
             histories = self.repository.prices(symbols, start)
-            self.math.replay(portfolio, combined, histories)
+            simulation.replay(portfolio, combined, histories)
         except (ValueError, KeyError, TypeError) as exc:
             raise QueryError("trade_unavailable", str(exc), 422) from exc
         trade_id = self.repository.add_trade(new_trade, previous_id)
@@ -123,7 +116,7 @@ class Simulations:
             start = min(row["execution_date"] for row in remaining)
             histories = self.repository.prices(sorted({row["symbol"] for row in remaining}), start)
             try:
-                self.math.replay(portfolio, pd.DataFrame(remaining), histories)
+                simulation.replay(portfolio, pd.DataFrame(remaining), histories)
             except ValueError as exc:
                 raise QueryError("trade_unavailable", str(exc), 422) from exc
         return self.repository.undo_last(portfolio_id, last_id)
@@ -140,12 +133,12 @@ class Simulations:
         if not long and ((self.today() - first).days > 1095 or len(symbols) > 10 or len(rows) > 100):
             raise QueryError("job_required", "El historial requiere un job local; solicítalo desde esta pantalla.", 409)
         try:
-            pairs = {self.math.fx_symbol(currency, base) for currency in trades["quote_currency"].unique()}
-            pairs.add(self.math.fx_symbol("USD", base))
+            pairs = {simulation.fx_symbol(currency, base) for currency in trades["quote_currency"].unique()}
+            pairs.add(simulation.fx_symbol("USD", base))
             start = (date.fromisoformat(min(trades["execution_date"])) - timedelta(days=7)).isoformat()
             histories = self.repository.prices(symbols + ["SPY"] + sorted(pair for pair in pairs if pair), start)
-            result = self.math.history(portfolio, trades, histories)
-            summary = self.math.summarize(result)
+            result = simulation.history(portfolio, trades, histories, self.today())
+            summary = simulation.summarize(result)
         except (ValueError, KeyError, TypeError) as exc:
             raise QueryError("result_unavailable", str(exc), 422) from exc
         curve = result["curve"].reset_index()

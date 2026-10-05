@@ -25,15 +25,15 @@ class LegacyExecutor:
             from datetime import date
 
             from gabi.application.portfolio.simulations import Simulations
-            from gabi.infrastructure.legacy.simulations import LegacySimulationMath
             from gabi.infrastructure.storage.simulations import SqliteSimulations
 
             assert command.portfolio_id is not None
-            return Simulations(SqliteSimulations(self.settings.data_dir), LegacySimulationMath(), date.today).result(
+            return Simulations(SqliteSimulations(self.settings.data_dir), date.today).result(
                 command.portfolio_id, long=True)
         if command.kind == "sim_prices":
             from gabi.application.portfolio.sim_prices import refresh_prices
-            from gabi.infrastructure.legacy.sim_prices import fetch_max_history, fx_symbol
+            from gabi.domain.portfolio.simulation import fx_symbol
+            from gabi.infrastructure.legacy.sim_prices import fetch_max_history
             from gabi.infrastructure.storage.simulations import SqliteSimulations
 
             assert command.portfolio_id is not None
@@ -43,10 +43,9 @@ class LegacyExecutor:
             from datetime import date
 
             from gabi.application.portfolio.simulations import Simulations
-            from gabi.infrastructure.legacy.simulations import LegacySimulationMath
             from gabi.infrastructure.storage.simulations import SqliteSimulations
 
-            return Simulations(SqliteSimulations(self.settings.data_dir), LegacySimulationMath(), date.today).compare()
+            return Simulations(SqliteSimulations(self.settings.data_dir), date.today).compare()
         if command.kind == "decision_plan":
             from datetime import date
 
