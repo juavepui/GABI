@@ -1,7 +1,8 @@
 import pytest
 
 from gabi import config, edgar, storage
-from gabi.historical_sec_audit import filing_status, load_concept_dates
+from gabi.domain.research.historical_sec_audit import filing_status
+from gabi.infrastructure.legacy.historical_sec_audit import load_concept_dates
 
 
 def test_filing_status_never_uses_future_or_stale_filing():

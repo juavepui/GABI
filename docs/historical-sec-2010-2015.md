@@ -61,7 +61,8 @@ interpretar diferencias.
 
 El [detalle por miembro](historical-sec-2010-2015.csv) y el
 [resumen JSON](historical-sec-2010-2015.json) se regeneran sin red con
-`.venv/Scripts/python.exe -m gabi.historical_sec_audit`. La composición
+`.venv/Scripts/python.exe -m gabi_cli research historical-sec-audit` (antes `-m gabi.historical_sec_audit`,
+commit 1283bf5; mismos ficheros, ADR 0002). La composición
 procede del archivo fja05680, con la corrección temporal WLP/ANTM. Cada celda
 cuenta miembros con identidad acreditada y **al menos un hecho** del concepto
 publicado hasta el 31 de diciembre; no equivale a tener cuatro ejercicios,
@@ -94,7 +95,7 @@ regenerar los artefactos (el primer comando descarga solo archivos ausentes):
 ```powershell
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 58
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
-.venv/Scripts/python.exe -m gabi.historical_sec_audit
+.venv/Scripts/python.exe -m gabi_cli research historical-sec-audit
 ```
 
 ## Evidencia de identidad y mejora medida

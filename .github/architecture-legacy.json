@@ -412,14 +412,6 @@
     "pandas",
     "pathlib"
   ],
-  "backend/src/gabi/historical_sec_audit.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.historical_data_audit.connect_readonly",
-    "gabi.historical_membership",
-    "pandas",
-    "pathlib"
-  ],
   "backend/src/gabi/historical_ticker_corrections.py": [
     "pathlib"
   ],
