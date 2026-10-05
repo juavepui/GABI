@@ -244,7 +244,7 @@ export function MarketPage() {
           <LoadingState />
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Calculando el ranking con tu caché local. Si GABI acaba de arrancar o han cambiado los
-            datos, la primera consulta puede tardar alrededor de un minuto; después es inmediata.
+            datos, la primera consulta tarda entre unos 20 s y un minuto; después es inmediata.
           </p>
         </div>
       ) : result.isError ? (

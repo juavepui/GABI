@@ -170,7 +170,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
         <div className="mt-3 space-y-2" role="status">
           <p className="text-sm text-muted-foreground">
             {computing
-              ? 'Calculando el ranking con tu caché local. Tras arrancar o actualizar los datos puede tardar alrededor de un minuto; después es inmediato.'
+              ? 'Calculando el ranking con tu caché local. Tras arrancar o actualizar los datos tarda entre unos 20 s y un minuto, según tenga el disco los datos a mano; después es inmediato.'
               : 'El ranking aún no está calculado.'}
           </p>
           {computing && (

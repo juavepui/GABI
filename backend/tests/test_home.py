@@ -5,6 +5,7 @@ import sqlite3
 import threading
 from datetime import timedelta
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
@@ -107,3 +108,19 @@ def test_home_says_whether_prices_include_the_last_closed_session(tmp_path, behi
         assert data["status"] == "ready"  # The 7-day ranking tolerance alone would call both «ready».
         assert data["last_session"] == session.isoformat() and data["prices_current"] is current
         assert client.get("/api/v1/data/status").json()["prices_current"] is current
+
+
+def test_ranking_reads_only_close_columns_with_the_same_values(home):
+    """#85: the ranking's close-only read gives the same frames as the full read, minus unused columns."""
+    _, app, _ = home
+    repository = app.state.market.repository
+    with repository.lock:
+        repository.connect()
+        repository.discover()
+        symbols = ("T000", "T001", "T002")
+        full = repository.prices(symbols, 160_000)
+        closes = repository.closes(symbols, 160_000)
+    assert set(closes) == set(full) and closes
+    for symbol, frame in closes.items():
+        assert list(frame.columns) == ["close", "adj_close"]
+        pd.testing.assert_frame_equal(frame, full[symbol][["close", "adj_close"]], check_exact=True)

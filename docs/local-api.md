@@ -189,6 +189,19 @@ Medición con la base local completa (2026-10-02, solo lectura y sin red):
 | Siguientes visitas | 0,24 s | 0,21 s |
 | Tras 6 minutos sin uso ni cambios de datos | 58,0 s | 0,12 s |
 
+El cálculo en frío (#85), medido el 2026-10-05 con la base local, 503 empresas:
+89 s bajo perfilador, 60-65 s sin él y con el disco frío, 27-33 s con el disco
+ya en la caché del sistema; 97 MiB de memoria Python pico, 137 consultas y
+4,27 millones de filas. El 76 % del tiempo era leer precios: los cálculos del
+ranking solo usan `close` y `adj_close`, pero se leían ocho columnas ordenadas
+por fecha, con un árbol temporal. `ReadOnlyMarket.closes` lee esas dos columnas
+en el orden de la clave primaria (símbolo, fecha). El ranking completo es
+idéntico (igualdad exacta de la tabla de 503 × 86) y tarda un 49 % menos:
+33,5 s → 17,0 s con el disco en caché. Se descartó precalcular tras cada
+actualización: la caché vive en el proceso de la API y el worker es otro
+proceso. La tasa de meses positivos (`risk._monthly_win_rate`, unos 3 s) no se
+toca: el módulo lo usan motores antiguos y el ahorro no compensa el riesgo.
+
 ## Verificación y medición
 
 Los tests usan bases sintéticas temporales: paridad contra una referencia de
