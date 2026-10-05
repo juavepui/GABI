@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import tax_drag as td
+from gabi.domain.portfolio import tax_drag as td
 
 # --- progressive_tax: límites exactos de tramo, verificados a mano ---
 

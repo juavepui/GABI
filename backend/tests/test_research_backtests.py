@@ -325,7 +325,7 @@ def _level(summary, level):
 
 
 def test_v1_diagnostics_match_streamlit_tail_and_tax(tmp_path):
-    from gabi import tax_drag
+    from gabi.domain.portfolio import tax_drag
 
     job_id = _finished_backtest(tmp_path, "backtest_v1", V1, _v1_result)
     test = _v1_result()

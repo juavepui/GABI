@@ -93,28 +93,10 @@ class LegacyBacktestMath:
         return portfolio_metrics.returns_from_nav(nav)
 
     @staticmethod
-    def tax_drag(periods, initial_capital: float) -> dict:
-        from gabi import tax_drag
-
-        return tax_drag.simulate_tax_drag(periods, initial_capital=initial_capital)
-
-    @staticmethod
-    def zero_turnover(periods, return_column: str):
-        from gabi import tax_drag
-
-        return tax_drag.zero_turnover_periods(periods, return_column)
-
-    @staticmethod
     def ranking_warnings(quality: dict, threshold: float) -> list[str]:
         from gabi import data_quality
 
         return data_quality.ranking_quality_warnings(quality, threshold)
-
-    @staticmethod
-    def tax_limitations() -> list[str]:
-        from gabi import tax_drag
-
-        return list(tax_drag.LIMITATIONS)
 
 
 def run_factor_contrast(periods, hac_lags: int | None) -> dict:

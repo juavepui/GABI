@@ -8,6 +8,7 @@ import pandas as pd
 from gabi.application.administration.jobs import Jobs
 from gabi.application.errors import QueryError
 from gabi.application.research.historical import _json_value
+from gabi.domain.portfolio import tax_drag
 
 SERIES_V1 = (("Estrategia", "retorno"), ("Universo EW", "universo_ew"), ("SPY", "spy"))
 SERIES_V2 = (("Estrategia", "estrategia"), ("SPY", "spy"))
@@ -16,9 +17,6 @@ SERIES_V2 = (("Estrategia", "estrategia"), ("SPY", "spy"))
 class BacktestMath(Protocol):
     def tail_risk(self, returns: pd.Series, horizon: str) -> dict: ...
     def returns_from_nav(self, nav: pd.Series) -> pd.Series: ...
-    def tax_drag(self, periods: pd.DataFrame, initial_capital: float) -> dict: ...
-    def zero_turnover(self, periods: pd.DataFrame, return_column: str) -> pd.DataFrame: ...
-    def tax_limitations(self) -> list[str]: ...
     def ranking_warnings(self, quality: dict, threshold: float) -> list[str]: ...
 
 
@@ -96,13 +94,13 @@ class BacktestDiagnostics:
         tax = None
         try:
             tax = {"capital": tax_capital,
-                   "strategy": _tax(self.math.tax_drag(periods, tax_capital)),
-                   "spy_buy_and_hold": _tax(self.math.tax_drag(self.math.zero_turnover(periods, "spy"),
-                                                               tax_capital)),
-                   "limitations": self.math.tax_limitations(), "error": None}
+                   "strategy": _tax(tax_drag.simulate_tax_drag(periods, initial_capital=tax_capital)),
+                   "spy_buy_and_hold": _tax(tax_drag.simulate_tax_drag(
+                       tax_drag.zero_turnover_periods(periods, "spy"), initial_capital=tax_capital)),
+                   "limitations": list(tax_drag.LIMITATIONS), "error": None}
         except (ValueError, KeyError) as exc:
             tax = {"capital": tax_capital, "strategy": None, "spy_buy_and_hold": None,
-                   "limitations": self.math.tax_limitations(), "error": str(exc)}
+                   "limitations": list(tax_drag.LIMITATIONS), "error": str(exc)}
         return {"job_id": job_id, "kind": job["kind"], "tail": self._tail_v1(periods), "tax": tax,
                 "quality_threshold": threshold, "quality_warnings": self._quality(artifact, threshold),
                 "result_sha256": job["result_sha256"]}

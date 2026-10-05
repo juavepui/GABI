@@ -788,9 +788,6 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/tax_drag.py": [
-    "pandas"
-  ],
   "backend/src/gabi/technicals.py": [
     "gabi.config",
     "numpy",

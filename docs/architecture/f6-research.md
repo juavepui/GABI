@@ -56,8 +56,8 @@ El riesgo de cola (V1 por rebalanceo si todos los periodos duran lo mismo; V2 po
 sesión sobre la NAV diaria) y el drag fiscal español de V1 se consultan con
 `GET /research/backtests/{id}/diagnostics`. La consulta relee el artefacto
 verificado y aplica `portfolio_metrics.tail_risk_metrics` y
-`tax_drag.simulate_tax_drag` mediante un adaptador legacy inyectado en el
-bootstrap; no descarga, no escribe y no ejecuta el backtest. El capital de la
+`tax_drag.simulate_tax_drag` (hoy en `domain/portfolio`, llamada directamente desde
+la aplicación; la cola de riesgo sigue en un adaptador legacy inyectado en el bootstrap); no descarga, no escribe y no ejecuta el backtest. El capital de la
 simulación fiscal se limita a 1.000-100.000.000 €. Las pruebas comparan ambos
 resultados con las llamadas de la página antigua.
 El contraste Fama-French 5 + Momentum es el job explícito `backtest_factors`,

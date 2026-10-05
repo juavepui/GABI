@@ -1,7 +1,7 @@
 # Drag fiscal español (IRPF, base del ahorro)
 
 Implementación del [issue #14](https://github.com/juavepui/GABI/issues/14).
-`src/gabi/tax_drag.py` simula cuánto del retorno bruto de un backtest V1 se
+`backend/src/gabi/domain/portfolio/tax_drag.py` (antes `src/gabi/tax_drag.py`) simula cuánto del retorno bruto de un backtest V1 se
 pierde por pagar IRPF sobre plusvalías realizadas trimestre a trimestre, en
 vez de diferirlas como haría un comprar-y-mantener.
 
