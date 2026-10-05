@@ -12,7 +12,9 @@ la historia de GABI?
   alfabético.
 - **Documentos**: el principal del 10-K y el anexo EX-13, donde muchas empresas
   publicaban los estados financieros.
-- **Extractor** (`gabi.tenk_extraction`): tablas HTML de resultados, balance y
+- **Extractor** (`gabi.tenk_extraction` en el commit 1283bf5; desde ADR 0002
+  `gabi.domain.research.tenk_extraction`, ejecutable con
+  `python -m gabi_cli research tenk-extraction [--subset ajuste|reserva]`): tablas HTML de resultados, balance y
   flujos de caja; etiquetas normalizadas; columna del ejercicio más reciente;
   escala («in millions» / «in thousands») de la tabla, del texto que la
   precede o la dominante del documento.

@@ -796,23 +796,6 @@
     "numpy",
     "pandas"
   ],
-  "backend/src/gabi/tenk_extraction.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.factor_stability",
-    "gabi.historical_identity_audit.CANDIDATE_SOURCE",
-    "gabi.historical_identity_audit._candidate_map",
-    "gabi.historical_issuer_evidence",
-    "gabi.historical_membership",
-    "gabi.historical_period",
-    "gabi.identity",
-    "gabi.sec_history",
-    "gabi.storage",
-    "io",
-    "numpy",
-    "pandas",
-    "requests"
-  ],
   "backend/src/gabi/universe.py": [
     "gabi.config",
     "gabi.historical_pit",

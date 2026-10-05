@@ -82,6 +82,14 @@ def historical_backfill(settings: Settings, args: argparse.Namespace) -> None:
         backfill.run(settings.data_dir)
 
 
+def tenk_extraction(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.sec_validation import directory
+    from gabi.infrastructure.legacy.tenk_extraction import run
+
+    summary = run(settings.data_dir.parent, directory(settings.data_dir), args.subset)
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -135,6 +143,9 @@ def main(argv: list[str]) -> None:
     command.add_argument("--import-prices", nargs=2, metavar=("START", "END"),
                          help="Solo importa el archivo de precios ya descargado para [START, END) (#34)")
     command.set_defaults(run=historical_backfill)
+    command = commands.add_parser("tenk-extraction", help="Piloto de extracción de 10-K sin XBRL (#41); descarga de SEC")
+    command.add_argument("--subset", choices=["ajuste", "reserva"])
+    command.set_defaults(run=tenk_extraction)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")
