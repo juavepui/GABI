@@ -21,7 +21,7 @@ def _history(tmp_path, symbol, period="0q"):
 def _evaluate(tmp_path, cutoff=date(2025, 7, 2), **kwargs):
     import exchange_calendars as xcals
 
-    from gabi import factor_lab
+    import gabi.domain.research.factors as factor_lab
 
     reader = SqliteEstimateAnalysis(tmp_path, cutoff)
     return estimates.evaluate_estimate_revision_signal(

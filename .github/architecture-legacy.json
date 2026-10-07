@@ -160,17 +160,6 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/factor_lab.py": [
-    "exchange_calendars",
-    "gabi.multifactor_backtest",
-    "gabi.portfolio_backtest",
-    "gabi.screener_asof",
-    "gabi.storage",
-    "gabi.universe",
-    "numpy",
-    "pandas",
-    "scipy"
-  ],
   "backend/src/gabi/factor_sector_stability.py": [
     "gabi.config",
     "gabi.evidence_catalog",

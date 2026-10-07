@@ -3,6 +3,7 @@
 import sqlite3
 from collections.abc import Callable
 from contextlib import closing
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -12,8 +13,10 @@ from gabi.infrastructure.settings import Settings
 
 
 class LegacyExecutor:
-    def __init__(self, settings: Settings, blind_plans_root: Path | None = None):
+    def __init__(self, settings: Settings, blind_plans_root: Path | None = None,
+                 *, today: Callable[[], date] = date.today):
         self.settings = settings
+        self.today = today
         self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
     reports_progress = True  # The worker passes progress(fraction, phase) to long downloads.
@@ -129,7 +132,7 @@ class LegacyExecutor:
             return build_factor_analysis(command.start, command.end, command.factor_months,
                                          command.factor_mode, command.factor_max_symbols,
                                          lambda start, end, **options: run_factors(
-                                             start, end, data_dir=self.settings.data_dir, **options))
+                                             start, end, data_dir=self.settings.data_dir, today=self.today(), **options))
         if command.kind == "estimate_analysis":
             from gabi.application.research.estimate_analysis import build_estimate_analysis
             from gabi.infrastructure.legacy.estimates import run_estimate_analysis

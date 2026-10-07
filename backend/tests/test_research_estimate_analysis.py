@@ -8,7 +8,8 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from gabi import config, factor_lab, storage
+import gabi.domain.research.factors as factor_lab
+from gabi import config, storage
 from gabi.application.errors import QueryError
 from gabi.domain.research import estimates
 from gabi.infrastructure.jobs.worker import Worker
