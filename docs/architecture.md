@@ -46,6 +46,8 @@ OLS/HAC y carga con puertos explícitos de caché/fuente en el worker.
 con puertos explícitos, caché acotada y validación de precios en dominio.
 [Tiingo](architecture/f7-tiingo-prices.md) comparte descarga e importación fijada
 con checkpoints y relojes explícitos entre CLI y worker persistente.
+[FRED](architecture/f7-fred.md) comparte política de revisiones y sincronización
+con repositorio, fuente y reloj explícitos, y metadatos de consulta en dominio.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo

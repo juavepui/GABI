@@ -627,7 +627,6 @@
     "gabi.data_fetch.RETRYABLE_CATEGORIES",
     "gabi.data_fetch._classify_error",
     "gabi.storage",
-    "pandas",
     "requests"
   ],
   "backend/src/gabi/tail_effect_test.py": [

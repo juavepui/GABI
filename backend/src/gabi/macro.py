@@ -14,6 +14,9 @@ from datetime import UTC, date, datetime
 import pandas as pd
 import requests
 
+from gabi.application.administration.fred import synchronize
+from gabi.domain.market import fred
+
 from . import config, storage
 from .data_fetch import _classify_error
 
@@ -21,55 +24,7 @@ FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 
 # id FRED -> metadatos. units_param sigue la convención de la API de FRED
 # ("lin" = sin transformar, "pc1" = variación % interanual).
-SERIES = {
-    "DGS10": {
-        "label": "Treasury 10 años", "unit": "%", "units_param": "lin",
-        "help": "Tipo de interés de la deuda pública de EE.UU. a 10 años. Referencia clave: cuando sube, "
-                "penaliza especialmente a las empresas cuyo beneficio esperado está muy lejos en el futuro "
-                "(crecimiento/tecnológicas), porque sus flujos de caja futuros valen menos al descontarlos.",
-    },
-    "DFII10": {
-        "label": "Tipo real 10 años (TIPS)", "unit": "%", "units_param": "lin",
-        "help": "Tipo de interés real (ya descontada la inflación esperada) a 10 años. Es, en muchos "
-                "sentidos, más determinante para la valoración de acciones que el tipo nominal.",
-    },
-    "FEDFUNDS": {
-        "label": "Tipo de interés oficial (Fed Funds)", "unit": "%", "units_param": "lin",
-        "help": "Tipo de interés oficial de la Reserva Federal. Su subida encarece el crédito para "
-                "empresas y consumidores; sus recortes suelen ser un catalizador alcista para renta variable.",
-    },
-    "T10Y2Y": {
-        "label": "Curva de tipos (10A-2A)", "unit": "puntos", "units_param": "lin",
-        "help": "Diferencia entre el tipo a 10 años y a 2 años. Cuando es negativa (curva invertida), "
-                "ha anticipado históricamente recesiones en EE.UU. con antelación.",
-    },
-    "CPIAUCSL": {
-        "label": "Inflación interanual (CPI)", "unit": "% interanual", "units_param": "pc1",
-        "help": "Variación interanual del Índice de Precios al Consumo. Determina en gran medida la "
-                "política de tipos de la Fed.",
-    },
-    "DTWEXBGS": {
-        "label": "Índice del dólar (trade-weighted)", "unit": "índice", "units_param": "lin",
-        "help": "Fortaleza del dólar frente a la cesta de divisas de sus principales socios comerciales. "
-                "Un dólar fuerte suele perjudicar a las multinacionales con muchas ventas fuera de EE.UU.",
-    },
-    "BAMLH0A0HYM2": {
-        "label": "Spread de crédito high yield", "unit": "puntos %", "units_param": "lin",
-        "help": "Sobreprima que exige el mercado a la deuda corporativa de peor calidad frente a deuda "
-                "pública. Se dispara cuando el mercado teme una recesión o impagos — termómetro de estrés "
-                "de crédito.",
-    },
-    "WALCL": {
-        "label": "Balance de la Fed (liquidez)", "unit": "millones $", "units_param": "lin",
-        "help": "Tamaño del balance de la Reserva Federal. Un balance que crece inyecta liquidez al "
-                "sistema; que se reduce (quantitative tightening) la retira.",
-    },
-    "SAHMREALTIME": {
-        "label": "Regla de Sahm (indicador de recesión)", "unit": "puntos", "units_param": "lin",
-        "help": "Indicador basado en el desempleo que históricamente señala el inicio de una recesión en "
-                "EE.UU. cuando supera 0,5.",
-    },
-}
+SERIES = {key: dict(value) for key, value in fred.SERIES.items()}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS macro_series (
@@ -100,9 +55,7 @@ def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 
         raise ValueError("FRED ha rechazado la petición (revisa que la API key sea correcta)")
     resp.raise_for_status()
     data = resp.json()
-    observations = data.get("observations", [])
-    return [(o["date"], None if o.get("value") in (None, ".") else float(o["value"]))
-            for o in observations if include_missing or o.get("value") not in (None, ".")]
+    return fred.observations(data, include_missing=include_missing)
 
 
 def upsert_series(series_id: str, observations: list):
@@ -146,58 +99,34 @@ def get_all_fetched_at() -> dict:
     return result
 
 
+class _Repository:
+    def fetched_at(self, series_ids):
+        return get_all_fetched_at()
+
+    def failed(self, series_ids):
+        from . import sync_state
+
+        return {entity for entity, _ in sync_state.failed_datasets("fred")}
+
+    def history(self, series_id):
+        return get_series_history(series_id)
+
+    def upsert(self, series_id, observations):
+        upsert_series(series_id, observations)
+
+    def record_errors(self, failed):
+        storage.record_update_errors("fred_macro", failed)
+
+
 def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=None,
                       *, full_refresh: bool = False) -> dict:
-    api_key = config.load_fred_key()
-    if not api_key:
-        return {"ok": False, "reason": "no_api_key", "refreshed": 0, "failed": {}}
-
-    fetched_at = get_all_fetched_at()
-    now = datetime.now(UTC)
     from . import sync_state as sync
-    failed_series = {entity for entity, _ in sync.failed_datasets("fred")}
-    stale = [
-        sid for sid in SERIES
-        if force or full_refresh or sid in failed_series or fetched_at.get(sid) is None
-        or (now - fetched_at[sid]).total_seconds() > max_age_hours * 3600
-    ]
-    failed = {}
-    for i, sid in enumerate(stale):
-        dataset = f"observations:{SERIES[sid]['units_param']}"
-        attempt = sync.Attempt("fred", sid, dataset)
-        cp = sync.get("fred", sid, dataset)
-        try:
-            old = get_series_history(sid)
-            audit_due = not cp.get("full_audited_at") or (
-                now - datetime.fromisoformat(cp["full_audited_at"])).total_seconds() >= 30 * 86400
-            audit = full_refresh or audit_due
-            start = "1776-07-04" if audit else (old.index.max() - pd.Timedelta(days=400)).date().isoformat() if not old.empty else None
-            obs = sync.retry(lambda: fetch_series(sid, api_key, units=SERIES[sid]["units_param"],
-                                                   limit=100000, observation_start=start, include_missing=True), attempt)
-            attempt.payload(obs)
-            if not obs:
-                raise ValueError("FRED devolvió una ventana vacía; checkpoint conservado.")
-            incoming = pd.DataFrame(obs, columns=["date", "value"]).set_index("date")
-            incoming.index = pd.to_datetime(incoming.index)
-            changed, new, revised = sync.delta_rows(old, incoming)
-            upsert_series(sid, [(d.date().isoformat(), None if pd.isna(v) else float(v)) for d, v in changed.value.items()])
-            state = {}
-            valid_dates = incoming.loc[incoming.value.notna()].index
-            if len(valid_dates):
-                state["watermark"] = max(cp.get("watermark", ""), valid_dates.max().date().isoformat())
-            if audit:
-                state["full_audited_at"] = now.isoformat()
-            attempt.finish(sync.change_status(new, revised), state=state, new=new, revised=revised,
-                           unchanged=len(incoming) - new - revised,
-                           reason="auditoría mensual de revisiones antiguas" if audit else "solape de 400 días para revisiones; incluye valores retirados")
-        except Exception as exc:
-            _, reason = _classify_error(exc, service="FRED")
-            failed[sid] = reason
-            attempt.finish("failed", reason=reason)
-        if progress_cb:
-            progress_cb(i + 1, len(stale), sid)
-    storage.record_update_errors("fred_macro", failed)
-    return {"ok": True, "refreshed": len(stale) - len(failed), "failed": failed}
+
+    return synchronize(_Repository(), SERIES, config.load_fred_key,
+                       fetch_series, sync.get, sync.Attempt, sync.retry,
+                       lambda exc: _classify_error(exc, service="FRED")[1],
+                       lambda: datetime.now(UTC), force=force, max_age_hours=max_age_hours,
+                       full_refresh=full_refresh, progress_cb=progress_cb)
 
 
 # release_id de FRED (no de series) -- solo para series que representan una
@@ -208,17 +137,7 @@ RELEASE_IDS = {"CPIAUCSL": 10}
 RELEASE_DATES_URL = "https://api.stlouisfed.org/fred/release/dates"
 
 
-def _parse_next_release_date(payload: dict, today: date) -> date | None:
-    """Pura: de la respuesta ya parseada (JSON) de /fred/release/dates, la
-    primera fecha >= today -- FRED las devuelve ordenadas ascendente al
-    pedir sort_order=asc, pero se ordena aquí también por si acaso."""
-    dates = sorted(d["date"] for d in payload.get("release_dates", []))
-    for d in dates:
-        parsed = date.fromisoformat(d)
-        if parsed >= today:
-            return parsed
-    return None
-
+_parse_next_release_date = fred.parse_next_release_date
 
 def fetch_next_release_date(series_id: str, api_key: str) -> date | None:
     """Próxima fecha de publicación programada (confirmada por la fuente
@@ -240,28 +159,4 @@ def fetch_next_release_date(series_id: str, api_key: str) -> date | None:
 
 
 def get_snapshot() -> pd.DataFrame:
-    """Una fila por serie: último valor, fecha, variación frente a ~3 meses
-    antes (aprox. 63 sesiones para series diarias, o últimas observaciones
-    disponibles para series menos frecuentes)."""
-    rows = []
-    for series_id, meta in SERIES.items():
-        history = get_series_history(series_id)
-        if history.empty:
-            rows.append({
-                "series_id": series_id, "label": meta["label"], "unit": meta["unit"],
-                "help": meta["help"], "latest_value": None, "latest_date": None, "change_3m": None,
-            })
-            continue
-        latest_date = history.index[-1]
-        latest_value = history["value"].iloc[-1]
-        change_3m = None
-        past = history[history.index <= latest_date - pd.Timedelta(days=90)]
-        if not past.empty:
-            past_value = past["value"].iloc[-1]
-            change_3m = latest_value - past_value
-        rows.append({
-            "series_id": series_id, "label": meta["label"], "unit": meta["unit"],
-            "help": meta["help"], "latest_value": latest_value,
-            "latest_date": latest_date.date().isoformat(), "change_3m": change_3m,
-        })
-    return pd.DataFrame(rows)
+    return fred.snapshot(SERIES, {sid: get_series_history(sid) for sid in SERIES})
