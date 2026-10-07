@@ -82,6 +82,17 @@ class FilePublishedFactors:
             results[name] = result
 
         sector = results["factor-zoo-sector"]
+        self.verify_sector(sector)
+        if not isinstance(results["factor-zoo"].get("factors"), dict) or not isinstance(
+            sector.get("factors"), dict
+        ) or not isinstance(sector.get("coverage"), list):
+            raise ValueError("Unexpected published factor shape")
+        return {"zoo": results["factor-zoo"], "sector": sector,
+                "zoo_sha256": sources["factor-zoo"]["sha256"],
+                "sector_sha256": sources["factor-zoo-sector"]["sha256"]}
+
+    def verify_sector(self, sector: dict) -> dict:
+        docs = self.root / "docs"
         specification_path = docs / "factor-zoo-sector" / "preregistro.json"
         if seal.fingerprint(self._json(specification_path)) != seal.SECTOR_SPEC_SHA256:
             raise ValueError("Published SIC specification differs")
@@ -95,13 +106,7 @@ class FilePublishedFactors:
             path = docs / "factor-zoo-sector" / name
             if path.stat().st_size > MAX_FILE_BYTES or seal.text_hash(path) != sector["artifacts_sha256"][name]:
                 raise ValueError("Published SIC artifact seal differs")
-        if not isinstance(results["factor-zoo"].get("factors"), dict) or not isinstance(
-            sector.get("factors"), dict
-        ) or not isinstance(sector.get("coverage"), list):
-            raise ValueError("Unexpected published factor shape")
-        return {"zoo": results["factor-zoo"], "sector": sector,
-                "zoo_sha256": sources["factor-zoo"]["sha256"],
-                "sector_sha256": sources["factor-zoo-sector"]["sha256"]}
+        return sector
 
     def read(self) -> dict:
         with self._lock:

@@ -124,8 +124,7 @@
   ],
   "backend/src/gabi/evidence_catalog.py": [
     "gabi.config",
-    "gabi.factor_sector_stability",
-    "gabi.live_ledger"
+    "gabi.factor_sector_stability"
   ],
   "backend/src/gabi/evidence_confidence.py": [
     "gabi.app_mode",
