@@ -16,7 +16,8 @@ def run_backtest_v1(start: str, end: str, options: dict) -> dict:
 
 
 def run_backtest_v2(start: str, end: str, options: dict) -> dict:
-    from gabi import multifactor_backtest, portfolio_backtest, portfolio_metrics
+    import gabi.domain.portfolio.metrics as portfolio_metrics
+    from gabi import multifactor_backtest, portfolio_backtest
 
     result = portfolio_backtest.run(
         start, end, months=options["months"], top_n=options["top_n"],
@@ -82,13 +83,13 @@ class LegacyBacktestMath:
 
     @staticmethod
     def tail_risk(returns, horizon: str) -> dict:
-        from gabi import portfolio_metrics
+        import gabi.domain.portfolio.metrics as portfolio_metrics
 
         return portfolio_metrics.tail_risk_metrics(returns, horizon=horizon)
 
     @staticmethod
     def returns_from_nav(nav):
-        from gabi import portfolio_metrics
+        import gabi.domain.portfolio.metrics as portfolio_metrics
 
         return portfolio_metrics.returns_from_nav(nav)
 

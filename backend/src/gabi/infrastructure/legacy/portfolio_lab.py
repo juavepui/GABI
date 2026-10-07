@@ -74,7 +74,7 @@ class LegacyPortfolioLabSources:
 
     @staticmethod
     def tracking_error(returns, benchmark):
-        from gabi import portfolio_metrics
+        import gabi.domain.portfolio.metrics as portfolio_metrics
 
         return portfolio_metrics.tracking_error(returns, benchmark)
 
@@ -86,7 +86,7 @@ class LegacyPortfolioLabSources:
 
     @staticmethod
     def beta(returns, benchmark):
-        from gabi import portfolio_metrics
+        import gabi.domain.portfolio.metrics as portfolio_metrics
 
         return portfolio_metrics.beta_vs_benchmark(returns, benchmark)
 

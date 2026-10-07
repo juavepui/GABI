@@ -67,8 +67,6 @@ module = [
     "gabi.data_fetch",
     "gabi.macro",
     "gabi.edgar",
-    "gabi.technicals",
-    "gabi.stats_rigor",
     "gabi.insider",
     "gabi.multifactor_backtest",
     "gabi.blind_validation",
