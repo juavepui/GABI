@@ -134,9 +134,7 @@
     "gabi.history_refresh.last_completed_session",
     "gabi.live_ledger",
     "gabi.rank_stability",
-    "gabi.scoring",
-    "numpy",
-    "pandas"
+    "gabi.scoring"
   ],
   "backend/src/gabi/factor_benchmark.py": [
     "gabi.academic_factors",

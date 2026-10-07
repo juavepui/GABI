@@ -186,7 +186,8 @@ def provenance(symbols: list[str]) -> dict:
 def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") -> dict:
     names = ("scoring.py", "domain/market/scoring.py", "metrics.py", "domain/market/fundamentals.py", "technicals.py", "domain/market/technicals.py",
              "risk.py", "domain/market/risk.py", "screener.py", "edgar.py", "domain/market/sec_facts.py",
-             "live_ledger.py", "domain/research/live_performance.py", "evidence_confidence.py", "evidence_catalog.py",
+             "live_ledger.py", "domain/research/live_performance.py", "evidence_confidence.py", "domain/market/evidence.py",
+             "application/market/evidence_assessment.py", "evidence_catalog.py",
              "workspace.py", "__init__.py")
     hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
     specification = {"weights": weights if weights is not None else app_mode.FROZEN_WEIGHTS,

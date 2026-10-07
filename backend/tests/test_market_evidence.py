@@ -9,7 +9,6 @@ from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
 from gabi import app_mode, evidence_confidence, rank_stability
-from gabi.infrastructure.legacy import evidence as legacy
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 
@@ -84,7 +83,7 @@ def test_the_portfolio_plan_reads_frozen_weight_evidence_in_research(market):
 def test_evidence_is_computed_once_per_ranking_revision(market, monkeypatch):
     client, app, _ = market
     calls = []
-    original = legacy.LegacyEvidence.evidence
+    original = app.state.evidence.math.evidence
     monkeypatch.setattr(app.state.evidence.math, "evidence",
                         lambda table, weights: calls.append(1) or original(table, weights))
     for _ in range(3):
