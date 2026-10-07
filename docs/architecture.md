@@ -40,6 +40,8 @@ con puertos explícitos de integración/publicación y retira su módulo plano.
 reglas de cobertura y caso de uso, con lecturas acotadas y exportación explícita.
 [La cobertura trimestral 1996–2015](architecture/f7-quarterly-coverage.md) retira
 su módulo plano, conserva los cinco artefactos y procesa una empresa por lectura.
+[Los factores académicos](architecture/f7-academic-factors.md) comparten dominio
+OLS/HAC y carga con puertos explícitos de caché/fuente en el worker.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo

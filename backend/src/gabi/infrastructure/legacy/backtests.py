@@ -1,8 +1,11 @@
 """Run the unchanged V1/V2 backtest engines with the metrics Streamlit showed."""
 
 import sqlite3
+from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
+
+from gabi.application.research.academic_factors import FactorSnapshot
 
 
 def run_backtest_v1(start: str, end: str, options: dict) -> dict:
@@ -100,21 +103,31 @@ class LegacyBacktestMath:
         return data_quality.ranking_quality_warnings(quality, threshold)
 
 
-def run_factor_contrast(periods, hac_lags: int | None) -> dict:
+def run_factor_contrast(periods, hac_lags: int | None, *, factor_loader: Callable[[], FactorSnapshot] | None = None) -> dict:
     """The Fama-French block of the old V1 page: cached factors, HAC regression, stability, benchmark."""
     import hashlib
 
-    from gabi import academic_factors, config, factor_benchmark, factor_stability
+    from gabi import factor_benchmark, factor_stability
+    from gabi.domain.research import academic_factors as calculations
+    from gabi.infrastructure.storage.academic_factors import calculation_sources
 
-    factors = academic_factors.fetch_ff_factors()  # Reads data/ff_factors.csv; downloads only if absent.
-    cache = config.DATA_DIR / "ff_factors.csv"
-    source = {"file": "ff_factors.csv", "sha256": hashlib.sha256(cache.read_bytes()).hexdigest(),
-              "first_month": factors.index.min().date().isoformat(),
-              "last_month": factors.index.max().date().isoformat(),
-              "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"}
-    result: dict = {"factors_source": source}
+    if factor_loader is None:
+        from gabi import academic_factors, config
+
+        factors = academic_factors.fetch_ff_factors()
+        cache = config.DATA_DIR / "ff_factors.csv"
+        source = {"file": "ff_factors.csv", "sha256": hashlib.sha256(cache.read_bytes()).hexdigest(),
+                  "first_month": factors.index.min().date().isoformat(),
+                  "last_month": factors.index.max().date().isoformat(),
+                  "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"}
+    else:
+        snapshot = factor_loader()
+        factors, source = snapshot.factors, snapshot.source
+        if factors.empty:
+            raise ValueError("Factor cache has no monthly data")
+    result: dict = {"factors_source": source, "calculation_sources": calculation_sources()}
     try:
-        result["regression"] = academic_factors.regress_returns_on_factors(periods, factors, hac_lags=hac_lags)
+        result["regression"] = calculations.regress_returns_on_factors(periods, factors, hac_lags=hac_lags)
     except (ValueError, RuntimeError) as exc:
         result["regression"] = str(exc)
     try:
@@ -128,11 +141,13 @@ def run_factor_contrast(periods, hac_lags: int | None) -> dict:
     return result
 
 
-def contrast_backtest(data_dir: Path, request: dict) -> dict:
+def contrast_backtest(data_dir: Path, request: dict, *, factor_loader: Callable[[], FactorSnapshot] | None = None) -> dict:
+    from functools import partial
+
     from gabi.application.research.backtest_factors import build_factor_contrast
     from gabi.infrastructure.storage.jobs import SqliteJobs
 
     jobs = SqliteJobs(data_dir)
     source = jobs.get(request["source_job_id"])
     artifact = jobs.result(request["source_job_id"])  # Verifies the stored SHA-256.
-    return build_factor_contrast(artifact, request, source["result_sha256"], run_factor_contrast)
+    return build_factor_contrast(artifact, request, source["result_sha256"], partial(run_factor_contrast, factor_loader=factor_loader))

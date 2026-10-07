@@ -9,16 +9,19 @@ from pathlib import Path
 import pandas as pd
 
 from gabi.application.administration.jobs import JobCommand
+from gabi.application.research.academic_factors import FactorSnapshot
 from gabi.infrastructure.settings import Settings
 
 
 class LegacyExecutor:
     def __init__(self, settings: Settings, blind_plans_root: Path | None = None,
                  *, today: Callable[[], date] = date.today,
-                 insider_sync: Callable[..., dict] | None = None):
+                 insider_sync: Callable[..., dict] | None = None,
+                 factor_loader: Callable[[], FactorSnapshot] | None = None):
         self.settings = settings
         self.today = today
         self.insider_sync = insider_sync
+        self.factor_loader = factor_loader
         self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
     reports_progress = True  # The worker passes progress(fraction, phase) to long downloads.
@@ -169,7 +172,7 @@ class LegacyExecutor:
             from gabi.infrastructure.legacy.backtests import contrast_backtest
 
             assert command.factor_contrast is not None
-            return contrast_backtest(self.settings.data_dir, command.factor_contrast)
+            return contrast_backtest(self.settings.data_dir, command.factor_contrast, factor_loader=self.factor_loader)
         if command.kind == "backtest_register":
             from gabi.infrastructure.legacy.backtests import register_backtest
 

@@ -44,4 +44,6 @@ def build_factor_contrast(artifact: dict, request: dict, source_sha256: str,
         value = result[part]
         output[part] = None if isinstance(value, str) else _json_value(value)
         output[f"{part}_error"] = value if isinstance(value, str) else None
+    if result.get("calculation_sources") is not None:
+        output["calculation_sources"] = _json_value(result["calculation_sources"])
     return output
