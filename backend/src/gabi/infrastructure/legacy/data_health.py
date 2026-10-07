@@ -1,9 +1,12 @@
 """The old Calidad de los datos through the unchanged data_quality, identity and historical_archive modules."""
 
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
 
+from gabi.application.administration.data_quality import provenance, summary
 from gabi.application.errors import QueryError
 
 
@@ -15,8 +18,9 @@ def _records(frame: pd.DataFrame) -> list[dict]:
 class LegacyDataHealth:
     """Worker only: its LegacyExecutor checks that config.DATA_DIR is the API data directory."""
 
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, *, now: Callable[[], datetime] | None = None):
         self.data_dir = data_dir
+        self.now = now or (lambda: datetime.now(UTC))
 
     def universe(self) -> list[dict]:
         from gabi import config
@@ -31,7 +35,7 @@ class LegacyDataHealth:
     def summary(self, symbols: list[str]) -> dict:
         from gabi import data_quality
 
-        return data_quality.universe_summary(symbols)
+        return summary(symbols, data_quality._readers(), now=self.now(), rules=data_quality._rules())
 
     def recent_errors(self) -> list[dict]:
         from gabi import data_quality
@@ -41,7 +45,7 @@ class LegacyDataHealth:
     def provenance(self, symbol: str, as_of: str) -> dict:
         from gabi import data_quality
 
-        return data_quality.symbol_provenance(symbol, as_of=as_of)
+        return provenance(symbol, data_quality._readers(), now=self.now(), as_of=as_of, rules=data_quality._rules())
 
     def identity(self, symbol: str, as_of: str) -> dict:
         from gabi import identity, storage

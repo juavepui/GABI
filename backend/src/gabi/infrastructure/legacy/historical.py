@@ -17,19 +17,19 @@ class LegacyRankingQuality:
 
     @staticmethod
     def block_coverage(table) -> dict:
-        from gabi import data_quality
+        from gabi.domain.market import data_quality
 
         return data_quality.score_block_coverage(table)
 
     @staticmethod
     def block_warnings(blocks: dict, threshold: float) -> list[str]:
-        from gabi import data_quality
+        from gabi.domain.market import data_quality
 
         return data_quality.block_coverage_warnings(blocks, threshold)
 
     @staticmethod
     def ranking_warnings(quality: dict, threshold: float) -> list[str]:
-        from gabi import data_quality
+        from gabi.domain.market import data_quality
 
         return data_quality.ranking_quality_warnings(quality, threshold)
 
