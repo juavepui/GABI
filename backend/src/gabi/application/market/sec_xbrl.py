@@ -82,3 +82,28 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
 def validate_issuer(payload: dict, cik: str) -> None:
     if "cik" in payload and normalize_cik(payload["cik"]) != normalize_cik(cik):
         raise ValueError("SEC respondió con hechos/filings de otro emisor.")
+
+
+def fetch_complete(cik: str, *, companyfacts: Callable[[str], dict], submissions: Callable[[str], dict],
+                   compute: Callable[[dict], dict]) -> tuple[dict, list[dict]]:
+    facts = companyfacts(cik)
+    validate_issuer(facts, cik)
+    rows = _extract_raw_facts(facts, TRACKED_TAGS, unit="USD")
+    rows += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
+    metrics = compute(facts)
+    try:
+        filings = submissions(cik)
+    except Exception:
+        pass  # Historical nonincremental compatibility: filing links remain optional.
+    else:
+        validate_issuer(filings, cik)
+        metrics.update(extract_latest_filings(filings))
+    return metrics, rows
+
+
+def download_complete(symbol: str, cik: str, *, store: XbrlStore, companyfacts: Callable[[str], dict],
+                      submissions: Callable[[str], dict], compute: Callable[[dict], dict]) -> None:
+    metrics, rows = fetch_complete(cik, companyfacts=companyfacts, submissions=submissions, compute=compute)
+    if rows:
+        store.ensure_entity(cik)
+    store.save(symbol, cik, rows, metrics)
