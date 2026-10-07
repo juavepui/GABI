@@ -1,23 +1,28 @@
 """The existing SEC CIK resolver behind an explicit Form 4 ingestion port."""
 
 import concurrent.futures as cf
+from collections.abc import Callable
 
 from gabi.application.market.insider_sync import InsiderAttempt, fetch_transactions
 from gabi.infrastructure.providers.form4 import SecForm4Documents
 
 
 class SecInsiders:
-    def __init__(self, user_agent: str):
+    def __init__(self, user_agent: str, *, mapping_loader: Callable | None = None,
+                 cik_resolver: Callable | None = None):
         self.documents = SecForm4Documents(user_agent)
+        self.mapping_loader, self.cik_resolver = mapping_loader, cik_resolver
 
-    @staticmethod
-    def mapping():
+    def mapping(self):
+        if self.mapping_loader is not None:
+            return self.mapping_loader()
         from gabi.edgar import get_cik_map
 
         return get_cik_map()
 
-    @staticmethod
-    def resolve(symbol, mapping):
+    def resolve(self, symbol, mapping):
+        if self.cik_resolver is not None:
+            return self.cik_resolver(symbol, mapping)[0]
         from gabi.edgar import get_cik_for_symbol
 
         return get_cik_for_symbol(symbol, cik_map=mapping)[0]

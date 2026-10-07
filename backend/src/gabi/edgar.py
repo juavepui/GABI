@@ -19,6 +19,8 @@ import pandas as pd
 import requests
 
 import gabi.domain.market.sec_facts as _sec_facts
+from gabi.application.market.sec_cik import current_map
+from gabi.application.market.sec_cik import resolve as resolve_cik
 
 from . import config, storage
 from .data_fetch import _classify_error
@@ -101,42 +103,36 @@ def _headers():
     return {"User-Agent": config.SEC_USER_AGENT}
 
 
-def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
-    """DataFrame[symbol, cik, title]. cik en formato de 10 dígitos con ceros
-    a la izquierda, tal y como lo requieren las URLs de companyfacts/submissions."""
-    if (not force_refresh and CIK_CACHE.exists()
-            and datetime.now(UTC).timestamp() - CIK_CACHE.stat().st_mtime < 7 * 86400):
+class _CikCache:
+    def exists(self):
+        return CIK_CACHE.exists()
+
+    def modified_at(self):
+        return CIK_CACHE.stat().st_mtime
+
+    def read(self):
         return pd.read_csv(CIK_CACHE, dtype={"cik": str})
+
+    def save(self, frame):
+        config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        pending = CIK_CACHE.with_suffix(".csv.tmp")
+        frame.to_csv(pending, index=False)
+        pending.replace(CIK_CACHE)
+
+
+def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
+    """Current SEC map, with the published weekly-cache and failure fallback."""
     from . import sync_state
-    attempt = sync_state.Attempt("sec", "all", "ticker-map")
 
     def fetch():
         resp = requests.get(TICKER_CIK_URL, headers=_headers(), timeout=20)
         resp.raise_for_status()
         return resp.json()
 
-    try:
-        data = sync_state.retry(fetch, attempt)
-        attempt.payload(data)
-    except Exception as exc:
-        attempt.finish("failed", reason=str(exc))
-        if CIK_CACHE.exists():
-            return pd.read_csv(CIK_CACHE, dtype={"cik": str})
-        raise
-    rows = [
-        {"symbol": v["ticker"], "cik": str(v["cik_str"]).zfill(10), "title": v.get("title", "")}
-        for v in data.values()
-    ]
-    df = pd.DataFrame(rows)
-    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    pending = CIK_CACHE.with_suffix(".csv.tmp")
-    df.to_csv(pending, index=False)
-    pending.replace(CIK_CACHE)
-    cp = sync_state.get("sec", "all", "ticker-map")
-    digest = sync_state.fingerprint(rows)
-    status = "new" if not cp else "unchanged" if cp.get("fingerprint") == digest else "revised"
-    attempt.finish(status, state={"fingerprint": digest}, reason="revisión semanal del mapeo ticker/CIK")
-    return df
+    return current_map(_CikCache(), fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
+                       sync_state.retry, lambda: sync_state.get("sec", "all", "ticker-map"),
+                       sync_state.fingerprint, lambda: datetime.now(UTC).timestamp(),
+                       force_refresh=force_refresh)
 
 
 # Caché persistente (symbol -> cik, title) de resoluciones que YA han
@@ -201,18 +197,15 @@ def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
     que hoy recicla ese ticker sería peor que no tener datos."""
     if cik_map is None:
         cik_map = get_cik_map()
-    row = cik_map[cik_map["symbol"] == symbol]
-    if row.empty and "." in symbol:
-        # Notación de clases de acción: los datasets de composición de índice usan
-        # el punto (ej. "BRK.B"), pero el mapeo de la SEC usa guión ("BRK-B") —
-        # es la misma acción, no una empresa distinta, así que esta normalización
-        # es segura y no entra en conflicto con la política de no adivinar.
-        row = cik_map[cik_map["symbol"] == symbol.replace(".", "-")]
-    if not row.empty:
-        cik, title = row.iloc[0]["cik"], row.iloc[0]["title"]
+    return resolve_cik(symbol, cik_map, _CikResolutions())
+
+
+class _CikResolutions:
+    def remember(self, symbol, cik, title):
         _remember_cik_resolution(symbol, cik, title)
-        return cik, title
-    return _get_cached_cik_resolution(symbol)
+
+    def cached(self, symbol):
+        return _get_cached_cik_resolution(symbol)
 
 
 def fetch_company_facts(cik: str) -> dict:
