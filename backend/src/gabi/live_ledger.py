@@ -185,7 +185,7 @@ def provenance(symbols: list[str]) -> dict:
 
 def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") -> dict:
     names = ("scoring.py", "domain/market/scoring.py", "metrics.py", "domain/market/fundamentals.py", "technicals.py", "domain/market/technicals.py",
-             "risk.py", "domain/market/risk.py", "screener.py", "domain/market/events.py", "domain/market/insiders.py", "edgar.py", "domain/market/sec_facts.py",
+             "risk.py", "domain/market/risk.py", "domain/market/model_policy.py", "screener.py", "domain/market/events.py", "domain/market/insiders.py", "edgar.py", "domain/market/sec_facts.py",
              "live_ledger.py", "domain/research/live_performance.py", "evidence_confidence.py", "domain/market/evidence.py",
              "application/market/evidence_assessment.py", "evidence_catalog.py", "domain/research/evidence_catalog.py",
              "application/research/evidence_catalog.py",

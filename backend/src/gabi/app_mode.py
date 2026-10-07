@@ -17,23 +17,19 @@ sigue permitiendo experimentar, pero cualquier desviación de los pesos
 congelados queda marcada EXPERIMENTAL de forma visible, nunca silenciosa."""
 import json
 
+from gabi.domain.market import model_policy as _policy
+
 from . import config
 
-MODES = ("INVESTOR", "RESEARCH")
-DEFAULT_MODE = "INVESTOR"  # un usuario nuevo no debería aterrizar en herramientas de investigación
-
+MODES = _policy.MODES
+DEFAULT_MODE = _policy.DEFAULT_MODE
 MODE_PATH = config.DATA_DIR / "app_mode.json"
+MODEL_STATUSES = _policy.MODEL_STATUSES
+FROZEN_MODEL_ID = _policy.FROZEN_MODEL_ID
+FROZEN_LABEL = _policy.FROZEN_LABEL
+FROZEN_WEIGHTS = dict(_policy.FROZEN_WEIGHTS)
+FROZEN_WEIGHTS_TOLERANCE = _policy.FROZEN_WEIGHTS_TOLERANCE
 
-MODEL_STATUSES = ("FROZEN", "VALIDATED", "EXPERIMENTAL", "LIVE_FORWARD")
-
-# La hipótesis exacta de HIPOTESIS_CONGELADA.md (2026-09-17). Si los pesos
-# activos coinciden con esto, el modelo mostrado es el validado; si no, es
-# una desviación experimental, se muestre donde se muestre -- no hay un
-# término medio "casi congelado".
-FROZEN_MODEL_ID = "GABI-MF-v1"
-FROZEN_LABEL = "Hipótesis congelada 2026-09-17"
-FROZEN_WEIGHTS = {"value": 0.30, "quality": 0.35, "momentum": 0.25, "risk": 0.10}
-FROZEN_WEIGHTS_TOLERANCE = 1e-6
 
 def get_mode() -> str:
     """Persistido en disco (no solo session_state de Streamlit) para que un
@@ -57,31 +53,11 @@ def set_mode(mode: str):
 
 
 def weights_match_frozen(weights: dict, tolerance: float = FROZEN_WEIGHTS_TOLERANCE) -> bool:
-    """True solo si los 4 pesos coinciden con FROZEN_WEIGHTS dentro de
-    `tolerance` -- un peso ausente cuenta como 0.0 (no coincide), no se
-    ignora la métrica."""
-    if not weights:
-        return False
-    return all(abs(weights.get(k, 0.0) - v) <= tolerance for k, v in FROZEN_WEIGHTS.items())
+    return _policy.weights_match_frozen(weights, tolerance, frozen_weights=FROZEN_WEIGHTS)
 
 
 def model_status(weights: dict, *, live_forward_active: bool = False) -> str:
-    """FROZEN/VALIDATED/EXPERIMENTAL -- función pura (sin red, sin base de
-    datos): `live_forward_active` lo decide el llamador (ver
-    current_model_status para la versión que sí consulta las fuentes reales).
-
-    - EXPERIMENTAL: `weights` se desvía de la hipótesis congelada, sea cual
-      sea la magnitud.
-    - LIVE_FORWARD: coincide con la hipótesis congelada Y hay seguimiento
-      en vivo activo (una validación ciega bloqueada con rebalanceos reales,
-      o al menos un experimento en fase LIVE_FORWARD).
-    - FROZEN: coincide con la hipótesis congelada pero sin seguimiento
-      en vivo activado todavía. Coincidir en pesos no acredita una ventaja
-      independiente; VALIDATED queda reservado para una acreditación explícita.
-      LIVE_FORWARD indica seguimiento, no éxito del estudio."""
-    if not weights_match_frozen(weights):
-        return "EXPERIMENTAL"
-    return "LIVE_FORWARD" if live_forward_active else "FROZEN"
+    return _policy.model_status(weights, live_forward_active=live_forward_active, frozen_weights=FROZEN_WEIGHTS)
 
 
 def _research_lab_live_forward_active() -> bool:
@@ -152,15 +128,4 @@ def current_model_status() -> dict:
 
 
 def experimental_banner_message(weights: dict) -> str | None:
-    """Mensaje a mostrar cuando `weights` se desvía de la hipótesis
-    congelada -- None si coincide (nada que avisar). El guardrail contra
-    data snooping accidental: cambiar un peso siempre se ve, nunca es
-    silencioso, y apunta a dónde registrar el experimento con trazabilidad."""
-    if weights_match_frozen(weights):
-        return None
-    parts = ", ".join(f"{k.capitalize()} {v:.0%}" for k, v in weights.items())
-    return (
-        f"🧪 **EXPERIMENTAL** -- estos pesos ({parts}) no son los de la {FROZEN_LABEL}. "
-        "Este resultado no es una validación oficial del modelo. Si quieres conservar la "
-        "trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
-    )
+    return _policy.experimental_banner_message(weights, frozen_weights=FROZEN_WEIGHTS, frozen_label=FROZEN_LABEL)

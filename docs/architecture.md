@@ -27,6 +27,8 @@ comparte análisis de fechas, sincronización explícita y almacenamiento.
 y resume operaciones con filas y fecha explícitas; conserva pendiente su I/O legacy.
 [El arnés de variantes](architecture/f7-variant-validation.md) comparte protocolo
 y métricas con un runner explícito y conserva la fachada usada por R3 congelado.
+[La identidad y estado del modelo](architecture/f7-model-policy.md) usa reglas
+de dominio con pesos de referencia inmutables compartidas por Mercado y evidencia.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
