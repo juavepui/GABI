@@ -1,10 +1,12 @@
 """Decision plans use existing calculations and never mutate data on GET."""
 
+from datetime import date, timedelta
+
 import pandas as pd
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import config, decision_engine
+from gabi import config, decision_engine, storage
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
@@ -72,6 +74,12 @@ def test_decisions_get_is_inert_and_invalid_holdings_do_not_save(tmp_path):
 
 
 def test_saved_plan_progress_matches_legacy_weighted_result(tmp_path, monkeypatch):
+    class FixtureDate(date):
+        @classmethod
+        def today(cls):
+            return TODAY
+
+    monkeypatch.setattr(decision_engine, "date", FixtureDate)
     seed_fixture(tmp_path)
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
@@ -82,6 +90,11 @@ def test_saved_plan_progress_matches_legacy_weighted_result(tmp_path, monkeypatc
          "change_pct": 2, "reason": "test", "score": 68},
     ])
     plan_id = decision_engine.save_plan({"decisions": rows, "method": "legacy"}, decision_engine.Policy(), {})
+    # Keep the saved plan inside the synthetic price window, independent of the day pytest runs.
+    with storage.get_connection() as connection:
+        plan_date = TODAY - timedelta(days=5)
+        connection.execute("UPDATE decision_runs SET created_at=? WHERE id=?", (f"{plan_date}T12:00:00", plan_id))
+        connection.commit()
     expected = decision_engine.plan_progress(plan_id)
     with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:
         response = api.get(f"/api/v1/portfolio/decisions/{plan_id}/progress")

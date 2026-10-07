@@ -196,9 +196,9 @@ class LegacyExecutor:
                 raise RuntimeError("Una o más fuentes fallaron.")
             return {"symbols": list(command.symbols), "updated": len(command.symbols)}
         if command.kind == "refresh":
-            from gabi import periodic_tasks
+            from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
-            result = periodic_tasks.refresh_data()
+            result = build_periodic_tasks(self.settings.data_dir).refresh_data()
             if result["fallos"] or result["failed_events"]:
                 raise RuntimeError("Una o más fuentes fallaron.")
             return {"symbols": result["simbolos"], "sync": result["sync"]}
@@ -211,17 +211,17 @@ class LegacyExecutor:
                     "skipped": result["skipped"], "metrics": result["metrics"],
                     "return": result["return"], "spy_return": result["spy_return"]}
         if command.kind == "maintenance":
-            from gabi import periodic_tasks
+            from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
-            result = periodic_tasks.run(refresh=False)
+            result = build_periodic_tasks(self.settings.data_dir).run(refresh=False)
             if result.get("error") or result.get("ledger", {}).get("status") == "ERROR":
                 raise RuntimeError("El mantenimiento terminó con errores.")
             # Never surface pending #43/#44 results through jobs.
             return {"maintenance": "completed"}
         if command.kind == "tiingo":
-            from gabi import periodic_tasks
+            from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
-            result = periodic_tasks.resume_tiingo()
+            result = build_periodic_tasks(self.settings.data_dir).resume_tiingo()
             if result.get("omitido"):
                 raise RuntimeError("La cola Tiingo ya está en curso.")
             return {"download": "completed"}

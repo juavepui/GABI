@@ -1,6 +1,6 @@
 # Ledger local LIVE_FORWARD (#57)
 
-La [política](POLITICA.md) se fijó en `ecf5085`. `periodic_tasks.run()` verifica la cadena antes del mantenimiento y, al terminar, añade una decisión con las entradas derivadas completas, fuentes/fechas, universo, ranking, exclusiones, Top-20 propuesto/efectivo, configuración, commit, hashes de código, fingerprint de datos y evidencia/confianza #52. Usa datos de la caché local; no archiva de nuevo los 83 GiB de fuentes crudas.
+La [política](POLITICA.md) se fijó en `ecf5085`. `application.administration.periodic.PeriodicTasks.run()` verifica la cadena antes del mantenimiento y, al terminar, añade una decisión con las entradas derivadas completas, fuentes/fechas, universo, ranking, exclusiones, Top-20 propuesto/efectivo, configuración, commit, hashes de código, fingerprint de datos y evidencia/confianza #52. Usa datos de la caché local; no archiva de nuevo los 83 GiB de fuentes crudas.
 
 Los estados son SIGNAL, DEGRADED, NO_SIGNAL y ERROR. Datos de las propuestas o benchmark caducados/futuros/desconocidos, precios inválidos o cambio de sesión durante el cálculo producen estado degradado; fallos del mantenimiento se conservan. Las propuestas quedan visibles para diagnóstico, pero el Top-N efectivo de esas ejecuciones está vacío. La falta de confianza estadística se comunica aparte y no modifica el ranking. El mantenimiento continúa protegiendo los rebalanceos ciegos existentes; el ledger no lee sus resultados.
 
@@ -10,7 +10,7 @@ Los eventos viven en `data/gabi.db`, tabla `live_ledger`; `data/live_ledger/head
 
 ```powershell
 .venv/Scripts/python.exe -m gabi.live_ledger --verify
-.venv/Scripts/python.exe -m gabi.periodic_tasks --run
+.venv/Scripts/python.exe -m gabi_cli periodic --run
 ```
 
 Una interrupción tras el commit SQLite y antes del ancla requiere revisión explícita. `--recover-anchor "motivo de la revisión"` solo acepta que el ancla anterior sea un prefijo válido de la cadena existente y añade ANCHOR_RECOVERY; no acepta ocultar una cola eliminada. `append_correction(seq, reason, changes)` añade CORRECTION con hash/referencia del original. Ningún evento reemplaza una decisión.

@@ -8,8 +8,9 @@ from fastapi.testclient import TestClient
 from test_blind_validation import WEIGHTS, _fake_ranking, _seed_prices
 
 from gabi import blind_validation as bv
-from gabi import config, periodic_tasks
+from gabi import config
 from gabi import research_lab as rl
+from gabi.application.administration.periodic import PeriodicTasks
 from gabi.application.research.blind import run_performance
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
@@ -46,7 +47,7 @@ def _prices(days=12):
 def test_due_rebalance_is_recorded_once_without_revealing_positions(monkeypatch):
     _prices()
     _fake_ranking(monkeypatch, {"A": 90, "B": 80})
-    monkeypatch.setattr(periodic_tasks, "prices_fresh", lambda: True)
+    monkeypatch.setattr(PeriodicTasks, "prices_fresh", lambda self: True)
     vid = bv.create_validation("Test", WEIGHTS, 2, 3, (TODAY - timedelta(days=1)).isoformat(), "2099-01-01")
     with TestClient(create_app(Settings(config.DATA_DIR), today=lambda: TODAY)) as client:
         first = client.get(f"/api/v1/research/blind-rebalances/{_run(client, 'blind_rebalance', vid, 'blind-r-1')}")
@@ -61,7 +62,7 @@ def test_due_rebalance_is_recorded_once_without_revealing_positions(monkeypatch)
 def test_stale_prices_block_the_rebalance(monkeypatch):
     _prices()
     _fake_ranking(monkeypatch, {"A": 90, "B": 80})
-    monkeypatch.setattr(periodic_tasks, "prices_fresh", lambda: False)
+    monkeypatch.setattr(PeriodicTasks, "prices_fresh", lambda self: False)
     vid = bv.create_validation("Test", WEIGHTS, 2, 3, (TODAY - timedelta(days=1)).isoformat(), "2099-01-01")
     with TestClient(create_app(Settings(config.DATA_DIR), today=lambda: TODAY)) as client:
         result = client.get(f"/api/v1/research/blind-rebalances/{_run(client, 'blind_rebalance', vid, 'blind-r-3')}")

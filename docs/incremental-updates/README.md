@@ -1,6 +1,10 @@
 # Actualizaciones incrementales locales (#55)
 
-Se amplían los actualizadores existentes de GABI y la tarea local de #46. El scheduler sigue siendo `gabi.periodic_tasks`; los checkpoints y eventos se guardan en la misma SQLite local. No se añade un servicio remoto.
+Se amplían los actualizadores existentes de GABI y la tarea local de #46. El mantenimiento se ejecuta con `gabi_cli periodic`; el scheduler encola con `gabi_cli schedule daily|tiingo`. Los checkpoints y eventos se guardan en la misma SQLite local. No se añade un servicio remoto.
+
+Desde F7.2 (#88), la coordinación usa el caso de uso compartido de
+[mantenimiento periódico](../architecture/f7-periodic.md). Ese documento recoge
+la sustitución de los comandos anteriores, los límites de lectura y la medición.
 
 ## Auditoría y política de cada fuente
 
@@ -25,7 +29,7 @@ Los checkpoints avanzan después de persistir observaciones válidas. Un fallo c
 
 Los reintentos transitorios son acotados, con backoff y `Retry-After` limitado a 30 s. La cadencia se comparte entre workers; SEC no tiene cuatro limitadores independientes. Tiingo conserva su ritmo y espera por cuota existentes. No se guardan claves API en los eventos. Los artefactos/preregistros y resultados prospectivos no se recalculan con este cambio.
 
-`python -m gabi.periodic_tasks --run` hace mantenimiento incremental. `--run --full-refresh` solicita deliberadamente el histórico completo de precios y auditorías completas de SEC/FRED/fundamentales. El archivo Tiingo sigue fijado: ese flag no sobrescribe snapshots históricos. El refresco manual de la app fuerza una consulta actual, pero conserva la ventana incremental salvo reparación de ajustes.
+`python -m gabi_cli periodic --run` hace mantenimiento incremental. `--run --full-refresh` solicita deliberadamente el histórico completo de precios y auditorías completas de SEC/FRED/fundamentales. El archivo Tiingo sigue fijado: ese flag no sobrescribe snapshots históricos. El refresco manual de la app fuerza una consulta actual, pero conserva la ventana incremental salvo reparación de ajustes.
 
 Los catorce días de precios y los 400 días de FRED son ventanas de detección, no garantías de que una revisión más antigua aparezca inmediatamente. FRED revisa todas las fechas mensualmente; precios permiten una auditoría completa explícita y reparan ajustes detectados. Los datos rechazados conservan el estado anterior y quedan registrados como fallo.
 

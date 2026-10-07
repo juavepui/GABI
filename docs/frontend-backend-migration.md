@@ -112,7 +112,7 @@ consulta lenta debe apoyarse en resultados cacheados o en un job explícito.
 | Hashes de código/inputs de los motores de investigación | Mantener bytes normalizados y semántica; una adaptación necesaria se versiona y no reesella evidencia anterior |
 | `live_ledger.capture_config` y git diff sobre `src/gabi` | Capturar el código trasladado y conservar lectura de registros anteriores, sin afirmar identidad si cambió código |
 | Salidas `BASE_DIR/docs` y snapshots bajo `DATA_DIR` | Mantener referencias verificables, lectura `mode=ro`, resultados publicados y separación de cachés operativas |
-| `scripts/programar_tareas.ps1` y CLI `gabi.periodic_tasks` | Resolver intérprete/working directory reales; no reinstalar tareas del usuario silenciosamente |
+| `scripts/programar_tareas.ps1` y CLI `gabi_cli periodic` | Resolver intérprete/working directory reales; no reinstalar tareas del usuario silenciosamente |
 | `.github/workflows/ci.yml` | Working directories y checks Python/TypeScript; mantener verificación de motores y registro de búsquedas |
 
 Los motores `tail_effect_test`, `factor_zoo` y `placebo_engine` tienen una guarda

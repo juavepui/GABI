@@ -4,9 +4,8 @@ from collections.abc import Callable
 from datetime import date
 from typing import Protocol
 
+from gabi.application.administration.periodic import SOON_DAYS
 from gabi.application.errors import QueryError
-
-SOON_DAYS = 7  # periodic_tasks.SOON_DAYS
 
 
 class BlindList(Protocol):

@@ -1,6 +1,6 @@
 """Queue scheduled tasks and run the separate local worker.
 
-Usage: python -m gabi_cli serve | worker | schedule daily | schedule tiingo | research <command>
+Usage: python -m gabi_cli serve | worker | schedule daily | schedule tiingo | periodic <options> | research <command>
 """
 
 import argparse
@@ -32,6 +32,12 @@ def warm_rankings(app) -> None:
 
 
 def main() -> None:
+    if sys.argv[1:2] == ["periodic"]:
+        from gabi.infrastructure.legacy.periodic import build_periodic_tasks
+        from gabi_cli.commands.periodic import main as periodic
+
+        periodic(build_periodic_tasks(Settings.from_environment().data_dir), sys.argv[2:])
+        return
     if sys.argv[1:2] == ["research"]:
         from gabi_cli.research.bootstrap import main as research
 
