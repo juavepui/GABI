@@ -19,7 +19,9 @@ incluidos duplicados. No precarga todos los precios/hechos de SQLite. Precios
 admiten 25.000 filas por serie, hechos/snapshots/aliases 100.000 por lectura,
 archivos 2 MB y targets 1.000. Los excesos fallan antes de publicar. No se recorta
 el historial usado para drawdown. El lector de hechos de conciliación SEC recibe
-un límite total explícito de 1.000.000 y tampoco crea bases ausentes.
+un límite total explícito de 2.000.000 y tampoco crea bases ausentes. El snapshot
+documentado tiene 1.415.983 observaciones fundamentales en total; el límite cubre
+ese volumen publicado incluso antes de filtrar por fecha de presentación.
 
 No hay caché de resultados: cada comando relee sus inputs, sin cambiar DB o
 snapshot. La auditoría anual sigue verificando que el detalle previo coincide

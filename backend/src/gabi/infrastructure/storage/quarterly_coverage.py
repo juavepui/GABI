@@ -33,7 +33,7 @@ def issuer_facts(connection: sqlite3.Connection, cik: str | None = None, *, max_
             for issuer, rows in records.items()}
 
 
-def read_facts(path: Path, *, max_rows: int = 1_000_000) -> dict[str, pd.DataFrame]:
+def read_facts(path: Path, *, max_rows: int = 2_000_000) -> dict[str, pd.DataFrame]:
     """Compatibility input for explicit SEC reconciliation; rejects overflow."""
     with closing(connect_readonly(path)) as connection:
         return issuer_facts(connection, max_rows=max_rows)
