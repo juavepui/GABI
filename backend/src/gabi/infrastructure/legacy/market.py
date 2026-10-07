@@ -1,9 +1,10 @@
 from functools import partial
 
 import gabi.domain.market.scoring as scoring
-from gabi import app_mode, config, events_calendar
+from gabi import app_mode, config
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
+from gabi.domain.market import events as events_calendar
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
 from gabi.domain.market.risk import compute_risk_metrics
 from gabi.domain.market.technicals import TechnicalParameters, compute_technicals

@@ -4,13 +4,13 @@ from datetime import date
 import pandas as pd
 
 from gabi.application.market.ranking import Calculators, MarketBatch, MemoryInputs, build_ranking
+from gabi.domain.market import events as events_calendar
 
 from . import (
     config,
     data_fetch,
     edgar,
     entity_master,
-    events_calendar,
     macro,
     metrics,
     risk,

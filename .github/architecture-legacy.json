@@ -114,14 +114,6 @@
     "gabi.storage",
     "pandas"
   ],
-  "backend/src/gabi/events_calendar.py": [
-    "concurrent.futures",
-    "gabi.data_fetch._classify_error",
-    "gabi.data_fetch.normalize_symbol",
-    "gabi.storage",
-    "pandas",
-    "yfinance"
-  ],
   "backend/src/gabi/evidence_catalog.py": [
     "gabi.config",
     "gabi.factor_sector_stability"
@@ -574,7 +566,6 @@
     "gabi.data_fetch",
     "gabi.edgar",
     "gabi.entity_master",
-    "gabi.events_calendar",
     "gabi.macro",
     "gabi.metrics",
     "gabi.risk",

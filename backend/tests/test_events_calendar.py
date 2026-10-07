@@ -6,7 +6,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, events_calendar, storage
+from gabi import config, storage
+from gabi.domain.market import events as events_calendar
+from gabi.infrastructure.legacy.earnings import YahooEarnings, sync_earnings_surprises
+from gabi.infrastructure.storage.earnings import SqliteEarnings
 
 
 def _isolate_db(tmp_path, monkeypatch):
@@ -94,12 +97,12 @@ def test_upcoming_events_filters_out_past_and_sorts_by_date(tmp_path, monkeypatc
         "earningsTimestampStart": _epoch(date(2026, 9, 25)), "isEarningsDateEstimate": True,
     }, pd.DataFrame(), pd.DataFrame())
 
-    df = events_calendar.upcoming_events(["AAA", "BBB", "CCC"], today=TODAY)
+    df = events_calendar.upcoming_events(["AAA", "BBB", "CCC"], storage.get_fundamentals(["AAA", "BBB", "CCC"]), today=TODAY)
     assert list(df["symbol"]) == ["CCC", "AAA"]  # BBB queda fuera (pasado); orden ascendente por fecha
 
 
 def test_upcoming_events_empty_symbols_returns_empty_dataframe():
-    df = events_calendar.upcoming_events([], today=TODAY)
+    df = events_calendar.upcoming_events([], {}, today=TODAY)
     assert df.empty
 
 
@@ -109,7 +112,7 @@ def test_next_earnings_map_returns_none_for_symbol_without_data(tmp_path, monkey
         "earningsTimestampStart": _epoch(date(2026, 10, 1)), "isEarningsDateEstimate": False,
     }, pd.DataFrame(), pd.DataFrame())
 
-    result = events_calendar.next_earnings_map(["AAA", "BBB"], today=TODAY)
+    result = events_calendar.next_earnings_map(["AAA", "BBB"], storage.get_fundamentals(["AAA", "BBB"]), today=TODAY)
     assert result["AAA"]["days_until"] == 11
     assert result["BBB"] is None
 
@@ -162,8 +165,8 @@ def test_store_and_get_earnings_surprises_roundtrip(tmp_path, monkeypatch):
         {"symbol": "AAA", "earnings_date": date(2026, 4, 30), "eps_estimate": 1.94,
          "eps_reported": 2.01, "surprise_pct": 3.46, "price_reaction_pct": -1.2},
     ]
-    events_calendar.store_earnings_surprises(rows)
-    df = events_calendar.get_earnings_surprises("AAA")
+    SqliteEarnings(tmp_path).save(rows)
+    df = SqliteEarnings(tmp_path).read("AAA")
     assert len(df) == 2
     assert list(df["earnings_date"]) == ["2026-07-30", "2026-04-30"]  # descendente
     assert df.iloc[0]["source"] == "Yahoo Finance (earnings_dates)"
@@ -173,16 +176,16 @@ def test_store_earnings_surprises_is_idempotent_on_reinsert(tmp_path, monkeypatc
     _isolate_db(tmp_path, monkeypatch)
     row = [{"symbol": "AAA", "earnings_date": date(2026, 7, 30), "eps_estimate": 1.89,
            "eps_reported": 2.02, "surprise_pct": 6.74, "price_reaction_pct": 3.1}]
-    events_calendar.store_earnings_surprises(row)
-    events_calendar.store_earnings_surprises(row)
-    df = events_calendar.get_earnings_surprises("AAA")
+    SqliteEarnings(tmp_path).save(row)
+    SqliteEarnings(tmp_path).save(row)
+    df = SqliteEarnings(tmp_path).read("AAA")
     assert len(df) == 1
 
 
 def test_store_earnings_surprises_empty_list_is_noop(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
-    events_calendar.store_earnings_surprises([])
-    assert events_calendar.get_earnings_surprises("AAA").empty
+    SqliteEarnings(tmp_path).save([])
+    assert SqliteEarnings(tmp_path).read("AAA").empty
 
 
 def test_sync_earnings_surprises_classifies_network_failures(tmp_path, monkeypatch):
@@ -191,10 +194,10 @@ def test_sync_earnings_surprises_classifies_network_failures(tmp_path, monkeypat
     def _boom(symbol):
         raise ConnectionError("network unreachable")
 
-    monkeypatch.setattr(events_calendar, "_fetch_earnings_history_attempt", _boom)
-    failed = events_calendar.sync_earnings_surprises(["AAA"])
+    monkeypatch.setattr(YahooEarnings, "fetch", staticmethod(_boom))
+    failed = sync_earnings_surprises(tmp_path, ["AAA"])
     assert "AAA" in failed
 
 
-def test_sync_earnings_surprises_empty_symbols_returns_empty_dict():
-    assert events_calendar.sync_earnings_surprises([]) == {}
+def test_sync_earnings_surprises_empty_symbols_returns_empty_dict(tmp_path):
+    assert sync_earnings_surprises(tmp_path, []) == {}
