@@ -26,15 +26,16 @@ class LegacyCompanyMath:
         return dict(insider.TRANSACTION_CODES)
 
 
-def sync_company(data_dir: Path, symbol: str, dataset: str) -> dict:
+def sync_company(data_dir: Path, symbol: str, dataset: str, *, today: date | None = None) -> dict:
     """Worker only: the per-company network syncs of the old Ficha buttons."""
-    from gabi import events_calendar, insider
+    from gabi import insider
+    from gabi.infrastructure.legacy.earnings import sync_earnings_surprises
     from gabi.infrastructure.legacy.estimates import sync_estimates
 
     if dataset == "insiders":  # «Actualizar insiders de esta empresa»: the latest Form 4, ignoring the 24 h cache.
         failed = insider.ensure_insider_data([symbol], max_age_hours=0)["failed"]
     elif dataset == "surprises":
-        failed = events_calendar.sync_earnings_surprises([symbol])
+        failed = sync_earnings_surprises(data_dir, [symbol], today=today)
     else:
         failed = sync_estimates(data_dir, [symbol])
     return {"kind": "company_sync", "symbol": symbol, "dataset": dataset, "synced": not failed,

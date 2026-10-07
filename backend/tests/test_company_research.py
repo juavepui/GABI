@@ -10,12 +10,15 @@ import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import config, events_calendar
+from gabi import config
+from gabi.domain.market import events as events_calendar
 from gabi.domain.research import estimates
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy import earnings as earnings_sync
 from gabi.infrastructure.legacy import estimates as estimate_sync
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.earnings import SqliteEarnings
 from gabi.infrastructure.storage.estimates import store_estimate_snapshot
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
@@ -35,7 +38,7 @@ def company():
                  "exDividendDate": _epoch(date(2026, 10, 10)), "dividendDate": _epoch(date(2026, 8, 1))}
         db.execute("UPDATE fundamentals SET info_json=? WHERE symbol='T001'", (json.dumps(info),))
         db.commit()
-    events_calendar.store_earnings_surprises([
+    SqliteEarnings(root).save([
         {"symbol": "T001", "earnings_date": date(2026, 7, 28), "eps_estimate": 1.0, "eps_reported": 1.1,
          "surprise_pct": 10.0, "price_reaction_pct": 2.5},
         {"symbol": "T001", "earnings_date": date(2026, 4, 28), "eps_estimate": 0.9, "eps_reported": 0.8,
@@ -60,7 +63,7 @@ def test_overview_matches_the_old_ficha_without_writing(company):
                                                                   today=TODAY) if e["days_until"] >= 0]
     assert [(e["event_type"], e["event_date"]) for e in body["events"]] == [
         (e["event_type"], e["event_date"].isoformat()) for e in sorted(expected, key=lambda e: e["event_date"])]
-    legacy = events_calendar.get_earnings_surprises("T001")
+    legacy = SqliteEarnings(root).read("T001")
     assert [row["earnings_date"] for row in body["surprises"]] == legacy["earnings_date"].tolist()
     assert body["surprises"][1]["price_reaction_pct"] is None
     assert body["estimate"]["eps_avg"] == 1.2 and body["estimate"]["captured_at"] == "2026-09-20T09:00:00+00:00"
@@ -88,9 +91,9 @@ def test_filing_changes_match_the_cached_comparison(company):
                                                  ("estimates", "sync_estimates")])
 def test_syncs_are_explicit_jobs_with_their_failure_reason(company, monkeypatch, dataset, target):
     client, root = company
-    module = events_calendar if dataset == "surprises" else estimate_sync
+    module = earnings_sync if dataset == "surprises" else estimate_sync
     calls = []
-    monkeypatch.setattr(module, target, lambda *args: calls.append(args[-1]) or {"T001": "sin respuesta de Yahoo"})
+    monkeypatch.setattr(module, target, lambda *args, **kwargs: calls.append(args[-1]) or {"T001": "sin respuesta de Yahoo"})
     job = client.post("/api/v1/jobs", json={"kind": "company_sync", "idempotency_key": f"company-{dataset}-1",
                                              "company": {"symbol": "t001", "dataset": dataset}})
     assert job.status_code == 202, job.text

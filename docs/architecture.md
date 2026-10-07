@@ -11,7 +11,7 @@ casos de uso y adaptadores separados; un cliente React por capacidades; SQLite
 y archivos compartidos en `data/`. API y worker son procesos del mismo backend,
 con los mismos modelos y servicios. No requieren despliegues independientes.
 
-El backend conserva 79 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las hojas de F7.4
+El backend conserva 78 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las hojas de F7.4
 [delegan sus cálculos en el dominio](architecture/f7-domain-leaves.md), incluidos
 [indicadores y estadísticas](architecture/f7-quantitative-domain.md) y
 [scoring y fundamentos SEC](architecture/f7-fundamental-domain.md), mientras conservan consumidores legacy.
@@ -21,6 +21,8 @@ caso de uso entre API y ledger.
 y verificación cacheada con invalidación por archivos.
 [Calidad de datos](architecture/f7-data-quality.md) comparte reglas de dominio y
 casos de uso con reloj explícito; conserva pendientes sus lectores de compatibilidad.
+[Eventos corporativos](architecture/f7-corporate-events.md) retira el módulo plano y
+comparte análisis de fechas, sincronización explícita y almacenamiento.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
