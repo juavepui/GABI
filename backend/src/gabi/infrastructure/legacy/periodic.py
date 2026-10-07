@@ -13,12 +13,14 @@ from gabi.infrastructure.storage.periodic import PeriodicFiles
 
 class LegacyPeriodicOperations:
     def __init__(self, data_dir: Path, *, tiingo_fetch: Callable[[list[str]], dict] | None = None,
-                 tiingo_import: Callable[[], dict] | None = None):
+                 tiingo_import: Callable[[], dict] | None = None,
+                 macro_sync: Callable[..., dict] | None = None):
         from gabi import config
 
         if config.DATA_DIR.resolve() != data_dir.resolve():
             raise ValueError("El mantenimiento y los motores legacy no usan el mismo directorio de datos.")
         self.tiingo_fetch, self.tiingo_import = tiingo_fetch, tiingo_import
+        self.macro_sync = macro_sync
 
     def latest_event_id(self):
         from gabi.sync_state import latest_event_id
@@ -56,6 +58,8 @@ class LegacyPeriodicOperations:
         return screener.refresh_data(symbols, **({"full_refresh": True} if full_refresh else {}))
 
     def refresh_macro(self, full_refresh):
+        if self.macro_sync is not None:
+            return self.macro_sync(full_refresh=full_refresh)
         from gabi import macro
 
         return macro.ensure_macro_data(full_refresh=full_refresh)
@@ -111,10 +115,12 @@ class LegacyPeriodicOperations:
 
 
 def build_periodic_tasks(data_dir: Path, *, tiingo_fetch: Callable[[list[str]], dict] | None = None,
-                         tiingo_import: Callable[[], dict] | None = None) -> PeriodicTasks:
+                         tiingo_import: Callable[[], dict] | None = None,
+                         macro_sync: Callable[..., dict] | None = None) -> PeriodicTasks:
     from gabi import smallmid_test
 
-    operations = LegacyPeriodicOperations(data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import)
+    operations = LegacyPeriodicOperations(data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
+                                          macro_sync=macro_sync)
     store = PeriodicFiles(data_dir, data_dir / "history_refresh" / "tiingo" / "smallmid",
                           smallmid_test.tiingo_complete_path(), smallmid_test.result_path(),
                           smallmid_test.DATA_FREEZE_DEADLINE)

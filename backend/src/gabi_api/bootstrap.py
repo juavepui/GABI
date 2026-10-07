@@ -44,6 +44,7 @@ from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedger
 from gabi.application.research.portfolio_lab_queries import PortfolioLabQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
+from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.signals import compare_snapshots
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -56,7 +57,6 @@ from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
-from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
 from gabi.infrastructure.legacy.published_factors import evidence_root
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline

@@ -28,7 +28,7 @@ from gabi.infrastructure.storage.academic_factors import FileFactorCache
 from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
-from gabi_cli.sources.bootstrap import build_tiingo_operations
+from gabi_cli.sources.bootstrap import build_fred_operation, build_tiingo_operations
 
 
 def warm_rankings(app) -> None:
@@ -48,7 +48,8 @@ def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = N
     factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())
     tiingo_fetch, tiingo_import = build_tiingo_operations(settings, now=clock)
     return LegacyExecutor(settings, insider_sync=insiders, factor_loader=factors,
-                          tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import)
+                          tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
+                          macro_sync=build_fred_operation(settings, now=clock))
 
 
 def main() -> None:
@@ -58,7 +59,8 @@ def main() -> None:
 
         settings = Settings.from_environment()
         tiingo_fetch, tiingo_import = build_tiingo_operations(settings)
-        periodic(build_periodic_tasks(settings.data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import), sys.argv[2:])
+        periodic(build_periodic_tasks(settings.data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
+                                      macro_sync=build_fred_operation(settings)), sys.argv[2:])
         return
     if sys.argv[1:2] == ["research"]:
         from gabi_cli.research.bootstrap import main as research
