@@ -6,8 +6,9 @@ import pandas as pd
 import pytest
 import requests
 
-from gabi import config, data_fetch, edgar, edgar_sync, historical_tiingo, macro, periodic_tasks, price_sync, storage
+from gabi import config, data_fetch, edgar, edgar_sync, historical_tiingo, macro, price_sync, storage
 from gabi import sync_state as sync
+from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
 
@@ -271,12 +272,12 @@ def test_periodic_task_integrates_checkpoints_and_full_refresh(monkeypatch):
     monkeypatch.setattr(screener, "get_universe", lambda **k: flags.append(k) or pd.DataFrame({"symbol": ["A"]}))
     monkeypatch.setattr(screener, "refresh_data", lambda *a, **k: flags.append(k) or {"failed": {}})
     monkeypatch.setattr(macro, "ensure_macro_data", lambda **k: {"ok": True})
-    first = periodic_tasks.refresh_data()
-    again = periodic_tasks.refresh_data()
+    first = build_periodic_tasks(config.DATA_DIR).refresh_data()
+    again = build_periodic_tasks(config.DATA_DIR).refresh_data()
     assert flags[0] == {"force_refresh": True}
     assert flags[2] == {"force_refresh": False}
     assert first["sync"]["calls"] == 1 and again["sync"]["calls"] == 0
-    periodic_tasks.refresh_data(full_refresh=True)
+    build_periodic_tasks(config.DATA_DIR).refresh_data(full_refresh=True)
     assert flags[-1] == {"full_refresh": True}
 
 
@@ -286,7 +287,7 @@ def test_periodic_universe_failure_keeps_the_previous_checkpoint(monkeypatch):
     sync.Attempt("universe", "SP500", "members").finish("new", state={"fingerprint": "previous"})
     monkeypatch.setattr(screener, "get_universe", lambda **k: (_ for _ in ()).throw(RuntimeError("no source")))
     with pytest.raises(RuntimeError):
-        periodic_tasks.refresh_data(full_refresh=True)
+        build_periodic_tasks(config.DATA_DIR).refresh_data(full_refresh=True)
     cp = sync.get("universe", "SP500", "members")
     assert cp["status"] == "failed" and cp["fingerprint"] == "previous"
 

@@ -485,20 +485,6 @@
     "pathlib",
     "sqlite3"
   ],
-  "backend/src/gabi/periodic_tasks.py": [
-    "gabi.blind_validation",
-    "gabi.config",
-    "gabi.factor_stability",
-    "gabi.historical_tiingo",
-    "gabi.history_refresh.last_completed_session",
-    "gabi.live_ledger",
-    "gabi.macro",
-    "gabi.screener",
-    "gabi.smallmid_test",
-    "gabi.storage",
-    "gabi.sync_state",
-    "pathlib"
-  ],
   "backend/src/gabi/placebo_engine.py": [
     "gabi.config",
     "gabi.cross_section_test",

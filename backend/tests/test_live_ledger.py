@@ -6,10 +6,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gabi import app_mode, periodic_tasks, screener, storage
+from gabi import app_mode, config, screener, storage
 from gabi import live_ledger as ledger
 from gabi.domain.research.live_performance import entry_session
 from gabi.infrastructure.legacy.live_ledger import live_report
+from gabi.infrastructure.legacy.periodic import build_periodic_tasks
+from gabi_cli.commands.periodic import main as periodic_main
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
 
@@ -147,6 +149,7 @@ def test_capture_records_degraded_unknown_inputs_and_no_signal(monkeypatch):
 
 
 def test_failed_maintenance_is_recorded_and_does_not_rebalance(monkeypatch):
+    periodic_tasks = build_periodic_tasks(config.DATA_DIR)
     setup_capture(monkeypatch, panel())
     monkeypatch.setattr(periodic_tasks, "status", lambda: {})
     monkeypatch.setattr(periodic_tasks, "refresh_data", lambda: (_ for _ in ()).throw(RuntimeError("no source")))
@@ -154,7 +157,7 @@ def test_failed_maintenance_is_recorded_and_does_not_rebalance(monkeypatch):
     report = periodic_tasks.run()
     assert report["ledger"]["status"] == "ERROR"
     assert ledger.events()[0]["payload"]["reason"] == "RuntimeError: no source"
-    assert periodic_tasks.log_path().exists()
+    assert periodic_tasks.store.log_path.exists()
 
 
 def test_partial_refresh_failures_are_frozen_as_degraded_even_with_fresh_cache(monkeypatch):
@@ -178,10 +181,10 @@ def test_only_failed_sources_used_in_decision_degrade_it(monkeypatch):
 
 
 def test_cli_keeps_failure_exit_status_for_task_scheduler(monkeypatch, capsys):
-    monkeypatch.setattr("sys.argv", ["periodic_tasks", "--run"])
+    periodic_tasks = build_periodic_tasks(config.DATA_DIR)
     monkeypatch.setattr(periodic_tasks, "run", lambda **kwargs: {"error": "provider failed", "ledger": {"status": "ERROR"}})
     with pytest.raises(SystemExit) as error:
-        periodic_tasks.main()
+        periodic_main(periodic_tasks, ["--run"])
     assert error.value.code == 1
     assert "provider failed" in capsys.readouterr().out
 

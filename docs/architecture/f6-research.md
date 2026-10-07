@@ -399,7 +399,7 @@ Registrar un rebalanceo, calcular el rendimiento revelado y exportarlo a
 Research Lab son ahora los jobs `blind_rebalance`, `blind_performance` y
 `blind_export`, en modo Research. El worker vuelve a aplicar las reglas en el
 momento de ejecutar.
-- **Rebalanceo:** solo se registra si toca, con la cadena íntegra y con precios del último cierre (`periodic_tasks.prices_fresh`). En Streamlit las dos últimas condiciones solo desactivaban el botón. El registro siempre es con fecha de hoy y usa `blind_validation.record_rebalance` sin cambios. El resultado nunca incluye posiciones ni precios, solo fecha, número de posiciones y hash.
+- **Rebalanceo:** solo se registra si toca, con la cadena íntegra y con precios del último cierre (`application.administration.periodic.PeriodicTasks.prices_fresh`). En Streamlit las dos últimas condiciones solo desactivaban el botón. El registro siempre es con fecha de hoy y usa `blind_validation.record_rebalance` sin cambios. El resultado nunca incluye posiciones ni precios, solo fecha, número de posiciones y hash.
 - **Rendimiento:** solo se calcula si `disclosure` lo permite. `get_status` y `export_to_research_lab` aceptan ahora un corte opcional `as_of`: solo cuentan los rebalanceos anteriores y el último periodo se valora en esa fecha. Sin corte se comportan como antes. Con preregistro, el corte es la última revisión alcanzada. El capital acumulado repite el `cumprod` con ausencias como cero de la página antigua.
 - **Exportación:** falla si la validación sigue bloqueada.
 
@@ -417,7 +417,7 @@ la base real porque escribiría, y aún no toca. Ambas paridades están probadas
 datos temporales. El aviso de rebalanceo de la portada y las instrucciones de
 `docs/prospective-plan/README.md` remiten ahora a Investigación → Validaciones
 ciegas; el plan sellado (`gabi-id1.json`) no cambia. `blind_validation` y
-`periodic_tasks` siguen en uso por el mantenimiento programado.
+`application.administration.periodic` siguen en uso por el mantenimiento programado.
 
 Portfolio Lab se ejecuta ahora como el job `portfolio_lab` en modo Research.
 Tiene los mismos parámetros que el formulario antiguo: periodo, rebalanceo,
@@ -489,7 +489,7 @@ sustituto:
 | Carteras simuladas | Backtest de cruce SMA de un ticker | Retirar: ejercicio aislado sin relación con la hipótesis (decisión del propietario, 2026-10-01) |
 | Carteras simuladas | Botones de descarga de precios de un ticker o cartera | Usar el job `symbols` existente |
 | Aprender | Tutorial extenso | Hecho: las cuatro pestañas en `/cartera/aprender`; las definiciones de métricas pasan de `ui_helpers` a `domain/market/metric_info.py` y React las lee de `GET /learn/metrics`, que marca las 13 que puntúan (decisión del propietario, 2026-10-01) |
-| Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Hecho: `GET /notices` (solo lectura, 0,1 s, igual que `periodic_tasks.due_soon` y `smallmid_state` con la base local), mostrado en `/mercado` junto al aviso legal de la portada |
+| Portada | Avisos de rebalanceo ciego próximo y del análisis del #44 | Hecho: `GET /notices` (solo lectura, 0,1 s, igual que los avisos del mantenimiento con la base local), mostrado en `/mercado` junto al aviso legal de la portada |
 | Ficha | Prompt para analizar con IA (`ai_prompt`) | Hecho: `GET /companies/{symbol}/analysis-prompt`, idéntico a la ficha antigua con la base local; `format_metric_value` pasa a `domain/market/metric_info.py` (revisión final de botones, 2026-10-01) |
 | Ficha | Actividad de insiders (Form 4) y su actualización | Hecho: `GET /companies/{symbol}/insiders` en solo lectura con la fórmula de `insider.summarize_insider_activity`, y `company_sync` con `dataset=insiders` |
 | Ficha | Todos los próximos eventos corporativos | Ya cubierto por «Próximos catalizadores» (`GET /companies/{symbol}/research`) |

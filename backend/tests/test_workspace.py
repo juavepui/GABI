@@ -102,8 +102,8 @@ def test_all_published_engines_and_original_config_remain_byte_identical():
 
 def test_periodic_cli_works_with_an_isolated_database_from_backend(tmp_path):
     (tmp_path / "sp500_constituents.csv").write_text("symbol,name,sector\nTEST,Test,Industrials\n", encoding="utf-8")
-    setup = "from gabi import storage; storage.init_db(); from gabi.periodic_tasks import main; main()"
-    result = subprocess.run([sys.executable, "-c", setup, "--status"],
+    setup = "from gabi import storage; storage.init_db(); from gabi_cli.bootstrap import main; main()"
+    result = subprocess.run([sys.executable, "-c", setup, "periodic", "--status"],
                             cwd=workspace.BACKEND, env={**os.environ, "GABI_DATA_DIR": str(tmp_path), "PYTHONUTF8": "1"},
                             capture_output=True, text=True, encoding="utf-8")
     assert result.returncode == 0, result.stderr
