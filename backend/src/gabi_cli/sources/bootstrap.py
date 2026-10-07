@@ -10,6 +10,30 @@ from gabi.domain.research.tiingo_prices import PACE_SECONDS
 from gabi.infrastructure.settings import Settings
 
 
+def build_cik_resolver(settings: Settings, user_agent: str, *, now: Callable[[], datetime] | None = None,
+                       wall_time: Callable[[], float] = time.perf_counter,
+                       cpu_time: Callable[[], float] = time.thread_time):
+    from gabi.application.administration.sync_events import SyncAttempt
+    from gabi.application.market.sec_cik import CikResolver
+    from gabi.infrastructure.legacy.source_errors import fingerprint, retry
+    from gabi.infrastructure.providers.sec_cik import SecTickerMap
+    from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
+    from gabi.infrastructure.storage.sync_events import OperationSyncEvents
+
+    clock = now or (lambda: datetime.now(UTC))
+    path = settings.data_dir / "gabi.db"
+    events = OperationSyncEvents(path)
+
+    def attempt() -> SyncAttempt:
+        return SyncAttempt("sec", "all", "ticker-map", events, now=clock,
+                           wall_time=wall_time, cpu_time=cpu_time)
+
+    return CikResolver(FileCikMap(settings.data_dir / "sec_cik_map.csv"), SqliteCikResolutions(path, clock),
+                       SecTickerMap(user_agent).fetch, attempt, retry,
+                       partial(events.get, "sec", "all", "ticker-map"), fingerprint,
+                       lambda: clock().timestamp())
+
+
 def build_fred_operation(settings: Settings, *, now: Callable[[], datetime] | None = None,
                          wall_time: Callable[[], float] = time.perf_counter,
                          cpu_time: Callable[[], float] = time.thread_time) -> Callable[..., dict]:

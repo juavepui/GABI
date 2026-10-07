@@ -28,7 +28,7 @@ from gabi.infrastructure.storage.academic_factors import FileFactorCache
 from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
-from gabi_cli.sources.bootstrap import build_fred_operation, build_tiingo_operations
+from gabi_cli.sources.bootstrap import build_cik_resolver, build_fred_operation, build_tiingo_operations
 
 
 def warm_rankings(app) -> None:
@@ -42,7 +42,9 @@ def warm_rankings(app) -> None:
 
 def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = None) -> LegacyExecutor:
     clock = now or (lambda: datetime.now(UTC))
-    source = SecInsiders(sec_user_agent())
+    user_agent = sec_user_agent()
+    ciks = build_cik_resolver(settings, user_agent, now=clock)
+    source = SecInsiders(user_agent, mapping_loader=ciks.mapping, cik_resolver=ciks.resolve)
     store = SqliteInsiders(settings.data_dir, now=clock)
     insiders = partial(sync_insiders, source=source, store=store, classify_error=classify_error, now=clock)
     factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())

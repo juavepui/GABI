@@ -48,6 +48,8 @@ con puertos explícitos, caché acotada y validación de precios en dominio.
 con checkpoints y relojes explícitos entre CLI y worker persistente.
 [FRED](architecture/f7-fred.md) comparte política de revisiones y sincronización
 con repositorio, fuente y reloj explícitos, y metadatos de consulta en dominio.
+[El mapa SEC](architecture/f7-sec-cik.md) comparte resolución ticker/CIK y respaldo
+persistente, con fuente/caché acotadas y composición explícita del worker.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
