@@ -112,7 +112,7 @@ cuenta, cuyas claves se guardan localmente desde ⚙️ Configuración
   DOW, STI, MON… antes de que se reutilizaran sus símbolos. Trae cierre
   negociado, dividendo por fecha ex y ratio de split. Se descargaron 213
   símbolos excluidos (186 con datos).
-- **Tiingo, plan gratuito** (`historical_tiingo.py`): su API solo sirve el
+- **Tiingo, plan gratuito** (`gabi_cli research tiingo-prices`): su API solo sirve el
   valor que usa hoy cada ticker, así que únicamente se piden símbolos cuya
   cotización actual ya cubría 2009–2015 (131); los reciclados (EMC → ETF,
   STI → Solidion, SNDK → SanDisk 2025) se descartan antes de pedirlos. El
@@ -329,13 +329,17 @@ Descarga de la evidencia y de las fuentes con clave (idempotente, ya cacheada):
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 1500 --annual-report-symbols 200
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
 .venv/Scripts/python.exe -m gabi_cli research wiki-prices --fetch <fichero con símbolos> --import-cached
-.venv/Scripts/python.exe -m gabi.historical_tiingo --fetch <fichero con símbolos> --import-cached
+.venv/Scripts/python.exe -m gabi_cli research tiingo-prices --fetch <fichero con símbolos> --import-cached
 ```
 
 La versión anterior de este documento, commit `a0455f795e6c22a666eab523f09cb67d4af3dfe0`,
 documentaba la descarga WIKI con `python -m gabi.historical_wiki`.
 La ruta actual conserva sus datos y metadatos; [la migración](architecture/f7-wiki-prices.md)
 explica puertos, límites e invalidación. No se han regenerado los resultados publicados.
+
+En ese mismo commit se documentaba Tiingo con `python -m gabi.historical_tiingo`.
+La [ruta actual](architecture/f7-tiingo-prices.md) conserva snapshots, metadatos
+y ventanas y comparte los checkpoints de reanudación con el worker.
 
 Límites conocidos: la banda de nivel no distingue un error de split 2:1; las
 sucesiones (Google → Alphabet, Walgreen → WBA) cortan las ventanas que las

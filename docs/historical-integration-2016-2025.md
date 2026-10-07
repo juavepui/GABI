@@ -21,9 +21,16 @@ sustituye la evidencia del otro.
 | Horizonte | frames SEC hasta CY2016, FINSABER hasta 2015-12-31, baja «sin float posterior» solo antes de 2016 | frames hasta CY2025, FINSABER hasta 2024-12-31, regla de baja hasta 2025 |
 
 Los módulos `historical_identity_audit`, `historical_price_audit`,
-`historical_issuer_evidence`, `historical_membership`, `historical_tiingo` y
+`historical_issuer_evidence`, `historical_membership` y
 `historical_pit` reciben el periodo (`--period 2016-2025` en línea de comandos).
 El valor por defecto sigue siendo 2010–2015.
+
+Tiingo usa actualmente `python -m gabi_cli research tiingo-prices --window 2016-2025`
+con las acciones explícitas de descarga/importación. En la versión anterior de
+este documento, commit `ce644a6dd48117fb3794985446aca995924e396e`, el módulo era
+`historical_tiingo` y su argumento específico era `--window`. La
+[migración](architecture/f7-tiingo-prices.md) conserva las fuentes/ventanas y los
+snapshots fijados; no regenera los resultados publicados aquí.
 
 **2010–2015 queda congelado y se ha comprobado.** Con toda la evidencia nueva
 ya en la base de datos:

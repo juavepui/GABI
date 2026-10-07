@@ -44,6 +44,8 @@ su módulo plano, conserva los cinco artefactos y procesa una empresa por lectur
 OLS/HAC y carga con puertos explícitos de caché/fuente en el worker.
 [El archivo WIKI](architecture/f7-wiki-prices.md) comparte descarga e importación
 con puertos explícitos, caché acotada y validación de precios en dominio.
+[Tiingo](architecture/f7-tiingo-prices.md) comparte descarga e importación fijada
+con checkpoints y relojes explícitos entre CLI y worker persistente.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo

@@ -1,6 +1,7 @@
 """Small adapters for the unchanged refresh, ledger and reserved research engines."""
 
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -11,11 +12,13 @@ from gabi.infrastructure.storage.periodic import PeriodicFiles
 
 
 class LegacyPeriodicOperations:
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, *, tiingo_fetch: Callable[[list[str]], dict] | None = None,
+                 tiingo_import: Callable[[], dict] | None = None):
         from gabi import config
 
         if config.DATA_DIR.resolve() != data_dir.resolve():
             raise ValueError("El mantenimiento y los motores legacy no usan el mismo directorio de datos.")
+        self.tiingo_fetch, self.tiingo_import = tiingo_fetch, tiingo_import
 
     def latest_event_id(self):
         from gabi.sync_state import latest_event_id
@@ -88,11 +91,15 @@ class LegacyPeriodicOperations:
         return capture_current(run_error=error, maintenance=maintenance)
 
     def fetch_tiingo(self, symbols):
+        if self.tiingo_fetch is not None:
+            return self.tiingo_fetch(symbols)
         from gabi import historical_tiingo
 
         return historical_tiingo.fetch(symbols, window="smallmid")
 
     def import_tiingo(self):
+        if self.tiingo_import is not None:
+            return self.tiingo_import()
         from gabi import historical_tiingo
 
         return historical_tiingo.import_cached("smallmid")
@@ -103,10 +110,11 @@ class LegacyPeriodicOperations:
         mark_tiingo_complete(fetched)
 
 
-def build_periodic_tasks(data_dir: Path) -> PeriodicTasks:
+def build_periodic_tasks(data_dir: Path, *, tiingo_fetch: Callable[[list[str]], dict] | None = None,
+                         tiingo_import: Callable[[], dict] | None = None) -> PeriodicTasks:
     from gabi import smallmid_test
 
-    operations = LegacyPeriodicOperations(data_dir)
+    operations = LegacyPeriodicOperations(data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import)
     store = PeriodicFiles(data_dir, data_dir / "history_refresh" / "tiingo" / "smallmid",
                           smallmid_test.tiingo_complete_path(), smallmid_test.result_path(),
                           smallmid_test.DATA_FREEZE_DEADLINE)

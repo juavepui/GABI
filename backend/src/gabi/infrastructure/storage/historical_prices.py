@@ -30,6 +30,32 @@ class SqliteHistoricalPrices:
                                 (source_id, json.dumps(metadata, sort_keys=True)))
         self.connection.commit()
 
+    def pinned(self, source_id: str, *, max_bytes: int = 2_000_000) -> dict:
+        try:
+            row = self.connection.execute("SELECT CASE WHEN length(CAST(metadata_json AS BLOB))<=? THEN metadata_json END, "
+                "length(CAST(metadata_json AS BLOB)) FROM historical_sources WHERE source_id=?", (max_bytes, source_id)).fetchone()
+        except sqlite3.OperationalError as exc:
+            if str(exc) != "no such table: historical_sources":
+                raise
+            return {}
+        if not row:
+            return {}
+        if row[1] > max_bytes:
+            raise ValueError("Historical source metadata byte limit exceeded")
+        return json.loads(row[0]).get("files_sha256", {})
+
+    def dates(self, source_id: str, symbol: str, first: str, last: str, *, max_rows: int = 10_000) -> pd.DatetimeIndex:
+        try:
+            rows = self.connection.execute("SELECT date FROM historical_prices WHERE source_id=? AND symbol=? AND date>=? AND date<? "
+                "ORDER BY date LIMIT ?", (source_id, symbol.replace(".", "-"), first, last, max_rows + 1)).fetchall()
+        except sqlite3.OperationalError as exc:
+            if str(exc) != "no such table: historical_prices":
+                raise
+            return pd.DatetimeIndex([])
+        if len(rows) > max_rows:
+            raise ValueError("Historical price date row limit exceeded")
+        return pd.DatetimeIndex(pd.to_datetime([row[0] for row in rows]))
+
     def import_prices(self, source_id: str, frame: pd.DataFrame, symbols: set[str], start: str, end: str) -> dict:
         frame, rejected = prepare_price_chunk(frame, symbols, start, end)
         records = [(source_id, row.symbol, row.date, row.open, row.high, row.low, row.close, row.adj_close,
