@@ -11,7 +11,7 @@ casos de uso y adaptadores separados; un cliente React por capacidades; SQLite
 y archivos compartidos en `data/`. API y worker son procesos del mismo backend,
 con los mismos modelos y servicios. No requieren despliegues independientes.
 
-El backend conserva 78 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las hojas de F7.4
+El backend conserva 77 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las hojas de F7.4
 [delegan sus cálculos en el dominio](architecture/f7-domain-leaves.md), incluidos
 [indicadores y estadísticas](architecture/f7-quantitative-domain.md) y
 [scoring y fundamentos SEC](architecture/f7-fundamental-domain.md), mientras conservan consumidores legacy.
@@ -34,6 +34,8 @@ de dominio con pesos de referencia inmutables compartidas por Mercado y evidenci
 reproduce cambios revisados en dominio, con ancla, ledger y día explícitos.
 [Las correcciones de etiquetas históricas](architecture/f7-ticker-corrections.md)
 validan nominaciones y sus intervalos en dominio, conservando los recursos revisados.
+[El plan prospectivo](architecture/f7-prospective-plan.md) comparte cálculo y hash
+con puertos explícitos de integración/publicación y retira su módulo plano.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo

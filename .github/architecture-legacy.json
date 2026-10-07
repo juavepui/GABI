@@ -487,13 +487,6 @@
     "numpy",
     "pandas"
   ],
-  "backend/src/gabi/prospective_plan.py": [
-    "gabi.config",
-    "gabi.factor_stability",
-    "numpy",
-    "scipy.optimize",
-    "scipy.stats"
-  ],
   "backend/src/gabi/quality_persistence.py": [
     "gabi.edgar"
   ],

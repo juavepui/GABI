@@ -18,7 +18,7 @@ def test_cited_name_domain_and_bridge_reproduce_the_sealed_fingerprint():
 
 def test_published_plan_follows_from_its_thresholds():
     record = json.loads(PUBLISHED.read_text(encoding="utf-8"))
-    from gabi import prospective_plan
+    from gabi.domain.research import prospective_plan
 
     bounds = [look["umbral_z"] for look in record["plan_secuencial"]["looks"]]
     assert hypothesis.sequential_plan(bounds, prospective_plan.obrien_fleming_spending) == record["plan_secuencial"]

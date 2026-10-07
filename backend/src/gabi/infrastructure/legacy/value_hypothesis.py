@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 
 from gabi.domain.research import value_hypothesis as hypothesis
+from gabi.domain.research.prospective_plan import boundaries, obrien_fleming_spending
+from gabi.infrastructure.statistics.prospective import ScipyNormalCDF
 
 
 def specification() -> dict:
@@ -17,7 +19,7 @@ def specification() -> dict:
 
 def preregister(output: Path) -> dict:
     """Congela la especificación, crea la prueba ciega con puntuaciones y registra el plan secuencial."""
-    from gabi import blind_validation, prospective_plan, research_lab
+    from gabi import blind_validation, research_lab
     from gabi import factor_stability as fs
 
     spec = specification()
@@ -29,8 +31,8 @@ def preregister(output: Path) -> dict:
         if record["sha256"] != digest:
             raise ValueError("La especificación cambió después del preregistro.")
         return record
-    plan = hypothesis.sequential_plan(prospective_plan.boundaries(hypothesis.fractions()),
-                                      prospective_plan.obrien_fleming_spending)
+    plan = hypothesis.sequential_plan(boundaries(hypothesis.fractions(), cdf=ScipyNormalCDF()),
+                                      obrien_fleming_spending)
     validation_id = blind_validation.create_validation(
         "Hipótesis de valor -- prueba prospectiva ciega (#43)", hypothesis.WEIGHTS, 20, 3, hypothesis.START,
         hypothesis.FIRST_LOOK, model_id=hypothesis.MODEL_ID)

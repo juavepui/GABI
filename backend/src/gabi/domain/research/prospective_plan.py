@@ -1,32 +1,16 @@
-"""Plan preregistrado de análisis de la prueba ciega prospectiva (issue #42).
+"""Preregistered prospective power, spending and boundaries over an explicit integration port."""
 
-No lee resultados de la prueba ciega. Fija de antemano:
-
-- la métrica y la prueba: exceso trimestral del Top-20 ciego frente al SPY
-  (principal) y frente al S&P 500 equiponderado, RSP (secundaria), t
-  unilateral;
-- un diseño secuencial con revisiones fijas y umbrales O'Brien-Fleming
-  (gasto de alfa de Lan-DeMets), que permite mirar en 2029 sin inflar el error
-  de tipo I;
-- la potencia esperable de cada revisión si el efecto futuro fuese el
-  observado en 2011-2025 (#39), y la regla para combinarla con la evidencia
-  retrospectiva que no es muestra de diseño (2011-07 → 2015-10).
-"""
-
-import argparse
 import hashlib
 import json
+from collections.abc import Callable
+from types import MappingProxyType
 
 import numpy as np
 from scipy.optimize import brentq
-from scipy.stats import multivariate_normal, norm
+from scipy.stats import norm
 
-from . import config
-from . import factor_stability as fs
-
-OUTPUT = config.BASE_DIR / "docs" / "prospective-plan"
 ALPHA = 0.05  # unilateral
-LOOKS = {"2029-09-21": 12, "2032-09-21": 24, "2036-09-21": 40}  # trimestres prospectivos acumulados
+LOOKS = MappingProxyType({"2029-09-21": 12, "2032-09-21": 24, "2036-09-21": 40})  # trimestres prospectivos acumulados
 RETRO_NON_DESIGN_QUARTERS = 18  # 2011-07 → 2015-10: acreditados, fuera de la muestra de diseño 2016-2025
 OBSERVED_QUARTERLY_SHARPE = 0.0106 / 0.0362  # exceso V1 Top-20 vs SPY 2011-2025 (#35, #39)
 
@@ -36,7 +20,7 @@ def obrien_fleming_spending(fraction: float, alpha: float = ALPHA) -> float:
     return float(2 * (1 - norm.cdf(norm.ppf(1 - alpha / 2) / np.sqrt(fraction))))
 
 
-def boundaries(fractions: list[float], alpha: float = ALPHA) -> list[float]:
+def boundaries(fractions: list[float], alpha: float = ALPHA, *, cdf: Callable[[np.ndarray, np.ndarray], float]) -> list[float]:
     """Umbrales z de cada revisión con el gasto O'Brien-Fleming (integración multinormal exacta)."""
     result: list[float] = []
     spent = 0.0
@@ -46,12 +30,11 @@ def boundaries(fractions: list[float], alpha: float = ALPHA) -> list[float]:
             bound = float(norm.ppf(1 - target))
         else:
             cov = np.array([[np.sqrt(min(a, b) / max(a, b)) for b in fractions[:k + 1]] for a in fractions[:k + 1]])
-            mvn = multivariate_normal(mean=np.zeros(k + 1), cov=cov)
 
-            def excess(c, prior=tuple(result), mvn=mvn, target=target):
+            def excess(c, prior=tuple(result), target=target):
                 # P(no cruzó antes y cruza ahora) - gasto objetivo
-                below_all = mvn.cdf(np.array([*prior, c]))
-                below_prior = multivariate_normal(mean=np.zeros(k), cov=cov[:k, :k]).cdf(np.array(prior)) \
+                below_all = cdf(np.array([*prior, c]), cov)
+                below_prior = cdf(np.array(prior), cov[:k, :k]) \
                     if k > 1 else norm.cdf(prior[0])
                 return (below_prior - below_all) - target
             bound = float(brentq(excess, 0.5, 6.0))
@@ -60,10 +43,10 @@ def boundaries(fractions: list[float], alpha: float = ALPHA) -> list[float]:
     return result
 
 
-def plan() -> dict:
+def plan(*, cdf: Callable[[np.ndarray, np.ndarray], float]) -> dict:
     counts = list(LOOKS.values())
     fractions = [n / counts[-1] for n in counts]
-    bounds = boundaries(fractions)
+    bounds = boundaries(fractions, cdf=cdf)
     drift = OBSERVED_QUARTERLY_SHARPE
     power = {date: float(norm.cdf(drift * np.sqrt(n) - b)) for (date, n), b in zip(LOOKS.items(), bounds, strict=True)}
     combined = {date: float(norm.cdf(drift * np.sqrt(n + RETRO_NON_DESIGN_QUARTERS) - b))
@@ -98,27 +81,18 @@ def plan() -> dict:
 
 
 def plan_hash(record: dict) -> str:
-    return hashlib.sha256(json.dumps(fs._json_safe(record), sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(json_value(record), sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
-def write() -> dict:
-    record = plan()
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    payload = {"sha256": plan_hash(record), "plan": record}
-    (OUTPUT / "plan.json").write_text(json.dumps(fs._json_safe(payload), ensure_ascii=False, indent=2) + "\n",
-                                      encoding="utf-8")
-    return payload
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write", action="store_true")
-    args = parser.parse_args()
-    print(json.dumps(fs._json_safe(write() if args.write else {"plan": plan()}), ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()
+def json_value(value):
+    """The original plan fingerprint's JSON normalization, including its key types."""
+    if isinstance(value, dict):
+        return {key: json_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [json_value(item) for item in value]
+    if isinstance(value, float) and not np.isfinite(value):
+        return None
+    return value
 
 
 def gabi_blind_plan() -> dict:
@@ -146,10 +120,3 @@ def gabi_blind_plan() -> dict:
     }
 
 
-def write_gabi_blind_plan() -> dict:
-    record = gabi_blind_plan()
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    payload = {"sha256": plan_hash(record), "plan": record}
-    (OUTPUT / "gabi-id1.json").write_text(json.dumps(fs._json_safe(payload), ensure_ascii=False, indent=2) + "\n",
-                                          encoding="utf-8")
-    return payload

@@ -377,7 +377,7 @@ Las validaciones ciegas aplican ahora en el backend las reglas de sus
 preregistros. `FileBlindPlans` lee los planes publicados: el de la prueba de
 GABI (id 1, #42, `docs/prospective-plan/gabi-id1.json`) y el de la hipótesis de
 valor (id 3, #43, `docs/value-hypothesis/preregistro.json`). Verifica sus huellas
-con `prospective_plan.plan_hash` y `value_hypothesis.spec_hash` sin cambios y
+con `domain.research.prospective_plan.plan_hash` y `value_hypothesis.spec_hash` sin cambios y
 los guarda en memoria hasta que cambia el fichero. Un plan alterado bloquea con
 503 cualquier consulta u orden ciega, en vez de dejar de aplicar sus reglas.
 La política es la función pura `disclosure` del dominio:
