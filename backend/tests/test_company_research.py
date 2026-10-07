@@ -142,16 +142,15 @@ def test_insiders_match_the_old_ficha_summary_read_only(company):
     assert client.get("/api/v1/companies/T002/insiders").json()["recent"] == []
 
 
-def test_insider_update_is_an_explicit_job_that_ignores_the_cache(company, monkeypatch):
-    from gabi import insider
-
+def test_insider_update_is_an_explicit_job_with_the_historical_age_option(company, monkeypatch):
     client, root = company
     calls = []
-    monkeypatch.setattr(insider, "ensure_insider_data",
-                        lambda symbols, max_age_hours=None: calls.append((symbols, max_age_hours)) or {"failed": {}})
+    def sync(symbols, max_age_hours=None):
+        calls.append((symbols, max_age_hours))
+        return {"failed": {}}
     job = client.post("/api/v1/jobs", json={"kind": "company_sync", "idempotency_key": "company-insiders-1",
                                              "company": {"symbol": "t001", "dataset": "insiders"}})
     assert job.status_code == 202, job.text
-    assert Worker(SqliteJobs(root), LegacyExecutor(Settings(root)), root).run_once()
+    assert Worker(SqliteJobs(root), LegacyExecutor(Settings(root), insider_sync=sync), root).run_once()
     result = client.get(f"/api/v1/jobs/{job.json()['id']}/result").json()
     assert calls == [(["T001"], 0)] and result["synced"] is True

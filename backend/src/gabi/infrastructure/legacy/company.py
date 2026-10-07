@@ -1,5 +1,6 @@
 """Company research formulas and the explicit per-company downloads (estimates, surprises, insiders)."""
 
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
@@ -23,14 +24,18 @@ class LegacyCompanyMath:
         return dict(insiders.TRANSACTION_CODES)
 
 
-def sync_company(data_dir: Path, symbol: str, dataset: str, *, today: date | None = None) -> dict:
+def sync_company(data_dir: Path, symbol: str, dataset: str, *, today: date | None = None,
+                 insider_sync: Callable[..., dict] | None = None) -> dict:
     """Worker only: the per-company network syncs of the old Ficha buttons."""
-    from gabi import insider
     from gabi.infrastructure.legacy.earnings import sync_earnings_surprises
     from gabi.infrastructure.legacy.estimates import sync_estimates
 
-    if dataset == "insiders":  # «Actualizar insiders de esta empresa»: the latest Form 4, ignoring the 24 h cache.
-        failed = insider.ensure_insider_data([symbol], max_age_hours=0)["failed"]
+    if dataset == "insiders":  # Preserve the historical max_age_hours=0 -> 24 h behavior.
+        if insider_sync is None:  # Compatibility callers; CLI bootstrap supplies the explicit ports.
+            from gabi.insider import ensure_insider_data
+
+            insider_sync = ensure_insider_data
+        failed = insider_sync([symbol], max_age_hours=0)["failed"]
     elif dataset == "surprises":
         failed = sync_earnings_surprises(data_dir, [symbol], today=today)
     else:

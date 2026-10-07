@@ -14,9 +14,11 @@ from gabi.infrastructure.settings import Settings
 
 class LegacyExecutor:
     def __init__(self, settings: Settings, blind_plans_root: Path | None = None,
-                 *, today: Callable[[], date] = date.today):
+                 *, today: Callable[[], date] = date.today,
+                 insider_sync: Callable[..., dict] | None = None):
         self.settings = settings
         self.today = today
+        self.insider_sync = insider_sync
         self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
     reports_progress = True  # The worker passes progress(fraction, phase) to long downloads.
@@ -178,7 +180,7 @@ class LegacyExecutor:
 
             assert command.company is not None
             return sync_company(self.settings.data_dir, command.company["symbol"], command.company["dataset"],
-                                today=self.today())
+                                today=self.today(), insider_sync=self.insider_sync)
         if command.kind == "data_health":
             from datetime import date
 
