@@ -51,7 +51,9 @@ uv run --project backend python -m gabi_cli research sec-facts --cik 1 --as-of 2
 `--tag Revenues` puede repetirse para filtrar las versiones mostradas. Las
 métricas y acciones se calculan con todos los conceptos disponibles del
 emisor. El comando devuelve JSON finito con CIK, corte, versiones, métricas y
-acciones, sin escribir archivos ni lanzar descargas. Una caché ausente devuelve
+acciones, sin escribir archivos ni lanzar descargas. Versiones y métricas del
+comando proceden de un único SELECT del emisor; un commit concurrente no mezcla
+revisiones entre ambas salidas. Una caché ausente devuelve
 hechos vacíos y métricas ausentes.
 
 Los consumidores legacy conservan sus adaptadores SQL/globales, y su

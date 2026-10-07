@@ -109,6 +109,22 @@ class SqliteSecReads:
             rows = self._observations(db, f"cik:{cik}", issuer_cutoff=as_of)
         return pd.DataFrame([{**json.loads(payload), "source_url": source} for symbol, payload, source in rows])
 
+    def issuer_inputs(self, cik: str, as_of: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+        # One SELECT owns both views, so a concurrent commit cannot mix revisions.
+        with self._read() as (db, tables):
+            if db is None or "entity_observations" not in tables:
+                return pd.DataFrame(), pd.DataFrame()
+            rows = self._observations(db, f"cik:{cik}")
+        decoded = [(symbol, json.loads(payload), source) for symbol, payload, source in rows]
+        raw = pd.DataFrame([{**record, "source_symbol": symbol} for symbol, record, source in decoded])
+        versions = pd.DataFrame([{**record, "source_url": source} for symbol, record, source in decoded])
+        if not raw.empty:
+            raw = raw.drop_duplicates(KEYS)
+            raw = raw[raw.filed_date.notna() & (raw.filed_date <= as_of)]
+            versions = versions[versions.filed_date.notna() & (versions.filed_date <= as_of)
+                                & versions.end_date.notna() & (versions.end_date <= as_of)]
+        return versions, raw
+
     def last_filed(self, symbols: list[str], as_of: str | None = None) -> dict[str, str]:
         symbols = list(dict.fromkeys(symbols))
         if len(symbols) > self.max_symbols:

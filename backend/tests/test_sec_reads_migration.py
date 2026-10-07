@@ -114,6 +114,10 @@ def test_queries_do_not_create_or_mutate_database_or_contact_sources(tmp_path, m
     assert snapshot["cik"] == "0000000001" and snapshot["facts"]
     assert path.read_bytes() == before
     assert not any(statement.lstrip().upper().startswith(("CREATE", "INSERT", "UPDATE", "DELETE")) for statement in statements)
+    assert len([statement for statement in statements if "FROM entity_observations" in statement]) == 1
+    expected = issuer_facts(reader, "1", "2020-12-31").to_dict("records")
+    assert snapshot["facts"] == expected
+    assert snapshot["metrics"] == metrics_as_of(reader, "", "2020-12-31", entity_id="cik:0000000001")
 
 
 @pytest.mark.parametrize("limits", [{"max_rows": 1}, {"max_bytes": 1}, {"max_row_bytes": 1}])

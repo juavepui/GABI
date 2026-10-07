@@ -18,6 +18,10 @@ class FactReader(Protocol):
     def last_filed(self, symbols: list[str], as_of: str | None = None) -> dict[str, str]: ...
 
 
+class IssuerSnapshotReader(Protocol):
+    def issuer_inputs(self, cik: str, as_of: str) -> tuple[pd.DataFrame, pd.DataFrame]: ...
+
+
 def issuer_facts(reader: FactReader, cik: str, as_of: str, tags: list[str] | None = None) -> pd.DataFrame:
     day, normalized = date.fromisoformat(as_of).isoformat(), normalize_cik(cik)
     return issuer_versions(reader.issuer(normalized, day), normalized, tags)
@@ -41,12 +45,12 @@ def shares_as_of(reader: FactReader, symbol: str, as_of: str, *, entity_id: str 
     return concept_value(reader, symbol, SHARES_TAGS, as_of, "shares", entity_id=entity_id)
 
 
-def issuer_snapshot(reader: FactReader, cik: str, as_of: str, tags: list[str] | None = None) -> dict:
+def issuer_snapshot(reader: IssuerSnapshotReader, cik: str, as_of: str, tags: list[str] | None = None) -> dict:
     day, normalized = date.fromisoformat(as_of).isoformat(), normalize_cik(cik)
-    versions = issuer_facts(reader, normalized, day, tags)
+    versions, raw = reader.issuer_inputs(normalized, day)
+    versions = issuer_versions(versions, normalized, tags)
     # Metrics retain the legacy filing-only cutoff and form policy, independently
     # of the stricter inspectable issuer versions (filing and period cutoff).
-    raw = reader.facts("", entity_id=f"cik:{normalized}", as_of=day)
     shares = raw[raw.tag.isin(SHARES_TAGS)] if not raw.empty else raw
     return {"cik": normalized, "as_of": day, "facts": versions.to_dict("records"),
             "metrics": compute_edgar_metrics(companyfacts(raw, day)),
