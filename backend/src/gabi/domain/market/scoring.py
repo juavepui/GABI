@@ -1,5 +1,7 @@
 """Normaliza métricas por percentil dentro del universo y combina bloques de
 score (Value / Quality / Momentum) en un score compuesto configurable."""
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 
@@ -36,6 +38,19 @@ SCORE_METRICS = {
     "momentum": ["momentum_12m", "rel_strength_6m", "price_vs_sma200"],
     "risk": ["debt_to_equity", "volatility", "max_drawdown"],
 }
+
+
+@dataclass(frozen=True)
+class ScoringParameters:
+    value_metrics: tuple[str, ...] = tuple(VALUE_METRICS_LOWER_BETTER)
+    quality_metrics: tuple[str, ...] = tuple(QUALITY_METRICS_HIGHER_BETTER)
+    momentum_metrics: tuple[str, ...] = tuple(MOMENTUM_METRICS_HIGHER_BETTER)
+    risk_lower_metrics: tuple[str, ...] = tuple(RISK_METRICS_LOWER_BETTER)
+    risk_higher_metrics: tuple[str, ...] = tuple(RISK_METRICS_HIGHER_BETTER)
+    score_metrics: tuple[tuple[str, tuple[str, ...]], ...] = tuple((key, tuple(values)) for key, values in SCORE_METRICS.items())
+    default_weights: tuple[tuple[str, float], ...] = tuple(DEFAULT_WEIGHTS.items())
+    min_score_coverage: float = MIN_SCORE_COVERAGE
+    min_sector_group: int = DEFAULT_MIN_SECTOR_GROUP
 
 
 def _percentile(series: pd.Series, higher_is_better: bool = True) -> pd.Series:
@@ -105,7 +120,8 @@ def _weighted_row_mean(row_values, weights):
     return float(np.dot(row_values[mask], ww) / ww.sum())
 
 
-def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
+def build_scores(df: pd.DataFrame, weights: dict = None,
+                     *, parameters: ScoringParameters = ScoringParameters()) -> pd.DataFrame:
     """df: DataFrame indexado por símbolo con las columnas de métricas crudas
     (las listadas arriba), más opcionalmente 'sector', 'rsi14' y 'golden_cross_recent'.
 
@@ -113,32 +129,33 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
     suficientes empresas de ese sector con dato (ver DEFAULT_MIN_SECTOR_GROUP);
     si no, caen de vuelta al percentil sobre todo el universo analizado.
     """
-    weights = weights or DEFAULT_WEIGHTS
+    weights = weights or dict(parameters.default_weights)
+    score_metrics = dict(parameters.score_metrics)
     df = df.copy()
 
-    df = add_percentile_columns(df, VALUE_METRICS_LOWER_BETTER, higher_is_better=False)
-    df = add_percentile_columns(df, QUALITY_METRICS_HIGHER_BETTER, higher_is_better=True)
-    df = add_percentile_columns(df, MOMENTUM_METRICS_HIGHER_BETTER, higher_is_better=True)
-    df = add_percentile_columns(df, RISK_METRICS_LOWER_BETTER, higher_is_better=False)
-    df = add_percentile_columns(df, RISK_METRICS_HIGHER_BETTER, higher_is_better=True)
+    df = add_percentile_columns(df, parameters.value_metrics, higher_is_better=False, min_group_size=parameters.min_sector_group)
+    df = add_percentile_columns(df, parameters.quality_metrics, higher_is_better=True, min_group_size=parameters.min_sector_group)
+    df = add_percentile_columns(df, parameters.momentum_metrics, higher_is_better=True, min_group_size=parameters.min_sector_group)
+    df = add_percentile_columns(df, parameters.risk_lower_metrics, higher_is_better=False, min_group_size=parameters.min_sector_group)
+    df = add_percentile_columns(df, parameters.risk_higher_metrics, higher_is_better=True, min_group_size=parameters.min_sector_group)
 
-    momentum_pct_cols = [c + "_pct" for c in SCORE_METRICS["momentum"]]
+    momentum_pct_cols = [c + "_pct" for c in score_metrics["momentum"]]
     if "rsi14" in df.columns:
         # Zona sana ~45-65: penaliza tanto sobrecompra como debilidad, no es
         # un percentil cruzado sino una distancia a la "zona dulce".
         df["rsi14_pct"] = 100 - (df["rsi14"] - 55).abs().clip(upper=55) / 55 * 100
         # El RSI se queda como diagnóstico; su "zona sana" es una heurística propia sin respaldo académico validado.
 
-    value_pct_cols = [c + "_pct" for c in SCORE_METRICS["value"]]
-    quality_pct_cols = [c + "_pct" for c in SCORE_METRICS["quality"]]
-    risk_pct_cols = [c + "_pct" for c in SCORE_METRICS["risk"]]
+    value_pct_cols = [c + "_pct" for c in score_metrics["value"]]
+    quality_pct_cols = [c + "_pct" for c in score_metrics["quality"]]
+    risk_pct_cols = [c + "_pct" for c in score_metrics["risk"]]
 
     df["value_score"] = compute_block_score(df, value_pct_cols)
     df["quality_score"] = compute_block_score(df, quality_pct_cols)
     df["momentum_score"] = compute_block_score(df, momentum_pct_cols)
     df["risk_score"] = compute_block_score(df, risk_pct_cols)
 
-    selected = [c for cols in SCORE_METRICS.values() for c in cols]
+    selected = [c for cols in score_metrics.values() for c in cols]
     df["metrics_available"] = df.reindex(columns=selected).notna().sum(axis=1)
     df["metrics_possible"] = len(selected)
     df["score_coverage"] = df["metrics_available"] / len(selected)
@@ -152,12 +169,13 @@ def build_scores(df: pd.DataFrame, weights: dict = None) -> pd.DataFrame:
         _weighted_row_mean(row, w) for row in block_values
     ]
     core_missing = df[["value_score", "quality_score", "momentum_score"]].isna().any(axis=1)
-    df.loc[(df["score_coverage"] < MIN_SCORE_COVERAGE) | core_missing, "composite_score"] = np.nan
+    df.loc[(df["score_coverage"] < parameters.min_score_coverage) | core_missing, "composite_score"] = np.nan
 
     return df.sort_values("composite_score", ascending=False)
 
 
-def compute_confidence(df: pd.DataFrame, weights: dict = None) -> pd.Series:
+def compute_confidence(df: pd.DataFrame, weights: dict = None,
+                     *, parameters: ScoringParameters = ScoringParameters()) -> pd.Series:
     """Confidence: cuánto nos podemos fiar del `composite_score` de cada
     fila -- una dimensión DISTINTA de cuánto de atractiva es la empresa
     (eso ya lo dice el score). Pensado para el caso señalado por el
@@ -170,7 +188,7 @@ def compute_confidence(df: pd.DataFrame, weights: dict = None) -> pd.Series:
     es aditiva: una columna nueva y opcional, pensada para mostrarse junto
     al score, no para filtrar ni reordenar el ranking.
 
-    Por bloque: fracción de las métricas de `SCORE_METRICS[bloque]` con dato
+    Por bloque: fracción de las métricas de `score_metrics[bloque]` con dato
     disponible (0.0 si el bloque entero falta, 1.0 si están todas). La
     confidence global es la media de las confidence por bloque, ponderada
     con los MISMOS pesos que el composite score (`weights`, por defecto
@@ -181,12 +199,13 @@ def compute_confidence(df: pd.DataFrame, weights: dict = None) -> pd.Series:
     Requiere llamarse DESPUÉS de `build_scores` (o de
     `add_percentile_columns`), que es quien crea las columnas `_pct` que
     esta función cuenta."""
-    weights = weights or DEFAULT_WEIGHTS
-    w = np.array([weights.get(b, 0) for b in SCORE_METRICS])
+    weights = weights or dict(parameters.default_weights)
+    score_metrics = dict(parameters.score_metrics)
+    w = np.array([weights.get(b, 0) for b in score_metrics])
     if w.sum() == 0:
         return pd.Series(0.0, index=df.index)
     block_fracs = []
-    for block, cols in SCORE_METRICS.items():
+    for block, cols in score_metrics.items():
         pct_cols = [c + "_pct" for c in cols]
         available = [c for c in pct_cols if c in df.columns]
         if not available:

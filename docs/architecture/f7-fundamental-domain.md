@@ -10,9 +10,14 @@
 
 Las fórmulas, ausencia de datos, selección de hechos, unidades, orden de tags,
 revisiones, conflictos, duraciones fiscales y umbrales de scoring permanecen.
-Scoring y periodos tienen contenido idéntico al commit anterior `486942a` (LF):
+Scoring y periodos se extrajeron con contenido idéntico al commit anterior `486942a` (LF):
 SHA-256 `b51a1b4929cf9f243c6c512b62e250e84f1081197320d8fae16a193d6a20d341`
 y `996cbb39d4b42c1e7f486c1460bf66f0fb5758eaa2b3d418a070b780f95e290c`.
+
+Scoring recibe después `ScoringParameters` inmutable para aislar las listas y
+umbrales. La fachada captura los valores legacy por llamada, incluidos los
+parches de listas del R3 congelado; el ranking nuevo conserva parámetros
+independientes. Las fórmulas no cambian y el test original de rescoring R3 pasa.
 
 El dominio SEC recibe `fiscal_alignment` y `tolerance_days` explícitos. No lee
 configuración global ni usa contexto mutable. La fachada EDGAR conserva el

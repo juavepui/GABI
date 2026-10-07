@@ -87,6 +87,17 @@ def test_domain_alignment_is_independent_of_legacy_context():
     assert not edgar.fiscal_alignment_enabled()
 
 
+def test_domain_scoring_is_independent_of_frozen_engine_metric_patches(monkeypatch):
+    frame = pd.DataFrame({metric: [1., 2.] for group in domain_scoring.SCORE_METRICS.values() for metric in group},
+                         index=["A", "B"])
+    frame["extra_quality"] = [.4, .8]
+    expected = domain_scoring.build_scores(frame)
+    monkeypatch.setattr(scoring, "QUALITY_METRICS_HIGHER_BETTER", [*scoring.QUALITY_METRICS_HIGHER_BETTER, "extra_quality"])
+    monkeypatch.setitem(scoring.SCORE_METRICS, "quality", [*scoring.SCORE_METRICS["quality"], "extra_quality"])
+    assert "extra_quality_pct" in scoring.build_scores(frame)
+    pd.testing.assert_frame_equal(domain_scoring.build_scores(frame), expected)
+
+
 def test_quality_reader_receives_exact_cutoff_and_identity():
     calls = []
 
@@ -100,8 +111,9 @@ def test_quality_reader_receives_exact_cutoff_and_identity():
 
 
 def test_legacy_functions_and_ranking_use_single_domain_implementations():
-    assert scoring.build_scores is domain_scoring.build_scores
-    assert scoring.compute_confidence is domain_scoring.compute_confidence
+    frame = pd.DataFrame({"pe": [10, 20]}, index=["A", "B"])
+    pd.testing.assert_frame_equal(scoring.build_scores(frame), domain_scoring.build_scores(frame))
+    pd.testing.assert_series_equal(scoring.compute_confidence(frame), domain_scoring.compute_confidence(frame))
     assert calculators().scores is domain_scoring.build_scores
     assert calculators().confidence is domain_scoring.compute_confidence
     assert quality_persistence.from_facts is quality.from_facts
