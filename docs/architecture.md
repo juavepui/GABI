@@ -54,6 +54,8 @@ persistente, con fuente/caché acotadas y composición explícita del worker.
 checkpoints y fuentes explícitos, y escritura atómica de hechos por emisor.
 [La selección SEC](architecture/f7-sec-selection.md) conserva antigüedad, cobertura
 y fallos por emisor, con identidad histórica por lotes y descarga completa explícita.
+[Los lectores EDGAR por fecha](architecture/f7-sec-reads.md) comparten interpretación
+de versiones y métricas con consultas locales acotadas por CIK o ticker.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo

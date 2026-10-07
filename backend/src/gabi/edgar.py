@@ -21,6 +21,7 @@ import requests
 import gabi.domain.market.sec_facts as _sec_facts
 from gabi.application.market.sec_cik import current_map
 from gabi.application.market.sec_cik import resolve as resolve_cik
+from gabi.application.market.sec_reads import concept_value, issuer_facts, metrics_as_of, stored_facts
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete
@@ -292,32 +293,31 @@ def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = N
         return pd.read_sql_query(query, conn, params=params)
 
 
-def get_issuer_facts_as_of(cik: str, as_of_date: str, tags: list | None = None) -> pd.DataFrame:
-    """All dated issuer facts known by ``as_of_date``, without a ticker lookup.
+class _FactReader:
+    def facts(self, symbol, *, entity_id=None, tags=None, as_of=None, unit=None):
+        return get_edgar_facts(symbol, tags=tags, entity_id=entity_id)
 
-    Keep all filing versions so callers can inspect restatements. A CIK
-    identifies the reporting entity, not a historical ticker or share class.
-    SEC bulk rounded dates are deliberately not used as exact fact periods.
-    """
-    from . import identity
+    def last_filed(self, symbols, as_of=None):
+        return get_last_filed_dates(symbols, as_of)
 
-    cutoff = date.fromisoformat(as_of_date).isoformat()
-    normalized = identity.normalize_cik(cik)
-    with storage.get_connection() as conn:
-        identity.ensure_schema(conn)
-        rows = conn.execute(
-            "SELECT payload_json,source FROM entity_observations WHERE entity_id=? "
-            "AND dataset='edgar_facts' AND json_extract(payload_json,'$.filed_date')<=? "
-            "AND json_extract(payload_json,'$.end_date')<=?",
-            (f"cik:{normalized}", cutoff, cutoff)).fetchall()
-    frame = pd.DataFrame([{**json.loads(payload), "source_url": source} for payload, source in rows])
-    if frame.empty:
+    def issuer(self, cik, as_of):
+        from . import identity
+
+        cutoff = date.fromisoformat(as_of).isoformat()
+        normalized = identity.normalize_cik(cik)
+        with storage.get_connection() as conn:
+            identity.ensure_schema(conn)
+            rows = conn.execute(
+                "SELECT payload_json,source FROM entity_observations WHERE entity_id=? "
+                "AND dataset='edgar_facts' AND json_extract(payload_json,'$.filed_date')<=? "
+                "AND json_extract(payload_json,'$.end_date')<=?",
+                (f"cik:{normalized}", cutoff, cutoff)).fetchall()
+        frame = pd.DataFrame([{**json.loads(payload), "source_url": source} for payload, source in rows])
         return frame
-    frame = frame[frame["form"].isin(["10-K", "10-Q", "10-K/A", "10-Q/A"])].copy()
-    if tags:
-        frame = frame[frame["tag"].isin(tags)].copy()
-    frame["cik"] = normalized
-    return frame.sort_values(["filed_date", "end_date", "accn", "tag"], kind="stable").reset_index(drop=True)
+
+
+def get_issuer_facts_as_of(cik: str, as_of_date: str, tags: list | None = None) -> pd.DataFrame:
+    return issuer_facts(_FactReader(), cik, as_of_date, tags)
 
 
 def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
@@ -355,18 +355,7 @@ def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
 
 
 def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD", *, entity_id: str | None = None):
-    """El valor de un concepto (probando los tags en orden) tal y como se
-    conocía en as_of_date — el hecho con el filed_date más reciente que no
-    sea posterior a esa fecha, evitando look-ahead bias. None si no había
-    ningún dato presentado todavía."""
-    df = get_edgar_facts(symbol, tags=tags, entity_id=entity_id)
-    if df.empty:
-        return None
-    df = df[(df["unit"] == unit) & (df["filed_date"].notna()) & (df["filed_date"] <= as_of_date)]
-    if df.empty:
-        return None
-    df = df.sort_values(["filed_date", "end_date"])
-    return float(df.iloc[-1]["val"])
+    return concept_value(_FactReader(), symbol, tags, as_of_date, unit, entity_id=entity_id)
 
 
 def get_shares_outstanding_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None):
@@ -377,42 +366,11 @@ def get_shares_outstanding_as_of(symbol: str, as_of_date: str, *, entity_id: str
 
 
 def _facts_dict_from_stored(symbol: str, as_of_date: str = None, *, entity_id: str | None = None) -> dict:
-    """Reconstruye una estructura equivalente a la que devuelve
-    fetch_company_facts(), pero leída de edgar_facts (ya descargado y
-    guardado antes) y, si se pasa as_of_date, recortada a los hechos cuyo
-    filed_date no sea posterior a esa fecha. Permite reutilizar
-    compute_edgar_metrics() sin red y sin duplicar su lógica, tanto para
-    'ahora' como para una fecha pasada — es la pieza central que hace
-    posible compute_edgar_metrics_as_of()."""
-    df = get_edgar_facts(symbol, entity_id=entity_id)
-    if df.empty:
-        return {"facts": {"us-gaap": {}}}
-    if as_of_date:
-        df = df[df["filed_date"].notna() & (df["filed_date"] <= as_of_date)]
-
-    us_gaap = {}
-    for tag, group in df.groupby("tag"):
-        by_unit = {}
-        for unit, ug in group.groupby("unit"):
-            entries = [
-                {
-                    "start": (r.start_date or None), "end": r.end_date, "val": r.val,
-                    "form": r.form, "fp": r.fp, "fy": r.fy, "filed": r.filed_date, "accn": r.accn,
-                }
-                for r in ug.itertuples()
-            ]
-            by_unit[unit] = entries
-        us_gaap[tag] = {"units": by_unit}
-    return {"facts": {"us-gaap": us_gaap}}
+    return stored_facts(_FactReader(), symbol, as_of_date, entity_id=entity_id)
 
 
 def compute_edgar_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
-    """compute_edgar_metrics(), pero solo con lo que se conocía públicamente
-    en as_of_date (sin red: usa edgar_facts, que debe haberse descargado
-    antes desde ⚙️ Configuración). Es la reconstrucción fundamental point-in-
-    time — la pieza que evita el look-ahead bias en el ranking histórico."""
-    facts = _facts_dict_from_stored(symbol, as_of_date=as_of_date, entity_id=entity_id)
-    return compute_edgar_metrics(facts)
+    return metrics_as_of(_FactReader(), symbol, as_of_date, entity_id=entity_id, compute=compute_edgar_metrics)
 
 
 _cagr_from_series = _sec_facts._cagr_from_series

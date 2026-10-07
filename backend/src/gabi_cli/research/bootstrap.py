@@ -17,6 +17,15 @@ def sec_reconciliation(settings: Settings, args: argparse.Namespace) -> None:
     print(json.dumps(run_reconciliation(settings.data_dir), indent=2))
 
 
+def sec_facts(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.application.market.sec_reads import issuer_snapshot
+    from gabi.domain.research.prospective_plan import json_value
+    from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+    result = issuer_snapshot(SqliteSecReads(settings.data_dir / "gabi.db"), args.cik, args.as_of, args.tag)
+    print(json.dumps(json_value(result), ensure_ascii=False, allow_nan=False))
+
+
 def legacy_filings(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.legacy.sec_validation import run_legacy_pilot
 
@@ -220,6 +229,11 @@ def tiingo_prices(settings: Settings, args: argparse.Namespace) -> None:
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="python -m gabi_cli research", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    command = commands.add_parser("sec-facts", help="Consulta hechos SEC locales por CIK y fecha, sin descargar ni escribir")
+    command.add_argument("--cik", required=True)
+    command.add_argument("--as-of", required=True)
+    command.add_argument("--tag", action="append", help="Filtra hechos; las métricas usan todos los conceptos")
+    command.set_defaults(run=sec_facts)
     command = commands.add_parser("sec-reconciliation", help="Concilia SEC NUM con los hechos exactos (validación 1996-2015)")
     command.set_defaults(run=sec_reconciliation)
     command = commands.add_parser("legacy-filings", help="Importa el piloto pre-XBRL revisado (descarga los 3 documentos fijados)")
