@@ -12,10 +12,13 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, evaluation, research_lab, storage
+from gabi import config, research_lab, storage
 from gabi.infrastructure.storage.decisions import SqliteDecisions
+from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
 
 
@@ -83,7 +86,7 @@ def test_evaluation_migrates_snapshots_table_without_name(tmp_path, monkeypatch)
         )
         conn.commit()
 
-    snapshots = evaluation.list_snapshots()
+    snapshots = pd.DataFrame(SqliteSignals(tmp_path).snapshots())
 
     assert len(snapshots) == 1
     assert snapshots.iloc[0]["source"] == "live"  # dato antiguo intacto

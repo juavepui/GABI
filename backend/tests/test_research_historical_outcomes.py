@@ -8,8 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from ranking_fixture import RankingFixture
 
-from gabi import config, evaluation
+from gabi import config
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.errors import QueryError
 from gabi.application.research.historical import build_historical_ranking
@@ -53,6 +54,7 @@ def _ranking(as_of):
 
 def test_window_reader_matches_legacy_lookup_and_refuses_reserved_dates(tmp_path, monkeypatch):
     _prices(tmp_path)
+    evaluation = RankingFixture(tmp_path, date(2025, 7, 2))
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     reader = SqliteWindowPrices(tmp_path, date(2025, 7, 2))
@@ -75,6 +77,7 @@ def _jobs(tmp_path, as_of):
 
 def test_outcomes_job_repeats_streamlit_selection_and_formula(tmp_path, monkeypatch):
     _prices(tmp_path)
+    evaluation = RankingFixture(tmp_path, date(2025, 7, 2))
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     store, ranking_id = _jobs(tmp_path, "2019-01-02")
