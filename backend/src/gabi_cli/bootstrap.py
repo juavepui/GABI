@@ -9,15 +9,20 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import date
+from collections.abc import Callable
+from datetime import UTC, date, datetime
+from functools import partial
 from pathlib import Path
 
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
+from gabi.application.market.insider_sync import sync_insiders
 from gabi.domain.market.selection import RankingFilter
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy.insiders import SecInsiders, classify_error, sec_user_agent
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
 
@@ -29,6 +34,14 @@ def warm_rankings(app) -> None:
         app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)
     except QueryError:
         pass  # No cached data yet: the pages show their own empty state.
+
+
+def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = None) -> LegacyExecutor:
+    clock = now or (lambda: datetime.now(UTC))
+    source = SecInsiders(sec_user_agent())
+    store = SqliteInsiders(settings.data_dir, now=clock)
+    insiders = partial(sync_insiders, source=source, store=store, classify_error=classify_error, now=clock)
+    return LegacyExecutor(settings, insider_sync=insiders)
 
 
 def main() -> None:
@@ -92,7 +105,7 @@ def main() -> None:
                 if exc.code != "job_conflict":
                     raise
         return
-    worker = Worker(store, LegacyExecutor(settings), settings.data_dir)
+    worker = Worker(store, build_executor(settings), settings.data_dir)
     if args.once:
         worker.run_once()
         return

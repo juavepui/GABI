@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 import pandas as pd
 import requests
 
+from gabi.application.market.insider_sync import InsiderAttempt, fetch_transactions, sync_insiders
 from gabi.domain.market.insiders import (
     SIGNAL_CODES as SIGNAL_CODES,
 )
@@ -60,43 +61,20 @@ CREATE TABLE IF NOT EXISTS insider_fetch_meta (
 """
 
 
-def fetch_insider_transactions(symbol: str, cik: str, limit_filings: int = 20) -> list:
-    """Descarga y parsea los Form 4 más recientes de una empresa (los Form 3
-    y 5 no traen transacciones, solo posiciones iniciales/anuales, así que
-    se ignoran). limit_filings acota cuántos filings recientes mirar — no
-    hace falta el histórico completo para una señal de actividad reciente."""
-    submissions = edgar.fetch_submissions(cik)
-    recent = submissions.get("filings", {}).get("recent", {})
-    forms = recent.get("form", [])
-    accessions = recent.get("accessionNumber", [])
-    primary_docs = recent.get("primaryDocument", [])
-    filing_dates = recent.get("filingDate", [])
+class _Documents:
+    @staticmethod
+    def submissions(cik: str) -> dict:
+        return edgar.fetch_submissions(cik)
 
-    rows = []
-    count = 0
-    for i, form in enumerate(forms):
-        if form != "4" or count >= limit_filings:
-            continue
-        count += 1
-        accn_nodash = accessions[i].replace("-", "")
-        filename = primary_docs[i].split("/")[-1]  # la carpeta xslF345X06/ es la vista renderizada; el XML crudo vive en la raíz del accession
-        url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accn_nodash}/{filename}"
-        try:
-            resp = requests.get(url, headers={"User-Agent": config.SEC_USER_AGENT}, timeout=20)
-            resp.raise_for_status()
-            parsed = parse_form4_xml(resp.text)
-        except Exception:
-            continue  # un filing individual mal formado no debe tumbar el resto
-        for tx in parsed["transactions"]:
-            rows.append({
-                "symbol": symbol, "cik": cik, "accn": accessions[i],
-                "owner_name": parsed["owner_name"], "owner_title": parsed["owner_title"],
-                "is_officer": parsed["is_officer"], "is_director": parsed["is_director"],
-                "is_ten_pct_owner": parsed["is_ten_pct_owner"], "is_10b5_1_plan": parsed["is_10b5_1_plan"],
-                "filed_date": filing_dates[i] if i < len(filing_dates) else None,
-                **tx,
-            })
-    return rows
+    @staticmethod
+    def xml(url: str) -> str:
+        response = requests.get(url, headers={"User-Agent": config.SEC_USER_AGENT}, timeout=20)
+        response.raise_for_status()
+        return response.text
+
+
+def fetch_insider_transactions(symbol: str, cik: str, limit_filings: int = 20) -> list:
+    return fetch_transactions(symbol, cik, _Documents(), limit_filings)
 
 
 def upsert_insider_transactions(symbol: str, rows: list):
@@ -160,60 +138,44 @@ def summarize_insider_activity(symbol: str, months: int = 6, transactions: pd.Da
     return _summarize(frame, months, as_of=datetime.now(UTC).date())
 
 
-def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: int = 4, progress_cb=None) -> dict:
-    """Descarga/refresca Form 4 de los símbolos dados (por defecto, cada 24h
-    — la actividad de insiders cambia más a menudo que unos fundamentales
-    anuales, así que se refresca más seguido que SEC EDGAR fundamental)."""
-    import concurrent.futures as cf
+class _Source:
+    @staticmethod
+    def mapping():
+        return edgar.get_cik_map()
 
-    max_age_hours = max_age_hours or 24
-    symbols = list(dict.fromkeys(symbols))
+    @staticmethod
+    def resolve(symbol, mapping):
+        return edgar.get_cik_for_symbol(symbol, cik_map=mapping)[0]
 
-    try:
-        cik_map = edgar.get_cik_map()
-    except Exception as exc:
-        _, reason = _classify_error(exc, service="SEC EDGAR")
-        failed = {s: reason for s in symbols}
+    @staticmethod
+    def attempts(ciks, max_workers):
+        import concurrent.futures as cf
+
+        with cf.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(fetch_insider_transactions, symbol, cik): symbol for symbol, cik in ciks.items()}
+            for future in cf.as_completed(futures):
+                symbol = futures[future]
+                try:
+                    yield InsiderAttempt(symbol, rows=future.result())
+                except Exception as exc:
+                    yield InsiderAttempt(symbol, error=exc)
+
+
+class _Store:
+    @staticmethod
+    def fetched_at(symbols):
+        return get_insider_fetched_at(symbols)
+
+    @staticmethod
+    def save(symbol, rows):
+        upsert_insider_transactions(symbol, rows)
+
+    @staticmethod
+    def errors(failed):
         storage.record_update_errors("insider_form4", failed)
-        return {"refreshed": 0, "failed": failed}
 
-    fetched_at = get_insider_fetched_at(symbols)
-    now = datetime.now(UTC)
-    stale = [
-        s for s in symbols
-        if fetched_at.get(s) is None or (now - fetched_at[s]).total_seconds() > max_age_hours * 3600
-    ]
-    if not stale:
-        return {"refreshed": 0, "failed": {}}
 
-    cik_by_symbol = {}
-    for s in stale:
-        cik, _title = edgar.get_cik_for_symbol(s, cik_map=cik_map)
-        if cik:
-            cik_by_symbol[s] = cik
-
-    failed = {}
-    total = len(stale)
-    done = 0
-    with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = {}
-        for s in stale:
-            cik = cik_by_symbol.get(s)
-            if not cik:
-                failed[s] = "Símbolo no encontrado en el mapeo ticker→CIK de la SEC"
-                continue
-            futures[ex.submit(fetch_insider_transactions, s, cik)] = s
-        for fut in cf.as_completed(futures):
-            sym = futures[fut]
-            done += 1
-            try:
-                rows = fut.result()
-                upsert_insider_transactions(sym, rows)
-            except Exception as exc:
-                _, reason = _classify_error(exc, service="SEC EDGAR")
-                failed[sym] = reason
-            if progress_cb:
-                progress_cb(done, total, sym)
-
-    storage.record_update_errors("insider_form4", failed)
-    return {"refreshed": len(stale) - len(failed), "failed": failed}
+def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: int = 4, progress_cb=None) -> dict:
+    return sync_insiders(symbols, _Source(), _Store(), lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+                         now=lambda: datetime.now(UTC), max_age_hours=max_age_hours,
+                         max_workers=max_workers, progress_cb=progress_cb)

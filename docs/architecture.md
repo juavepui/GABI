@@ -24,7 +24,8 @@ casos de uso con reloj explícito; conserva pendientes sus lectores de compatibi
 [Eventos corporativos](architecture/f7-corporate-events.md) retira el módulo plano y
 comparte análisis de fechas, sincronización explícita y almacenamiento.
 [El análisis de insiders](architecture/f7-insider-analysis.md) interpreta Form 4
-y resume operaciones con filas y fecha explícitas; conserva pendiente su I/O legacy.
+y resume operaciones con filas y fecha explícitas. [Su sincronización](architecture/f7-insider-sync.md)
+comparte puertos de documentos y almacenamiento; conserva pendiente la resolución CIK legacy.
 [El arnés de variantes](architecture/f7-variant-validation.md) comparte protocolo
 y métricas con un runner explícito y conserva la fachada usada por R3 congelado.
 [La identidad y estado del modelo](architecture/f7-model-policy.md) usa reglas

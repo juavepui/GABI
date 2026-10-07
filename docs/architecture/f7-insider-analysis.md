@@ -21,7 +21,8 @@ entradas no cambian ni requieren reloj implícito o archivos. La ficha conserva
 sus consultas de solo lectura y su contrato HTTP.
 
 Esta entrega no cambia SQL, límites, cachés ni acceso a datos; no se atribuye
-una mejora de rendimiento. La descarga SEC, persistencia y refresco del módulo
-de compatibilidad siguen pendientes de la migración de proveedores y almacenes.
+una mejora de rendimiento. La entrega posterior de [sincronización](f7-insider-sync.md)
+migra documentos, coordinación y almacén del job; la resolución CIK y los lectores
+de compatibilidad siguen pendientes junto al núcleo.
 No se altera ningún motor congelado. La nueva ruta se incluye solo en metadatos
 de futuras versiones del ledger; los registros y hashes históricos permanecen.
