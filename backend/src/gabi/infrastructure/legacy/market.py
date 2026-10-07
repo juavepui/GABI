@@ -1,12 +1,18 @@
-from gabi import app_mode, config, events_calendar, risk, scoring, technicals
+from functools import partial
+
+from gabi import app_mode, config, events_calendar, scoring
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
+from gabi.domain.market.risk import compute_risk_metrics
+from gabi.domain.market.technicals import TechnicalParameters, compute_technicals
 
 
 def calculators() -> Calculators:
-    return Calculators(compute_fundamental_metrics, technicals.compute_technicals,
-                       risk.compute_risk_metrics, events_calendar.parse_corporate_events,
+    parameters = TechnicalParameters(config.SMA_SHORT, config.SMA_LONG, config.RSI_PERIOD,
+                                     config.MOMENTUM_SHORT_DAYS, config.MOMENTUM_LONG_DAYS)
+    return Calculators(compute_fundamental_metrics, partial(compute_technicals, parameters=parameters),
+                       compute_risk_metrics, events_calendar.parse_corporate_events,
                        scoring.build_scores, scoring.compute_confidence)
 
 

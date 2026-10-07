@@ -508,7 +508,6 @@
   ],
   "backend/src/gabi/portfolio_metrics.py": [
     "gabi.config",
-    "numpy",
     "pandas"
   ],
   "backend/src/gabi/price_sync.py": [
@@ -577,7 +576,6 @@
   ],
   "backend/src/gabi/risk.py": [
     "gabi.config",
-    "numpy",
     "pandas"
   ],
   "backend/src/gabi/rotation_experiment.py": [
@@ -678,11 +676,7 @@
     "scipy",
     "yfinance"
   ],
-  "backend/src/gabi/stats_rigor.py": [
-    "numpy",
-    "pandas",
-    "scipy"
-  ],
+  "backend/src/gabi/stats_rigor.py": [],
   "backend/src/gabi/storage.py": [
     "gabi.config",
     "gabi.identity.put_observations",
@@ -718,7 +712,6 @@
   ],
   "backend/src/gabi/technicals.py": [
     "gabi.config",
-    "numpy",
     "pandas"
   ],
   "backend/src/gabi/universe.py": [
