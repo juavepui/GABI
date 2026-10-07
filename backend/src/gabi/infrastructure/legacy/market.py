@@ -1,10 +1,11 @@
-from gabi import app_mode, config, events_calendar, metrics, risk, scoring, technicals
+from gabi import app_mode, config, events_calendar, risk, scoring, technicals
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
+from gabi.domain.market.fundamentals import compute_fundamental_metrics
 
 
 def calculators() -> Calculators:
-    return Calculators(metrics.compute_fundamental_metrics, technicals.compute_technicals,
+    return Calculators(compute_fundamental_metrics, technicals.compute_technicals,
                        risk.compute_risk_metrics, events_calendar.parse_corporate_events,
                        scoring.build_scores, scoring.compute_confidence)
 

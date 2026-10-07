@@ -93,7 +93,7 @@ class LegacyPortfolioLabSources:
 
 def run_portfolio_lab(start: str, end: str, options: dict) -> dict:
     """The Streamlit form's parameters, with the broker's stock fee as the default commission."""
-    from gabi import broker_costs
+    from gabi.domain.portfolio import broker_costs
 
     result = run_engine(
         start, end, LegacyPortfolioLabSources(), date.today(), commission_usd=broker_costs.STOCK_FEE_USD,

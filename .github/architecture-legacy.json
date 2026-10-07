@@ -33,9 +33,7 @@
     "scipy.stats"
   ],
   "backend/src/gabi/broker_costs.py": [],
-  "backend/src/gabi/capital_allocation.py": [
-    "pandas"
-  ],
+  "backend/src/gabi/capital_allocation.py": [],
   "backend/src/gabi/capital_input_audit.py": [
     "gabi.config",
     "gabi.factor_sector_stability",
