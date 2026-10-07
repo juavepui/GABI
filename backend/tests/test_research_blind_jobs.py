@@ -54,7 +54,11 @@ def test_due_rebalance_is_recorded_once_without_revealing_positions(monkeypatch)
         again = client.get(f"/api/v1/research/blind-rebalances/{_run(client, 'blind_rebalance', vid, 'blind-r-2')}")
     assert first.json()["recorded"] and first.json()["n_positions"] == 2
     assert first.json()["rebalance_date"] == TODAY.isoformat()
-    assert '"A"' not in first.text and "100" not in first.text
+    # Job IDs and hashes can contain the digits of a fixture price by chance.
+    # The public payload must contain only these metadata fields, never positions/prices.
+    assert set(first.json()) == {"job_id", "validation_id", "recorded", "reason",
+                                "rebalance_date", "n_positions", "record_hash"}
+    assert first.json()["reason"] is None
     assert bv.verify_integrity(vid) == {"ok": True, "broken_at": None, "n_periods": 1}
     assert again.json()["recorded"] is False and "próximo rebalanceo" in again.json()["reason"]
 
