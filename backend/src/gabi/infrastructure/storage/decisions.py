@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from collections.abc import Callable
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,9 +12,14 @@ import pandas as pd
 from gabi.application.errors import QueryError
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
 class SqliteDecisions:
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, *, now: Callable[[], datetime] = _utc_now):
         self.path = data_dir / "gabi.db"
+        self.now = now
 
     def _read(self, table: str) -> sqlite3.Connection | None:
         if not self.path.is_file():
@@ -120,7 +126,7 @@ class SqliteDecisions:
                 return int(existing[0])
             cursor = db.execute("INSERT INTO decision_runs "
                                 "(created_at,method,decisions_json,policy_json,holdings_json,name,source_job_id) "
-                                "VALUES(?,?,?,?,?,?,?)", (datetime.now(UTC).isoformat(), result["method"],
+                                "VALUES(?,?,?,?,?,?,?)", (self.now().isoformat(), result["method"],
                                 json.dumps(result["decisions"], ensure_ascii=False, allow_nan=False),
                                 json.dumps(result["policy"], allow_nan=False),
                                 json.dumps(result["holdings"], allow_nan=False), name, job_id))
@@ -132,6 +138,11 @@ class SqliteDecisions:
         if not self.path.is_file():
             return False
         with closing(sqlite3.connect(self.path, timeout=5)) as db:
+            columns = {row[1] for row in db.execute("PRAGMA table_info(decision_runs)")}
+            if not columns:
+                return False
+            if "name" not in columns:
+                db.execute("ALTER TABLE decision_runs ADD COLUMN name TEXT")
             cursor = db.execute("UPDATE decision_runs SET name=? WHERE id=?", (name, plan_id))
             db.commit()
             return cursor.rowcount == 1

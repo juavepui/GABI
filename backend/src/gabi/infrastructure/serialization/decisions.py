@@ -1,11 +1,11 @@
-"""Bridge to the existing experimental decision policy and optimizer."""
+"""JSON serialization of the experimental decision policy and optimizer."""
 
 import json
 from dataclasses import asdict
 
 import pandas as pd
 
-from gabi import decision_engine
+import gabi.domain.portfolio.decisions as decision_engine
 
 
 def build_decisions(table: pd.DataFrame, histories: dict[str, pd.DataFrame],

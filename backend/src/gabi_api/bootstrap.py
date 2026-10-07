@@ -49,7 +49,6 @@ from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
 from gabi.infrastructure.legacy.company import LegacyCompanyMath, analysis_prompt
 from gabi.infrastructure.legacy.data_update import LegacyKeyWriter
-from gabi.infrastructure.legacy.decisions import build_decisions
 from gabi.infrastructure.legacy.evidence import LegacyEvidence
 from gabi.infrastructure.legacy.experiment_log import LegacyExperimentLog
 from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
@@ -60,6 +59,7 @@ from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
 from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
+from gabi.infrastructure.serialization.decisions import build_decisions
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.blind_plans import FileBlindPlans

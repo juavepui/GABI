@@ -51,8 +51,8 @@ class LegacyExecutor:
 
             from gabi.application.administration.jobs import Jobs
             from gabi.application.portfolio.decisions import Decisions
-            from gabi.infrastructure.legacy.decisions import build_decisions
             from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+            from gabi.infrastructure.serialization.decisions import build_decisions
             from gabi.infrastructure.storage.decisions import SqliteDecisions
             from gabi.infrastructure.storage.jobs import SqliteJobs
             from gabi.infrastructure.storage.market import ReadOnlyMarket
