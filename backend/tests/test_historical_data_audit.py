@@ -3,7 +3,10 @@ import sqlite3
 import pandas as pd
 import pytest
 
-from gabi import historical_data_audit as audit
+from gabi.domain.research import historical_data_audit as audit
+from gabi.domain.research.coverage import CoverageParameters
+from gabi.infrastructure.storage.historical_data_audit import SqliteAnnualAudit
+from gabi.infrastructure.storage.readonly import connect_readonly
 
 
 def test_snapshot_uses_latest_prior_membership_without_future_lookahead():
@@ -48,8 +51,9 @@ def test_annual_metrics_never_uses_future_filing(tmp_path):
         conn.execute("INSERT INTO edgar_facts VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                      ("AAA", "NetIncomeLoss", "USD", "2019-01-01", "2019-12-31", 100,
                       "10-K", "FY", 2019, "2021-01-01", "future"))
-    with audit.connect_readonly(db) as conn:
-        result = audit.annual_metrics(conn, ["AAA"], "2019-12-31")
+    with connect_readonly(db) as conn:
+        reader = SqliteAnnualAudit(conn, tmp_path / "members.csv", tmp_path / "old.csv", tmp_path / "manifest.json")
+        result = reader.annual_metrics(["AAA"], "2019-12-31", CoverageParameters())
         assert result["pe"] == 0
         assert result["prices_253_recent"] == 1
         with pytest.raises(sqlite3.OperationalError):

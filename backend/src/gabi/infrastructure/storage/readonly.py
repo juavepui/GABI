@@ -1,7 +1,5 @@
-"""Compatibility SQLite helper for the remaining historical price audit.
+"""Open an existing SQLite database without creating or changing it."""
 
-Annual inventory now runs through ``gabi_cli research historical-data-audit``.
-"""
 import sqlite3
 from pathlib import Path
 
@@ -12,7 +10,3 @@ def connect_readonly(path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
     conn.execute("PRAGMA query_only=ON")
     return conn
-
-
-if __name__ == "__main__":
-    raise SystemExit("Use python -m gabi_cli research historical-data-audit")
