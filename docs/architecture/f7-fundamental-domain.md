@@ -39,7 +39,7 @@ atribuye mejora de rendimiento a esta extracción.
 
 ## Validación
 
-22 tests nuevos y 88 existentes pasan (110 en total). La referencia sintética
+22 tests nuevos y 89 existentes pasan (111 en total, incluida la compatibilidad R3). La referencia sintética
 `tests/fixtures/fundamental_migration.json` fue calculada con EDGAR y calidad
 del commit anterior; guarda sus hashes LF. Ocho escenarios cubren revisión,
 conflicto, hueco fiscal, ausencia, antigüedad y ceros, con/sin alineación. Floats

@@ -11,7 +11,7 @@ from gabi.infrastructure.storage.estimates import SqliteEstimateAnalysis, store_
 def run_estimate_analysis(data_dir: Path, cutoff: date) -> dict:
     import exchange_calendars as xcals
 
-    from gabi import factor_lab
+    import gabi.domain.research.factors as factor_lab
 
     reader = SqliteEstimateAnalysis(data_dir, cutoff)
 

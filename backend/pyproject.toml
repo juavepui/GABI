@@ -70,7 +70,6 @@ module = [
     "gabi.insider",
     "gabi.multifactor_backtest",
     "gabi.blind_validation",
-    "gabi.factor_lab",
 ]
 ignore_errors = true
 

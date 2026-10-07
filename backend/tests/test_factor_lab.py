@@ -1,4 +1,5 @@
 import sys
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -6,8 +7,23 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from gabi import config, storage
-from gabi import factor_lab as fl
+from gabi.application.research import factor_engine as fl
 from gabi.infrastructure.storage.factor_prices import SqliteFactorPrices
+
+TODAY = date(2025, 1, 1)
+
+
+class _Inputs:
+    def __init__(self, path, membership, rank):
+        self.membership, self.rank = membership, rank
+        self.prices = SqliteFactorPrices(path)
+
+    @staticmethod
+    def sample(symbols, maximum):
+        return symbols  # Every fixture declares the complete synthetic universe.
+
+    def ranking(self, as_of, symbols):
+        return self.rank(as_of, symbols)["table"]
 
 
 def _seed_prices(dates, symbol_closes):
@@ -19,7 +35,6 @@ def _seed_prices(dates, symbol_closes):
 def _isolate(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
-    monkeypatch.setattr(fl, "_MIN_ROWS_PER_QUANTILE", 1)  # datos sinteticos pequenos en los tests
 
 
 def _fake_universe(symbols):
@@ -40,18 +55,21 @@ def _fake_ranking(scores: dict, sectors: dict = None):
 
 
 def test_rejects_validation_mode_with_max_symbols():
+    inputs = None  # Invalid options are rejected before any reader call.
     with pytest.raises(ValueError, match="validation"):
-        fl.run_factor_analysis("2024-01-02", "2024-02-02", mode="validation", max_symbols=50)
+        fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, mode="validation", max_symbols=50)
 
 
 def test_rejects_fast_dev_mode_without_max_symbols():
+    inputs = None  # Invalid options are rejected before any reader call.
     with pytest.raises(ValueError, match="fast_dev"):
-        fl.run_factor_analysis("2024-01-02", "2024-02-02", mode="fast_dev", max_symbols=None)
+        fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, mode="fast_dev", max_symbols=None)
 
 
 def test_rejects_n_quantiles_below_two():
+    inputs = None  # Invalid options are rejected before any reader call.
     with pytest.raises(ValueError):
-        fl.run_factor_analysis("2024-01-02", "2024-02-02", max_symbols=10, mode="fast_dev", n_quantiles=1)
+        fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, max_symbols=10, mode="fast_dev", n_quantiles=1)
 
 
 def test_perfect_predictor_gives_ic_near_one_and_positive_spread(tmp_path, monkeypatch):
@@ -66,10 +84,10 @@ def test_perfect_predictor_gives_ic_near_one_and_positive_spread(tmp_path, monke
         _seed_prices(dates, [(s, closes)])
 
     scores = {"A": 10, "B": 20, "C": 30, "D": 40, "E": 50, "F": 60}
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of", _fake_ranking(scores))
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = _fake_ranking(scores)
 
-    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", months=1, max_symbols=len(symbols),
+    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, months=1, max_symbols=len(symbols),
                                     mode="fast_dev", factor_cols=("composite_score",),
                                     horizons_months=(1,), n_quantiles=3)
     assert not result["skipped"]
@@ -86,14 +104,15 @@ def test_bounded_price_reader_matches_original_factor_metrics(tmp_path, monkeypa
     dates = pd.date_range("2024-01-01", periods=45, freq="B")
     for i, symbol in enumerate(symbols):
         _seed_prices(dates, [(symbol, [100.0] * 20 + [100.0 + i] * 25)])
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of",
-                        _fake_ranking({symbol: i for i, symbol in enumerate(symbols)}))
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = _fake_ranking({symbol: i for i, symbol in enumerate(symbols)})
     options = {"months": 1, "max_symbols": 6, "mode": "fast_dev",
                "factor_cols": ("composite_score",), "horizons_months": (1,), "n_quantiles": 3}
-    original = fl.run_factor_analysis("2024-01-02", "2024-02-02", **options)
+    inputs.prices = lambda symbols, first, last: storage.get_prices_multi(symbols)
+    original = fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, **options)
     reader = SqliteFactorPrices(tmp_path)
-    bounded = fl.run_factor_analysis("2024-01-02", "2024-02-02", price_loader=reader, **options)
+    inputs.prices = reader
+    bounded = fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, **options)
     for name in ("summary", "ic_series", "quantile_returns", "turnover"):
         pd.testing.assert_frame_equal(original[name], bounded[name])
     assert original["skipped"] == bounded["skipped"]
@@ -113,10 +132,10 @@ def test_no_relationship_gives_ic_near_zero_on_average(tmp_path, monkeypatch):
         _seed_prices(dates, [(s, closes)])
 
     scores = {"A": 10, "B": 20, "C": 30, "D": 40, "E": 50, "F": 60}
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of", _fake_ranking(scores))
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = _fake_ranking(scores)
 
-    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", months=1, max_symbols=len(symbols),
+    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, months=1, max_symbols=len(symbols),
                                     mode="fast_dev", factor_cols=("composite_score",),
                                     horizons_months=(1,), n_quantiles=3)
     row = result["summary"].iloc[0]
@@ -132,10 +151,10 @@ def test_turnover_is_zero_when_quantile_membership_is_identical(tmp_path, monkey
         _seed_prices(dates, [(s, closes)])
 
     scores = {"A": 10, "B": 20, "C": 30, "D": 40, "E": 50, "F": 60}  # MISMO score en las 2 fechas
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of", _fake_ranking(scores))
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = _fake_ranking(scores)
 
-    result = fl.run_factor_analysis("2024-01-02", "2024-03-02", months=1, max_symbols=len(symbols),
+    result = fl.run_factor_analysis("2024-01-02", "2024-03-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, months=1, max_symbols=len(symbols),
                                     mode="fast_dev", factor_cols=("composite_score",),
                                     horizons_months=(1,), n_quantiles=3)
     turnover = result["turnover"]
@@ -164,10 +183,10 @@ def test_turnover_is_one_when_quantile_membership_fully_changes(tmp_path, monkey
                               "sector": ["Tech"] * len(symbols)}, index=symbols)
         return {"table": table}
 
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of", _rank)
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = _rank
 
-    result = fl.run_factor_analysis("2024-01-02", "2024-03-02", months=1, max_symbols=len(symbols),
+    result = fl.run_factor_analysis("2024-01-02", "2024-03-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, months=1, max_symbols=len(symbols),
                                     mode="fast_dev", factor_cols=("composite_score",),
                                     horizons_months=(1,), n_quantiles=3)
     turnover = result["turnover"]
@@ -202,10 +221,10 @@ def test_sector_neutral_filters_out_a_purely_sector_driven_signal(tmp_path, monk
 
     scores = {"T1": 80, "T2": 82, "T3": 84, "E1": 20, "E2": 22, "E3": 24}
     sectors = {**{s: "Tech" for s in tech}, **{s: "Energy" for s in energy}}
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of", _fake_ranking(scores, sectors))
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = _fake_ranking(scores, sectors)
 
-    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", months=1, max_symbols=len(symbols),
+    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, months=1, max_symbols=len(symbols),
                                     mode="fast_dev", factor_cols=("composite_score",),
                                     horizons_months=(1,), n_quantiles=2)
     summary = result["summary"]
@@ -217,14 +236,11 @@ def test_sector_neutral_filters_out_a_purely_sector_driven_signal(tmp_path, monk
 
 def test_skips_period_with_insufficient_universe_coverage(tmp_path, monkeypatch):
     _isolate(tmp_path, monkeypatch)
-    monkeypatch.setattr(fl, "_MIN_ROWS_PER_QUANTILE", 4)  # restaura el umbral real de produccion
     symbols = ["A", "B", "C"]  # solo 1/3 elegible -> por debajo de min_universe_coverage=0.5
-    monkeypatch.setattr(fl.universe, "get_sp500_constituents_asof", _fake_universe(symbols))
-    monkeypatch.setattr(fl.screener_asof, "build_ranking_as_of",
-                        lambda day, symbols: {"table": pd.DataFrame(
-                            {"composite_score": [80, None, None], "score_coverage": [.9, 0, 0],
-                             "sector": ["Tech"] * 3}, index=symbols)})
-    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", months=1, max_symbols=len(symbols),
+    inputs = _Inputs(tmp_path, _fake_universe(symbols), None)
+    inputs.rank = lambda day, symbols: {"table": pd.DataFrame(
+        {"composite_score": [80, None, None], "score_coverage": [.9, 0, 0], "sector": ["Tech"] * 3}, index=symbols)}
+    result = fl.run_factor_analysis("2024-01-02", "2024-02-02", inputs=inputs, today=TODAY, min_rows_per_quantile=1, months=1, max_symbols=len(symbols),
                                     mode="fast_dev")
     assert result["summary"].empty
     assert len(result["skipped"]) == 1
