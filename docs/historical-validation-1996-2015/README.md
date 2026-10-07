@@ -201,13 +201,18 @@ Evidencia de esta ejecución:
 .venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
 .venv/Scripts/python.exe -m gabi.sec_history --instances 10000 --unmatched
 .venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
-.venv/Scripts/python.exe -m gabi.historical_coverage
+.venv/Scripts/python.exe -m gabi_cli research quarterly-coverage
 ```
 
 La conciliación SEC y el piloto pre-XBRL se produjeron originalmente con
 `python -m gabi.sec_reconciliation` (último commit: 1283bf5) y `python -m gabi.legacy_filings`
 (último commit: 1283bf5); desde ADR 0002 los mismos cálculos se ejecutan con
 `python -m gabi_cli research sec-reconciliation` y `… research legacy-filings` y escriben los mismos ficheros.
+
+La cobertura trimestral se produjo con `python -m gabi.historical_coverage`,
+disponible en el commit `21c807f46f710f8ef42bb974f0878eed9be8b322` anterior a su
+migración. El comando actual `… research quarterly-coverage` conserva los cinco
+formatos de salida; los resultados publicados no se regeneran por esta retirada.
 
 Primero se crea una copia consistente de SQLite. Los ZIP y documentos descargados
 tienen hash y URL registrados; las descargas pueden reanudarse. Los datos se

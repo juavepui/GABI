@@ -7,6 +7,7 @@ import pandas as pd
 
 from gabi.domain.research.sec_reconciliation import compare, summary
 from gabi.infrastructure.providers.sec_filings import extract_reviewed
+from gabi.infrastructure.storage.quarterly_coverage import read_facts
 
 
 def directory(data_dir: Path) -> Path:
@@ -14,8 +15,6 @@ def directory(data_dir: Path) -> Path:
 
 
 def run_reconciliation(data_dir: Path) -> dict:
-    from gabi.historical_coverage import read_facts
-
     database = data_dir / "gabi.db"
     with sqlite3.connect(database, timeout=30) as conn:
         bulk = pd.read_sql_query("SELECT s.cik,f.* FROM sec_bulk_facts f JOIN sec_bulk_submissions s USING(accn)", conn)

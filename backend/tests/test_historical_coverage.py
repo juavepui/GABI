@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from gabi import historical_coverage as hc
 from gabi import risk, technicals
+from gabi.domain.research import coverage as hc
 
 
 def test_availability_requires_value_quality_momentum_and_half_metrics():

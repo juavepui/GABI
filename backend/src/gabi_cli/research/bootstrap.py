@@ -105,6 +105,26 @@ def value_hypothesis(settings: Settings, args: argparse.Namespace) -> None:
                       "plan": record["plan_secuencial"]}, ensure_ascii=False, indent=2))
 
 
+def quarterly_coverage(settings: Settings, args: argparse.Namespace) -> None:
+    from contextlib import closing
+
+    import exchange_calendars as xcals
+
+    from gabi.application.research.quarterly_coverage import publish
+    from gabi.infrastructure.storage.quarterly_coverage import FileQuarterlyCoverage, SqliteQuarterlyCoverage
+    from gabi.infrastructure.storage.readonly import connect_readonly
+
+    directory = settings.data_dir / "history_refresh/validation_1996_2015"
+    resources = Path(__file__).parents[2] / "gabi/resources"
+    sessions = xcals.get_calendar("XNYS", start="1994-01-01", end="2016-01-01").sessions
+    with closing(connect_readonly(args.db or settings.data_dir / "gabi.db")) as connection, \
+            closing(connect_readonly(args.before or directory / "before_validation.db")) as before:
+        reader = SqliteQuarterlyCoverage(connection, before, args.cik_map or settings.data_dir / "sec_cik_map.csv",
+                                         resources / "historical_sources_1996_2015.json", resources / "legacy_filings_pilot.json")
+        publish(reader, sessions, FileQuarterlyCoverage(args.output or directory / "coverage"),
+                progress=lambda message: print(message, flush=True))
+
+
 def historical_data_audit(settings: Settings, args: argparse.Namespace) -> None:
     from contextlib import closing
 
@@ -201,6 +221,12 @@ def main(argv: list[str]) -> None:
     command = commands.add_parser("value-hypothesis", help="Preregistro de la hipótesis de valor (#43); comprueba uno existente")
     command.add_argument("--preregister", action="store_true", required=True)
     command.set_defaults(run=value_hypothesis)
+    command = commands.add_parser("quarterly-coverage", help="Cobertura trimestral 1996-2015 sin red ni backtests; exportación explícita")
+    command.add_argument("--db", type=Path)
+    command.add_argument("--before", type=Path)
+    command.add_argument("--cik-map", type=Path)
+    command.add_argument("--output", type=Path)
+    command.set_defaults(run=quarterly_coverage)
     command = commands.add_parser("historical-data-audit", help="Inventario anual local de cobertura; lectura SQLite y exportación CSV explícita")
     command.add_argument("--db", type=Path)
     command.add_argument("--membership", type=Path)

@@ -194,18 +194,6 @@
     "numpy",
     "pandas"
   ],
-  "backend/src/gabi/historical_coverage.py": [
-    "exchange_calendars",
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.historical_archive",
-    "gabi.scoring",
-    "gabi.sec_history.DIRECTORY",
-    "gabi.storage",
-    "pandas",
-    "pathlib",
-    "sqlite3"
-  ],
   "backend/src/gabi/historical_data_audit.py": [
     "pathlib",
     "sqlite3"

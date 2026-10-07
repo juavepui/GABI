@@ -28,7 +28,10 @@ def original_modules():
         module = types.ModuleType(f"gabi._reference_{name}")
         module.__package__ = "gabi"
         module.__file__ = str(SOURCE_DIR / f"{name}.py")
-        exec(compile(REFERENCE[key], module.__file__, "exec"), module.__dict__)
+        source = REFERENCE[key]
+        if key == "annual_source":
+            source = source.replace("from .historical_coverage import availability, finite, metric_row", "")
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
         modules.append(module)
     old_coverage, old_annual = modules
     old_annual.metric_row = old_coverage.metric_row
@@ -161,24 +164,6 @@ def test_domain_counts_have_no_io_and_policy_is_explicit(monkeypatch):
     assert block_counts([full])["all_13"] == 1
     altered = coverage.CoverageParameters(min_score_coverage=1.0)
     assert not coverage.availability(dict(full, pe=None), parameters=altered)[1]
-
-
-def test_quarterly_facade_forwards_compatibility_settings_without_mutating_them(monkeypatch):
-    from gabi import historical_coverage as quarterly
-
-    captured = []
-
-    def capture(*args, **kwargs):
-        captured.append(kwargs["parameters"])
-        return {}
-
-    monkeypatch.setattr(quarterly.edgar, "_fiscal_alignment", True)
-    monkeypatch.setattr(quarterly.config, "MOMENTUM_LONG_DAYS", 200)
-    monkeypatch.setattr(coverage, "metric_row", capture)
-    quarterly.metric_row(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), "2015-12-31", nominal_price=None)
-    assert captured[0].fiscal_alignment is True
-    assert captured[0].technical.momentum_long_days == 200
-    assert quarterly.edgar.fiscal_alignment_enabled() is True
 
 
 def test_cli_composes_readonly_inputs_and_explicit_csv_export(tmp_path, capsys, monkeypatch):

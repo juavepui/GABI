@@ -164,7 +164,7 @@ publicado no se regenera al migrar. El comando actual admite los mismos argument
 Lee `data/sp500_historical_membership.csv` y el detalle local
 `data/history_refresh/validation_1996_2015/coverage/company-quarter.csv` de la
 auditoría anterior. Si este último no existe o la base ha cambiado, se puede
-regenerar con `.venv/Scripts/python.exe -m gabi.historical_coverage` (también sin
+regenerar con `.venv/Scripts/python.exe -m gabi_cli research quarterly-coverage` (también sin
 red) antes de repetir el inventario. El script rechaza una composición
 pre-2016 que difiera del archivo trimestral; no mezcla denominadores.
 

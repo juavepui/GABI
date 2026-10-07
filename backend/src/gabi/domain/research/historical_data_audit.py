@@ -36,7 +36,7 @@ def block_counts(rows: list[dict], *, parameters: CoverageParameters = CoverageP
 def old_block_counts(detail: pd.DataFrame, day: str, *, parameters: CoverageParameters = CoverageParameters()) -> dict[str, int]:
     frame = detail[detail.date == day]
     if frame.empty:
-        raise ValueError(f"Missing pre-2016 quarterly audit at {day}; run python -m gabi.historical_coverage")
+        raise ValueError(f"Missing pre-2016 quarterly audit at {day}; run python -m gabi_cli research quarterly-coverage")
     rows = []
     for missing in frame.missing_metrics.fillna(""):
         absent = set(missing.split(";"))
