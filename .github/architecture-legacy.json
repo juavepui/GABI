@@ -689,10 +689,7 @@
     "gabi.scoring"
   ],
   "backend/src/gabi/variant_validation.py": [
-    "exchange_calendars",
-    "gabi.portfolio_backtest",
-    "gabi.portfolio_metrics",
-    "pandas"
+    "gabi.portfolio_backtest"
   ],
   "backend/src/gabi/workspace.py": [
     "importlib.abc",
