@@ -5,7 +5,16 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, evaluation, storage
+import pytest
+from ranking_fixture import RankingFixture
+
+from gabi import config, storage
+from gabi.application.errors import QueryError
+
+
+@pytest.fixture
+def evaluation(tmp_path):
+    return RankingFixture(tmp_path, date.today())
 
 
 def _seed(symbol, p0, p1):
@@ -24,7 +33,7 @@ def _seed_to_today(symbol, p_start, p_today, start_date):
     storage.upsert_prices(symbol, df)
 
 
-def test_snapshot_and_evaluation_expose_missing_data(tmp_path, monkeypatch):
+def test_snapshot_and_evaluation_expose_missing_data(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     table = pd.DataFrame({"composite_score": [80., 70., float("nan")],
@@ -40,7 +49,7 @@ def test_snapshot_and_evaluation_expose_missing_data(tmp_path, monkeypatch):
     assert round(result["benchmark_return"], 3) == .098
 
 
-def test_snapshot_default_name_uses_date(tmp_path, monkeypatch):
+def test_snapshot_default_name_uses_date(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     table = pd.DataFrame({"composite_score": [80.], "score_coverage": [.9]}, index=["AAA"])
@@ -49,7 +58,7 @@ def test_snapshot_default_name_uses_date(tmp_path, monkeypatch):
     assert row["name"] == "Ranking 2024-01-02"
 
 
-def test_snapshot_custom_name_and_rename(tmp_path, monkeypatch):
+def test_snapshot_custom_name_and_rename(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     table = pd.DataFrame({"composite_score": [80.], "score_coverage": [.9]}, index=["AAA"])
@@ -64,7 +73,7 @@ def test_snapshot_custom_name_and_rename(tmp_path, monkeypatch):
     assert len(evaluation.list_snapshots()) == 1
 
 
-def test_rename_snapshot_rejects_invalid_name(tmp_path, monkeypatch):
+def test_rename_snapshot_rejects_invalid_name(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     table = pd.DataFrame({"composite_score": [80.], "score_coverage": [.9]}, index=["AAA"])
@@ -72,11 +81,11 @@ def test_rename_snapshot_rejects_invalid_name(tmp_path, monkeypatch):
     try:
         evaluation.rename_snapshot(snapshot, "   ")
         assert False, "debia rechazar un nombre vacio"
-    except ValueError:
+    except QueryError:
         pass
 
 
-def test_snapshot_progress_computes_return_up_to_today(tmp_path, monkeypatch):
+def test_snapshot_progress_computes_return_up_to_today(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     start_date = "2024-01-02"
@@ -96,7 +105,7 @@ def test_snapshot_progress_computes_return_up_to_today(tmp_path, monkeypatch):
     assert set(result["detail"]["symbol"]) == {"AAA", "BBB"}
 
 
-def test_snapshot_progress_reports_missing_prices_without_treating_as_zero(tmp_path, monkeypatch):
+def test_snapshot_progress_reports_missing_prices_without_treating_as_zero(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     start_date = "2024-01-02"
@@ -111,7 +120,7 @@ def test_snapshot_progress_reports_missing_prices_without_treating_as_zero(tmp_p
     assert round(result["portfolio_return"], 3) == .5  # solo cuenta AAA, BBB no se trata como 0
 
 
-def test_snapshot_progress_flags_stale_cache_without_newer_data(tmp_path, monkeypatch):
+def test_snapshot_progress_flags_stale_cache_without_newer_data(tmp_path, monkeypatch, evaluation):
     """Si el precio cacheado mas reciente es de la MISMA fecha (o anterior) a
     cuando se guardo el ranking, no hay ningun dia nuevo que comparar todavia
     -- debe marcarse como 'stale', no como '0% de cambio real'. Se guarda el
@@ -135,7 +144,7 @@ def test_snapshot_progress_flags_stale_cache_without_newer_data(tmp_path, monkey
     assert result["portfolio_return"] == 0.0  # matematicamente correcto, pero "stale" avisa de por que
 
 
-def test_snapshot_created_at_includes_madrid_time(tmp_path, monkeypatch):
+def test_snapshot_created_at_includes_madrid_time(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     table = pd.DataFrame({"composite_score": [80.], "score_coverage": [.9]}, index=["AAA"])
@@ -146,7 +155,7 @@ def test_snapshot_created_at_includes_madrid_time(tmp_path, monkeypatch):
     assert row["created_at"][:10] == date.today().isoformat()
 
 
-def test_snapshot_price_curve_normalizes_to_100_at_start(tmp_path, monkeypatch):
+def test_snapshot_price_curve_normalizes_to_100_at_start(tmp_path, monkeypatch, evaluation):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     start_date = "2024-01-02"

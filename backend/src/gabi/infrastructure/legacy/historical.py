@@ -36,7 +36,7 @@ class LegacyRankingQuality:
 
 def run_outcomes(data_dir, request: dict) -> dict:
     """The "Resultado posterior" and block comparison of the old page, with bounded observed prices."""
-    from gabi import evaluation
+    from gabi.application.market.snapshot_math import SnapshotCalculations
     from gabi.application.research.historical_outcomes import build_outcomes
     from gabi.application.research.reservations import OBSERVED_END
     from gabi.infrastructure.storage.jobs import SqliteJobs
@@ -49,5 +49,5 @@ def run_outcomes(data_dir, request: dict) -> dict:
     ranking = jobs.result(request["source_job_id"])  # Verifies the stored SHA-256.
     prices = SqliteWindowPrices(data_dir, OBSERVED_END)
     return build_outcomes(ranking, request, source["result_sha256"],
-                          lambda symbols, as_of, months, cost: evaluation.evaluate(
-                              symbols, as_of, months, cost, price_at=prices, today=OBSERVED_END))
+                          lambda symbols, as_of, months, cost: SnapshotCalculations.evaluate(
+                              symbols, as_of, months, cost_bps=cost, price_at=prices, today=OBSERVED_END))

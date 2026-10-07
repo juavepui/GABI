@@ -114,10 +114,6 @@
     "gabi.storage",
     "pandas"
   ],
-  "backend/src/gabi/evaluation.py": [
-    "gabi.storage",
-    "pandas"
-  ],
   "backend/src/gabi/events_calendar.py": [
     "concurrent.futures",
     "gabi.data_fetch._classify_error",

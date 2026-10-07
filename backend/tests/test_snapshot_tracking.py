@@ -6,8 +6,9 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
+from ranking_fixture import RankingFixture
 
-from gabi import config, evaluation
+from gabi import config
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 
@@ -16,6 +17,7 @@ from gabi_api.bootstrap import create_app
 def saved():
     root = config.DATA_DIR
     seed_fixture(root, companies=12)
+    evaluation = RankingFixture(root, TODAY)
     table = pd.DataFrame({"composite_score": [80.0, 70.0, 60.0], "score_coverage": [.9, .9, .9],
                           "confidence": [90.0, 80.0, 70.0], "sector": ["X", "Y", "Z"]},
                          index=["T000", "T001", "MISSING"])
@@ -28,6 +30,7 @@ def saved():
 
 def test_progress_curve_and_horizons_match_the_old_screener(saved):
     client, root, snapshot_id, as_of = saved
+    evaluation = RankingFixture(root, TODAY)
     symbols = evaluation.snapshot_symbols(snapshot_id)
     expected = evaluation.progress_for(symbols, as_of, data_as_of=evaluation._latest_cached_date(symbols + ["SPY"]),
                                        today=TODAY)  # The page's call, with the app's date.
@@ -52,7 +55,8 @@ def test_progress_curve_and_horizons_match_the_old_screener(saved):
 
 
 def test_rename_is_explicit_and_validated(saved):
-    client, _, snapshot_id, _ = saved
+    client, root, snapshot_id, _ = saved
+    evaluation = RankingFixture(root, TODAY)
     renamed = client.post(f"/api/v1/market/snapshots/{snapshot_id}/rename", json={"name": "  Pesos 40/30  "})
     assert renamed.json() == {"id": snapshot_id, "name": "Pesos 40/30"}
     assert evaluation.list_snapshots().set_index("id").loc[snapshot_id, "name"] == "Pesos 40/30"

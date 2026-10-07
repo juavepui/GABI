@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from collections.abc import Callable
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,8 +33,9 @@ CREATE INDEX IF NOT EXISTS idx_signal_events_detected ON signal_events(detected_
 
 
 class SqliteSignals:
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, *, now: Callable[[], datetime] | None = None):
         self.path = data_dir / "gabi.db"
+        self.now = now or (lambda: datetime.now(ZoneInfo("Europe/Madrid")))
 
     def _read(self, table: str) -> sqlite3.Connection | None:
         if not self.path.is_file():
@@ -175,7 +177,7 @@ class SqliteSignals:
                     db.execute(f"ALTER TABLE ranking_snapshots ADD COLUMN {column} {definition}")
             db.execute("BEGIN IMMEDIATE")
             snapshot_id = int(db.execute("SELECT COALESCE(MAX(snapshot_id),0)+1 FROM ranking_snapshots").fetchone()[0])
-            created_at = datetime.now(ZoneInfo("Europe/Madrid")).isoformat(timespec="seconds")
+            created_at = self.now().isoformat(timespec="seconds")
             db.executemany("INSERT INTO ranking_snapshots(snapshot_id,created_at,as_of_date,source,symbol,rank,"
                            "score,coverage,name,confidence,sector) VALUES(?,?,?,?,?,?,?,?,?,?,?)", [
                                (snapshot_id, created_at, as_of_date, "react", symbol, rank,

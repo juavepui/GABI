@@ -26,6 +26,7 @@ from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
+from gabi.application.market.snapshot_math import SnapshotCalculations
 from gabi.application.market.snapshots import SnapshotTracking
 from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.journal import Journal
@@ -58,7 +59,6 @@ from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
 from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
-from gabi.infrastructure.legacy.snapshots import LegacySnapshotMath
 from gabi.infrastructure.serialization.decisions import build_decisions
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
@@ -178,7 +178,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         LegacyCompanyMath(), today)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
-        LegacySnapshotMath(), today)
+        SnapshotCalculations(), today)
     app.state.simulations = simulations
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
