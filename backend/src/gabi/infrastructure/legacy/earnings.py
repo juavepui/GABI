@@ -38,6 +38,5 @@ def classify_error(exc: Exception) -> str:
 
 def sync_earnings_surprises(data_dir: Path, symbols: list[str], *, today: date | None = None,
                            now: datetime | None = None, max_workers: int = 6, progress_cb=None) -> dict:
-    now = now or datetime.now(UTC)
-    return run_sync(symbols, YahooEarnings(), SqliteEarnings(data_dir, now=lambda: now), classify_error,
+    return run_sync(symbols, YahooEarnings(), SqliteEarnings(data_dir, now=lambda: now or datetime.now(UTC)), classify_error,
                     today=today or date.today(), max_workers=max_workers, progress_cb=progress_cb)
