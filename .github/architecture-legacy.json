@@ -199,23 +199,14 @@
     "gabi.config",
     "gabi.edgar",
     "gabi.historical_archive",
-    "gabi.risk",
     "gabi.scoring",
     "gabi.sec_history.DIRECTORY",
     "gabi.storage",
-    "gabi.technicals",
     "pandas",
     "pathlib",
     "sqlite3"
   ],
   "backend/src/gabi/historical_data_audit.py": [
-    "exchange_calendars",
-    "gabi.config",
-    "gabi.historical_coverage.availability",
-    "gabi.historical_coverage.finite",
-    "gabi.historical_coverage.metric_row",
-    "gabi.scoring",
-    "pandas",
     "pathlib",
     "sqlite3"
   ],

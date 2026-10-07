@@ -105,6 +105,23 @@ def value_hypothesis(settings: Settings, args: argparse.Namespace) -> None:
                       "plan": record["plan_secuencial"]}, ensure_ascii=False, indent=2))
 
 
+def historical_data_audit(settings: Settings, args: argparse.Namespace) -> None:
+    from contextlib import closing
+
+    from gabi.application.research.historical_data_audit import publish_audit
+    from gabi.infrastructure.storage.historical_data_audit import CsvAnnualAudit, SqliteAnnualAudit
+    from gabi.infrastructure.storage.readonly import connect_readonly
+
+    output = args.output or settings.data_dir.parent / "docs/historical-data-audit.csv"
+    membership = args.membership or settings.data_dir / "sp500_historical_membership.csv"
+    old_detail = args.old_detail or settings.data_dir / "history_refresh/validation_1996_2015/coverage/company-quarter.csv"
+    manifest = Path(__file__).parents[2] / "gabi/resources/historical_sources_1996_2015.json"
+    with closing(connect_readonly(args.db or settings.data_dir / "gabi.db")) as connection:
+        reader = SqliteAnnualAudit(connection, membership, old_detail, manifest)
+        publish_audit(reader, CsvAnnualAudit(output), progress=lambda message: print(message, flush=True))
+    print(output)
+
+
 def prospective_plan(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.application.research.prospective_plan import publish_plan
     from gabi.domain.research.prospective_plan import gabi_blind_plan, json_value, plan
@@ -184,6 +201,12 @@ def main(argv: list[str]) -> None:
     command = commands.add_parser("value-hypothesis", help="Preregistro de la hipótesis de valor (#43); comprueba uno existente")
     command.add_argument("--preregister", action="store_true", required=True)
     command.set_defaults(run=value_hypothesis)
+    command = commands.add_parser("historical-data-audit", help="Inventario anual local de cobertura; lectura SQLite y exportación CSV explícita")
+    command.add_argument("--db", type=Path)
+    command.add_argument("--membership", type=Path)
+    command.add_argument("--old-detail", type=Path)
+    command.add_argument("--output", type=Path)
+    command.set_defaults(run=historical_data_audit)
     command = commands.add_parser("prospective-plan", help="Plan de análisis prospectivo (#42), sin leer resultados ciegos")
     command.add_argument("--write", action="store_true", help="Escribir el JSON del plan en el directorio de salida")
     command.add_argument("--gabi", action="store_true", help="Plan fijo de la prueba GABI id 1; por defecto, diseño secuencial")

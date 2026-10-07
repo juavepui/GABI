@@ -4,72 +4,44 @@ Reports numerical metric availability separately from certified historical
 identity, sector and source continuity. Community mappings are candidates only.
 """
 import json
-import math
 import sqlite3
 from pathlib import Path
 
 import exchange_calendars as xcals
 import pandas as pd
 
-from . import config, edgar, historical_archive, risk, scoring, storage, technicals
+from gabi.domain.market.technicals import TechnicalParameters
+from gabi.domain.research import coverage as _coverage
+
+from . import config, edgar, historical_archive, scoring, storage
 from .sec_history import DIRECTORY
 
 METRICS = [m for block in scoring.SCORE_METRICS.values() for m in block]
 
 
-def fact_structure(frame: pd.DataFrame, as_of: str) -> dict:
-    if frame.empty:
-        return {"facts": {"us-gaap": {}}}
-    frame = frame[(frame.filed_date <= as_of) & (frame.end_date <= as_of)].sort_values(["filed_date", "end_date", "accn"])
-    result: dict = {}
-    for row in frame.itertuples(index=False):
-        entries = result.setdefault(row.tag, {"units": {}})["units"].setdefault(row.unit, [])
-        entries.append(dict(start=row.start_date or None, end=row.end_date, val=row.val,
-                            form=row.form, fp=row.fp, fy=row.fy, filed=row.filed_date, accn=row.accn))
-    return {"facts": {"us-gaap": result}}
+def _parameters() -> _coverage.CoverageParameters:
+    return _coverage.CoverageParameters(
+        blocks=tuple((block, tuple(metrics)) for block, metrics in scoring.SCORE_METRICS.items()),
+        metrics=tuple(METRICS), min_score_coverage=scoring.MIN_SCORE_COVERAGE,
+        technical=TechnicalParameters(momentum_long_days=config.MOMENTUM_LONG_DAYS,
+                                      momentum_short_days=config.MOMENTUM_SHORT_DAYS, sma_long=config.SMA_LONG),
+        fiscal_alignment=edgar.fiscal_alignment_enabled(), alignment_tolerance_days=edgar.ALIGNMENT_TOLERANCE_DAYS,
+        shares_tags=tuple(edgar.SHARES_TAGS),
+    )
 
 
-def finite(value) -> bool:
-    return value is not None and not pd.isna(value) and math.isfinite(float(value))
+fact_structure = _coverage.fact_structure
+finite = _coverage.finite
+compare_prices = _coverage.compare_prices
 
 
 def metric_row(facts: pd.DataFrame, prices: pd.DataFrame, benchmark: pd.DataFrame,
                as_of: str, *, nominal_price: float | None) -> dict:
-    """Same 13 ingredients/formulas as GABI; undefined ratios remain missing."""
-    result = dict.fromkeys(METRICS)
-    facts = facts[(facts.filed_date <= as_of) & (facts.end_date <= as_of)] if not facts.empty else facts
-    m = edgar.compute_edgar_metrics(fact_structure(facts, as_of))
-    shares = facts[(facts.tag.isin(edgar.SHARES_TAGS)) & (facts.unit == "shares")] if not facts.empty else facts
-    count = float(shares.sort_values(["filed_date", "end_date"]).iloc[-1].val) if not shares.empty else None
-    cap = nominal_price * count if nominal_price and count and count > 0 else None
-    ni, equity, ebitda = (m.get(k) for k in ["latest_net_income", "latest_equity", "latest_ebitda"])
-    debt, cash = m.get("latest_debt"), m.get("latest_cash")
-    result["pe"] = cap / ni if cap and ni and ni > 0 else None
-    result["pb"] = cap / equity if cap and equity and equity > 0 else None
-    ev = cap + (debt or 0) - (cash or 0) if cap else None
-    result["ev_ebitda"] = ev / ebitda if ev and ebitda and ebitda > 0 else None
-    result["debt_to_equity"] = debt / equity * 100 if debt is not None and equity and equity > 0 else None
-    for key in scoring.SCORE_METRICS["quality"]:
-        result[key] = m.get(key)
-    prices = prices.loc[:as_of]
-    benchmark = benchmark.loc[:as_of]
-    if not prices.empty:
-        close = prices.adj_close
-        result["momentum_12m"] = technicals._pct_change_n(close, config.MOMENTUM_LONG_DAYS)
-        short = technicals._pct_change_n(close, config.MOMENTUM_SHORT_DAYS)
-        bench = technicals._pct_change_n(benchmark.adj_close, config.MOMENTUM_SHORT_DAYS) if not benchmark.empty else None
-        result["rel_strength_6m"] = short - bench if short is not None and bench is not None else None
-        if len(close) >= config.SMA_LONG:
-            result["price_vs_sma200"] = float(close.iloc[-1] / close.tail(config.SMA_LONG).mean() - 1)
-        result["volatility"] = risk._annualized_volatility(close.pct_change(fill_method=None).dropna())
-        result["max_drawdown"] = risk._max_drawdown(prices)
-    return result
+    return _coverage.metric_row(facts, prices, benchmark, as_of, nominal_price=nominal_price, parameters=_parameters())
 
 
 def availability(metrics: dict) -> tuple[int, bool]:
-    count = sum(finite(metrics.get(m)) for m in METRICS)
-    core = all(any(finite(metrics.get(m)) for m in scoring.SCORE_METRICS[b]) for b in ["value", "quality", "momentum"])
-    return count, bool(count / len(METRICS) >= scoring.MIN_SCORE_COVERAGE and core)
+    return _coverage.availability(metrics, parameters=_parameters())
 
 
 def read_facts(path: Path) -> dict[str, pd.DataFrame]:
@@ -81,18 +53,6 @@ def read_facts(path: Path) -> dict[str, pd.DataFrame]:
                 records.setdefault(cik, []).append(json.loads(payload))
     return {cik: pd.DataFrame(rows).drop_duplicates(["tag", "unit", "start_date", "end_date", "accn"])
             for cik, rows in records.items()}
-
-
-def compare_prices(yahoo: pd.DataFrame, archive: pd.DataFrame) -> dict:
-    """Compare returns, not differently adjusted price levels. Not identity proof."""
-    aligned = pd.concat([yahoo.adj_close.rename("yahoo"), archive.adj_close.rename("archive")], axis=1, sort=True).dropna()
-    returns = aligned.pct_change(fill_method=None).dropna()
-    if len(returns) < 60:
-        return {"overlap_returns": len(returns), "status": "insufficient_overlap", "p99_return_difference": None}
-    difference = (returns.yahoo - returns.archive).abs()
-    q = float(difference.quantile(0.99))
-    return {"overlap_returns": len(returns), "status": "consistent_overlap" if q <= 0.005 else "disagreement",
-            "p99_return_difference": q, "max_return_difference": float(difference.max())}
 
 
 def run() -> dict:

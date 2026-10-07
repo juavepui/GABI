@@ -152,11 +152,15 @@ de identidad señalada arriba.
 ## Reproducción sin red
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.historical_data_audit
-.venv/Scripts/python.exe -m pytest tests/test_historical_data_audit.py -q
+.venv/Scripts/python.exe -m gabi_cli research historical-data-audit
+.venv/Scripts/python.exe -m pytest backend/tests/test_historical_data_audit.py -q
 ```
 
 El comando abre SQLite en modo **solo lectura** y no llama a Yahoo, SEC ni FRED.
+La ruta anterior era `python -m gabi.historical_data_audit`, conservada en el
+commit `cf69bbfbffa6ce8054157ce48b3e2be9704cc5d8` previo a esta extracción. El CSV
+publicado no se regenera al migrar. El comando actual admite los mismos argumentos
+`--db`, `--membership`, `--old-detail` y `--output`.
 Lee `data/sp500_historical_membership.csv` y el detalle local
 `data/history_refresh/validation_1996_2015/coverage/company-quarter.csv` de la
 auditoría anterior. Si este último no existe o la base ha cambiado, se puede

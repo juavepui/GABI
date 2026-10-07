@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from gabi.domain.research import historical_sec_audit as audit_rules
+from gabi.infrastructure.storage.readonly import connect_readonly
 
 FACTS = """
   SELECT e.cik,
@@ -36,7 +37,6 @@ def load_concept_dates(conn) -> dict[tuple[str, str], list[str]]:
 
 def audit(db: Path) -> tuple[pd.DataFrame, dict]:
     from gabi import historical_membership
-    from gabi.historical_data_audit import connect_readonly
 
     concepts = list(concept_tags())
     with connect_readonly(db) as conn:

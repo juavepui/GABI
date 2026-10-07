@@ -36,6 +36,8 @@ reproduce cambios revisados en dominio, con ancla, ledger y día explícitos.
 validan nominaciones y sus intervalos en dominio, conservando los recursos revisados.
 [El plan prospectivo](architecture/f7-prospective-plan.md) comparte cálculo y hash
 con puertos explícitos de integración/publicación y retira su módulo plano.
+[El inventario histórico anual](architecture/f7-historical-data-audit.md) comparte
+reglas de cobertura y caso de uso, con lecturas acotadas y exportación explícita.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
