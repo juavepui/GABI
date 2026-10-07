@@ -42,6 +42,8 @@ reglas de cobertura y caso de uso, con lecturas acotadas y exportación explíci
 su módulo plano, conserva los cinco artefactos y procesa una empresa por lectura.
 [Los factores académicos](architecture/f7-academic-factors.md) comparten dominio
 OLS/HAC y carga con puertos explícitos de caché/fuente en el worker.
+[El archivo WIKI](architecture/f7-wiki-prices.md) comparte descarga e importación
+con puertos explícitos, caché acotada y validación de precios en dominio.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo

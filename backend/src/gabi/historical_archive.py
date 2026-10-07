@@ -5,10 +5,10 @@ rows are queryable here without silently replacing the operational price cache.
 """
 import json
 
-import numpy as np
 import pandas as pd
 
 from gabi.domain.research import coverage as _coverage
+from gabi.domain.research.historical_prices import prepare_price_chunk
 
 from . import identity, storage
 
@@ -112,20 +112,7 @@ def import_issuer_candidates(source_id: str, frame: pd.DataFrame) -> int:
 
 
 def import_price_chunk(source_id: str, frame: pd.DataFrame, symbols: set[str], start: str, end: str) -> dict:
-    frame = frame.rename(columns={"adjusted_close": "adj_close"}).copy()
-    frame["symbol"] = frame["symbol"].str.replace(".", "-", regex=False)
-    frame = frame[(frame["date"] >= start) & (frame["date"] < end) & frame["symbol"].isin(symbols)]
-    pd.to_datetime(frame["date"], format="%Y-%m-%d", errors="raise")
-    columns = ["open", "high", "low", "close", "adj_close", "volume"]
-    values = frame[columns].apply(pd.to_numeric, errors="coerce")
-    valid = np.isfinite(values).all(axis=1) & (values[columns[:-1]] > 0).all(axis=1) & (values["volume"] >= 0)
-    valid &= values["high"] + 0.001 >= values[["open", "close", "low"]].max(axis=1)
-    valid &= values["low"] - 0.001 <= values[["open", "close", "high"]].min(axis=1)
-    rejected = int((~valid).sum())
-    frame[columns] = values
-    frame = frame[valid]
-    if frame.duplicated(["symbol", "date"]).any():
-        raise ValueError("Duplicate price observations within source chunk")
+    frame, rejected = prepare_price_chunk(frame, symbols, start, end)
     records = [(source_id, row.symbol, row.date, row.open, row.high, row.low, row.close, row.adj_close,
                 row.volume, "as_traded") for row in frame.itertuples(index=False)]
     with storage.get_connection() as conn:
