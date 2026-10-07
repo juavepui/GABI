@@ -1,0 +1,399 @@
+{
+  "source_sha256": "afec946df936fbfb3aa7a8281d61cdf4f46b86abf4283db79c36b9f2cd6e9690",
+  "symbols": [
+    {
+      "day": "2009-11-30",
+      "symbols": [
+        "ANTM"
+      ],
+      "expected": [
+        "ANTM"
+      ],
+      "changes": []
+    },
+    {
+      "day": "2009-12-01",
+      "symbols": [
+        "ANTM",
+        "OTHER"
+      ],
+      "expected": [
+        "OTHER",
+        "WLP"
+      ],
+      "changes": [
+        {
+          "reported_symbol": "ANTM",
+          "historical_symbol": "WLP",
+          "valid_from": "2009-12-01",
+          "valid_to": "2014-12-03",
+          "source_urls": [
+            "https://www.sec.gov/Archives/edgar/data/1156039/000119312509244519/dex991.htm",
+            "https://www.miaxglobal.com/alert/2014/12/02/miax-corporate-action-alert-wellpoint-inc-wlp-name-and-symbol-change-anthem"
+          ]
+        }
+      ]
+    },
+    {
+      "day": "2012-01-01",
+      "symbols": [
+        "ANTM"
+      ],
+      "expected": [
+        "WLP"
+      ],
+      "changes": [
+        {
+          "reported_symbol": "ANTM",
+          "historical_symbol": "WLP",
+          "valid_from": "2009-12-01",
+          "valid_to": "2014-12-03",
+          "source_urls": [
+            "https://www.sec.gov/Archives/edgar/data/1156039/000119312509244519/dex991.htm",
+            "https://www.miaxglobal.com/alert/2014/12/02/miax-corporate-action-alert-wellpoint-inc-wlp-name-and-symbol-change-anthem"
+          ]
+        }
+      ]
+    },
+    {
+      "day": "2014-12-03",
+      "symbols": [
+        "ANTM"
+      ],
+      "expected": [
+        "ANTM"
+      ],
+      "changes": []
+    },
+    {
+      "day": "2012-01-01",
+      "symbols": [
+        "ANTM",
+        "WLP"
+      ],
+      "error": "Both WLP and ANTM occur in historical membership on 2012-01-01"
+    },
+    {
+      "day": "2012-01-01",
+      "symbols": [
+        "OTHER"
+      ],
+      "expected": [
+        "OTHER"
+      ],
+      "changes": []
+    }
+  ],
+  "applications": [
+    {
+      "name": "interval",
+      "entries": [
+        {
+          "label": "LABEL",
+          "cik": "0000000001",
+          "valid_from": "2020-01-01",
+          "valid_to": "2025-01-01",
+          "sec_tickers": [
+            "LABEL"
+          ],
+          "reason": "reviewed",
+          "evidence_window_days": 14
+        }
+      ],
+      "community": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2030-01-01"
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      },
+      "expected": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2020-01-01"
+          },
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2025-01-01",
+            "end": "2030-01-01"
+          },
+          {
+            "cik": "0000000001",
+            "name": null,
+            "start": "2020-01-01",
+            "end": "2025-01-01",
+            "nomination": {
+              "label": "LABEL",
+              "cik": "0000000001",
+              "valid_from": "2020-01-01",
+              "valid_to": "2025-01-01",
+              "sec_tickers": [
+                "LABEL"
+              ],
+              "reason": "reviewed",
+              "evidence_window_days": 14
+            }
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "price_only",
+      "entries": [
+        {
+          "label": "LABEL",
+          "cik": "0000000001",
+          "valid_from": "2020-01-01",
+          "valid_to": "2025-01-01",
+          "sec_tickers": [
+            "LABEL"
+          ],
+          "reason": "reviewed",
+          "evidence_window_days": 14,
+          "price_only": true
+        }
+      ],
+      "community": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2030-01-01"
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      },
+      "expected": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2030-01-01"
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "existing_nomination",
+      "entries": [
+        {
+          "label": "LABEL",
+          "cik": "0000000001",
+          "valid_from": "2020-01-01",
+          "valid_to": "2025-01-01",
+          "sec_tickers": [
+            "LABEL"
+          ],
+          "reason": "reviewed",
+          "evidence_window_days": 14
+        }
+      ],
+      "community": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2030-01-01",
+            "nomination": {
+              "reviewed": true
+            }
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      },
+      "expected": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2030-01-01",
+            "nomination": {
+              "reviewed": true
+            }
+          },
+          {
+            "cik": "0000000001",
+            "name": null,
+            "start": "2020-01-01",
+            "end": "2025-01-01",
+            "nomination": {
+              "label": "LABEL",
+              "cik": "0000000001",
+              "valid_from": "2020-01-01",
+              "valid_to": "2025-01-01",
+              "sec_tickers": [
+                "LABEL"
+              ],
+              "reason": "reviewed",
+              "evidence_window_days": 14
+            }
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty",
+      "entries": [
+        {
+          "label": "LABEL",
+          "cik": "0000000001",
+          "valid_from": "2020-01-01",
+          "valid_to": "2025-01-01",
+          "sec_tickers": [
+            "LABEL"
+          ],
+          "reason": "reviewed",
+          "evidence_window_days": 14
+        }
+      ],
+      "community": {},
+      "expected": {
+        "LABEL": [
+          {
+            "cik": "0000000001",
+            "name": null,
+            "start": "2020-01-01",
+            "end": "2025-01-01",
+            "nomination": {
+              "label": "LABEL",
+              "cik": "0000000001",
+              "valid_from": "2020-01-01",
+              "valid_to": "2025-01-01",
+              "sec_tickers": [
+                "LABEL"
+              ],
+              "reason": "reviewed",
+              "evidence_window_days": 14
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "touching",
+      "entries": [
+        {
+          "label": "LABEL",
+          "cik": "0000000001",
+          "valid_from": "2020-01-01",
+          "valid_to": "2025-01-01",
+          "sec_tickers": [
+            "LABEL"
+          ],
+          "reason": "reviewed",
+          "evidence_window_days": 14
+        }
+      ],
+      "community": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2020-01-01"
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      },
+      "expected": {
+        "LABEL": [
+          {
+            "cik": "0000000002",
+            "name": "Candidate",
+            "start": "2018-01-01",
+            "end": "2020-01-01"
+          },
+          {
+            "cik": "0000000001",
+            "name": null,
+            "start": "2020-01-01",
+            "end": "2025-01-01",
+            "nomination": {
+              "label": "LABEL",
+              "cik": "0000000001",
+              "valid_from": "2020-01-01",
+              "valid_to": "2025-01-01",
+              "sec_tickers": [
+                "LABEL"
+              ],
+              "reason": "reviewed",
+              "evidence_window_days": 14
+            }
+          }
+        ],
+        "OTHER": [
+          {
+            "cik": "0000000003",
+            "name": "Other",
+            "start": "2010-01-01",
+            "end": "2030-01-01"
+          }
+        ]
+      }
+    }
+  ]
+}

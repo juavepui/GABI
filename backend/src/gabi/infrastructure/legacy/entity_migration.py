@@ -13,7 +13,7 @@ import pandas as pd
 
 from gabi import identity, storage
 from gabi.domain.research import identity_coverage
-from gabi.historical_ticker_corrections import WLP_END, WLP_SOURCES, WLP_START
+from gabi.domain.research.ticker_corrections import WLP_END, WLP_SOURCES, WLP_START
 
 # Bounds are trading dates, not corporate-name effective dates. Multiple
 # independent sources are retained; open ends express continuity until new evidence.
