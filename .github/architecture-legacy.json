@@ -529,8 +529,7 @@
     "scipy.stats"
   ],
   "backend/src/gabi/quality_persistence.py": [
-    "gabi.edgar",
-    "numpy"
+    "gabi.edgar"
   ],
   "backend/src/gabi/r3_experiment.py": [
     "gabi.academic_factors",
@@ -595,10 +594,7 @@
     "shutil"
   ],
   "backend/src/gabi/rotation_policy.py": [],
-  "backend/src/gabi/scoring.py": [
-    "numpy",
-    "pandas"
-  ],
+  "backend/src/gabi/scoring.py": [],
   "backend/src/gabi/screener.py": [
     "gabi.config",
     "gabi.data_fetch",
