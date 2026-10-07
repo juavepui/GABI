@@ -1,4 +1,6 @@
+import json
 import sys
+from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
@@ -6,7 +8,25 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, decision_engine, storage
+from gabi import config, storage
+from gabi.domain.portfolio import decisions as decision_engine
+from gabi.domain.portfolio.decision_progress import progress
+from gabi.infrastructure.storage.decisions import SqliteDecisions
+
+
+def _save_plan(repo, plan, holdings):
+    result = {"decisions": json.loads(plan["decisions"].to_json(orient="records")),
+              "method": plan["method"], "policy": asdict(decision_engine.Policy()), "holdings": holdings}
+    return repo.save(result, "Prueba", f"fixture-{len(repo.list())}")
+
+
+def _progress(repo, plan_id):
+    record = repo.get(plan_id)
+    symbols = list(dict.fromkeys([row["symbol"] for row in record["decisions"]
+                                 if row.get("target_pct", 0) > 0] + ["SPY"]))
+    start = (pd.Timestamp(record["created_at"][:10]) - pd.Timedelta(days=7)).date().isoformat()
+    histories = repo.progress_histories(symbols, start)
+    return progress(record["created_at"], record["decisions"], histories, date.today())
 
 
 def _seed_to_today(symbol, p_start, p_today, start_date):
@@ -68,7 +88,7 @@ def test_unreviewable_holding_reserves_capital(monkeypatch):
 
 def test_invalid_holdings_are_rejected():
     try:
-        decision_engine.build_plan(_table(), {}, {"AAA": 101})
+        decision_engine.build_plan(_table(), {}, {"AAA": 101}, as_of="2026-09-10")
     except ValueError as exc:
         assert "100" in str(exc)
     else:
@@ -91,13 +111,14 @@ def test_plan_audit_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     plan = {"decisions": pd.DataFrame([{"symbol": "AAA", "action": "COMPRAR"}]), "method": "test"}
-    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {"AAA": 2})
-    assert decision_engine.list_saved_plans().iloc[0]["id"] == run_id
-    assert decision_engine.load_saved_plan(run_id).iloc[0]["action"] == "COMPRAR"
-    assert decision_engine.rename_saved_plan(run_id, "Prueba renovada")
-    assert decision_engine.list_saved_plans().iloc[0]["name"] == "Prueba renovada"
-    assert decision_engine.delete_saved_plan(run_id)
-    assert decision_engine.list_saved_plans().empty
+    repo = SqliteDecisions(tmp_path)
+    run_id = _save_plan(repo, plan, {"AAA": 2})
+    assert repo.list()[0]["id"] == run_id
+    assert repo.get(run_id)["decisions"][0]["action"] == "COMPRAR"
+    assert repo.rename(run_id, "Prueba renovada")
+    assert repo.list()[0]["name"] == "Prueba renovada"
+    assert repo.delete(run_id)
+    assert repo.list() == []
 
 
 def _backdate_plan(run_id, days_ago):
@@ -121,13 +142,14 @@ def test_plan_progress_weights_by_target_pct_not_equally(tmp_path, monkeypatch):
         {"symbol": "AAA", "action": "COMPRAR", "target_pct": 80.0},
         {"symbol": "BBB", "action": "COMPRAR", "target_pct": 20.0},
     ]), "method": "test"}
-    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {})
+    repo = SqliteDecisions(tmp_path)
+    run_id = _save_plan(repo, plan, {})
     origin_date = _backdate_plan(run_id, days_ago=3)
     _seed_to_today("AAA", 100, 150, origin_date)  # +50%, pesa 80%
     _seed_to_today("BBB", 100, 100, origin_date)  # +0%, pesa 20%
     _seed_to_today("SPY", 100, 110, origin_date)  # +10%
 
-    result = decision_engine.plan_progress(run_id)
+    result = _progress(repo, run_id)
     assert result["requested"] == 2
     assert result["available"] == 2
     # 0.8*50% + 0.2*0% = 40%, NO el 25% que saldria equiponderado
@@ -143,8 +165,9 @@ def test_plan_progress_ignores_zero_weight_positions(tmp_path, monkeypatch):
         {"symbol": "AAA", "action": "COMPRAR", "target_pct": 100.0},
         {"symbol": "CCC", "action": "VENDER", "target_pct": 0.0},
     ]), "method": "test"}
-    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {})
-    result = decision_engine.plan_progress(run_id)
+    repo = SqliteDecisions(tmp_path)
+    run_id = _save_plan(repo, plan, {})
+    result = _progress(repo, run_id)
     assert result["requested"] == 1  # CCC (peso 0, ya fuera de cartera) no cuenta
 
 
@@ -155,17 +178,18 @@ def test_plan_price_curve_weighted_normalizes_to_100(tmp_path, monkeypatch):
         {"symbol": "AAA", "action": "COMPRAR", "target_pct": 75.0},
         {"symbol": "BBB", "action": "COMPRAR", "target_pct": 25.0},
     ]), "method": "test"}
-    run_id = decision_engine.save_plan(plan, decision_engine.Policy(), {})
+    repo = SqliteDecisions(tmp_path)
+    run_id = _save_plan(repo, plan, {})
     origin_date = _backdate_plan(run_id, days_ago=3)
     _seed_to_today("AAA", 100, 200, origin_date)  # x2
     _seed_to_today("BBB", 100, 100, origin_date)  # sin cambio
     _seed_to_today("SPY", 100, 105, origin_date)
 
-    curve = decision_engine.plan_price_curve(run_id)
-    assert curve.iloc[0]["Cartera"] == 100
+    curve = _progress(repo, run_id)["curve"]
+    assert curve[0]["portfolio"] == 100
     # 0.75*200 + 0.25*100 = 175
-    assert round(curve.iloc[-1]["Cartera"], 1) == 175.0
-    assert round(curve.iloc[-1]["SPY"], 1) == 105.0
+    assert round(curve[-1]["portfolio"], 1) == 175.0
+    assert round(curve[-1]["spy"], 1) == 105.0
 
 
 def test_existing_plan_table_gets_name_column(tmp_path, monkeypatch):
@@ -177,10 +201,11 @@ def test_existing_plan_table_gets_name_column(tmp_path, monkeypatch):
                      "decisions_json TEXT, policy_json TEXT, holdings_json TEXT)")
         conn.execute("INSERT INTO decision_runs VALUES (1, '2026-01-01', 'test', '[]', '{}', '{}')")
         conn.commit()
-    saved = decision_engine.list_saved_plans()
-    assert saved.iloc[0]["name"] == "Plan #1"
-    assert decision_engine.rename_saved_plan(1, "Histórico")
-    assert decision_engine.list_saved_plans().iloc[0]["name"] == "Histórico"
+    repo = SqliteDecisions(tmp_path)
+    saved = repo.list()
+    assert saved[0]["name"] == "Plan #1"
+    assert repo.rename(1, "Histórico")
+    assert repo.list()[0]["name"] == "Histórico"
 
 
 # --- Portfolio Engine V2: optimizador con límites dentro del problema (opt-in) ---

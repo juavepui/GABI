@@ -89,14 +89,6 @@
     "gabi.storage",
     "pandas"
   ],
-  "backend/src/gabi/decision_engine.py": [
-    "gabi.evaluation",
-    "gabi.storage",
-    "numpy",
-    "pandas",
-    "pypfopt",
-    "quantstats"
-  ],
   "backend/src/gabi/edgar.py": [
     "concurrent.futures",
     "gabi.config",

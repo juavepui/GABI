@@ -80,7 +80,7 @@ class LegacyPortfolioLabSources:
 
     @staticmethod
     def min_variance(histories: dict, picks: list[str]):
-        from gabi import decision_engine
+        import gabi.domain.portfolio.decisions as decision_engine
 
         return decision_engine._risk_weights(histories, picks)
 

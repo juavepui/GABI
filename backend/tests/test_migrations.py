@@ -14,7 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, decision_engine, evaluation, research_lab, storage
+from gabi import config, evaluation, research_lab, storage
+from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.simulations import SqliteSimulations
 
 
@@ -60,11 +61,11 @@ def test_decision_engine_migrates_runs_table_without_name(tmp_path, monkeypatch)
         )
         conn.commit()
 
-    plans = decision_engine.list_saved_plans()
+    plans = SqliteDecisions(tmp_path).list()
 
     assert len(plans) == 1
-    assert plans.iloc[0]["method"] == "min_variance"  # dato antiguo intacto
-    assert plans.iloc[0]["name"] == "Plan #1"  # backfill documentado para filas sin nombre
+    assert plans[0]["method"] == "min_variance"  # dato antiguo intacto
+    assert plans[0]["name"] == "Plan #1"  # nombre compatible sin modificar la tabla al leer
 
 
 def test_evaluation_migrates_snapshots_table_without_name(tmp_path, monkeypatch):

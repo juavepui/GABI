@@ -11,8 +11,11 @@ casos de uso y adaptadores separados; un cliente React por capacidades; SQLite
 y archivos compartidos en `data/`. API y worker son procesos del mismo backend,
 con los mismos modelos y servicios. No requieren despliegues independientes.
 
-El backend conserva 82 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las primeras hojas de F7.4
-[delegan sus cálculos en el dominio](architecture/f7-domain-leaves.md) mientras conservan consumidores legacy. F2 ha migrado el cálculo
+El backend conserva 81 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las hojas de F7.4
+[delegan sus cálculos en el dominio](architecture/f7-domain-leaves.md), incluidos
+[indicadores y estadísticas](architecture/f7-quantitative-domain.md) y
+[scoring y fundamentos SEC](architecture/f7-fundamental-domain.md), mientras conservan consumidores legacy.
+[Decisiones retira su módulo plano](architecture/f7-decisions.md). F2 ha migrado el cálculo
 y los filtros del Screener a casos de uso/dominio compartidos y añadido la
 [API local de consulta](local-api.md), con SQL de solo lectura y caché por lotes.
 F3 incorpora el [cliente React local](../frontend/README.md)

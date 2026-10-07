@@ -1,0 +1,31 @@
+{
+  "as_of_date": "2026-09-24",
+  "created_at": "2026-09-24T12:00:00+00:00",
+  "today": "2026-09-29",
+  "data_as_of": "2026-09-29",
+  "stale": false,
+  "detail": [
+    {
+      "symbol": "T000",
+      "weight_pct": 5.0,
+      "price_start": 150.99125992896822,
+      "price_now": 152.2727497260915,
+      "return": 0.008487178646804594
+    },
+    {
+      "symbol": "T001",
+      "weight_pct": 2.0,
+      "price_start": 133.1588195483014,
+      "price_now": 136.8015015904175,
+      "return": 0.027355920204705342
+    }
+  ],
+  "available": 2,
+  "requested": 2,
+  "portfolio_return": 0.013878247663347665,
+  "benchmark_return": 0.01788041321999123,
+  "excess_return": -0.0040021655566435665,
+  "missing": [],
+  "source_commit": "486942af7a92bea5afa7ffec98983eeba701baad",
+  "source_sha256_lf": "162d13efaf4708d3a88ad23906b710fb694b32631af3a64bed13b5776b675c70"
+}

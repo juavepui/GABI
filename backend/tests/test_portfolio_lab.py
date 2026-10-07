@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gabi import broker_costs, config, decision_engine, screener_asof, storage, universe
+from gabi import broker_costs, config, screener_asof, storage, universe
 from gabi import portfolio_backtest as pb
 from gabi.application.research.portfolio_lab_engine import run_portfolio_lab
+from gabi.domain.portfolio import decisions as decision_engine
 from gabi.domain.research import portfolio_lab as pl
 from gabi.infrastructure.legacy.portfolio_lab import LegacyPortfolioLabSources
 

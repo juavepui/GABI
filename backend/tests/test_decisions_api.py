@@ -1,15 +1,18 @@
 """Decision plans use existing calculations and never mutate data on GET."""
 
-from datetime import date, timedelta
+import json
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pandas as pd
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import config, decision_engine, storage
+from gabi import config
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
 
@@ -43,9 +46,10 @@ def test_decision_job_is_experimental_and_saved_in_legacy_table(tmp_path, monkey
         plan_id = saved.json()["id"]
         assert saved.json()["decisions"] == result["decisions"]
         assert api.post("/api/v1/portfolio/decisions", json={"job_id": job_id, "name": "Otra"}).json()["id"] == plan_id
-        assert decision_engine.load_saved_plan(plan_id).to_dict(orient="records") == result["decisions"]
+        stored = SqliteDecisions(tmp_path).get(plan_id)
+        assert stored["decisions"] == result["decisions"]
         columns = ["symbol", "action", "current_pct", "target_pct", "change_pct", "reason", "score"]
-        expected_csv = decision_engine.load_saved_plan(plan_id)[columns].to_csv(index=False, lineterminator="\n")
+        expected_csv = pd.DataFrame(stored["decisions"])[columns].to_csv(index=False, lineterminator="\n")
         for path in (f"jobs/{job_id}/decisions.csv", f"{plan_id}/decisions.csv"):
             csv = api.get(f"/api/v1/portfolio/decisions/{path}")
             assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv")
@@ -74,12 +78,6 @@ def test_decisions_get_is_inert_and_invalid_holdings_do_not_save(tmp_path):
 
 
 def test_saved_plan_progress_matches_legacy_weighted_result(tmp_path, monkeypatch):
-    class FixtureDate(date):
-        @classmethod
-        def today(cls):
-            return TODAY
-
-    monkeypatch.setattr(decision_engine, "date", FixtureDate)
     seed_fixture(tmp_path)
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
@@ -89,13 +87,11 @@ def test_saved_plan_progress_matches_legacy_weighted_result(tmp_path, monkeypatc
         {"symbol": "T001", "action": "COMPRAR", "current_pct": 0, "target_pct": 2,
          "change_pct": 2, "reason": "test", "score": 68},
     ])
-    plan_id = decision_engine.save_plan({"decisions": rows, "method": "legacy"}, decision_engine.Policy(), {})
-    # Keep the saved plan inside the synthetic price window, independent of the day pytest runs.
-    with storage.get_connection() as connection:
-        plan_date = TODAY - timedelta(days=5)
-        connection.execute("UPDATE decision_runs SET created_at=? WHERE id=?", (f"{plan_date}T12:00:00", plan_id))
-        connection.commit()
-    expected = decision_engine.plan_progress(plan_id)
+    plan_date = TODAY - timedelta(days=5)
+    repo = SqliteDecisions(tmp_path, now=lambda: datetime.combine(plan_date, datetime.min.time(), UTC).replace(hour=12))
+    plan_id = repo.save({"decisions": rows.to_dict(orient="records"), "method": "legacy", "policy": {}, "holdings": {}},
+                        "Referencia", "reference-plan")
+    expected = json.loads((Path(__file__).parent / "fixtures/decision_progress_migration.json").read_text(encoding="utf-8"))
     with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:
         response = api.get(f"/api/v1/portfolio/decisions/{plan_id}/progress")
         assert response.status_code == 200, response.text

@@ -1,0 +1,302 @@
+{
+  "source_commit": "486942af7a92bea5afa7ffec98983eeba701baad",
+  "source_sha256_lf": "162d13efaf4708d3a88ad23906b710fb694b32631af3a64bed13b5776b675c70",
+  "normal": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "COMPRAR",
+        "current_pct": 1.0,
+        "target_pct": 5.0,
+        "change_pct": 4.0,
+        "reason": "cumple reglas y tiene hueco en cartera",
+        "score": 80.0
+      }
+    ],
+    "targets": {
+      "AAA": 5.0
+    },
+    "rejections": {
+      "AAA": []
+    },
+    "method": "una empresa",
+    "risk": {
+      "historical_sharpe": 332.7200852747,
+      "historical_max_drawdown": 0.0,
+      "sessions": 179
+    },
+    "cash_target_pct": 95.0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "AAA": 1.0
+    },
+    "status": "EXPERIMENTAL"
+  },
+  "absent_prices": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "REVISAR",
+        "current_pct": 1.0,
+        "target_pct": 1.0,
+        "change_pct": 0.0,
+        "reason": "datos insuficientes o antiguos para decidir una venta",
+        "score": 80.0
+      }
+    ],
+    "targets": {},
+    "rejections": {
+      "AAA": [
+        "precio ausente o antiguo",
+        "hist\u00f3rico de rentabilidad insuficiente"
+      ]
+    },
+    "method": "sin candidatas",
+    "risk": {},
+    "cash_target_pct": 99.0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "AAA": 1.0
+    },
+    "status": "EXPERIMENTAL"
+  },
+  "low_score": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "VENDER",
+        "current_pct": 1.0,
+        "target_pct": 0.0,
+        "change_pct": -1.0,
+        "reason": "score inferior al umbral",
+        "score": 50.0
+      }
+    ],
+    "targets": {},
+    "rejections": {
+      "AAA": [
+        "score inferior al umbral"
+      ]
+    },
+    "method": "sin candidatas",
+    "risk": {},
+    "cash_target_pct": 100.0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "AAA": 1.0
+    },
+    "status": "EXPERIMENTAL"
+  },
+  "low_coverage": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "REVISAR",
+        "current_pct": 1.0,
+        "target_pct": 1.0,
+        "change_pct": 0.0,
+        "reason": "datos insuficientes o antiguos para decidir una venta",
+        "score": 80.0
+      }
+    ],
+    "targets": {},
+    "rejections": {
+      "AAA": [
+        "datos insuficientes"
+      ]
+    },
+    "method": "sin candidatas",
+    "risk": {},
+    "cash_target_pct": 99.0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "AAA": 1.0
+    },
+    "status": "EXPERIMENTAL"
+  },
+  "below_sma": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "VENDER",
+        "current_pct": 1.0,
+        "target_pct": 0.0,
+        "change_pct": -1.0,
+        "reason": "precio bajo SMA200",
+        "score": 80.0
+      }
+    ],
+    "targets": {},
+    "rejections": {
+      "AAA": [
+        "precio bajo SMA200"
+      ]
+    },
+    "method": "sin candidatas",
+    "risk": {},
+    "cash_target_pct": 100.0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "AAA": 1.0
+    },
+    "status": "EXPERIMENTAL"
+  },
+  "high_risk": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "VENDER",
+        "current_pct": 1.0,
+        "target_pct": 0.0,
+        "change_pct": -1.0,
+        "reason": "volatilidad excesiva o desconocida",
+        "score": 80.0
+      }
+    ],
+    "targets": {},
+    "rejections": {
+      "AAA": [
+        "volatilidad excesiva o desconocida"
+      ]
+    },
+    "method": "sin candidatas",
+    "risk": {},
+    "cash_target_pct": 100.0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "AAA": 1.0
+    },
+    "status": "EXPERIMENTAL"
+  },
+  "protected_holding": {
+    "decisions": [
+      {
+        "symbol": "AAA",
+        "action": "COMPRAR",
+        "current_pct": 0.0,
+        "target_pct": 2.0,
+        "change_pct": 2.0,
+        "reason": "cumple reglas y tiene hueco en cartera",
+        "score": 80.0
+      },
+      {
+        "symbol": "UNKNOWN",
+        "action": "REVISAR",
+        "current_pct": 98.0,
+        "target_pct": 98.0,
+        "change_pct": 0.0,
+        "reason": "posici\u00f3n fuera del universo analizado",
+        "score": null
+      }
+    ],
+    "targets": {
+      "AAA": 2.0
+    },
+    "rejections": {
+      "AAA": []
+    },
+    "method": "una empresa",
+    "risk": {
+      "historical_sharpe": 332.7200852747,
+      "historical_max_drawdown": 0.0,
+      "sessions": 179
+    },
+    "cash_target_pct": 0,
+    "policy": {
+      "min_score": 65.0,
+      "min_coverage": 0.7,
+      "max_positions": 10,
+      "max_position_pct": 5.0,
+      "max_sector_pct": 20.0,
+      "max_invested_pct": 50.0,
+      "max_volatility": 0.6,
+      "min_drawdown": -0.5,
+      "max_price_age_days": 7,
+      "trade_threshold_pct": 0.5,
+      "constrained_optimizer": false,
+      "turnover_penalty": 0.0
+    },
+    "holdings": {
+      "UNKNOWN": 98.0
+    },
+    "status": "EXPERIMENTAL"
+  }
+}
