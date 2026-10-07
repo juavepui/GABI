@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from gabi.domain.market import insiders
 from gabi.domain.research import estimates
 
 
@@ -14,16 +15,12 @@ class LegacyCompanyMath:
         return estimates.compute_revision(history, lookback_days, as_of=as_of)
 
     @staticmethod
-    def insiders(symbol: str, transactions: pd.DataFrame, months: int) -> dict:
-        from gabi import insider
-
-        return insider.summarize_insider_activity(symbol, months, transactions=transactions)
+    def insiders(symbol: str, transactions: pd.DataFrame, months: int, as_of: date) -> dict:
+        return insiders.summarize_insider_activity(transactions, months, as_of=as_of)
 
     @staticmethod
     def transaction_labels() -> dict[str, str]:
-        from gabi import insider
-
-        return dict(insider.TRANSACTION_CODES)
+        return dict(insiders.TRANSACTION_CODES)
 
 
 def sync_company(data_dir: Path, symbol: str, dataset: str, *, today: date | None = None) -> dict:

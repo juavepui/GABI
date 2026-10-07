@@ -12,31 +12,24 @@ de insiders" sin más.
 De momento es solo informativo (se muestra en la Ficha de empresa): no entra
 en el Composite Score. Igual que con el resto de bloques nuevos, primero hay
 que ver si la señal aporta algo con datos reales antes de dejar que vote."""
-import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 
 import pandas as pd
 import requests
 
+from gabi.domain.market.insiders import (
+    SIGNAL_CODES as SIGNAL_CODES,
+)
+from gabi.domain.market.insiders import (
+    TRANSACTION_CODES as TRANSACTION_CODES,
+)
+from gabi.domain.market.insiders import (
+    parse_form4_xml as parse_form4_xml,
+)
+from gabi.domain.market.insiders import summarize_insider_activity as _summarize
+
 from . import config, edgar, storage
 from .data_fetch import _classify_error
-
-TRANSACTION_CODES = {
-    "P": "Compra en mercado abierto",
-    "S": "Venta en mercado abierto",
-    "A": "Concesión/adjudicación (award)",
-    "M": "Ejercicio de opciones",
-    "G": "Donación (gift)",
-    "F": "Retención fiscal (tax withholding)",
-    "C": "Conversión de valores derivados",
-    "X": "Ejercicio de opción in-the-money",
-    "D": "Disposición a un tercero (ej. divorcio)",
-    "J": "Otra transacción (ver notas del filing)",
-}
-# Las únicas dos que reflejan una decisión discrecional con dinero/acciones
-# propias en mercado abierto — el resto son mecánicas (compensación, fiscal,
-# ejercicio de opciones) y no se cuentan como señal de convicción.
-SIGNAL_CODES = {"P", "S"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS insider_transactions (
@@ -65,69 +58,6 @@ CREATE TABLE IF NOT EXISTS insider_fetch_meta (
     fetched_at TEXT NOT NULL
 );
 """
-
-
-def _text(elem, path):
-    if elem is None:
-        return None
-    node = elem.find(path)
-    return node.text.strip() if node is not None and node.text else None
-
-
-def _bool(elem, path):
-    val = _text(elem, path)
-    return val is not None and val.strip().lower() == "true"
-
-
-def _float(elem, path):
-    val = _text(elem, path)
-    try:
-        return float(val) if val is not None else None
-    except ValueError:
-        return None
-
-
-def parse_form4_xml(xml_text: str) -> dict:
-    """Extrae del XML crudo de un Form 4: quién es el insider, su relación
-    con la empresa (directivo/consejero/accionista >10%), si las
-    transacciones parecen ir dentro de un plan 10b5-1 (por las notas al
-    pie — SEC no lo marca con un campo aparte), y cada transacción de
-    acciones ordinarias (no derivados: opciones/warrants se ignoran, son
-    una señal mucho más ambigua)."""
-    root = ET.fromstring(xml_text)
-    issuer_symbol = _text(root, "issuer/issuerTradingSymbol")
-    owner = root.find("reportingOwner")
-    owner_name = _text(owner, "reportingOwnerId/rptOwnerName")
-    rel = owner.find("reportingOwnerRelationship") if owner is not None else None
-    is_officer = _bool(rel, "isOfficer")
-    is_director = _bool(rel, "isDirector")
-    is_ten_pct = _bool(rel, "isTenPercentOwner")
-    officer_title = _text(rel, "officerTitle")
-
-    footnote_text = " ".join((fn.text or "") for fn in root.findall(".//footnote")).lower()
-    is_10b5_1 = "10b5-1" in footnote_text.replace(" ", "")
-
-    transactions = []
-    for i, tx in enumerate(root.findall(".//nonDerivativeTransaction")):
-        code = _text(tx, "transactionCoding/transactionCode")
-        date = _text(tx, "transactionDate/value")
-        if not code or not date:
-            continue
-        transactions.append({
-            "line_no": i,
-            "transaction_date": date,
-            "transaction_code": code,
-            "acquired_disposed": _text(tx, "transactionAmounts/transactionAcquiredDisposedCode/value"),
-            "shares": _float(tx, "transactionAmounts/transactionShares/value"),
-            "price_per_share": _float(tx, "transactionAmounts/transactionPricePerShare/value"),
-            "shares_owned_after": _float(tx, "postTransactionAmounts/sharesOwnedFollowingTransaction/value"),
-        })
-
-    return {
-        "symbol": issuer_symbol, "owner_name": owner_name, "owner_title": officer_title,
-        "is_officer": is_officer, "is_director": is_director, "is_ten_pct_owner": is_ten_pct,
-        "is_10b5_1_plan": is_10b5_1, "transactions": transactions,
-    }
 
 
 def fetch_insider_transactions(symbol: str, cik: str, limit_filings: int = 20) -> list:
@@ -225,42 +155,9 @@ def get_insider_fetched_at(symbols: list) -> dict:
 
 
 def summarize_insider_activity(symbol: str, months: int = 6, transactions: pd.DataFrame | None = None) -> dict:
-    """Resumen de actividad en los últimos `months` meses. Solo cuenta P
-    (compra) y S (venta) en mercado abierto — concesiones, ejercicios de
-    opciones y donaciones no reflejan una decisión de convicción, así que no
-    cuentan para 'compradores distintos' ni para el valor neto.
-
-    `transactions` permite pasar las filas ya leídas (la API las lee en solo
-    lectura); por defecto se leen de la base como siempre."""
-    df = get_insider_transactions(symbol) if transactions is None else transactions
-    empty = {
-        "n_buys": 0, "n_sells": 0, "distinct_buyers": 0, "distinct_sellers": 0,
-        "net_value": None, "has_10b5_1_only_buys": False, "recent": df,
-    }
-    if df.empty:
-        return empty
-
-    cutoff = (pd.Timestamp.now(tz="UTC").tz_localize(None) - pd.DateOffset(months=months)).date().isoformat()
-    recent = df[df["transaction_date"] >= cutoff]
-    if recent.empty:
-        return {**empty, "recent": recent}
-
-    buys = recent[recent["transaction_code"] == "P"]
-    sells = recent[recent["transaction_code"] == "S"]
-    net_value = None
-    if not buys.empty or not sells.empty:
-        buy_value = (buys["shares"].fillna(0) * buys["price_per_share"].fillna(0)).sum()
-        sell_value = (sells["shares"].fillna(0) * sells["price_per_share"].fillna(0)).sum()
-        net_value = float(buy_value - sell_value)
-
-    return {
-        "n_buys": int(len(buys)), "n_sells": int(len(sells)),
-        "distinct_buyers": int(buys["owner_name"].nunique()),
-        "distinct_sellers": int(sells["owner_name"].nunique()),
-        "net_value": net_value,
-        "has_10b5_1_only_buys": bool(not buys.empty and buys["is_10b5_1_plan"].astype(bool).all()),
-        "recent": recent,
-    }
+    """Compatibility entry point; modern callers pass their own date and rows."""
+    frame = get_insider_transactions(symbol) if transactions is None else transactions
+    return _summarize(frame, months, as_of=datetime.now(UTC).date())
 
 
 def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: int = 4, progress_cb=None) -> dict:

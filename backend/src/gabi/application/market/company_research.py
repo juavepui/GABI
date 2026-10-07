@@ -30,7 +30,7 @@ class ResearchStore(Protocol):
 
 class CompanyMath(Protocol):
     def revision(self, history: pd.DataFrame, lookback_days: int, as_of: date) -> dict | None: ...
-    def insiders(self, symbol: str, transactions: pd.DataFrame, months: int) -> dict: ...
+    def insiders(self, symbol: str, transactions: pd.DataFrame, months: int, as_of: date) -> dict: ...
     def transaction_labels(self) -> dict[str, str]: ...
 
 
@@ -79,7 +79,7 @@ class CompanyResearch:
     def insiders(self, symbol: str) -> dict:
         """The old Ficha «Actividad de insiders (SEC Form 4)»: six-month open-market summary and recent lines."""
         symbol = normalize_symbol(symbol)
-        summary = self.math.insiders(symbol, self.store.insider_transactions(symbol), INSIDER_MONTHS)
+        summary = self.math.insiders(symbol, self.store.insider_transactions(symbol), INSIDER_MONTHS, self.today())
         recent = summary["recent"]
         labels = self.math.transaction_labels()
         rows = [_row(row, INSIDER_KEYS) | {"transaction_label": labels.get(row["transaction_code"],
