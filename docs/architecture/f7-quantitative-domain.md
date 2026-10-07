@@ -42,7 +42,10 @@ original y sus hashes LF, obtenidos con precios sintéticos. Nueve escenarios
 incluyen vacío, ventana corta, precio constante, ajustados completos/incompletos,
 ausencias, hueco del benchmark y pérdida total. Se comparan además ventanas
 personalizadas, riesgo, cola, captura, Sharpe rodante, PSR, DSR, bootstrap con
-semilla fija y PBO. No se consultan datos de aplicación ni reservas.
+semilla fija y PBO. Los floats usan tolerancia relativa `1e-12` y absoluta
+`1e-14` por el redondeo de bibliotecas entre Linux/Windows; ausencias, estados,
+fechas y recuentos se comparan exactamente. No se consultan datos de aplicación
+ni reservas.
 
 Pasan 116 tests existentes y 16 nuevos de equivalencia, ausencia de I/O,
 aislamiento de parámetros, alias y procedencia. Se ejecutan arquitectura

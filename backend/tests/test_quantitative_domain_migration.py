@@ -72,6 +72,23 @@ def canonical(value):
     return json.loads(json.dumps(value, default=float))
 
 
+def assert_reference(actual, expected):
+    """Allow only machine rounding across Windows/Linux numeric libraries."""
+    if isinstance(expected, dict):
+        assert actual.keys() == expected.keys()
+        for key in expected:
+            assert_reference(actual[key], expected[key])
+    elif isinstance(expected, list):
+        assert len(actual) == len(expected)
+        for observed, reference in zip(actual, expected, strict=True):
+            assert_reference(observed, reference)
+    elif isinstance(expected, float):
+        assert np.isfinite(actual)
+        assert actual == pytest.approx(expected, rel=1e-12, abs=1e-14)
+    else:
+        assert actual == expected
+
+
 @pytest.fixture(scope="module")
 def reference():
     return json.loads((Path(__file__).parent / "fixtures/quantitative_migration.json").read_text(encoding="utf-8"))
@@ -81,30 +98,30 @@ def reference():
 def test_price_metrics_match_pre_migration_reference(reference, case):
     stock, benchmark = price_inputs(case)
     original = stock.copy(deep=True)
-    assert canonical(technicals.compute_technicals(stock, benchmark)) == reference[case]["technicals"]
-    assert canonical(risk.compute_risk_metrics(stock, benchmark, .025)) == reference[case]["risk"]
+    assert_reference(canonical(technicals.compute_technicals(stock, benchmark)), reference[case]["technicals"])
+    assert_reference(canonical(risk.compute_risk_metrics(stock, benchmark, .025)), reference[case]["risk"])
     pd.testing.assert_frame_equal(stock, original)
 
 
 def test_portfolio_and_statistics_match_pre_migration_reference(reference):
-    assert canonical(portfolio_outputs(metrics)) == reference["portfolio"]
-    assert canonical(statistics_outputs(statistics)) == reference["statistics"]
+    assert_reference(canonical(portfolio_outputs(metrics)), reference["portfolio"])
+    assert_reference(canonical(statistics_outputs(statistics)), reference["statistics"])
 
 
 def test_explicit_parameters_and_legacy_configuration(reference, monkeypatch):
     stock, benchmark = price_inputs("default")
     parameters = technicals.TechnicalParameters(20, 80, 14, 21, 63)
-    assert canonical(technicals.compute_technicals(stock, benchmark, parameters=parameters)) == reference["custom_technicals"]
+    assert_reference(canonical(technicals.compute_technicals(stock, benchmark, parameters=parameters)), reference["custom_technicals"])
     for name, value in (("SMA_SHORT", 20), ("SMA_LONG", 80), ("MOMENTUM_SHORT_DAYS", 21), ("MOMENTUM_LONG_DAYS", 63), ("RISK_FREE_RATE", .025)):
         monkeypatch.setattr(config, name, value)
     old_tech = importlib.import_module("gabi.technicals")
     old_risk = importlib.import_module("gabi.risk")
-    assert canonical(old_tech.compute_technicals(stock, benchmark)) == reference["custom_technicals"]
-    assert canonical(old_risk.compute_risk_metrics(stock, benchmark)) == reference["default"]["risk"]
+    assert_reference(canonical(old_tech.compute_technicals(stock, benchmark)), reference["custom_technicals"])
+    assert_reference(canonical(old_risk.compute_risk_metrics(stock, benchmark)), reference["default"]["risk"])
     # Composition captures the parameters; later global changes do not affect an operation.
     composed = calculators()
     monkeypatch.setattr(config, "SMA_SHORT", 3)
-    assert canonical(composed.technicals(stock, benchmark)) == reference["custom_technicals"]
+    assert_reference(canonical(composed.technicals(stock, benchmark)), reference["custom_technicals"])
     assert composed.risk is risk.compute_risk_metrics
 
 
