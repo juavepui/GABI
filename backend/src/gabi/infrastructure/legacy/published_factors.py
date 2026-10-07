@@ -16,3 +16,9 @@ def fingerprint(value: dict) -> str:
 
 def text_hash(path: Path) -> str:
     return factor_sector_stability.file_hash(path, text=True)
+
+
+def evidence_root() -> Path:
+    from gabi import config
+
+    return config.BASE_DIR

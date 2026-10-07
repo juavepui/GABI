@@ -3,6 +3,7 @@ import json
 from copy import deepcopy
 from datetime import timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -94,11 +95,12 @@ def test_source_adapter_passes_its_clock_and_rule_settings(monkeypatch):
         {}, pd.DataFrame(), pd.DataFrame({"top20_inclusion": [1.] * len(frame)}, index=frame.index)))
     seen = []
     monkeypatch.setattr(history_refresh, "last_completed_session", lambda now: seen.append(now) or "2024-01-10")
-    sources = LegacyEvidence(now=lambda: NOW)
+    catalogue = SimpleNamespace(load=lambda: cat, matches=lambda *a: True)
+    sources = LegacyEvidence(catalogue, now=lambda: NOW)
     _equal(sources.evidence(frame(), scoring.DEFAULT_WEIGHTS), REFERENCE["build"])
     assert seen == [NOW]
     table = frame()
     table.attrs["sources"]["F00"]["fundamentals_fetched_at"] = (NOW - timedelta(hours=25)).isoformat()
     assert not sources.evidence(table, scoring.DEFAULT_WEIGHTS)["F00"]["quality"]["fresh"]
-    relaxed = LegacyEvidence(now=lambda: NOW, rules=evidence.EvidenceRules(fundamentals_hours=48))
+    relaxed = LegacyEvidence(catalogue, now=lambda: NOW, rules=evidence.EvidenceRules(fundamentals_hours=48))
     assert relaxed.evidence(table, scoring.DEFAULT_WEIGHTS)["F00"]["quality"]["fresh"]

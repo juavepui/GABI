@@ -58,6 +58,7 @@ from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
 from gabi.infrastructure.legacy.macro import series_metadata
 from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
+from gabi.infrastructure.legacy.published_factors import evidence_root
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
 from gabi.infrastructure.serialization.decisions import build_decisions
 from gabi.infrastructure.settings import Settings
@@ -66,6 +67,7 @@ from gabi.infrastructure.storage.blind_plans import FileBlindPlans
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
+from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
@@ -166,7 +168,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.analysis_prompt = AnalysisPrompt(market, analysis_prompt)
     app.state.metric_glossary = {"blocks": metric_glossary(*metric_blocks()), "terms": glossary_terms(),
                                  "glossary": technical_terms()}
-    app.state.evidence = EvidenceQueries(market, LegacyEvidence(), LegacyRankingQuality())
+    app.state.evidence = EvidenceQueries(
+        market, LegacyEvidence(FileEvidenceCatalog(published_factors_root or evidence_root())), LegacyRankingQuality())
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.journal = journal

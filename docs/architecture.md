@@ -17,6 +17,8 @@ El backend conserva 79 módulos planos como compatibilidad; [F7](https://github.
 [scoring y fundamentos SEC](architecture/f7-fundamental-domain.md), mientras conservan consumidores legacy.
 [Las reglas de evidencia](architecture/f7-evidence-rules.md) comparten dominio y
 caso de uso entre API y ledger.
+[El catálogo de estudios](architecture/f7-evidence-catalog.md) usa fuentes explícitas
+y verificación cacheada con invalidación por archivos.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
