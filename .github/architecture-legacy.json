@@ -6,7 +6,6 @@
   "backend/src/gabi/academic_factors.py": [
     "gabi.config",
     "io",
-    "numpy",
     "pandas",
     "requests"
   ],

@@ -17,11 +17,14 @@ from pathlib import Path
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
 from gabi.application.market.insider_sync import sync_insiders
+from gabi.application.research.academic_factors import prepare_factor_snapshot
 from gabi.domain.market.selection import RankingFilter
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.insiders import SecInsiders, classify_error, sec_user_agent
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
+from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.academic_factors import FileFactorCache
 from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
@@ -41,7 +44,8 @@ def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = N
     source = SecInsiders(sec_user_agent())
     store = SqliteInsiders(settings.data_dir, now=clock)
     insiders = partial(sync_insiders, source=source, store=store, classify_error=classify_error, now=clock)
-    return LegacyExecutor(settings, insider_sync=insiders)
+    factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())
+    return LegacyExecutor(settings, insider_sync=insiders, factor_loader=factors)
 
 
 def main() -> None:

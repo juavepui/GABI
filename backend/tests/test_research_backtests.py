@@ -420,7 +420,7 @@ def _write_factors(path):
 def test_factor_contrast_job_matches_streamlit_block(tmp_path, monkeypatch):
     from gabi import academic_factors, config, factor_benchmark, factor_stability
     from gabi.application.research.historical import _json_value
-    from gabi.infrastructure.legacy.jobs import LegacyExecutor
+    from gabi_cli.bootstrap import build_executor
 
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
@@ -437,14 +437,14 @@ def test_factor_contrast_job_matches_streamlit_block(tmp_path, monkeypatch):
     with TestClient(create_app(Settings(tmp_path))) as api:
         created = api.post("/api/v1/jobs", json=request)
         assert created.status_code == 202, created.text
-        assert Worker(store, LegacyExecutor(Settings(tmp_path)), tmp_path).run_once()
+        assert Worker(store, build_executor(Settings(tmp_path)), tmp_path).run_once()
         job_id = created.json()["id"]
         preview = api.get(f"/api/v1/research/backtest-factors/{job_id}")
         assert preview.status_code == 200, preview.text
         full = api.get(f"/api/v1/jobs/{job_id}/result").json()
         too_many = api.post("/api/v1/jobs", json=request | {
             "idempotency_key": "factors-test-02", "factor_contrast": {"source_job_id": source["id"], "hac_lags": 24}})
-        assert Worker(store, LegacyExecutor(Settings(tmp_path)), tmp_path).run_once()
+        assert Worker(store, build_executor(Settings(tmp_path)), tmp_path).run_once()
         assert store.get(too_many.json()["id"])["status"] == "failed"
 
     periods = _quarterly_v1()["periods"]
@@ -465,3 +465,4 @@ def test_factor_contrast_job_matches_streamlit_block(tmp_path, monkeypatch):
     assert data["factors_source"]["last_month"] == "2020-12-01"
     assert data["source_result_sha256"] == store.get(source["id"])["result_sha256"]
     assert data["independent_advantage_demonstrated"] is False
+    assert "domain/research/academic_factors.py" in full["calculation_sources"]
