@@ -1,6 +1,7 @@
 from functools import partial
 
-from gabi import app_mode, config, events_calendar, scoring
+import gabi.domain.market.scoring as scoring
+from gabi import app_mode, config, events_calendar
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
