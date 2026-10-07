@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from gabi.domain.research import value_hypothesis as hypothesis
+from gabi.domain.research.prospective_plan import plan_hash
 
 GABI_PLAN = Path("docs") / "prospective-plan" / "gabi-id1.json"
 VALUE_PLAN = Path("docs") / "value-hypothesis" / "preregistro.json"
@@ -19,10 +20,8 @@ def _read(path: Path) -> dict:
 
 
 def gabi_plan(root: Path) -> dict:
-    from gabi import prospective_plan
-
     record = _read(root / GABI_PLAN)
-    if prospective_plan.plan_hash(record["plan"]) != record["sha256"]:
+    if plan_hash(record["plan"]) != record["sha256"]:
         raise ValueError("El plan de la prueba ciega de GABI no coincide con su huella.")
     plan = record["plan"]
     return {"validation_id": int(plan["blind_validation_id"]), "issue": plan["issue"], "looks": [plan["look"]],

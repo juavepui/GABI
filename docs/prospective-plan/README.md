@@ -1,7 +1,12 @@
 # Planes de análisis de las pruebas ciegas prospectivas (#42)
 
-Planes fijados antes de ver ningún dato prospectivo. Código:
-`gabi.prospective_plan`.
+Planes fijados antes de ver ningún dato prospectivo. Comando actual:
+`python -m gabi_cli research prospective-plan` (diseño secuencial) o
+`python -m gabi_cli research prospective-plan --gabi` (plan fijo id 1).
+`--write --output <directorio>` escribe un artefacto explícito.
+Se produjeron originalmente con `gabi.prospective_plan`; el módulo anterior se
+conserva en el commit `619b49dba427b1b4c0607d8ebae870b410442cef` y anteriores.
+La migración no modifica ni regenera los planes publicados.
 
 ## Prueba ciega de GABI (id 1): [gabi-id1.json](gabi-id1.json)
 

@@ -105,6 +105,21 @@ def value_hypothesis(settings: Settings, args: argparse.Namespace) -> None:
                       "plan": record["plan_secuencial"]}, ensure_ascii=False, indent=2))
 
 
+def prospective_plan(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.application.research.prospective_plan import publish_plan
+    from gabi.domain.research.prospective_plan import gabi_blind_plan, json_value, plan
+    from gabi.infrastructure.statistics.prospective import ScipyNormalCDF
+    from gabi.infrastructure.storage.prospective_plans import FileProspectivePlans
+
+    record = gabi_blind_plan() if args.gabi else plan(cdf=ScipyNormalCDF())
+    if args.write:
+        writer = FileProspectivePlans(args.output or settings.data_dir.parent / "docs/prospective-plan")
+        payload = publish_plan(record, writer, name="gabi-id1.json" if args.gabi else "plan.json")
+    else:
+        payload = {"plan": record}
+    print(json.dumps(json_value(payload), ensure_ascii=False, indent=2))
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -169,6 +184,11 @@ def main(argv: list[str]) -> None:
     command = commands.add_parser("value-hypothesis", help="Preregistro de la hipótesis de valor (#43); comprueba uno existente")
     command.add_argument("--preregister", action="store_true", required=True)
     command.set_defaults(run=value_hypothesis)
+    command = commands.add_parser("prospective-plan", help="Plan de análisis prospectivo (#42), sin leer resultados ciegos")
+    command.add_argument("--write", action="store_true", help="Escribir el JSON del plan en el directorio de salida")
+    command.add_argument("--gabi", action="store_true", help="Plan fijo de la prueba GABI id 1; por defecto, diseño secuencial")
+    command.add_argument("--output", type=Path, help="Por defecto docs/prospective-plan del proyecto")
+    command.set_defaults(run=prospective_plan)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")
