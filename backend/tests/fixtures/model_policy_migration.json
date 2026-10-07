@@ -1,0 +1,113 @@
+{
+  "source_sha256": "0dafd1826f5439ff05f98dea2a6820f81fd1f3b631d3ce6019ee18545c4e2d79",
+  "cases": [
+    {
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      },
+      "live": false,
+      "matches": true,
+      "status": "FROZEN",
+      "banner": null
+    },
+    {
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      },
+      "live": true,
+      "matches": true,
+      "status": "LIVE_FORWARD",
+      "banner": null
+    },
+    {
+      "weights": {},
+      "live": false,
+      "matches": false,
+      "status": "EXPERIMENTAL",
+      "banner": "🧪 **EXPERIMENTAL** -- estos pesos () no son los de la Hipótesis congelada 2026-09-17. Este resultado no es una validación oficial del modelo. Si quieres conservar la trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
+    },
+    {
+      "weights": {},
+      "live": true,
+      "matches": false,
+      "status": "EXPERIMENTAL",
+      "banner": "🧪 **EXPERIMENTAL** -- estos pesos () no son los de la Hipótesis congelada 2026-09-17. Este resultado no es una validación oficial del modelo. Si quieres conservar la trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
+    },
+    {
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25
+      },
+      "live": false,
+      "matches": false,
+      "status": "EXPERIMENTAL",
+      "banner": "🧪 **EXPERIMENTAL** -- estos pesos (Value 30%, Quality 35%, Momentum 25%) no son los de la Hipótesis congelada 2026-09-17. Este resultado no es una validación oficial del modelo. Si quieres conservar la trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
+    },
+    {
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25
+      },
+      "live": true,
+      "matches": false,
+      "status": "EXPERIMENTAL",
+      "banner": "🧪 **EXPERIMENTAL** -- estos pesos (Value 30%, Quality 35%, Momentum 25%) no son los de la Hipótesis congelada 2026-09-17. Este resultado no es una validación oficial del modelo. Si quieres conservar la trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
+    },
+    {
+      "weights": {
+        "value": 0.31,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      },
+      "live": false,
+      "matches": false,
+      "status": "EXPERIMENTAL",
+      "banner": "🧪 **EXPERIMENTAL** -- estos pesos (Value 31%, Quality 35%, Momentum 25%, Risk 10%) no son los de la Hipótesis congelada 2026-09-17. Este resultado no es una validación oficial del modelo. Si quieres conservar la trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
+    },
+    {
+      "weights": {
+        "value": 0.31,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      },
+      "live": true,
+      "matches": false,
+      "status": "EXPERIMENTAL",
+      "banner": "🧪 **EXPERIMENTAL** -- estos pesos (Value 31%, Quality 35%, Momentum 25%, Risk 10%) no son los de la Hipótesis congelada 2026-09-17. Este resultado no es una validación oficial del modelo. Si quieres conservar la trazabilidad de lo que pruebes, regístralo en Research Lab (Investigación, interfaz React)."
+    },
+    {
+      "weights": {
+        "value": 0.300000001,
+        "quality": 0.350000001,
+        "momentum": 0.250000001,
+        "risk": 0.100000001
+      },
+      "live": false,
+      "matches": true,
+      "status": "FROZEN",
+      "banner": null
+    },
+    {
+      "weights": {
+        "value": 0.300000001,
+        "quality": 0.350000001,
+        "momentum": 0.250000001,
+        "risk": 0.100000001
+      },
+      "live": true,
+      "matches": true,
+      "status": "LIVE_FORWARD",
+      "banner": null
+    }
+  ]
+}

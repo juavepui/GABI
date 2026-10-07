@@ -8,6 +8,7 @@ import pandas as pd
 from gabi.application.market.evidence_assessment import build_evidence
 from gabi.application.research.evidence_catalog import ReviewedCatalogue
 from gabi.domain.market.evidence import DEFAULT_RULES, EvidenceRules
+from gabi.domain.market.model_policy import FROZEN_MODEL_ID
 
 
 class LegacyEvidence:
@@ -18,7 +19,7 @@ class LegacyEvidence:
         self.catalogue = catalogue
 
     def evidence(self, table: pd.DataFrame, weights: dict) -> dict[str, dict]:
-        from gabi import app_mode, live_ledger, rank_stability
+        from gabi import live_ledger, rank_stability
         from gabi.history_refresh import last_completed_session
 
         now = self.now()
@@ -26,7 +27,7 @@ class LegacyEvidence:
         return build_evidence(table, weights, now=now, market_date=last_completed_session(now),
                               catalogue=catalogue, matching=self.catalogue.matches(catalogue, weights, "SP500_CURRENT"),
                               metadata=live_ledger.model_metadata(weights=weights), analyze_stability=rank_stability.analyze,
-                              model_id=app_mode.FROZEN_MODEL_ID, benchmark=self.benchmark, rules=self.rules)
+                              model_id=FROZEN_MODEL_ID, benchmark=self.benchmark, rules=self.rules)
 
     @staticmethod
     def stability(table: pd.DataFrame, weights: dict) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
