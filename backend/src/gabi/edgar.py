@@ -546,7 +546,7 @@ def get_edgar_fetched_at(symbols: list) -> dict:
 
 
 def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,
-                      *, full_refresh: bool = False, incremental: bool = True) -> dict:
+                      *, full_refresh: bool = False, incremental: bool = True, synchronize_one=None) -> dict:
     """Descarga y cachea métricas EDGAR en paralelo (pool conservador: la SEC
     es más estricta que Yahoo con el rate limiting). Devuelve dict[symbol] =
     motivo de error en español para los símbolos que fallaron."""
@@ -566,7 +566,8 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
                 continue
             if incremental:
                 from . import edgar_sync
-                futures[ex.submit(edgar_sync.run_one, s, cik, full_refresh=full_refresh)] = (s, cik)
+                operation = synchronize_one or edgar_sync.run_one
+                futures[ex.submit(operation, s, cik, full_refresh=full_refresh)] = (s, cik)
             else:
                 futures[ex.submit(_fetch_one, s, cik)] = (s, cik)
         done = 0
@@ -589,7 +590,7 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
 
 
 def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
-                      *, as_of: str | None = None, full_refresh: bool = False) -> dict:
+                      *, as_of: str | None = None, full_refresh: bool = False, synchronize_one=None) -> dict:
     if as_of:
         from . import identity
         resolved = {s: identity.resolve(s, as_of) for s in symbols}
@@ -649,6 +650,8 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
         return {"edgar_refreshed": 0, "failed": failed}
 
     extra = {"full_refresh": True} if full_refresh else {}
+    if synchronize_one is not None:
+        extra["synchronize_one"] = synchronize_one
     failed = fetch_edgar_batch(stale, cik_by_symbol, progress_cb=progress_cb, **extra) if stale else {}
     storage.record_update_errors("sec_edgar", failed)
     return {"edgar_refreshed": len(stale) - len(failed), "failed": failed}

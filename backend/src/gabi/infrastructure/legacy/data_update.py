@@ -6,7 +6,8 @@ from pathlib import Path
 from gabi.application.errors import QueryError
 
 
-def run_data_update(options: dict, progress: Callable[[float, str], None] | None = None) -> dict:
+def run_data_update(options: dict, progress: Callable[[float, str], None] | None = None,
+                    *, sec_sync: Callable[..., dict] | None = None) -> dict:
     """Worker only (its LegacyExecutor checks the data directory): screener.refresh_data as the old button.
 
     Progress: prices up to 10 % (no per-symbol callback), Yahoo fundamentals 10-55 %, SEC EDGAR 55-100 %."""
@@ -26,7 +27,8 @@ def run_data_update(options: dict, progress: Callable[[float, str], None] | None
     def edgar(done: int, total: int, *_: object) -> None:
         report(0.55 + 0.45 * done / max(total, 1), f"SEC EDGAR: {done} de {total}")
 
-    result = screener.refresh_data(symbols, force=force, progress_cb=fundamentals, edgar_progress_cb=edgar)
+    sync_options: dict = {"sec_sync": sec_sync} if sec_sync else {}
+    result = screener.refresh_data(symbols, force=force, progress_cb=fundamentals, edgar_progress_cb=edgar, **sync_options)
     report(1.0, "Resumiendo fallos")
     return summarize_update(options, symbols, result)
 

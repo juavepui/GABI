@@ -50,6 +50,8 @@ con checkpoints y relojes explícitos entre CLI y worker persistente.
 con repositorio, fuente y reloj explícitos, y metadatos de consulta en dominio.
 [El mapa SEC](architecture/f7-sec-cik.md) comparte resolución ticker/CIK y respaldo
 persistente, con fuente/caché acotadas y composición explícita del worker.
+[La ingesta XBRL](architecture/f7-sec-xbrl.md) comparte sincronización con reloj,
+checkpoints y fuentes explícitos, y escritura atómica de hechos por emisor.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
