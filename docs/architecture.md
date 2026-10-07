@@ -30,6 +30,8 @@ comparte puertos de documentos y almacenamiento; conserva pendiente la resoluci�
 y métricas con un runner explícito y conserva la fachada usada por R3 congelado.
 [La identidad y estado del modelo](architecture/f7-model-policy.md) usa reglas
 de dominio con pesos de referencia inmutables compartidas por Mercado y evidencia.
+[La extensión de membresía histórica](architecture/f7-membership-extension.md)
+reproduce cambios revisados en dominio, con ancla, ledger y día explícitos.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
