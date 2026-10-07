@@ -86,6 +86,8 @@ STEPS = [(PUBLISHED, "operativo"), ("operativo", "acreditado"), ("acreditado", "
 def extra_sources() -> tuple[Path, ...]:
     root = Path(__file__).parent
     names = ["edgar.py", "historical_period.py", "historical_membership.py", "historical_ticker_corrections.py",
+             "domain/market/sec_facts.py", "domain/research/periods.py", "domain/research/ticker_corrections.py",
+             "membership_extension.py", "domain/research/membership.py",
              "resources/historical_identity_corrections_2010_2015.json",
              "resources/historical_identity_corrections_2016_2025.json"]
     return (*hv.extra_sources(), *[root / name for name in names], *[path for path, _ in hv.QUARTERLY_AUDITS[1:]])
