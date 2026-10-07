@@ -172,6 +172,33 @@ def frozen(settings: Settings, args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def wiki_prices(settings: Settings, args: argparse.Namespace) -> None:
+    import sqlite3
+    import time
+    from contextlib import closing
+
+    from gabi.application.research.wiki_prices import fetch, import_cached
+    from gabi.infrastructure.providers.wiki_prices import NasdaqWikiSource
+    from gabi.infrastructure.storage.historical_prices import SqliteHistoricalPrices
+    from gabi.infrastructure.storage.wiki_prices import FileWikiCache, nasdaq_key
+
+    cache = FileWikiCache(args.cache or settings.data_dir / "history_refresh/nasdaq_wiki")
+    report = {}
+    if args.fetch:
+        with args.fetch.open("rb") as stream:
+            data = stream.read(settings.max_small_file_bytes + 1)
+        if len(data) > settings.max_small_file_bytes:
+            raise ValueError("WIKI symbol file limit exceeded")
+        symbols = [line.strip().upper() for line in data.decode("utf8").splitlines() if line.strip()]
+        report["fetch"] = fetch(symbols, cache, NasdaqWikiSource(), api_key=nasdaq_key(settings.data_dir),
+                                wait=time.sleep, progress=lambda message: print(message, flush=True),
+                                max_symbols=settings.max_symbols)
+    if args.import_cached:
+        with closing(sqlite3.connect(args.db or settings.data_dir / "gabi.db")) as connection:
+            report["import"] = import_cached(cache, SqliteHistoricalPrices(connection))
+    print(json.dumps(report, indent=2))
+
+
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="python -m gabi_cli research", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -238,6 +265,12 @@ def main(argv: list[str]) -> None:
     command.add_argument("--gabi", action="store_true", help="Plan fijo de la prueba GABI id 1; por defecto, diseño secuencial")
     command.add_argument("--output", type=Path, help="Por defecto docs/prospective-plan del proyecto")
     command.set_defaults(run=prospective_plan)
+    command = commands.add_parser("wiki-prices", help="Descarga WIKI reanudable e importación local explícita al archivo histórico")
+    command.add_argument("--fetch", type=Path, help="Fichero con un símbolo por línea")
+    command.add_argument("--import-cached", action="store_true")
+    command.add_argument("--cache", type=Path)
+    command.add_argument("--db", type=Path)
+    command.set_defaults(run=wiki_prices)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")

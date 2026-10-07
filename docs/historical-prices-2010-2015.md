@@ -107,7 +107,7 @@ empresas absorbidas en 2016–2019. Se añadieron dos fuentes gratuitas con
 cuenta, cuyas claves se guardan localmente desde ⚙️ Configuración
 (`data/*_api_key.txt`, excluidos del control de versiones):
 
-- **Nasdaq Data Link, tabla WIKI Prices** (`historical_wiki.py`): congelada
+- **Nasdaq Data Link, tabla WIKI Prices** (`gabi_cli research wiki-prices`): congelada
   el 2018-03-27 con los tickers de entonces, por lo que conserva a EMC, CA,
   DOW, STI, MON… antes de que se reutilizaran sus símbolos. Trae cierre
   negociado, dividendo por fecha ex y ratio de split. Se descargaron 213
@@ -328,9 +328,14 @@ Descarga de la evidencia y de las fuentes con clave (idempotente, ya cacheada):
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --import-nominated-filings --fetch-candidate-instances 400
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 1500 --annual-report-symbols 200
 .venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
-.venv/Scripts/python.exe -m gabi.historical_wiki --fetch <fichero con símbolos> --import-cached
+.venv/Scripts/python.exe -m gabi_cli research wiki-prices --fetch <fichero con símbolos> --import-cached
 .venv/Scripts/python.exe -m gabi.historical_tiingo --fetch <fichero con símbolos> --import-cached
 ```
+
+La versión anterior de este documento, commit `a0455f795e6c22a666eab523f09cb67d4af3dfe0`,
+documentaba la descarga WIKI con `python -m gabi.historical_wiki`.
+La ruta actual conserva sus datos y metadatos; [la migración](architecture/f7-wiki-prices.md)
+explica puertos, límites e invalidación. No se han regenerado los resultados publicados.
 
 Límites conocidos: la banda de nivel no distingue un error de split 2:1; las
 sucesiones (Google → Alphabet, Walgreen → WBA) cortan las ventanas que las

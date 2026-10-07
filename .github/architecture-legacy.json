@@ -190,7 +190,6 @@
   "backend/src/gabi/historical_archive.py": [
     "gabi.identity",
     "gabi.storage",
-    "numpy",
     "pandas"
   ],
   "backend/src/gabi/historical_data_audit.py": [
@@ -333,7 +332,6 @@
   "backend/src/gabi/historical_wiki.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "pandas",
     "pathlib",
     "requests"
   ],
