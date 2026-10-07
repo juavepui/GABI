@@ -49,7 +49,7 @@ class SqliteAnnualAudit:
     def metadata(self) -> AuditMetadata:
         self._file(self.membership_csv)
         if not self.old_detail.is_file():
-            raise FileNotFoundError(f"{self.old_detail}: run python -m gabi.historical_coverage first")
+            raise FileNotFoundError(f"{self.old_detail}: run python -m gabi_cli research quarterly-coverage first")
         self._file(self.old_detail)
         self._file(self.manifest)
         manifest = json.loads(self.manifest.read_text(encoding="utf-8"))

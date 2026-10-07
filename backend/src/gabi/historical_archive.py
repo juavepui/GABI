@@ -8,6 +8,8 @@ import json
 import numpy as np
 import pandas as pd
 
+from gabi.domain.research import coverage as _coverage
+
 from . import identity, storage
 
 IDENTITY_INTERVAL_SOURCE = "sec-identity-evidence:2010-2015:v1"
@@ -278,18 +280,4 @@ def source_summary() -> list[dict]:
 
 
 def unique_historical_ciks(frame: pd.DataFrame, targets: set[str], live: dict, stored: dict) -> tuple[dict, dict]:
-    frame = frame.fillna("").copy()
-    frame["symbol"] = frame["symbol"].str.replace(".", "-", regex=False)
-    frame = frame[(frame["created_at"] < "2016-01-01") & (frame["date_added"].str[:10] < "2016-01-01")]
-    safe, blocked = {}, {}
-    for symbol in sorted(targets):
-        candidates = set(frame.loc[frame["symbol"] == symbol, "cik"]) - {""}
-        if len(candidates) != 1:
-            blocked[symbol] = "missing_historical_cik" if not candidates else "ambiguous_historical_cik"
-            continue
-        cik = next(iter(candidates)).zfill(10)
-        if any(mapping.get(symbol) and mapping[symbol] != cik for mapping in (live, stored)):
-            blocked[symbol] = "issuer_conflict_or_reused_ticker"
-        else:
-            safe[symbol] = cik
-    return safe, blocked
+    return _coverage.unique_historical_ciks(frame, targets, live, stored)

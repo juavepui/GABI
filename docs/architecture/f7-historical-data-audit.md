@@ -11,8 +11,8 @@ de dominio para SEC, indicadores y riesgo. Se conservan exclusión de filings
 futuros, ajustes nominales por splits posteriores (incluidos cero y ausencia),
 frescura de 460/10 días, identidad candidata frente a acreditada, fuentes,
 orden de columnas y fecha de corte basada en el último precio ajustado de SPY.
-El comando trimestral legacy delega sus reglas en este dominio, pasando una
-instantánea explícita de sus ajustes y alineación fiscal, sin cambiar globales.
+El comando trimestral usa [las mismas reglas de dominio](f7-quarterly-coverage.md)
+con ajustes y alineación fiscal explícitos, sin cambiar globales.
 
 Las lecturas de precios conservan el historial disponible hasta el corte para
 no cambiar el drawdown. Su límite es 25.000 filas por símbolo; hechos, aliases
