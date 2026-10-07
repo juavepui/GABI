@@ -109,7 +109,7 @@ def test_syncs_are_explicit_jobs_with_their_failure_reason(company, monkeypatch,
 def _seed_insiders(root):
     from gabi import insider
 
-    recent = (datetime.now(UTC) - timedelta(days=30)).date().isoformat()
+    recent = (TODAY - timedelta(days=30)).isoformat()
     old = "2020-01-02"
     rows = [("T001", "1", "a1", 1, "Ann", "CEO", 1, 0, 0, 0, recent, "P", "A", 100.0, 50.0, 1000.0, recent),
             ("T001", "1", "a2", 1, "Bob", "CFO", 1, 0, 0, 1, recent, "S", "D", 40.0, 55.0, 500.0, recent),
