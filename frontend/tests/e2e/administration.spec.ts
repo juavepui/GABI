@@ -120,11 +120,29 @@ test('calidad de los datos: universo, procedencia, identidades y archivo desde 2
 test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra pantalla', async ({
   page,
 }) => {
+  let launchedId: string | undefined;
+  let allowCompletion = false;
+  // Keep the real job visible as running until the header has observed it and
+  // navigation has finished. The synthetic worker can finish before either.
+  await page.route('**/api/v1/jobs', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    if (route.request().method() === 'POST') launchedId = body.id;
+    if (route.request().method() === 'GET' && launchedId && !allowCompletion) {
+      for (const job of body.jobs) {
+        if (job.id === launchedId) job.status = 'running';
+      }
+    }
+    await route.fulfill({ response, json: body });
+  });
   await page.goto('/administracion');
   const update = page.getByRole('region', { name: 'Actualizar datos' });
   await update.getByRole('button', { name: 'Actualizar datos' }).click();
+  await expect(page.getByRole('button', { name: /^Trabajos: \d+ en curso$/ })).toBeVisible();
   // Leave the page that launched it: the header keeps track of the job.
   await page.getByRole('link', { name: 'Mercado', exact: true }).first().click();
+  await expect(page).toHaveURL(/\/mercado$/);
+  allowCompletion = true;
   const toast = page.getByRole('status', { name: 'Avisos de trabajos' });
   await expect(toast.getByText('Actualizar datos (Yahoo y SEC)')).toBeVisible({ timeout: 15_000 });
   await expect(toast.getByText(/Completado/)).toBeVisible();
