@@ -49,4 +49,3 @@ def build_tiingo_operations(settings: Settings, *, window_name: str = "smallmid"
             return import_cached(spec, cache, SqliteHistoricalPrices(connection), events, attempt_factory=attempt)
 
     return download, import_prices
-
