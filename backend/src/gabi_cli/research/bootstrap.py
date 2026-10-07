@@ -199,6 +199,24 @@ def wiki_prices(settings: Settings, args: argparse.Namespace) -> None:
     print(json.dumps(report, indent=2))
 
 
+def tiingo_prices(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi_cli.sources.bootstrap import build_tiingo_operations
+
+    download, import_prices = build_tiingo_operations(settings, window_name=args.window,
+                                                    cache_directory=args.cache, database=args.db)
+    report = {}
+    if args.fetch:
+        with args.fetch.open("rb") as stream:
+            data = stream.read(settings.max_small_file_bytes + 1)
+        if len(data) > settings.max_small_file_bytes:
+            raise ValueError("Tiingo symbol file limit exceeded")
+        symbols = [line.strip().upper() for line in data.decode("utf8").splitlines() if line.strip()]
+        report["fetch"] = download(symbols)
+    if args.import_cached:
+        report["import"] = import_prices()
+    print(json.dumps(report, indent=2))
+
+
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="python -m gabi_cli research", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -271,6 +289,13 @@ def main(argv: list[str]) -> None:
     command.add_argument("--cache", type=Path)
     command.add_argument("--db", type=Path)
     command.set_defaults(run=wiki_prices)
+    command = commands.add_parser("tiingo-prices", help="Descarga Tiingo reanudable e importación fijada con checkpoints explícitos")
+    command.add_argument("--fetch", type=Path)
+    command.add_argument("--import-cached", action="store_true")
+    command.add_argument("--window", default="2010-2015", choices=["2010-2015", "2016-2025", "smallmid"])
+    command.add_argument("--cache", type=Path)
+    command.add_argument("--db", type=Path)
+    command.set_defaults(run=tiingo_prices)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")

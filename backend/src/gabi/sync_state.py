@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -10,6 +9,8 @@ from datetime import UTC, datetime
 
 import pandas as pd
 import requests
+
+from gabi.domain.market.sync_events import event_checkpoint, validate_status
 
 from . import storage
 
@@ -89,24 +90,13 @@ class Attempt:
 
     def finish(self, status: str, *, state: dict | None = None, new: int = 0, revised: int = 0,
                unchanged: int = 0, reason: str = "", skipped: bool = False) -> dict:
-        if status not in {"new", "revised", "unchanged", "failed"}:
-            raise ValueError("Estado de sincronización desconocido.")
-        reason = re.sub(r"(?i)(api_key|token)=([^&\s]+)", r"\1=<redacted>", reason)
+        validate_status(status)
         now = datetime.now(UTC).isoformat()
         previous = get(self.source, self.entity, self.dataset)
-        event = {"source": self.source, "entity": self.entity, "dataset": self.dataset, "at": now,
-                 "status": status, "new": new, "revised": revised, "unchanged": unchanged,
-                 "calls": self.calls, "payload_bytes": self.payload_bytes,
-                 "seconds": time.perf_counter() - self.started, "cpu_seconds": time.thread_time() - self.cpu_started,
-                 "reason": reason, "skipped": skipped}
-        checkpoint = {**previous, **(state or {}), "status": status, "checked_at": now}
-        if previous.get("watermark") and checkpoint.get("watermark"):
-            checkpoint["watermark"] = max(previous["watermark"], checkpoint["watermark"])
-        if status != "failed" and not skipped:
-            checkpoint["last_success"] = now
-        if status == "failed":
-            # An error must never advance the successful watermark or validation token.
-            checkpoint = {**previous, "status": status, "checked_at": now, "error": reason}
+        event, checkpoint = event_checkpoint(self.source, self.entity, self.dataset, previous, now,
+            status=status, calls=self.calls, payload_bytes=self.payload_bytes,
+            seconds=time.perf_counter() - self.started, cpu_seconds=time.thread_time() - self.cpu_started,
+            state=state, new=new, revised=revised, unchanged=unchanged, reason=reason, skipped=skipped)
         with storage.get_connection() as conn:
             conn.executescript(SCHEMA)
             if not skipped:
