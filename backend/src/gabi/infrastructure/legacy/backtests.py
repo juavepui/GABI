@@ -95,7 +95,7 @@ class LegacyBacktestMath:
 
     @staticmethod
     def ranking_warnings(quality: dict, threshold: float) -> list[str]:
-        from gabi import data_quality
+        from gabi.domain.market import data_quality
 
         return data_quality.ranking_quality_warnings(quality, threshold)
 

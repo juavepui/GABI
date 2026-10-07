@@ -1,0 +1,483 @@
+{
+  "source": "486942af7a92bea5afa7ffec98983eeba701baad:backend/src/gabi/data_quality.py",
+  "source_sha256_lf": "7bc9d182ea167ca2329c52e29a0f5dbbcd837cfe7e68cc5ad7ab65a1906afdbe",
+  "cases": {
+    "normal": {
+      "summary": {
+        "n_symbols": 3,
+        "sources": {
+          "prices": {
+            "label": "Precios (Yahoo)",
+            "coverage": 0.6666666666666666,
+            "fresh": 0.3333333333333333,
+            "threshold_hours": 120,
+            "oldest_hours": null,
+            "oldest_date": "2023-12-01",
+            "have": 2,
+            "fresh_n": 1,
+            "total": 3
+          },
+          "fundamentals": {
+            "label": "Fundamentales (Yahoo)",
+            "coverage": 0.3333333333333333,
+            "fresh": 0.3333333333333333,
+            "threshold_hours": 24,
+            "oldest_hours": 2.0,
+            "have": 1,
+            "fresh_n": 1,
+            "total": 3
+          },
+          "edgar": {
+            "label": "SEC EDGAR",
+            "coverage": 0.6666666666666666,
+            "fresh": 0.3333333333333333,
+            "threshold_hours": 168,
+            "oldest_hours": 192.0,
+            "have": 2,
+            "fresh_n": 1,
+            "total": 3,
+            "with_facts_pct": 0.3333333333333333
+          },
+          "insider": {
+            "label": "Insider (Form 4)",
+            "coverage": 0.3333333333333333,
+            "fresh": 0.3333333333333333,
+            "threshold_hours": 24,
+            "oldest_hours": 0.0,
+            "have": 1,
+            "fresh_n": 1,
+            "total": 3
+          },
+          "entity_master": {
+            "label": "Entity Master (sector)",
+            "coverage": 0.3333333333333333,
+            "fresh": 0.3333333333333333,
+            "threshold_hours": null,
+            "oldest_hours": null,
+            "have": 1,
+            "fresh_n": 1,
+            "total": 3
+          },
+          "fred": {
+            "label": "FRED",
+            "coverage": 0.5,
+            "fresh": 0.5,
+            "threshold_hours": 24,
+            "oldest_hours": 72.0,
+            "have": 1,
+            "fresh_n": 1,
+            "total": 2,
+            "latest_dates": {
+              "M1": "2024-01-08",
+              "M2": null
+            }
+          }
+        },
+        "cik": {
+          "resolved": 1,
+          "total": 3,
+          "pct": 0.3333333333333333
+        },
+        "macro": {
+          "n_series": 2,
+          "oldest_hours": 72.0,
+          "threshold_hours": 24
+        },
+        "status": "degraded",
+        "structural_limitations": [
+          "SEC EDGAR / CIK histórico: company_tickers.json de la SEC solo mapea registrantes ACTIVOS hoy, no históricos. En una reconstrucción point-in-time (🕰️ Ranking histórico), la cobertura de cualquier trimestre anterior a 2022 tiene un techo estructural de ~57-69% -- un % de CIK resueltos alto en el universo EN VIVO (esta página) no aplica a esos backtests.",
+          "Sector point-in-time: no existe una fuente gratuita de sector HISTÓRICO. Entity Master solo acumula fotos con fecha desde que se implementó -- para la inmensa mayoría de fechas históricas de hoy, el sector usado en un backtest es una aproximación (el sector ACTUAL), marcada como tal, no el real de la época."
+        ]
+      },
+      "provenance": {
+        "AAA": {
+          "symbol": "AAA",
+          "cik": "0000000123",
+          "prices": {
+            "latest_date": "2024-01-10",
+            "adjusted_sessions": 20,
+            "age_hours": 0,
+            "threshold_hours": 120
+          },
+          "fundamentals": {
+            "fetched_at": "2024-01-10T20:00:00+00:00",
+            "age_hours": 2.0,
+            "threshold_hours": 24
+          },
+          "edgar": {
+            "fetched_at": "2024-01-02T22:00:00+00:00",
+            "age_hours": 192.0,
+            "threshold_hours": 168,
+            "has_facts": true,
+            "latest_10k_date": "2023-12-31",
+            "latest_10q_date": "2023-09-30"
+          },
+          "insider": {
+            "fetched_at": "2024-01-10T22:00:00+00:00",
+            "age_hours": 0.0,
+            "threshold_hours": 24
+          },
+          "entity_master": {
+            "reference_date": "2023-01-10",
+            "status": "point_in_time",
+            "sector": "Technology",
+            "effective_date": "2022-01-01",
+            "is_approximate": false,
+            "has_snapshot": true
+          }
+        },
+        "BBB": {
+          "symbol": "BBB",
+          "cik": null,
+          "prices": {
+            "latest_date": "2023-12-01",
+            "adjusted_sessions": 10,
+            "age_hours": 960,
+            "threshold_hours": 120
+          },
+          "fundamentals": {
+            "fetched_at": "2025-01-01T00:00:00+00:00",
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "edgar": {
+            "fetched_at": "2024-01-10T22:00:00+00:00",
+            "age_hours": 0.0,
+            "threshold_hours": 168,
+            "has_facts": false,
+            "latest_10k_date": null,
+            "latest_10q_date": null
+          },
+          "insider": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "entity_master": {
+            "reference_date": "2023-01-10",
+            "status": "missing",
+            "sector": null,
+            "effective_date": null,
+            "is_approximate": true,
+            "has_snapshot": false
+          }
+        },
+        "EMPTY": {
+          "symbol": "EMPTY",
+          "cik": null,
+          "prices": {
+            "latest_date": null,
+            "adjusted_sessions": 0,
+            "age_hours": null,
+            "threshold_hours": 120
+          },
+          "fundamentals": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "edgar": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 168,
+            "has_facts": false,
+            "latest_10k_date": null,
+            "latest_10q_date": null
+          },
+          "insider": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "entity_master": {
+            "reference_date": "2023-01-10",
+            "status": "missing",
+            "sector": null,
+            "effective_date": null,
+            "is_approximate": true,
+            "has_snapshot": false
+          }
+        }
+      }
+    },
+    "missing": {
+      "summary": {
+        "n_symbols": 3,
+        "sources": {
+          "prices": {
+            "label": "Precios (Yahoo)",
+            "coverage": 0.0,
+            "fresh": 0.0,
+            "threshold_hours": 120,
+            "oldest_hours": null,
+            "oldest_date": null,
+            "have": 0,
+            "fresh_n": 0,
+            "total": 3
+          },
+          "fundamentals": {
+            "label": "Fundamentales (Yahoo)",
+            "coverage": 0.0,
+            "fresh": 0.0,
+            "threshold_hours": 24,
+            "oldest_hours": null,
+            "have": 0,
+            "fresh_n": 0,
+            "total": 3
+          },
+          "edgar": {
+            "label": "SEC EDGAR",
+            "coverage": 0.0,
+            "fresh": 0.0,
+            "threshold_hours": 168,
+            "oldest_hours": null,
+            "have": 0,
+            "fresh_n": 0,
+            "total": 3,
+            "with_facts_pct": 0.0
+          },
+          "insider": {
+            "label": "Insider (Form 4)",
+            "coverage": 0.0,
+            "fresh": 0.0,
+            "threshold_hours": 24,
+            "oldest_hours": null,
+            "have": 0,
+            "fresh_n": 0,
+            "total": 3
+          },
+          "entity_master": {
+            "label": "Entity Master (sector)",
+            "coverage": 0.0,
+            "fresh": 0.0,
+            "threshold_hours": null,
+            "oldest_hours": null,
+            "have": 0,
+            "fresh_n": 0,
+            "total": 3
+          },
+          "fred": {
+            "label": "FRED",
+            "coverage": 0.0,
+            "fresh": 0.0,
+            "threshold_hours": 24,
+            "oldest_hours": null,
+            "have": 0,
+            "fresh_n": 0,
+            "total": 2,
+            "latest_dates": {
+              "M1": null,
+              "M2": null
+            }
+          }
+        },
+        "cik": null,
+        "macro": null,
+        "status": "degraded",
+        "structural_limitations": [
+          "SEC EDGAR / CIK histórico: company_tickers.json de la SEC solo mapea registrantes ACTIVOS hoy, no históricos. En una reconstrucción point-in-time (🕰️ Ranking histórico), la cobertura de cualquier trimestre anterior a 2022 tiene un techo estructural de ~57-69% -- un % de CIK resueltos alto en el universo EN VIVO (esta página) no aplica a esos backtests.",
+          "Sector point-in-time: no existe una fuente gratuita de sector HISTÓRICO. Entity Master solo acumula fotos con fecha desde que se implementó -- para la inmensa mayoría de fechas históricas de hoy, el sector usado en un backtest es una aproximación (el sector ACTUAL), marcada como tal, no el real de la época."
+        ]
+      },
+      "provenance": {
+        "AAA": {
+          "symbol": "AAA",
+          "cik": null,
+          "prices": {
+            "latest_date": null,
+            "adjusted_sessions": 0,
+            "age_hours": null,
+            "threshold_hours": 120
+          },
+          "fundamentals": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "edgar": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 168,
+            "has_facts": false,
+            "latest_10k_date": null,
+            "latest_10q_date": null
+          },
+          "insider": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "entity_master": {
+            "reference_date": "2023-01-10",
+            "status": "missing",
+            "sector": null,
+            "effective_date": null,
+            "is_approximate": true,
+            "has_snapshot": false
+          }
+        },
+        "BBB": {
+          "symbol": "BBB",
+          "cik": null,
+          "prices": {
+            "latest_date": null,
+            "adjusted_sessions": 0,
+            "age_hours": null,
+            "threshold_hours": 120
+          },
+          "fundamentals": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "edgar": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 168,
+            "has_facts": false,
+            "latest_10k_date": null,
+            "latest_10q_date": null
+          },
+          "insider": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "entity_master": {
+            "reference_date": "2023-01-10",
+            "status": "missing",
+            "sector": null,
+            "effective_date": null,
+            "is_approximate": true,
+            "has_snapshot": false
+          }
+        },
+        "EMPTY": {
+          "symbol": "EMPTY",
+          "cik": null,
+          "prices": {
+            "latest_date": null,
+            "adjusted_sessions": 0,
+            "age_hours": null,
+            "threshold_hours": 120
+          },
+          "fundamentals": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "edgar": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 168,
+            "has_facts": false,
+            "latest_10k_date": null,
+            "latest_10q_date": null
+          },
+          "insider": {
+            "fetched_at": null,
+            "age_hours": null,
+            "threshold_hours": 24
+          },
+          "entity_master": {
+            "reference_date": "2023-01-10",
+            "status": "missing",
+            "sector": null,
+            "effective_date": null,
+            "is_approximate": true,
+            "has_snapshot": false
+          }
+        }
+      }
+    }
+  },
+  "diagnostics": {
+    "normal": {
+      "quality": {
+        "blocks": {
+          "value": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 1.0,
+            "n_metrics": 3
+          },
+          "quality": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 1.0,
+            "n_metrics": 4
+          },
+          "momentum": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 1.0,
+            "n_metrics": 3
+          },
+          "risk": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 1.0,
+            "n_metrics": 3
+          }
+        },
+        "sector_degraded": 0.6666666666666666,
+        "identity_unresolved": 0.3333333333333333
+      },
+      "warnings": [
+        "**Value**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "**Quality**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "**Momentum**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "**Risk**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "Identidad histórica sin acreditar en 33% del universo; excluida del score.",
+        "Sector aproximado o ausente en 67% del universo."
+      ],
+      "low_confidence": [
+        {
+          "symbol": "EMPTY",
+          "confidence": 20.0,
+          "score_coverage": 0.6
+        }
+      ]
+    },
+    "empty": {
+      "quality": {
+        "blocks": {
+          "value": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 0.0,
+            "n_metrics": 3
+          },
+          "quality": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 0.0,
+            "n_metrics": 4
+          },
+          "momentum": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 0.0,
+            "n_metrics": 3
+          },
+          "risk": {
+            "complete": 0.0,
+            "any": 0.0,
+            "none": 0.0,
+            "n_metrics": 3
+          }
+        },
+        "sector_degraded": 1.0,
+        "identity_unresolved": null
+      },
+      "warnings": [
+        "**Value**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "**Quality**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "**Momentum**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "**Risk**: solo 0% del universo tiene TODAS las métricas de este bloque (umbral configurado: 70%).",
+        "Sector aproximado o ausente en 100% del universo."
+      ],
+      "low_confidence": []
+    }
+  }
+}
