@@ -20,9 +20,10 @@ la última fila de proveedor para cada clave.
 única transacción por emisor. El CIK se valida; si la respuesta incluye CIK,
 debe coincidir con el solicitado. El ticker se conserva como procedencia,
 sin crear evidencia de identidad histórica ni mezclar series de precios.
-El puente pequeño `infrastructure/legacy/sec_xbrl.py` reutiliza el esquema y
-la atribución de `identity` sobre la conexión suministrada: no cambia settings,
-no abre otra conexión ni copia su política de sustitución entre aliases.
+Tras migrar [el núcleo de identidad](f7-issuer-identity.md), `SqliteXbrl` reutiliza
+el esquema y la atribución de `infrastructure/storage/identity_writes.py` sobre
+la conexión suministrada. Se retira `infrastructure/legacy/sec_xbrl.py`;
+no se abre otra conexión ni se copia la política de sustitución entre aliases.
 
 ## Auditoría, checkpoints y límites
 

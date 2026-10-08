@@ -70,6 +70,21 @@ def test_legacy_debt_cannot_expand_and_retired_exceptions_must_be_removed(tmp_pa
     assert any("new flat/Streamlit module" in error for error in GUARD["check"](tmp_path))
 
 
+def test_compatibility_facade_can_delegate_sql_only_to_storage(tmp_path):
+    write(tmp_path, ".github/architecture-legacy.json", json.dumps({"backend/src/gabi/old.py": []}))
+    write(tmp_path, "backend/src/gabi/old.py", "from gabi.infrastructure.storage.sec_reads import Reader\n")
+    write(tmp_path, "backend/src/gabi/infrastructure/storage/sec_reads.py", "class Reader: pass\n")
+    assert GUARD["check"](tmp_path) == []
+    for target in ("providers.sec", "legacy.sec", "settings", "storage"):
+        write(tmp_path, "backend/src/gabi/old.py", f"import gabi.infrastructure.{target}\n")
+        assert any("new legacy dependency" in error for error in GUARD["check"](tmp_path))
+    write(tmp_path, "backend/src/gabi/old.py", "from gabi.infrastructure.storage.sec_reads import Reader\n")
+    write(tmp_path, "backend/src/gabi/infrastructure/storage/sec_reads.py", "from gabi import old\n")
+    errors = GUARD["check"](tmp_path)
+    assert any("infrastructure cannot depend on legacy" in error for error in errors)
+    assert any("dependency cycle" in error for error in errors)
+
+
 def test_io_through_pandas_and_cycles_are_detected_without_executing_code(tmp_path):
     write(tmp_path, ".github/architecture-legacy.json", "{}")
     write(tmp_path, "backend/src/gabi/domain/market/a.py", "from . import b\npd.read_csv('never-opened.csv')\n")

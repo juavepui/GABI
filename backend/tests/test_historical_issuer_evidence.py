@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from gabi import historical_issuer_evidence as evidence
+from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
 
 
 def _facts(**kinds):
@@ -51,10 +52,13 @@ def test_price_level_uses_unrestated_cover_shares_and_as_traded_close():
 @pytest.fixture
 def submissions(tmp_path, monkeypatch):
     monkeypatch.setattr(evidence, "SUBMISSIONS_DIR", tmp_path)
-    monkeypatch.setattr(evidence, "issuer_facts", lambda cik, frame_year_max=None: _facts(
-        public_float=[_float("2011-06-30", 1e9), _float("2012-06-29", 1e9)] +
-        ([_float("2013-06-28", 1e9)] if cik == "1" else [])))
-    evidence.listing_life.cache_clear()
+    def reader():
+        result = HistoricalIssuerFiles(tmp_path / 'frames', tmp_path)
+        result.issuer_facts = lambda cik, frame_year_max=None: _facts(
+            public_float=[_float("2011-06-30", 1e9), _float("2012-06-29", 1e9)] +
+            ([_float("2013-06-28", 1e9)] if cik == "1" else []))
+        return result
+    monkeypatch.setattr(evidence, 'reader', reader)
 
     def write(cik, filings, name="Issuer Inc"):
         forms, dates, accessions = zip(*filings, strict=True)
@@ -65,9 +69,7 @@ def submissions(tmp_path, monkeypatch):
                                           "primaryDocument": ["doc.htm"] * len(forms)},
                                "files": []}}
         (tmp_path / f"CIK{int(cik):010d}.json").write_text(json.dumps(payload), encoding="utf-8")
-        evidence.listing_life.cache_clear()
     yield write
-    evidence.listing_life.cache_clear()
 
 
 def test_listing_life_separates_real_delisting_from_debt_delisting_or_transfer(submissions):
