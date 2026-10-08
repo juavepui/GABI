@@ -44,9 +44,9 @@ Los límites son explícitos y un exceso falla sin truncar silenciosamente.
 
 El bootstrap común compone el nuevo sincronizador y lo inyecta en actualizaciones
 de Administración, símbolos y refrescos periódicos del worker y CLI. Sigue
-pendiente la selección legacy de empresas por antigüedad/cobertura, el recorrido
-histórico `as_of` y su descarga no incremental, otros lectores EDGAR y el núcleo
-de identidad. La fachada mantiene esos consumidores y sus contratos. No se
+pendiente otros lectores EDGAR y el núcleo de identidad. La selección por
+antigüedad/cobertura, el recorrido histórico `as_of` y su descarga no incremental
+se migran en [F7.5](f7-sec-selection.md). La fachada mantiene los consumidores y sus contratos. No se
 amplían excepciones; se retira la dependencia pandas de `edgar_sync`.
 Los 18 motores/configuración congelados y artefactos publicados no cambian.
 

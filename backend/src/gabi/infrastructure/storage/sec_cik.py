@@ -74,6 +74,47 @@ class SqliteCikResolutions:
                 db.execute("INSERT OR REPLACE INTO cik_resolutions VALUES (?,?,?,?)",
                            (symbol, cik, title, self.clock().isoformat()))
 
+    def remember_many(self, values: dict[str, tuple]) -> None:
+        if len(values) > 1000 or any(len(str(value).encode()) > self.max_field_bytes
+                                    for symbol, pair in values.items() for value in (symbol, *pair)):
+            raise ValueError("Las resoluciones CIK superan el límite de escritura.")
+        if not values:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with closing(sqlite3.connect(self.path, timeout=30)) as db:
+            db.executescript(SCHEMA)
+            with db:
+                db.executemany("INSERT OR REPLACE INTO cik_resolutions VALUES (?,?,?,?)",
+                               [(symbol, cik, title, self.clock().isoformat()) for symbol, (cik, title) in values.items()])
+
+    def cached_many(self, symbols: list[str]) -> dict[str, tuple]:
+        symbols = list(dict.fromkeys(symbols))
+        if len(symbols) > 1000:
+            raise ValueError("Las resoluciones CIK superan el límite de símbolos.")
+        result = {symbol: (None, None) for symbol in symbols}
+        if not symbols or not self.path.is_file():
+            return result
+        with closing(sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True, timeout=5)) as db:
+            db.execute("PRAGMA query_only=ON")
+            for start in range(0, len(symbols), 200):
+                chunk = symbols[start:start + 200]
+                marks = ",".join("?" for _ in chunk)
+                try:
+                    rows = db.execute("SELECT symbol,CASE WHEN length(CAST(cik AS BLOB))<=? THEN cik END, "
+                                      "CASE WHEN COALESCE(length(CAST(title AS BLOB)),0)<=? THEN title END, "
+                                      "length(CAST(cik AS BLOB)), COALESCE(length(CAST(title AS BLOB)),0) "
+                                      f"FROM cik_resolutions WHERE symbol IN ({marks})",
+                                      (self.max_field_bytes, self.max_field_bytes, *chunk)).fetchall()
+                except sqlite3.OperationalError as exc:
+                    if str(exc) != "no such table: cik_resolutions":
+                        raise
+                    return result
+                for symbol, cik, title, cik_size, title_size in rows:
+                    if max(cik_size, title_size) > self.max_field_bytes:
+                        raise ValueError("La resolución CIK supera el límite de campo.")
+                    result[symbol] = (cik, title)
+        return result
+
     def cached(self, symbol: str) -> tuple:
         if not self.path.is_file():
             return None, None

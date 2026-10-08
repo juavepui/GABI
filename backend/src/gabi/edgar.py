@@ -21,6 +21,9 @@ import requests
 import gabi.domain.market.sec_facts as _sec_facts
 from gabi.application.market.sec_cik import current_map
 from gabi.application.market.sec_cik import resolve as resolve_cik
+from gabi.application.market.sec_selection import batch as run_batch
+from gabi.application.market.sec_selection import refresh as refresh_selection
+from gabi.application.market.sec_xbrl import fetch_complete
 
 from . import config, storage
 from .data_fetch import _classify_error
@@ -201,6 +204,13 @@ def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
 
 
 class _CikResolutions:
+    def cached_many(self, symbols):
+        return {symbol: self.cached(symbol) for symbol in symbols}
+
+    def remember_many(self, values):
+        for symbol, (cik, title) in values.items():
+            self.remember(symbol, cik, title)
+
     def remember(self, symbol, cik, title):
         _remember_cik_resolution(symbol, cik, title)
 
@@ -463,16 +473,8 @@ extract_latest_filings = _sec_facts.extract_latest_filings
 
 
 def _fetch_one(symbol: str, cik: str) -> tuple:
-    facts = fetch_company_facts(cik)
-    raw_facts = _extract_raw_facts(facts, TRACKED_TAGS, unit="USD")
-    raw_facts += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
-    metrics = compute_edgar_metrics(facts)
-    try:
-        submissions = fetch_submissions(cik)
-        metrics.update(extract_latest_filings(submissions))
-    except Exception:
-        pass  # los enlaces a filings son un "nice to have"; no tumbar la empresa por esto
-    return metrics, raw_facts
+    return fetch_complete(cik, companyfacts=fetch_company_facts, submissions=fetch_submissions,
+                          compute=compute_edgar_metrics)
 
 
 def upsert_edgar_metrics(symbol: str, cik: str, metrics: dict):
@@ -547,111 +549,61 @@ def get_edgar_fetched_at(symbols: list) -> dict:
 
 def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,
                       *, full_refresh: bool = False, incremental: bool = True, synchronize_one=None) -> dict:
-    """Descarga y cachea métricas EDGAR en paralelo (pool conservador: la SEC
-    es más estricta que Yahoo con el rate limiting). Devuelve dict[symbol] =
-    motivo de error en español para los símbolos que fallaron."""
-    failed = {}
-    total = len(symbols)
-    if total == 0:
-        return failed
-    with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = {}
-        for s in symbols:
-            cik = cik_by_symbol.get(s)
-            if not cik:
-                failed[s] = (
-                    "Símbolo no encontrado en el mapeo ticker→CIK de la SEC (ni en vivo ni en "
-                    "resoluciones anteriores) — posible ticker deslistado hace tiempo, o nunca resuelto antes"
-                )
-                continue
-            if incremental:
-                from . import edgar_sync
-                operation = synchronize_one or edgar_sync.run_one
-                futures[ex.submit(operation, s, cik, full_refresh=full_refresh)] = (s, cik)
-            else:
-                futures[ex.submit(_fetch_one, s, cik)] = (s, cik)
-        done = 0
-        for fut in cf.as_completed(futures):
-            sym, cik = futures[fut]
-            done += 1
-            try:
-                if incremental:
-                    fut.result()  # checkpoint after the adapter's successful writes
-                else:
-                    metrics, raw_facts = fut.result()
-                    upsert_edgar_metrics(sym, cik, metrics)
-                    upsert_edgar_facts(sym, raw_facts, cik=cik)
-            except Exception as exc:
-                _, reason = _classify_error(exc, service="SEC EDGAR")
-                failed[sym] = reason
-            if progress_cb:
-                progress_cb(done, total, sym)
-    return failed
+    def operation(symbol, cik):
+        if incremental:
+            from . import edgar_sync
+            return (synchronize_one or edgar_sync.run_one)(symbol, cik, full_refresh=full_refresh)
+        metrics, rows = _fetch_one(symbol, cik)
+        upsert_edgar_metrics(symbol, cik, metrics)
+        upsert_edgar_facts(symbol, rows, cik=cik)
+
+    def runner(tasks, execute):
+        if not tasks:
+            return
+        with cf.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(execute, symbol, cik): symbol for symbol, cik in tasks}
+            for future in cf.as_completed(futures):
+                error = None
+                try:
+                    future.result()
+                except Exception as exc:
+                    error = exc
+                yield futures[future], error
+    return run_batch(symbols, cik_by_symbol, operation=operation, runner=runner,
+                     classify_error=lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+                     progress_cb=progress_cb)
+
+
+class _SelectionStore:
+    def current(self, symbols):
+        from . import sync_state
+        failures = {}
+        for entity, dataset in sync_state.failed_datasets("sec"):
+            if dataset.startswith("facts:") and dataset.removeprefix("facts:") in symbols:
+                failures.setdefault(dataset.removeprefix("facts:"), set()).add(entity)
+        return get_edgar_fetched_at(symbols), get_symbols_with_facts(symbols), failures
+
+    def historical(self, symbols, as_of):
+        from . import identity
+        return {symbol: identity.resolve(symbol, as_of) for symbol in symbols}
+
+    def covered_entities(self, entities):
+        from . import identity
+        return {entity for entity in entities if not identity.observations(entity, "edgar_facts").empty}
+
+    def errors(self, failed):
+        storage.record_update_errors("sec_edgar", failed)
 
 
 def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
                       *, as_of: str | None = None, full_refresh: bool = False, synchronize_one=None) -> dict:
-    if as_of:
-        from . import identity
-        resolved = {s: identity.resolve(s, as_of) for s in symbols}
-        ciks = {s: r["cik"] for s, r in resolved.items() if r["cik"]}
-        failed = {s: "Identidad/CIK histórico sin acreditar para esta fecha" for s in symbols if s not in ciks}
-        needed = [s for s in ciks if force or identity.observations(resolved[s]["entity_id"], "edgar_facts").empty]
-        failed.update(fetch_edgar_batch(needed, ciks, progress_cb=progress_cb, incremental=False))
-        storage.record_update_errors("sec_edgar", failed)
-        return {"edgar_refreshed": len(needed) - sum(s in failed for s in needed), "failed": failed}
-    max_age_hours = max_age_hours or config.EDGAR_CACHE_MAX_AGE_HOURS
-    symbols = list(dict.fromkeys(symbols))
-
-    try:
-        cik_map = get_cik_map(force_refresh=True) if full_refresh else get_cik_map()
-    except Exception as exc:
-        _, reason = _classify_error(exc, service="SEC EDGAR")
-        cik_map = None
-        live_map_error = reason
-    else:
-        live_map_error = None
-
-    fetched_at = get_edgar_fetched_at(symbols)
-    with_facts = get_symbols_with_facts(symbols)
-    from . import sync_state
-    live_ciks = dict(zip(cik_map["symbol"], cik_map["cik"])) if cik_map is not None else {}
-    failed_symbols = set()
-    for entity, dataset in sync_state.failed_datasets("sec"):
-        if not dataset.startswith("facts:"):
-            continue
-        symbol = dataset.removeprefix("facts:")
-        cik = live_ciks.get(symbol) or _get_cached_cik_resolution(symbol)[0]
-        if cik and entity == f"cik:{str(cik).zfill(10)}":
-            failed_symbols.add(symbol)
-    now = datetime.now(UTC)
-    stale = [
-        s for s in symbols
-        if force or full_refresh or s in failed_symbols or fetched_at.get(s) is None
-        or (now - fetched_at[s]).total_seconds() > max_age_hours * 3600
-        or s not in with_facts  # "fresco" pero sin histórico fechado real: hay que rellenarlo igualmente
-    ]
-
-    # Se resuelve CIK símbolo a símbolo (mapeo en vivo, con fallback a la
-    # caché local de resoluciones anteriores — ver get_cik_for_symbol) en vez
-    # de un solo dict global: así una empresa ya deslistada puede seguir
-    # actualizándose aunque haya desaparecido del mapeo en vivo de hoy.
-    cik_by_symbol = {}
-    for s in stale:
-        cik, _title = get_cik_for_symbol(s, cik_map=cik_map) if cik_map is not None else _get_cached_cik_resolution(s)
-        if cik:
-            cik_by_symbol[s] = cik
-
-    if cik_map is None and not cik_by_symbol:
-        # Sin mapeo en vivo Y sin nada en la caché local: no hay forma de
-        # seguir para ninguno de los símbolos pedidos.
-        failed = {s: live_map_error for s in symbols}
-        storage.record_update_errors("sec_edgar", failed)
-        return {"edgar_refreshed": 0, "failed": failed}
-
-    extra = {"full_refresh": True} if full_refresh else {}
-    if synchronize_one is not None:
-        extra["synchronize_one"] = synchronize_one
-    failed = fetch_edgar_batch(stale, cik_by_symbol, progress_cb=progress_cb, **extra) if stale else {}
-    storage.record_update_errors("sec_edgar", failed)
-    return {"edgar_refreshed": len(stale) - len(failed), "failed": failed}
+    def download(symbols, ciks, **options):
+        if synchronize_one is not None:
+            options["synchronize_one"] = synchronize_one
+        return fetch_edgar_batch(symbols, ciks, **options)
+    return refresh_selection(symbols, store=_SelectionStore(), mapping=get_cik_map,
+                             resolutions=_CikResolutions(), download_batch=download,
+                             classify_error=lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+                             now=lambda: datetime.now(UTC), default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
+                             force=force, max_age_hours=max_age_hours, progress_cb=progress_cb,
+                             as_of=as_of, full_refresh=full_refresh)

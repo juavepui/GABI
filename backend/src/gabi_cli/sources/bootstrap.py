@@ -38,10 +38,13 @@ def build_xbrl_operation(settings: Settings, user_agent: str, *, now: Callable[[
                          wall_time: Callable[[], float] = time.perf_counter,
                          cpu_time: Callable[[], float] = time.thread_time):
     from gabi.application.administration.sync_events import SyncAttempt
-    from gabi.application.market.sec_xbrl import synchronize
-    from gabi.infrastructure.legacy.sec_xbrl import refresh_selected
-    from gabi.infrastructure.legacy.source_errors import fingerprint, retry
+    from gabi.application.market.sec_selection import batch, refresh
+    from gabi.application.market.sec_xbrl import download_complete, synchronize
+    from gabi.domain.market.sec_facts import compute_edgar_metrics
+    from gabi.infrastructure.jobs.sec_batch import run
+    from gabi.infrastructure.legacy.source_errors import fingerprint, retry, sec_error
     from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+    from gabi.infrastructure.storage.sec_selection import SqliteSecSelection
     from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
     from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
@@ -54,7 +57,20 @@ def build_xbrl_operation(settings: Settings, user_agent: str, *, now: Callable[[
 
     operation = partial(synchronize, store=store, submissions=source.submissions, companyfacts=source.companyfacts,
                         checkpoint=events.get, attempt_factory=attempt, retry=retry, fingerprint=fingerprint, now=clock)
-    return partial(refresh_selected, settings.data_dir, operation)
+    complete = partial(download_complete, store=store, companyfacts=source.companyfacts,
+                       submissions=source.submissions, compute=compute_edgar_metrics)
+    ciks = build_cik_resolver(settings, user_agent, now=clock, wall_time=wall_time, cpu_time=cpu_time)
+
+    def download(symbols, resolved, *, full_refresh=False, incremental=True, progress_cb=None):
+        selected = partial(operation, full_refresh=full_refresh) if incremental else complete
+        return batch(symbols, resolved, operation=selected, runner=run, classify_error=sec_error, progress_cb=progress_cb)
+
+    # Preserve the frozen compatibility setting without changing it per operation.
+    from gabi.infrastructure.legacy.sec_defaults import cache_max_age_hours
+    return partial(refresh, store=SqliteSecSelection(path, clock, max_symbols=settings.max_symbols),
+                   mapping=ciks.mapping, resolutions=ciks.resolutions, download_batch=download,
+                   classify_error=sec_error, now=clock, default_max_age_hours=cache_max_age_hours(),
+                   max_symbols=settings.max_symbols)
 
 
 def build_fred_operation(settings: Settings, *, now: Callable[[], datetime] | None = None,

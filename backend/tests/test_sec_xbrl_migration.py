@@ -13,7 +13,7 @@ import pytest
 import requests
 
 from gabi.application.administration.sync_events import SyncAttempt
-from gabi.application.market.sec_xbrl import synchronize
+from gabi.application.market.sec_xbrl import download_complete, fetch_complete, synchronize
 from gabi.domain.market.sec_xbrl import facts_due
 from gabi.infrastructure.legacy.source_errors import fingerprint
 from gabi.infrastructure.providers.sec_xbrl import SecXbrl
@@ -310,13 +310,89 @@ def test_bootstrap_and_worker_use_injected_sync_not_legacy(tmp_path, monkeypatch
 
     operation = build_xbrl_operation(Settings(tmp_path), "contact", now=lambda: NOW)
     assert not tmp_path.joinpath("gabi.db").exists()
-    single = operation.args[1]
     monkeypatch.setattr(SecXbrl, "submissions", lambda self, cik: filings())
     monkeypatch.setattr(SecXbrl, "companyfacts", lambda self, cik: payload())
     monkeypatch.setattr(edgar_sync, "run_one", lambda *a, **k: pytest.fail("legacy synchronization"))
     monkeypatch.setattr(edgar, "fetch_submissions", lambda *a: pytest.fail("legacy HTTP"))
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda *a: pytest.fail("legacy HTTP"))
-    monkeypatch.setattr(edgar, "get_cik_map", lambda **k: pd.DataFrame({"symbol": ["A"], "cik": ["0000000001"], "title": ["A"]}))
+    from gabi.application.market.sec_cik import CikResolver
+    monkeypatch.setattr(CikResolver, "mapping", lambda self, **k: pd.DataFrame({"symbol": ["A"], "cik": ["0000000001"], "title": ["A"]}))
+    monkeypatch.setattr(edgar, "get_cik_map", lambda **k: pytest.fail("legacy map"))
+    monkeypatch.setattr(edgar, "ensure_edgar_data", lambda *a, **k: pytest.fail("legacy selection"))
     executor = build_executor(Settings(config.DATA_DIR), now=lambda: NOW)
     assert executor.sec_sync(["A"], force=True)["edgar_refreshed"] == 1
-    assert single.keywords["store"].path == tmp_path / "gabi.db"
+    assert operation.keywords["store"].path == tmp_path / "gabi.db"
+
+
+def test_complete_download_optional_links_and_source_failure_do_not_open_sql(tmp_path):
+    path = tmp_path / "gabi.db"
+    store = SqliteXbrl(path, lambda: NOW)
+    def source(cik):
+        assert not path.exists()
+        return payload()
+    def unavailable(cik):
+        assert not path.exists()
+        raise OSError("optional filing links unavailable")
+    download_complete("OLD", "0000000001", store=store, companyfacts=source,
+                      submissions=unavailable, compute=lambda facts: {"roic": 0.1})
+    tables = read_tables(path)
+    assert len(tables["edgar_facts"]) == len(tables["entity_observations"]) == 2
+    assert tables["entity_observations"][0][0] == "cik:0000000001"
+    assert store.metrics("OLD")["roic"] == 0.1
+    assert not tables["sync_checkpoints"] and not tables["sync_events"]
+    before = path.read_bytes()
+    def failed(cik):
+        raise OSError("companyfacts unavailable")
+    with pytest.raises(OSError):
+        download_complete("OLD", "1", store=store, companyfacts=failed,
+                          submissions=unavailable, compute=lambda facts: {})
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("source", ["facts", "filings"])
+def test_complete_download_rejects_another_issuer_before_storage(tmp_path, source):
+    facts, submissions = payload(), filings()
+    (facts if source == "facts" else submissions)["cik"] = 2
+    path = tmp_path / "gabi.db"
+    with pytest.raises(ValueError, match="otro emisor"):
+        download_complete("A", "1", store=SqliteXbrl(path, lambda: NOW),
+                          companyfacts=lambda cik: facts, submissions=lambda cik: submissions,
+                          compute=lambda facts: {})
+    assert not path.exists()
+
+
+def test_complete_extraction_preserves_rows_metrics_and_filing_links():
+    from gabi.domain.market.sec_facts import compute_edgar_metrics
+    actual = fetch_complete("1", companyfacts=lambda cik: payload(), submissions=lambda cik: filings(),
+                            compute=compute_edgar_metrics)
+    namespace = {"fetch_company_facts": lambda cik: payload(), "fetch_submissions": lambda cik: filings()}
+    from gabi.domain.market import sec_facts
+    namespace.update(vars(sec_facts))
+    captured_functions(REFERENCE["edgar"], namespace, {"_fetch_one"})
+    assert actual == namespace["_fetch_one"]("A", "1")
+
+
+def test_historical_bootstrap_uses_dated_issuer_and_explicit_database(tmp_path, monkeypatch):
+    from gabi import config, edgar, identity
+    from gabi.application.market.sec_cik import CikResolver
+    from gabi.infrastructure.settings import Settings
+    from gabi_cli.sources.bootstrap import build_xbrl_operation
+
+    path = tmp_path / "gabi.db"
+    with closing(sqlite3.connect(path)) as db:
+        identity.ensure_schema(db)
+        db.execute("INSERT INTO entities VALUES ('cik:0000000001','0000000001','Old','2010-01-01')")
+        db.execute("INSERT INTO entity_aliases VALUES ('cik:0000000001','REC','2010-01-01','2020-01-01','dated',1)")
+        db.commit()
+    assert path != config.DB_PATH
+    monkeypatch.setattr(CikResolver, "mapping", lambda *a, **k: pytest.fail("current map in historical route"))
+    monkeypatch.setattr(edgar, "ensure_edgar_data", lambda *a, **k: pytest.fail("legacy selection"))
+    calls = []
+    monkeypatch.setattr(SecXbrl, "companyfacts", lambda self, cik: calls.append(cik) or payload())
+    monkeypatch.setattr(SecXbrl, "submissions", lambda self, cik: filings())
+    operation = build_xbrl_operation(Settings(tmp_path), "contact", now=lambda: NOW)
+    assert operation(["REC"], as_of="2012-01-01") == {"edgar_refreshed": 1, "failed": {}}
+    assert calls == ["0000000001"]
+    assert operation(["REC"], as_of="2012-01-01") == {"edgar_refreshed": 0, "failed": {}}
+    assert calls == ["0000000001"]
+    assert len(read_tables(path)["entity_observations"]) == 2

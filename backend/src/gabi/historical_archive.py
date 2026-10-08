@@ -7,6 +7,7 @@ import json
 
 import pandas as pd
 
+from gabi.domain.market.sec_identity import ACCREDITED_IDENTITY_TIERS as ACCREDITED_IDENTITY_TIERS
 from gabi.domain.research import coverage as _coverage
 from gabi.domain.research.historical_prices import prepare_price_chunk
 
@@ -15,8 +16,6 @@ from . import identity, storage
 IDENTITY_INTERVAL_SOURCE = "sec-identity-evidence:2010-2015:v1"
 # Research tiers that may attribute a historical label to one CIK. The
 # historical-ticker tier covers labels applied retroactively by the source.
-ACCREDITED_IDENTITY_TIERS = ("confirmed_by_multiple_evidence", "confirmed_historical_ticker",
-                             "corroborated_candidate")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS historical_sources (

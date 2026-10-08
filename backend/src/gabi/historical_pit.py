@@ -27,6 +27,8 @@ from datetime import date, timedelta
 
 import pandas as pd
 
+from gabi.domain.market.sec_identity import accredited_resolution
+
 from . import historical_archive, historical_membership, historical_period, identity, storage
 from .historical_price_policy import ADJUSTED, YAHOO_SOURCE
 from .historical_price_policy import SCHEMA as PROVENANCE_SCHEMA
@@ -98,18 +100,7 @@ def resolve(symbol: str, as_of: str) -> dict:
     found = historical_membership._identities({identity.normalize_symbol(symbol)}, as_of,
                                               interval_source=_period(as_of).identity_source)
     row = found[identity.normalize_symbol(symbol)]
-    # Solo los niveles acreditados por intervalo (#27/#28); una prueba SEC de
-    # un solo día no activa identidad para un backtest.
-    resolved = (row["identity_status"] == "resolved" and row["entity_id"] and
-                row["identity_tier"] in historical_archive.ACCREDITED_IDENTITY_TIERS)
-    return {"entity_id": row["entity_id"] if resolved else None,
-            "cik": row["cik"] if resolved else None,
-            "status": "resolved" if resolved else
-            ("ambiguous" if row["identity_status"] == "ambiguous" else "unresolved"),
-            "candidates": [row["entity_id"]] if row["entity_id"] else [],
-            "source": row["identity_source"] or "historical_identity_interval",
-            "confidence": 1.0 if resolved else None,
-            "identity_tier": row["identity_tier"]}
+    return accredited_resolution(row)
 
 
 def _intervals(entity_id: str) -> list[tuple]:

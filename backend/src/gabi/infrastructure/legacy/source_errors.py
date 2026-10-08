@@ -7,3 +7,7 @@ from gabi.sync_state import retry as retry
 
 def fred_error(exc: Exception) -> str:
     return _classify_error(exc, service="FRED")[1]
+
+
+def sec_error(exc: Exception) -> str:
+    return _classify_error(exc, service="SEC EDGAR")[1]
