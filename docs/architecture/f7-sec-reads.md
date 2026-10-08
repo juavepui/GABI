@@ -56,12 +56,26 @@ comando proceden de un único SELECT del emisor; un commit concurrente no mezcla
 revisiones entre ambas salidas. Una caché ausente devuelve
 hechos vacíos y métricas ausentes.
 
-Los consumidores legacy conservan sus adaptadores SQL/globales, y su
-inicialización histórica de esquemas, como compatibilidad. La consulta nueva
-no los usa. Quedan pendientes la migración de esos lectores de compatibilidad,
-otros flujos históricos y el núcleo de identidad; no se presenta este bloque
-como eliminación completa de `edgar.py`. No cambian límites de arquitectura,
-excepciones ni motores/configuración congelados.
+La fachada EDGAR usa ahora el mismo `SqliteSecReads`: retira `_FactReader` y sus
+consultas SQL de compatibilidad para hechos crudos, versiones por CIK, valores,
+acciones, métricas históricas y últimas fechas de filing. La ruta de compatibilidad
+se captura por operación; no se modifica configuración global ni se registra un
+lector global. Conserva el callback fiscal explícito del cálculo EDGAR.
+
+Los consumidores del ranking histórico, persistencia de calidad, asignación de
+capital, Portfolio Lab y motores congelados conservan sus interfaces y reciben
+estas lecturas acotadas sin inicializar tablas. Una base o tabla ausente devuelve
+ausencias; ya no se crea para consultar. Los presupuestos del lector también se
+aplican a la fachada y fallan sin truncar. Cada conexión observa las revisiones
+posteriores; no se añade caché. [ADR 0003](../adr/0003-legacy-storage-delegation.md)
+documenta la delegación de SQL desde fachadas existentes hacia almacenamiento,
+con pruebas de frontera y sin ampliar el inventario de excepciones.
+
+El [núcleo de identidad y su guard de últimas fechas atribuidas](f7-issuer-identity.md)
+ya usan lectores compartidos. Siguen pendientes otros flujos históricos y las
+lecturas actuales de métricas cacheadas. No se presenta este bloque como eliminación completa de `edgar.py`
+ni como consulta libre de efectos de todo el ranking. No cambian motores ni
+configuración congelados.
 
 ## Validación y medida
 
@@ -72,6 +86,14 @@ cortes, ausencia de datos, tags, USD/shares, revisiones, amendments, aliases
 duplicados, otro CIK y un período posterior al corte con filing anterior.
 Comprueba límites, ausencia de red/escrituras y composición del comando sin
 lectores legacy.
+
+La migración de la fachada añade comparación directa con esa referencia,
+política fiscal activada/desactivada, persistencia de calidad y almacenamiento
+ausente, prohibiendo conexiones SQL legacy. Validación del 2026-10-08:
+162 pruebas de lectores, arquitectura, EDGAR, identidad, ranking histórico,
+calidad, asignación de capital, sincronización incremental y Portfolio Lab;
+guardas backend/frontend, nueve pruebas de arquitectura frontend, lint de
+Python versionado, tipos y hashes congelados correctos.
 
 Medida reproducible:
 `.venv/Scripts/python.exe scripts/measure_f7_sec_reads.py`.
@@ -91,3 +113,11 @@ Las métricas por ticker reducen materialización. La consulta de versiones
 aumenta tiempo y las métricas atribuidas aumentan asignaciones. Los tiempos
 son observaciones de esta fixture, no una mejora general de la ingesta ni
 una predicción para datos reales o consultas durante un refresco concurrente.
+
+Repetición del 2026-10-08 con la misma fixture y comprobaciones en paralelo:
+paridad exacta y cero descargas. Frío/caliente por ticker: anterior
+0,6857/0,3346 s, nuevo 0,3240/0,3138 s; por entidad: anterior
+0,5121/0,5116 s, nuevo 0,6506/0,6794 s; versiones: anterior
+0,1567/0,1480 s, nuevo 0,1790/0,1839 s. Filas, consultas y picos Python
+coinciden con la tabla. No se atribuye una mejora general: las lecturas por
+entidad y de versiones fueron más lentas en esta ejecución.

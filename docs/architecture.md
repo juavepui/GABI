@@ -56,6 +56,24 @@ checkpoints y fuentes explícitos, y escritura atómica de hechos por emisor.
 y fallos por emisor, con identidad histórica por lotes y descarga completa explícita.
 [Los lectores EDGAR por fecha](architecture/f7-sec-reads.md) comparten interpretación
 de versiones y métricas con consultas locales acotadas por CIK o ticker.
+[El núcleo de identidad y las series acreditadas](architecture/f7-issuer-identity.md)
+comparten reglas, lectores por lotes y doble escritura atómica; la fachada
+histórica conserva sus interfaces y los consumidores congelados.
+[La composición histórica y las escrituras de auditoría](architecture/f7-historical-composition-writes.md)
+usan loaders locales acotados, consultas de solo lectura e importaciones
+atómicas con procedencia y reglas de acreditación compartidas.
+[Los runners históricos y sus exportaciones](architecture/f7-historical-runners.md)
+comparten casos de uso y lecturas acotadas, con caché por operación y respaldo
+operativo de precios por lotes; quedan pendientes las descargas de evidencia.
+[La evidencia local de emisores históricos](architecture/f7-historical-issuer-files.md)
+usa lectores acotados y caché por operación, con preparación de CIK por lotes
+e invalidación por archivos; las descargas conservan su compatibilidad explícita.
+[La descarga del archivo SEC](architecture/f7-sec-archive-download.md) comparte
+coordinación, archivos y registro transaccional de procedencia con dependencias
+explícitas; conserva el transporte HTTP de compatibilidad.
+[La ingesta trimestral SEC](architecture/f7-sec-bulk-import.md) comparte reglas
+SUB/NUM, lectura local por lotes y transacción atómica de esquema y datos,
+conservando fechas redondeadas y alternativas de valor.
 [Decisiones](architecture/f7-decisions.md), [Factor Lab](architecture/f7-factor-analysis.md)
 y [seguimiento de rankings](architecture/f7-ranking-evaluation.md)
 retiran sus módulos planos. F2 ha migrado el cálculo
@@ -137,6 +155,10 @@ El dominio no conoce Streamlit, FastAPI, HTTP, SQLite, ficheros ni ajustes globa
 Puede usar NumPy/pandas para operar sobre datos ya suministrados. Los casos de uso
 reciben repositorios específicos, configuración y reloj; un `Protocol` se introduce
 cuando existe un límite de I/O o de compatibilidad publicada que inyectar.
+Las fachadas planas existentes pueden sustituir su SQL por un adaptador concreto
+de `infrastructure/storage` según [ADR 0003](adr/0003-legacy-storage-delegation.md),
+sin nuevas dependencias de proveedores, ajustes o puentes legacy. Almacenamiento
+no importa módulos planos; siguen prohibidos los ciclos con capas nuevas.
 No añadir interfaces a funciones puras nuevas. Evitar reexports masivos en
 `__init__`; importar desde el módulo que define el contrato.
 

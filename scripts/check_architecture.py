@@ -169,8 +169,11 @@ def check(root: Path) -> list[str]:
             if relative not in baseline:
                 errors.append(f"{relative}: new flat/Streamlit module; use the architecture directories")
                 continue
+            # ADR 0003: replace compatibility SQL with concrete storage adapters.
+            # Storage cannot import legacy; mixed cycles are still rejected.
             tracked = {target for target, _ in dependencies if legacy_dependency(target)
-                       and layer(target) not in {"domain", "application"}}
+                       and layer(target) not in {"domain", "application"}
+                       and not target.startswith("gabi.infrastructure.storage.")}
             expected = set(baseline[relative])
             for target in sorted(tracked - expected):
                 errors.append(f"{relative}: new legacy dependency {target}; extract into the correct layer")

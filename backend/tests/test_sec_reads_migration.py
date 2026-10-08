@@ -64,6 +64,8 @@ def seed(path):
 
 @pytest.mark.parametrize("day", ["2016-01-01", "2019-06-01", "2020-02-01", "2020-12-31", "2021-06-01"])
 def test_captured_values_metrics_versions_and_raw_rows(tmp_path, monkeypatch, day):
+    from gabi import edgar
+
     path = tmp_path / "gabi.db"
     seed(path)
     old = captured(path, monkeypatch)
@@ -71,13 +73,59 @@ def test_captured_values_metrics_versions_and_raw_rows(tmp_path, monkeypatch, da
     for entity in (None, "cik:0000000001", "cik:0000000002", "cik:0000009999"):
         for tags in (None, [], ["Revenues"], ["absent"]):
             assert_frame_equal(reader.facts("REC", tags=tags, entity_id=entity), old["get_edgar_facts"]("REC", tags=tags, entity_id=entity))
+            assert_frame_equal(edgar.get_edgar_facts("REC", tags=tags, entity_id=entity), old["get_edgar_facts"]("REC", tags=tags, entity_id=entity))
         assert stored_facts(reader, "REC", day, entity_id=entity) == old["_facts_dict_from_stored"]("REC", day, entity_id=entity)
         assert metrics_as_of(reader, "REC", day, entity_id=entity) == old["compute_edgar_metrics_as_of"]("REC", day, entity_id=entity)
+        assert edgar.compute_edgar_metrics_as_of("REC", day, entity_id=entity) == old["compute_edgar_metrics_as_of"]("REC", day, entity_id=entity)
         for tags, unit in ((["Revenues"], "USD"), (sec_facts.SHARES_TAGS, "shares"), (["unknown"], "USD")):
             assert concept_value(reader, "REC", tags, day, unit, entity_id=entity) == old["get_value_as_of"]("REC", tags, day, unit, entity_id=entity)
+            assert edgar.get_value_as_of("REC", tags, day, unit, entity_id=entity) == old["get_value_as_of"]("REC", tags, day, unit, entity_id=entity)
     for tags in (None, ["Revenues"], ["absent"]):
         assert_frame_equal(issuer_facts(reader, "1", day, tags), old["get_issuer_facts_as_of"]("1", day, tags))
+        assert_frame_equal(edgar.get_issuer_facts_as_of("1", day, tags), old["get_issuer_facts_as_of"]("1", day, tags))
     assert reader.last_filed(["REC", "UNKNOWN"], day) == old["get_last_filed_dates"](["REC", "UNKNOWN"], day)
+    assert edgar.get_last_filed_dates(["REC", "UNKNOWN"], day) == old["get_last_filed_dates"](["REC", "UNKNOWN"], day)
+
+
+@pytest.mark.parametrize("aligned", [False, True])
+def test_historical_facade_uses_shared_reader_and_keeps_fiscal_policy(tmp_path, monkeypatch, aligned):
+    from gabi import config, edgar, quality_persistence, storage
+    from gabi.domain.market.quality_persistence import from_facts
+
+    path = tmp_path / "gabi.db"
+    seed(path)
+    monkeypatch.setattr(config, "DB_PATH", path)
+    monkeypatch.setattr(edgar, "_fiscal_alignment", aligned)
+    monkeypatch.setattr(storage, "get_connection", lambda: pytest.fail("legacy SQL connection"))
+    for entity in (None, "cik:0000000001", "cik:0000000002", "cik:0000009999"):
+        reader = SqliteSecReads(path)
+        for day in ("2016-01-01", "2020-12-31", "2021-06-01"):
+            facts = stored_facts(reader, "REC", day, entity_id=entity)
+            assert edgar._facts_dict_from_stored("REC", day, entity_id=entity) == facts
+            assert edgar.compute_edgar_metrics_as_of("REC", day, entity_id=entity) == sec_facts.compute_edgar_metrics(
+                facts, fiscal_alignment=aligned)
+            assert edgar.get_shares_outstanding_as_of("REC", day, entity_id=entity) == concept_value(
+                reader, "REC", sec_facts.SHARES_TAGS, day, "shares", entity_id=entity)
+            assert quality_persistence.as_of("REC", day, entity_id=entity) == from_facts(facts)
+        assert_frame_equal(edgar.get_edgar_facts("REC", entity_id=entity), reader.facts("REC", entity_id=entity))
+    assert_frame_equal(edgar.get_issuer_facts_as_of("1", "2020-12-31"), issuer_facts(SqliteSecReads(path), "1", "2020-12-31"))
+    assert edgar.get_last_filed_dates(["REC", "UNKNOWN"], "2020-12-31") == {"REC": "2020-06-01"}
+
+
+def test_historical_facade_does_not_initialize_missing_storage(tmp_path, monkeypatch):
+    from gabi import config, edgar, storage
+
+    path = tmp_path / "missing/gabi.db"
+    monkeypatch.setattr(config, "DB_PATH", path)
+    monkeypatch.setattr(storage, "get_connection", lambda: pytest.fail("legacy SQL connection"))
+    assert edgar.get_edgar_facts("UNKNOWN").empty
+    assert edgar.get_edgar_facts("UNKNOWN", entity_id="cik:0000000001").empty
+    assert edgar.get_issuer_facts_as_of("1", "2020-12-31").empty
+    assert edgar.get_last_filed_dates(["UNKNOWN"], "2020-12-31") == {}
+    assert edgar.get_value_as_of("UNKNOWN", ["Revenues"], "2020-12-31") is None
+    assert edgar.get_shares_outstanding_as_of("UNKNOWN", "2020-12-31") is None
+    assert edgar.compute_edgar_metrics_as_of("UNKNOWN", "2020-12-31")["latest_revenue"] is None
+    assert not path.parent.exists()
 
 
 def test_duplicate_alias_is_selected_before_cutoff_and_other_cik_is_isolated(tmp_path):

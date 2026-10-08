@@ -1,5 +1,6 @@
 import hashlib
 import json
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -13,6 +14,8 @@ from gabi.historical_membership import REFERENCE_SOURCE
 def offline_db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setattr(audit.issuer_evidence, 'FRAMES_DIR', tmp_path / 'frames')
+    monkeypatch.setattr(audit.issuer_evidence, 'SUBMISSIONS_DIR', tmp_path / 'submissions')
     monkeypatch.setattr("requests.sessions.Session.request",
                         lambda *args, **kwargs: pytest.fail("No network allowed"))
 
@@ -417,8 +420,7 @@ def _proofs(rows):
 
 
 def test_retroactive_label_is_confirmed_by_historical_sec_ticker(monkeypatch):
-    from gabi import historical_ticker_corrections
-    monkeypatch.setattr(historical_ticker_corrections, "identity_nominations", lambda: (_nomination(),))
+    monkeypatch.setattr(audit, "identity_nominations", lambda: (_nomination(),))
     _membership_with_candidate()
     _proofs([("OLDT", "7", "2011-02-01"), ("OLDT", "7", "2013-02-01")])
     [row] = audit.build_evidence_intervals()
@@ -426,8 +428,7 @@ def test_retroactive_label_is_confirmed_by_historical_sec_ticker(monkeypatch):
 
 
 def test_nominated_historical_ticker_used_by_another_issuer_is_ambiguous(monkeypatch):
-    from gabi import historical_ticker_corrections
-    monkeypatch.setattr(historical_ticker_corrections, "identity_nominations", lambda: (_nomination(),))
+    monkeypatch.setattr(audit, "identity_nominations", lambda: (_nomination(),))
     _membership_with_candidate()
     _proofs([("OLDT", "7", "2011-02-01"), ("OLDT", "7", "2013-02-01"), ("OLDT", "8", "2014-02-01")])
     assert [row["status"] for row in audit.build_evidence_intervals()] == ["ambiguous"]
@@ -436,8 +437,9 @@ def test_nominated_historical_ticker_used_by_another_issuer_is_ambiguous(monkeyp
 def test_successor_cik_that_starts_filing_later_is_not_backdated(monkeypatch):
     _membership_with_candidate(symbol="HOLD", cik="0000000009")
     _proofs([("HOLD", "9", "2015-02-01"), ("HOLD", "9", "2015-05-01")])
-    monkeypatch.setattr(audit.issuer_evidence, "listing_life",
-                        lambda cik: {"first_periodic": "2014-12-31", "current_tickers": []})
+    monkeypatch.setattr(audit.issuer_evidence, 'reader', lambda: SimpleNamespace(
+        listing_life=lambda cik: {"first_periodic": "2014-12-31", "current_tickers": []},
+        prepare=lambda *args: None))
     assert [row["status"] for row in audit.build_evidence_intervals()] == ["unresolved"]
 
 
@@ -502,10 +504,11 @@ def test_each_period_only_sees_proofs_filed_inside_its_evidence_window(monkeypat
     historical_archive.register_source(REFERENCE_SOURCE, {"start": "2010-01-01", "end_exclusive": "2016-01-01"})
     historical_archive.import_membership(REFERENCE_SOURCE, pd.DataFrame([("2009-12-31", "OTHER"), ("2015-09-01", "LATE")],
                                          columns=["date", "tickers"]), "2009-01-01", "2016-01-01")
-    monkeypatch.setattr(audit, "apply_nominations", lambda rows: {"LATE": [{
-        "cik": "0000000001", "name": None, "start": "2015-09-01", "end": "2016-01-01",
-        "nomination": {"sec_tickers": ("LATE",), "evidence_window_days": 200}}]})
-    monkeypatch.setattr(audit.issuer_evidence, "listing_life", lambda cik: None)
+    monkeypatch.setattr(audit, "identity_nominations", lambda: (_nomination(
+        label="LATE", cik="0000000001", valid_from="2015-09-01", valid_to="2016-01-01",
+        sec_tickers=("LATE",), evidence_window_days=200),))
+    monkeypatch.setattr(audit.issuer_evidence, 'reader', lambda: SimpleNamespace(
+        listing_life=lambda cik: None, prepare=lambda *args: None))
     rows = [{"symbol": "LATE", "cik": "1", "accession": f"a-{day}", "filed_date": day,
              "sha256": "a" * 64, "source_url": f"https://www.sec.gov/Archives/edgar/data/1/{day}"}
             for day in ("2015-11-05", "2016-02-05", "2016-05-05")]

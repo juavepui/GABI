@@ -125,11 +125,15 @@ def test_same_source_may_overlap_only_across_period_producers(db):
                       adjustment_basis=ADJUSTED, status="tier_a", evidence=refs(P2016.price_producer))
 
 
-def test_2010_2015_price_audit_keeps_its_evidence_horizon(monkeypatch):
+def test_2010_2015_price_audit_keeps_its_evidence_horizon(tmp_path, monkeypatch):
+    import json
+
     from gabi import historical_issuer_evidence as evidence
-    rows = [{"accn": "a", "start": None, "end": end, "val": 1.0, "frame": frame, "source_url": "u"}
-            for end, frame in (("2016-06-30", "CY2016Q2I"), ("2017-06-30", "CY2017Q2I"))]
-    monkeypatch.setattr(evidence, "load_frames", lambda: {"0000000001": {"public_float": rows}})
+    monkeypatch.setattr(evidence, 'FRAMES_DIR', tmp_path)
+    for year in (2016, 2017):
+        _, path = evidence._frame_path('public_float', f'CY{year}Q2')
+        path.write_text(json.dumps(dict(ccp=f'CY{year}Q2I', data=[dict(
+            cik=1, accn='a', end=f'{year}-06-30', val=1.0)])), encoding='utf-8')
     assert len(evidence.issuer_facts("1")["public_float"]) == 2
     assert [row["end"] for row in evidence.issuer_facts("1", P2010.frame_year_max)["public_float"]] == ["2016-06-30"]
     assert P2010.archive_until("finsaber") == "2015-12-31" and P2016.archive_until("finsaber") == P2016.series_end

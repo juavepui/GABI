@@ -9,8 +9,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from gabi.domain.market.identity import require_same_cik
 from gabi.domain.market.sec_xbrl import KEYS, normalize_cik
-from gabi.infrastructure.legacy.sec_xbrl import ensure_schema, put_facts
+from gabi.infrastructure.storage.identity_writes import ensure_schema, put_facts
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS edgar_facts (
@@ -54,8 +55,7 @@ class SqliteXbrl:
             with db:
                 ensure_schema(db)
                 existing = db.execute("SELECT cik FROM entities WHERE entity_id=?", (entity,)).fetchone()
-                if existing and existing[0] != normalized:
-                    raise ValueError("An entity's CIK cannot be reassigned")
+                require_same_cik(existing, normalized)
                 db.execute("INSERT INTO entities VALUES (?,?,?,?) ON CONFLICT(entity_id) DO NOTHING",
                            (entity, normalized, None, self.now().date().isoformat()))
         return entity

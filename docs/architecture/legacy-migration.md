@@ -25,6 +25,32 @@ Una versión nueva del motor es un cambio separado con su procedencia, no una
 reorganización silenciosa del original. Los módulos mutable tampoco se trasladan
 sin comprobar los manifiestos que los referencian.
 
+Para retirar SQL de una fachada existente, [ADR 0003](../adr/0003-legacy-storage-delegation.md)
+permite delegarlo en un módulo concreto de `infrastructure/storage`, con ruta
+explícita por operación. No permite nuevos imports de proveedores, ajustes o
+puentes legacy; almacenamiento no puede importar módulos planos y los ciclos
+con capas nuevas siguen prohibidos. El inventario de excepciones solo disminuye.
+
+[La extracción F7.7](f7-historical-composition-writes.md) aplica ese límite a
+los loaders de composición y escritores de auditorías históricas. Las fachadas
+mantienen su API; los casos de uso reciben puertos y los adaptadores concretos
+ruta/reloj por operación. Sus lecturas no crean esquemas y sus importaciones
+revierten también el alta del emisor cuando falla la evidencia.
+
+[F7.8](f7-historical-runners.md) continúa con coordinación de composición,
+auditoría/promoción de precios, intervalos y cobertura de identidad,
+exportaciones explícitas y respaldo operativo por ticker. Los lectores no
+crean esquemas y la caché de precios tiene presupuesto y vida por operación.
+[F7.9](f7-historical-issuer-files.md) extrae los lectores de archivos de evidencia,
+la preparación por CIK y los cálculos de vida de cotización. Las descargas y
+acciones de ingesta conservan su compatibilidad documentada.
+[F7.10](f7-sec-archive-download.md) extrae la acción común de descarga y el
+registro de procedencia del archivo SEC, conservando la fuente HTTP pequeña
+de compatibilidad y las acciones de selección/ingesta todavía pendientes.
+[F7.11](f7-sec-bulk-import.md) extrae la importación trimestral SUB/NUM con
+lectura local por lotes y migración/escritura atómicas; la selección de CIK,
+los checkpoints y el escaneo de identidad mantienen su compatibilidad.
+
 ## Responsabilidades y entregas
 
 Cada grupo puede requerir dividir un módulo que hoy mezcla responsabilidades; la

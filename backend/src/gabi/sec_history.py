@@ -4,7 +4,6 @@ NUM.ddate and qtrs are rounded by SEC. Raw records are retained separately;
 only original XBRL contexts supply exact dates for GABI's fact schema.
 """
 import argparse
-import hashlib
 import json
 import math
 import sqlite3
@@ -17,109 +16,41 @@ import pandas as pd
 import requests
 from lxml import etree
 
+from gabi.application.research import sec_archive_download, sec_bulk
+from gabi.domain.research import sec_bulk as bulk_rules
+from gabi.infrastructure.storage import sec_bulk as bulk_storage
+from gabi.infrastructure.storage.sec_archive_download import SecArchiveFiles, SqliteSecArchiveProvenance
+
 from . import config, edgar, historical_archive, storage
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS sec_archive_files (
- url TEXT PRIMARY KEY, sha256 TEXT NOT NULL, bytes INTEGER NOT NULL, fetched_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS sec_bulk_submissions (
- accn TEXT PRIMARY KEY, cik TEXT NOT NULL, name TEXT, sic TEXT, form TEXT,
- filed_date TEXT, accepted TEXT, fy TEXT, fp TEXT, instance TEXT, source_url TEXT
-);
-CREATE TABLE IF NOT EXISTS sec_bulk_facts (
- accn TEXT, tag TEXT, version TEXT, end_month TEXT, qtrs INTEGER, unit TEXT, val REAL,
- PRIMARY KEY(accn,tag,version,end_month,qtrs,unit,val)
-);
-CREATE INDEX IF NOT EXISTS idx_sec_bulk_cik ON sec_bulk_submissions(cik,filed_date);
-"""
+SCHEMA = bulk_storage.SCHEMA
 DIRECTORY = config.DATA_DIR / "history_refresh" / "validation_1996_2015"
 TRACKED = set(edgar.TRACKED_TAGS + edgar.SHARES_TAGS)
 
 
-def ensure_schema(conn: sqlite3.Connection) -> None:
-    conn.executescript(SCHEMA)
-    columns = conn.execute("PRAGMA table_info(sec_bulk_facts)").fetchall()
-    if not next(column[5] for column in columns if column[1] == "val"):
-        # Rounded NUM keys can contain distinct values. Retain all alternatives
-        # for reconciliation instead of silently choosing the last one.
-        conn.executescript("""
-        BEGIN IMMEDIATE;
-        ALTER TABLE sec_bulk_facts RENAME TO sec_bulk_facts_old;
-        CREATE TABLE sec_bulk_facts (
-         accn TEXT, tag TEXT, version TEXT, end_month TEXT, qtrs INTEGER, unit TEXT, val REAL,
-         PRIMARY KEY(accn,tag,version,end_month,qtrs,unit,val)
-        );
-        INSERT INTO sec_bulk_facts SELECT * FROM sec_bulk_facts_old;
-        DROP TABLE sec_bulk_facts_old;
-        COMMIT;
-        """)
+ensure_schema = bulk_storage.initialize_compatibility
 
 
 def download(url: str, path: Path) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not path.exists():
-        time.sleep(0.15)
-        with requests.get(url, headers=edgar._headers(), timeout=(20, 90), stream=True) as response:
-            response.raise_for_status()
-            tmp = path.with_suffix(path.suffix + ".part")
-            with tmp.open("wb") as f:
-                for chunk in response.iter_content(1024 * 1024):
-                    f.write(chunk)
-            tmp.replace(path)
-    with path.open("rb") as f:
-        digest = hashlib.file_digest(f, "sha256").hexdigest()
-    with storage.get_connection() as conn:
-        ensure_schema(conn)
-        prior = conn.execute("SELECT sha256 FROM sec_archive_files WHERE url=?", (url,)).fetchone()
-        if prior and prior[0] != digest:
-            raise ValueError("Cached source changed; review before replacing its provenance")
-        conn.execute("INSERT OR IGNORE INTO sec_archive_files VALUES (?,?,?,?)",
-                     (url, digest, path.stat().st_size, datetime.now(UTC).isoformat()))
-        conn.commit()
+    sec_archive_download.download(url, str(path), files=SecArchiveFiles(),
+        provenance=SqliteSecArchiveProvenance(config.DB_PATH), source=_download_chunks,
+        now=lambda: datetime.now(UTC))
     return path
 
 
-def date8(value: str) -> str:
-    return datetime.strptime(value, "%Y%m%d").date().isoformat()
+def _download_chunks(url: str):
+    time.sleep(0.15)
+    with requests.get(url, headers=edgar._headers(), timeout=(20, 90), stream=True) as response:
+        response.raise_for_status()
+        yield from response.iter_content(1024 * 1024)
+
+
+date8 = bulk_rules.date8
 
 
 def import_quarter(path: Path, source_url: str, ciks: set[str], *, facts: bool = True) -> dict:
-    """Index 10-K/10-Q submissions of ``ciks``; with ``facts`` also their NUM rows."""
-    result = {"submissions": 0, "facts": 0, "excluded_segment_or_coreg": 0, "invalid": 0}
-    with zipfile.ZipFile(path) as z, storage.get_connection() as conn:
-        ensure_schema(conn)
-        with z.open("sub.txt") as f:
-            sub = pd.read_csv(f, sep="\t", dtype=str, keep_default_na=False)
-        sub["cik"] = sub["cik"].str.zfill(10)
-        sub = sub[sub.cik.isin(ciks) & sub.form.isin(["10-K", "10-Q", "10-K/A", "10-Q/A"])]
-        records = [(r.adsh, r.cik, r.name, r.sic, r.form, date8(r.filed), r.accepted,
-                    r.fy, r.fp, r.instance, source_url) for r in sub.itertuples(index=False)]
-        conn.executemany("INSERT OR REPLACE INTO sec_bulk_submissions VALUES (?,?,?,?,?,?,?,?,?,?,?)", records)
-        result["submissions"] = len(records)
-        accessions = set(sub.adsh)
-        if not facts:
-            conn.commit()
-            return result
-        with z.open("num.txt") as f:
-            for chunk in pd.read_csv(f, sep="\t", dtype=str, keep_default_na=False, chunksize=200000):
-                selected = chunk[chunk.adsh.isin(accessions) & chunk.tag.isin(TRACKED)
-                                 & chunk.version.str.match(r"^(us-gaap|dei)/")]
-                consolidated = (selected.coreg == "") & (selected.get("segments", "") == "")
-                result["excluded_segment_or_coreg"] += int((~consolidated).sum())
-                fact_records = []
-                for r in selected[consolidated].itertuples(index=False):
-                    try:
-                        val, qtrs = float(r.value), int(r.qtrs)
-                        if not math.isfinite(val) or qtrs < 0 or r.uom != ("shares" if r.tag in edgar.SHARES_TAGS else "USD"):
-                            raise ValueError("invalid value or unit")
-                        fact_records.append((r.adsh, r.tag, r.version, date8(r.ddate), qtrs, r.uom, val))
-                    except ValueError:
-                        result["invalid"] += 1
-                conn.executemany("INSERT OR REPLACE INTO sec_bulk_facts VALUES (?,?,?,?,?,?,?)", fact_records)
-                result["facts"] += len(fact_records)
-        conn.commit()
-    return result
+    return sec_bulk.import_quarter(bulk_storage.LocalSecQuarter(path), bulk_storage.SqliteSecQuarter(config.DB_PATH),
+                                   source_url, ciks, tracked=TRACKED, shares=set(edgar.SHARES_TAGS), facts=facts)
 
 
 def parse_instance(content: bytes, *, cik: str, accn: str, filed_date: str, form: str, fp: str, fy: str) -> list[dict]:

@@ -10,10 +10,9 @@ Yahoo son poco fiables o directamente no existen:
     de la empresa (justo lo que recomienda cualquier guía de aprendizaje).
 """
 import concurrent.futures as cf
-import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 import requests
@@ -25,6 +24,7 @@ from gabi.application.market.sec_reads import concept_value, issuer_facts, metri
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 
 from . import config, storage
 from .data_fetch import _classify_error
@@ -273,51 +273,16 @@ def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = N
     """Histórico crudo y fechado para una empresa. Sin filtrar: incluye
     trimestres, anuales y restataciones. Base para reconstruir 'qué se sabía
     en una fecha concreta' (fase 2), no algo para usar directamente en scoring."""
-    if entity_id:
-        from .identity import observations
-        frame = observations(entity_id, "edgar_facts")
-        if not frame.empty:
-            if tags:
-                frame = frame[frame["tag"].isin(tags)]
-            frame = frame.drop_duplicates(["tag", "unit", "start_date", "end_date", "accn"])
-        return frame
-    query = "SELECT * FROM edgar_facts WHERE symbol = ?"
-    params = [symbol]
-    if tags:
-        placeholders = ",".join("?" * len(tags))
-        query += f" AND tag IN ({placeholders})"
-        params += list(tags)
-    query += " ORDER BY end_date, filed_date"
-    with storage.get_connection() as conn:
-        conn.executescript(FACTS_SCHEMA)
-        return pd.read_sql_query(query, conn, params=params)
+    return _fact_reader().facts(symbol, tags=tags, entity_id=entity_id)
 
 
-class _FactReader:
-    def facts(self, symbol, *, entity_id=None, tags=None, as_of=None, unit=None):
-        return get_edgar_facts(symbol, tags=tags, entity_id=entity_id)
-
-    def last_filed(self, symbols, as_of=None):
-        return get_last_filed_dates(symbols, as_of)
-
-    def issuer(self, cik, as_of):
-        from . import identity
-
-        cutoff = date.fromisoformat(as_of).isoformat()
-        normalized = identity.normalize_cik(cik)
-        with storage.get_connection() as conn:
-            identity.ensure_schema(conn)
-            rows = conn.execute(
-                "SELECT payload_json,source FROM entity_observations WHERE entity_id=? "
-                "AND dataset='edgar_facts' AND json_extract(payload_json,'$.filed_date')<=? "
-                "AND json_extract(payload_json,'$.end_date')<=?",
-                (f"cik:{normalized}", cutoff, cutoff)).fetchall()
-        frame = pd.DataFrame([{**json.loads(payload), "source_url": source} for payload, source in rows])
-        return frame
+def _fact_reader() -> SqliteSecReads:
+    # The compatibility setting is captured per operation, never mutated.
+    return SqliteSecReads(config.DB_PATH)
 
 
 def get_issuer_facts_as_of(cik: str, as_of_date: str, tags: list | None = None) -> pd.DataFrame:
-    return issuer_facts(_FactReader(), cik, as_of_date, tags)
+    return issuer_facts(_fact_reader(), cik, as_of_date, tags)
 
 
 def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
@@ -340,22 +305,11 @@ def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
     saltaría — justo el fallo que se pretende detectar. También protege de
     que esos `edgar_facts` de la empresa nueva contaminen el resultado con
     fechas fuera del periodo que se está evaluando."""
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    date_filter = "AND filed_date <= ?" if as_of else ""
-    params = list(symbols) + ([as_of] if as_of else [])
-    with storage.get_connection() as conn:
-        conn.executescript(FACTS_SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, MAX(filed_date) FROM edgar_facts WHERE symbol IN ({placeholders}) "
-            f"{date_filter} GROUP BY symbol", params,
-        ).fetchall()
-    return {symbol: last for symbol, last in rows if last}
+    return _fact_reader().last_filed(symbols, as_of)
 
 
 def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD", *, entity_id: str | None = None):
-    return concept_value(_FactReader(), symbol, tags, as_of_date, unit, entity_id=entity_id)
+    return concept_value(_fact_reader(), symbol, tags, as_of_date, unit, entity_id=entity_id)
 
 
 def get_shares_outstanding_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None):
@@ -366,11 +320,11 @@ def get_shares_outstanding_as_of(symbol: str, as_of_date: str, *, entity_id: str
 
 
 def _facts_dict_from_stored(symbol: str, as_of_date: str = None, *, entity_id: str | None = None) -> dict:
-    return stored_facts(_FactReader(), symbol, as_of_date, entity_id=entity_id)
+    return stored_facts(_fact_reader(), symbol, as_of_date, entity_id=entity_id)
 
 
 def compute_edgar_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
-    return metrics_as_of(_FactReader(), symbol, as_of_date, entity_id=entity_id, compute=compute_edgar_metrics)
+    return metrics_as_of(_fact_reader(), symbol, as_of_date, entity_id=entity_id, compute=compute_edgar_metrics)
 
 
 _cagr_from_series = _sec_facts._cagr_from_series
