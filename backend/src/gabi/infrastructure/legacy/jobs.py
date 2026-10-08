@@ -20,13 +20,15 @@ class LegacyExecutor:
                  factor_loader: Callable[[], FactorSnapshot] | None = None,
                  tiingo_fetch: Callable[[list[str]], dict] | None = None,
                  tiingo_import: Callable[[], dict] | None = None,
-                 macro_sync: Callable[..., dict] | None = None):
+                 macro_sync: Callable[..., dict] | None = None,
+                 sec_sync: Callable[..., dict] | None = None):
         self.settings = settings
         self.today = today
         self.insider_sync = insider_sync
         self.factor_loader = factor_loader
         self.tiingo_fetch, self.tiingo_import = tiingo_fetch, tiingo_import
         self.macro_sync = macro_sync
+        self.sec_sync = sec_sync
         self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
     reports_progress = True  # The worker passes progress(fraction, phase) to long downloads.
@@ -201,11 +203,12 @@ class LegacyExecutor:
             from gabi.infrastructure.legacy.data_update import run_data_update
 
             assert command.update is not None
-            return run_data_update(command.update, progress)
+            return run_data_update(command.update, progress, sec_sync=self.sec_sync)
         if command.kind == "symbols":
             from gabi import screener
 
-            result = screener.refresh_data(list(command.symbols))
+            options: dict = {"sec_sync": self.sec_sync} if self.sec_sync else {}
+            result = screener.refresh_data(list(command.symbols), **options)
             if result.get("failed"):
                 raise RuntimeError("Una o más fuentes fallaron.")
             return {"symbols": list(command.symbols), "updated": len(command.symbols)}
@@ -213,7 +216,8 @@ class LegacyExecutor:
             from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
             result = build_periodic_tasks(self.settings.data_dir, tiingo_fetch=self.tiingo_fetch,
-                                          tiingo_import=self.tiingo_import, macro_sync=self.macro_sync).refresh_data()
+                                          tiingo_import=self.tiingo_import, macro_sync=self.macro_sync,
+                                          sec_sync=self.sec_sync).refresh_data()
             if result["fallos"] or result["failed_events"]:
                 raise RuntimeError("Una o más fuentes fallaron.")
             return {"symbols": result["simbolos"], "sync": result["sync"]}

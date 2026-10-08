@@ -34,6 +34,29 @@ def build_cik_resolver(settings: Settings, user_agent: str, *, now: Callable[[],
                        lambda: clock().timestamp())
 
 
+def build_xbrl_operation(settings: Settings, user_agent: str, *, now: Callable[[], datetime] | None = None,
+                         wall_time: Callable[[], float] = time.perf_counter,
+                         cpu_time: Callable[[], float] = time.thread_time):
+    from gabi.application.administration.sync_events import SyncAttempt
+    from gabi.application.market.sec_xbrl import synchronize
+    from gabi.infrastructure.legacy.sec_xbrl import refresh_selected
+    from gabi.infrastructure.legacy.source_errors import fingerprint, retry
+    from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+    from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
+    from gabi.infrastructure.storage.sync_events import OperationSyncEvents
+
+    clock = now or (lambda: datetime.now(UTC))
+    path = settings.data_dir / "gabi.db"
+    store, events, source = SqliteXbrl(path, clock), OperationSyncEvents(path), SecXbrl(user_agent)
+
+    def attempt(provider: str, entity: str, dataset: str) -> SyncAttempt:
+        return SyncAttempt(provider, entity, dataset, events, now=clock, wall_time=wall_time, cpu_time=cpu_time)
+
+    operation = partial(synchronize, store=store, submissions=source.submissions, companyfacts=source.companyfacts,
+                        checkpoint=events.get, attempt_factory=attempt, retry=retry, fingerprint=fingerprint, now=clock)
+    return partial(refresh_selected, settings.data_dir, operation)
+
+
 def build_fred_operation(settings: Settings, *, now: Callable[[], datetime] | None = None,
                          wall_time: Callable[[], float] = time.perf_counter,
                          cpu_time: Callable[[], float] = time.thread_time) -> Callable[..., dict]:
