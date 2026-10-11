@@ -22,14 +22,18 @@ import requests
 from gabi.application.research import historical_audit_exports as audit_exports
 from gabi.application.research import historical_identity_audit as identity_audit
 from gabi.application.research import identity_instances as instance_scan
+from gabi.application.research import sec_quarter_ingest as quarter_ingest
+from gabi.domain.market.identity import normalize_cik
 from gabi.domain.research import historical_identity_audit as identity_rules
 from gabi.domain.research import identity_instances as instance_rules
+from gabi.domain.research import sec_bulk as bulk_rules
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_identity_audit import SqliteIdentityAuditReads
 from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
 from gabi.infrastructure.storage.identity_instances import LocalIdentityInstances, SqliteIdentityInstances
+from gabi.infrastructure.storage.sec_quarter_ingest import SqliteSecIngestSelection
 
-from . import config, historical_archive, identity, sec_history, storage
+from . import config, historical_archive, sec_history
 from . import historical_issuer_evidence as issuer_evidence
 from .historical_period import P2010, Period
 from .historical_period import get as get_period
@@ -80,48 +84,13 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
     """
     if limit < 0:
         raise ValueError("limit must be nonnegative")
-    with storage.get_connection() as conn:
-        candidates = conn.execute(
-            "SELECT DISTINCT symbol,cik,date_added,date_removed FROM historical_issuer_candidates "
-            "WHERE source_id=? AND date_added<? "
-            "AND (date_removed IS NULL OR date_removed='' OR date_removed>=?)",
-            (CANDIDATE_SOURCE, period.end_exclusive, period.start)).fetchall()
-        filings = conn.execute(
-            "SELECT accn,cik,filed_date,instance FROM sec_bulk_submissions "
-            "WHERE filed_date>=? AND filed_date<? "
-            "AND form IN ('10-K','10-Q') AND instance IS NOT NULL ORDER BY filed_date,accn",
-            (period.start, period.end_exclusive)).fetchall()
-        candidates += [(row["label"], row["cik"],
-                        (date.fromisoformat(row["valid_from"]) - timedelta(days=row["evidence_window_days"])).isoformat(),
-                        (date.fromisoformat(row["valid_to"]) + timedelta(days=row["evidence_window_days"])).isoformat())
-                       for row in identity_nominations()]
-        unresolved = conn.execute(
-            "SELECT cik,valid_from,valid_to FROM historical_identity_intervals "
-            "WHERE source_id=? AND status='unresolved'",
-            (period.identity_source,)).fetchall() if prioritize_unresolved else []
-    by_cik: dict[str, list[tuple]] = {}
-    for row in filings:
-        by_cik.setdefault(identity.normalize_cik(row[1]), []).append(row)
-    selected: dict[str, tuple] = {}
-    missing_candidates = 0
-    for _symbol, cik, added, removed in candidates:
-        start = max(_date(added) or period.start, period.start)
-        end = min(_date(removed) or period.end_exclusive, period.end_exclusive)
-        eligible = [row for row in by_cik.get(identity.normalize_cik(cik), [])
-                    if start <= row[2] < end]
-        if len(eligible) < 2:
-            missing_candidates += 1
-            continue
-        for index in {0, len(eligible) // 2, len(eligible) - 1}:
-            row = eligible[index]
-            selected[row[0]] = row
-    # The ordinary three-per-candidate sample is already cached. For a second
-    # pass, inspect remaining filings only inside still-unresolved intervals;
-    # never broaden an ambiguous ticker/CIK association automatically.
-    for cik, start, end in unresolved:
-        for row in by_cik.get(identity.normalize_cik(cik), []):
-            if start <= row[2] < end:
-                selected[row[0]] = row
+    nominated = [(row["label"], row["cik"],
+                  (date.fromisoformat(row["valid_from"]) - timedelta(days=row["evidence_window_days"])).isoformat(),
+                  (date.fromisoformat(row["valid_to"]) + timedelta(days=row["evidence_window_days"])).isoformat())
+                 for row in identity_nominations()]
+    selected, missing_candidates = quarter_ingest.cover_filings(
+        _ingest_selection(), CANDIDATE_SOURCE, start=period.start, end_exclusive=period.end_exclusive,
+        nominated=nominated, identity_source=period.identity_source, prioritize_unresolved=prioritize_unresolved)
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "instances"
     already_cached = 0
     pending: list[tuple[str, str, Path]] = []
@@ -182,6 +151,23 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
             "prioritize_unresolved": prioritize_unresolved}
 
 
+def _ingest_selection() -> SqliteSecIngestSelection:
+    # The compatibility setting is captured per operation, never mutated.
+    return SqliteSecIngestSelection(config.DB_PATH)
+
+
+def _download_quarter(url: str, name: str) -> Path:
+    return sec_history.download(url, sec_history.DIRECTORY / name)
+
+
+def _import_quarter(path: Path, url: str, ciks: set[str], facts: bool) -> dict:
+    return sec_history.import_quarter(path, url, ciks, facts=facts)
+
+
+def _log(*values) -> None:
+    print(*values, flush=True)
+
+
 def import_nominated_filings(period: Period = P2010) -> dict:
     """Index SEC bulk 10-K/10-Q rows for nominated CIKs from the cached archive.
 
@@ -189,25 +175,17 @@ def import_nominated_filings(period: Period = P2010) -> dict:
     their URL/SHA-256; this only adds rows for CIKs no candidate selected.
     """
     ciks = {row["cik"] for row in identity_nominations()}
-    with storage.get_connection() as conn:
-        sec_history.ensure_schema(conn)
-        # Present means indexed for this period's quarters, not for another period.
-        first_year = period.years.start - (1 if period is P2010 else 0)
-        present = {row[0] for row in conn.execute(
-            "SELECT DISTINCT cik FROM sec_bulk_submissions WHERE filed_date>=? AND filed_date<?",
-            (f"{first_year}-01-01", period.end_exclusive))}
-    missing = ciks - present
+    # Present means indexed for this period's quarters, not for another period.
+    first_year = period.years.start - (1 if period is P2010 else 0)
+    missing = quarter_ingest.nominated_missing(_ingest_selection(), ciks, start=f"{first_year}-01-01",
+                                               end_exclusive=period.end_exclusive)
     report: dict[str, object] = {"nominated_ciks": len(ciks), "missing_before": len(missing)}
     if not missing:
         return report
-    for year in range(period.years.start - (1 if period is P2010 else 0), period.years.stop):
-        for quarter in range(1, 5):
-            key = f"{year}q{quarter}"
-            url = f"https://www.sec.gov/files/dera/data/financial-statement-data-sets/{key}.zip"
-            path = sec_history.download(url, sec_history.DIRECTORY / f"{key}.zip")
-            report[key] = sec_history.import_quarter(path, url, missing, facts=period is P2010)
-            print(key, report[key], flush=True)
-    return report
+    return quarter_ingest.ingest_quarters(
+        bulk_rules.quarter_keys(range(first_year, period.years.stop)), missing,
+        download=_download_quarter, import_quarter=_import_quarter,
+        facts=period is P2010, report=report, log=_log)
 
 
 def import_period_filings(period: Period) -> dict:
@@ -217,26 +195,13 @@ def import_period_filings(period: Period) -> dict:
     SUB table is read here (form, filing date, instance, issuer name); facts
     for 2016+ come from Company Facts. Quarters already indexed are skipped.
     """
-    with storage.get_connection() as conn:
-        sec_history.ensure_schema(conn)
-        ciks = {identity.normalize_cik(row[0]) for row in conn.execute(
-            "SELECT DISTINCT cik FROM historical_issuer_candidates WHERE source_id=? AND cik<>'' "
-            "AND replace(date_added,'*','')<? "
-            "AND (date_removed IS NULL OR date_removed='' OR replace(date_removed,'*','')>=?)",
-            (CANDIDATE_SOURCE, period.end_exclusive, period.start))}
-    ciks |= {row["cik"] for row in identity_nominations()
-             if row["valid_from"] < period.end_exclusive and row["valid_to"] > period.start}
-    report: dict[str, object] = {"ciks": len(ciks)}
+    ciks = quarter_ingest.period_ciks(_ingest_selection(), CANDIDATE_SOURCE, start=period.start,
+                                      end_exclusive=period.end_exclusive, nominations=identity_nominations())
     # Only quarters inside the period: adding rows filed before it would
     # change the evidence of the previous period's intervals.
-    for year in period.years:
-        for quarter in range(1, 5):
-            key = f"{year}q{quarter}"
-            url = f"https://www.sec.gov/files/dera/data/financial-statement-data-sets/{key}.zip"
-            path = sec_history.download(url, sec_history.DIRECTORY / f"{key}.zip")
-            report[key] = sec_history.import_quarter(path, url, ciks, facts=False)
-            print(key, report[key], flush=True)
-    return report
+    return quarter_ingest.ingest_quarters(
+        bulk_rules.quarter_keys(period.years), ciks, download=_download_quarter,
+        import_quarter=_import_quarter, facts=False, report={"ciks": len(ciks)}, log=_log)
 
 
 def annual_report_symbol_evidence(limit: int, period: Period = P2010) -> dict:
@@ -248,11 +213,7 @@ def annual_report_symbol_evidence(limit: int, period: Period = P2010) -> dict:
     """
     if limit < 0:
         raise ValueError("limit must be nonnegative")
-    with storage.get_connection() as conn:
-        rows = conn.execute(
-            "SELECT symbol,cik,valid_from,valid_to,status FROM historical_identity_intervals "
-            "WHERE source_id=? AND status IN ('unresolved','corroborated_candidate')",
-            (period.identity_source,)).fetchall()
+    rows = _ingest_selection().intervals(period.identity_source, ("unresolved", "corroborated_candidate"))
     nominated = {(row["label"], row["cik"]) for row in identity_nominations()}
     # Unresolved intervals, plus nominations still resting on one SEC ticker
     # observation; community-name corroborations are left as they are.
@@ -299,12 +260,7 @@ def fetch_issuer_name_histories(limit: int, period: Period = P2010) -> dict:
     """Cache SEC's official name chain for still-unresolved historical CIKs."""
     if limit < 0:
         raise ValueError("limit must be nonnegative")
-    with storage.get_connection() as conn:
-        ciks = [row[0] for row in conn.execute(
-            "SELECT DISTINCT cik FROM historical_identity_intervals "
-            "WHERE source_id=? AND status='unresolved' AND cik IN "
-            "(SELECT cik FROM sec_bulk_submissions GROUP BY cik HAVING COUNT(*)>=2) ORDER BY cik",
-            (period.identity_source,))]
+    ciks = _ingest_selection().unresolved_ciks_with_filings(period.identity_source)
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "identity_submissions"
     cached = fetched = failed = 0
     for cik in ciks:
@@ -318,7 +274,7 @@ def fetch_issuer_name_histories(limit: int, period: Period = P2010) -> dict:
         try:
             sec_history.download(url, path)
             payload = json.loads(path.read_text(encoding="utf-8"))
-            if identity.normalize_cik(payload["cik"]) != cik:
+            if normalize_cik(payload["cik"]) != cik:
                 raise ValueError("SEC submissions issuer CIK mismatch")
             fetched += 1
         except (requests.RequestException, OSError, ValueError, KeyError) as exc:

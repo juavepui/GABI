@@ -52,6 +52,8 @@ lectura local por lotes y migración/escritura atómicas; la selección de CIK,
 los checkpoints y el escaneo de identidad mantienen su compatibilidad.
 [F7.12](f7-storage-reads.md) retira las escrituras de esquema de las lecturas
 de `storage` y de las métricas EDGAR cacheadas; las escrituras siguen en sus fachadas.
+[F7.13](f7-sec-quarter-ingest.md) extrae la selección de CIK y de covers, los
+checkpoints trimestrales y la recuperación de instancias XBRL del archivo SEC.
 
 ## Responsabilidades y entregas
 

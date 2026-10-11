@@ -202,9 +202,7 @@
     "gabi.historical_period.Period",
     "gabi.historical_period.get",
     "gabi.historical_ticker_corrections.identity_nominations",
-    "gabi.identity",
     "gabi.sec_history",
-    "gabi.storage",
     "pathlib",
     "requests"
   ],
@@ -525,12 +523,10 @@
     "gabi.config",
     "gabi.edgar",
     "gabi.historical_archive",
-    "gabi.storage",
     "lxml",
     "pandas",
     "pathlib",
-    "requests",
-    "sqlite3"
+    "requests"
   ],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",
