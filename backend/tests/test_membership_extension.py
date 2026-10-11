@@ -1,6 +1,7 @@
 import copy
 import json
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -117,8 +118,8 @@ def test_renamed_price_series_excludes_later_prices_but_keeps_adjusting_splits(m
     monkeypatch.setattr(history_refresh.yf, "Ticker", lambda s: Ticker())
     monkeypatch.setattr(identity, "resolve", lambda *a: {"entity_id": None})
     saved = {}
-    monkeypatch.setattr(history_refresh.storage, "upsert_prices", lambda s, f, **kw: saved.update(prices=f))
-    monkeypatch.setattr(history_refresh.storage, "upsert_splits", lambda s, f, **kw: saved.update(splits=f))
+    monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(
+        prices=lambda s, f, **kw: saved.update(prices=f), splits=lambda s, f, **kw: saved.update(splits=f)))
     assert history_refresh.refresh_prices("OLD", "NEW", "2026-01-03", "2025-11-11") == 1
     assert saved["prices"].index.max() == pd.Timestamp("2025-11-10")
     assert saved["splits"] == {"2026-01-02": 2.}
@@ -136,8 +137,8 @@ def test_empty_provider_rows_cannot_erase_cached_close(monkeypatch):
     monkeypatch.setattr(history_refresh.yf, "Ticker", lambda s: Ticker())
     monkeypatch.setattr(identity, "resolve", lambda *a: {"entity_id": None})
     saved = {}
-    monkeypatch.setattr(history_refresh.storage, "upsert_prices", lambda s, f, **kw: saved.update(prices=f))
-    monkeypatch.setattr(history_refresh.storage, "upsert_splits", lambda *a, **kw: None)
+    monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(
+        prices=lambda s, f, **kw: saved.update(prices=f), splits=lambda *a, **kw: None))
     assert history_refresh.refresh_prices("AAA", "AAA", "2026-09-23") == 1
     assert list(saved["prices"].index) == [pd.Timestamp("2026-09-21")]
 
@@ -150,9 +151,10 @@ def test_share_class_cache_requires_matching_adjustments(monkeypatch, different_
     target = source.iloc[:5].copy()
     if different_basis:
         target["adj_close"] *= .5
-    monkeypatch.setattr(history_refresh.storage, "get_prices", lambda s: source if "." in s else target)
+    monkeypatch.setattr(history_refresh, "cached_data", SimpleNamespace(
+        prices=lambda cache, s: source if "." in s else target))
     saved = {}
-    monkeypatch.setattr(history_refresh.storage, "upsert_prices", lambda s, f: saved.update({s: f}))
+    monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(prices=lambda s, f: saved.update({s: f})))
     result = history_refresh.restore_share_class_spelling("2026-09-23")
     if different_basis:
         assert result == saved == {}

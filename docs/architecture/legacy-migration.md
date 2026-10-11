@@ -54,6 +54,8 @@ los checkpoints y el escaneo de identidad mantienen su compatibilidad.
 de `storage` y de las métricas EDGAR cacheadas; las escrituras siguen en sus fachadas.
 [F7.13](f7-sec-quarter-ingest.md) extrae la selección de CIK y de covers, los
 checkpoints trimestrales y la recuperación de instancias XBRL del archivo SEC.
+[F7.14](f7-legacy-facades.md) retira `storage` y otras dependencias planas de
+`edgar_sync`, `entity_master`, `screener`, `live_ledger` e `history_refresh`.
 
 ## Responsabilidades y entregas
 

@@ -23,20 +23,12 @@ el pasado exige CIK explícito para acreditar identidad: el mapa SEC actual
 no demuestra identidad histórica. Véase docs/entity-identity.md."""
 import pandas as pd
 
-from . import edgar, identity, storage
+from gabi.application.market import sector_snapshots as sector_queries
+from gabi.infrastructure.storage import entity_snapshots as snapshot_storage
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS entity_snapshots (
-    symbol TEXT NOT NULL,
-    cik TEXT,
-    name TEXT,
-    sector TEXT,
-    industry TEXT,
-    effective_date TEXT NOT NULL,
-    PRIMARY KEY (symbol, effective_date)
-);
-CREATE INDEX IF NOT EXISTS idx_entity_snapshots_symbol ON entity_snapshots (symbol, effective_date);
-"""
+from . import edgar, identity
+
+SCHEMA = snapshot_storage.SCHEMA
 
 
 def record_snapshot(universe_df: pd.DataFrame, effective_date: str = None) -> int:
@@ -75,15 +67,7 @@ def record_snapshot(universe_df: pd.DataFrame, effective_date: str = None) -> in
                 "name": row.get("name"), "sector": row.get("sector"), "industry": row.get("industry"),
                 "cik": cik, "effective_date": effective_date,
             }))
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        conn.executemany(
-            "INSERT OR REPLACE INTO entity_snapshots (symbol, cik, name, sector, industry, effective_date) "
-            "VALUES (?,?,?,?,?,?)", rows,
-        )
-        for entity_id, symbol, payload in attributed:
-            identity.put_observations(conn, entity_id, "sector", symbol, [payload], "observed-universe-snapshot")
-        conn.commit()
+    identity.sector_snapshots().record(rows, attributed)
     return len(rows)
 
 
@@ -100,47 +84,4 @@ def get_sector_asof(symbols: list, as_of_date: str, *, strict_identity: bool = F
     fecha histórica, y da el mismo sector que el comportamiento anterior
     (sector actual). Símbolos sin ninguna foto (ej. deslistados antes de
     que existiera este mecanismo) devuelven sector=None, igual que antes."""
-    result = {s: {"sector": None, "industry": None, "name": None, "cik": None,
-                  "effective_date": None, "is_approximate": True} for s in symbols}
-    if not symbols:
-        return result
-    legacy_symbols = []
-    for symbol in symbols:
-        resolved = identity.resolve(symbol, as_of_date)
-        if resolved["entity_id"]:
-            frame = identity.observations(resolved["entity_id"], "sector")
-            if not frame.empty:
-                before = frame[frame["effective_date"] <= as_of_date]
-                chosen = (before.sort_values("effective_date").iloc[-1] if not before.empty
-                          else frame.sort_values("effective_date").iloc[0])
-                result[symbol] = {key: chosen.get(key) for key in
-                                  ("sector", "industry", "name", "cik", "effective_date")}
-                result[symbol]["is_approximate"] = before.empty
-        elif not strict_identity and not identity.has_aliases(symbol):
-            legacy_symbols.append(symbol)
-    symbols = legacy_symbols
-    if not symbols:
-        return result
-    placeholders = ",".join("?" * len(symbols))
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, cik, name, sector, industry, effective_date FROM entity_snapshots "
-            f"WHERE symbol IN ({placeholders})", list(symbols),
-        ).fetchall()
-    if not rows:
-        return result
-    df = pd.DataFrame(rows, columns=["symbol", "cik", "name", "sector", "industry", "effective_date"])
-    for symbol, group in df.groupby("symbol"):
-        on_or_before = group[group["effective_date"] <= as_of_date]
-        if not on_or_before.empty:
-            chosen = on_or_before.loc[on_or_before["effective_date"].idxmax()]
-            is_approximate = False
-        else:
-            chosen = group.loc[group["effective_date"].idxmin()]
-            is_approximate = True
-        result[symbol] = {
-            "sector": chosen["sector"], "industry": chosen["industry"], "name": chosen["name"],
-            "cik": chosen["cik"], "effective_date": chosen["effective_date"], "is_approximate": is_approximate,
-        }
-    return result
+    return sector_queries.sector_as_of(identity, identity.sector_snapshots(), symbols, as_of_date, strict_identity=strict_identity)

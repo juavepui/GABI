@@ -6,7 +6,6 @@ The reviewed membership ledger deliberately has a fixed verification horizon.
 import hashlib
 import json
 import shutil
-import sqlite3
 from datetime import UTC, datetime, timedelta
 from io import StringIO
 
@@ -14,7 +13,13 @@ import pandas as pd
 import requests
 import yfinance as yf
 
-from . import config, data_fetch, edgar, macro, storage, universe
+from gabi.application.market import cached_data
+from gabi.infrastructure.storage.backups import backup_once
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+from . import config, data_fetch, edgar, macro, universe
 from .domain.market import freshness
 from .membership_extension import LEDGER_PATH, extend_membership, symbols
 
@@ -29,18 +34,17 @@ def period_symbols(history: pd.DataFrame, start: str, end: str) -> list[str]:
     return sorted(set().union(*(symbols(s) for s in selected["tickers"])))
 
 
+def _cache() -> SqliteCacheReads:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteCacheReads(config.DB_PATH)
+
+
+def _writes() -> SqliteCacheWrites:
+    return SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC))
+
+
 def database_coverage() -> dict:
-    with storage.get_connection() as conn:
-        result = {}
-        for table, column in [("prices", "date"), ("edgar_facts", "filed_date"), ("macro_series", "date")]:
-            row = conn.execute(f"SELECT COUNT(*),MIN({column}),MAX({column}) FROM {table}").fetchone()
-            result[table] = dict(zip(["rows", "first", "last"], row, strict=True))
-        result["macro_by_series"] = {
-            sid: {"first": lo, "last": hi, "rows": count}
-            for sid, lo, hi, count in conn.execute(
-                "SELECT series_id,MIN(date),MAX(date),COUNT(*) FROM macro_series GROUP BY series_id")
-        }
-        return result
+    return _cache().table_coverage()
 
 
 def restore_share_class_spelling(end: str) -> dict:
@@ -52,7 +56,8 @@ def restore_share_class_spelling(end: str) -> dict:
     restored = {}
     for original in ("BRK.B", "BF.B"):
         canonical = original.replace(".", "-")
-        source, target = storage.get_prices(original), storage.get_prices(canonical)
+        cache = _cache()
+        source, target = cached_data.prices(cache, original), cached_data.prices(cache, canonical)
         if source.empty or target.empty:
             continue
         overlap = source.index.intersection(target.index).sort_values()[-5:]
@@ -68,7 +73,7 @@ def restore_share_class_spelling(end: str) -> dict:
             continue
         frame = missing.rename(columns={"open": "Open", "high": "High", "low": "Low", "close": "Close",
                                         "adj_close": "Adj Close", "volume": "Volume"})
-        storage.upsert_prices(canonical, frame)
+        _writes().prices(canonical, frame)
         restored[canonical] = {"source_symbol": original, "dates": missing.index.strftime("%Y-%m-%d").tolist()}
     return restored
 
@@ -90,9 +95,10 @@ def refresh_prices(symbol: str, download_symbol: str, end: str, valid_to: str | 
         raise ValueError("No prices before cutoff")
     from . import identity
     owner = identity.resolve(symbol, datetime.now(UTC).date().isoformat())["entity_id"]
-    storage.upsert_prices(symbol, frame, entity_id=owner)
+    writes = _writes()
+    writes.prices(symbol, frame, entity_id=owner)
     # Later splits also adjust earlier prices, even after a ticker rename.
-    storage.upsert_splits(symbol, splits, entity_id=owner)
+    writes.splits(symbol, splits, entity_id=owner)
     return len(frame)
 
 
@@ -112,8 +118,7 @@ def run() -> dict:
         (directory / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     # A SQLite backup includes committed WAL pages, unlike a plain file copy.
-    with storage.get_connection() as conn, sqlite3.connect(directory / "gabi_before.db") as backup:
-        conn.backup(backup)
+    backup_once(config.DB_PATH, directory / "gabi_before.db")
     for path in [universe.HISTORICAL_MEMBERSHIP_CACHE, config.SP500_CACHE, edgar.CIK_CACHE]:
         if path.exists():
             shutil.copy2(path, directory / path.name)
@@ -141,8 +146,7 @@ def run() -> dict:
     live = edgar.get_cik_map(force_refresh=True)
     live_ciks = dict(zip(live["symbol"], live["cik"], strict=True))
     former_issuers = json.loads(LEDGER_PATH.with_name("former_issuers_2025_2026.json").read_text(encoding="utf-8"))
-    with storage.get_connection() as conn:
-        stored_ciks = dict(conn.execute("SELECT symbol,cik FROM edgar_metrics"))
+    stored_ciks = SqliteSecReads(config.DB_PATH).stored_ciks()
     renamed = {e["removed"]: e for e in ledger["events"] if e["kind"] in {"ticker_change", "merger_rename"}}
     ciks, blocked = {}, {}
     for symbol in targets:
@@ -159,7 +163,7 @@ def run() -> dict:
     report["identity_unresolved"] = blocked
     report["successor_sources"] = list(renamed.values())
     end = (pd.Timestamp(report["latest_completed_session"]) + timedelta(days=1)).date().isoformat()
-    coverage = storage.get_price_coverage(targets + [config.BENCHMARK_SYMBOL])
+    coverage = cached_data.price_coverage(_cache(), targets + [config.BENCHMARK_SYMBOL])
     report["prices"] = {"updated": {}, "failed": {}, "preserved_inactive": []}
     for i, symbol in enumerate(targets + [config.BENCHMARK_SYMBOL], 1):
         event = renamed.get(symbol)
@@ -192,7 +196,7 @@ def run() -> dict:
     report["edgar"].update(refreshed=len(ciks) - len(failures), failed=failures)
     save()
 
-    existing_fundamentals = storage.get_fundamentals_fetched_at(current["symbol"].tolist())
+    existing_fundamentals = cached_data.fundamentals_fetched_at(_cache(), current["symbol"].tolist())
     missing_fundamentals = [s for s in current["symbol"] if s not in existing_fundamentals]
     report["yahoo_fundamentals"] = {
         "requested": missing_fundamentals,
@@ -216,7 +220,7 @@ def run() -> dict:
             report["macro"]["failed"][sid] = "FRED download failed; API key omitted from log"
         save()
     report["after"] = database_coverage()
-    report["current_price_coverage"] = storage.get_price_coverage(current["symbol"].tolist())
+    report["current_price_coverage"] = cached_data.price_coverage(_cache(), current["symbol"].tolist())
     report["completed_at"] = datetime.now(UTC).isoformat()
     save()
     print(f"Report saved: {directory / 'report.json'}", flush=True)

@@ -1,4 +1,5 @@
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -95,7 +96,7 @@ def test_record_and_get_recent_update_errors_roundtrip(tmp_path, monkeypatch):
 def test_get_recent_update_errors_excludes_entries_older_than_window(tmp_path, monkeypatch):
     _isolate_db(tmp_path, monkeypatch)
     import gabi.storage as storage_mod
-    old_iso = (storage_mod.datetime.now(storage_mod.UTC) - storage_mod.timedelta(days=10)).isoformat()
+    old_iso = (storage_mod.datetime.now(storage_mod.UTC) - timedelta(days=10)).isoformat()
     with storage.get_connection() as conn:
         conn.executescript(storage.SCHEMA)
         conn.execute(
@@ -113,7 +114,7 @@ def test_record_update_errors_prunes_entries_older_than_retention(tmp_path, monk
     _isolate_db(tmp_path, monkeypatch)
     import gabi.storage as storage_mod
     very_old = (storage_mod.datetime.now(storage_mod.UTC)
-                - storage_mod.timedelta(days=storage.UPDATE_ERRORS_RETENTION_DAYS + 1)).isoformat()
+                - timedelta(days=storage.UPDATE_ERRORS_RETENTION_DAYS + 1)).isoformat()
     with storage.get_connection() as conn:
         conn.executescript(storage.SCHEMA)
         conn.execute(

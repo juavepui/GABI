@@ -92,7 +92,6 @@
     "concurrent.futures",
     "gabi.config",
     "gabi.data_fetch._classify_error",
-    "gabi.edgar_sync",
     "gabi.identity",
     "gabi.storage",
     "gabi.sync_state",
@@ -100,15 +99,11 @@
     "requests"
   ],
   "backend/src/gabi/edgar_sync.py": [
-    "gabi.edgar",
-    "gabi.identity",
-    "gabi.storage",
-    "gabi.sync_state"
+    "gabi.edgar"
   ],
   "backend/src/gabi/entity_master.py": [
     "gabi.edgar",
     "gabi.identity",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/evidence_catalog.py": [
@@ -306,13 +301,11 @@
     "gabi.membership_extension.LEDGER_PATH",
     "gabi.membership_extension.extend_membership",
     "gabi.membership_extension.symbols",
-    "gabi.storage",
     "gabi.universe",
     "io",
     "pandas",
     "requests",
     "shutil",
-    "sqlite3",
     "yfinance"
   ],
   "backend/src/gabi/identity.py": [
@@ -332,13 +325,11 @@
   "backend/src/gabi/live_ledger.py": [
     "gabi.app_mode",
     "gabi.config",
-    "gabi.edgar",
     "gabi.evidence_confidence",
     "gabi.history_refresh.last_completed_session",
     "gabi.identity",
     "gabi.research_lab",
     "gabi.screener",
-    "gabi.storage",
     "numpy",
     "os",
     "pandas",
@@ -495,11 +486,8 @@
     "gabi.data_fetch",
     "gabi.edgar",
     "gabi.entity_master",
-    "gabi.macro",
-    "gabi.metrics",
     "gabi.risk",
     "gabi.scoring",
-    "gabi.storage",
     "gabi.technicals",
     "gabi.universe",
     "pandas"
@@ -567,7 +555,6 @@
   "backend/src/gabi/stats_rigor.py": [],
   "backend/src/gabi/storage.py": [
     "gabi.config",
-    "gabi.identity.put_observations",
     "pandas",
     "sqlite3"
   ],

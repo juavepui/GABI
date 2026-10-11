@@ -10,6 +10,7 @@ Yahoo son poco fiables o directamente no existen:
     de la empresa (justo lo que recomienda cualquier guía de aprendizaje).
 """
 import concurrent.futures as cf
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -18,6 +19,7 @@ import pandas as pd
 import requests
 
 import gabi.domain.market.sec_facts as _sec_facts
+from gabi.application.administration.sync_events import SyncAttempt
 from gabi.application.market.sec_cik import current_map
 from gabi.application.market.sec_cik import resolve as resolve_cik
 from gabi.application.market.sec_reads import (
@@ -31,10 +33,12 @@ from gabi.application.market.sec_reads import (
 )
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
-from gabi.application.market.sec_xbrl import fetch_complete
+from gabi.application.market.sec_xbrl import fetch_complete, synchronize
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
-from . import config, storage
+from . import config, storage, sync_state
 from .data_fetch import _classify_error
 
 TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
@@ -434,12 +438,29 @@ def get_edgar_fetched_at(symbols: list) -> dict:
     return fetched_at(_fact_reader(), symbols)
 
 
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def synchronize_issuer(symbol: str, cik: str, *, full_refresh: bool = False) -> dict:
+    """Incremental issuer companyfacts sync with the same stores as the worker; path captured per operation."""
+    events = OperationSyncEvents(config.DB_PATH)
+
+    def attempt(source: str, entity: str, dataset: str) -> SyncAttempt:
+        return SyncAttempt(source, entity, dataset, events, now=_now, wall_time=time.perf_counter,
+                           cpu_time=time.thread_time)
+
+    return synchronize(symbol, cik, store=SqliteXbrl(config.DB_PATH, _now), submissions=fetch_submissions,
+                       companyfacts=fetch_company_facts, checkpoint=events.get, attempt_factory=attempt,
+                       retry=sync_state.retry, fingerprint=sync_state.fingerprint, now=_now,
+                       full_refresh=full_refresh, fiscal_alignment=fiscal_alignment_enabled())
+
+
 def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,
                       *, full_refresh: bool = False, incremental: bool = True, synchronize_one=None) -> dict:
     def operation(symbol, cik):
         if incremental:
-            from . import edgar_sync
-            return (synchronize_one or edgar_sync.run_one)(symbol, cik, full_refresh=full_refresh)
+            return (synchronize_one or synchronize_issuer)(symbol, cik, full_refresh=full_refresh)
         metrics, rows = _fetch_one(symbol, cik)
         upsert_edgar_metrics(symbol, cik, metrics)
         upsert_edgar_facts(symbol, rows, cik=cik)
@@ -463,7 +484,6 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
 
 class _SelectionStore:
     def current(self, symbols):
-        from . import sync_state
         failures = {}
         for entity, dataset in sync_state.failed_datasets("sec"):
             if dataset.startswith("facts:") and dataset.removeprefix("facts:") in symbols:

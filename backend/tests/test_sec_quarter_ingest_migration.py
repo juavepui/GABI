@@ -16,7 +16,8 @@ from lxml import etree
 
 from gabi import config, historical_identity_audit, sec_history
 from gabi.domain.market.identity import normalize_cik
-from gabi.infrastructure.storage.sec_quarter_ingest import JsonQuarterReport, SqliteSecIngestSelection, backup_once
+from gabi.infrastructure.storage.backups import backup_once
+from gabi.infrastructure.storage.sec_quarter_ingest import JsonQuarterReport, SqliteSecIngestSelection
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/sec_quarter_ingest_migration.json").read_text(encoding="utf-8"))
 SOURCE = historical_identity_audit.CANDIDATE_SOURCE
