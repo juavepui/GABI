@@ -3,6 +3,7 @@
 import hashlib
 import json
 import sqlite3
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
@@ -47,7 +48,8 @@ def http(monkeypatch):
 
     monkeypatch.setattr(requests, 'get', get)
     monkeypatch.setattr(sec_history.edgar, '_headers', lambda: {'User-Agent': 'temporary-test'})
-    monkeypatch.setattr(sec_history.time, 'sleep', lambda delay: calls.append(delay))
+    monkeypatch.setattr(config, 'SEC_USER_AGENT', 'temporary-test')
+    monkeypatch.setattr(time, 'sleep', lambda delay: calls.append(delay))
     monkeypatch.setattr('requests.sessions.Session.request', lambda *a, **k: pytest.fail('Real network'))
     return calls
 
@@ -62,7 +64,7 @@ def test_captured_download_parity_and_cached_idempotence(tmp_path, monkeypatch, 
     reference = json.loads((Path(__file__).parent / 'fixtures/sec_archive_download_migration.json')
                            .read_text(encoding='utf-8'))
     clock = SimpleNamespace(now=lambda zone: NOW)
-    scope = dict(Path=Path, hashlib=hashlib, time=sec_history.time, requests=requests,
+    scope = dict(Path=Path, hashlib=hashlib, time=time, requests=requests,
                  edgar=sec_history.edgar, storage=storage, ensure_schema=sec_history.ensure_schema,
                  datetime=clock, UTC=UTC)
     exec(reference['download'], scope)

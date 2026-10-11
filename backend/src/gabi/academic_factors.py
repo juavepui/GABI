@@ -1,18 +1,14 @@
 """Compatibility for frozen factor engines; modern jobs use explicit factor ports."""
-import io
-import zipfile
-
 import pandas as pd
-import requests
 
 from gabi.application.research.academic_factors import refresh_factors
 from gabi.domain.research import academic_factors as _implementation
+from gabi.infrastructure.providers import academic_factors as factor_source
+from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
 
 from . import config
 
-FF5_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_5_Factors_2x3_CSV.zip"
-MOM_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip"
-_HEADERS = {"User-Agent": "GABI (herramienta personal de análisis, uso no comercial)"}
+FF5_URL, MOM_URL = factor_source.FF5_URL, factor_source.MOM_URL
 DEFAULT_FACTOR_COLS = list(_implementation.DEFAULT_FACTOR_COLS)
 _parse_monthly_csv = _implementation._parse_monthly_csv
 quarterly_period_return = _implementation.quarterly_period_return
@@ -20,11 +16,12 @@ _ols = _implementation._ols
 
 
 def _download_zip_csv(url: str) -> str:
-    resp = requests.get(url, timeout=30, headers=_HEADERS)
-    resp.raise_for_status()
-    z = zipfile.ZipFile(io.BytesIO(resp.content))
-    with z.open(z.namelist()[0]) as f:
-        return f.read().decode("utf-8", errors="replace")
+    return FrenchFactorSource().csv(url)
+
+
+class _Source:
+    def tables(self) -> tuple[str, str]:
+        return _download_zip_csv(FF5_URL), _download_zip_csv(MOM_URL)
 
 
 class _Cache:
@@ -38,11 +35,6 @@ class _Cache:
     def save(self, frame: pd.DataFrame) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
         frame.to_csv(self.path)
-
-
-class _Source:
-    def tables(self) -> tuple[str, str]:
-        return _download_zip_csv(FF5_URL), _download_zip_csv(MOM_URL)
 
 
 def fetch_ff_factors(force_refresh: bool = False) -> pd.DataFrame:

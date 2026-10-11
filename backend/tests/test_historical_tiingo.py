@@ -73,15 +73,23 @@ def test_wiki_cache_imports_as_traded_rows_without_storing_the_key(db, monkeypat
 
 
 def test_monthly_cap_answer_is_not_saved_as_a_series(db, monkeypatch, tmp_path):
+    import requests
+
     class Response:
         status_code = 200
         content = b'{"detail": "You have run over your 500 symbol look up for this month."}'
 
-        def json(self):
-            return json.loads(self.content)
+        def __enter__(self):
+            return self
 
-    monkeypatch.setattr(historical_tiingo, "_headers", lambda: {})
-    monkeypatch.setattr(historical_tiingo.requests, "get", lambda *a, **k: Response())
+        def __exit__(self, *exc):
+            return False
+
+        def iter_content(self, chunk_size):
+            yield self.content
+
+    monkeypatch.setattr(historical_tiingo.config, "load_tiingo_key", lambda: "test-key")
+    monkeypatch.setattr(requests, "get", lambda *a, **k: Response())
     result = historical_tiingo.fetch(["AAA", "BBB"], pace=0, window="smallmid")
     assert result["stopped_at"] == "AAA" and result["fetched"] == 0
     assert not list((tmp_path / "tiingo" / "smallmid").glob("*.json"))

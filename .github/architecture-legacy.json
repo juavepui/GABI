@@ -5,9 +5,7 @@
   ],
   "backend/src/gabi/academic_factors.py": [
     "gabi.config",
-    "io",
-    "pandas",
-    "requests"
+    "pandas"
   ],
   "backend/src/gabi/app_mode.py": [
     "gabi.blind_validation",
@@ -93,8 +91,7 @@
     "gabi.config",
     "gabi.identity",
     "gabi.sync_state",
-    "pandas",
-    "requests"
+    "pandas"
   ],
   "backend/src/gabi/edgar_sync.py": [
     "gabi.edgar"
@@ -268,8 +265,7 @@
     "gabi.storage",
     "gabi.sync_state",
     "pandas",
-    "pathlib",
-    "requests"
+    "pathlib"
   ],
   "backend/src/gabi/historical_validation.py": [
     "exchange_calendars",
@@ -287,8 +283,7 @@
   "backend/src/gabi/historical_wiki.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "pathlib",
-    "requests"
+    "pathlib"
   ],
   "backend/src/gabi/history_refresh.py": [
     "gabi.config",
@@ -300,9 +295,7 @@
     "gabi.membership_extension.extend_membership",
     "gabi.membership_extension.symbols",
     "gabi.universe",
-    "io",
     "pandas",
-    "requests",
     "shutil",
     "yfinance"
   ],
@@ -316,8 +309,7 @@
     "gabi.config",
     "gabi.edgar",
     "gabi.storage",
-    "pandas",
-    "requests"
+    "pandas"
   ],
   "backend/src/gabi/live_ledger.py": [
     "gabi.app_mode",
@@ -337,8 +329,7 @@
     "gabi.config",
     "gabi.storage",
     "gabi.sync_state",
-    "pandas",
-    "requests"
+    "pandas"
   ],
   "backend/src/gabi/membership_extension.py": [
     "pandas",
@@ -587,9 +578,7 @@
     "gabi.historical_pit",
     "gabi.historical_ticker_corrections.correct_symbols",
     "gabi.membership_extension.apply_reviewed_extension",
-    "io",
-    "pandas",
-    "requests"
+    "pandas"
   ],
   "backend/src/gabi/valuation_expectations.py": [],
   "backend/src/gabi/value_hypothesis.py": [

@@ -60,6 +60,8 @@ checkpoints trimestrales y la recuperación de instancias XBRL del archivo SEC.
 a dominio, aplicación e infraestructura; `sync_state` conserva el marcapasos único.
 [F7.16](f7-edgar-writes.md) retira `storage` de `edgar` (escrituras, resoluciones CIK)
 y extrae Company Facts por CIK de `sec_history`.
+[F7.17](f7-http-providers.md) aplica [ADR 0004](../adr/0004-legacy-provider-delegation.md):
+las fachadas delegan su HTTP en proveedores acotados de `infrastructure/providers`.
 
 ## Responsabilidades y entregas
 

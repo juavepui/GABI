@@ -1,9 +1,9 @@
 """Obtiene el universo de empresas a analizar (constituyentes del S&P 500),
 tanto el actual como (aproximado) el de una fecha pasada."""
-from io import BytesIO
-
 import pandas as pd
-import requests
+
+from gabi.infrastructure.providers import sp500_sources
+from gabi.infrastructure.providers.sp500_sources import SP500Sources
 
 from . import config
 from .historical_ticker_corrections import correct_symbols
@@ -13,11 +13,7 @@ from .membership_extension import apply_reviewed_extension
 # Se prefiere sobre el scraping directo de Wikipedia porque es más ligero
 # (no requiere parsear HTML) y algunas redes bloquean/filtran wikipedia.org
 # específicamente mientras dejan pasar github.com sin problema.
-GITHUB_CSV_URL = (
-    "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/"
-    "data/constituents.csv"
-)
-WIKI_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+GITHUB_CSV_URL, WIKI_URL = sp500_sources.GITHUB_CSV_URL, sp500_sources.WIKI_URL
 
 # Composición histórica día a día desde 1996 (una fila por fecha en la que
 # cambió el índice, con la lista completa de tickers de ese momento —
@@ -26,10 +22,7 @@ WIKI_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 # pieza que evita el sesgo de supervivencia al reconstruir un ranking
 # histórico, pero no está tan verificada como Wikipedia/GitHub para el
 # universo ACTUAL — por eso se usa solo para fechas pasadas, nunca para "hoy".
-HISTORICAL_MEMBERSHIP_URL = (
-    "https://raw.githubusercontent.com/hanshof/sp500_constituents/main/"
-    "sp_500_historical_components.csv"
-)
+HISTORICAL_MEMBERSHIP_URL = sp500_sources.HISTORICAL_MEMBERSHIP_URL
 HISTORICAL_MEMBERSHIP_CACHE = config.DATA_DIR / "sp500_historical_membership.csv"
 
 
@@ -72,13 +65,18 @@ def get_sp500_constituents(force_refresh: bool = False) -> pd.DataFrame:
     )
 
 
+def _sources() -> SP500Sources:
+    # The compatibility user agent is read per operation, never mutated.
+    return SP500Sources(config.SEC_USER_AGENT)
+
+
 def _fetch_from_github_csv() -> pd.DataFrame:
-    return _normalize(pd.read_csv(GITHUB_CSV_URL))
+    return _normalize(_sources().constituents_csv())
 
 
 def _fetch_from_wikipedia() -> pd.DataFrame:
-    tables = pd.read_html(WIKI_URL)
-    return _normalize(tables[0])
+    sources = _sources()
+    return _normalize(sources.wikipedia_tables(sources.wikipedia_page())[0])
 
 
 def get_historical_membership(force_refresh: bool = False) -> pd.DataFrame:
@@ -88,9 +86,7 @@ def get_historical_membership(force_refresh: bool = False) -> pd.DataFrame:
     if not force_refresh and HISTORICAL_MEMBERSHIP_CACHE.exists():
         history = pd.read_csv(HISTORICAL_MEMBERSHIP_CACHE, dtype={"date": str})
         return apply_reviewed_extension(history)
-    resp = requests.get(HISTORICAL_MEMBERSHIP_URL, timeout=60)
-    resp.raise_for_status()
-    history = pd.read_csv(BytesIO(resp.content), dtype={"date": str})
+    history = _sources().historical_membership()
     if HISTORICAL_MEMBERSHIP_CACHE.exists():
         cached = pd.read_csv(HISTORICAL_MEMBERSHIP_CACHE, dtype={"date": str})
         # A stale upstream download must not erase a newer local extension.

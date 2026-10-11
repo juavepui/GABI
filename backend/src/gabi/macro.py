@@ -12,15 +12,13 @@ inversión, las relaciones causales típicas: tipos, inflación, curva, crédito
 from datetime import UTC, date, datetime
 
 import pandas as pd
-import requests
 
 from gabi.application.administration.fred import synchronize
 from gabi.domain.market import fred
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers.fred import FredSource
 
 from . import config, storage
-
-FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 
 # id FRED -> metadatos. units_param sigue la convención de la API de FRED
 # ("lin" = sin transformar, "pc1" = variación % interanual).
@@ -44,18 +42,8 @@ def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 
                  *, observation_start: str | None = None, include_missing: bool = False) -> list:
     """[(fecha, valor), ...] más reciente primero. Descarta observaciones sin
     dato ('.' es como FRED marca los huecos)."""
-    params = {
-        "series_id": series_id, "api_key": api_key, "file_type": "json",
-        "sort_order": "desc", "limit": limit, "units": units,
-    }
-    if observation_start:
-        params["observation_start"] = observation_start
-    resp = requests.get(FRED_BASE_URL, params=params, timeout=20)
-    if resp.status_code in (400, 401, 403):
-        raise ValueError("FRED ha rechazado la petición (revisa que la API key sea correcta)")
-    resp.raise_for_status()
-    data = resp.json()
-    return fred.observations(data, include_missing=include_missing)
+    return FredSource().fetch(series_id, api_key, units, limit, observation_start=observation_start,
+                              include_missing=include_missing, require_complete=False)
 
 
 def upsert_series(series_id: str, observations: list):
@@ -133,8 +121,7 @@ def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=
 # publicación programada y discreta (una vez al mes, en fecha conocida de
 # antemano), no una serie que se actualiza a diario como DGS10 o FEDFUNDS:
 # ahí "próxima actualización" no es un evento, es continuo.
-RELEASE_IDS = {"CPIAUCSL": 10}
-RELEASE_DATES_URL = "https://api.stlouisfed.org/fred/release/dates"
+RELEASE_IDS = dict(fred.RELEASE_IDS)
 
 
 _parse_next_release_date = fred.parse_next_release_date
@@ -144,18 +131,7 @@ def fetch_next_release_date(series_id: str, api_key: str) -> date | None:
     oficial que FRED indexa, ej. BLS para CPI) -- None si `series_id` no
     tiene un release_id mapeado en RELEASE_IDS o si FRED no devuelve ninguna
     fecha futura."""
-    release_id = RELEASE_IDS.get(series_id)
-    if release_id is None:
-        return None
-    today = date.today()
-    params = {
-        "release_id": release_id, "api_key": api_key, "file_type": "json",
-        "realtime_start": today.isoformat(), "sort_order": "asc",
-        "include_release_dates_with_no_data": "true",
-    }
-    resp = requests.get(RELEASE_DATES_URL, params=params, timeout=20)
-    resp.raise_for_status()
-    return _parse_next_release_date(resp.json(), today)
+    return FredSource().next_release(series_id, api_key, date.today())
 
 
 def get_snapshot() -> pd.DataFrame:

@@ -18,14 +18,13 @@ import json
 import time
 from pathlib import Path
 
-import requests
-
-from gabi.application.research.wiki_prices import CachedResponse, FetchResponse
+from gabi.application.research.wiki_prices import CachedResponse
 from gabi.application.research.wiki_prices import fetch as _fetch
 from gabi.application.research.wiki_prices import import_cached as _import_cached
-from gabi.domain.research.wiki_prices import COLUMNS, END_EXCLUSIVE, START, URL
 from gabi.domain.research.wiki_prices import SOURCE_ID as SOURCE_ID
-from gabi.domain.research.wiki_prices import wiki_ticker as _wiki_ticker
+from gabi.domain.research.wiki_prices import URL as URL
+from gabi.domain.research.wiki_prices import wiki_ticker as _wiki_ticker  # noqa: F401 - public compatibility name
+from gabi.infrastructure.providers.wiki_prices import NasdaqWikiSource
 
 from . import config, historical_archive
 
@@ -50,17 +49,6 @@ class _Cache:
             yield CachedResponse(path.stem, json.loads(data.decode("utf8")), hashlib.sha256(data).hexdigest())
 
 
-class _Source:
-    def request(self, symbol, api_key):
-        params = {"ticker": _wiki_ticker(symbol), "date.gte": START, "date.lt": END_EXCLUSIVE,
-                  "qopts.columns": COLUMNS, "api_key": api_key}
-        try:
-            response = requests.get(URL, params=params, timeout=90)
-        except requests.RequestException as exc:
-            return FetchResponse(error_name=type(exc).__name__)
-        return FetchResponse(response.status_code, response.json() if response.status_code == 200 else None)
-
-
 class _Archive:
     def register(self, source_id, metadata):
         historical_archive.register_source(source_id, metadata)
@@ -70,7 +58,7 @@ class _Archive:
 
 
 def fetch(symbols: list[str], *, pause: float = 0.5) -> dict:
-    return _fetch(symbols, _Cache(), _Source(), api_key=config.load_nasdaq_data_link_key(),
+    return _fetch(symbols, _Cache(), NasdaqWikiSource(), api_key=config.load_nasdaq_data_link_key(),
                   wait=time.sleep, progress=lambda message: print(message, flush=True), pause=pause)
 
 
