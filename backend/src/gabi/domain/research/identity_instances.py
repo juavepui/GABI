@@ -5,7 +5,7 @@ from bisect import bisect_right
 from dataclasses import dataclass
 
 from gabi.domain.market.identity import normalize_cik, normalize_symbol
-from gabi.domain.research.historical_identity_audit import _candidate_map
+from gabi.domain.research.historical_identity_audit import _candidate_map, _date
 from gabi.domain.research.ticker_corrections import correct_symbols
 
 TICKER_RE = re.compile(r'[A-Z][A-Z0-9-]{0,11}\Z')
@@ -89,3 +89,32 @@ def summary(records: list[dict], failures: dict[str, int]) -> dict:
         historical_names=sum(row['historical_name'] is not None for row in records), candidate_crosscheck=statuses,
         conflict_examples=[{key: row[key] for key in ('symbol', 'cik', 'filed_date')} for row in records
                            if row['candidate_status'] in {'conflicts', 'ambiguous'}][:20], rejections=failures)
+
+
+def select_cover_filings(candidates: list[tuple], filings: list[tuple], unresolved: list[tuple], *,
+                         start: str, end_exclusive: str) -> tuple[dict[str, tuple], int]:
+    """Three filings spread over each candidate's tenure, plus every filing of unresolved intervals.
+
+    ``candidates``: (symbol, cik, added, removed); ``filings``: (accn, cik, filed, instance)
+    ordered by filing date; ``unresolved``: (cik, valid_from, valid_to). Never broadens an
+    ambiguous ticker/CIK association beyond the unresolved interval itself.
+    """
+    by_cik: dict[str, list[tuple]] = {}
+    for row in filings:
+        by_cik.setdefault(normalize_cik(row[1]), []).append(row)
+    selected: dict[str, tuple] = {}
+    missing = 0
+    for _symbol, cik, added, removed in candidates:
+        first = max(_date(added) or start, start)
+        last = min(_date(removed) or end_exclusive, end_exclusive)
+        eligible = [row for row in by_cik.get(normalize_cik(cik), []) if first <= row[2] < last]
+        if len(eligible) < 2:
+            missing += 1
+            continue
+        for index in {0, len(eligible) // 2, len(eligible) - 1}:
+            selected[eligible[index][0]] = eligible[index]
+    for cik, valid_from, valid_to in unresolved:
+        for row in by_cik.get(normalize_cik(cik), []):
+            if valid_from <= row[2] < valid_to:
+                selected[row[0]] = row
+    return selected, missing

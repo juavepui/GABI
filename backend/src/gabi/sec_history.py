@@ -5,8 +5,6 @@ only original XBRL contexts supply exact dates for GABI's fact schema.
 """
 import argparse
 import json
-import math
-import sqlite3
 import time
 import zipfile
 from datetime import UTC, datetime
@@ -17,11 +15,13 @@ import requests
 from lxml import etree
 
 from gabi.application.research import sec_archive_download, sec_bulk
+from gabi.application.research import sec_quarter_ingest as quarter_ingest
 from gabi.domain.research import sec_bulk as bulk_rules
 from gabi.infrastructure.storage import sec_bulk as bulk_storage
+from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
 from gabi.infrastructure.storage.sec_archive_download import SecArchiveFiles, SqliteSecArchiveProvenance
 
-from . import config, edgar, historical_archive, storage
+from . import config, edgar, historical_archive
 
 SCHEMA = bulk_storage.SCHEMA
 DIRECTORY = config.DATA_DIR / "history_refresh" / "validation_1996_2015"
@@ -55,87 +55,39 @@ def import_quarter(path: Path, source_url: str, ciks: set[str], *, facts: bool =
 
 def parse_instance(content: bytes, *, cik: str, accn: str, filed_date: str, form: str, fp: str, fy: str) -> list[dict]:
     """Consolidated standard facts only; exact XBRL context dates, never NUM dates."""
-    parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=False)
-    root = etree.fromstring(content, parser)
-    ns = {"x": "http://www.xbrl.org/2003/instance"}
-    contexts = {}
-    for context in root.findall("x:context", ns):
-        identifier = context.find("x:entity/x:identifier", ns)
-        if identifier is None or (identifier.text or "").strip().zfill(10) != cik:
-            continue
-        if context.find("x:entity/x:segment", ns) is not None or context.find("x:scenario", ns) is not None:
-            continue
-        period = context.find("x:period", ns)
-        if period is None:
-            continue
-        instant, start, end = (period.findtext(f"x:{tag}", namespaces=ns) for tag in ["instant", "startDate", "endDate"])
-        instant, start, end = ((value.strip() if value else None) for value in (instant, start, end))
-        end = instant or end
-        if end:
-            datetime.fromisoformat(end)
-            if start:
-                datetime.fromisoformat(start)
-            contexts[context.get("id")] = (start or "", end)
-    units = {}
-    for unit in root.findall("x:unit", ns):
-        measures = unit.findall("x:measure", ns)
-        if len(measures) == 1 and unit.find("x:divide", ns) is None:
-            units[unit.get("id")] = (measures[0].text or "").strip().split(":")[-1]
-    records: dict = {}
-    conflicts = set()
-    for node in root:
-        if not isinstance(node.tag, str):
-            continue
-        qname = etree.QName(node)
-        tag = qname.localname
-        if tag not in TRACKED or not any(f"/{part}/" in (qname.namespace or "") for part in ["us-gaap", "dei"]):
-            continue
-        context = contexts.get(node.get("contextRef"))
-        unit = units.get(node.get("unitRef"))
-        if not context or unit != ("shares" if tag in edgar.SHARES_TAGS else "USD"):
-            continue
-        try:
-            val = float(node.text or "")
-        except ValueError:
-            continue
-        if not math.isfinite(val):
-            continue
-        key = (tag, unit, *context)
-        if key in records and records[key]["val"] != val:
-            conflicts.add(key)
-        records[key] = dict(tag=tag, unit=unit, start_date=context[0], end_date=context[1], val=val,
-                            form=form, fp=fp, fy=int(fy) if fy else None, filed_date=filed_date, accn=accn)
-    return [row for key, row in records.items() if key not in conflicts]
+    return bulk_rules.instance_facts(*ingest_storage.decode_instance(content), cik=cik, accn=accn,
+                                     filed_date=filed_date, form=form, fp=fp, fy=fy,
+                                     tracked=TRACKED, shares=set(edgar.SHARES_TAGS))
+
+
+def _selection() -> ingest_storage.SqliteSecIngestSelection:
+    # The compatibility setting is captured per operation, never mutated.
+    return ingest_storage.SqliteSecIngestSelection(config.DB_PATH)
+
+
+def _download_to_directory(url: str, name: str) -> Path:
+    return download(url, DIRECTORY / name)
+
+
+def _import(path: Path, url: str, ciks: set[str], facts: bool) -> dict:
+    return import_quarter(path, url, ciks, facts=facts)
 
 
 def target_ciks() -> set[str]:
-    with storage.get_connection() as conn:
-        return {r[0] for r in conn.execute("SELECT DISTINCT cik FROM historical_issuer_candidates WHERE observed_from<'2016-01-01'")}
+    return _selection().candidate_ciks_before("2016-01-01")
 
 
 def run_bulk() -> dict:
     DIRECTORY.mkdir(parents=True, exist_ok=True)
-    backup_path = DIRECTORY / "before_validation.db"
-    if not backup_path.exists():
-        with storage.get_connection() as conn, sqlite3.connect(backup_path) as backup:
-            conn.backup(backup)
-    report_path = DIRECTORY / "bulk_report.json"
-    report = json.loads(report_path.read_text()) if report_path.exists() else {}
-    ciks = target_ciks()
-    for year in range(2009, 2016):
-        for quarter in range(1, 5):
-            key = f"{year}q{quarter}"
-            if report.get(key, {}).get("status") == "complete":
-                continue
-            url = f"https://www.sec.gov/files/dera/data/financial-statement-data-sets/{key}.zip"
-            try:
-                path = download(url, DIRECTORY / f"{key}.zip")
-                report[key] = {"status": "complete", **import_quarter(path, url, ciks)}
-            except (requests.RequestException, ValueError, zipfile.BadZipFile) as exc:
-                report[key] = {"status": "failed", "error": str(exc)[:180]}
-            report_path.write_text(json.dumps(report, indent=2) + "\n")
-            print(key, report[key], flush=True)
-    return report
+    ingest_storage.backup_once(config.DB_PATH, DIRECTORY / "before_validation.db")
+    return quarter_ingest.ingest_quarters(
+        bulk_rules.quarter_keys(range(2009, 2016)), target_ciks(), download=_download_to_directory,
+        import_quarter=_import, checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "bulk_report.json"),
+        errors=(requests.RequestException, ValueError, zipfile.BadZipFile), log=_log)
+
+
+def _log(*values) -> None:
+    print(*values, flush=True)
 
 
 def recover_instances(limit: int = 100, *, quarterly: bool = False, unmatched: bool = False) -> dict:
@@ -145,34 +97,17 @@ def recover_instances(limit: int = 100, *, quarterly: bool = False, unmatched: b
         "quality": "exact_contexts_from_original_SEC_XBRL; ticker_identity_not_certified",
         "provenance": "sec_archive_files and instances_report.json contain URLs and file hashes",
     })
-    with storage.get_connection() as conn:
-        forms = ["10-Q", "10-Q/A", "10-K/A", "10-K"] if unmatched else ["10-Q", "10-Q/A", "10-K/A"] if quarterly else ["10-K"]
-        placeholders = ",".join("?" for _ in forms)
-        submissions = pd.read_sql_query(f"SELECT * FROM sec_bulk_submissions WHERE form IN ({placeholders}) ORDER BY filed_date,accn", conn, params=forms)
-        existing = {a for a, in conn.execute("SELECT DISTINCT accn FROM edgar_facts UNION SELECT DISTINCT json_extract(payload_json,'$.accn') FROM historical_facts")}
-    report_path = DIRECTORY / "instances_report.json"
-    report = json.loads(report_path.read_text()) if report_path.exists() else {}
-    if unmatched:
-        accessions = set(pd.read_csv(DIRECTORY / "sec-unmatched.csv").accn)
-        missing = submissions[submissions.accn.isin(accessions)]
-    else:
-        missing = submissions[~submissions.accn.isin(existing)]
-    for r in missing.head(limit).itertuples(index=False):
-        if report.get(r.accn, {}).get("status") == "complete" and not unmatched:
-            continue
-        url = f"https://www.sec.gov/Archives/edgar/data/{int(r.cik)}/{r.accn.replace('-', '')}/{r.instance}"
-        try:
-            path = download(url, DIRECTORY / "instances" / f"{r.accn}.xml")
-            rows = parse_instance(path.read_bytes(), cik=r.cik, accn=r.accn, filed_date=r.filed_date,
-                                  form=r.form, fp=r.fp, fy=r.fy)
-            # The source symbol is explicitly a CIK placeholder, never a ticker alias.
-            historical_archive.import_sec_facts("sec-original-xbrl", f"CIK{r.cik}", r.cik, rows, source_url=url)
-            report[r.accn] = {"status": "complete", "cik": r.cik, "rows": len(rows), "url": url}
-        except (requests.RequestException, ValueError, etree.XMLSyntaxError) as exc:
-            report[r.accn] = {"status": "failed", "error": str(exc)[:180], "url": url}
-        report_path.write_text(json.dumps(report, indent=2) + "\n")
-        print(r.accn, report[r.accn]["status"], flush=True)
-    return report
+    reviewed = set(pd.read_csv(DIRECTORY / "sec-unmatched.csv").accn) if unmatched else None
+
+    def import_facts(symbol: str, cik: str, rows: list[dict], url: str) -> None:
+        # The source symbol is explicitly a CIK placeholder, never a ticker alias.
+        historical_archive.import_sec_facts("sec-original-xbrl", symbol, cik, rows, source_url=url)
+
+    return quarter_ingest.recover_instances(
+        _selection(), limit=limit, quarterly=quarterly, unmatched=reviewed,
+        checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "instances_report.json"),
+        fetch=lambda url, name: _download_to_directory(url, name).read_bytes(), parse=parse_instance, import_facts=import_facts,
+        errors=(requests.RequestException, ValueError, etree.XMLSyntaxError), log=_log)
 
 
 def recover_companyfacts_gaps() -> dict:
