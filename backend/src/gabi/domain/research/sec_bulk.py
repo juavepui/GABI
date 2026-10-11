@@ -105,3 +105,10 @@ def instance_facts(contexts: list[tuple], units: list[tuple], nodes: list[tuple]
         records[key] = dict(tag=tag, unit=unit, start_date=context[0], end_date=context[1], val=val,
                             form=form, fp=fp, fy=int(fy) if fy else None, filed_date=filed_date, accn=accn)
     return [row for key, row in records.items() if key not in conflicts]
+
+
+COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
+
+
+def companyfacts_url(cik: str) -> str:
+    return COMPANYFACTS_URL.format(cik=cik)

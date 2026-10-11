@@ -58,6 +58,8 @@ checkpoints trimestrales y la recuperación de instancias XBRL del archivo SEC.
 `edgar_sync`, `entity_master`, `screener`, `live_ledger` e `history_refresh`.
 [F7.15](f7-sync-state.md) lleva clasificación de errores, reintentos y checkpoints
 a dominio, aplicación e infraestructura; `sync_state` conserva el marcapasos único.
+[F7.16](f7-edgar-writes.md) retira `storage` de `edgar` (escrituras, resoluciones CIK)
+y extrae Company Facts por CIK de `sec_history`.
 
 ## Responsabilidades y entregas
 

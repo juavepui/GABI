@@ -414,3 +414,15 @@ def extract_latest_filings(submissions: dict) -> dict:
                 )
                 break
     return result
+
+
+def issuer_companyfacts_rows(payload: dict, cik: str, *, tracked: list, shares: list,
+                             filed_window: tuple[str, str] | None = None) -> list:
+    """Raw USD and share facts of one issuer's Company Facts, refusing a payload of another CIK."""
+    if str(payload["cik"]).zfill(10) != cik:
+        raise ValueError("Company Facts issuer mismatch")
+    rows = _extract_raw_facts(payload, tracked) + _extract_raw_facts(payload, shares, unit="shares")
+    if filed_window:
+        start, end = filed_window
+        rows = [row for row in rows if row.get("filed_date") and start <= row["filed_date"] < end]
+    return rows
