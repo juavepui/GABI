@@ -10,6 +10,8 @@ import pandas as pd
 from gabi.domain.market.sec_xbrl import KEYS
 
 FACT_COLUMNS = ["symbol", "tag", "unit", "start_date", "end_date", "val", "form", "fp", "fy", "filed_date", "accn"]
+METRIC_COLUMNS = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url",
+                  "latest_10q_date", "latest_10q_url", "fetched_at"]
 
 
 class SqliteSecReads:
@@ -142,3 +144,29 @@ class SqliteSecReads:
                     params += (as_of,)
                 result.update({symbol: day for symbol, day in self._rows(db, sql + " GROUP BY symbol", params) if day})
         return result
+
+    def _by_symbol(self, table: str, columns: str, symbols: list[str], *, distinct: bool = False) -> list[tuple]:
+        # Both tables key rows by symbol (PK or DISTINCT), so each batch returns at most its size.
+        symbols = list(dict.fromkeys(symbols))
+        if not symbols:
+            return []
+        rows: list[tuple] = []
+        with self._read() as (db, tables):
+            if db is None or table not in tables:
+                return rows
+            db.execute("BEGIN")  # every batch observes one revision
+            for start in range(0, len(symbols), self.batch_size):
+                chunk = symbols[start:start + self.batch_size]
+                rows += self._rows(db, f"SELECT {'DISTINCT ' if distinct else ''}{columns} FROM {table} "
+                                   "WHERE symbol IN (" + ",".join("?" for _ in chunk) + ")", tuple(chunk))
+        return rows
+
+    def cached_metrics(self, symbols: list[str]) -> dict[str, dict]:
+        rows = self._by_symbol("edgar_metrics", "symbol," + ",".join(METRIC_COLUMNS), symbols)
+        return {row[0]: dict(zip(METRIC_COLUMNS, row[1:])) for row in rows}
+
+    def fetched_at(self, symbols: list[str]) -> dict[str, object]:
+        return dict(self._by_symbol("edgar_metrics", "symbol,fetched_at", symbols))
+
+    def symbols_with_facts(self, symbols: list[str]) -> set[str]:
+        return {symbol for symbol, in self._by_symbol("edgar_facts", "symbol", symbols, distinct=True)}

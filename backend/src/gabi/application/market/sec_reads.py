@@ -1,7 +1,7 @@
 """Local SEC queries over a specific read port; no implicit synchronization."""
 
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from typing import Protocol
 
 import pandas as pd
@@ -16,6 +16,30 @@ class FactReader(Protocol):
               as_of: str | None = None, unit: str | None = None) -> pd.DataFrame: ...
     def issuer(self, cik: str, as_of: str) -> pd.DataFrame: ...
     def last_filed(self, symbols: list[str], as_of: str | None = None) -> dict[str, str]: ...
+
+
+class CachedMetricsReader(Protocol):
+    def cached_metrics(self, symbols: list[str]) -> dict[str, dict]: ...
+    def fetched_at(self, symbols: list[str]) -> dict[str, object]: ...
+    def symbols_with_facts(self, symbols: list[str]) -> set[str]: ...
+
+
+def cached_metrics(reader: CachedMetricsReader, symbols: list[str]) -> dict[str, dict]:
+    return reader.cached_metrics(symbols) if symbols else {}
+
+
+def fetched_at(reader: CachedMetricsReader, symbols: list[str]) -> dict[str, datetime | None]:
+    result: dict[str, datetime | None] = {}
+    for symbol, stamp in (reader.fetched_at(symbols) if symbols else {}).items():
+        try:
+            result[symbol] = datetime.fromisoformat(stamp)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            result[symbol] = None
+    return result
+
+
+def symbols_with_facts(reader: CachedMetricsReader, symbols: list[str]) -> set[str]:
+    return reader.symbols_with_facts(symbols) if symbols else set()
 
 
 class IssuerSnapshotReader(Protocol):
