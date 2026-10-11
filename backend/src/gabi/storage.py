@@ -43,6 +43,11 @@ def get_connection():
         conn.close()
 
 
+def database_path():
+    """The compatibility database, read per operation for facades that may not import config."""
+    return config.DB_PATH
+
+
 def _writer() -> SqliteCacheWrites:
     # The compatibility path is captured per operation, never mutated.
     return SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC), error_retention_days=UPDATE_ERRORS_RETENTION_DAYS)

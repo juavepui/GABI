@@ -34,12 +34,12 @@ from gabi.application.market.sec_reads import (
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete, synchronize
+from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
 from . import config, storage, sync_state
-from .data_fetch import _classify_error
 
 TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
@@ -478,7 +478,7 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
                     error = exc
                 yield futures[future], error
     return run_batch(symbols, cik_by_symbol, operation=operation, runner=runner,
-                     classify_error=lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+                     classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
                      progress_cb=progress_cb)
 
 
@@ -510,7 +510,7 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
         return fetch_edgar_batch(symbols, ciks, **options)
     return refresh_selection(symbols, store=_SelectionStore(), mapping=get_cik_map,
                              resolutions=_CikResolutions(), download_batch=download,
-                             classify_error=lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+                             classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
                              now=lambda: datetime.now(UTC), default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
                              force=force, max_age_hours=max_age_hours, progress_cb=progress_cb,
                              as_of=as_of, full_refresh=full_refresh)

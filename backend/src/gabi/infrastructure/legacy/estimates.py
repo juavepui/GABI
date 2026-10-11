@@ -4,6 +4,7 @@ import concurrent.futures as cf
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+from gabi.domain.market.source_errors import classify
 from gabi.domain.research import estimates
 from gabi.infrastructure.storage.estimates import SqliteEstimateAnalysis, store_estimate_snapshot
 
@@ -40,7 +41,6 @@ def sync_estimates(data_dir: Path, symbols: list, max_workers: int = 6) -> dict:
     """Descarga (red) earnings_estimate/revenue_estimate/eps_revisions por símbolo y los
     persiste con un ÚNICO `captured_at` compartido por toda la llamada -- así todas las
     filas forman un batch cross-seccional genuino (mismo instante de captura)."""
-    from gabi.data_fetch import _classify_error
 
     failed: dict = {}
     if not symbols:
@@ -57,6 +57,6 @@ def sync_estimates(data_dir: Path, symbols: list, max_workers: int = 6) -> dict:
                 )
                 store_estimate_snapshot(data_dir, rows)
             except Exception as exc:
-                _, reason = _classify_error(exc, service="Yahoo Finance")
+                _, reason = classify(str(exc), "Yahoo Finance")
                 failed[sym] = reason
     return failed

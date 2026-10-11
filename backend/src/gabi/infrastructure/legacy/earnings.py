@@ -8,6 +8,7 @@ import yfinance as yf
 
 from gabi.application.market.earnings_sync import EarningsAttempt
 from gabi.application.market.earnings_sync import sync_earnings_surprises as run_sync
+from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.storage.earnings import SqliteEarnings
 
 
@@ -31,9 +32,7 @@ class YahooEarnings:
 
 
 def classify_error(exc: Exception) -> str:
-    from gabi.data_fetch import _classify_error
-
-    return _classify_error(exc, service="Yahoo Finance")[1]
+    return classify(str(exc), "Yahoo Finance")[1]
 
 
 def sync_earnings_surprises(data_dir: Path, symbols: list[str], *, today: date | None = None,

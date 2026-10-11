@@ -16,9 +16,9 @@ import requests
 
 from gabi.application.administration.fred import synchronize
 from gabi.domain.market import fred
+from gabi.domain.market.source_errors import classify
 
 from . import config, storage
-from .data_fetch import _classify_error
 
 FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 
@@ -124,7 +124,7 @@ def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=
 
     return synchronize(_Repository(), SERIES, config.load_fred_key,
                        fetch_series, sync.get, sync.Attempt, sync.retry,
-                       lambda exc: _classify_error(exc, service="FRED")[1],
+                       lambda exc: classify(str(exc), "FRED")[1],
                        lambda: datetime.now(UTC), force=force, max_age_hours=max_age_hours,
                        full_refresh=full_refresh, progress_cb=progress_cb)
 
