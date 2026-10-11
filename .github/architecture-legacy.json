@@ -91,7 +91,6 @@
   "backend/src/gabi/edgar.py": [
     "concurrent.futures",
     "gabi.config",
-    "gabi.data_fetch._classify_error",
     "gabi.identity",
     "gabi.storage",
     "gabi.sync_state",
@@ -316,7 +315,6 @@
   "backend/src/gabi/insider.py": [
     "concurrent.futures",
     "gabi.config",
-    "gabi.data_fetch._classify_error",
     "gabi.edgar",
     "gabi.storage",
     "pandas",
@@ -338,7 +336,6 @@
   ],
   "backend/src/gabi/macro.py": [
     "gabi.config",
-    "gabi.data_fetch._classify_error",
     "gabi.storage",
     "gabi.sync_state",
     "pandas",
@@ -569,8 +566,6 @@
     "sqlite3"
   ],
   "backend/src/gabi/sync_state.py": [
-    "gabi.data_fetch.RETRYABLE_CATEGORIES",
-    "gabi.data_fetch._classify_error",
     "gabi.storage",
     "requests"
   ],

@@ -12,9 +12,12 @@ from datetime import UTC, datetime
 import pandas as pd
 import yfinance as yf
 
+from gabi.domain.market.source_errors import RETRYABLE_CATEGORIES as RETRYABLE
+from gabi.domain.market.source_errors import classify
+
 from . import config, identity, storage
 
-RETRYABLE_CATEGORIES = {"rate_limit", "timeout", "connection"}
+RETRYABLE_CATEGORIES = set(RETRYABLE)
 RETRY_BACKOFF_SECONDS = 1.5
 
 
@@ -24,21 +27,8 @@ def normalize_symbol(symbol: str) -> str:
 
 
 def _classify_error(exc: Exception, service: str = "Yahoo Finance") -> tuple[str, str]:
-    """Devuelve (categoria, mensaje_en_español) a partir de una excepción.
-    Genérica: la reutiliza también gabi.edgar para clasificar fallos de SEC EDGAR."""
-    msg = str(exc)
-    lower = msg.lower()
-    if "429" in msg or "too many requests" in lower or "rate limit" in lower:
-        return "rate_limit", f"Límite de peticiones de {service} alcanzado (rate limit)"
-    if "delisted" in lower or "no data found" in lower or "no price data" in lower or "not found" in lower:
-        return "not_found", "Sin datos disponibles (ticker posiblemente deslistado, incorrecto o sin cobertura)"
-    if "timeout" in lower or "timed out" in lower:
-        return "timeout", f"Tiempo de espera agotado al contactar con {service}"
-    if "connection" in lower or "connect" in lower or "network" in lower or "resolve" in lower:
-        return "connection", f"Error de conexión de red con {service}"
-    if "json" in lower or "expecting value" in lower:
-        return "invalid_response", "Respuesta inválida o vacía del servidor"
-    return "other", (msg[:200] if msg else "Error desconocido")
+    """Devuelve (categoria, mensaje_en_español) a partir de una excepción (regla compartida en dominio)."""
+    return classify(str(exc), service)
 
 
 def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:

@@ -1,6 +1,9 @@
 """Original event/checkpoint policy with explicit time and previous state."""
 
+import hashlib
+import json
 import re
+from datetime import datetime
 
 
 def validate_status(status: str) -> None:
@@ -28,3 +31,23 @@ def event_checkpoint(source: str, entity: str, dataset: str, previous: dict, now
         # An error must never advance the successful watermark or validation token.
         checkpoint = {**previous, "status": status, "checked_at": now, "error": reason}
     return event, checkpoint
+
+
+def fingerprint(value) -> str:
+    """Stable SHA-256 of JSON-compatible content; non-finite numbers count as absent."""
+    safe = json.loads(json.dumps(value, default=str), parse_constant=lambda _: None)
+    return hashlib.sha256(json.dumps(safe, sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def due(checkpoint: dict, hours: float, now: datetime) -> bool:
+    if checkpoint.get("status") == "failed" or not checkpoint.get("last_success"):
+        return True
+    return (now - datetime.fromisoformat(checkpoint["last_success"])).total_seconds() >= hours * 3600
+
+
+def totals(events: list[dict]) -> dict:
+    return {**{key: sum(event.get(key, 0) for event in events)
+               for key in ("calls", "payload_bytes", "seconds", "cpu_seconds", "new", "revised", "unchanged")},
+            "statuses": {status: sum(event["status"] == status for event in events)
+                         for status in ("new", "revised", "unchanged", "failed")},
+            "skipped": sum(event["skipped"] for event in events)}

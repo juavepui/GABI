@@ -56,6 +56,8 @@ de `storage` y de las métricas EDGAR cacheadas; las escrituras siguen en sus fa
 checkpoints trimestrales y la recuperación de instancias XBRL del archivo SEC.
 [F7.14](f7-legacy-facades.md) retira `storage` y otras dependencias planas de
 `edgar_sync`, `entity_master`, `screener`, `live_ledger` e `history_refresh`.
+[F7.15](f7-sync-state.md) lleva clasificación de errores, reintentos y checkpoints
+a dominio, aplicación e infraestructura; `sync_state` conserva el marcapasos único.
 
 ## Responsabilidades y entregas
 

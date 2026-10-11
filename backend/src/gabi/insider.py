@@ -28,9 +28,9 @@ from gabi.domain.market.insiders import (
     parse_form4_xml as parse_form4_xml,
 )
 from gabi.domain.market.insiders import summarize_insider_activity as _summarize
+from gabi.domain.market.source_errors import classify
 
 from . import config, edgar, storage
-from .data_fetch import _classify_error
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS insider_transactions (
@@ -176,6 +176,6 @@ class _Store:
 
 
 def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: int = 4, progress_cb=None) -> dict:
-    return sync_insiders(symbols, _Source(), _Store(), lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+    return sync_insiders(symbols, _Source(), _Store(), lambda exc: classify(str(exc), "SEC EDGAR")[1],
                          now=lambda: datetime.now(UTC), max_age_hours=max_age_hours,
                          max_workers=max_workers, progress_cb=progress_cb)

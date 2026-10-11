@@ -5,6 +5,8 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
+from gabi.infrastructure.storage.bounded_reads import bounded_rows, read_only
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sync_checkpoints (
     source TEXT NOT NULL, entity TEXT NOT NULL, dataset TEXT NOT NULL,
@@ -69,3 +71,22 @@ class OperationSyncEvents:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with closing(sqlite3.connect(self.path, timeout=30)) as connection:
             SqliteSyncEvents(connection).save(event, checkpoint, skipped=skipped)
+
+    def _rows(self, table: str, query: str, params: tuple = (), *, max_rows: int = 1_000_000) -> list[tuple]:
+        with read_only(self.path, 2_000_000) as (db, tables):
+            if db is None or table not in tables:
+                return []
+            return bounded_rows(db, query, params, max_rows=max_rows, max_bytes=1024 * 1024 * 1024,
+                                max_field_bytes=2_000_000)
+
+    def events_since(self, event_id: int = 0) -> list[dict]:
+        return [json.loads(row[0]) for row in
+                self._rows("sync_events", "SELECT event_json FROM sync_events WHERE id>? ORDER BY id", (event_id,))]
+
+    def latest_event_id(self) -> int:
+        rows = self._rows("sync_events", "SELECT COALESCE(MAX(id),0) FROM sync_events")
+        return int(rows[0][0]) if rows else 0
+
+    def failed_datasets(self, source: str) -> set[tuple[str, str]]:
+        return set(self._rows("sync_checkpoints", "SELECT entity,dataset FROM sync_checkpoints WHERE source=? "
+                              "AND json_extract(state_json,'$.status')='failed'", (source,)))

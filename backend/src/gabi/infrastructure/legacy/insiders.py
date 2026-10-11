@@ -4,6 +4,7 @@ import concurrent.futures as cf
 from collections.abc import Callable
 
 from gabi.application.market.insider_sync import InsiderAttempt, fetch_transactions
+from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.providers.form4 import SecForm4Documents
 
 
@@ -42,9 +43,7 @@ class SecInsiders:
 
 
 def classify_error(exc: Exception) -> str:
-    from gabi.data_fetch import _classify_error
-
-    return _classify_error(exc, service="SEC EDGAR")[1]
+    return classify(str(exc), "SEC EDGAR")[1]
 
 
 def sec_user_agent() -> str:
