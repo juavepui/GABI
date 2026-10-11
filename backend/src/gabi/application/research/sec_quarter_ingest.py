@@ -100,3 +100,26 @@ def recover_instances(selection: IngestSelection, *, limit: int, quarterly: bool
         checkpoints.save(report)
         log(row.accn, report[row.accn]["status"])
     return report
+
+
+def ingest_companyfacts(ciks: Iterable[str], *, fetch: Callable[[str, str], dict],
+                        rows_for: Callable[[dict, str], list], save: Callable[[str, list, str], None],
+                        errors: tuple[type[BaseException], ...], with_url: bool,
+                        checkpoints: Checkpoints | None = None, log: Log = lambda *args: None) -> dict:
+    """Company Facts by CIK only, under a ``CIK##########`` placeholder symbol, never a ticker.
+
+    With ``checkpoints`` the whole report is saved after every issuer (it is not resumed).
+    """
+    report: dict = {}
+    for cik in ciks:
+        url = rules.companyfacts_url(cik)
+        try:
+            rows = rows_for(fetch(url, f"companyfacts/CIK{cik}.json"), cik)
+            save(cik, rows, url)
+            report[cik] = {"status": "complete", "rows": len(rows), **({"url": url} if with_url else {})}
+        except errors as exc:
+            report[cik] = {"status": "failed", "error": str(exc)[:180], **({"url": url} if with_url else {})}
+        if checkpoints:
+            checkpoints.save(report)
+            log(cik, report[cik]["status"])
+    return report

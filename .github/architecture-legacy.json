@@ -92,7 +92,6 @@
     "concurrent.futures",
     "gabi.config",
     "gabi.identity",
-    "gabi.storage",
     "gabi.sync_state",
     "pandas",
     "requests"

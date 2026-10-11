@@ -35,11 +35,13 @@ from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete, synchronize
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
-from . import config, storage, sync_state
+from . import config, sync_state
 
 TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
@@ -119,21 +121,8 @@ def _headers():
     return {"User-Agent": config.SEC_USER_AGENT}
 
 
-class _CikCache:
-    def exists(self):
-        return CIK_CACHE.exists()
-
-    def modified_at(self):
-        return CIK_CACHE.stat().st_mtime
-
-    def read(self):
-        return pd.read_csv(CIK_CACHE, dtype={"cik": str})
-
-    def save(self, frame):
-        config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-        pending = CIK_CACHE.with_suffix(".csv.tmp")
-        frame.to_csv(pending, index=False)
-        pending.replace(CIK_CACHE)
+def _cik_cache() -> FileCikMap:
+    return FileCikMap(CIK_CACHE)
 
 
 def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
@@ -145,7 +134,7 @@ def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
         resp.raise_for_status()
         return resp.json()
 
-    return current_map(_CikCache(), fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
+    return current_map(_cik_cache(), fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
                        sync_state.retry, lambda: sync_state.get("sec", "all", "ticker-map"),
                        sync_state.fingerprint, lambda: datetime.now(UTC).timestamp(),
                        force_refresh=force_refresh)
@@ -176,23 +165,17 @@ CREATE TABLE IF NOT EXISTS cik_resolutions (
 """
 
 
+def _resolutions() -> SqliteCikResolutions:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteCikResolutions(config.DB_PATH, _now)
+
+
 def _remember_cik_resolution(symbol: str, cik: str, title: str):
-    with storage.get_connection() as conn:
-        conn.executescript(RESOLUTIONS_SCHEMA)
-        conn.execute(
-            "INSERT OR REPLACE INTO cik_resolutions (symbol, cik, title, resolved_at) VALUES (?,?,?,?)",
-            (symbol, cik, title, datetime.now(UTC).isoformat()),
-        )
-        conn.commit()
+    _resolutions().remember(symbol, cik, title)
 
 
 def _get_cached_cik_resolution(symbol: str):
-    with storage.get_connection() as conn:
-        conn.executescript(RESOLUTIONS_SCHEMA)
-        row = conn.execute(
-            "SELECT cik, title FROM cik_resolutions WHERE symbol = ?", (symbol,),
-        ).fetchone()
-    return (row[0], row[1]) if row else (None, None)
+    return _resolutions().cached(symbol)
 
 
 def get_resolved_title(symbol: str):
@@ -213,22 +196,7 @@ def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
     que hoy recicla ese ticker sería peor que no tener datos."""
     if cik_map is None:
         cik_map = get_cik_map()
-    return resolve_cik(symbol, cik_map, _CikResolutions())
-
-
-class _CikResolutions:
-    def cached_many(self, symbols):
-        return {symbol: self.cached(symbol) for symbol in symbols}
-
-    def remember_many(self, values):
-        for symbol, (cik, title) in values.items():
-            self.remember(symbol, cik, title)
-
-    def remember(self, symbol, cik, title):
-        _remember_cik_resolution(symbol, cik, title)
-
-    def cached(self, symbol):
-        return _get_cached_cik_resolution(symbol)
+    return resolve_cik(symbol, cik_map, _resolutions())
 
 
 def fetch_company_facts(cik: str) -> dict:
@@ -256,29 +224,16 @@ _extract_instant_values = _sec_facts._extract_instant_values
 _extract_raw_facts = _sec_facts._extract_raw_facts
 
 
+def _xbrl() -> SqliteXbrl:
+    return SqliteXbrl(config.DB_PATH, _now)
+
+
 def upsert_edgar_facts(symbol: str, rows: list, *, cik: str | None = None):
     if not rows:
         return
     from . import identity
     entity_id = identity.ensure_entity(cik) if cik else None
-    with storage.get_connection() as conn:
-        conn.executescript(FACTS_SCHEMA)
-        conn.executemany(
-            "INSERT OR REPLACE INTO edgar_facts "
-            "(symbol, tag, unit, start_date, end_date, val, form, fp, fy, filed_date, accn) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            [
-                (
-                    symbol, r["tag"], r["unit"], r["start_date"], r["end_date"], r["val"],
-                    r["form"], r["fp"], r["fy"], r["filed_date"], r["accn"],
-                )
-                for r in rows
-            ],
-        )
-        if entity_id:
-            identity.put_observations(conn, entity_id, "edgar_facts", symbol, rows,
-                                      f"https://data.sec.gov/api/xbrl/companyfacts/CIK{identity.normalize_cik(cik)}.json")
-        conn.commit()
+    _xbrl().store_facts(symbol, rows, entity=entity_id, cik=cik)
 
 
 def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = None) -> pd.DataFrame:
@@ -402,22 +357,7 @@ def _fetch_one(symbol: str, cik: str) -> tuple:
 
 
 def upsert_edgar_metrics(symbol: str, cik: str, metrics: dict):
-    fetched_at = datetime.now(UTC).isoformat()
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        conn.execute(
-            "INSERT OR REPLACE INTO edgar_metrics "
-            "(symbol, cik, fetched_at, revenue_cagr_3y, fcf_cagr_3y, roic, "
-            "latest_10k_date, latest_10k_url, latest_10q_date, latest_10q_url) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (
-                symbol, cik, fetched_at,
-                metrics.get("revenue_cagr_3y"), metrics.get("fcf_cagr_3y"), metrics.get("roic"),
-                metrics.get("latest_10k_date"), metrics.get("latest_10k_url"),
-                metrics.get("latest_10q_date"), metrics.get("latest_10q_url"),
-            ),
-        )
-        conn.commit()
+    _xbrl().store_metrics(symbol, cik, metrics)
 
 
 def get_edgar_metrics(symbols: list) -> dict:
@@ -499,7 +439,7 @@ class _SelectionStore:
         return {entity for entity in entities if not identity.observations(entity, "edgar_facts").empty}
 
     def errors(self, failed):
-        storage.record_update_errors("sec_edgar", failed)
+        SqliteCacheWrites(config.DB_PATH, _now).update_errors("sec_edgar", failed)
 
 
 def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
@@ -509,8 +449,8 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
             options["synchronize_one"] = synchronize_one
         return fetch_edgar_batch(symbols, ciks, **options)
     return refresh_selection(symbols, store=_SelectionStore(), mapping=get_cik_map,
-                             resolutions=_CikResolutions(), download_batch=download,
+                             resolutions=_resolutions(), download_batch=download,
                              classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
-                             now=lambda: datetime.now(UTC), default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
+                             now=_now, default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
                              force=force, max_age_hours=max_age_hours, progress_cb=progress_cb,
                              as_of=as_of, full_refresh=full_refresh)

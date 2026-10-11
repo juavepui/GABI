@@ -16,6 +16,7 @@ from lxml import etree
 
 from gabi.application.research import sec_archive_download, sec_bulk
 from gabi.application.research import sec_quarter_ingest as quarter_ingest
+from gabi.domain.market.sec_facts import issuer_companyfacts_rows
 from gabi.domain.research import sec_bulk as bulk_rules
 from gabi.infrastructure.storage import sec_bulk as bulk_storage
 from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
@@ -111,6 +112,17 @@ def recover_instances(limit: int = 100, *, quarterly: bool = False, unmatched: b
         errors=(requests.RequestException, ValueError, etree.XMLSyntaxError), log=_log)
 
 
+def _companyfacts(url: str, name: str) -> dict:
+    return json.loads(_download_to_directory(url, name).read_text(encoding="utf-8"))
+
+
+def _issuer_rows(window: tuple[str, str] | None = None):
+    def rows(payload: dict, cik: str) -> list:
+        return issuer_companyfacts_rows(payload, cik, tracked=edgar.TRACKED_TAGS, shares=edgar.SHARES_TAGS,
+                                        filed_window=window)
+    return rows
+
+
 def recover_companyfacts_gaps() -> dict:
     """Resolve unmatched bulk issuers directly by CIK; no ticker mapping needed."""
     historical_archive.register_source("sec-companyfacts-gap-recovery", {
@@ -119,24 +131,14 @@ def recover_companyfacts_gaps() -> dict:
         "provenance": "companyfacts_gaps_report.json and sec_archive_files",
     })
     gaps = pd.read_csv(DIRECTORY / "sec-unmatched.csv", dtype={"cik": str})
-    report = {}
-    for cik in sorted(set(gaps.cik)):
-        url = edgar.COMPANYFACTS_URL.format(cik=cik)
-        try:
-            path = download(url, DIRECTORY / "companyfacts" / f"CIK{cik}.json")
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            if str(payload["cik"]).zfill(10) != cik:
-                raise ValueError("Company Facts issuer mismatch")
-            rows = edgar._extract_raw_facts(payload, edgar.TRACKED_TAGS)
-            rows += edgar._extract_raw_facts(payload, edgar.SHARES_TAGS, unit="shares")
-            rows = [r for r in rows if r.get("filed_date") and "2009-01-01" <= r["filed_date"] < "2016-01-01"]
-            historical_archive.import_sec_facts("sec-companyfacts-gap-recovery", f"CIK{cik}", cik, rows, source_url=url)
-            report[cik] = {"status": "complete", "rows": len(rows), "url": url}
-        except (requests.RequestException, ValueError) as exc:
-            report[cik] = {"status": "failed", "error": str(exc)[:180], "url": url}
-        (DIRECTORY / "companyfacts_gaps_report.json").write_text(json.dumps(report, indent=2) + "\n")
-        print(cik, report[cik]["status"], flush=True)
-    return report
+
+    def save(cik: str, rows: list, url: str) -> None:
+        historical_archive.import_sec_facts("sec-companyfacts-gap-recovery", f"CIK{cik}", cik, rows, source_url=url)
+
+    return quarter_ingest.ingest_companyfacts(
+        sorted(set(gaps.cik)), fetch=_companyfacts, rows_for=_issuer_rows(("2009-01-01", "2016-01-01")), save=save,
+        errors=(requests.RequestException, ValueError), with_url=True,
+        checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "companyfacts_gaps_report.json"), log=_log)
 
 
 def ingest_issuer_companyfacts(ciks: set[str]) -> dict:
@@ -146,21 +148,10 @@ def ingest_issuer_companyfacts(ciks: set[str]) -> dict:
     symbol, never under a ticker, so the legacy ticker-keyed table cannot mix
     a predecessor's facts with a later company reusing the symbol.
     """
-    report = {}
-    for cik in sorted(str(value).zfill(10) for value in ciks):
-        url = edgar.COMPANYFACTS_URL.format(cik=cik)
-        try:
-            path = download(url, DIRECTORY / "companyfacts" / f"CIK{cik}.json")
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            if str(payload["cik"]).zfill(10) != cik:
-                raise ValueError("Company Facts issuer mismatch")
-            rows = edgar._extract_raw_facts(payload, edgar.TRACKED_TAGS)
-            rows += edgar._extract_raw_facts(payload, edgar.SHARES_TAGS, unit="shares")
-            edgar.upsert_edgar_facts(f"CIK{cik}", rows, cik=cik)
-            report[cik] = {"status": "complete", "rows": len(rows)}
-        except (requests.RequestException, ValueError, KeyError) as exc:
-            report[cik] = {"status": "failed", "error": str(exc)[:180]}
-    return report
+    return quarter_ingest.ingest_companyfacts(
+        sorted(str(value).zfill(10) for value in ciks), fetch=_companyfacts, rows_for=_issuer_rows(),
+        save=lambda cik, rows, url: edgar.upsert_edgar_facts(f"CIK{cik}", rows, cik=cik),
+        errors=(requests.RequestException, ValueError, KeyError), with_url=False)
 
 
 if __name__ == "__main__":
