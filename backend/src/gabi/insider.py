@@ -15,7 +15,6 @@ que ver si la señal aporta algo con datos reales antes de dejar que vote."""
 from datetime import UTC, datetime
 
 import pandas as pd
-import requests
 
 from gabi.application.market.insider_sync import InsiderAttempt, fetch_transactions, sync_insiders
 from gabi.domain.market.insiders import (
@@ -29,6 +28,7 @@ from gabi.domain.market.insiders import (
 )
 from gabi.domain.market.insiders import summarize_insider_activity as _summarize
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers.form4 import SecForm4Documents
 
 from . import config, edgar, storage
 
@@ -68,9 +68,7 @@ class _Documents:
 
     @staticmethod
     def xml(url: str) -> str:
-        response = requests.get(url, headers={"User-Agent": config.SEC_USER_AGENT}, timeout=20)
-        response.raise_for_status()
-        return response.text
+        return SecForm4Documents(config.SEC_USER_AGENT).xml(url)
 
 
 def fetch_insider_transactions(symbol: str, cik: str, limit_filings: int = 20) -> list:

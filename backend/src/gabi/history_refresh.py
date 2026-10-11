@@ -7,13 +7,12 @@ import hashlib
 import json
 import shutil
 from datetime import UTC, datetime, timedelta
-from io import StringIO
 
 import pandas as pd
-import requests
 import yfinance as yf
 
 from gabi.application.market import cached_data
+from gabi.infrastructure.providers.sp500_sources import SP500Sources
 from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
@@ -128,10 +127,10 @@ def run() -> dict:
 
     history = pd.read_csv(universe.HISTORICAL_MEMBERSHIP_CACHE, dtype=str)
     extended = extend_membership(history, ledger)
-    current_response = requests.get(universe.WIKI_URL, headers={"User-Agent": config.SEC_USER_AGENT}, timeout=60)
-    current_response.raise_for_status()
-    (directory / "current.html").write_bytes(current_response.content)
-    current = universe._normalize(pd.read_html(StringIO(current_response.text))[0])
+    sources = SP500Sources(config.SEC_USER_AGENT)
+    page = sources.wikipedia_page()
+    (directory / "current.html").write_bytes(page)
+    current = universe._normalize(sources.wikipedia_tables(page)[0])
     if set(current["symbol"]) != set(ledger["endpoint_symbols"]):
         raise ValueError("Current constituents differ from reviewed endpoint; review new changes first")
     temporary = universe.HISTORICAL_MEMBERSHIP_CACHE.with_suffix(".csv.tmp")

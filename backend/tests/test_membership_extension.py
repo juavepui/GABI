@@ -60,13 +60,24 @@ def test_refresh_stale_upstream_keeps_local_extension(reviewed, monkeypatch, tmp
     monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", cache)
     monkeypatch.setattr(universe, "apply_reviewed_extension", lambda h: extend_membership(h, ledger))
 
+    import requests
+
     class Response:
         content = history.to_csv(index=False).encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
 
         def raise_for_status(self):
             pass
 
-    monkeypatch.setattr(universe.requests, "get", lambda *args, **kwargs: Response())
+        def iter_content(self, size):
+            yield self.content
+
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Response())
     pd.testing.assert_frame_equal(universe.get_historical_membership(force_refresh=True), extended)
     pd.testing.assert_frame_equal(pd.read_csv(cache), extended)
 

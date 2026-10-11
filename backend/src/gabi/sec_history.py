@@ -5,7 +5,6 @@ only original XBRL contexts supply exact dates for GABI's fact schema.
 """
 import argparse
 import json
-import time
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,6 +17,7 @@ from gabi.application.research import sec_archive_download, sec_bulk
 from gabi.application.research import sec_quarter_ingest as quarter_ingest
 from gabi.domain.market.sec_facts import issuer_companyfacts_rows
 from gabi.domain.research import sec_bulk as bulk_rules
+from gabi.infrastructure.providers.sec_archive import SecArchiveChunks
 from gabi.infrastructure.storage import sec_bulk as bulk_storage
 from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
 from gabi.infrastructure.storage.backups import backup_once
@@ -41,10 +41,7 @@ def download(url: str, path: Path) -> Path:
 
 
 def _download_chunks(url: str):
-    time.sleep(0.15)
-    with requests.get(url, headers=edgar._headers(), timeout=(20, 90), stream=True) as response:
-        response.raise_for_status()
-        yield from response.iter_content(1024 * 1024)
+    yield from SecArchiveChunks(config.SEC_USER_AGENT).chunks(url)
 
 
 date8 = bulk_rules.date8

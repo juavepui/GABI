@@ -149,11 +149,22 @@ def test_cik_map_cache_matches_capture(tmp_path, monkeypatch):
     payload = {"0": {"cik_str": 1, "ticker": "AAA", "title": "Alpha"}, "1": {"cik_str": 22, "ticker": "BRK-B", "title": "B"}}
 
     class Response:
+        status_code = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
         def raise_for_status(self):
             return None
 
         def json(self):
             return payload
+
+        def iter_content(self, size):
+            yield json.dumps(payload).encode()
 
     monkeypatch.setattr(requests, "get", lambda *a, **k: Response())
     monkeypatch.setattr(sync_state, "_pace", lambda *a: None)

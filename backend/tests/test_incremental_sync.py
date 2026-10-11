@@ -219,14 +219,23 @@ def test_cik_map_lookup_without_explicit_frame_and_full_refresh(monkeypatch, tmp
     monkeypatch.setattr(edgar, "CIK_CACHE", tmp_path / "map.csv")
 
     class Response:
+        status_code = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
         def raise_for_status(self):
             pass
 
-        def json(self):
-            return {"0": {"ticker": "A", "cik_str": 1, "title": "Firm"}}
+        def iter_content(self, size):
+            yield json.dumps({"0": {"ticker": "A", "cik_str": 1, "title": "Firm"}}).encode()
 
+    import requests
     calls = []
-    monkeypatch.setattr(edgar.requests, "get", lambda *a, **k: calls.append(1) or Response())
+    monkeypatch.setattr(requests, "get", lambda *a, **k: calls.append(1) or Response())
     assert edgar.get_cik_for_symbol("A")[0] == "0000000001"
     assert edgar.get_cik_for_symbol("A")[0] == "0000000001"
     assert len(calls) == 1

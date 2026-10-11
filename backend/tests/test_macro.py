@@ -75,35 +75,34 @@ def test_get_snapshot_computes_3m_change(tmp_path, monkeypatch):
     assert round(row["change_3m"], 2) == round(4.0 - 3.2, 2)  # frente a ~90 días antes (junio)
 
 
-def test_fetch_series_parses_observations_and_skips_missing_values():
+def test_fetch_series_parses_observations_and_skips_missing_values(monkeypatch):
+    import json
+
+    import requests
+
+    body = json.dumps({"count": 900, "observations": [
+        {"date": "2026-09-01", "value": "4.20"},
+        {"date": "2026-08-01", "value": "."},  # FRED marca huecos así
+        {"date": "2026-07-01", "value": "4.00"},
+    ]}).encode()
+
     class FakeResponse:
         status_code = 200
 
-        def raise_for_status(self):
-            pass
+        def __enter__(self):
+            return self
 
-        def json(self):
-            return {
-                "observations": [
-                    {"date": "2026-09-01", "value": "4.20"},
-                    {"date": "2026-08-01", "value": "."},  # FRED marca huecos así
-                    {"date": "2026-07-01", "value": "4.00"},
-                ]
-            }
+        def __exit__(self, *exc):
+            return False
 
-    import gabi.macro as macro_module
+        def iter_content(self, size):
+            yield body
 
-    def fake_get(url, params=None, timeout=None):
-        return FakeResponse()
-
-    orig_get = macro_module.requests.get
-    macro_module.requests.get = fake_get
-    try:
-        obs = macro.fetch_series("DGS10", api_key="fake-key")
-    finally:
-        macro_module.requests.get = orig_get
-
-    assert obs == [("2026-09-01", 4.2), ("2026-07-01", 4.0)]
+    requests_seen = []
+    monkeypatch.setattr(requests, "get", lambda url, **kwargs: requests_seen.append(kwargs) or FakeResponse())
+    # More observations than the limit keep the historical newest-first truncation.
+    assert macro.fetch_series("DGS10", api_key="fake-key") == [("2026-09-01", 4.2), ("2026-07-01", 4.0)]
+    assert requests_seen[0]["params"]["limit"] == 260 and requests_seen[0]["timeout"] == 20
 
 
 def test_parse_next_release_date_returns_earliest_future_date():

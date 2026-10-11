@@ -16,7 +16,6 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 
 import pandas as pd
-import requests
 
 import gabi.domain.market.sec_facts as _sec_facts
 from gabi.application.administration.sync_events import SyncAttempt
@@ -35,6 +34,8 @@ from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete, synchronize
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers.sec_cik import SecTickerMap
+from gabi.infrastructure.providers.sec_xbrl import SecXbrl
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
 from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
@@ -129,12 +130,7 @@ def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
     """Current SEC map, with the published weekly-cache and failure fallback."""
     from . import sync_state
 
-    def fetch():
-        resp = requests.get(TICKER_CIK_URL, headers=_headers(), timeout=20)
-        resp.raise_for_status()
-        return resp.json()
-
-    return current_map(_cik_cache(), fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
+    return current_map(_cik_cache(), SecTickerMap(config.SEC_USER_AGENT).fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
                        sync_state.retry, lambda: sync_state.get("sec", "all", "ticker-map"),
                        sync_state.fingerprint, lambda: datetime.now(UTC).timestamp(),
                        force_refresh=force_refresh)
@@ -200,19 +196,11 @@ def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
 
 
 def fetch_company_facts(cik: str) -> dict:
-    resp = requests.get(COMPANYFACTS_URL.format(cik=cik), headers=_headers(), timeout=30)
-    if resp.status_code == 404:
-        raise ValueError("SEC EDGAR no tiene datos XBRL estructurados para esta empresa")
-    resp.raise_for_status()
-    return resp.json()
+    return SecXbrl(config.SEC_USER_AGENT).companyfacts(cik)
 
 
 def fetch_submissions(cik: str) -> dict:
-    resp = requests.get(SUBMISSIONS_URL.format(cik=cik), headers=_headers(), timeout=30)
-    if resp.status_code == 404:
-        raise ValueError("SEC EDGAR no tiene historial de filings para esta empresa")
-    resp.raise_for_status()
-    return resp.json()
+    return SecXbrl(config.SEC_USER_AGENT).submissions(cik)
 
 
 _extract_annual_values = _sec_facts._extract_annual_values
