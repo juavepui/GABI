@@ -19,6 +19,7 @@ from gabi.application.research import sec_quarter_ingest as quarter_ingest
 from gabi.domain.research import sec_bulk as bulk_rules
 from gabi.infrastructure.storage import sec_bulk as bulk_storage
 from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
+from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.sec_archive_download import SecArchiveFiles, SqliteSecArchiveProvenance
 
 from . import config, edgar, historical_archive
@@ -79,7 +80,7 @@ def target_ciks() -> set[str]:
 
 def run_bulk() -> dict:
     DIRECTORY.mkdir(parents=True, exist_ok=True)
-    ingest_storage.backup_once(config.DB_PATH, DIRECTORY / "before_validation.db")
+    backup_once(config.DB_PATH, DIRECTORY / "before_validation.db")
     return quarter_ingest.ingest_quarters(
         bulk_rules.quarter_keys(range(2009, 2016)), target_ciks(), download=_download_to_directory,
         import_quarter=_import, checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "bulk_report.json"),

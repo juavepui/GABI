@@ -8,6 +8,7 @@ import pandas as pd
 from gabi.application.market import identity as identity_queries
 from gabi.domain.market import identity as identity_rules
 from gabi.infrastructure.storage import identity_writes
+from gabi.infrastructure.storage.entity_snapshots import SqliteEntitySnapshots
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
 from gabi.infrastructure.storage.identity_writes import SqliteIdentityWrites
 from gabi.infrastructure.storage.ticker_prices import SqliteTickerPrices
@@ -31,6 +32,11 @@ def _reader() -> SqliteIdentityReads:
 
 def _writer() -> SqliteIdentityWrites:
     return SqliteIdentityWrites(config.DB_PATH, date.today, lambda: str(uuid.uuid4()))
+
+
+def sector_snapshots() -> SqliteEntitySnapshots:
+    """Dated sector snapshots, whose CIK rows are attributed to these entities."""
+    return SqliteEntitySnapshots(config.DB_PATH)
 
 def ensure_entity(cik=None, name: str | None = None, *, entity_id: str | None = None) -> str:
     return _writer().ensure_entity(cik, name, entity_id=entity_id)

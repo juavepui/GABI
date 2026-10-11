@@ -2,9 +2,7 @@
 
 import json
 import os
-import sqlite3
 import tempfile
-from contextlib import closing
 from pathlib import Path
 
 import pandas as pd
@@ -139,16 +137,3 @@ class JsonQuarterReport:
         except BaseException:
             Path(temporary).unlink(missing_ok=True)
             raise
-
-
-def backup_once(source: Path, target: Path) -> bool:
-    """Copy the database once before ingestion; an absent source leaves an empty 'before' copy."""
-    if target.exists():
-        return False
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with closing(sqlite3.connect(target)) as backup:
-        if source.is_file():
-            with closing(sqlite3.connect(source.resolve().as_uri() + "?mode=ro", uri=True, timeout=30)) as db:
-                db.backup(backup)
-        backup.commit()
-    return True

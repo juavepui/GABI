@@ -13,8 +13,8 @@ la recuperación de instancias XBRL originales salen de las fachadas.
   checkpoints), `nominated_missing`, `period_ciks`, `cover_filings` y
   `recover_instances`. Recibe descarga, importación, lector, checkpoints y log.
 - `infrastructure/storage/sec_quarter_ingest.py`: `decode_instance` (lxml sin
-  entidades ni red), `SqliteSecIngestSelection` de solo lectura,
-  `JsonQuarterReport` y `backup_once`.
+  entidades ni red), `SqliteSecIngestSelection` de solo lectura y
+  `JsonQuarterReport`; `backup_once` vive en `infrastructure/storage/backups.py`.
 
 Fachadas: `sec_history.target_ciks`, `run_bulk`, `recover_instances` y
 `parse_instance`; `historical_identity_audit.import_nominated_filings`,

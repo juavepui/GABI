@@ -168,5 +168,12 @@ class SqliteSecReads:
     def fetched_at(self, symbols: list[str]) -> dict[str, object]:
         return dict(self._by_symbol("edgar_metrics", "symbol,fetched_at", symbols))
 
+    def stored_ciks(self) -> dict[str, str]:
+        """Every cached symbol→CIK pair, bounded by the row budget."""
+        with self._read() as (db, tables):
+            if db is None or "edgar_metrics" not in tables:
+                return {}
+            return dict(self._rows(db, "SELECT symbol,cik FROM edgar_metrics"))
+
     def symbols_with_facts(self, symbols: list[str]) -> set[str]:
         return {symbol for symbol, in self._by_symbol("edgar_facts", "symbol", symbols, distinct=True)}
