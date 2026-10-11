@@ -6,6 +6,9 @@ from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
+from gabi.application.market import cached_data
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+
 from . import config
 
 SCHEMA = """
@@ -127,58 +130,24 @@ def upsert_prices(symbol: str, price_df: pd.DataFrame, *, entity_id: str | None 
         conn.commit()
 
 
+def _reader() -> SqliteCacheReads:
+    # The compatibility setting is captured per operation, never mutated.
+    return SqliteCacheReads(config.DB_PATH)
+
+
 def get_prices(symbol: str) -> pd.DataFrame:
     """Devuelve DataFrame indexado por fecha (ascendente) con columnas
     open/high/low/close/volume para un símbolo."""
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_price_columns(conn)
-        df = pd.read_sql_query(
-            "SELECT date, open, high, low, close, volume, adj_close FROM prices "
-            "WHERE symbol = ? ORDER BY date ASC",
-            conn, params=(symbol,),
-        )
-    if df.empty:
-        return df
-    df["date"] = pd.to_datetime(df["date"])
-    return df.set_index("date")
+    return cached_data.prices(_reader(), symbol)
 
 
 def get_prices_multi(symbols: list) -> dict:
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_price_columns(conn)
-        df = pd.read_sql_query(
-            f"SELECT symbol, date, open, high, low, close, volume, adj_close FROM prices "
-            f"WHERE symbol IN ({placeholders}) ORDER BY date ASC",
-            conn, params=symbols,
-        )
-    result = {}
-    if df.empty:
-        return result
-    df["date"] = pd.to_datetime(df["date"])
-    for sym, group in df.groupby("symbol"):
-        result[sym] = group.drop(columns=["symbol"]).set_index("date")
-    return result
+    return cached_data.prices_multi(_reader(), symbols)
 
 
 def get_price_coverage(symbols: list) -> dict:
-    """Nº de cierres ajustados verificados y su fecha más reciente, en una sola consulta a la base de datos."""
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_price_columns(conn)
-        rows = conn.execute(
-            f"SELECT symbol, COUNT(adj_close), MAX(CASE WHEN adj_close IS NOT NULL THEN date END) "
-            f"FROM prices WHERE symbol IN ({placeholders}) GROUP BY symbol", symbols,
-        ).fetchall()
-    return {symbol: {"adjusted_count": count, "latest_adjusted_date": latest}
-            for symbol, count, latest in rows}
+    """Nº de cierres ajustados verificados y su fecha más reciente, por lotes en una transacción de lectura."""
+    return cached_data.price_coverage(_reader(), symbols)
 
 
 def get_price_as_of(symbol: str, as_of_date: str):
@@ -187,25 +156,12 @@ def get_price_as_of(symbol: str, as_of_date: str):
     más cercana. None si no hay precio cacheado tan atrás en el tiempo (el
     histórico de precios solo cubre ~2 años desde la última actualización,
     así que fechas más antiguas pueden no tener dato disponible)."""
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        row = conn.execute(
-            "SELECT close FROM prices WHERE symbol = ? AND date <= ? ORDER BY date DESC LIMIT 1",
-            (symbol, as_of_date),
-        ).fetchone()
-    return float(row[0]) if row and row[0] is not None else None
+    return cached_data.price_as_of(_reader(), symbol, as_of_date)
 
 
 def has_verified_price_as_of(symbol: str, as_of_date: str) -> bool:
     """True si hay un cierre ajustado (adj_close) verificado para esa fecha; False si el precio en caché es de antes de este cambio y todavía no lo tiene."""
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_price_columns(conn)
-        row = conn.execute(
-            "SELECT adj_close FROM prices WHERE symbol=? AND date<=? ORDER BY date DESC LIMIT 1",
-            (symbol, as_of_date),
-        ).fetchone()
-    return bool(row and row[0] is not None)
+    return cached_data.has_verified_price_as_of(_reader(), symbol, as_of_date)
 
 
 def upsert_splits(symbol: str, splits: dict, *, entity_id: str | None = None):
@@ -233,31 +189,7 @@ def get_split_factor_since(symbol: str, as_of_date: str) -> float:
     lo reporta SEC EDGAR), hay que multiplicar el precio ajustado por este
     factor para deshacer los splits posteriores a esa fecha. 1.0 si no hubo
     ningún split después (o no hay splits registrados)."""
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            "SELECT ratio FROM splits WHERE symbol = ? AND date > ?", (symbol, as_of_date),
-        ).fetchall()
-    factor = 1.0
-    for (ratio,) in rows:
-        if ratio:
-            factor *= ratio
-    return factor
-
-
-def get_latest_price_date(symbols: list = None):
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        if symbols:
-            placeholders = ",".join("?" * len(symbols))
-            row = conn.execute(
-                f"SELECT MAX(date) FROM prices WHERE symbol IN ({placeholders})", symbols,
-            ).fetchone()
-        else:
-            row = conn.execute("SELECT MAX(date) FROM prices").fetchone()
-    if not row or not row[0]:
-        return None
-    return datetime.strptime(row[0], "%Y-%m-%d").date()
+    return cached_data.split_factor_since(_reader(), symbol, as_of_date)
 
 
 def upsert_fundamentals(symbol: str, info: dict, quarterly_income_df, quarterly_cashflow_df,
@@ -286,42 +218,11 @@ def upsert_fundamentals(symbol: str, info: dict, quarterly_income_df, quarterly_
 
 
 def get_fundamentals(symbols: list) -> dict:
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, fetched_at, info_json, quarterly_income_json, quarterly_cashflow_json "
-            f"FROM fundamentals WHERE symbol IN ({placeholders})", symbols,
-        ).fetchall()
-    result = {}
-    for symbol, fetched_at, info_json, qi_json, qcf_json in rows:
-        result[symbol] = {
-            "fetched_at": fetched_at,
-            "info": json.loads(info_json),
-            "quarterly_income": json.loads(qi_json),
-            "quarterly_cashflow": json.loads(qcf_json),
-        }
-    return result
+    return cached_data.fundamentals(_reader(), symbols)
 
 
 def get_fundamentals_fetched_at(symbols: list) -> dict:
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, fetched_at FROM fundamentals WHERE symbol IN ({placeholders})", symbols,
-        ).fetchall()
-    result = {}
-    for symbol, fetched_at in rows:
-        try:
-            result[symbol] = datetime.fromisoformat(fetched_at)
-        except Exception:
-            result[symbol] = None
-    return result
+    return cached_data.fundamentals_fetched_at(_reader(), symbols)
 
 
 def record_update_errors(source: str, failed: dict):
@@ -351,13 +252,4 @@ def get_recent_update_errors(source: str = None, since_hours: float = 24 * 7) ->
     """Fallos de actualización de los últimos `since_hours` (por defecto, 7
     días), opcionalmente filtrados por fuente ('yahoo_precio',
     'yahoo_fundamentales', 'sec_edgar', 'insider_form4', 'fred_macro')."""
-    cutoff = (datetime.now(UTC) - timedelta(hours=since_hours)).isoformat()
-    query = "SELECT source, symbol, reason, occurred_at FROM update_errors WHERE occurred_at >= ?"
-    params: list = [cutoff]
-    if source:
-        query += " AND source = ?"
-        params.append(source)
-    query += " ORDER BY occurred_at DESC"
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        return pd.read_sql_query(query, conn, params=params)
+    return cached_data.recent_update_errors(_reader(), now=datetime.now(UTC), source=source, since_hours=since_hours)

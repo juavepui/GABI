@@ -6,6 +6,7 @@ from typing import Protocol
 
 import pandas as pd
 
+from gabi.application.market.cached_data import parse_fetched_at
 from gabi.domain.market.sec_facts import SHARES_TAGS, compute_edgar_metrics
 from gabi.domain.market.sec_reads import companyfacts, issuer_versions, value_as_of
 from gabi.domain.market.sec_xbrl import normalize_cik
@@ -29,13 +30,7 @@ def cached_metrics(reader: CachedMetricsReader, symbols: list[str]) -> dict[str,
 
 
 def fetched_at(reader: CachedMetricsReader, symbols: list[str]) -> dict[str, datetime | None]:
-    result: dict[str, datetime | None] = {}
-    for symbol, stamp in (reader.fetched_at(symbols) if symbols else {}).items():
-        try:
-            result[symbol] = datetime.fromisoformat(stamp)  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            result[symbol] = None
-    return result
+    return parse_fetched_at(reader.fetched_at(symbols).items()) if symbols else {}
 
 
 def symbols_with_facts(reader: CachedMetricsReader, symbols: list[str]) -> set[str]:
