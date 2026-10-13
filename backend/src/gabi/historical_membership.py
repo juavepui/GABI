@@ -12,11 +12,11 @@ import pandas as pd
 
 from gabi.application.research import historical_composition as composition
 from gabi.domain.research import historical_membership as composition_rules
+from gabi.domain.research.periods import REFERENCE_SOURCE, REFERENCE_SOURCE_FULL
 from gabi.infrastructure.storage.historical_composition import HistoricalCompositionFiles, LocalHistoricalComposition
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
 
 from . import config, historical_archive, universe
-from .historical_period import REFERENCE_SOURCE, REFERENCE_SOURCE_FULL
 
 OPERATIONAL_SOURCE = "hanshof:local+reviewed-extension"
 REFERENCE_SOURCES = (REFERENCE_SOURCE, REFERENCE_SOURCE_FULL)

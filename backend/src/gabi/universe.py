@@ -1,13 +1,16 @@
 """Obtiene el universo de empresas a analizar (constituyentes del S&P 500),
 tanto el actual como (aproximado) el de una fecha pasada."""
+from datetime import date
+
 import pandas as pd
 
+from gabi.domain.research import membership
+from gabi.domain.research.ticker_corrections import correct_symbols
 from gabi.infrastructure.providers import sp500_sources
 from gabi.infrastructure.providers.sp500_sources import SP500Sources
+from gabi.infrastructure.storage import reviewed_resources
 
 from . import config
-from .historical_ticker_corrections import correct_symbols
-from .membership_extension import apply_reviewed_extension
 
 # Fuente principal: CSV plano mantenido en sincronía con la Wikipedia oficial.
 # Se prefiere sobre el scraping directo de Wikipedia porque es más ligero
@@ -63,6 +66,11 @@ def get_sp500_constituents(force_refresh: bool = False) -> pd.DataFrame:
         "No se pudo obtener la lista de constituyentes del S&P 500 de ninguna "
         "fuente y no hay caché local. Errores: " + " | ".join(errors)
     )
+
+
+def apply_reviewed_extension(history: pd.DataFrame) -> pd.DataFrame:
+    """Replay the reviewed, dated index changes after the community snapshot ends."""
+    return membership.apply_reviewed_extension(history, reviewed_resources.membership_ledger(), today=date.today())
 
 
 def _sources() -> SP500Sources:

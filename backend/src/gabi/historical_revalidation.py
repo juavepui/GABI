@@ -109,7 +109,9 @@ def stale_issuer_facts(max_gap_days: int = 200) -> list[tuple[str, str | None, s
     """
     from datetime import date
 
-    from . import historical_archive, historical_period, storage
+    from gabi.domain.research import periods as historical_period
+
+    from . import historical_archive, storage
     with storage.get_connection() as conn:
         intervals = conn.execute(
             "SELECT cik,MAX(valid_to) FROM historical_identity_intervals WHERE source_id=? AND status IN "

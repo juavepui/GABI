@@ -6,21 +6,23 @@ The reviewed membership ledger deliberately has a fixed verification horizon.
 import hashlib
 import json
 import shutil
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 
 from gabi.application.market import cached_data
+from gabi.domain.research import membership
+from gabi.domain.research.membership import symbols
 from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.sp500_sources import SP500Sources
 from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.reviewed_resources import MEMBERSHIP_LEDGER as LEDGER_PATH
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 
 from . import config, data_fetch, edgar, macro, universe
 from .domain.market import freshness
-from .membership_extension import LEDGER_PATH, extend_membership, symbols
 
 
 def last_completed_session(now: datetime) -> str:
@@ -126,7 +128,7 @@ def run() -> dict:
     print(f"Backup saved: {directory}", flush=True)
 
     history = pd.read_csv(universe.HISTORICAL_MEMBERSHIP_CACHE, dtype=str)
-    extended = extend_membership(history, ledger)
+    extended = membership.extend_membership(history, ledger, today=date.today())
     sources = SP500Sources(config.SEC_USER_AGENT)
     page = sources.wikipedia_page()
     (directory / "current.html").write_bytes(page)

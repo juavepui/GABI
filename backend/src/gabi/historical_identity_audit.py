@@ -27,17 +27,17 @@ from gabi.domain.market.identity import normalize_cik
 from gabi.domain.research import historical_identity_audit as identity_rules
 from gabi.domain.research import identity_instances as instance_rules
 from gabi.domain.research import sec_bulk as bulk_rules
+from gabi.domain.research.periods import P2010, Period
+from gabi.domain.research.periods import get as get_period
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_identity_audit import SqliteIdentityAuditReads
 from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
 from gabi.infrastructure.storage.identity_instances import LocalIdentityInstances, SqliteIdentityInstances
+from gabi.infrastructure.storage.reviewed_resources import identity_nominations
 from gabi.infrastructure.storage.sec_quarter_ingest import SqliteSecIngestSelection
 
 from . import config, historical_archive, sec_history
 from . import historical_issuer_evidence as issuer_evidence
-from .historical_period import P2010, Period
-from .historical_period import get as get_period
-from .historical_ticker_corrections import identity_nominations
 
 QUARTERS = P2010.quarters
 TICKER_RE = instance_rules.TICKER_RE

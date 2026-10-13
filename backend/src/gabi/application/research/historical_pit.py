@@ -6,6 +6,7 @@ from typing import Protocol
 import pandas as pd
 
 from gabi.domain.research import historical_pit as rules
+from gabi.domain.research.periods import PERIODS, Period
 
 
 class HistoricalPitReader(Protocol):
@@ -80,3 +81,40 @@ def exit_value(reader: HistoricalPitReader, frame: pd.DataFrame, entity_id: str,
         event = reader.terminal_event(entity_id, (entry - pd.Timedelta(days=1)).date().isoformat(),
                                       (exit_session + pd.Timedelta(days=10)).date().isoformat())
     return rules.exit_value(frame, entity_id, entry, exit_session, event)
+
+
+QUARTER_ENDS = frozenset(quarter for period in PERIODS.values() for quarter in period.quarters)
+TRAILING_DAYS = 365  # ~253 sessions: the window momentum and risk require
+
+
+class AccreditedHistory:
+    """Accredited series for an explicit set of active periods; dates outside them are not covered."""
+
+    def __init__(self, reader: HistoricalPitReader, periods: tuple[Period, ...]):
+        self.reader, self.periods = reader, periods
+
+    @property
+    def producers(self) -> set[str]:
+        return {period.price_producer for period in self.periods}
+
+    def period_for(self, as_of: str) -> Period | None:
+        day = date.fromisoformat(as_of[:10]).isoformat()
+        return next((period for period in self.periods if period.covers(day)), None)
+
+    def covers(self, as_of: str) -> bool:
+        return self.period_for(as_of) is not None
+
+    def intervals(self, entity_id: str) -> list[tuple]:
+        return intervals(self.reader, entity_id, self.producers)
+
+    def has_series(self, entity_id: str | None, day: str) -> bool:
+        if not entity_id:
+            return False
+        return any(start <= day[:10] < end for _s, _y, start, end, _t in self.intervals(entity_id))
+
+    def ranking_series(self, entity_id: str | None, as_of: str) -> pd.DataFrame:
+        return ranking_series(self.reader, entity_id, as_of, producers=self.producers, quarter_ends=set(QUARTER_ENDS),
+                              trailing_days=TRAILING_DAYS)
+
+    def holding_series(self, entity_id: str | None, day: str) -> pd.DataFrame:
+        return holding_series(self.reader, entity_id, day, producers=self.producers)
