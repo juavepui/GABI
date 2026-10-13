@@ -10,10 +10,10 @@ import time
 from datetime import UTC, datetime
 
 import pandas as pd
-import yfinance as yf
 
 from gabi.domain.market.source_errors import RETRYABLE_CATEGORIES as RETRYABLE
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers import yahoo
 
 from . import config, identity, storage
 
@@ -37,7 +37,7 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
     tickers = [normalize_symbol(s) for s in symbols]
     failed = {}
     try:
-        data = yf.download(
+        data = yahoo.download(
             tickers, period=period, interval="1d", group_by="ticker",
             threads=True, auto_adjust=False, progress=False,
         )
@@ -69,7 +69,7 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
 
 
 def _fetch_splits_one(symbol: str) -> dict:
-    splits = yf.Ticker(normalize_symbol(symbol)).splits
+    splits = yahoo.splits(normalize_symbol(symbol))
     if splits is None or splits.empty:
         return {}
     return {d.strftime("%Y-%m-%d"): float(r) for d, r in splits.items()}
@@ -132,7 +132,7 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
         return {"deep_fetched": 0, "already_covered": already_covered, "failed": failed}
 
     download_failed = {}
-    batch_size = 50  # yf.download con 'period=max' es más pesado; lotes moderados
+    batch_size = 50  # la descarga con 'period=max' es más pesado; lotes moderados
     for i in range(0, len(need_deep_fetch), batch_size):
         batch = need_deep_fetch[i:i + batch_size]
         download_failed.update(fetch_prices_batch(batch, period="max"))
@@ -191,7 +191,7 @@ def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
 
 
 def _fetch_fundamentals_attempt(symbol: str):
-    t = yf.Ticker(normalize_symbol(symbol))
+    t = yahoo.ticker(normalize_symbol(symbol))
     info = t.info or {}
     has_signal = any(
         info.get(k) is not None for k in ("regularMarketPrice", "currentPrice", "sector", "marketCap")

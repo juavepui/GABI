@@ -62,6 +62,7 @@ a dominio, aplicación e infraestructura; `sync_state` conserva el marcapasos ú
 y extrae Company Facts por CIK de `sec_history`.
 [F7.17](f7-http-providers.md) aplica [ADR 0004](../adr/0004-legacy-provider-delegation.md):
 las fachadas delegan su HTTP en proveedores acotados de `infrastructure/providers`.
+[F7.18](f7-yahoo-provider.md) concentra `yfinance` en `infrastructure/providers/yahoo.py`.
 
 ## Responsabilidades y entregas
 

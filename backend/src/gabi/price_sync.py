@@ -5,9 +5,11 @@ from datetime import UTC, datetime, timedelta
 import numpy as np
 import pandas as pd
 
+from gabi.infrastructure.providers import yahoo
+
 from . import identity, storage
 from . import sync_state as sync
-from .data_fetch import _classify_error, normalize_symbol, yf
+from .data_fetch import _classify_error, normalize_symbol
 from .history_refresh import last_completed_session
 
 COLS = {"Open": "open", "High": "high", "Low": "low", "Close": "close",
@@ -50,7 +52,7 @@ def run(symbols: list, *, force: bool = False, full_refresh: bool = False, now=N
             if key not in downloads:
                 members = groups.get(key, [symbol])
                 try:
-                    downloads[key] = sync.retry(lambda: yf.download([normalize_symbol(s) for s in members],
+                    downloads[key] = sync.retry(lambda: yahoo.download([normalize_symbol(s) for s in members],
                                                                    interval="1d", group_by="ticker", threads=6,
                                                                    auto_adjust=False, progress=False, **params), attempt)
                 except Exception as exc:

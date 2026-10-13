@@ -10,19 +10,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
-import yfinance as yf
 
 from gabi import edgar, historical_archive, storage
 from gabi.domain.research.historical_backfill import overlaps_membership
 from gabi.historical_membership import historical_backfill_manifest
 from gabi.history_refresh import database_coverage, last_completed_session, period_symbols
+from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.pinned_files import download_pinned, matches
 
 MANIFEST = historical_backfill_manifest()
 
 
 def fetch_missing_history(symbol: str, history: pd.DataFrame, end: str) -> int:
-    frame = yf.Ticker(symbol).history(period="max", end=end, auto_adjust=False)
+    frame = yahoo.history(symbol, period="max", end=end, auto_adjust=False)
     if frame.empty or "Adj Close" not in frame:
         raise ValueError("No adjusted history")
     frame = frame.dropna(subset=["Close", "Adj Close"])
@@ -87,7 +87,7 @@ def run(data_dir: Path) -> dict:
     report["blocked_operational_imports"] = blocked
     report["before_old_coverage"] = {"symbols_with_prices": len(targets & old_prices), "symbols_with_facts": len(targets & old_facts)}
     report["yahoo"] = {"updated": {}, "failed": {}}
-    yf.set_tz_cache_location(str(data_dir / "history_refresh" / "yfinance_cache"))
+    yahoo.use_timezone_cache(data_dir / "history_refresh" / "yfinance_cache")
     completed_end = (pd.Timestamp(last_completed_session(now)) + pd.Timedelta(days=1)).date().isoformat()
     for symbol in sorted(set(safe) & set(live) - old_prices):
         try:

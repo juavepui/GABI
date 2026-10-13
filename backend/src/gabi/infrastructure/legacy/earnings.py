@@ -4,11 +4,11 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pandas as pd
-import yfinance as yf
 
 from gabi.application.market.earnings_sync import EarningsAttempt
 from gabi.application.market.earnings_sync import sync_earnings_surprises as run_sync
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.storage.earnings import SqliteEarnings
 
 
@@ -17,7 +17,7 @@ class YahooEarnings:
     def fetch(symbol: str) -> pd.DataFrame:
         from gabi.data_fetch import normalize_symbol
 
-        table = yf.Ticker(normalize_symbol(symbol)).earnings_dates
+        table = yahoo.ticker(normalize_symbol(symbol)).earnings_dates
         return table if table is not None else pd.DataFrame()
 
     def attempts(self, symbols: list[str], max_workers: int):

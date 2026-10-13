@@ -9,9 +9,9 @@ import shutil
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd
-import yfinance as yf
 
 from gabi.application.market import cached_data
+from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.sp500_sources import SP500Sources
 from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
@@ -83,7 +83,7 @@ def refresh_prices(symbol: str, download_symbol: str, end: str, valid_to: str | 
     Former tickers may use an explicitly reviewed successor, only before the
     ticker change. Never copy an acquired company's acquirer series.
     """
-    frame = yf.Ticker(download_symbol).history(period="max", end=end, auto_adjust=False)
+    frame = yahoo.history(download_symbol, period="max", end=end, auto_adjust=False)
     if frame.empty or "Adj Close" not in frame or frame["Adj Close"].dropna().empty:
         raise ValueError("No adjusted prices returned")
     splits = ({d.strftime("%Y-%m-%d"): float(v) for d, v in frame["Stock Splits"].items()
@@ -109,7 +109,7 @@ def run() -> dict:
         raise ValueError("Review the membership ledger through today before running a new refresh")
     directory = config.DATA_DIR / "history_refresh" / now.strftime("%Y%m%dT%H%M%S")
     directory.mkdir(parents=True, exist_ok=False)
-    yf.set_tz_cache_location(str(config.DATA_DIR / "history_refresh" / "yfinance_cache"))
+    yahoo.use_timezone_cache(config.DATA_DIR / "history_refresh" / "yfinance_cache")
     report: dict = {"started_at": now.isoformat(), "directory": str(directory), "cost_eur": 0,
                     "membership_verified_through": today, "latest_completed_session": last_completed_session(now)}
 

@@ -404,8 +404,10 @@ def test_refresh_prices_writes_like_the_captured_facade(tmp_path, monkeypatch):
 
     download = prices_frame(6, start="2024-02-01")
     download["Stock Splits"] = [0, 0, 2.0, 0, float("nan"), 0]
-    monkeypatch.setattr(history_refresh, "yf", SimpleNamespace(Ticker=lambda symbol: SimpleNamespace(
-        history=lambda **k: download.copy())))
+    import yfinance
+
+    fake_yf = SimpleNamespace(Ticker=lambda symbol: SimpleNamespace(history=lambda **k: download.copy()))
+    monkeypatch.setattr(yfinance, "Ticker", fake_yf.Ticker)
     results = []
     for label in ("old", "new"):
         path = tmp_path / label / "gabi.db"
@@ -417,7 +419,7 @@ def test_refresh_prices_writes_like_the_captured_facade(tmp_path, monkeypatch):
         if label == "old":
             store = SimpleNamespace(**legacy_storage(path))
             count = captured("history_refresh", {"refresh_prices"}, {
-                "storage": store, "pd": pd, "yf": history_refresh.yf, "datetime": datetime, "UTC": UTC,
+                "storage": store, "pd": pd, "yf": fake_yf, "datetime": datetime, "UTC": UTC,
                 "__package__": "gabi", "__name__": "gabi.history_refresh"})["refresh_prices"]("AAA", "AAA", "2024-02-06")
         else:
             count = history_refresh.refresh_prices("AAA", "AAA", "2024-02-06")

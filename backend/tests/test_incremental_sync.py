@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import requests
+import yfinance
 
 from gabi import config, data_fetch, edgar, edgar_sync, historical_tiingo, macro, price_sync, storage
 from gabi import sync_state as sync
@@ -33,7 +34,7 @@ def test_new_prices_then_same_session_uses_no_network_and_no_duplicates(monkeypa
         calls.append(kwargs)
         return prices()
 
-    monkeypatch.setattr(data_fetch.yf, "download", download)
+    monkeypatch.setattr(yfinance, "download", download)
     first = price_sync.run(["A", "A"], now=NOW)
     assert first["events"][0]["status"] == "new"
     assert first["events"][0]["new"] == 7
@@ -49,7 +50,7 @@ def test_incremental_starts_at_last_valid_close_minus_overlap_and_classifies_rev
     calls = []
     panel = prices()
     panel.loc[pd.Timestamp("2024-01-09"), "Volume"] = 150
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: calls.append(k) or panel)
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: calls.append(k) or panel)
     event = price_sync.run(["A"], now=NOW)["events"][0]
     assert calls[0]["start"] == "2023-12-26"
     assert "period" not in calls[0]
@@ -66,7 +67,7 @@ def test_adjustment_change_repairs_all_cached_history_before_advancing(monkeypat
     complete = prices("2023-09-01")
     complete["Adj Close"] = 5
     calls = []
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: calls.append(k) or (recent if len(calls) == 1 else complete))
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: calls.append(k) or (recent if len(calls) == 1 else complete))
     event = price_sync.run(["A"], now=NOW)["events"][0]
     assert len(calls) == 2
     assert calls[1]["start"] == "2023-09-01"
@@ -78,7 +79,7 @@ def test_failed_adjustment_repair_preserves_entire_series_and_checkpoint(monkeyp
     storage.upsert_prices("A", prices("2023-09-01", "2024-01-09"))
     old = storage.get_prices("A")
     recent = prices().assign(**{"Adj Close": 5.})
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: recent)
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: recent)
     event = price_sync.run(["A"], now=NOW)["events"][0]
     assert event["status"] == "failed"
     assert "watermark" not in sync.get("yahoo", "ticker:A", "prices:A")
@@ -89,13 +90,13 @@ def test_history_repair_rejects_missing_cached_interior_session(monkeypatch):
     storage.upsert_prices("A", prices())
     panel = prices().assign(**{"Adj Close": 5.})
     panel = panel.drop(pd.Timestamp("2024-01-05"))
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: panel)
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: panel)
     assert price_sync.run(["A"], now=NOW, full_refresh=True)["events"][0]["status"] == "failed"
     assert (storage.get_prices("A").adj_close == 10).all()
 
 
 def test_interruption_after_data_write_resumes_without_double_insertion(monkeypatch):
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: prices())
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: prices())
     original = storage.upsert_prices
 
     def interrupted(*args, **kwargs):
@@ -116,7 +117,7 @@ def test_interruption_after_data_write_resumes_without_double_insertion(monkeypa
 def test_explicit_full_refresh_uses_max_and_rejects_partial_live_bar(monkeypatch):
     calls = []
     panel = prices(end="2024-01-11")
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: calls.append(k) or panel)
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: calls.append(k) or panel)
     price_sync.run(["A"], now=NOW, full_refresh=True)
     assert calls[0]["period"] == "max"
     assert storage.get_prices("A").index.max() == pd.Timestamp("2024-01-10")
@@ -125,7 +126,7 @@ def test_explicit_full_refresh_uses_max_and_rejects_partial_live_bar(monkeypatch
 def test_incomplete_invalid_payload_never_moves_watermark(monkeypatch):
     panel = prices()
     panel.iloc[-1, panel.columns.get_loc("Adj Close")] = np.nan
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *a, **k: panel)
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: panel)
     assert price_sync.run(["A"], now=NOW)["events"][0]["status"] == "failed"
     assert storage.get_prices("A").empty
 
