@@ -67,6 +67,8 @@ las fachadas delegan su HTTP en proveedores acotados de `infrastructure/provider
 función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
 [F7.19](f7-operational-sources.md) (#134) saca `macro`, `insider`, `price_sync` y
 `data_fetch` de la fachada `storage` y rompe el ciclo `data_fetch`↔`price_sync`.
+[F7.20](f7-historical-core.md) (#130) mueve los periodos acreditados a `identity`
+(sin ciclo con `historical_pit`) y lee los registros revisados desde infraestructura.
 
 ## Responsabilidades y entregas
 

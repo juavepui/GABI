@@ -21,7 +21,9 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from . import config, historical_membership, historical_period, identity, storage
+from gabi.domain.research import periods as historical_period
+
+from . import config, historical_membership, identity, storage
 from . import factor_stability as fs
 from . import historical_issuer_evidence as ie
 

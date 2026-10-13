@@ -60,7 +60,7 @@ def _xbrl_value(cik: str, item: str, directory: Path) -> tuple[float | None, str
 def sample(directory: Path) -> list[dict]:
     """30 miembros del S&P 500 a 2008-12-31 con 10-K del ejercicio 2008 presentado en 2009 y XBRL posterior."""
     from gabi import historical_membership as hm
-    from gabi import historical_period as hp
+    from gabi.domain.research import periods as hp
     from gabi.historical_identity_audit import CANDIDATE_SOURCE, _candidate_map
 
     members = hm.constituents_as_of("2008-12-31", source_id=hp.REFERENCE_SOURCE_FULL, compare_reference=False)["symbols"]

@@ -19,18 +19,18 @@ from gabi.application.research import historical_composition as composition
 from gabi.application.research import historical_price_audit as price_audit
 from gabi.domain.research import historical_price_audit as price_rules
 from gabi.domain.research import price_accreditation
+from gabi.domain.research.periods import P2010, Period
+from gabi.domain.research.periods import get as get_period
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_audit_writes import SCHEMA as _PROVENANCE_SCHEMA
 from gabi.infrastructure.storage.historical_audit_writes import SqliteHistoricalAuditWrites
 from gabi.infrastructure.storage.historical_price_audit import SqlitePriceAuditReads, series_from_connection
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
+from gabi.infrastructure.storage.reviewed_resources import identity_nominations
 
 from . import config, historical_membership
 from . import historical_issuer_evidence as issuer_evidence
-from .historical_period import P2010, Period
-from .historical_period import get as get_period
 from .historical_price_policy import YAHOO_SOURCE
-from .historical_ticker_corrections import identity_nominations
 from .historical_tiingo import SOURCE_ID as TIINGO_SOURCE
 from .historical_tiingo import source_id as tiingo_source
 from .historical_wiki import SOURCE_ID as WIKI_SOURCE

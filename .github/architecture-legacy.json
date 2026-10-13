@@ -183,10 +183,6 @@
     "gabi.config",
     "gabi.historical_archive",
     "gabi.historical_issuer_evidence",
-    "gabi.historical_period.P2010",
-    "gabi.historical_period.Period",
-    "gabi.historical_period.get",
-    "gabi.historical_ticker_corrections.identity_nominations",
     "gabi.sec_history",
     "pathlib",
     "requests"
@@ -200,8 +196,6 @@
   "backend/src/gabi/historical_membership.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "gabi.historical_period.REFERENCE_SOURCE",
-    "gabi.historical_period.REFERENCE_SOURCE_FULL",
     "gabi.universe",
     "pandas",
     "pathlib"
@@ -209,7 +203,6 @@
   "backend/src/gabi/historical_period.py": [],
   "backend/src/gabi/historical_pit.py": [
     "gabi.historical_membership",
-    "gabi.historical_period",
     "gabi.identity",
     "pandas"
   ],
@@ -218,11 +211,7 @@
     "gabi.config",
     "gabi.historical_issuer_evidence",
     "gabi.historical_membership",
-    "gabi.historical_period.P2010",
-    "gabi.historical_period.Period",
-    "gabi.historical_period.get",
     "gabi.historical_price_policy.YAHOO_SOURCE",
-    "gabi.historical_ticker_corrections.identity_nominations",
     "gabi.historical_tiingo.SOURCE_ID",
     "gabi.historical_tiingo.source_id",
     "gabi.historical_wiki.SOURCE_ID",
@@ -240,7 +229,6 @@
     "gabi.factor_stability",
     "gabi.full_universe_audit",
     "gabi.historical_archive",
-    "gabi.historical_period",
     "gabi.historical_pit",
     "gabi.historical_validation",
     "gabi.multifactor_backtest",
@@ -251,9 +239,7 @@
     "pandas",
     "pathlib"
   ],
-  "backend/src/gabi/historical_ticker_corrections.py": [
-    "pathlib"
-  ],
+  "backend/src/gabi/historical_ticker_corrections.py": [],
   "backend/src/gabi/historical_tiingo.py": [
     "gabi.config",
     "gabi.historical_archive",
@@ -286,16 +272,12 @@
     "gabi.edgar",
     "gabi.identity",
     "gabi.macro",
-    "gabi.membership_extension.LEDGER_PATH",
-    "gabi.membership_extension.extend_membership",
-    "gabi.membership_extension.symbols",
     "gabi.universe",
     "pandas",
     "shutil"
   ],
   "backend/src/gabi/identity.py": [
     "gabi.config",
-    "gabi.historical_pit",
     "pandas"
   ],
   "backend/src/gabi/insider.py": [
@@ -324,8 +306,7 @@
     "pandas"
   ],
   "backend/src/gabi/membership_extension.py": [
-    "pandas",
-    "pathlib"
+    "pandas"
   ],
   "backend/src/gabi/metrics.py": [],
   "backend/src/gabi/multifactor_backtest.py": [
@@ -494,7 +475,6 @@
     "gabi.factor_stability",
     "gabi.historical_issuer_evidence",
     "gabi.historical_membership",
-    "gabi.historical_period",
     "gabi.historical_tiingo",
     "gabi.identity",
     "gabi.storage",
@@ -562,8 +542,6 @@
   "backend/src/gabi/universe.py": [
     "gabi.config",
     "gabi.historical_pit",
-    "gabi.historical_ticker_corrections.correct_symbols",
-    "gabi.membership_extension.apply_reviewed_extension",
     "pandas"
   ],
   "backend/src/gabi/valuation_expectations.py": [],
