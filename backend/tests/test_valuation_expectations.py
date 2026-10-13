@@ -1,11 +1,11 @@
 import pytest
 
-from gabi.valuation_expectations import expectations_metrics, reverse_dcf_growth
+from gabi.domain.market.valuation_expectations import expectations_metrics, reverse_dcf_growth
 
 
 def test_reverse_dcf_recovers_known_growth():
     # Use the same equation as the implementation to create a value at 10%.
-    from gabi.valuation_expectations import _present_value
+    from gabi.domain.market.valuation_expectations import _present_value
     fcf = 100.0
     enterprise_value = _present_value(fcf, 0.10, 0.0, 0.09, 0.025, 5)
     assert reverse_dcf_growth(enterprise_value, fcf) == pytest.approx(0.10)

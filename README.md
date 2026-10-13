@@ -1040,7 +1040,7 @@ contra dos fuentes reales: el extracto oficial de cuenta (`Posiciones cerradas`,
 movimientos bancarios, para poder separar depósitos hechos con tarjeta de los hechos con
 transferencia. Cada cifra de abajo se verificó transacción a transacción contra esas
 fuentes (no se tomó de memoria ni de un análisis externo sin comprobar) — módulo
-`backend/src/gabi/broker_costs.py`, tests en `backend/tests/test_broker_costs.py`.
+`backend/src/gabi/domain/portfolio/broker_costs.py`, tests en `backend/tests/test_broker_costs.py`.
 
 **Costes de operar (abrir/cerrar una posición), verificados sobre 61 cargos reales:**
 

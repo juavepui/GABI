@@ -29,8 +29,6 @@
     "pathlib",
     "scipy.stats"
   ],
-  "backend/src/gabi/broker_costs.py": [],
-  "backend/src/gabi/capital_allocation.py": [],
   "backend/src/gabi/capital_input_audit.py": [
     "gabi.config",
     "gabi.factor_sector_stability",
@@ -81,7 +79,6 @@
     "gabi.insider",
     "gabi.macro",
     "gabi.scoring",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/edgar.py": [
@@ -305,7 +302,6 @@
     "gabi.data_quality",
     "gabi.historical_pit",
     "gabi.identity",
-    "gabi.rotation_policy",
     "gabi.screener_asof",
     "gabi.universe",
     "numpy",
@@ -339,12 +335,10 @@
   ],
   "backend/src/gabi/portfolio_backtest.py": [
     "exchange_calendars",
-    "gabi.broker_costs",
     "gabi.data_quality",
     "gabi.historical_pit",
     "gabi.identity",
     "gabi.multifactor_backtest",
-    "gabi.rotation_policy",
     "gabi.screener_asof",
     "gabi.universe",
     "pandas"
@@ -357,9 +351,6 @@
     "gabi.identity",
     "gabi.storage",
     "gabi.sync_state"
-  ],
-  "backend/src/gabi/quality_persistence.py": [
-    "gabi.edgar"
   ],
   "backend/src/gabi/r3_experiment.py": [
     "gabi.academic_factors",
@@ -437,18 +428,13 @@
     "pandas"
   ],
   "backend/src/gabi/screener_asof.py": [
-    "gabi.capital_allocation",
     "gabi.edgar",
     "gabi.entity_master",
-    "gabi.historical_pit",
     "gabi.identity",
-    "gabi.quality_persistence",
     "gabi.risk",
     "gabi.scoring",
-    "gabi.storage",
     "gabi.technicals",
     "gabi.universe",
-    "gabi.valuation_expectations.expectations_metrics",
     "pandas"
   ],
   "backend/src/gabi/sec_history.py": [
@@ -532,7 +518,6 @@
     "gabi.historical_pit",
     "pandas"
   ],
-  "backend/src/gabi/valuation_expectations.py": [],
   "backend/src/gabi/value_hypothesis.py": [
     "gabi.scoring"
   ],

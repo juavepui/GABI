@@ -16,6 +16,8 @@ mientras existan sus consumidores; no contienen fórmulas ni duplican la
 implementación. El inventario conserva esos cuatro archivos y retira la
 dependencia `pandas` de `capital_allocation`. La deuda de módulos sigue en 82: esta
 entrega extrae las hojas y todavía no retira sus nombres de compatibilidad.
+[F7.22](f7-ranking-quality.md) retiró `valuation_expectations`, `capital_allocation` y
+`broker_costs` al pasar sus consumidores al dominio.
 
 Los adaptadores nuevos de ranking y Portfolio Lab importan directamente las
 funciones/constantes del dominio. El resto de las referencias legacy conserva

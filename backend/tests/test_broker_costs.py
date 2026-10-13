@@ -1,6 +1,6 @@
 import pytest
 
-from gabi import broker_costs
+from gabi.domain.portfolio import broker_costs
 
 
 def test_effective_trade_cost_bps_matches_manual_calculation():

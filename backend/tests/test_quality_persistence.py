@@ -1,6 +1,6 @@
 import pytest
 
-from gabi.quality_persistence import from_facts
+from gabi.domain.market.quality_persistence import from_facts
 
 
 def _facts():
