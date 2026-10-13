@@ -11,19 +11,32 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
+from gabi.application.market import cached_data
+from gabi.domain.market.price_sync import yahoo_symbol
 from gabi.domain.market.source_errors import RETRYABLE_CATEGORIES as RETRYABLE
 from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.providers import yahoo
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites, statement_json
 
-from . import config, identity, storage
+from . import config, identity
 
 RETRYABLE_CATEGORIES = set(RETRYABLE)
 RETRY_BACKOFF_SECONDS = 1.5
 
 
+def _reads() -> SqliteCacheReads:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteCacheReads(config.DB_PATH)
+
+
+def _writes() -> SqliteCacheWrites:
+    return SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC))
+
+
 def normalize_symbol(symbol: str) -> str:
     """Yahoo Finance usa '-' en vez de '.' (ej. BRK.B -> BRK-B)."""
-    return symbol.replace(".", "-")
+    return yahoo_symbol(symbol)
 
 
 def _classify_error(exc: Exception, service: str = "Yahoo Finance") -> tuple[str, str]:
@@ -62,7 +75,7 @@ def fetch_prices_batch(symbols: list, period: str = "2y") -> dict:
             df = None
         if df is not None and not df.empty:
             owner = identity.resolve(orig, datetime.now(UTC).date().isoformat())["entity_id"]
-            storage.upsert_prices(orig, df.dropna(how="all"), entity_id=owner)
+            _writes().prices(orig, df.dropna(how="all"), entity_id=owner)
         else:
             failed[orig] = "Sin datos de precio devueltos por Yahoo Finance (posible ticker incorrecto o deslistado)"
     return failed
@@ -91,7 +104,7 @@ def fetch_splits_batch(symbols: list, max_workers: int = 6) -> dict:
             sym = futures[fut]
             try:
                 owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
-                storage.upsert_splits(sym, fut.result(), entity_id=owner)
+                _writes().splits(sym, fut.result(), entity_id=owner)
             except Exception as exc:
                 _, reason = _classify_error(exc)
                 failed[sym] = reason
@@ -113,7 +126,7 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
     already_covered = 0
     for symbol in symbols:
         if symbol == config.BENCHMARK_SYMBOL:
-            if storage.has_verified_price_as_of(symbol, as_of_date):
+            if cached_data.has_verified_price_as_of(_reads(), symbol, as_of_date):
                 already_covered += 1
             else:
                 download_for[symbol] = symbol
@@ -148,7 +161,7 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
         if downloaded in download_failed:
             failed[original] = download_failed[downloaded]
             continue
-        history = (storage.get_prices(original) if original == config.BENCHMARK_SYMBOL
+        history = (cached_data.prices(_reads(), original) if original == config.BENCHMARK_SYMBOL
                    else identity.price_history(original, as_of_date))
         if history.empty or not history.loc[history.index <= pd.Timestamp(as_of_date), "adj_close"].notna().any():
             failed[original] = "La descarga no aportó precios ajustados atribuidos para esta fecha"
@@ -163,7 +176,7 @@ def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) 
 def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
     """Migra el caché de precios antiguo y refresca los símbolos desactualizados, para las decisiones de cartera."""
     symbols = list(dict.fromkeys(symbols))
-    coverage = storage.get_price_coverage(symbols)
+    coverage = cached_data.price_coverage(_reads(), symbols)
     today = datetime.now(UTC).date()
     need = []
     for symbol in symbols:
@@ -178,7 +191,7 @@ def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
         failed.update(fetch_prices_batch(batch, period="2y"))
         if progress_cb:
             progress_cb(min(i + 40, len(need)), len(need))
-    updated = storage.get_price_coverage(need)
+    updated = cached_data.price_coverage(_reads(), need)
     for symbol in need:
         if symbol in failed:
             continue
@@ -227,22 +240,22 @@ def fetch_fundamentals_batch(symbols: list, max_workers: int = 6, progress_cb=No
     if total == 0:
         return failed
     from . import sync_state as sync
-    previous = storage.get_fundamentals(symbols)
+    previous = cached_data.fundamentals(_reads(), symbols)
 
     def sync_one(sym):
         owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
         attempt = sync.Attempt("yahoo", owner or f"ticker:{sym}", f"fundamentals:{sym}")
         try:
             info, qi, qcf = sync.retry(lambda: _fetch_fundamentals_attempt(sym), attempt)
-            payload = {"info": info, "quarterly_income": json.loads(storage._df_to_json(qi)),
-                       "quarterly_cashflow": json.loads(storage._df_to_json(qcf))}
+            payload = {"info": info, "quarterly_income": json.loads(statement_json(qi)),
+                       "quarterly_cashflow": json.loads(statement_json(qcf))}
             attempt.payload(payload)
             digest = sync.fingerprint(payload)
             old = previous.get(sym)
             status = "new" if not old else "unchanged" if digest == sync.fingerprint(
                 {k: v for k, v in old.items() if k != "fetched_at"}) else "revised"
             # Refresh the snapshot timestamp even when values agree; no historical reprocessing.
-            storage.upsert_fundamentals(sym, info, qi, qcf, entity_id=owner)
+            _writes().fundamentals(sym, info, qi, qcf, entity_id=owner)
             attempt.finish(status, state={"fingerprint": digest, "watermark": datetime.now(UTC).isoformat()},
                            new=int(status == "new"), revised=int(status == "revised"), unchanged=int(status == "unchanged"),
                            reason="snapshot Yahoo: proveedor sin endpoint incremental para fundamentales")
@@ -287,7 +300,7 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     needs_price_refresh = any(not e["skipped"] for e in price_result["events"])
     price_failed = price_result["failed"]
 
-    fetched_at = storage.get_fundamentals_fetched_at(symbols)
+    fetched_at = cached_data.fundamentals_fetched_at(_reads(), symbols)
     now = datetime.now(UTC)
     from . import sync_state
     failed_fundamentals = {dataset.removeprefix("fundamentals:") for _, dataset in sync_state.failed_datasets("yahoo")
@@ -307,8 +320,8 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     for sym, reason in fundamentals_failed.items():
         failed.setdefault(sym, {})["fundamentales"] = reason
 
-    storage.record_update_errors("yahoo_precio", {s: r["precio"] for s, r in failed.items() if "precio" in r})
-    storage.record_update_errors(
+    _writes().update_errors("yahoo_precio", {s: r["precio"] for s, r in failed.items() if "precio" in r})
+    _writes().update_errors(
         "yahoo_fundamentales", {s: r["fundamentales"] for s, r in failed.items() if "fundamentales" in r})
 
     return {

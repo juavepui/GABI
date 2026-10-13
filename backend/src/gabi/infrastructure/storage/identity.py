@@ -90,6 +90,14 @@ class SqliteIdentityReads:
                 resolved[original] = row
         return resolved
 
+    def name_candidates(self, symbol: str, limit: int = 200) -> pd.DataFrame:
+        """Reviewed name candidates for a symbol; an absent table is no evidence, never created here."""
+        columns = ["symbol", "entity_id", "name", "source", "reason"]
+        with self._read() as (db, tables):
+            rows = self._rows(db, "SELECT * FROM (SELECT symbol,entity_id,name,source,reason FROM entity_candidates "
+                              "WHERE symbol=? LIMIT ?)", (normalize_symbol(symbol), limit))                 if db is not None and "entity_candidates" in tables else []
+        return pd.DataFrame.from_records(rows, columns=columns, coerce_float=True)
+
     def registered(self, symbols: list[str]) -> set[str]:
         chunks = list(self._chunks([normalize_symbol(symbol) for symbol in symbols]))
         result: set[str] = set()

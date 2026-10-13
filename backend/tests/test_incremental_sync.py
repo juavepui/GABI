@@ -96,18 +96,20 @@ def test_history_repair_rejects_missing_cached_interior_session(monkeypatch):
 
 
 def test_interruption_after_data_write_resumes_without_double_insertion(monkeypatch):
-    monkeypatch.setattr(yfinance, "download", lambda *a, **k: prices())
-    original = storage.upsert_prices
+    from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
 
-    def interrupted(*args, **kwargs):
-        original(*args, **kwargs)
+    monkeypatch.setattr(yfinance, "download", lambda *a, **k: prices())
+    original = SqliteCacheWrites.prices
+
+    def interrupted(self, *args, **kwargs):
+        original(self, *args, **kwargs)
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(storage, "upsert_prices", interrupted)
+    monkeypatch.setattr(SqliteCacheWrites, "prices", interrupted)
     with pytest.raises(KeyboardInterrupt):
         price_sync.run(["A"], now=NOW)
     assert not sync.get("yahoo", "ticker:A", "prices:A")
-    monkeypatch.setattr(storage, "upsert_prices", original)
+    monkeypatch.setattr(SqliteCacheWrites, "prices", original)
     event = price_sync.run(["A"], now=NOW)["events"][0]
     assert event["status"] == "unchanged" and event["new"] == 0
     assert sync.get("yahoo", "ticker:A", "prices:A")["watermark"] == "2024-01-10"

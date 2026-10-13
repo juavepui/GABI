@@ -71,7 +71,6 @@
     "gabi.config",
     "gabi.identity",
     "gabi.price_sync",
-    "gabi.storage",
     "gabi.sync_state",
     "pandas"
   ],
@@ -303,7 +302,6 @@
     "concurrent.futures",
     "gabi.config",
     "gabi.edgar",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/live_ledger.py": [
@@ -322,7 +320,6 @@
   ],
   "backend/src/gabi/macro.py": [
     "gabi.config",
-    "gabi.storage",
     "gabi.sync_state",
     "pandas"
   ],
@@ -386,14 +383,9 @@
     "pandas"
   ],
   "backend/src/gabi/price_sync.py": [
-    "gabi.data_fetch._classify_error",
-    "gabi.data_fetch.normalize_symbol",
-    "gabi.history_refresh.last_completed_session",
     "gabi.identity",
     "gabi.storage",
-    "gabi.sync_state",
-    "numpy",
-    "pandas"
+    "gabi.sync_state"
   ],
   "backend/src/gabi/quality_persistence.py": [
     "gabi.edgar"

@@ -48,14 +48,10 @@ class LegacyDataHealth:
         return provenance(symbol, data_quality._readers(), now=self.now(), as_of=as_of, rules=data_quality._rules())
 
     def identity(self, symbol: str, as_of: str) -> dict:
-        from gabi import identity, storage
+        from gabi import identity
 
         resolution = identity.resolve(symbol, as_of)
-        with storage.get_connection() as conn:
-            identity.ensure_schema(conn)
-            candidates = pd.read_sql_query("SELECT * FROM entity_candidates WHERE symbol=? LIMIT 200", conn,
-                                           params=(identity.normalize_symbol(symbol),))
-        return {"resolution": resolution, "name_candidates": _records(candidates)}
+        return {"resolution": resolution, "name_candidates": _records(identity.name_candidates(symbol))}
 
     def identities(self, symbols: list[str], as_of: str) -> list[dict]:
         from gabi import identity
