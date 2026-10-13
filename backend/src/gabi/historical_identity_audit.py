@@ -11,17 +11,14 @@ cannot certify a ticker or activate an operational alias.
 import argparse
 import hashlib
 import json
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, timedelta
 from pathlib import Path
-
-import requests
 
 from gabi.application.research import historical_audit_exports as audit_exports
 from gabi.application.research import historical_identity_audit as identity_audit
 from gabi.application.research import identity_instances as instance_scan
+from gabi.application.research import sec_cover_downloads as cover_downloads
 from gabi.application.research import sec_quarter_ingest as quarter_ingest
 from gabi.domain.market.identity import normalize_cik
 from gabi.domain.research import historical_identity_audit as identity_rules
@@ -29,6 +26,7 @@ from gabi.domain.research import identity_instances as instance_rules
 from gabi.domain.research import sec_bulk as bulk_rules
 from gabi.domain.research.periods import P2010, Period
 from gabi.domain.research.periods import get as get_period
+from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_identity_audit import SqliteIdentityAuditReads
 from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
@@ -92,61 +90,14 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
         _ingest_selection(), CANDIDATE_SOURCE, start=period.start, end_exclusive=period.end_exclusive,
         nominated=nominated, identity_source=period.identity_source, prioritize_unresolved=prioritize_unresolved)
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "instances"
-    already_cached = 0
-    pending: list[tuple[str, str, Path]] = []
-    for accn, cik, _filed, instance in sorted(selected.values(), key=lambda row: (row[2], row[0])):
-        path = directory / f"{accn}.xml"
-        if path.exists():
-            already_cached += 1
-            continue
-        if len(pending) >= limit:
-            continue
-        url = (f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/"
-               f"{accn.replace('-', '')}/{instance}")
-        pending.append((accn, url, path))
+    already_cached, pending = cover_downloads.pending_covers(
+        selected, limit, cached=lambda accn: (directory / f"{accn}.xml").exists())
     # Pace starts across workers: 4/s, including retries, below SEC's 10/s cap.
-    pace_lock = threading.Lock()
-    next_start = time.monotonic()
-
-    def paced_download(url: str, path: Path) -> None:
-        nonlocal next_start
-        with pace_lock:
-            now = time.monotonic()
-            delay = max(0, next_start - now)
-            next_start = max(now, next_start) + 0.25
-        if delay:
-            time.sleep(delay)
-        sec_history.download(url, path)
-
-    def fetch_one(accn: str, url: str, path: Path) -> tuple[str, str | None]:
-        for attempt in range(3):
-            try:
-                paced_download(url, path)
-                return accn, None
-            except requests.HTTPError as exc:
-                status = exc.response.status_code if exc.response is not None else None
-                if status in {429, 500, 502, 503, 504} and attempt < 2:
-                    time.sleep(2 ** attempt)
-                    continue
-                return accn, str(exc)
-            except (requests.RequestException, OSError, ValueError) as exc:
-                return accn, str(exc)
-        return accn, "retries exhausted"
-
-    fetched = failures = 0
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        futures = [pool.submit(fetch_one, *item) for item in pending]
-        for future in as_completed(futures):
-            accn, error = future.result()
-            if error:
-                failures += 1
-                print(f"SEC identity download failed {accn}: {error}", flush=True)
-            else:
-                fetched += 1
-            if (fetched + failures) % 50 == 0:
-                print(f"SEC identity covers attempted: {fetched + failures}", flush=True)
-    return {"selected_filings": len(selected), "already_cached": already_cached,
-            "fetched": fetched, "failed": failures,
+    counts = cover_downloads.download_covers(
+        pending, download=lambda url, accn: sec_history.download(url, directory / f"{accn}.xml"),
+        errors=(sec_archive.REQUEST_ERROR, OSError, ValueError), status=sec_archive.http_status,
+        parallel=sec_archive.parallel, clock=time.monotonic, wait=lambda seconds: time.sleep(seconds), log=_log)
+    return {"selected_filings": len(selected), "already_cached": already_cached, **counts,
             "candidates_with_fewer_than_two_filings": missing_candidates,
             "prioritize_unresolved": prioritize_unresolved}
 
@@ -277,7 +228,7 @@ def fetch_issuer_name_histories(limit: int, period: Period = P2010) -> dict:
             if normalize_cik(payload["cik"]) != cik:
                 raise ValueError("SEC submissions issuer CIK mismatch")
             fetched += 1
-        except (requests.RequestException, OSError, ValueError, KeyError) as exc:
+        except (sec_archive.REQUEST_ERROR, OSError, ValueError, KeyError) as exc:
             failed += 1
             print(f"SEC issuer name history failed {cik}: {exc}", flush=True)
     return {"candidate_ciks": len(ciks), "cached": cached, "fetched": fetched, "failed": failed}

@@ -174,24 +174,16 @@
     "gabi.identity",
     "pandas"
   ],
-  "backend/src/gabi/historical_data_audit.py": [
-    "pathlib",
-    "sqlite3"
-  ],
   "backend/src/gabi/historical_identity_audit.py": [
-    "concurrent.futures",
     "gabi.config",
     "gabi.historical_archive",
     "gabi.historical_issuer_evidence",
     "gabi.sec_history",
-    "pathlib",
-    "requests"
+    "pathlib"
   ],
   "backend/src/gabi/historical_issuer_evidence.py": [
-    "gabi.identity",
     "gabi.sec_history",
-    "pathlib",
-    "requests"
+    "pathlib"
   ],
   "backend/src/gabi/historical_membership.py": [
     "gabi.config",
@@ -216,8 +208,7 @@
     "gabi.historical_tiingo.source_id",
     "gabi.historical_wiki.SOURCE_ID",
     "pandas",
-    "pathlib",
-    "sqlite3"
+    "pathlib"
   ],
   "backend/src/gabi/historical_price_policy.py": [
     "gabi.identity",
@@ -243,7 +234,6 @@
   "backend/src/gabi/historical_tiingo.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "gabi.storage",
     "gabi.sync_state",
     "pandas",
     "pathlib"
@@ -465,10 +455,8 @@
     "gabi.config",
     "gabi.edgar",
     "gabi.historical_archive",
-    "lxml",
     "pandas",
-    "pathlib",
-    "requests"
+    "pathlib"
   ],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",

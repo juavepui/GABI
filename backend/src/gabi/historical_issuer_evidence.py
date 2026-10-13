@@ -18,12 +18,13 @@ import argparse
 import json
 from pathlib import Path
 
-import requests
-
+from gabi.application.research import historical_issuer_evidence as evidence_downloads
 from gabi.domain.research import issuer_evidence as issuer_rules
+from gabi.domain.research.sec_bulk import instance_url
+from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
 
-from . import identity, sec_history
+from . import sec_history
 
 DIRECTORY = sec_history.DIRECTORY
 FRAMES_DIR = DIRECTORY / "frames"
@@ -79,52 +80,38 @@ def _frame_path(kind: str, period: str) -> tuple[str, Path]:
     return url, FRAMES_DIR / f"{taxonomy}_{tag}_{unit}_{period}{suffix}.json"
 
 
+class _Documents:
+    """SEC documents cached by file name with URL/SHA-256 provenance; the directory is read per call."""
+
+    def __init__(self, directory: Path):
+        self.directory = directory
+
+    def exists(self, name: str) -> bool:
+        return (self.directory / name).exists()
+
+    def download(self, url: str, name: str) -> Path:
+        return sec_history.download(url, self.directory / name)
+
+    def read(self, name: str) -> dict:
+        return json.loads((self.directory / name).read_text(encoding="utf-8"))
+
+
 def fetch_frames() -> dict:
     """Cache every quarterly frame used by the checks (idempotent)."""
-    fetched = cached = missing = 0
+    targets = []
     for kind in FRAME_SPECS:
         for period in _periods(kind):
             url, path = _frame_path(kind, period)
-            if path.exists():
-                cached += 1
-                continue
-            try:
-                sec_history.download(url, path)
-                fetched += 1
-            except requests.HTTPError as exc:
-                # SEC returns 404 for frames without facts; record, never invent.
-                if exc.response is not None and exc.response.status_code == 404:
-                    missing += 1
-                    continue
-                raise
-    return {"fetched": fetched, "cached": cached, "not_published": missing}
+            targets.append((url, path.name))
+    return evidence_downloads.fetch_frames(targets, _Documents(FRAMES_DIR), missing_error=sec_archive.HTTP_ERROR,
+                                           status=sec_archive.http_status)
 
 
 def fetch_submissions(ciks: set[str]) -> dict:
     """Cache SEC submissions, including older pages that overlap the filing window."""
-    fetched = cached = failed = 0
-    for cik in sorted(identity.normalize_cik(value) for value in ciks):
-        path = SUBMISSIONS_DIR / f"CIK{cik}.json"
-        try:
-            if path.exists():
-                cached += 1
-            else:
-                sec_history.download(SUBMISSIONS_URL.format(name=f"CIK{cik}.json"), path)
-                fetched += 1
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            if identity.normalize_cik(payload["cik"]) != cik:
-                raise ValueError("SEC submissions issuer CIK mismatch")
-            for page in payload.get("filings", {}).get("files", []):
-                if page.get("filingFrom", "9999") > FILINGS_TO or page.get("filingTo", "0000") < FILINGS_FROM:
-                    continue
-                extra = SUBMISSIONS_DIR / page["name"]
-                if not extra.exists():
-                    sec_history.download(SUBMISSIONS_URL.format(name=page["name"]), extra)
-                    fetched += 1
-        except (requests.RequestException, OSError, ValueError, KeyError) as exc:
-            failed += 1
-            print(f"SEC submissions failed {cik}: {exc}", flush=True)
-    return {"ciks": len(ciks), "fetched_files": fetched, "cached": cached, "failed": failed}
+    return evidence_downloads.fetch_submissions(
+        ciks, _Documents(SUBMISSIONS_DIR), errors=(sec_archive.REQUEST_ERROR, OSError, ValueError, KeyError),
+        log=lambda message: print(message, flush=True))
 
 
 def load_frames() -> dict[str, dict[str, list[dict]]]:
@@ -189,8 +176,7 @@ annual_report_symbols = issuer_rules.annual_report_symbols
 
 
 def fetch_annual_report(cik: str, report: dict) -> tuple[str, Path]:
-    url = (f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/"
-           f"{report['accession'].replace('-', '')}/{report['primary']}")
+    url = instance_url(cik, report["accession"], report["primary"])
     return url, sec_history.download(url, ANNUAL_DIR / f"{report['accession']}_{Path(report['primary']).name}")
 
 
@@ -215,8 +201,7 @@ completion_reports = issuer_rules.completion_reports
 
 
 def fetch_report(cik: str, report: dict) -> tuple[str, Path]:
-    url = (f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/"
-           f"{report['accession'].replace('-', '')}/{report['primary']}")
+    url = instance_url(cik, report["accession"], report["primary"])
     return url, sec_history.download(url, TERMINAL_DIR / f"{report['accession']}_{Path(report['primary']).name}")
 
 
