@@ -92,9 +92,6 @@
     "gabi.sync_state",
     "pandas"
   ],
-  "backend/src/gabi/edgar_sync.py": [
-    "gabi.edgar"
-  ],
   "backend/src/gabi/entity_master.py": [
     "gabi.edgar",
     "gabi.identity",

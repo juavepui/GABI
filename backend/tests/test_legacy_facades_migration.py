@@ -152,10 +152,10 @@ def test_failed_attribution_rolls_back_the_price_rows(tmp_path, monkeypatch):
     assert storage.get_prices("AAA").empty
 
 
-def test_edgar_sync_facade_uses_the_verified_modern_composition(tmp_path, monkeypatch):
+def test_issuer_sync_uses_the_verified_modern_composition(tmp_path, monkeypatch):
     import test_sec_xbrl_migration as xbrl
 
-    from gabi import edgar, edgar_sync, storage, sync_state
+    from gabi import edgar, storage, sync_state
 
     path = tmp_path / "facade" / "gabi.db"
     monkeypatch.setattr(config, "DB_PATH", path)
@@ -167,7 +167,7 @@ def test_edgar_sync_facade_uses_the_verified_modern_composition(tmp_path, monkey
     monkeypatch.setattr(storage, "get_connection", lambda: pytest.fail("legacy connection"))
     modern = xbrl.modern(tmp_path / "modern")
     for full_refresh in (False, False, True):
-        assert edgar_sync.run_one("A", "1", full_refresh=full_refresh) == modern.run("A", "1", full_refresh=full_refresh)
+        assert edgar.synchronize_issuer("A", "1", full_refresh=full_refresh) == modern.run("A", "1", full_refresh=full_refresh)
     assert xbrl.read_tables(path) == xbrl.read_tables(modern.path)
 
 

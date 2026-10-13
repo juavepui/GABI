@@ -63,6 +63,8 @@ y extrae Company Facts por CIK de `sec_history`.
 [F7.17](f7-http-providers.md) aplica [ADR 0004](../adr/0004-legacy-provider-delegation.md):
 las fachadas delegan su HTTP en proveedores acotados de `infrastructure/providers`.
 [F7.18](f7-yahoo-provider.md) concentra `yfinance` en `infrastructure/providers/yahoo.py`.
+`edgar_sync` se retira: ya no tenía consumidores de producción y su única
+función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
 
 ## Responsabilidades y entregas
 
@@ -75,7 +77,7 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 | `screener`, `data_quality`, `evidence_confidence`, `app_mode` | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |
 | `storage`, `entity_master`, `entity_migration`, `identity`, `sync_state` | SQL al adaptador; política de identidad al dominio | F2/F4: alias, duplicidad de clases, lotes y cambios aditivos |
 | `data_fetch`, `universe`, `edgar`, `macro`, `academic_factors`, `insider`, `estimates`, `historical_*`, `sec_*` | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
-| `periodic_tasks`, `price_sync`, `edgar_sync`, `history_refresh` | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
+| `periodic_tasks`, `price_sync`, `history_refresh` (`edgar_sync` retirado) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
 | `capital_allocation`, `rotation_policy`, `broker_costs`, `tax_drag`, `portfolio_metrics` | Dominio Cartera; coordinación de lecturas/escrituras en aplicación | F5: selección, costes y rentabilidades idénticos |
 | `decision_engine`, `sim_portfolios`, `signal_monitor`, `evaluation`, `live_ledger` | Aplicación por capacidad y persistencia específica | F5: operaciones, ledger y contratos sin cambios de interpretación |
 | `research_lab`, `blind_validation`, `factor_lab`, `portfolio_lab`, auditorías/backtests/experimentos | Dominio de cálculos; casos de uso Investigación; jobs y artefactos en infraestructura | F6: protocolos, hashes, reservas, resultados y exportaciones |

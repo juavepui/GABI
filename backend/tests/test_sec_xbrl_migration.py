@@ -303,7 +303,7 @@ def test_http_bounds_404_and_response_closed(monkeypatch, status, payload_bytes,
 
 
 def test_bootstrap_and_worker_use_injected_sync_not_legacy(tmp_path, monkeypatch):
-    from gabi import config, edgar, edgar_sync
+    from gabi import config, edgar
     from gabi.infrastructure.settings import Settings
     from gabi_cli.bootstrap import build_executor
     from gabi_cli.sources.bootstrap import build_xbrl_operation
@@ -312,7 +312,7 @@ def test_bootstrap_and_worker_use_injected_sync_not_legacy(tmp_path, monkeypatch
     assert not tmp_path.joinpath("gabi.db").exists()
     monkeypatch.setattr(SecXbrl, "submissions", lambda self, cik: filings())
     monkeypatch.setattr(SecXbrl, "companyfacts", lambda self, cik: payload())
-    monkeypatch.setattr(edgar_sync, "run_one", lambda *a, **k: pytest.fail("legacy synchronization"))
+    monkeypatch.setattr(edgar, "synchronize_issuer", lambda *a, **k: pytest.fail("legacy synchronization"))
     monkeypatch.setattr(edgar, "fetch_submissions", lambda *a: pytest.fail("legacy HTTP"))
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda *a: pytest.fail("legacy HTTP"))
     from gabi.application.market.sec_cik import CikResolver
