@@ -74,6 +74,9 @@ covers SEC a un caso de uso, saca `requests`/`lxml`/SQL de las auditorías hist�
 y retira `historical_data_audit`.
 [F7.22](f7-ranking-quality.md) (#132) saca `storage` de `screener_asof` y `data_quality`
 y retira cuatro alias pequeños; `rotation_policy` queda por la huella de `rotation_experiment`.
+[F7.23](f7-research-ledgers.md) (#133) lleva los registros de experimentos y de
+validación ciega a infraestructura; [ADR 0005](../adr/0005-legacy-config-path.md) permite
+sustituir `storage` por `config` cuando solo se usaba para la ruta de la base.
 
 ## Responsabilidades y entregas
 

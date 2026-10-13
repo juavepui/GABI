@@ -22,58 +22,23 @@ from datetime import date
 
 import pandas as pd
 
-from . import screener_asof, storage
+from gabi.application.market import cached_data
+from gabi.infrastructure.storage.blind_ledger import SCHEMA as SCHEMA
+from gabi.infrastructure.storage.blind_ledger import DuplicatePeriod, SqliteBlindLedger
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+
+from . import config, screener_asof
 from .domain.research.blind import canonical_payload, verify_chain
 from .research_lab import _current_git_commit, log_experiment
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS blind_validations (
-    id INTEGER PRIMARY KEY,
-    created_at TEXT NOT NULL,
-    name TEXT NOT NULL,
-    model_id TEXT NOT NULL,
-    weights_json TEXT NOT NULL,
-    n_positions INTEGER NOT NULL,
-    rebalance_months INTEGER NOT NULL,
-    start_date TEXT NOT NULL,
-    unlock_date TEXT NOT NULL,
-    git_commit_created TEXT,
-    status TEXT NOT NULL DEFAULT 'locked',
-    broken_early_at TEXT,
-    broken_early_reason TEXT
-);
-CREATE TABLE IF NOT EXISTS blind_validation_periods (
-    id INTEGER PRIMARY KEY,
-    validation_id INTEGER NOT NULL,
-    rebalance_date TEXT NOT NULL,
-    recorded_at TEXT NOT NULL,
-    symbols_json TEXT NOT NULL,
-    weights_json TEXT NOT NULL,
-    entry_prices_json TEXT NOT NULL,
-    git_commit TEXT,
-    prev_hash TEXT,
-    record_hash TEXT NOT NULL,
-    UNIQUE(validation_id, rebalance_date)
-);
--- Opcional por validación (#43): puntuación completa del universo en cada
--- rebalanceo, para medir el IC de sección cruzada de forma prospectiva. Tabla
--- aparte: no altera los periodos ni la cadena de hashes existentes.
-CREATE TABLE IF NOT EXISTS blind_validation_options (
-    validation_id INTEGER PRIMARY KEY,
-    store_ranking INTEGER NOT NULL DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS blind_validation_rankings (
-    validation_id INTEGER NOT NULL,
-    rebalance_date TEXT NOT NULL,
-    ranking_json TEXT NOT NULL,
-    ranking_hash TEXT NOT NULL,
-    PRIMARY KEY(validation_id, rebalance_date)
-);
-"""
+
+def _ledger() -> SqliteBlindLedger:
+    # The compatibility setting is read per operation, never mutated (ADR 0005).
+    return SqliteBlindLedger(config.DB_PATH)
 
 
-def _ensure_schema(conn):
-    conn.executescript(SCHEMA)
+def _prices_multi(symbols: list) -> dict:
+    return cached_data.prices_multi(SqliteCacheReads(config.DB_PATH), symbols)
 
 
 def _canonical_payload(rebalance_date: str, symbols: list, entry_prices: dict) -> str:
@@ -86,32 +51,10 @@ def create_validation(name: str, weights: dict, n_positions: int, rebalance_mont
         raise ValueError("La fecha de desbloqueo debe ser posterior a la de inicio.")
     if n_positions < 1:
         raise ValueError("n_positions debe ser al menos 1.")
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        cur = conn.execute(
-            "INSERT INTO blind_validations (created_at, name, model_id, weights_json, n_positions, "
-            "rebalance_months, start_date, unlock_date, git_commit_created, status) "
-            "VALUES (?,?,?,?,?,?,?,?,?,'locked')",
-            (pd.Timestamp.now().isoformat(), name, model_id, json.dumps(weights), n_positions,
-             rebalance_months, start_date, unlock_date, _current_git_commit()),
-        )
-        conn.commit()
-        return cur.lastrowid
-
-
-def _get_validation_row(conn, validation_id: int) -> dict:
-    columns = [d[0] for d in conn.execute("SELECT * FROM blind_validations LIMIT 0").description]
-    row = conn.execute("SELECT * FROM blind_validations WHERE id = ?", (validation_id,)).fetchone()
-    return dict(zip(columns, row)) if row else {}
-
-
-def _get_periods(conn, validation_id: int) -> list:
-    columns = [d[0] for d in conn.execute("SELECT * FROM blind_validation_periods LIMIT 0").description]
-    rows = conn.execute(
-        "SELECT * FROM blind_validation_periods WHERE validation_id = ? ORDER BY rebalance_date",
-        (validation_id,),
-    ).fetchall()
-    return [dict(zip(columns, r)) for r in rows]
+    return _ledger().create({"created_at": pd.Timestamp.now().isoformat(), "name": name, "model_id": model_id,
+                             "weights_json": json.dumps(weights), "n_positions": n_positions,
+                             "rebalance_months": rebalance_months, "start_date": start_date,
+                             "unlock_date": unlock_date, "git_commit_created": _current_git_commit()})
 
 
 def record_rebalance(validation_id: int, as_of: str = None) -> dict:
@@ -126,12 +69,11 @@ def record_rebalance(validation_id: int, as_of: str = None) -> dict:
     `as_of` (no el patrón señal→sesión siguiente de un backtest: aquí no se
     simula nada, se registra el precio real más reciente en el momento en
     que se pulsa el botón)."""
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        validation = _get_validation_row(conn, validation_id)
-        if not validation:
-            raise ValueError(f"No existe la validación #{validation_id}.")
-        periods = _get_periods(conn, validation_id)
+    ledger = _ledger()
+    validation = ledger.validation(validation_id)
+    if not validation:
+        raise ValueError(f"No existe la validación #{validation_id}.")
+    periods = ledger.periods(validation_id)
 
     as_of = as_of or date.today().isoformat()
     as_of_ts = pd.Timestamp(as_of)
@@ -144,7 +86,7 @@ def record_rebalance(validation_id: int, as_of: str = None) -> dict:
         raise ValueError(f"Solo {len(eligible)}/{n_positions} candidatas con cobertura suficiente hoy.")
     picks = eligible.index.tolist()[:n_positions]
 
-    histories = storage.get_prices_multi(picks)
+    histories = _prices_multi(picks)
     entry_prices, missing = {}, []
     for symbol in picks:
         h = histories.get(symbol, pd.DataFrame())
@@ -161,29 +103,22 @@ def record_rebalance(validation_id: int, as_of: str = None) -> dict:
     payload = _canonical_payload(as_of, picks, entry_prices)
     record_hash = hashlib.sha256(f"{prev_hash or ''}{payload}".encode()).hexdigest()
 
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        try:
-            conn.execute(
-                "INSERT INTO blind_validation_periods (validation_id, rebalance_date, recorded_at, "
-                "symbols_json, weights_json, entry_prices_json, git_commit, prev_hash, record_hash) "
-                "VALUES (?,?,?,?,?,?,?,?,?)",
-                (validation_id, as_of, pd.Timestamp.now().isoformat(), json.dumps(picks),
-                 json.dumps(weights), json.dumps(entry_prices), _current_git_commit(), prev_hash, record_hash),
-            )
-            if _stores_ranking(conn, validation_id):
-                snapshot = json.dumps({symbol: {"composite_score": _finite(row["composite_score"]),
-                                                "score_coverage": _finite(row["score_coverage"]),
-                                                "eligible": symbol in set(eligible.index)}
-                                       for symbol, row in ranked.iterrows()}, sort_keys=True)
-                conn.execute("INSERT INTO blind_validation_rankings VALUES (?,?,?,?)",
-                             (validation_id, as_of, snapshot, hashlib.sha256(snapshot.encode()).hexdigest()))
-            conn.commit()
-        except Exception as exc:
-            if "UNIQUE" in str(exc):
-                raise ValueError(f"Ya existe un rebalanceo registrado para {as_of} en esta validación — "
-                                 "es inmutable, no se puede repetir ni sobrescribir.") from exc
-            raise
+    def snapshot() -> tuple[str, str]:
+        ranking = json.dumps({symbol: {"composite_score": _finite(row["composite_score"]),
+                                       "score_coverage": _finite(row["score_coverage"]),
+                                       "eligible": symbol in set(eligible.index)}
+                              for symbol, row in ranked.iterrows()}, sort_keys=True)
+        return ranking, hashlib.sha256(ranking.encode()).hexdigest()
+
+    try:
+        ledger.seal({"validation_id": validation_id, "rebalance_date": as_of,
+                     "recorded_at": pd.Timestamp.now().isoformat(), "symbols_json": json.dumps(picks),
+                     "weights_json": json.dumps(weights), "entry_prices_json": json.dumps(entry_prices),
+                     "git_commit": _current_git_commit(), "prev_hash": prev_hash, "record_hash": record_hash},
+                    snapshot)
+    except DuplicatePeriod as exc:
+        raise ValueError(f"Ya existe un rebalanceo registrado para {as_of} en esta validación — "
+                         "es inmutable, no se puede repetir ni sobrescribir.") from exc
     return {"rebalance_date": as_of, "symbols": picks, "entry_prices": entry_prices,
            "record_hash": record_hash, "as_of_is_today": as_of == date.today().isoformat()}
 
@@ -192,27 +127,14 @@ def _finite(value) -> float | None:
     return float(value) if value is not None and pd.notna(value) else None
 
 
-def _stores_ranking(conn, validation_id: int) -> bool:
-    row = conn.execute("SELECT store_ranking FROM blind_validation_options WHERE validation_id=?",
-                       (validation_id,)).fetchone()
-    return bool(row and row[0])
-
-
 def enable_ranking_snapshots(validation_id: int) -> None:
     """Guarda la puntuación completa del universo en los rebalanceos futuros de esta validación."""
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        if not _get_validation_row(conn, validation_id):
-            raise ValueError(f"No existe la validación #{validation_id}.")
-        conn.execute("INSERT OR REPLACE INTO blind_validation_options VALUES (?,1)", (validation_id,))
-        conn.commit()
+    if not _ledger().enable_ranking(validation_id):
+        raise ValueError(f"No existe la validación #{validation_id}.")
 
 
 def verify_integrity(validation_id: int) -> dict:
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        periods = _get_periods(conn, validation_id)
-    return verify_chain(periods)
+    return verify_chain(_ledger().periods(validation_id))
 
 
 def _is_revealed(validation: dict) -> bool:
@@ -229,7 +151,7 @@ def _last_price_on_or_before(history: pd.DataFrame, as_of_ts: pd.Timestamp) -> f
 
 
 def _mark_to_market_return(symbols: list, entry_prices: dict, as_of_ts: pd.Timestamp) -> float:
-    histories = storage.get_prices_multi(symbols)
+    histories = _prices_multi(symbols)
     rets = []
     for s in symbols:
         h = histories.get(s, pd.DataFrame())
@@ -251,12 +173,11 @@ def get_status(validation_id: int, reveal: bool = False, as_of: str | None = Non
     los rebalanceos anteriores y el último periodo se valora a esa fecha. Así
     una prueba con revisiones preregistradas solo muestra hasta su última
     revisión alcanzada."""
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        validation = _get_validation_row(conn, validation_id)
-        if not validation:
-            raise ValueError(f"No existe la validación #{validation_id}.")
-        periods = _get_periods(conn, validation_id)
+    ledger = _ledger()
+    validation = ledger.validation(validation_id)
+    if not validation:
+        raise ValueError(f"No existe la validación #{validation_id}.")
+    periods = ledger.periods(validation_id)
 
     next_rebalance = None
     if periods:
@@ -282,7 +203,7 @@ def get_status(validation_id: int, reveal: bool = False, as_of: str | None = Non
 
     end = as_of or date.today().isoformat()
     shown = periods if as_of is None else [period for period in periods if period["rebalance_date"] < as_of]
-    spy_history = storage.get_prices_multi(["SPY"]).get("SPY", pd.DataFrame())
+    spy_history = _prices_multi(["SPY"]).get("SPY", pd.DataFrame())
     period_returns = []
     for i, period in enumerate(shown):
         symbols = json.loads(period["symbols_json"])
@@ -304,26 +225,15 @@ def break_seal_early(validation_id: int, reason: str) -> None:
     reason = (reason or "").strip()
     if not reason:
         raise ValueError("Hace falta un motivo para romper el sello antes de tiempo.")
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        conn.execute(
-            "UPDATE blind_validations SET status='broken_early', broken_early_at=?, broken_early_reason=? "
-            "WHERE id = ?",
-            (pd.Timestamp.now().isoformat(), reason, validation_id),
-        )
-        conn.commit()
+    _ledger().break_seal(validation_id, pd.Timestamp.now().isoformat(), reason)
 
 
 def list_validations() -> pd.DataFrame:
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        return pd.read_sql_query("SELECT * FROM blind_validations ORDER BY id DESC", conn)
+    return _ledger().validations()
 
 
 def export_to_research_lab(validation_id: int, as_of: str | None = None) -> int:
-    with storage.get_connection() as conn:
-        _ensure_schema(conn)
-        validation = _get_validation_row(conn, validation_id)
+    validation = _ledger().validation(validation_id)
     if not validation:
         raise ValueError(f"No existe la validación #{validation_id}.")
     if not _is_revealed(validation):

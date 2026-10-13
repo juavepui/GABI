@@ -128,6 +128,17 @@ def test_baseline_can_only_shrink_when_modules_or_dependencies_are_retired():
     assert GUARD["baseline_growth"](previous, {"old.py": ["gabi.storage"]}) == []
 
 
+def test_config_may_only_replace_a_retired_storage_dependency():
+    previous = {"old.py": ["gabi.storage", "pandas"], "other.py": ["pandas"]}
+    assert GUARD["baseline_growth"](previous, {"old.py": ["gabi.config", "pandas"], "other.py": ["pandas"]}) == []
+    kept = GUARD["baseline_growth"](previous, {"old.py": ["gabi.config", "gabi.storage", "pandas"]})
+    assert kept == ["legacy baseline cannot add dependency old.py -> gabi.config"]
+    unrelated = GUARD["baseline_growth"](previous, {"other.py": ["gabi.config", "pandas"]})
+    assert unrelated == ["legacy baseline cannot add dependency other.py -> gabi.config"]
+    other = GUARD["baseline_growth"](previous, {"old.py": ["gabi.edgar", "pandas"]})
+    assert other == ["legacy baseline cannot add dependency old.py -> gabi.edgar"]
+
+
 def test_retired_streamlit_cannot_return_as_import_or_dependency(tmp_path):
     write(tmp_path, ".github/architecture-legacy.json", json.dumps({"backend/src/gabi/old.py": ["streamlit"]}))
     write(tmp_path, "backend/src/gabi/old.py", "import streamlit\n")

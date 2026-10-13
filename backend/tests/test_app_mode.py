@@ -230,7 +230,9 @@ def test_record_rebalance_uses_the_validation_weights_and_optional_ranking_snaps
     blind_validation.enable_ranking_snapshots(vid)
     blind_validation.record_rebalance(vid, as_of="2024-01-10")
     assert seen == [value_only]
-    with blind_validation.storage.get_connection() as conn:
+    from gabi import storage
+
+    with storage.get_connection() as conn:
         snapshot, digest = conn.execute("SELECT ranking_json, ranking_hash FROM blind_validation_rankings "
                                         "WHERE validation_id=?", (vid,)).fetchone()
     ranking = json.loads(snapshot)

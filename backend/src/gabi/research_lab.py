@@ -18,17 +18,18 @@ validado":
   distinto nunca explorado).
 - **LIVE_FORWARD**: seguimiento real a partir de hoy, sin margen para haber
   influido en el diseño -- la prueba más honesta que existe."""
-import hashlib
-import json
 import platform
-import subprocess
-from importlib.metadata import PackageNotFoundError, version
 
 import pandas as pd
 
+from gabi.application.research import experiment_log
 from gabi.domain.research.experiments import STAGE_INFO, STAGES  # noqa: F401  (interfaz pública)
+from gabi.infrastructure.providers import research_environment
+from gabi.infrastructure.storage.experiment_log import SCHEMA as SCHEMA
+from gabi.infrastructure.storage.experiment_log import SqliteExperimentLog
+from gabi.infrastructure.storage.experiment_log import ensure_columns as _ensure_columns  # noqa: F401
 
-from . import config, storage
+from . import config
 
 # Paquetes cuya versión exacta puede cambiar el resultado numérico de un
 # backtest (cálculo, no solo I/O) -- se registran junto al commit para que un
@@ -39,64 +40,14 @@ TRACKED_PACKAGES = [
     "backtesting", "exchange_calendars", "quantstats",
 ]
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS experiments (
-    id INTEGER PRIMARY KEY,
-    created_at TEXT NOT NULL,
-    model_id TEXT NOT NULL,
-    git_commit TEXT,
-    data_cutoff TEXT,
-    universe TEXT,
-    factors TEXT,
-    weights_json TEXT,
-    n_positions INTEGER,
-    rebalance TEXT,
-    cost_model TEXT,
-    is_start TEXT,
-    is_end TEXT,
-    oos_start TEXT,
-    oos_end TEXT,
-    hypothesis_registered INTEGER NOT NULL,
-    stage TEXT NOT NULL,
-    family TEXT,
-    deps_json TEXT,
-    python_version TEXT,
-    env_fingerprint TEXT,
-    data_fingerprint TEXT,
-    sharpe REAL,
-    sortino REAL,
-    max_drawdown REAL,
-    total_return REAL,
-    annualized_return REAL,
-    periods_per_year REAL,
-    n_periods INTEGER,
-    returns_json TEXT,
-    notes TEXT,
-    result_json TEXT
-);
-"""
 
-
-def _ensure_columns(conn):
-    columns = {row[1] for row in conn.execute("PRAGMA table_info(experiments)")}
-    if "deps_json" not in columns:
-        conn.execute("ALTER TABLE experiments ADD COLUMN deps_json TEXT")
-    if "python_version" not in columns:
-        conn.execute("ALTER TABLE experiments ADD COLUMN python_version TEXT")
-    if "env_fingerprint" not in columns:
-        conn.execute("ALTER TABLE experiments ADD COLUMN env_fingerprint TEXT")
-    if "data_fingerprint" not in columns:
-        conn.execute("ALTER TABLE experiments ADD COLUMN data_fingerprint TEXT")
+def _log() -> SqliteExperimentLog:
+    # The compatibility setting is read per operation, never mutated.
+    return SqliteExperimentLog(config.DB_PATH)
 
 
 def _dependency_versions() -> dict:
-    versions = {}
-    for pkg in TRACKED_PACKAGES:
-        try:
-            versions[pkg] = version(pkg)
-        except PackageNotFoundError:
-            pass
-    return versions
+    return research_environment.dependency_versions(TRACKED_PACKAGES)
 
 
 def _env_fingerprint() -> str | None:
@@ -107,20 +58,11 @@ def _env_fingerprint() -> str | None:
     instalaron exactamente los mismos paquetes, sin tener que diffear el
     lockfile entero a mano. None si no se encuentra (ej. instalación sin
     checkout del repo, sin `uv.lock` junto al código)."""
-    lock_path = config.BASE_DIR / "uv.lock"
-    try:
-        return hashlib.sha256(lock_path.read_bytes()).hexdigest()[:12]
-    except OSError:
-        return None
+    return research_environment.lock_fingerprint(config.BASE_DIR / "uv.lock")
 
 
 def _current_git_commit() -> str | None:
-    try:
-        result = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=config.BASE_DIR,
-                                capture_output=True, text=True, timeout=5)
-        return result.stdout.strip() or None
-    except Exception:
-        return None
+    return research_environment.git_commit(config.BASE_DIR)
 
 
 def log_experiment(
@@ -147,91 +89,31 @@ def log_experiment(
     research_lab no conoce el universo de símbolos de cada run; lo calcula
     el llamador, que sí lo sabe (ej. el backtest de 🕰️ Ranking histórico), y
     lo pasa ya hecho."""
-    if stage not in STAGES:
-        raise ValueError(f"stage debe ser uno de {STAGES}.")
+    experiment_log.require_stage(stage)
     if git_commit is None:
         git_commit = _current_git_commit()
-    returns_json = None
-    if returns is not None:
-        returns_json = json.dumps({str(k): float(v) for k, v in returns.dropna().items()})
-    deps_json = json.dumps(_dependency_versions())
-    python_version = platform.python_version()
-    env_fingerprint = _env_fingerprint()
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_columns(conn)
-        cur = conn.execute(
-            "INSERT INTO experiments (created_at, model_id, git_commit, data_cutoff, universe, factors, "
-            "weights_json, n_positions, rebalance, cost_model, is_start, is_end, oos_start, oos_end, "
-            "hypothesis_registered, stage, family, deps_json, python_version, env_fingerprint, "
-            "data_fingerprint, sharpe, sortino, max_drawdown, total_return, annualized_return, "
-            "periods_per_year, n_periods, returns_json, notes, result_json) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (pd.Timestamp.now().isoformat(), model_id, git_commit, data_cutoff, universe, factors,
-             json.dumps(weights) if weights else None, n_positions, rebalance, cost_model,
-             is_start, is_end, oos_start, oos_end, int(bool(hypothesis_registered)), stage, family,
-             deps_json, python_version, env_fingerprint, data_fingerprint, sharpe, sortino, max_drawdown,
-             total_return, annualized_return, periods_per_year, n_periods, returns_json, notes,
-             json.dumps(result) if result else None),
-        )
-        conn.commit()
-        return cur.lastrowid
+    row = experiment_log.record(
+        model_id, stage, hypothesis_registered, created_at=pd.Timestamp.now().isoformat(), git_commit=git_commit,
+        deps=_dependency_versions(), python_version=platform.python_version(), env_fingerprint=_env_fingerprint(),
+        weights=weights, returns=returns, result=result, data_cutoff=data_cutoff, universe=universe,
+        factors=factors, n_positions=n_positions, rebalance=rebalance, cost_model=cost_model, is_start=is_start,
+        is_end=is_end, oos_start=oos_start, oos_end=oos_end, family=family, data_fingerprint=data_fingerprint,
+        sharpe=sharpe, sortino=sortino, max_drawdown=max_drawdown, total_return=total_return,
+        annualized_return=annualized_return, periods_per_year=periods_per_year, n_periods=n_periods, notes=notes)
+    return _log().record(row)
 
 
 def list_experiments(family: str = None, stage: str = None) -> pd.DataFrame:
-    query = "SELECT * FROM experiments"
-    conditions, params = [], []
-    if family is not None:
-        conditions.append("family = ?")
-        params.append(family)
-    if stage is not None:
-        conditions.append("stage = ?")
-        params.append(stage)
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-    query += " ORDER BY id DESC"
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_columns(conn)
-        conn.commit()
-        return pd.read_sql_query(query, conn, params=params)
+    return _log().frame(family, stage)
 
 
 def get_experiment(experiment_id: int) -> dict:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        _ensure_columns(conn)
-        row = conn.execute("SELECT * FROM experiments WHERE id = ?", (experiment_id,)).fetchone()
-        columns = [d[0] for d in conn.execute("SELECT * FROM experiments LIMIT 0").description]
-        conn.commit()
-    if row is None:
-        return {}
-    data = dict(zip(columns, row))
-    data["weights"] = json.loads(data["weights_json"]) if data.get("weights_json") else None
-    data["result"] = json.loads(data["result_json"]) if data.get("result_json") else None
-    data["deps"] = json.loads(data["deps_json"]) if data.get("deps_json") else None
-    if data.get("returns_json"):
-        series = pd.Series(json.loads(data["returns_json"]))
-        series.index = pd.to_datetime(series.index)
-        data["returns"] = series.sort_index()
-    else:
-        data["returns"] = None
-    return data
+    return experiment_log.detail(_log().row(experiment_id))
 
 
 def delete_experiment(experiment_id: int) -> bool:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        cur = conn.execute("DELETE FROM experiments WHERE id = ?", (experiment_id,))
-        conn.commit()
-        return cur.rowcount > 0
+    return _log().delete(experiment_id)
 
 
 def list_families() -> list:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            "SELECT DISTINCT family FROM experiments WHERE family IS NOT NULL ORDER BY family"
-        ).fetchall()
-        conn.commit()
-    return [r[0] for r in rows]
+    return _log().families()
