@@ -17,25 +17,15 @@ from gabi.application.administration.fred import synchronize
 from gabi.domain.market import fred
 from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.providers.fred import FredSource
+from gabi.infrastructure.storage.fred import SCHEMA as SCHEMA
+from gabi.infrastructure.storage.fred import SqliteFred
 
-from . import config, storage
+from . import config
 
 # id FRED -> metadatos. units_param sigue la convención de la API de FRED
 # ("lin" = sin transformar, "pc1" = variación % interanual).
 SERIES = {key: dict(value) for key, value in fred.SERIES.items()}
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS macro_series (
-    series_id TEXT NOT NULL,
-    date TEXT NOT NULL,
-    value REAL,
-    PRIMARY KEY (series_id, date)
-);
-CREATE TABLE IF NOT EXISTS macro_meta (
-    series_id TEXT PRIMARY KEY,
-    fetched_at TEXT NOT NULL
-);
-"""
 
 
 def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 260,
@@ -46,71 +36,28 @@ def fetch_series(series_id: str, api_key: str, units: str = "lin", limit: int = 
                               include_missing=include_missing, require_complete=False)
 
 
+def _repository() -> SqliteFred:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))
+
+
 def upsert_series(series_id: str, observations: list):
-    fetched_at = datetime.now(UTC).isoformat()
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        conn.executemany(
-            "INSERT OR REPLACE INTO macro_series (series_id, date, value) VALUES (?,?,?)",
-            [(series_id, date, value) for date, value in observations],
-        )
-        conn.execute(
-            "INSERT OR REPLACE INTO macro_meta (series_id, fetched_at) VALUES (?,?)",
-            (series_id, fetched_at),
-        )
-        conn.commit()
+    _repository().upsert(series_id, observations)
 
 
 def get_series_history(series_id: str) -> pd.DataFrame:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        df = pd.read_sql_query(
-            "SELECT date, value FROM macro_series WHERE series_id = ? ORDER BY date ASC",
-            conn, params=(series_id,),
-        )
-    if df.empty:
-        return df
-    df["date"] = pd.to_datetime(df["date"])
-    return df.set_index("date")
+    return _repository().history(series_id)
 
 
 def get_all_fetched_at() -> dict:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute("SELECT series_id, fetched_at FROM macro_meta").fetchall()
-    result = {}
-    for series_id, fetched_at in rows:
-        try:
-            result[series_id] = datetime.fromisoformat(fetched_at)
-        except Exception:
-            result[series_id] = None
-    return result
-
-
-class _Repository:
-    def fetched_at(self, series_ids):
-        return get_all_fetched_at()
-
-    def failed(self, series_ids):
-        from . import sync_state
-
-        return {entity for entity, _ in sync_state.failed_datasets("fred")}
-
-    def history(self, series_id):
-        return get_series_history(series_id)
-
-    def upsert(self, series_id, observations):
-        upsert_series(series_id, observations)
-
-    def record_errors(self, failed):
-        storage.record_update_errors("fred_macro", failed)
+    return _repository().fetched_at_all()
 
 
 def ensure_macro_data(force: bool = False, max_age_hours: int = 24, progress_cb=None,
                       *, full_refresh: bool = False) -> dict:
     from . import sync_state as sync
 
-    return synchronize(_Repository(), SERIES, config.load_fred_key,
+    return synchronize(_repository(), SERIES, config.load_fred_key,
                        fetch_series, sync.get, sync.Attempt, sync.retry,
                        lambda exc: classify(str(exc), "FRED")[1],
                        lambda: datetime.now(UTC), force=force, max_age_hours=max_age_hours,

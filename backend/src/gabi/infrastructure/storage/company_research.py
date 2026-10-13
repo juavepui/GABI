@@ -22,8 +22,8 @@ INSIDER_COLUMNS = ("symbol", "cik", "accn", "line_no", "owner_name", "owner_titl
 
 
 class SqliteCompanyResearch:
-    def __init__(self, data_dir: Path):
-        self.path = data_dir / "gabi.db"
+    def __init__(self, data_dir: Path, *, database: Path | None = None):
+        self.path = database or data_dir / "gabi.db"
 
     def _frame(self, table: str, columns: tuple[str, ...], where: str, params: tuple, order: str,
                limit: int) -> pd.DataFrame:

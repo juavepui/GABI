@@ -62,6 +62,18 @@ class SqliteFred:
                 result[sid] = None
         return result
 
+    def fetched_at_all(self) -> dict:
+        rows = self._read("SELECT series_id,fetched_at FROM macro_meta LIMIT ?", (self.max_rows + 1,), "macro_meta")
+        if len(rows) > self.max_rows:
+            raise ValueError("Los metadatos FRED superan el límite de lectura.")
+        result: dict[str, datetime | None] = {}
+        for sid, at in rows:
+            try:
+                result[sid] = datetime.fromisoformat(at)
+            except Exception:
+                result[sid] = None
+        return result
+
     def failed(self, series_ids: Sequence[str]) -> set[str]:
         ids = self._ids(series_ids)
         if not ids:

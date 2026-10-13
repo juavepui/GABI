@@ -65,6 +65,22 @@ class SqliteCacheReads:
                               "AND date<=? ORDER BY date DESC LIMIT 1)", (symbol, as_of), max_rows=1)
             return rows[0] if rows else None
 
+    def adjusted_span(self, symbol: str) -> tuple[str | None, str | None]:
+        """First and last session with a positive adjusted close."""
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            if db is None or "prices" not in tables or self._adjusted(db) == "NULL":
+                return None, None
+            first, last = db.execute("SELECT MIN(date),MAX(date) FROM prices WHERE symbol=? AND adj_close>0",
+                                     (symbol,)).fetchone()
+            return first, last
+
+    def prices_from(self, symbol: str, start: str) -> list[tuple]:
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            if db is None or "prices" not in tables:
+                return []
+            return self._rows(db, f"SELECT date,open,high,low,close,{self._adjusted(db)} AS adj_close,volume FROM prices "
+                              "WHERE symbol=? AND date>=? ORDER BY date", (symbol, start), max_rows=self.max_series_rows)
+
     def table_coverage(self) -> dict:
         """Row counts and date span per cached table, and per macro series; absent tables count as empty."""
         spans = (("prices", "date"), ("edgar_facts", "filed_date"), ("macro_series", "date"))

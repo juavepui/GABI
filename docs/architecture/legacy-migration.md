@@ -65,6 +65,8 @@ las fachadas delegan su HTTP en proveedores acotados de `infrastructure/provider
 [F7.18](f7-yahoo-provider.md) concentra `yfinance` en `infrastructure/providers/yahoo.py`.
 `edgar_sync` se retira: ya no tenía consumidores de producción y su única
 función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
+[F7.19](f7-operational-sources.md) (#134) saca `macro`, `insider`, `price_sync` y
+`data_fetch` de la fachada `storage` y rompe el ciclo `data_fetch`↔`price_sync`.
 
 ## Responsabilidades y entregas
 

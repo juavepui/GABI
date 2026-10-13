@@ -38,9 +38,10 @@ CREATE TABLE IF NOT EXISTS insider_fetch_meta (
 
 
 class SqliteInsiders:
-    def __init__(self, data_dir: Path, *, now: Callable[[], datetime] | None = None):
-        self.path = data_dir / "gabi.db"
-        self.reader = SqliteCompanyResearch(data_dir)
+    def __init__(self, data_dir: Path, *, now: Callable[[], datetime] | None = None, database: Path | None = None):
+        # ``database`` lets compatibility callers keep their configured file name.
+        self.path = database or data_dir / "gabi.db"
+        self.reader = SqliteCompanyResearch(data_dir, database=self.path)
         self.now = now or (lambda: datetime.now(UTC))
 
     def save(self, symbol: str, rows: list[dict]) -> None:

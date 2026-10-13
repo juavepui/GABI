@@ -29,36 +29,10 @@ from gabi.domain.market.insiders import (
 from gabi.domain.market.insiders import summarize_insider_activity as _summarize
 from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.providers.form4 import SecForm4Documents
+from gabi.infrastructure.storage.insiders import SCHEMA as SCHEMA
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 
-from . import config, edgar, storage
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS insider_transactions (
-    symbol TEXT NOT NULL,
-    cik TEXT NOT NULL,
-    accn TEXT NOT NULL,
-    line_no INTEGER NOT NULL,
-    owner_name TEXT,
-    owner_title TEXT,
-    is_officer INTEGER,
-    is_director INTEGER,
-    is_ten_pct_owner INTEGER,
-    is_10b5_1_plan INTEGER,
-    transaction_date TEXT NOT NULL,
-    transaction_code TEXT NOT NULL,
-    acquired_disposed TEXT,
-    shares REAL,
-    price_per_share REAL,
-    shares_owned_after REAL,
-    filed_date TEXT,
-    PRIMARY KEY (symbol, accn, line_no)
-);
-CREATE INDEX IF NOT EXISTS idx_insider_symbol_date ON insider_transactions (symbol, transaction_date);
-CREATE TABLE IF NOT EXISTS insider_fetch_meta (
-    symbol TEXT PRIMARY KEY,
-    fetched_at TEXT NOT NULL
-);
-"""
+from . import config, edgar
 
 
 class _Documents:
@@ -75,59 +49,21 @@ def fetch_insider_transactions(symbol: str, cik: str, limit_filings: int = 20) -
     return fetch_transactions(symbol, cik, _Documents(), limit_filings)
 
 
+def _store() -> SqliteInsiders:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteInsiders(config.DB_PATH.parent, database=config.DB_PATH, now=lambda: datetime.now(UTC))
+
+
 def upsert_insider_transactions(symbol: str, rows: list):
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        if rows:
-            conn.executemany(
-                "INSERT OR REPLACE INTO insider_transactions "
-                "(symbol, cik, accn, line_no, owner_name, owner_title, is_officer, is_director, "
-                "is_ten_pct_owner, is_10b5_1_plan, transaction_date, transaction_code, acquired_disposed, "
-                "shares, price_per_share, shares_owned_after, filed_date) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                [
-                    (
-                        r["symbol"], r["cik"], r["accn"], r["line_no"], r["owner_name"], r["owner_title"],
-                        int(r["is_officer"]), int(r["is_director"]), int(r["is_ten_pct_owner"]),
-                        int(r["is_10b5_1_plan"]), r["transaction_date"], r["transaction_code"],
-                        r["acquired_disposed"], r["shares"], r["price_per_share"], r["shares_owned_after"],
-                        r["filed_date"],
-                    )
-                    for r in rows
-                ],
-            )
-        conn.execute(
-            "INSERT OR REPLACE INTO insider_fetch_meta (symbol, fetched_at) VALUES (?, ?)",
-            (symbol, datetime.now(UTC).isoformat()),
-        )
-        conn.commit()
+    _store().save(symbol, rows)
 
 
 def get_insider_transactions(symbol: str) -> pd.DataFrame:
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        return pd.read_sql_query(
-            "SELECT * FROM insider_transactions WHERE symbol = ? ORDER BY transaction_date DESC",
-            conn, params=(symbol,),
-        )
+    return _store().transactions(symbol)
 
 
 def get_insider_fetched_at(symbols: list) -> dict:
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, fetched_at FROM insider_fetch_meta WHERE symbol IN ({placeholders})", symbols,
-        ).fetchall()
-    result = {}
-    for symbol, fetched_at in rows:
-        try:
-            result[symbol] = datetime.fromisoformat(fetched_at)
-        except Exception:
-            result[symbol] = None
-    return result
+    return _store().fetched_at(symbols)
 
 
 def summarize_insider_activity(symbol: str, months: int = 6, transactions: pd.DataFrame | None = None) -> dict:
@@ -159,21 +95,7 @@ class _Source:
                     yield InsiderAttempt(symbol, error=exc)
 
 
-class _Store:
-    @staticmethod
-    def fetched_at(symbols):
-        return get_insider_fetched_at(symbols)
-
-    @staticmethod
-    def save(symbol, rows):
-        upsert_insider_transactions(symbol, rows)
-
-    @staticmethod
-    def errors(failed):
-        storage.record_update_errors("insider_form4", failed)
-
-
 def ensure_insider_data(symbols: list, max_age_hours: int = None, max_workers: int = 4, progress_cb=None) -> dict:
-    return sync_insiders(symbols, _Source(), _Store(), lambda exc: classify(str(exc), "SEC EDGAR")[1],
+    return sync_insiders(symbols, _Source(), _store(), lambda exc: classify(str(exc), "SEC EDGAR")[1],
                          now=lambda: datetime.now(UTC), max_age_hours=max_age_hours,
                          max_workers=max_workers, progress_cb=progress_cb)

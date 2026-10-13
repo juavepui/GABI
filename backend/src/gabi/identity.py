@@ -55,6 +55,10 @@ def has_aliases(symbol: str) -> bool:
     return bool(_reader().registered([symbol]))
 
 
+def name_candidates(symbol: str) -> pd.DataFrame:
+    return _reader().name_candidates(symbol)
+
+
 def observations(entity_id: str, dataset: str) -> pd.DataFrame:
     return _reader().observations(entity_id, dataset)
 

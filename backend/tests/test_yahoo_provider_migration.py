@@ -64,8 +64,8 @@ def captured(fake) -> dict:
     lambda m: m["fetch_prices_batch"](["AAA"]), lambda m: m["fetch_prices_batch"](["AAA", "FAIL"], period="max"),
 ])
 def test_data_fetch_calls_match_capture(monkeypatch, call):
-    monkeypatch.setattr(data_fetch.storage, "upsert_prices", lambda *a, **k: None)
-    monkeypatch.setattr(data_fetch.storage, "upsert_splits", lambda *a, **k: None)
+    monkeypatch.setattr(data_fetch, "_writes", lambda: SimpleNamespace(prices=lambda *a, **k: None,
+                                                                        splits=lambda *a, **k: None))
     monkeypatch.setattr(data_fetch.identity, "resolve", lambda *a: {"entity_id": None})
     results = []
     for label in ("old", "new"):
