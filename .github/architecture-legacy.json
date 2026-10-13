@@ -73,8 +73,7 @@
     "gabi.price_sync",
     "gabi.storage",
     "gabi.sync_state",
-    "pandas",
-    "yfinance"
+    "pandas"
   ],
   "backend/src/gabi/data_quality.py": [
     "gabi.config",
@@ -296,8 +295,7 @@
     "gabi.membership_extension.symbols",
     "gabi.universe",
     "pandas",
-    "shutil",
-    "yfinance"
+    "shutil"
   ],
   "backend/src/gabi/identity.py": [
     "gabi.config",
@@ -393,7 +391,6 @@
   "backend/src/gabi/price_sync.py": [
     "gabi.data_fetch._classify_error",
     "gabi.data_fetch.normalize_symbol",
-    "gabi.data_fetch.yf",
     "gabi.history_refresh.last_completed_session",
     "gabi.identity",
     "gabi.storage",

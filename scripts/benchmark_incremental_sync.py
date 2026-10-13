@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "src"))
 
 import exchange_calendars as xcals
 import pandas as pd
+import yfinance
 
 from gabi import config, data_fetch, price_sync, storage
 from gabi import sync_state as sync
@@ -39,7 +40,7 @@ def benchmark(output: Path) -> dict:
                 count["payload_bytes"] += sum(len(selected.to_csv().encode()) for _ in tickers)
                 return pd.concat({s: selected for s in tickers}, axis=1)
 
-            with patch.multiple(config, DATA_DIR=root, DB_PATH=db), patch.object(data_fetch.yf, "download", download), \
+            with patch.multiple(config, DATA_DIR=root, DB_PATH=db), patch.object(yfinance, "download", download), \
                     patch.object(sync, "_pace", lambda *_: None):
                 storage.init_db()
                 if variant != "repeat_same_session":

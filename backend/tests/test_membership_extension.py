@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+import yfinance
 
 from gabi import universe
 from gabi.history_refresh import last_completed_session, period_symbols
@@ -126,7 +127,7 @@ def test_renamed_price_series_excludes_later_prices_but_keeps_adjusting_splits(m
             assert kwargs["end"] == "2026-01-03"
             return frame
 
-    monkeypatch.setattr(history_refresh.yf, "Ticker", lambda s: Ticker())
+    monkeypatch.setattr(yfinance, "Ticker", lambda s: Ticker())
     monkeypatch.setattr(identity, "resolve", lambda *a: {"entity_id": None})
     saved = {}
     monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(
@@ -145,7 +146,7 @@ def test_empty_provider_rows_cannot_erase_cached_close(monkeypatch):
         def history(self, **kwargs):
             return frame
 
-    monkeypatch.setattr(history_refresh.yf, "Ticker", lambda s: Ticker())
+    monkeypatch.setattr(yfinance, "Ticker", lambda s: Ticker())
     monkeypatch.setattr(identity, "resolve", lambda *a: {"entity_id": None})
     saved = {}
     monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(

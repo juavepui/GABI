@@ -6,6 +6,7 @@ from pathlib import Path
 
 from gabi.domain.market.source_errors import classify
 from gabi.domain.research import estimates
+from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.storage.estimates import SqliteEstimateAnalysis, store_estimate_snapshot
 
 
@@ -26,11 +27,10 @@ def run_estimate_analysis(data_dir: Path, cutoff: date) -> dict:
 
 
 def _fetch_estimate_snapshot_attempt(symbol: str) -> dict:
-    import yfinance as yf
 
     from gabi.data_fetch import normalize_symbol
 
-    t = yf.Ticker(normalize_symbol(symbol))
+    t = yahoo.ticker(normalize_symbol(symbol))
     return {
         "earnings_estimate": t.earnings_estimate, "revenue_estimate": t.revenue_estimate,
         "eps_revisions": t.eps_revisions,
