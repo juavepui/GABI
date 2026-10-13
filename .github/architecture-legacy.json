@@ -8,15 +8,13 @@
     "pandas"
   ],
   "backend/src/gabi/app_mode.py": [
-    "gabi.blind_validation",
-    "gabi.config",
-    "gabi.research_lab"
+    "gabi.config"
   ],
   "backend/src/gabi/blind_validation.py": [
+    "gabi.config",
     "gabi.research_lab._current_git_commit",
     "gabi.research_lab.log_experiment",
     "gabi.screener_asof",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/block_bootstrap.py": [
@@ -389,10 +387,7 @@
   ],
   "backend/src/gabi/research_lab.py": [
     "gabi.config",
-    "gabi.storage",
-    "importlib.metadata",
-    "pandas",
-    "subprocess"
+    "pandas"
   ],
   "backend/src/gabi/risk.py": [
     "gabi.config",

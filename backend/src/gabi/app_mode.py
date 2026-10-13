@@ -18,6 +18,8 @@ congelados queda marcada EXPERIMENTAL de forma visible, nunca silenciosa."""
 import json
 
 from gabi.domain.market import model_policy as _policy
+from gabi.infrastructure.storage.blind_ledger import SqliteBlindLedger
+from gabi.infrastructure.storage.experiment_log import SqliteExperimentLog
 
 from . import config
 
@@ -65,9 +67,8 @@ def _research_lab_live_forward_active() -> bool:
     LIVE_FORWARD en Research Lab -- no garantiza que corresponda a una
     validación ciega real en marcha, cualquiera puede registrar un
     experimento con ese `stage` a mano sin más disciplina detrás."""
-    from . import research_lab  # import diferido: no acopla este módulo a research_lab/storage en import time
     try:
-        return not research_lab.list_experiments(stage="LIVE_FORWARD").empty
+        return not SqliteExperimentLog(config.DB_PATH).frame(stage="LIVE_FORWARD").empty
     except Exception:
         return False  # el estado del modelo no debe romperse porque falle una consulta secundaria
 
@@ -81,9 +82,9 @@ def _blind_validation_live_forward_id(weights: dict) -> int | None:
     es la señal que de verdad debería encender LIVE_FORWARD, no una
     etiqueta suelta de Research Lab. None si no hay ninguna así; nunca
     lanza si la consulta falla (misma cautela que la señal débil)."""
-    from . import blind_validation  # import diferido, mismo motivo que research_lab arriba
     try:
-        validations = blind_validation.list_validations()
+        ledger = SqliteBlindLedger(config.DB_PATH)
+        validations = ledger.validations()
         for _, row in validations.iterrows():
             if row["status"] != "locked":
                 continue
@@ -93,7 +94,7 @@ def _blind_validation_live_forward_id(weights: dict) -> int | None:
                 continue
             if not weights_match_frozen(row_weights):
                 continue
-            if blind_validation.get_status(int(row["id"]))["n_periods"] >= 1:
+            if ledger.periods(int(row["id"])):
                 return int(row["id"])
     except Exception:
         pass

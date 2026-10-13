@@ -205,8 +205,11 @@ def check(root: Path) -> list[str]:
 def baseline_growth(previous: dict, current: dict) -> list[str]:
     errors = [f"legacy baseline cannot add module {name}" for name in sorted(set(current) - set(previous))]
     for name in sorted(set(previous) & set(current)):
-        errors.extend(f"legacy baseline cannot add dependency {name} -> {target}"
-                      for target in sorted(set(current[name]) - set(previous[name])))
+        added = set(current[name]) - set(previous[name])
+        # ADR 0005: gabi.config may only replace a retired gabi.storage used to resolve the database path.
+        if "gabi.config" in added and "gabi.storage" in previous[name] and "gabi.storage" not in current[name]:
+            added.discard("gabi.config")
+        errors.extend(f"legacy baseline cannot add dependency {name} -> {target}" for target in sorted(added))
     return errors
 
 
