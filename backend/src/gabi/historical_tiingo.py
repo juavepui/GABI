@@ -32,8 +32,9 @@ from gabi.domain.research.tiingo_prices import WINDOWS as _WINDOWS
 from gabi.domain.research.tiingo_prices import current_listings as _current_listings
 from gabi.domain.research.tiingo_prices import eligible as eligible
 from gabi.infrastructure.providers.tiingo_prices import TiingoPrices
+from gabi.infrastructure.storage.historical_prices import pinned_files
 
-from . import config, historical_archive, storage, sync_state
+from . import config, historical_archive, sync_state
 
 DIRECTORY = config.DATA_DIR / "history_refresh" / "tiingo"
 WINDOWS = dict(_WINDOWS)
@@ -78,10 +79,7 @@ class _Cache:
 
 class _Archive:
     def pinned(self, source_id):
-        with storage.get_connection() as conn:
-            conn.executescript(historical_archive.SCHEMA)
-            row = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?", (source_id,)).fetchone()
-        return json.loads(row[0]).get("files_sha256", {}) if row else {}
+        return pinned_files(config.DB_PATH, source_id)
 
     def register(self, source_id, metadata):
         historical_archive.register_source(source_id, metadata)

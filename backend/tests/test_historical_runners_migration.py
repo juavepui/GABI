@@ -1,5 +1,6 @@
 """Captured runner parity, explicit effects and bounded historical reads."""
 
+import ast
 import hashlib
 import json
 import sqlite3
@@ -32,7 +33,14 @@ REFERENCE = json.loads((Path(__file__).parent / 'fixtures/historical_runners_mig
 def captured(name):
     scope = dict(__name__=f'gabi._captured_{name}', __package__='gabi',
                  __file__=str(Path(facade.__file__).with_name(name + '.py')))
-    exec(REFERENCE[name], scope)
+    # The retired historical_data_audit facade only held connect_readonly; use its captured source.
+    source = REFERENCE[name].replace('from .historical_data_audit import connect_readonly\n', '')
+    annual = json.loads((Path(__file__).parent / 'fixtures/historical_data_audit_migration.json')
+                        .read_text(encoding='utf-8'))['annual_source']
+    scope.update(sqlite3=sqlite3, Path=Path)
+    exec(next(ast.get_source_segment(annual, node) for node in ast.parse(annual).body
+              if getattr(node, 'name', '') == 'connect_readonly'), scope)
+    exec(source, scope)
     return scope
 
 

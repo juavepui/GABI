@@ -13,6 +13,9 @@ from gabi.infrastructure.storage.bounded_reads import bounded_rows, read_only
 XBRL = {"x": "http://www.xbrl.org/2003/instance"}
 
 
+# Malformed original XBRL; recorded per filing by the recovery use case.
+XML_ERROR = etree.XMLSyntaxError
+
 def decode_instance(content: bytes) -> tuple[list[tuple], list[tuple], list[tuple]]:
     """Plain contexts, units and top-level fact nodes of an XBRL instance; no interpretation."""
     parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=False)

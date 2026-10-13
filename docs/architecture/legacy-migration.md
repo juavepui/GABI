@@ -69,6 +69,9 @@ función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
 `data_fetch` de la fachada `storage` y rompe el ciclo `data_fetch`↔`price_sync`.
 [F7.20](f7-historical-core.md) (#130) mueve los periodos acreditados a `identity`
 (sin ciclo con `historical_pit`) y lee los registros revisados desde infraestructura.
+[F7.21](f7-historical-audits.md) (#131) lleva la descarga paralela y con ritmo de
+covers SEC a un caso de uso, saca `requests`/`lxml`/SQL de las auditorías históricas
+y retira `historical_data_audit`.
 
 ## Responsabilidades y entregas
 

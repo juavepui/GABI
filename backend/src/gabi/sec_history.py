@@ -10,14 +10,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
-import requests
-from lxml import etree
 
 from gabi.application.research import sec_archive_download, sec_bulk
 from gabi.application.research import sec_quarter_ingest as quarter_ingest
 from gabi.domain.market.sec_facts import issuer_companyfacts_rows
 from gabi.domain.research import sec_bulk as bulk_rules
-from gabi.infrastructure.providers.sec_archive import SecArchiveChunks
+from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage import sec_bulk as bulk_storage
 from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
 from gabi.infrastructure.storage.backups import backup_once
@@ -41,7 +39,7 @@ def download(url: str, path: Path) -> Path:
 
 
 def _download_chunks(url: str):
-    yield from SecArchiveChunks(config.SEC_USER_AGENT).chunks(url)
+    yield from sec_archive.SecArchiveChunks(config.SEC_USER_AGENT).chunks(url)
 
 
 date8 = bulk_rules.date8
@@ -82,7 +80,7 @@ def run_bulk() -> dict:
     return quarter_ingest.ingest_quarters(
         bulk_rules.quarter_keys(range(2009, 2016)), target_ciks(), download=_download_to_directory,
         import_quarter=_import, checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "bulk_report.json"),
-        errors=(requests.RequestException, ValueError, zipfile.BadZipFile), log=_log)
+        errors=(sec_archive.REQUEST_ERROR, ValueError, zipfile.BadZipFile), log=_log)
 
 
 def _log(*values) -> None:
@@ -106,7 +104,7 @@ def recover_instances(limit: int = 100, *, quarterly: bool = False, unmatched: b
         _selection(), limit=limit, quarterly=quarterly, unmatched=reviewed,
         checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "instances_report.json"),
         fetch=lambda url, name: _download_to_directory(url, name).read_bytes(), parse=parse_instance, import_facts=import_facts,
-        errors=(requests.RequestException, ValueError, etree.XMLSyntaxError), log=_log)
+        errors=(sec_archive.REQUEST_ERROR, ValueError, ingest_storage.XML_ERROR), log=_log)
 
 
 def _companyfacts(url: str, name: str) -> dict:
@@ -134,7 +132,7 @@ def recover_companyfacts_gaps() -> dict:
 
     return quarter_ingest.ingest_companyfacts(
         sorted(set(gaps.cik)), fetch=_companyfacts, rows_for=_issuer_rows(("2009-01-01", "2016-01-01")), save=save,
-        errors=(requests.RequestException, ValueError), with_url=True,
+        errors=(sec_archive.REQUEST_ERROR, ValueError), with_url=True,
         checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "companyfacts_gaps_report.json"), log=_log)
 
 
@@ -148,7 +146,7 @@ def ingest_issuer_companyfacts(ciks: set[str]) -> dict:
     return quarter_ingest.ingest_companyfacts(
         sorted(str(value).zfill(10) for value in ciks), fetch=_companyfacts, rows_for=_issuer_rows(),
         save=lambda cik, rows, url: edgar.upsert_edgar_facts(f"CIK{cik}", rows, cik=cik),
-        errors=(requests.RequestException, ValueError, KeyError), with_url=False)
+        errors=(sec_archive.REQUEST_ERROR, ValueError, KeyError), with_url=False)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ adjustments, not ownership, and never fixes a delisting return.
 """
 import argparse
 import json
-import sqlite3
 from datetime import date
 from pathlib import Path
 
@@ -24,7 +23,7 @@ from gabi.domain.research.periods import get as get_period
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_audit_writes import SCHEMA as _PROVENANCE_SCHEMA
 from gabi.infrastructure.storage.historical_audit_writes import SqliteHistoricalAuditWrites
-from gabi.infrastructure.storage.historical_price_audit import SqlitePriceAuditReads, series_from_connection
+from gabi.infrastructure.storage.historical_price_audit import SqlitePriceAuditReads
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
 from gabi.infrastructure.storage.reviewed_resources import identity_nominations
 
@@ -79,11 +78,6 @@ SERIES_END = P2010.series_end
 # after the next rebalance date; a week of slack covers holidays/weekends.
 FORWARD_SLACK_DAYS = 7
 ACCEPTED_ADJUSTMENTS = {"dividends_reconciled", "no_dividends_consistent"}
-
-
-def _series(conn: sqlite3.Connection, symbol: str, start: str, end: str,
-            *, archive: bool, source_id: str = PRICE_SOURCE) -> pd.DataFrame:
-    return series_from_connection(conn, symbol, start, end, archive=archive, source_id=source_id)
 
 
 assess_series = price_rules.assess_series

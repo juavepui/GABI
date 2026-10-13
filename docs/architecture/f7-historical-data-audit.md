@@ -24,8 +24,9 @@ dentro de cada lote, sin cargar toda la base. No hay caché: cada ejecución rel
 detalle trimestral previo se valida contra la membresía anual y debe regenerarse
 si sus datos cambian, como exigía el comando original.
 
-La fachada `historical_data_audit.py` conserva solo `connect_readonly`, todavía
-usado por la auditoría de precios plana. Se retirará con ese consumidor. El
+La fachada `historical_data_audit.py` conservaba solo `connect_readonly` para la
+auditoría de precios plana; se retiró en [F7.21](f7-historical-audits.md), cuando ese
+consumidor pasó a lectores de infraestructura. El
 adaptador SEC actual ya usa la conexión de infraestructura. El inventario de
 excepciones pierde los imports antiguos de cálculo, configuración y calendario;
 la fachada no autoriza funcionalidades nuevas.
