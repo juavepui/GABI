@@ -7,7 +7,7 @@ import pytest
 import requests
 import yfinance
 
-from gabi import config, data_fetch, edgar, edgar_sync, historical_tiingo, macro, price_sync, storage
+from gabi import config, data_fetch, edgar, historical_tiingo, macro, price_sync, storage
 from gabi import sync_state as sync
 from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
@@ -166,10 +166,10 @@ def test_sec_unchanged_filings_skip_companyfacts_and_keep_provenance(monkeypatch
     calls = []
     monkeypatch.setattr(edgar, "fetch_submissions", lambda cik: submissions())
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: calls.append(cik) or facts())
-    first = edgar_sync.run_one("A", "1")
+    first = edgar.synchronize_issuer("A", "1")
     original = edgar.get_edgar_facts
     monkeypatch.setattr(edgar, "get_edgar_facts", lambda *a, **k: pytest.fail("No historical read without changed facts"))
-    again = edgar_sync.run_one("A", "1")
+    again = edgar.synchronize_issuer("A", "1")
     monkeypatch.setattr(edgar, "get_edgar_facts", original)
     assert first["new"] == 1 and again["status"] == "unchanged"
     assert len(calls) == 1 and again["calls"] == 1
@@ -180,13 +180,13 @@ def test_sec_unchanged_filings_skip_companyfacts_and_keep_provenance(monkeypatch
 def test_sec_same_accession_revision_and_new_amendment_are_separate(monkeypatch):
     monkeypatch.setattr(edgar, "fetch_submissions", lambda cik: submissions())
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: facts())
-    edgar_sync.run_one("A", "1")
+    edgar.synchronize_issuer("A", "1")
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: facts(110))
-    revised = edgar_sync.run_one("A", "1", full_refresh=True)
+    revised = edgar.synchronize_issuer("A", "1", full_refresh=True)
     assert revised["revised"] == 1 and revised["new"] == 0
     monkeypatch.setattr(edgar, "fetch_submissions", lambda cik: submissions("a2", "2020-05-01"))
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: facts(120, "a2", "2020-05-01"))
-    new = edgar_sync.run_one("A", "1")
+    new = edgar.synchronize_issuer("A", "1")
     assert new["new"] == 1
     stored = edgar.get_edgar_facts("A", entity_id="cik:0000000001")
     assert set(stored.accn) == {"a1", "a2"}
@@ -196,11 +196,11 @@ def test_sec_failed_companyfacts_retries_same_filing_on_resume(monkeypatch):
     monkeypatch.setattr(edgar, "fetch_submissions", lambda cik: submissions())
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: (_ for _ in ()).throw(ValueError("bad JSON")))
     with pytest.raises(ValueError):
-        edgar_sync.run_one("A", "1")
+        edgar.synchronize_issuer("A", "1")
     cp = sync.get("sec", "cik:0000000001", "facts:A")
     assert "filings_hash" not in cp
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: facts())
-    assert edgar_sync.run_one("A", "1")["status"] == "new"
+    assert edgar.synchronize_issuer("A", "1")["status"] == "new"
 
 
 def test_sec_checkpoint_failure_retries_despite_recent_metrics(monkeypatch):
