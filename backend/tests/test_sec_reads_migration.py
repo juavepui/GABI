@@ -89,7 +89,7 @@ def test_captured_values_metrics_versions_and_raw_rows(tmp_path, monkeypatch, da
 
 @pytest.mark.parametrize("aligned", [False, True])
 def test_historical_facade_uses_shared_reader_and_keeps_fiscal_policy(tmp_path, monkeypatch, aligned):
-    from gabi import config, edgar, quality_persistence, storage
+    from gabi import config, edgar, screener_asof, storage
     from gabi.domain.market.quality_persistence import from_facts
 
     path = tmp_path / "gabi.db"
@@ -106,7 +106,7 @@ def test_historical_facade_uses_shared_reader_and_keeps_fiscal_policy(tmp_path, 
                 facts, fiscal_alignment=aligned)
             assert edgar.get_shares_outstanding_as_of("REC", day, entity_id=entity) == concept_value(
                 reader, "REC", sec_facts.SHARES_TAGS, day, "shares", entity_id=entity)
-            assert quality_persistence.as_of("REC", day, entity_id=entity) == from_facts(facts)
+            assert screener_asof._quality_as_of("REC", day, entity_id=entity) == from_facts(facts)
         assert_frame_equal(edgar.get_edgar_facts("REC", entity_id=entity), reader.facts("REC", entity_id=entity))
     assert_frame_equal(edgar.get_issuer_facts_as_of("1", "2020-12-31"), issuer_facts(SqliteSecReads(path), "1", "2020-12-31"))
     assert edgar.get_last_filed_dates(["REC", "UNKNOWN"], "2020-12-31") == {"REC": "2020-06-01"}

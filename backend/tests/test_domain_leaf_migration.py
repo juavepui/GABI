@@ -15,9 +15,6 @@ from gabi.infrastructure.legacy.market import calculators
 
 @pytest.mark.parametrize(("legacy", "domain", "exports"), [
     ("metrics", "market.fundamentals", ("compute_fundamental_metrics", "_positive_or_none", "_revenue_growth_from_quarterly")),
-    ("capital_allocation", "portfolio.capital_allocation", ("metrics", "_annual_series", "_instant_series", "BUYBACK_TAGS")),
-    ("valuation_expectations", "market.valuation_expectations", ("expectations_metrics", "reverse_dcf_growth", "_present_value")),
-    ("broker_costs", "portfolio.broker_costs", ("effective_trade_cost_bps", "position_size_usd", "STOCK_FEE_USD")),
 ])
 def test_legacy_entry_points_are_the_same_domain_implementation(legacy, domain, exports):
     old = importlib.import_module(f"gabi.{legacy}")

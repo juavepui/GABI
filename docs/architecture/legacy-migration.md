@@ -72,6 +72,8 @@ función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
 [F7.21](f7-historical-audits.md) (#131) lleva la descarga paralela y con ritmo de
 covers SEC a un caso de uso, saca `requests`/`lxml`/SQL de las auditorías históricas
 y retira `historical_data_audit`.
+[F7.22](f7-ranking-quality.md) (#132) saca `storage` de `screener_asof` y `data_quality`
+y retira cuatro alias pequeños; `rotation_policy` queda por la huella de `rotation_experiment`.
 
 ## Responsabilidades y entregas
 

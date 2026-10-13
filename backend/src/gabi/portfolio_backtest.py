@@ -18,7 +18,9 @@ from datetime import date
 import exchange_calendars as xcals
 import pandas as pd
 
-from . import broker_costs, data_quality, historical_pit, identity, rotation_policy, screener_asof, universe
+from gabi.domain.portfolio import broker_costs, rotation
+
+from . import data_quality, historical_pit, identity, screener_asof, universe
 from . import multifactor_backtest as v1
 
 _CALENDAR = "XNYS"
@@ -270,7 +272,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
                 raise ValueError(f"cobertura insuficiente del universo ({len(eligible)}/{len(symbols)})")
             ranked_pool = eligible.index.tolist()
             scores = eligible["composite_score"].astype(float).to_dict()
-            picks = rotation_policy.select_with_score_hurdle(
+            picks = rotation.select_with_score_hurdle(
                 list(shares), ranked_pool, scores, top_n, rotation_hurdle_points)
             if len(picks) < top_n:
                 raise ValueError(f"solo {len(picks)}/{top_n} candidatas con cobertura suficiente")

@@ -133,12 +133,12 @@ def test_split_inside_the_window_does_not_move_adjusted_momentum_or_sma():
 
 
 def test_metrics_only_see_observations_up_to_the_ranking_date(monkeypatch):
-    from gabi import risk, screener_asof, storage
+    from gabi import risk, screener_asof
     dates = pd.bdate_range("2012-01-02", periods=400)
     values = np.linspace(100, 200, 400)
     values[350:] = 50  # a crash after the ranking date
     frame = pd.DataFrame({"close": values, "adj_close": values}, index=dates)
-    monkeypatch.setattr(storage, "get_prices", lambda symbol: frame)
+    monkeypatch.setattr(screener_asof, "_ticker_prices", lambda symbol: frame)
     as_of = dates[300]
     seen = screener_asof._price_history_as_of("AAA", as_of)
     assert seen.index.max() == as_of

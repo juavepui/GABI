@@ -8,7 +8,9 @@ import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, data_quality, historical_pit, identity, rotation_policy, screener_asof, universe
+from gabi.domain.portfolio import rotation
+
+from . import config, data_quality, historical_pit, identity, screener_asof, universe
 
 # Si una empresa lleva más de esto sin presentar NADA ante la SEC (ni un
 # 10-Q trimestral), lo normal es que haya dejado de ser una "reporting
@@ -245,7 +247,7 @@ def run(start: str, end: str, months: int = 3, top_n: int = 10,
             ranked_pool = eligible.index.tolist()
             if rotation_hurdle_points > 0:
                 scores = eligible["composite_score"].astype(float).to_dict()
-                picks = rotation_policy.select_with_score_hurdle(
+                picks = rotation.select_with_score_hurdle(
                     previous_picks, ranked_pool, scores, top_n, rotation_hurdle_points)
             else:
                 picks = _apply_holding_buffer(previous_picks, ranked_pool, top_n, buffer_multiplier)

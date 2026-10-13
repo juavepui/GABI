@@ -13,6 +13,7 @@ from gabi.domain.market import identity as identity_rules
 from gabi.domain.research.periods import P2010, Period
 from gabi.domain.research.periods import get as get_period
 from gabi.infrastructure.storage import identity_writes
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.entity_snapshots import SqliteEntitySnapshots
 from gabi.infrastructure.storage.historical_pit import SqliteHistoricalPit
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
@@ -66,6 +67,11 @@ def _writer() -> SqliteIdentityWrites:
 def sector_snapshots() -> SqliteEntitySnapshots:
     """Dated sector snapshots, whose CIK rows are attributed to these entities."""
     return SqliteEntitySnapshots(config.DB_PATH)
+
+
+def cache_reads() -> SqliteCacheReads:
+    """Ticker-keyed cache of issuers without a registered alias, read per operation."""
+    return SqliteCacheReads(config.DB_PATH)
 
 def ensure_entity(cik=None, name: str | None = None, *, entity_id: str | None = None) -> str:
     return _writer().ensure_entity(cik, name, entity_id=entity_id)

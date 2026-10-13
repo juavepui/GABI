@@ -16,20 +16,37 @@ vez de romper el resto — igual que ya se hace en el screener "en vivo".
 """
 import pandas as pd
 
-from . import (
-    capital_allocation,
-    edgar,
-    entity_master,
-    historical_pit,
-    identity,
-    quality_persistence,
-    risk,
-    scoring,
-    storage,
-    technicals,
-    universe,
-)
-from .valuation_expectations import expectations_metrics
+from gabi.application.market import cached_data
+from gabi.application.market.quality import quality_as_of
+from gabi.application.research import historical_pit as accredited_prices
+from gabi.domain.market.valuation_expectations import expectations_metrics
+from gabi.domain.portfolio import capital_allocation
+
+from . import edgar, entity_master, identity, risk, scoring, technicals, universe
+
+
+def _ticker_price_as_of(symbol: str, as_of_date: str) -> float | None:
+    """Verified close of an unmigrated issuer from the ticker-keyed cache, or None."""
+    cache = identity.cache_reads()
+    if not cached_data.has_verified_price_as_of(cache, symbol, as_of_date):
+        return None
+    return cached_data.price_as_of(cache, symbol, as_of_date)
+
+
+def _ticker_prices(symbol: str) -> pd.DataFrame:
+    return cached_data.prices(identity.cache_reads(), symbol)
+
+
+def _ticker_split_factor(symbol: str, as_of_date: str) -> float:
+    return cached_data.split_factor_since(identity.cache_reads(), symbol, as_of_date)
+
+
+def _quality_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
+    return quality_as_of(symbol, as_of_date, read_facts=edgar._facts_dict_from_stored, entity_id=entity_id)
+
+
+def _covers(as_of_date: str) -> bool:
+    return identity.accredited_history().covers(as_of_date)
 
 
 def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
@@ -37,13 +54,13 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     de FCF, márgenes, PER/P-VC/P-Ventas/EV-EBITDA) reconstruidos con lo que se
     conocía en as_of_date."""
     m = edgar.compute_edgar_metrics_as_of(symbol, as_of_date, entity_id=entity_id)
-    historical = historical_pit.covers(as_of_date)
+    historical = _covers(as_of_date)
     if entity_id:
         history = identity.price_history(symbol, as_of_date, entity_id=entity_id)
         history = history[history.index <= pd.Timestamp(as_of_date)] if not history.empty else history
         price = float(history["close"].iloc[-1]) if not history.empty and pd.notna(history["adj_close"].iloc[-1]) else None
     else:
-        price = storage.get_price_as_of(symbol, as_of_date) if storage.has_verified_price_as_of(symbol, as_of_date) else None
+        price = _ticker_price_as_of(symbol, as_of_date)
     shares = edgar.get_shares_outstanding_as_of(symbol, as_of_date, entity_id=entity_id)
 
     # yfinance devuelve el precio siempre ajustado por splits (con o sin
@@ -57,7 +74,8 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     if price is not None and historical:
         # Cierre negociado de la serie acreditada (deshace splits solo si la
         # fuente es la caché Yahoo).
-        price_asof_unadjusted = historical_pit.as_traded_close(history, as_of_date) if entity_id else None
+        price_asof_unadjusted = accredited_prices.as_traded_close(
+            identity.accredited_history().reader, history, as_of_date) if entity_id else None
     elif price is not None:
         if entity_id:
             splits = identity.observations(entity_id, "splits")
@@ -65,7 +83,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
                 splits = splits[splits["source_symbol"] == history.attrs.get("source_symbol", identity.normalize_symbol(symbol))]
             split_factor = float(splits[splits["date"] > as_of_date]["ratio"].prod()) if not splits.empty else 1.0
         else:
-            split_factor = storage.get_split_factor_since(symbol, as_of_date)
+            split_factor = _ticker_split_factor(symbol, as_of_date)
         price_asof_unadjusted = price * split_factor
 
     market_cap = price_asof_unadjusted * shares if price_asof_unadjusted and shares else None
@@ -93,7 +111,7 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
     allocation = capital_allocation.metrics(
         edgar.get_edgar_facts(symbol, entity_id=entity_id), as_of_date, market_cap=market_cap)
 
-    persistence = quality_persistence.as_of(symbol, as_of_date, entity_id=entity_id)
+    persistence = _quality_as_of(symbol, as_of_date, entity_id=entity_id)
     return {
         # Precio nominal (sin ajustar por splits posteriores) — el que de
         # verdad se habría visto en pantalla ese día, no el retroajustado
@@ -130,7 +148,7 @@ def fundamental_diagnostics(symbol: str, as_of_date: str, *, entity_id: str | No
     classic = _classic_metrics_as_of(symbol, as_of_date, entity_id=entity_id)
     market = None
     if classic.get("price") is None:
-        market = "no_accredited_price" if historical_pit.covers(as_of_date) else "no_price"
+        market = "no_accredited_price" if _covers(as_of_date) else "no_price"
     elif classic.get("shares_outstanding") is None:
         market = "no_shares_outstanding"
     metrics = edgar.compute_edgar_metrics(facts)
@@ -154,7 +172,7 @@ def fundamental_diagnostics(symbol: str, as_of_date: str, *, entity_id: str | No
 
 def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp, *, entity_id: str | None = None) -> pd.DataFrame:
     df = (identity.price_history(symbol, as_of_date.date().isoformat(), entity_id=entity_id)
-          if entity_id else storage.get_prices(symbol))
+          if entity_id else _ticker_prices(symbol))
     if df.empty:
         return df
     df = df[df.index <= as_of_date]
@@ -200,7 +218,7 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     as_of_ts = pd.Timestamp(as_of_date)
     bench_df = _price_history_as_of("SPY", as_of_ts)
     # 2010-2015: solo entidades con identidad acreditada, sin caché por ticker.
-    historical = historical_pit.covers(as_of_date)
+    historical = _covers(as_of_date)
 
     rows = []
     for sym in symbols:

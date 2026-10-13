@@ -84,10 +84,9 @@ def _classic(monkeypatch, metrics, *, price=10.0, shares=100.0):
     monkeypatch.setattr(edgar, "compute_edgar_metrics_as_of", lambda *a, **k: metrics)
     monkeypatch.setattr(edgar, "get_shares_outstanding_as_of", lambda *a, **k: shares)
     monkeypatch.setattr(edgar, "get_edgar_facts", lambda *a, **k: pd.DataFrame())
-    monkeypatch.setattr(screener_asof.storage, "has_verified_price_as_of", lambda *a, **k: price is not None)
-    monkeypatch.setattr(screener_asof.storage, "get_price_as_of", lambda *a, **k: price)
-    monkeypatch.setattr(screener_asof.storage, "get_split_factor_since", lambda *a, **k: 1.0)
-    monkeypatch.setattr(screener_asof.quality_persistence, "as_of", lambda *a, **k: {})
+    monkeypatch.setattr(screener_asof, "_ticker_price_as_of", lambda *a, **k: price)
+    monkeypatch.setattr(screener_asof, "_ticker_split_factor", lambda *a, **k: 1.0)
+    monkeypatch.setattr(screener_asof, "_quality_as_of", lambda *a, **k: {})
     return screener_asof._classic_metrics_as_of("AAA", "2017-06-30")
 
 
