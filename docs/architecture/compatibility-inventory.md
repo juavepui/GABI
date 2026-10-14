@@ -10,9 +10,11 @@ pendientes solo bajan.
 Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.28:
 [F7.25](f7-retire-source-facades.md), [F7.26](f7-retire-blind-validation.md),
 [F7.27](f7-identity-audit-command.md), [F7.28](f7-history-refresh-command.md)):
-63 módulos planos = 18 congelados + 37 permanentes + 8 pendientes. F7.25 retira
+63 módulos planos = 18 congelados + 40 permanentes + 5 pendientes. F7.25 retira
 `price_sync`, `macro` e `insider`; F7.26, `blind_validation`; F7.27,
-`historical_identity_audit`; F7.28, `history_refresh`.
+`historical_identity_audit`; F7.28, `history_refresh`. `historical_archive`,
+`historical_tiingo` y `historical_wiki` pasan a permanentes porque los importa la
+prueba #44 preregistrada (decisión del 2026-10-14).
 
 ## Criterio de cierre de #90 y #91
 
@@ -20,12 +22,14 @@ Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.28:
 2. Todo módulo plano restante es congelado o permanente sin I/O directo. Las dos
    excepciones de la prueba #44 (`smallmid_test` y el `get_connection` de `storage`)
    se cierran al terminar #44, como tarde tras congelar sus datos el 2027-01-15.
+   Entonces se revisan también `historical_archive`, `historical_tiingo` y
+   `historical_wiki`, permanentes solo porque `smallmid_test` los importa.
 
 ## Congelados (18)
 
 Verificados por hash con `gabi_cli research frozen --check-frozen`: `block_bootstrap`, `capital_input_audit`, `capital_input_audit_v2`, `config`, `cross_section_test`, `factor_benchmark`, `factor_history`, `factor_sector_stability`, `factor_stability`, `factor_zoo`, `full_universe_audit`, `overfitting_audit`, `placebo_engine`, `r3_experiment`, `rank_stability`, `repurchase_cash_strategy`, `strategy_discovery`, `tail_effect_test`.
 
-## Permanentes (37)
+## Permanentes (40)
 
 "Leído por nombre" significa que un fichero congelado, una caché o un documento
 publicado registra el hash del fichero por su nombre: debe seguir existiendo aunque
@@ -39,6 +43,7 @@ importa y usa sus nombres públicos.
 | `entity_master` | leído por nombre para una huella publicada | overfitting_audit (huella de código) | ninguno |
 | `evidence_catalog` | interfaz de motores congelados; leído por nombre para una huella publicada | factor_sector_stability (congelado); live_ledger.model_metadata (model_version) | ninguno |
 | `evidence_confidence` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
+| `historical_archive` | interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15 | smallmid_test (#44); historical_revalidation; historical_membership; historical_tiingo; historical_wiki; sec_history; infrastructure/legacy/data_health; infrastructure/legacy/sec_validation | ninguno |
 | `historical_issuer_evidence` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
 | `historical_membership` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
 | `historical_period` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
@@ -47,7 +52,9 @@ importa y usa sus nombres públicos.
 | `historical_price_policy` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
 | `historical_revalidation` | comando de reproducción #35 (ADR 0002); interfaz de motores congelados | gabi_cli research historical-revalidation; cross_section_test (congelado); factor_zoo (congelado); placebo_engine (congelado); r3_experiment (congelado); tail_effect_test (congelado) | ninguno |
 | `historical_ticker_corrections` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
+| `historical_tiingo` | interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15 | smallmid_test (#44); smallmid_feasibility; historical_price_audit; infrastructure/legacy/periodic | ninguno |
 | `historical_validation` | comando de reproducción #33 (ADR 0002); interfaz de motores congelados | gabi_cli research historical-validation; cross_section_test (congelado) | ninguno |
+| `historical_wiki` | interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15 | smallmid_test (#44); historical_price_audit | ninguno |
 | `identity` | interfaz de motores congelados; leído por nombre para una huella publicada | full_universe_audit (congelado); overfitting_audit (congelado); overfitting_audit (huella de código); full_universe_audit (huella de cachés); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `live_ledger` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 | `membership_extension` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
@@ -72,16 +79,13 @@ importa y usa sus nombres públicos.
 | `variant_validation` | interfaz de motores congelados; leído por nombre para una huella publicada | r3_experiment (congelado); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `workspace` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 
-## Pendientes (8)
+## Pendientes (5)
 
 | Módulo | Siguiente paso |
 | --- | --- |
 | `app_mode` | #91: estado del modelo; consumidores en API y live_ledger |
 | `data_fetch` | #90: descarga operativa; caso de uso compartido con el worker |
 | `data_quality` | #90: ranking_quality y fachada de lecturas (#139) |
-| `historical_archive` | #90: fachada del archivo histórico (F7.7) |
-| `historical_tiingo` | #90: importación Tiingo; la usa smallmid_test |
-| `historical_wiki` | #90: importación WIKI; la usa smallmid_test |
 | `sec_history` | #90: descargas SEC fijadas |
 | `sync_state` | #90: checkpoints y reintentos; requests solo para clasificar errores transitorios |
 

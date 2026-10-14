@@ -42,6 +42,19 @@
         "live_ledger.model_metadata (model_version)"
       ]
     },
+    "historical_archive": {
+      "reason": "interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15",
+      "consumers": [
+        "smallmid_test (#44)",
+        "historical_revalidation",
+        "historical_membership",
+        "historical_tiingo",
+        "historical_wiki",
+        "sec_history",
+        "infrastructure/legacy/data_health",
+        "infrastructure/legacy/sec_validation"
+      ]
+    },
     "historical_issuer_evidence": {
       "reason": "leído por nombre para una huella publicada",
       "consumers": [
@@ -97,11 +110,27 @@
         "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
       ]
     },
+    "historical_tiingo": {
+      "reason": "interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15",
+      "consumers": [
+        "smallmid_test (#44)",
+        "smallmid_feasibility",
+        "historical_price_audit",
+        "infrastructure/legacy/periodic"
+      ]
+    },
     "historical_validation": {
       "reason": "comando de reproducción #33 (ADR 0002); interfaz de motores congelados",
       "consumers": [
         "gabi_cli research historical-validation",
         "cross_section_test (congelado)"
+      ]
+    },
+    "historical_wiki": {
+      "reason": "interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15",
+      "consumers": [
+        "smallmid_test (#44)",
+        "historical_price_audit"
       ]
     },
     "identity": {
@@ -296,9 +325,6 @@
     "app_mode": "#91: estado del modelo; consumidores en API y live_ledger",
     "data_fetch": "#90: descarga operativa; caso de uso compartido con el worker",
     "data_quality": "#90: ranking_quality y fachada de lecturas (#139)",
-    "historical_archive": "#90: fachada del archivo histórico (F7.7)",
-    "historical_tiingo": "#90: importación Tiingo; la usa smallmid_test",
-    "historical_wiki": "#90: importación WIKI; la usa smallmid_test",
     "sec_history": "#90: descargas SEC fijadas",
     "sync_state": "#90: checkpoints y reintentos; requests solo para clasificar errores transitorios"
   }
