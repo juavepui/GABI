@@ -14,8 +14,9 @@ import pytest
 import requests
 from lxml import etree
 
-from gabi import config, historical_identity_audit, sec_history
+from gabi import config, sec_history
 from gabi.domain.market.identity import normalize_cik
+from gabi.infrastructure.legacy import historical_identity_audit
 from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.sec_quarter_ingest import JsonQuarterReport, SqliteSecIngestSelection
 
@@ -369,3 +370,84 @@ def test_checkpoint_report_replaces_atomically(tmp_path, monkeypatch):
         report.save({"other": 1})
     assert report.load() == {"2010q1": {"status": "complete"}}
     assert [path.name for path in (tmp_path / "nested").iterdir()] == ["report.json"]
+
+
+def annual_report_sources(directory: Path, imported: list):
+    """Synthetic issuer evidence: one or several symbols per 10-K, and an archive that records proofs."""
+    texts = {"2011": "AAA", "2012": "AAA ZZZ", "2014": "CCC", "2017": "NEW OTHER", "2018": "NEW"}
+    lives = {"1": [2010, 2011, 2012, 2014], "0000000003": None, "0000000005": [2017, 2018]}
+
+    def listing_life(cik):
+        years = lives.get(cik)
+        return None if years is None else {"name": f"Issuer {cik}", "annual_reports": [
+            {"filed": f"{year}-03-01", "accession": f"{cik}-{year}"} for year in years]}
+
+    def fetch_annual_report(cik, report):
+        path = directory / f"{report['accession']}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(texts[report["filed"][:4]], encoding="utf-8")
+        return f"https://www.sec.gov/{report['accession']}", path
+
+    evidence = SimpleNamespace(listing_life=listing_life, fetch_annual_report=fetch_annual_report,
+                               annual_report_symbols=lambda text, extended=False: set(text.split()))
+    archive = SimpleNamespace(import_filing_identity_evidence=lambda records: imported.extend(records) or len(records))
+    return evidence, archive
+
+
+@pytest.mark.parametrize("period", PERIODS)
+@pytest.mark.parametrize("limit", [0, 1, 10])
+def test_annual_report_symbols_match_capture(workspace, monkeypatch, period, limit):
+    import hashlib
+
+    monkeypatch.setattr(historical_identity_audit, "P2010", PERIODS[0])
+    monkeypatch.setattr(historical_identity_audit, "identity_nominations", lambda: NOMINATIONS)
+    results = []
+    for label in ("old", "new"):
+        imported = []
+        evidence, archive = annual_report_sources(workspace.root / label, imported)
+        if label == "old":
+            namespace = audit_namespace(workspace, Calls(workspace.root / label), workspace.root / label)
+            namespace.update(issuer_evidence=evidence, historical_archive=archive, hashlib=hashlib)
+            function = namespace["annual_report_symbol_evidence"]
+        else:
+            monkeypatch.setattr(historical_identity_audit, "issuer_evidence", evidence)
+            monkeypatch.setattr(historical_identity_audit, "historical_archive", archive)
+            function = historical_identity_audit.annual_report_symbol_evidence
+        results.append((function(limit, period), imported))
+    assert results[0] == results[1]
+    if limit != 1:  # no report read, or room for every report: each period then stores a proof
+        assert bool(results[1][1]) is (limit == 10)
+    with pytest.raises(ValueError, match="nonnegative"):
+        historical_identity_audit.annual_report_symbol_evidence(-1, PERIODS[0])
+
+
+@pytest.mark.parametrize("period", PERIODS)
+@pytest.mark.parametrize("limit", [0, 1, 5])
+def test_issuer_name_histories_match_capture(workspace, monkeypatch, period, limit):
+    results = []
+    for label in ("old", "new"):
+        data = workspace.root / label / "data"
+        monkeypatch.setattr(config, "DATA_DIR", data)
+        seen = []
+
+        def download(url, path, seen=seen):
+            seen.append(url)
+            if "CIK0000000005" in url:
+                raise requests.ConnectionError("offline")
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            Path(path).write_text(json.dumps({"cik": 3}), encoding="utf-8")
+            return path
+
+        if label == "old":
+            function = audit_namespace(workspace, SimpleNamespace(download=download, import_quarter=None),
+                                       data)["fetch_issuer_name_histories"]
+        else:
+            monkeypatch.setattr(sec_history, "download", download)
+            function = historical_identity_audit.fetch_issuer_name_histories
+        report = function(limit, period)
+        files = sorted(path.relative_to(data).as_posix() for path in data.rglob("*.json")) if data.exists() else []
+        results.append((report, seen, files, workspace.capsys.readouterr().out))
+    assert results[0] == results[1]
+    assert results[1][0]["fetched"] + results[1][0]["failed"] == min(limit, 1)
+    with pytest.raises(ValueError, match="nonnegative"):
+        historical_identity_audit.fetch_issuer_name_histories(-1, PERIODS[0])

@@ -139,11 +139,17 @@ adquirente y adquirida ni se usan como fundamental histórico conocido entonces.
 
 ```powershell
 .venv/Scripts/python.exe -m gabi_cli research entity-migration --activate-reviewed-symbol WLP
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-candidate-instances 2000 --output data/identity-fetch.json
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --build-intervals --output data/identity-before-names.json
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-issuer-names 100 --output data/identity-names.json
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --build-intervals --output docs/historical-identity-2010-2015.json --evidence-csv docs/historical-identity-filing-evidence.csv --intervals-csv docs/historical-identity-intervals.csv
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --fetch-candidate-instances 2000 --output data/identity-fetch.json
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --scan-instances --import-evidence --build-intervals --output data/identity-before-names.json
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --fetch-issuer-names 100 --output data/identity-names.json
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --scan-instances --import-evidence --build-intervals --output docs/historical-identity-2010-2015.json --evidence-csv docs/historical-identity-filing-evidence.csv --intervals-csv docs/historical-identity-intervals.csv
 ```
+
+Estos resultados se produjeron originalmente con
+`python -m gabi.historical_identity_audit` (disponible en el commit c324aab de
+develop); desde F7.27 (ADR 0002) los mismos pasos se ejecutan con
+`python -m gabi_cli research identity-audit`, con los mismos argumentos y los
+mismos ficheros de salida.
 
 El primer comando activa solo `WLP`. Los comandos `--fetch-*` hacen descargas
 gratuitas de SEC y usan caché local, URL y SHA-256. La selección de instancias

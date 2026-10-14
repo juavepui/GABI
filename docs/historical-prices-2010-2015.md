@@ -312,10 +312,16 @@ conocida. Consecuencias obligatorias para la integración (#32) y la validación
 
 ### Reproducir
 
+Estos resultados se produjeron originalmente con
+`python -m gabi.historical_identity_audit` (disponible en el commit c324aab de
+develop); desde F7.27 (ADR 0002) los mismos pasos se ejecutan con
+`python -m gabi_cli research identity-audit`, con los mismos argumentos y los
+mismos ficheros de salida.
+
 Sin red (con la base y las cachés SEC locales):
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
 .venv/Scripts/python.exe -m gabi.historical_price_audit --quarterly --terminal-events --promote
 .venv/Scripts/python.exe -m gabi.historical_price_audit
 .venv/Scripts/python.exe -m pytest tests/test_historical_issuer_evidence.py tests/test_historical_price_audit.py tests/test_historical_price_policy.py tests/test_historical_identity_audit.py tests/test_historical_tiingo.py -q
@@ -325,9 +331,9 @@ Descarga de la evidencia y de las fuentes con clave (idempotente, ya cacheada):
 
 ```powershell
 .venv/Scripts/python.exe -m gabi.historical_issuer_evidence --fetch-frames --fetch-submissions <fichero con CIK>
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --import-nominated-filings --fetch-candidate-instances 400
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 1500 --annual-report-symbols 200
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --import-nominated-filings --fetch-candidate-instances 400
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --fetch-unresolved-instances 1500 --annual-report-symbols 200
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
 .venv/Scripts/python.exe -m gabi_cli research wiki-prices --fetch <fichero con símbolos> --import-cached
 .venv/Scripts/python.exe -m gabi_cli research tiingo-prices --fetch <fichero con símbolos> --import-cached
 ```

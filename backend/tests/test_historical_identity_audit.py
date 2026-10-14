@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 from gabi import config, historical_archive, historical_membership, identity, sec_history, storage
-from gabi import historical_identity_audit as audit
 from gabi.historical_membership import REFERENCE_SOURCE
+from gabi.infrastructure.legacy import historical_identity_audit as audit
 
 
 @pytest.fixture(autouse=True)
@@ -517,3 +517,32 @@ def test_each_period_only_sees_proofs_filed_inside_its_evidence_window(monkeypat
     # The 2016 covers were gathered for 2016-2025: the 2010-2015 rebuild ignores them.
     assert interval["direct_ticker_proofs"] == 1 and interval["status"] == "unresolved"
     assert P2016.evidence_from < P2016.start
+
+
+def test_cli_rejects_dependent_options_before_any_step(monkeypatch):
+    from gabi_cli.research.bootstrap import main
+
+    monkeypatch.setattr(audit, "command", lambda *args, **kwargs: pytest.fail("no step may run"))
+    for argv in (["--import-evidence"], ["--evidence-csv", "x.csv"], ["--intervals-csv", "x.csv"],
+                 ["--fetch-candidate-instances", "1", "--fetch-unresolved-instances", "1"]):
+        with pytest.raises(SystemExit):
+            main(["identity-audit", *argv])
+
+
+def test_cli_passes_the_published_options_and_prints_the_report(monkeypatch, capsys):
+    from gabi_cli.research.bootstrap import main
+
+    calls = []
+
+    def command(period, *, emit, **options):
+        calls.append((period, options))
+        emit({"step": 1})
+        return {"by_year": {}}
+
+    monkeypatch.setattr(audit, "command", command)
+    main(["identity-audit", "--period", "2016-2025", "--scan-instances", "--import-evidence",
+          "--fetch-unresolved-instances", "7", "--build-intervals"])
+    period, options = calls[0]
+    assert period == "2016-2025" and options["fetch_unresolved"] == 7 and options["fetch_candidates"] is None
+    assert options["scan_instances"] and options["import_evidence"] and options["build_intervals"]
+    assert capsys.readouterr().out == '{"step": 1}\n' + json.dumps({"by_year": {}}, indent=2) + "\n"
