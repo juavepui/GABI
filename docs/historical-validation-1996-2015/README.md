@@ -192,17 +192,21 @@ Evidencia de esta ejecución:
 ## Reproducción y consulta
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.sec_history
-.venv/Scripts/python.exe -m gabi.sec_history --instances 10000
-.venv/Scripts/python.exe -m gabi.sec_history --instances 10000 --quarterly
+.venv/Scripts/python.exe -m gabi_cli research sec-history
+.venv/Scripts/python.exe -m gabi_cli research sec-history --instances 10000
+.venv/Scripts/python.exe -m gabi_cli research sec-history --instances 10000 --quarterly
 .venv/Scripts/python.exe -m gabi_cli research legacy-filings
 .venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
-.venv/Scripts/python.exe -m gabi.sec_history --companyfacts-gaps
+.venv/Scripts/python.exe -m gabi_cli research sec-history --companyfacts-gaps
 .venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
-.venv/Scripts/python.exe -m gabi.sec_history --instances 10000 --unmatched
+.venv/Scripts/python.exe -m gabi_cli research sec-history --instances 10000 --unmatched
 .venv/Scripts/python.exe -m gabi_cli research sec-reconciliation
 .venv/Scripts/python.exe -m gabi_cli research quarterly-coverage
 ```
+
+La importación del archivo estructurado SEC se produjo originalmente con
+`python -m gabi.sec_history` (disponible en el commit c324aab de develop); desde
+F7.31 (ADR 0002) los mismos pasos se ejecutan con `python -m gabi_cli research sec-history`.
 
 La conciliación SEC y el piloto pre-XBRL se produjeron originalmente con
 `python -m gabi.sec_reconciliation` (último commit: 1283bf5) y `python -m gabi.legacy_filings`

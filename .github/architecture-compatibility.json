@@ -50,9 +50,9 @@
         "historical_membership",
         "historical_tiingo",
         "historical_wiki",
-        "sec_history",
         "infrastructure/legacy/data_health",
-        "infrastructure/legacy/sec_validation"
+        "infrastructure/legacy/sec_validation",
+        "infrastructure/legacy/sec_history"
       ]
     },
     "historical_issuer_evidence": {
@@ -323,7 +323,6 @@
   },
   "pending": {
     "app_mode": "#91: estado del modelo; consumidores en API y live_ledger",
-    "data_quality": "#90: ranking_quality y fachada de lecturas (#139)",
-    "sec_history": "#90: descargas SEC fijadas"
+    "data_quality": "#90: ranking_quality y fachada de lecturas (#139)"
   }
 }

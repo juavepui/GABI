@@ -15,10 +15,10 @@ import pytest
 import requests
 from test_sec_quarter_ingest_migration import NOMINATIONS, PERIODS, connection_factory, seed
 
-from gabi import config, historical_issuer_evidence, historical_tiingo, sec_history
+from gabi import config, historical_issuer_evidence, historical_tiingo
 from gabi.application.research import sec_cover_downloads
 from gabi.domain.market.identity import normalize_cik
-from gabi.infrastructure.legacy import historical_identity_audit
+from gabi.infrastructure.legacy import historical_identity_audit, sec_history
 from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage import historical_prices
 
@@ -184,7 +184,7 @@ def run_evidence(tmp_path, monkeypatch, capsys, label, script, flow, seed_files)
         module = historical_issuer_evidence
         monkeypatch.setattr(module, "FRAMES_DIR", directory / "frames")
         monkeypatch.setattr(module, "SUBMISSIONS_DIR", directory / "submissions")
-        monkeypatch.setattr(sec_history, "download", sec.download)
+        monkeypatch.setattr(module, "download", sec.download)
     try:
         outcome = flow(module)
     except Exception as exc:  # noqa: BLE001 - the propagated type and message are compared
@@ -246,7 +246,7 @@ def test_document_urls_and_paths_match_capture(tmp_path, monkeypatch, flow):
     seen = []
     old = frame_namespace(SimpleNamespace(download=lambda url, path: seen.append((url, path)) or path), tmp_path)
     old.update(ANNUAL_DIR=historical_issuer_evidence.ANNUAL_DIR, TERMINAL_DIR=historical_issuer_evidence.TERMINAL_DIR)
-    monkeypatch.setattr(sec_history, "download", lambda url, path: seen.append((url, path)) or path)
+    monkeypatch.setattr(historical_issuer_evidence, "download", lambda url, path: seen.append((url, path)) or path)
     assert getattr(historical_issuer_evidence, flow)("0000000042", report) == old[flow]("0000000042", report)
     assert seen[0] == seen[1]
 

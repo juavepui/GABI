@@ -151,7 +151,7 @@
     "pandas"
   ],
   "backend/src/gabi/historical_issuer_evidence.py": [
-    "gabi.sec_history",
+    "gabi.config",
     "pathlib"
   ],
   "backend/src/gabi/historical_membership.py": [
@@ -363,13 +363,6 @@
     "gabi.technicals",
     "gabi.universe",
     "pandas"
-  ],
-  "backend/src/gabi/sec_history.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.historical_archive",
-    "pandas",
-    "pathlib"
   ],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",
