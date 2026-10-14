@@ -294,7 +294,6 @@
     "gabi.identity",
     "gabi.screener_asof",
     "gabi.universe",
-    "numpy",
     "pandas"
   ],
   "backend/src/gabi/overfitting_audit.py": [
@@ -324,13 +323,7 @@
     "scipy"
   ],
   "backend/src/gabi/portfolio_backtest.py": [
-    "exchange_calendars",
-    "gabi.data_quality",
-    "gabi.historical_pit",
-    "gabi.identity",
     "gabi.multifactor_backtest",
-    "gabi.screener_asof",
-    "gabi.universe",
     "pandas"
   ],
   "backend/src/gabi/portfolio_metrics.py": [

@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import config, edgar, storage
+from gabi import config, edgar, screener_asof, storage, universe
 from gabi import portfolio_backtest as pb
 
 
@@ -159,9 +159,9 @@ def test_run_result_reports_mode_used(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     dates = pd.date_range("2023-01-01", "2023-10-15", freq="D")
     _seed_prices(dates, [("AAA", [100.0] * len(dates)), ("SPY", [100.0] * len(dates))])
-    monkeypatch.setattr(pb.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA"], "note": ""})
-    monkeypatch.setattr(pb.screener_asof, "build_ranking_as_of",
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
                         lambda day, symbols: {"table": pd.DataFrame(
                             {"composite_score": [80], "score_coverage": [.9]}, index=["AAA"])})
     result = pb.run("2023-01-02", "2023-07-02", months=3, top_n=1, initial_capital=10_000.0)
@@ -180,7 +180,7 @@ def test_run_rebalances_using_each_periods_ranking(tmp_path, monkeypatch):
     dates = pd.date_range("2023-01-01", "2023-10-15", freq="D")
     _seed_prices(dates, [("AAA", [100.0] * len(dates)), ("BBB", [100.0] * len(dates)),
                         ("SPY", [100.0] * len(dates))])
-    monkeypatch.setattr(pb.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA", "BBB"], "note": ""})
 
     seen = []
@@ -192,7 +192,7 @@ def test_run_rebalances_using_each_periods_ranking(tmp_path, monkeypatch):
         return {"table": pd.DataFrame({"composite_score": [80, 70], "score_coverage": [.9, .9]},
                                       index=[winner, loser])}
 
-    monkeypatch.setattr(pb.screener_asof, "build_ranking_as_of", rank)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", rank)
     result = pb.run("2023-01-02", "2023-07-02", months=3, top_n=1, initial_capital=10_000.0)
     assert seen == ["2023-01-02", "2023-04-02"]
     assert result["periods"]["bought"].tolist() == ["AAA", "BBB"]
@@ -209,7 +209,7 @@ def test_run_nav_curve_stays_flat_through_skipped_period_no_gap(tmp_path, monkey
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     dates = pd.date_range("2023-01-01", "2023-10-15", freq="D")
     _seed_prices(dates, [("AAA", [100.0] * len(dates)), ("SPY", [100.0] * len(dates))])
-    monkeypatch.setattr(pb.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA"], "note": ""})
 
     def rank(day, symbols):
@@ -217,7 +217,7 @@ def test_run_nav_curve_stays_flat_through_skipped_period_no_gap(tmp_path, monkey
             return {"table": pd.DataFrame({"composite_score": [None], "score_coverage": [0]}, index=["AAA"])}
         return {"table": pd.DataFrame({"composite_score": [80], "score_coverage": [.9]}, index=["AAA"])}
 
-    monkeypatch.setattr(pb.screener_asof, "build_ranking_as_of", rank)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", rank)
     result = pb.run("2023-01-02", "2023-10-02", months=3, top_n=1, initial_capital=10_000.0)
     assert len(result["skipped"]) == 1
     # la curva NAV no tiene huecos: cubre todo el rango de sesiones, incluido el periodo saltado
@@ -238,9 +238,9 @@ def test_run_ignores_future_filing_from_recycled_ticker(tmp_path, monkeypatch):
         "tag": "NetIncomeLoss", "unit": "USD", "start_date": "2025-01-01", "end_date": "2025-12-31",
         "val": 1, "form": "10-K", "fp": "FY", "fy": 2025, "filed_date": "2025-01-01", "accn": "0002-25-000001",
     }])
-    monkeypatch.setattr(pb.universe, "get_sp500_constituents_asof",
+    monkeypatch.setattr(universe, "get_sp500_constituents_asof",
                         lambda day: {"is_exact": True, "symbols": ["AAA"], "note": ""})
-    monkeypatch.setattr(pb.screener_asof, "build_ranking_as_of",
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
                         lambda day, symbols: {"table": pd.DataFrame(
                             {"composite_score": [80], "score_coverage": [.9]}, index=["AAA"])})
     with pytest.raises(ValueError, match="Ningún periodo"):
