@@ -346,8 +346,8 @@
     "pandas"
   ],
   "backend/src/gabi/price_sync.py": [
+    "gabi.config",
     "gabi.identity",
-    "gabi.storage",
     "gabi.sync_state"
   ],
   "backend/src/gabi/r3_experiment.py": [
@@ -491,7 +491,7 @@
     "sqlite3"
   ],
   "backend/src/gabi/sync_state.py": [
-    "gabi.storage",
+    "gabi.config",
     "requests"
   ],
   "backend/src/gabi/tail_effect_test.py": [

@@ -17,12 +17,12 @@ from gabi.domain.market.sync_events import totals as totals
 from gabi.infrastructure.storage.sync_events import SCHEMA as SCHEMA
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
-from . import storage
+from . import config
 
 
 def _events() -> OperationSyncEvents:
     # The compatibility path is captured per operation, never mutated.
-    return OperationSyncEvents(storage.database_path())
+    return OperationSyncEvents(config.DB_PATH)
 
 
 _PACE_LOCK = threading.Lock()

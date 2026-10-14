@@ -5,18 +5,19 @@ never remote code or pickle. The existing post-2015 membership and audit stay in
 An explicit write: it downloads, backs SQLite up and imports into the configured database.
 """
 import json
-import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
 
-from gabi import edgar, historical_archive, storage
+from gabi import config, edgar, historical_archive
 from gabi.domain.research.historical_backfill import overlaps_membership
 from gabi.historical_membership import historical_backfill_manifest
 from gabi.history_refresh import database_coverage, last_completed_session, period_symbols
 from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.pinned_files import download_pinned, matches
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.historical_backfill import SqliteHistoricalBackfill
 
 MANIFEST = historical_backfill_manifest()
 
@@ -31,9 +32,11 @@ def fetch_missing_history(symbol: str, history: pd.DataFrame, end: str) -> int:
     market_dates = pd.to_datetime(frame.index.strftime("%Y-%m-%d"))
     if not overlaps_membership(market_dates, history, symbol, "2016-01-01"):
         raise ValueError("Provider history does not overlap historical membership")
-    storage.upsert_prices(symbol, frame)
+    # The compatibility path is captured per operation, never mutated.
+    writes = SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC))
+    writes.prices(symbol, frame)
     if "Stock Splits" in frame:
-        storage.upsert_splits(symbol, {d.strftime("%Y-%m-%d"): float(v)
+        writes.splits(symbol, {d.strftime("%Y-%m-%d"): float(v)
                                       for d, v in frame["Stock Splits"].items() if pd.notna(v) and v > 0})
     return len(frame)
 
@@ -46,8 +49,8 @@ def run(data_dir: Path) -> dict:
     now = datetime.now(UTC)
     run_dir = directory / now.strftime("%Y%m%dT%H%M%S")
     run_dir.mkdir()
-    with storage.get_connection() as conn, sqlite3.connect(run_dir / "gabi_before.db") as backup:
-        conn.backup(backup)
+    store = SqliteHistoricalBackfill(config.DB_PATH)
+    store.backup(run_dir / "gabi_before.db")
     start, end = manifest["start"], manifest["end_exclusive"]
     history = pd.read_csv(files["membership"], dtype=str)
     issuers = pd.read_csv(files["issuers"], dtype=str).fillna("")
@@ -78,10 +81,7 @@ def run(data_dir: Path) -> dict:
 
     live_frame = edgar.get_cik_map()
     live = dict(zip(live_frame["symbol"], live_frame["cik"], strict=True))
-    with storage.get_connection() as conn:
-        stored = dict(conn.execute("SELECT symbol,cik FROM edgar_metrics"))
-        old_facts = {s for s, in conn.execute("SELECT DISTINCT symbol FROM edgar_facts WHERE filed_date<?", (end,))}
-        old_prices = {s for s, in conn.execute("SELECT DISTINCT symbol FROM prices WHERE date<? AND adj_close IS NOT NULL", (end,))}
+    stored, old_facts, old_prices = store.operational(end)
     safe, blocked = historical_archive.unique_historical_ciks(issuers, targets, live, stored)
     report["historical_cik_candidates"] = safe
     report["blocked_operational_imports"] = blocked
@@ -126,18 +126,12 @@ def run(data_dir: Path) -> dict:
             print(f"SEC: {n}/{len(needed)}; imported {len(report['sec']['updated'])}", flush=True)
         save()
     report["after"] = database_coverage()
-    with storage.get_connection() as conn:
-        report["archive_coverage"] = dict(zip(["rows", "symbols", "first", "last"], conn.execute(
-            "SELECT COUNT(*),COUNT(DISTINCT symbol),MIN(date),MAX(date) FROM historical_prices WHERE source_id=?",
-            (manifest["price_source_id"],)).fetchone(), strict=True))
-        old_facts = {s for s, in conn.execute("SELECT DISTINCT symbol FROM edgar_facts WHERE filed_date<?", (end,))}
-        old_prices = {s for s, in conn.execute("SELECT DISTINCT symbol FROM prices WHERE date<? AND adj_close IS NOT NULL", (end,))}
-        report["after_old_coverage"] = {"symbols_with_prices": len(targets & old_prices), "symbols_with_facts": len(targets & old_facts)}
-        report["archived_sec_facts"] = dict(zip(["rows", "candidate_symbols", "issuers", "first_filed", "last_filed"],
-            conn.execute("SELECT COUNT(*),COUNT(DISTINCT candidate_symbol),COUNT(DISTINCT cik),"
-                         "MIN(filed_date),MAX(filed_date) FROM historical_facts WHERE source_id=?",
-                         (manifest["issuer_source_id"],)).fetchone(), strict=True))
-        report["sqlite_integrity"] = conn.execute("PRAGMA quick_check").fetchone()[0]
+    after = store.summary(manifest["price_source_id"], manifest["issuer_source_id"], end)
+    report["archive_coverage"] = after["archive_coverage"]
+    report["after_old_coverage"] = {"symbols_with_prices": len(targets & after["old_prices"]),
+                                    "symbols_with_facts": len(targets & after["old_facts"])}
+    report["archived_sec_facts"] = after["archived_sec_facts"]
+    report["sqlite_integrity"] = after["sqlite_integrity"]
     report["completed_at"] = datetime.now(UTC).isoformat()
     save()
     print(f"Report: {run_dir / 'report.json'}", flush=True)
