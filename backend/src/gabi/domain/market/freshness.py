@@ -27,6 +27,11 @@ def last_completed_session(now: datetime) -> date:
     return session.date()
 
 
+def market_date(now: datetime) -> str:
+    """ISO date of the last closed NYSE session, as stored in ledgers and evidence."""
+    return last_completed_session(now).isoformat()
+
+
 def prices_current(price_dates: Iterable[date | None], session: date,
                    max_behind_share: float = MAX_BEHIND_SHARE) -> bool:
     """At most `max_behind_share` of the symbols lack the close of `session`; a missing price counts as behind."""

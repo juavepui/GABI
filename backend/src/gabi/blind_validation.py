@@ -23,13 +23,18 @@ from datetime import date
 import pandas as pd
 
 from gabi.application.market import cached_data
+from gabi.infrastructure.providers import research_environment
 from gabi.infrastructure.storage.blind_ledger import SCHEMA as SCHEMA
 from gabi.infrastructure.storage.blind_ledger import DuplicatePeriod, SqliteBlindLedger
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 
 from . import config, screener_asof
 from .domain.research.blind import canonical_payload, verify_chain
-from .research_lab import _current_git_commit, log_experiment
+from .research_lab import log_experiment
+
+
+def _current_git_commit() -> str | None:
+    return research_environment.git_commit(config.BASE_DIR)
 
 
 def _ledger() -> SqliteBlindLedger:
