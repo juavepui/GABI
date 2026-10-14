@@ -55,13 +55,6 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/data_quality.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.entity_master",
-    "gabi.scoring",
-    "pandas"
-  ],
   "backend/src/gabi/edgar.py": [
     "concurrent.futures",
     "gabi.config",
@@ -243,7 +236,6 @@
   "backend/src/gabi/multifactor_backtest.py": [
     "exchange_calendars",
     "gabi.config",
-    "gabi.data_quality",
     "gabi.historical_pit",
     "gabi.identity",
     "gabi.screener_asof",

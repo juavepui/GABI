@@ -29,13 +29,16 @@ def main() -> None:
     import test_backtest_inputs_migration as parity
     from _pytest.monkeypatch import MonkeyPatch
 
-    from gabi import data_quality, historical_pit, identity, screener_asof, universe
+    from gabi import historical_pit, identity, screener_asof, universe
+    from gabi.infrastructure.legacy import data_quality
 
     patches = MonkeyPatch()
     patches.setattr(universe, "get_sp500_constituents_asof", parity.membership)
     patches.setattr(screener_asof, "build_ranking_as_of",
                     lambda as_of, symbols: {"table": parity.ranking(as_of, symbols)})
-    patches.setattr(data_quality, "ranking_quality", parity.quality)
+    patches.setattr(data_quality, "ranking_quality", parity.quality)  # the captured engines
+    patches.setattr(parity.v1.quality_rules, "ranking_quality", parity.quality)  # the facade (F7.32)
+    patches.setitem(sys.modules, "gabi.data_quality", data_quality)  # retired flat module (F7.32)
     patches.setattr(identity, "backtest_prices", parity.prices)
     patches.setattr(identity, "last_filings", lambda symbols, as_of: parity.last_filings(symbols, as_of))
     patches.setattr(identity, "resolve", lambda symbol, as_of: {"entity_id": f"cik:{symbol}"})

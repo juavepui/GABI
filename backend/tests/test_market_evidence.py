@@ -101,7 +101,7 @@ def test_dates_in_ranking_rows_no_longer_break_the_evidence(market):
 
 
 def test_block_coverage_and_warnings_match_the_old_screener(market):
-    from gabi import data_quality
+    from gabi.infrastructure.legacy import data_quality
 
     client, app, root = market
     table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table

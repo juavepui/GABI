@@ -57,8 +57,9 @@ def _already_registered(data_dir: Path, source_job_id: str) -> int | None:
 
 def register_backtest(data_dir: Path, registration: dict) -> dict:
     """Log a verified backtest artifact once, with the same fields and data fingerprint as Streamlit."""
-    from gabi import data_quality, research_lab
+    from gabi import research_lab
     from gabi.application.research.backtests import experiment_from_backtest
+    from gabi.infrastructure.legacy import data_quality
     from gabi.infrastructure.storage.jobs import SqliteJobs
 
     source = registration["source_job_id"]

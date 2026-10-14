@@ -18,6 +18,11 @@ sys.path.insert(0, str(ROOT / 'backend/src'))
 
 
 def main():
+    # Retired flat modules imported by the captured sources (F7), shared with the parity tests.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "tests"))
+    import retired_modules
+
+    retired_modules.install()
     from gabi import historical_price_audit as facade
     from gabi.application.research.historical_price_audit import audit
     from gabi.domain.research.periods import P2010
