@@ -266,6 +266,13 @@ def baseline_growth(previous: dict, current: dict) -> list[str]:
         # ADR 0005: gabi.config may only replace a retired gabi.storage used to resolve the database path.
         if "gabi.config" in added and "gabi.storage" in previous[name] and "gabi.storage" not in current[name]:
             added.discard("gabi.config")
+        # ADR 0007: or a dependency on a flat module retired in the same change (paths and SEC user agent only).
+        retired = {dependency for dependency in set(previous[name]) - set(current[name])
+                   if dependency.count(".") == 1 and dependency.startswith("gabi.")
+                   and f"backend/src/gabi/{dependency[5:]}.py" in previous
+                   and f"backend/src/gabi/{dependency[5:]}.py" not in current}
+        if "gabi.config" in added and retired:
+            added.discard("gabi.config")
         errors.extend(f"legacy baseline cannot add dependency {name} -> {target}" for target in sorted(added))
     return errors
 

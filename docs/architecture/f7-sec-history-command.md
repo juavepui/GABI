@@ -12,8 +12,9 @@
 `historical_issuer_evidence` (permanente, leído por nombre por `extra_sources`; ya
 cambia en la pila) tiene su propia `download` sobre `download_pinned` y define su
 directorio desde `config`. Su excepción del inventario legacy cambia
-`gabi.sec_history` por `gabi.config`: el número no crece y `config` solo aporta la ruta
-de datos, la base y el User-Agent, como en [ADR 0005](../adr/0005-legacy-config-path.md).
+`gabi.sec_history` por `gabi.config` según [ADR 0007](../adr/0007-config-for-retired-flat-dependency.md): el número
+no crece y `config` solo aporta la ruta de datos, la base y el User-Agent. La primera versión
+de esta entrega lo justificó con ADR 0005, que no lo cubre; la CI de la integración lo detectó.
 `tenk_extraction`, la auditoría de identidad y el piloto pre-XBRL usan el puente;
 el piloto localiza `resources/legacy_filings_pilot.json` junto a `historical_archive`.
 

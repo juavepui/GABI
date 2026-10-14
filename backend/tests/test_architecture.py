@@ -139,6 +139,23 @@ def test_config_may_only_replace_a_retired_storage_dependency():
     assert other == ["legacy baseline cannot add dependency old.py -> gabi.edgar"]
 
 
+def test_config_may_replace_a_flat_module_retired_in_the_same_change():
+    flat = "backend/src/gabi/"
+    previous = {flat + "user.py": ["gabi.paths", "pathlib"], flat + "paths.py": ["gabi.config"],
+                flat + "other.py": ["pathlib"]}
+    retired = {flat + "user.py": ["gabi.config", "pathlib"], flat + "other.py": ["pathlib"]}
+    assert GUARD["baseline_growth"](previous, retired) == []
+    still_there = {**retired, flat + "paths.py": ["gabi.config"]}
+    assert GUARD["baseline_growth"](previous, still_there) == [
+        f"legacy baseline cannot add dependency {flat}user.py -> gabi.config"]
+    unrelated = {flat + "user.py": ["gabi.paths", "pathlib"], flat + "other.py": ["gabi.config", "pathlib"]}
+    assert GUARD["baseline_growth"](previous, unrelated) == [
+        f"legacy baseline cannot add dependency {flat}other.py -> gabi.config"]
+    other = {flat + "user.py": ["gabi.edgar", "pathlib"], flat + "other.py": ["pathlib"]}
+    assert GUARD["baseline_growth"](previous, other) == [
+        f"legacy baseline cannot add dependency {flat}user.py -> gabi.edgar"]
+
+
 def test_retired_streamlit_cannot_return_as_import_or_dependency(tmp_path):
     write(tmp_path, ".github/architecture-legacy.json", json.dumps({"backend/src/gabi/old.py": ["streamlit"]}))
     write(tmp_path, "backend/src/gabi/old.py", "import streamlit\n")
