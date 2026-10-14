@@ -81,6 +81,9 @@ validación ciega a infraestructura; [ADR 0005](../adr/0005-legacy-config-path.m
 sustituir `storage` por `config` cuando solo se usaba para la ruta de la base.
 Su segunda entrega pasa a `gabi_cli research` las órdenes de las validaciones
 #33/#35 y de la viabilidad #44, y deja `smallmid_test` (preregistro en curso).
+[F7.24](f7-backtest-inputs.md) (#132) pasa los backtests V1/V2 a casos de uso con
+entradas explícitas (`BacktestMarket`) y reglas puras en `domain/portfolio/backtest`;
+las fachadas conservan los nombres que parchean los motores congelados.
 
 ## Responsabilidades y entregas
 

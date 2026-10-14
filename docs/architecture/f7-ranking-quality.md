@@ -80,6 +80,5 @@ idénticas. Mediana de 3 en dos ejecuciones:
 Sin cambio apreciable. El coste del ranking está en el cálculo por símbolo, no en
 las lecturas que se han movido.
 
-Pendiente de #132: entradas explícitas (precios, identidad, calendario) en
-`multifactor_backtest` y `portfolio_backtest`, cuyos nombres internos parchean
-`full_universe_audit` y `rotation_experiment`.
+Las entradas explícitas de `multifactor_backtest` y `portfolio_backtest` llegan en la
+segunda entrega: [F7.24](f7-backtest-inputs.md).
