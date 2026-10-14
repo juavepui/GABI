@@ -50,6 +50,8 @@ de compatibilidad y las acciones de selección/ingesta todavía pendientes.
 [F7.11](f7-sec-bulk-import.md) extrae la importación trimestral SUB/NUM con
 lectura local por lotes y migración/escritura atómicas; la selección de CIK,
 los checkpoints y el escaneo de identidad mantienen su compatibilidad.
+[F7.12](f7-storage-reads.md) retira las escrituras de esquema de las lecturas
+de `storage` y de las métricas EDGAR cacheadas; las escrituras siguen en sus fachadas.
 
 ## Responsabilidades y entregas
 

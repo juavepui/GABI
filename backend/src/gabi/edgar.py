@@ -20,7 +20,15 @@ import requests
 import gabi.domain.market.sec_facts as _sec_facts
 from gabi.application.market.sec_cik import current_map
 from gabi.application.market.sec_cik import resolve as resolve_cik
-from gabi.application.market.sec_reads import concept_value, issuer_facts, metrics_as_of, stored_facts
+from gabi.application.market.sec_reads import (
+    cached_metrics,
+    concept_value,
+    fetched_at,
+    issuer_facts,
+    metrics_as_of,
+    stored_facts,
+    symbols_with_facts,
+)
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete
@@ -409,18 +417,7 @@ def upsert_edgar_metrics(symbol: str, cik: str, metrics: dict):
 
 
 def get_edgar_metrics(symbols: list) -> dict:
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, revenue_cagr_3y, fcf_cagr_3y, roic, "
-            f"latest_10k_date, latest_10k_url, latest_10q_date, latest_10q_url, fetched_at "
-            f"FROM edgar_metrics WHERE symbol IN ({placeholders})", symbols,
-        ).fetchall()
-    cols = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url", "latest_10q_date", "latest_10q_url", "fetched_at"]
-    return {r[0]: dict(zip(cols, r[1:])) for r in rows}
+    return cached_metrics(_fact_reader(), symbols)
 
 
 def get_symbols_with_facts(symbols: list) -> set:
@@ -430,33 +427,11 @@ def get_symbols_with_facts(symbols: list) -> set:
     guardó edgar_metrics por algún fallo puntual al persistir), y sin este
     chequeo quedarían marcadas como "frescas" para siempre sin tener nunca
     los datos que hacen falta para reconstruir una fecha pasada."""
-    if not symbols:
-        return set()
-    placeholders = ",".join("?" * len(symbols))
-    with storage.get_connection() as conn:
-        conn.executescript(FACTS_SCHEMA)
-        rows = conn.execute(
-            f"SELECT DISTINCT symbol FROM edgar_facts WHERE symbol IN ({placeholders})", symbols,
-        ).fetchall()
-    return {r[0] for r in rows}
+    return symbols_with_facts(_fact_reader(), symbols)
 
 
 def get_edgar_fetched_at(symbols: list) -> dict:
-    if not symbols:
-        return {}
-    placeholders = ",".join("?" * len(symbols))
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        rows = conn.execute(
-            f"SELECT symbol, fetched_at FROM edgar_metrics WHERE symbol IN ({placeholders})", symbols,
-        ).fetchall()
-    result = {}
-    for symbol, fetched_at in rows:
-        try:
-            result[symbol] = datetime.fromisoformat(fetched_at)
-        except Exception:
-            result[symbol] = None
-    return result
+    return fetched_at(_fact_reader(), symbols)
 
 
 def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,

@@ -72,10 +72,53 @@ documenta la delegación de SQL desde fachadas existentes hacia almacenamiento,
 con pruebas de frontera y sin ampliar el inventario de excepciones.
 
 El [núcleo de identidad y su guard de últimas fechas atribuidas](f7-issuer-identity.md)
-ya usan lectores compartidos. Siguen pendientes otros flujos históricos y las
-lecturas actuales de métricas cacheadas. No se presenta este bloque como eliminación completa de `edgar.py`
+ya usan lectores compartidos. Las lecturas actuales de métricas cacheadas
+también (sección siguiente). Siguen pendientes otros flujos históricos y las
+escrituras de `edgar_metrics`. No se presenta este bloque como eliminación completa de `edgar.py`
 ni como consulta libre de efectos de todo el ranking. No cambian motores ni
 configuración congelados.
+
+## Métricas cacheadas actuales
+
+`get_edgar_metrics`, `get_edgar_fetched_at` y `get_symbols_with_facts` delegan
+en `cached_metrics`, `fetched_at` y `symbols_with_facts` de
+`application/market/sec_reads.py`, sobre `SqliteSecReads`. Ya no ejecutan
+`CREATE TABLE` al consultar ni abren la conexión legacy: base o tabla ausente
+devuelve `{}`/`set()` sin crear nada. Se conservan las columnas y claves del
+resultado, la deduplicación de símbolos repetidos, la ausencia de símbolos sin
+fila y `None` cuando `fetched_at` no es una fecha ISO.
+
+Los símbolos se consultan en lotes de 200 dentro de una única transacción de
+lectura, de modo que todos los lotes observan la misma revisión. Ambas tablas
+tienen como máximo una fila por símbolo y lote (clave primaria o `DISTINCT`),
+así que la materialización queda acotada por la entrada; cada fila sigue
+limitada a 16 KiB y un exceso falla sin truncar. No se añade un tope de
+símbolos para no cambiar el contrato del ranking y la calidad de datos, que
+consultan el universo completo. No hay caché: la siguiente consulta observa
+la siguiente sincronización. Las escrituras (`upsert_edgar_metrics`) siguen
+en la fachada.
+
+Referencia capturada `c324aabadf3c7b517129f5cd55ffff880921d865` en
+`fixtures/sec_cached_metrics_migration.json`. `test_sec_cached_metrics_migration.py`
+compara caso de uso y fachada con las funciones originales (vacío, ausente,
+repetidos, fecha inválida, 452 símbolos), y prueba base/tabla ausente sin
+creación, tres lotes por consulta, cero escrituras, bytes de la base intactos,
+prohibición de la conexión legacy y límite por fila.
+Validación del 2026-10-11: suite Python completa de 1.853 pruebas correcta.
+
+Medida reproducible: `.venv/Scripts/python.exe scripts/measure_f7_sec_cached_metrics.py`.
+Windows/Python 3.13, 500 símbolos y 20.000 hechos sintéticos, ejecución fría y
+tres repeticiones; paridad exacta y cero descargas.
+
+| Consulta | Frío anterior → nuevo (s) | Mediana caliente (s) | Pico Python (MiB) | SELECT | Sentencias de esquema |
+| --- | --- | --- | --- | --- | --- |
+| Métricas cacheadas | 0,0068 → 0,0093 | 0,0022 → 0,0032 | 0,3968 → 0,3392 | 1 → 4 | 1 → 0 |
+| Fecha de descarga | 0,0031 → 0,0049 | 0,0013 → 0,0021 | 0,1201 → 0,1009 | 1 → 4 | 1 → 0 |
+| Símbolos con hechos | 0,0033 → 0,0051 | 0,0026 → 0,0034 | 0,0888 → 0,0647 | 1 → 4 | 2 → 0 |
+
+Los SELECT nuevos son el inventario de tablas y tres lotes. Las consultas son
+entre uno y dos milisegundos más lentas en esta fixture; el cambio elimina
+escrituras de esquema en lecturas y acota los lotes, no promete más velocidad.
 
 ## Validación y medida
 
