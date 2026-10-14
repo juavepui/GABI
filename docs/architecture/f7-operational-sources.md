@@ -12,8 +12,8 @@ Primera entrega de #134. Las fuentes operativas dejan de pasar por `storage`:
 
 `price_sync` deja de importar `data_fetch` e `history_refresh`: desaparece el ciclo
 `data_fetch`↔`price_sync`. `data_fetch.normalize_symbol` delega en
-`domain.market.price_sync.yahoo_symbol`. `price_sync` usa `storage.database_path()`
-porque `config` sería una dependencia legacy nueva. Inventario: `macro`, `insider` y
+`domain.market.price_sync.yahoo_symbol`. En esta entrega `price_sync` usaba
+`storage.database_path()`; la segunda la sustituye por `config` (ver abajo). Inventario: `macro`, `insider` y
 `data_fetch` pierden `gabi.storage`; `price_sync` pierde `data_fetch.*`,
 `history_refresh.*`, `numpy` y `pandas`.
 
@@ -29,9 +29,34 @@ porque `config` sería una dependencia legacy nueva. Inventario: `macro`, `insid
 - `macro.upsert_series` admite hasta 100.000 observaciones por escritura.
 - La consulta de identidad de `data_health` ya no crea tablas al leer candidatos.
 
-Pendiente de #134: los puentes de una sola ejecución `entity_migration`,
-`historical_backfill` y `tenk_extraction` siguen con `storage.get_connection`;
-los demás usos están en módulos de #131–#133.
+## Segunda entrega: ruta desde `config` y puentes sin `storage`
+
+| Módulo | Ahora |
+| --- | --- |
+| `sync_state`, `price_sync` | `config.DB_PATH` leído por operación en lugar de `storage.database_path()` ([ADR 0005](../adr/0005-legacy-config-path.md)); `storage.database_path` se retira |
+| puente `entity_migration` (`migrate`, `attribute_legacy`, `coverage_report`) | `infrastructure/storage/entity_migration.py`: instantáneas antiguas, atribución en una transacción y alias |
+| puente `historical_backfill` (`run`, `fetch_missing_history`) | `infrastructure/storage/historical_backfill.py` (copia previa, cobertura antes/después, resumen del archivo, `quick_check`) + `SqliteCacheWrites` para precios y splits |
+| puente `tenk_extraction.sample` | `SqliteIdentityAuditReads.issuer_candidates`, lectura acotada en solo lectura |
+
+Las tres operaciones de los puentes son órdenes explícitas, así que conservan la
+creación de esquema y la conexión WAL con espera de 30 s. Los candidatos del piloto
+10-K se leen en solo lectura; sin la tabla, el error es `ValueError` en lugar de
+`sqlite3.OperationalError`. Inventario: `sync_state` y `price_sync` cambian
+`gabi.storage` por `gabi.config`; los puentes no figuran en él.
+
+`storage.get_connection` queda sin usos de producción fuera de `storage`, salvo
+`historical_revalidation`, `smallmid_feasibility` y `smallmid_test`, que #133 migra
+junto con sus comandos de reproducción.
+
+Validación: `test_bridge_storage_migration.py` con
+`bridge_storage_migration.json` (código de `18bfcd87fc15b2e124ad6df76be2f1285b6d242e`).
+Ejecuta el puente `entity_migration` capturado y el nuevo sobre bases temporales y
+compara resultados y tablas; ejecuta los bloques SQL capturados de
+`historical_backfill.run` y `tenk_extraction.sample` y compara sus resultados con
+los adaptadores, la copia de seguridad y las escrituras de precios y splits. Una
+mutación deliberada (quitar el filtro `adj_close IS NOT NULL`) hace fallar la prueba.
+El acceso a datos no cambia: mismas consultas y una conexión por bloque, como antes.
+Validación del 2026-10-14: suite Python completa de 2.092 pruebas correcta.
 
 ## Validación y medida
 

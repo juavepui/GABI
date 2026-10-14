@@ -11,9 +11,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from gabi import identity, storage
+from gabi import config, identity
 from gabi.domain.research import identity_coverage
 from gabi.domain.research.ticker_corrections import WLP_END, WLP_SOURCES, WLP_START
+from gabi.infrastructure.storage.entity_migration import SqliteEntityMigration
 
 # Bounds are trading dates, not corporate-name effective dates. Multiple
 # independent sources are retained; open ends express continuity until new evidence.
@@ -59,23 +60,22 @@ def activate(symbol: str) -> dict:
     return {"activated": activate_reviewed_symbol(symbol), "symbol": identity.normalize_symbol(symbol)}
 
 
+def _store() -> SqliteEntityMigration:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteEntityMigration(config.DB_PATH)
+
+
 def migrate() -> dict:
     """Idempotent DDL + reviewed aliases + dated legacy snapshots, no network."""
-    with storage.get_connection() as conn:
-        identity.ensure_schema(conn)
-        exists = conn.execute("SELECT 1 FROM sqlite_master WHERE name='entity_snapshots'").fetchone()
-        rows = conn.execute("SELECT symbol,cik,name,sector,industry,effective_date FROM entity_snapshots").fetchall() if exists else []
-        conn.commit()
+    rows = _store().legacy_snapshots()
     imported = 0
     for symbol, cik, name, sector, industry, day in rows:
         if not cik:
             continue
         entity = identity.import_filing_identity(symbol, cik, day, source="legacy-snapshot:observed-date", name=name)
-        with storage.get_connection() as conn:
-            identity.put_observations(conn, entity, "sector", symbol, [{
-                "cik": cik, "name": name, "sector": sector, "industry": industry, "effective_date": day,
-            }], "legacy-snapshot:observed-date")
-            conn.commit()
+        _store().put_snapshot(entity, symbol, {
+            "cik": cik, "name": name, "sector": sector, "industry": industry, "effective_date": day,
+        }, "legacy-snapshot:observed-date")
         imported += 1
     for symbol in sorted({row[2] for row in KNOWN_ALIASES}):
         activate_reviewed_symbol(symbol)
@@ -91,16 +91,8 @@ def attribute_legacy(symbol: str, entity_id: str, dataset: str, *, source: str,
     rows for the symbol could have been fetched for a different issuer.
     """
     identity_coverage.check_attribution(dataset, source, start, end)
-    with storage.get_connection() as conn:
-        identity.ensure_schema(conn)
-        exists = conn.execute("SELECT 1 FROM sqlite_master WHERE name=?", (dataset,)).fetchone()
-        if not exists:
-            return 0
-        frame = pd.read_sql_query(f'SELECT * FROM "{dataset}" WHERE symbol=?', conn, params=(symbol,))
-        rows = identity_coverage.attribution_rows(frame, dataset, start, end)
-        identity.put_observations(conn, entity_id, dataset, symbol, rows, source)
-        conn.commit()
-    return len(rows)
+    return _store().attribute(symbol, entity_id, dataset, source,
+                              lambda frame: identity_coverage.attribution_rows(frame, dataset, start, end))
 
 
 def import_candidates(symbol: str, historical_name: str, submissions: Path, source: str):
@@ -110,9 +102,7 @@ def import_candidates(symbol: str, historical_name: str, submissions: Path, sour
 
 def coverage_report(history: pd.DataFrame, current_map: pd.DataFrame) -> dict:
     # Read alias evidence once: the historical file can contain millions of pairs.
-    with storage.get_connection() as conn:
-        identity.ensure_schema(conn)
-        aliases = pd.read_sql_query("SELECT * FROM entity_aliases", conn)
+    aliases = _store().aliases()
     return identity_coverage.coverage(history, current_map, aliases, identity.normalize_symbol, identity.MIN_CONFIDENCE)
 
 

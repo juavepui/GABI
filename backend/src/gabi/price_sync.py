@@ -11,7 +11,7 @@ from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
 
-from . import identity, storage
+from . import config, identity
 from . import sync_state as sync
 
 
@@ -35,7 +35,7 @@ class _Store:
 def run(symbols: list, *, force: bool = False, full_refresh: bool = False, now=None) -> dict:
     now = now or datetime.now(UTC)
     # The compatibility path is captured per operation, never mutated.
-    path = storage.database_path()
+    path = config.DB_PATH
     store = _Store(SqliteCacheReads(path), SqliteCacheWrites(path, lambda: datetime.now(UTC)))
     return run_use_case(symbols, store=store, owner=lambda symbol, day: identity.resolve(symbol, day)["entity_id"],
                         attempt=sync.Attempt, checkpoint=sync.get, due=sync.due, retry=sync.retry,

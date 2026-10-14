@@ -10,10 +10,11 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from gabi import edgar, identity, sec_history, storage
+from gabi import config, edgar, identity, sec_history
 from gabi import factor_stability as fs
 from gabi import historical_issuer_evidence as ie
 from gabi.domain.research import tenk_extraction as pilot
+from gabi.infrastructure.storage.historical_identity_audit import SqliteIdentityAuditReads
 
 TAGS = {
     "revenue": edgar.REVENUE_TAGS,
@@ -61,12 +62,10 @@ def sample(directory: Path) -> list[dict]:
     """30 miembros del S&P 500 a 2008-12-31 con 10-K del ejercicio 2008 presentado en 2009 y XBRL posterior."""
     from gabi import historical_membership as hm
     from gabi.domain.research import periods as hp
-    from gabi.historical_identity_audit import CANDIDATE_SOURCE, _candidate_map
+    from gabi.historical_identity_audit import _candidate_map
 
     members = hm.constituents_as_of("2008-12-31", source_id=hp.REFERENCE_SOURCE_FULL, compare_reference=False)["symbols"]
-    with storage.get_connection() as conn:
-        cands = conn.execute("SELECT symbol,cik,name,date_added,date_removed,observed_from FROM "
-                             "historical_issuer_candidates WHERE source_id=?", (CANDIDATE_SOURCE,)).fetchall()
+    cands = SqliteIdentityAuditReads(config.DB_PATH).issuer_candidates()
     cmap = _candidate_map(cands, "2008-12-31")
     pool = []
     for symbol in sorted(members):

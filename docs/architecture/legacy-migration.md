@@ -66,7 +66,9 @@ las fachadas delegan su HTTP en proveedores acotados de `infrastructure/provider
 `edgar_sync` se retira: ya no tenía consumidores de producción y su única
 función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
 [F7.19](f7-operational-sources.md) (#134) saca `macro`, `insider`, `price_sync` y
-`data_fetch` de la fachada `storage` y rompe el ciclo `data_fetch`↔`price_sync`.
+`data_fetch` de la fachada `storage` y rompe el ciclo `data_fetch`↔`price_sync`;
+su segunda entrega lee la ruta de `sync_state`/`price_sync` desde `config` y saca
+`storage` de los puentes `entity_migration`, `historical_backfill` y `tenk_extraction`.
 [F7.20](f7-historical-core.md) (#130) mueve los periodos acreditados a `identity`
 (sin ciclo con `historical_pit`) y lee los registros revisados desde infraestructura.
 [F7.21](f7-historical-audits.md) (#131) lleva la descarga paralela y con ritmo de
