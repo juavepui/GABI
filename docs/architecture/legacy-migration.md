@@ -106,6 +106,9 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 El listado completo de archivos/imports heredados está en
 [architecture-legacy.json](../../.github/architecture-legacy.json); las dependencias
 publicadas congeladas, en [legacy-engine-hashes.json](../../backend/legacy-engine-hashes.json).
+Qué módulos planos se quedan para siempre, por qué y el criterio de cierre de #90/#91
+están en el [inventario de compatibilidad](compatibility-inventory.md)
+([architecture-compatibility.json](../../.github/architecture-compatibility.json), ADR 0006).
 Los archivos no destacados en la tabla siguen el grupo de su flujo y las mismas
 reglas. No quedan fuera de la guarda por no aparecer en un ejemplo.
 
