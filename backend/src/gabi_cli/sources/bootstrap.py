@@ -76,26 +76,9 @@ def build_xbrl_operation(settings: Settings, user_agent: str, *, now: Callable[[
 def build_fred_operation(settings: Settings, *, now: Callable[[], datetime] | None = None,
                          wall_time: Callable[[], float] = time.perf_counter,
                          cpu_time: Callable[[], float] = time.thread_time) -> Callable[..., dict]:
-    from gabi.application.administration.fred import synchronize
-    from gabi.application.administration.sync_events import SyncAttempt
-    from gabi.domain.market.fred import SERIES
-    from gabi.infrastructure.legacy.source_errors import fred_error, retry
-    from gabi.infrastructure.providers.fred import FredSource, fred_key
-    from gabi.infrastructure.storage.fred import SqliteFred
-    from gabi.infrastructure.storage.sync_events import OperationSyncEvents
+    from gabi.infrastructure.legacy.fred import fred_operation
 
-    clock = now or (lambda: datetime.now(UTC))
-    path = settings.data_dir / "gabi.db"
-    events = OperationSyncEvents(path)
-    repository = SqliteFred(path, clock)
-    source = FredSource()
-
-    def attempt(provider: str, sid: str, dataset: str) -> SyncAttempt:
-        return SyncAttempt(provider, sid, dataset, events, now=clock,
-                           wall_time=wall_time, cpu_time=cpu_time)
-
-    return partial(synchronize, repository, SERIES, partial(fred_key, settings.data_dir), source.fetch,
-                   events.get, attempt, retry, fred_error, clock)
+    return fred_operation(settings.data_dir, now=now, wall_time=wall_time, cpu_time=cpu_time)
 
 
 def build_tiingo_operations(settings: Settings, *, window_name: str = "smallmid",

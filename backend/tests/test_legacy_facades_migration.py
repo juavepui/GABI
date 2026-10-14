@@ -278,7 +278,6 @@ def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
         data_fetch,
         edgar,
         entity_master,
-        macro,
         metrics,
         risk,
         scoring,
@@ -288,6 +287,7 @@ def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
     )
     from gabi.application.market.ranking import Calculators, MarketBatch, MemoryInputs, build_ranking
     from gabi.domain.market import events as events_calendar
+    from gabi.infrastructure.storage.fred import SqliteFred
 
     path = tmp_path / "gabi.db"
     seed_market(path)
@@ -298,7 +298,7 @@ def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
     storage_old.get_fundamentals = captured("storage", {"get_fundamentals", "SCHEMA"}, {
         "get_connection": connection(path), "json": json})["get_fundamentals"]
     old = captured("screener", {"_get_risk_free_rate", "build_screener_table"}, {
-        "storage": storage_old, "edgar": edgar, "macro": macro, "config": config, "metrics": metrics,
+        "storage": storage_old, "edgar": edgar, "macro": SimpleNamespace(get_series_history=SqliteFred(path, datetime.now).history), "config": config, "metrics": metrics,
         "technicals": technicals, "risk": risk, "scoring": scoring, "events_calendar": events_calendar,
         "MemoryInputs": MemoryInputs, "MarketBatch": MarketBatch, "Calculators": Calculators,
         "build_ranking": build_ranking, "date": date, "pd": pd,

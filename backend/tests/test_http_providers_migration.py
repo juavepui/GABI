@@ -6,6 +6,7 @@ import json
 import time
 import zipfile
 from datetime import date
+from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -91,8 +92,8 @@ RELEASES = "https://api.stlouisfed.org/fred/release/dates"
 
 
 def test_fred_observations_and_releases(web, monkeypatch):
-    from gabi import macro
     from gabi.domain.market import fred
+    from gabi.infrastructure.providers.fred import FredSource
 
     old = captured("macro", {"fetch_series", "fetch_next_release_date", "FRED_BASE_URL", "RELEASE_IDS",
                              "RELEASE_DATES_URL", "_parse_next_release_date"},
@@ -105,23 +106,24 @@ def test_fred_observations_and_releases(web, monkeypatch):
                  ({FRED: Fake(429)}, lambda f: f("DGS10", "k")),
                  ({FRED: requests.ConnectionError("HTTPSConnectionPool(host='api'): Max retries exceeded with url: ?api_key=k (Caused by NewConnectionError)")}, lambda f: f("DGS10", "k")),
                  ({FRED: requests.Timeout("read timed out")}, lambda f: f("DGS10", "k"))]
-    compare(web, scenarios, old["fetch_series"], macro.fetch_series)
+    compare(web, scenarios, old["fetch_series"], partial(FredSource().fetch, require_complete=False))
     releases = json.dumps({"release_dates": [{"date": "2020-01-01"}, {"date": "2999-01-01"}]}).encode()
     compare(web, [({RELEASES: Fake(200, releases)}, lambda f: f("CPIAUCSL", "k")), ({}, lambda f: f("DGS10", "k")),
                   ({RELEASES: Fake(500)}, lambda f: f("CPIAUCSL", "k"))],
-            old["fetch_next_release_date"], macro.fetch_next_release_date)
+            old["fetch_next_release_date"], lambda sid, key: FredSource().next_release(sid, key, date.today()))
 
 
 def test_fred_errors_never_carry_the_key(web):
-    from gabi import macro
+    from gabi.infrastructure.providers.fred import FredSource
     web.routes = {FRED: requests.ConnectionError("Max retries exceeded with url: ?api_key=SECRET")}
     with pytest.raises(requests.ConnectionError) as error:
-        macro.fetch_series("DGS10", "SECRET")
+        FredSource().fetch("DGS10", "SECRET")
     assert "SECRET" not in str(error.value)
 
 
 def test_sec_documents_and_ticker_map(web, tmp_path, monkeypatch):
-    from gabi import edgar, insider
+    from gabi import edgar
+    from gabi.infrastructure.providers.form4 import SecForm4Documents
 
     old = captured("edgar", {"fetch_company_facts", "fetch_submissions", "_headers", "COMPANYFACTS_URL",
                              "SUBMISSIONS_URL"}, {"requests": requests, "config": config})
@@ -136,7 +138,7 @@ def test_sec_documents_and_ticker_map(web, tmp_path, monkeypatch):
     old_insider = captured("insider", {"_Documents"}, {"requests": requests, "config": config, "edgar": edgar})
     compare(web, [({xml_url: Fake(200, b"<ownershipDocument/>")}, lambda f: f(xml_url)),
                   ({xml_url: Fake(500)}, lambda f: f(xml_url))],
-            old_insider["_Documents"].xml, insider._Documents.xml)
+            old_insider["_Documents"].xml, lambda url: SecForm4Documents(config.SEC_USER_AGENT).xml(url))
     tickers = "https://www.sec.gov/files/company_tickers.json"
     payload = json.dumps({"0": {"cik_str": 1, "ticker": "AAA", "title": "Alpha"}}).encode()
     def old_fetch():

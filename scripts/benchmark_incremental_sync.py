@@ -15,7 +15,7 @@ import exchange_calendars as xcals
 import pandas as pd
 import yfinance
 
-from gabi import config, data_fetch, price_sync, storage
+from gabi import config, data_fetch, storage
 from gabi import sync_state as sync
 
 
@@ -53,7 +53,7 @@ def benchmark(output: Path) -> dict:
                     failed = data_fetch.fetch_prices_batch(symbols)
                     changed_rows = len(panel) * len(symbols)
                 else:
-                    result = price_sync.run(symbols, now=now)
+                    result = data_fetch.sync_prices(symbols, now=now)
                     failed = result["failed"]
                     changed_rows = result["metrics"]["new"] + result["metrics"]["revised"]
                 elapsed, cpu_elapsed = time.perf_counter() - start, time.process_time() - cpu

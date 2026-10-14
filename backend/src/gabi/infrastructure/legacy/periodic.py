@@ -23,6 +23,7 @@ class LegacyPeriodicOperations:
 
         if config.DATA_DIR.resolve() != data_dir.resolve():
             raise ValueError("El mantenimiento y los motores legacy no usan el mismo directorio de datos.")
+        self.data_dir = data_dir
         self.events = OperationSyncEvents(data_dir / "gabi.db")
         self.tiingo_fetch, self.tiingo_import = tiingo_fetch, tiingo_import
         self.macro_sync = macro_sync
@@ -58,11 +59,12 @@ class LegacyPeriodicOperations:
         return screener.refresh_data(symbols, **options)
 
     def refresh_macro(self, full_refresh):
-        if self.macro_sync is not None:
-            return self.macro_sync(full_refresh=full_refresh)
-        from gabi import macro
+        operation = self.macro_sync
+        if operation is None:  # Compatibility callers; the CLI bootstrap supplies the explicit ports.
+            from gabi.infrastructure.legacy.fred import fred_operation
 
-        return macro.ensure_macro_data(full_refresh=full_refresh)
+            operation = fred_operation(self.data_dir)
+        return operation(full_refresh=full_refresh)
 
     def events_since(self, event_id):
         return self.events.events_since(event_id)

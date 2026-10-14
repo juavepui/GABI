@@ -35,10 +35,31 @@ def module(name: str) -> ModuleType:
     return captured
 
 
+def retired_sources() -> dict[str, ModuleType]:
+    """The readers the capture used from the facades retired in F7.25, over the same stores."""
+    from gabi import config
+    from gabi.domain.market import fred
+    from gabi.infrastructure.storage.fred import SqliteFred
+    from gabi.infrastructure.storage.insiders import SqliteInsiders
+
+    def series():
+        return SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))
+
+    insider, macro = ModuleType("gabi.insider"), ModuleType("gabi.macro")
+    insider.get_insider_fetched_at = lambda symbols: SqliteInsiders(
+        config.DB_PATH.parent, database=config.DB_PATH).fetched_at(symbols)
+    macro.SERIES = {key: dict(value) for key, value in fred.SERIES.items()}
+    macro.get_all_fetched_at = lambda: series().fetched_at_all()
+    macro.get_series_history = lambda series_id: series().history(series_id)
+    return {"insider": insider, "macro": macro}
+
+
 @pytest.fixture
 def old(monkeypatch):
     for name in ALIASES:
         monkeypatch.setitem(sys.modules, f"gabi.{name}", module(name))
+    for name, facade in retired_sources().items():
+        monkeypatch.setitem(sys.modules, f"gabi.{name}", facade)
     return {name: module(name) for name in ("screener_asof", "data_quality")}
 
 

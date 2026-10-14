@@ -1,4 +1,6 @@
-"""Captured parity of macro, insider and data_fetch persistence after leaving the storage facade (#134)."""
+"""Captured parity of macro, insider and data_fetch persistence after leaving the storage facade (#134).
+
+The retired `macro`/`insider` facades are compared through the stores that replaced them."""
 
 import ast
 import json
@@ -13,7 +15,9 @@ import pandas as pd
 import pytest
 import yfinance
 
-from gabi import config, data_fetch, identity, insider, macro, storage
+from gabi import config, data_fetch, identity, storage
+from gabi.infrastructure.storage.fred import SqliteFred
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/operational_sources_migration.json").read_text(encoding="utf-8"))
 NOW = datetime(2026, 2, 3, 15, tzinfo=UTC)
@@ -67,7 +71,7 @@ def dump(path: Path) -> dict:
 @pytest.fixture
 def clock(monkeypatch):
     from gabi import sync_state
-    for module in (macro, insider, data_fetch, sync_state):
+    for module in (data_fetch, sync_state):
         monkeypatch.setattr(module, "datetime", FixedDatetime)
     monkeypatch.setattr(time, "perf_counter", lambda: 3.)
     monkeypatch.setattr(time, "thread_time", lambda: 1.)
@@ -79,9 +83,13 @@ def test_macro_series_match_capture(tmp_path, monkeypatch, clock):
     for label in ("old", "new"):
         path = tmp_path / label / "gabi.db"
         monkeypatch.setattr(config, "DB_PATH", path)
-        target = legacy_module("macro", storage=legacy_storage(path), config=config) if label == "old" else macro
         if label == "old":
+            target = legacy_module("macro", storage=legacy_storage(path), config=config)
             target.datetime = FixedDatetime
+        else:
+            series = SqliteFred(path, lambda: NOW)
+            target = SimpleNamespace(get_series_history=series.history, get_all_fetched_at=series.fetched_at_all,
+                                     upsert_series=series.upsert)
         outcomes = [target.get_series_history("DGS10"), target.get_all_fetched_at()]
         target.upsert_series("DGS10", [("2026-01-02", 4.1), ("2026-01-05", None), ("2026-01-03", 4.2)])
         target.upsert_series("DGS10", [("2026-01-05", 4.3)])
@@ -109,7 +117,9 @@ def test_insider_persistence_matches_capture(tmp_path, monkeypatch, clock):
                                    edgar=SimpleNamespace(), datetime=FixedDatetime)
             target.datetime = FixedDatetime
         else:
-            target = insider
+            store = SqliteInsiders(path.parent, database=path, now=lambda: NOW)
+            target = SimpleNamespace(get_insider_transactions=store.transactions, get_insider_fetched_at=store.fetched_at,
+                                     upsert_insider_transactions=store.save)
         outcomes = [target.get_insider_transactions("AAA").to_dict("split"), target.get_insider_fetched_at(["AAA"])]
         target.upsert_insider_transactions("AAA", [form4(i) for i in range(3)])
         target.upsert_insider_transactions("BBB", [])

@@ -11,17 +11,20 @@ from datetime import UTC, date, datetime, timedelta
 import pandas as pd
 
 from gabi.application.market import cached_data
+from gabi.domain.market import fred
 from gabi.domain.research import membership
 from gabi.domain.research.membership import symbols
 from gabi.infrastructure.providers import yahoo
+from gabi.infrastructure.providers.fred import FredSource
 from gabi.infrastructure.providers.sp500_sources import SP500Sources
 from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.reviewed_resources import MEMBERSHIP_LEDGER as LEDGER_PATH
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 
-from . import config, data_fetch, edgar, macro, universe
+from . import config, data_fetch, edgar, universe
 from .domain.market import freshness
 
 
@@ -207,14 +210,15 @@ def run() -> dict:
 
     report["macro"] = {"updated": {}, "failed": {}}
     key = config.load_fred_key()
-    for sid, settings in macro.SERIES.items():
+    source, series = FredSource(), SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))
+    for sid, settings in fred.SERIES.items():
         if not key:
             report["macro"]["failed"][sid] = "No free FRED API key configured"
             continue
         try:
             # The normal 260-observation refresh misses most of 2025 for daily series.
-            observations = macro.fetch_series(sid, key, units=settings["units_param"], limit=10000)
-            macro.upsert_series(sid, observations)
+            observations = source.fetch(sid, key, settings["units_param"], 10000, require_complete=False)
+            series.upsert(sid, observations)
             report["macro"]["updated"][sid] = len(observations)
         except Exception:
             # A requests exception can contain the API key in its URL.

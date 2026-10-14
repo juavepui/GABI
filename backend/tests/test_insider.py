@@ -1,11 +1,7 @@
-import sys
-from pathlib import Path
-
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
-from gabi import insider
+from gabi.domain.market.insiders import parse_form4_xml, summarize_insider_activity
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 
 SAMPLE_XML_BUY = """<?xml version="1.0"?>
 <ownershipDocument>
@@ -83,7 +79,7 @@ SAMPLE_XML_PLANNED_SALE = """<?xml version="1.0"?>
 
 
 def test_parse_form4_xml_extracts_buy_transaction():
-    parsed = insider.parse_form4_xml(SAMPLE_XML_BUY)
+    parsed = parse_form4_xml(SAMPLE_XML_BUY)
     assert parsed["symbol"] == "ACME"
     assert parsed["owner_name"] == "Doe Jane"
     assert parsed["is_officer"] is True
@@ -99,7 +95,7 @@ def test_parse_form4_xml_extracts_buy_transaction():
 
 
 def test_parse_form4_xml_detects_10b5_1_plan_from_footnote():
-    parsed = insider.parse_form4_xml(SAMPLE_XML_PLANNED_SALE)
+    parsed = parse_form4_xml(SAMPLE_XML_PLANNED_SALE)
     assert parsed["is_10b5_1_plan"] is True
     assert parsed["transactions"][0]["transaction_code"] == "S"
 
@@ -109,17 +105,16 @@ def test_parse_form4_xml_handles_malformed_xml_gracefully():
 
     import pytest
     with pytest.raises(ET.ParseError):
-        insider.parse_form4_xml("<not valid xml")
+        parse_form4_xml("<not valid xml")
 
 
-def _isolate_db(tmp_path, monkeypatch):
-    from gabi import config
-    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
-    monkeypatch.setattr(config, "DB_PATH", tmp_path / "test_gabi.db")
+def _summary(tmp_path, symbol, months=6):
+    return summarize_insider_activity(SqliteInsiders(tmp_path).transactions(symbol), months,
+                                      as_of=pd.Timestamp.today().date())
 
 
 def _rows_from(symbol, cik, xml, accn):
-    parsed = insider.parse_form4_xml(xml)
+    parsed = parse_form4_xml(xml)
     return [
         {
             "symbol": symbol, "cik": cik, "accn": accn,
@@ -133,35 +128,33 @@ def _rows_from(symbol, cik, xml, accn):
     ]
 
 
-def test_upsert_and_get_insider_transactions_roundtrip(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
+def test_upsert_and_get_insider_transactions_roundtrip(tmp_path):
     rows = _rows_from("ACME", "0000320193", SAMPLE_XML_BUY, "0001-25-000001")
-    insider.upsert_insider_transactions("ACME", rows)
+    SqliteInsiders(tmp_path).save("ACME", rows)
 
-    df = insider.get_insider_transactions("ACME")
+    df = SqliteInsiders(tmp_path).transactions("ACME")
     assert len(df) == 1
     assert df.iloc[0]["owner_name"] == "Doe Jane"
     assert df.iloc[0]["transaction_code"] == "P"
 
-    fetched_at = insider.get_insider_fetched_at(["ACME"])
+    fetched_at = SqliteInsiders(tmp_path).fetched_at(["ACME"])
     assert "ACME" in fetched_at
 
     # Re-insertar no debe duplicar (misma symbol/accn/line_no).
-    insider.upsert_insider_transactions("ACME", rows)
-    assert len(insider.get_insider_transactions("ACME")) == 1
+    SqliteInsiders(tmp_path).save("ACME", rows)
+    assert len(SqliteInsiders(tmp_path).transactions("ACME")) == 1
 
 
-def test_summarize_insider_activity_distinguishes_buys_and_sells(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
+def test_summarize_insider_activity_distinguishes_buys_and_sells(tmp_path):
     today = pd.Timestamp.today()
     recent_buy_xml = SAMPLE_XML_BUY.replace("2025-03-10", (today - pd.Timedelta(days=10)).date().isoformat())
     recent_sale_xml = SAMPLE_XML_PLANNED_SALE.replace("2025-03-12", (today - pd.Timedelta(days=5)).date().isoformat())
 
     rows = _rows_from("ACME", "0000320193", recent_buy_xml, "0001-25-000001")
     rows += _rows_from("ACME", "0000320193", recent_sale_xml, "0001-25-000002")
-    insider.upsert_insider_transactions("ACME", rows)
+    SqliteInsiders(tmp_path).save("ACME", rows)
 
-    summary = insider.summarize_insider_activity("ACME", months=6)
+    summary = _summary(tmp_path, "ACME")
     assert summary["n_buys"] == 1
     assert summary["n_sells"] == 1
     assert summary["distinct_buyers"] == 1
@@ -169,16 +162,14 @@ def test_summarize_insider_activity_distinguishes_buys_and_sells(tmp_path, monke
     assert summary["net_value"] == 5000 * 42.50 - 1000 * 45.00
 
 
-def test_summarize_insider_activity_empty_symbol_returns_zeros(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
-    summary = insider.summarize_insider_activity("NADA")
+def test_summarize_insider_activity_empty_symbol_returns_zeros(tmp_path):
+    summary = _summary(tmp_path, "NADA")
     assert summary["n_buys"] == 0
     assert summary["net_value"] is None
 
 
-def test_summarize_insider_activity_ignores_old_transactions_outside_window(tmp_path, monkeypatch):
-    _isolate_db(tmp_path, monkeypatch)
+def test_summarize_insider_activity_ignores_old_transactions_outside_window(tmp_path):
     rows = _rows_from("ACME", "0000320193", SAMPLE_XML_BUY, "0001-25-000001")  # fecha 2025-03-10, muy antigua
-    insider.upsert_insider_transactions("ACME", rows)
-    summary = insider.summarize_insider_activity("ACME", months=6)
+    SqliteInsiders(tmp_path).save("ACME", rows)
+    summary = _summary(tmp_path, "ACME")
     assert summary["n_buys"] == 0

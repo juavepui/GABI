@@ -23,7 +23,7 @@ NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
 def main():
     import yfinance
 
-    from gabi import config, data_fetch, history_refresh, identity, price_sync, storage
+    from gabi import config, data_fetch, history_refresh, identity, storage
     from gabi import sync_state as sync
 
     reference = json.loads((ROOT / "backend/tests/fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
@@ -48,7 +48,7 @@ def main():
     rows = {}
     with tempfile.TemporaryDirectory(prefix="gabi-price-sync-") as directory:
         tables = []
-        for label, run in (("anterior", namespace["run"]), ("nuevo", price_sync.run)):
+        for label, run in (("anterior", namespace["run"]), ("nuevo", data_fetch.sync_prices)):
             path = Path(directory) / label / "gabi.db"
             path.parent.mkdir()
             config.DATA_DIR, config.DB_PATH = path.parent, path
