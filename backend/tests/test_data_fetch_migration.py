@@ -45,9 +45,15 @@ def captured_refresh_data(old_data_fetch, edgar) -> object:
 
 
 def dump(path: Path) -> dict:
+    """Every table's rows; autoincrement ids are dropped because the fundamentals pool finishes in any order."""
     with closing(sqlite3.connect(path)) as db:
         tables = sorted(n for n, in db.execute("SELECT name FROM sqlite_schema WHERE type='table'"))
-        return {t: sorted(map(repr, db.execute(f"SELECT * FROM {t}").fetchall())) for t in tables}
+        result = {}
+        for table in tables:
+            cursor = db.execute(f"SELECT * FROM {table}")
+            skip = 1 if cursor.description and cursor.description[0][0] == "id" else 0
+            result[table] = sorted(repr(row[skip:]) for row in cursor.fetchall())
+        return result
 
 
 @pytest.fixture

@@ -88,12 +88,11 @@ def main():
         }), encoding="utf-8")
         # Legacy writers (Research Lab manual log) use the project config: point it at the fixture only.
         # config computes key/cache paths at import time: rebase every one of them, as conftest does.
-        from gabi import app_mode, config
+        from gabi import config
         previous_data = config.DATA_DIR
         for name, value in list(vars(config).items()):
             if isinstance(value, Path) and value.is_relative_to(previous_data):
                 setattr(config, name, root / value.relative_to(previous_data))
-        app_mode.MODE_PATH = root / "app_mode.json"
         from gabi import live_ledger
         live_ledger._append({"kind": "DECISION", "stage": "LIVE_FORWARD", "created_at": "2026-09-28T22:00:00+00:00",
                              "model_id": "fixture", "model_version": "fixture-model-v1", "market_date": "2026-09-28",
@@ -257,8 +256,8 @@ def synthetic_job(command, app):
         return build(SqliteExperiments(Path(app.state.settings.data_dir)), command.experiment_analysis,
                      LegacyExperimentMath())
     if command.kind in {"blind_rebalance", "blind_performance", "blind_export"}:
-        from gabi import blind_validation
         from gabi.application.research import blind
+        from gabi.infrastructure.legacy import blind_validation
 
         queries, validation_id = app.state.blind_validations, command.blind["validation_id"]
         if command.kind == "blind_rebalance":  # The ranking rebuild is replaced; the rules are real.
