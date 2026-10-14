@@ -8,6 +8,7 @@ explicit ``BacktestMarket`` that touches no old module.
 """
 
 import json
+import sys
 from datetime import date
 from pathlib import Path
 from types import ModuleType
@@ -17,17 +18,24 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gabi import config, data_quality, historical_pit, identity, screener_asof, universe
+from gabi import config, historical_pit, identity, screener_asof, universe
 from gabi import multifactor_backtest as v1
 from gabi import portfolio_backtest as v2
 from gabi.application.research import backtest_v1, backtest_v2
 from gabi.application.research.backtest_market import BacktestMarket
+from gabi.infrastructure.legacy import data_quality
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/backtest_inputs_migration.json").read_text(encoding="utf-8"))
 CALENDAR = xcals.get_calendar("XNYS")
 SESSIONS = CALENDAR.sessions_in_range("2020-12-01", "2023-03-31")
 SYMBOLS = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "EXT", "REC", "MIS"]
 EXIT_DAY = pd.Timestamp("2021-08-16")
+
+
+@pytest.fixture(autouse=True)
+def retired_data_quality(monkeypatch):
+    """The captured engines imported the flat data_quality retired in F7.32; the bridge keeps its names."""
+    monkeypatch.setitem(sys.modules, "gabi.data_quality", data_quality)
 
 
 def captured(name: str, **overrides) -> ModuleType:
@@ -97,7 +105,8 @@ def quality(table):
 def market(monkeypatch):
     monkeypatch.setattr(universe, "get_sp500_constituents_asof", membership)
     monkeypatch.setattr(screener_asof, "build_ranking_as_of", lambda as_of, symbols: {"table": ranking(as_of, symbols)})
-    monkeypatch.setattr(data_quality, "ranking_quality", quality)
+    monkeypatch.setattr(data_quality, "ranking_quality", quality)  # the captured engines
+    monkeypatch.setattr(v1.quality_rules, "ranking_quality", quality)  # the facade (F7.32)
     monkeypatch.setattr(identity, "backtest_prices", prices)
     monkeypatch.setattr(identity, "last_filings", lambda symbols, as_of: last_filings(symbols, as_of))
     monkeypatch.setattr(identity, "resolve", lambda symbol, as_of: {"entity_id": f"cik:{symbol}"})

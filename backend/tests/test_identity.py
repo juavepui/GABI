@@ -8,7 +8,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from gabi import (
     config,
-    data_quality,
     edgar,
     entity_master,
     identity,
@@ -16,7 +15,7 @@ from gabi import (
     screener_asof,
     storage,
 )
-from gabi.infrastructure.legacy import entity_migration
+from gabi.infrastructure.legacy import data_quality, entity_migration
 
 
 @pytest.fixture(autouse=True)

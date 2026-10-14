@@ -15,6 +15,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> None:
+    # Retired flat modules imported by the captured sources (F7), shared with the parity tests.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "tests"))
+    import retired_modules
+
+    retired_modules.install()
     sys.path.insert(0, str(ROOT / "backend/tests"))
     fixture = runpy.run_path(str(ROOT / "backend/tests/test_quarterly_coverage_migration.py"))
     readings: dict[str, list[tuple[float, float]]] = {"original": [], "migrated": []}

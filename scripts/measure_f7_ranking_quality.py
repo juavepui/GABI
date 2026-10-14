@@ -35,12 +35,18 @@ def median(function) -> tuple[object, float]:
 
 
 def main():
-    from gabi import config, data_quality, edgar, identity, screener_asof, storage
+    from gabi import config, edgar, identity, screener_asof, storage
+    from gabi.infrastructure.legacy import data_quality
 
     reference = json.loads((ROOT / "backend/tests/fixtures/ranking_quality_migration.json").read_text(encoding="utf-8"))
     anchor = Path(screener_asof.__file__)
     for name in ("capital_allocation", "valuation_expectations", "quality_persistence", "broker_costs", "rotation_policy"):
         sys.modules[f"gabi.{name}"] = captured(reference, name, anchor)
+    # Retired flat modules the captured data_quality imported (F7), shared with the parity tests.
+    sys.path.insert(0, str(ROOT / "backend/tests"))
+    import retired_modules
+
+    retired_modules.install()
     old = {name: captured(reference, name, anchor) for name in ("screener_asof", "data_quality")}
     symbols = [f"S{i:03d}" for i in range(SYMBOLS)]
     index = pd.bdate_range("2018-01-02", periods=400)

@@ -322,7 +322,6 @@
     }
   },
   "pending": {
-    "app_mode": "#91: estado del modelo; consumidores en API y live_ledger",
-    "data_quality": "#90: ranking_quality y fachada de lecturas (#139)"
+    "app_mode": "#91: estado del modelo; consumidores en API y live_ledger"
   }
 }

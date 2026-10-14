@@ -3,6 +3,7 @@ import argparse
 import sqlite3
 import statistics
 import subprocess
+import sys
 import tempfile
 import time
 import tracemalloc
@@ -54,6 +55,11 @@ def measured(call, repeats):
 
 
 def main():
+    # Retired flat modules imported by the captured sources (F7), shared with the parity tests.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "tests"))
+    import retired_modules
+
+    retired_modules.install()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", default="486942a")
     parser.add_argument("--repeats", type=int, default=3)

@@ -3,10 +3,11 @@
 import pandas as pd
 from fastapi.testclient import TestClient
 
-from gabi import data_quality, scoring
+from gabi import scoring
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.research.historical import build_historical_ranking
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy import data_quality
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app

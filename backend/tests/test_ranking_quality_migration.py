@@ -12,14 +12,16 @@ from types import ModuleType
 import numpy as np
 import pandas as pd
 import pytest
+import retired_modules
 from pandas.testing import assert_frame_equal
 
-from gabi import config, data_quality, edgar, entity_master, historical_pit, identity, screener_asof, storage
+from gabi import config, edgar, entity_master, historical_pit, identity, screener_asof, storage
 from gabi.domain.market import quality_persistence as domain_quality
 from gabi.domain.market import valuation_expectations as domain_valuation
 from gabi.domain.portfolio import broker_costs as domain_costs
 from gabi.domain.portfolio import capital_allocation as domain_allocation
 from gabi.domain.portfolio import rotation as domain_rotation
+from gabi.infrastructure.legacy import data_quality
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/ranking_quality_migration.json").read_text(encoding="utf-8"))
 NOW = datetime(2024, 3, 1, 12, tzinfo=UTC)
@@ -35,30 +37,11 @@ def module(name: str) -> ModuleType:
     return captured
 
 
-def retired_sources() -> dict[str, ModuleType]:
-    """The readers the capture used from the facades retired in F7.25, over the same stores."""
-    from gabi import config
-    from gabi.domain.market import fred
-    from gabi.infrastructure.storage.fred import SqliteFred
-    from gabi.infrastructure.storage.insiders import SqliteInsiders
-
-    def series():
-        return SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))
-
-    insider, macro = ModuleType("gabi.insider"), ModuleType("gabi.macro")
-    insider.get_insider_fetched_at = lambda symbols: SqliteInsiders(
-        config.DB_PATH.parent, database=config.DB_PATH).fetched_at(symbols)
-    macro.SERIES = {key: dict(value) for key, value in fred.SERIES.items()}
-    macro.get_all_fetched_at = lambda: series().fetched_at_all()
-    macro.get_series_history = lambda series_id: series().history(series_id)
-    return {"insider": insider, "macro": macro}
-
-
 @pytest.fixture
 def old(monkeypatch):
     for name in ALIASES:
         monkeypatch.setitem(sys.modules, f"gabi.{name}", module(name))
-    for name, facade in retired_sources().items():
+    for name, facade in retired_modules.facades().items():  # insider, macro (F7.25)
         monkeypatch.setitem(sys.modules, f"gabi.{name}", facade)
     return {name: module(name) for name in ("screener_asof", "data_quality")}
 

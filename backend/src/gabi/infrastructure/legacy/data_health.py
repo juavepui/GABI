@@ -33,17 +33,17 @@ class LegacyDataHealth:
                 for symbol, name in zip(frame["symbol"], names, strict=True) if pd.notna(symbol)]
 
     def summary(self, symbols: list[str]) -> dict:
-        from gabi import data_quality
+        from gabi.infrastructure.legacy import data_quality
 
         return summary(symbols, data_quality._readers(), now=self.now(), rules=data_quality._rules())
 
     def recent_errors(self) -> list[dict]:
-        from gabi import data_quality
+        from gabi.infrastructure.legacy import data_quality
 
         return _records(data_quality.recent_errors_summary())
 
     def provenance(self, symbol: str, as_of: str) -> dict:
-        from gabi import data_quality
+        from gabi.infrastructure.legacy import data_quality
 
         return provenance(symbol, data_quality._readers(), now=self.now(), as_of=as_of, rules=data_quality._rules())
 

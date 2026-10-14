@@ -5,6 +5,7 @@ import json
 import sqlite3
 import statistics
 import subprocess
+import sys
 import tempfile
 import time
 import tracemalloc
@@ -63,6 +64,11 @@ def rows(path):
 
 
 def main():
+    # Retired flat modules imported by the captured sources (F7), shared with the parity tests.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "tests"))
+    import retired_modules
+
+    retired_modules.install()
     reference = json.loads((ROOT / "backend/tests/fixtures/insider_sync_migration.json").read_text(encoding="utf-8"))
     original_source = subprocess.check_output([
         "git", "show", "54c0fec965e7bb1d8a062e0090b34c9357b79753:backend/src/gabi/insider.py"], cwd=ROOT).decode("utf-8")

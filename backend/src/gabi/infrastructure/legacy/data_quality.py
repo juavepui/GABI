@@ -10,11 +10,16 @@ donde ver "qué calidad tienen mis datos" (agregado, por universo) ni "de
 dónde procede este resultado" (desglosado, por empresa). Este módulo solo
 agrega lo que ya existe: no añade ninguna fuente, umbral ni llamada de red
 nueva -- todo se lee de la caché local (SQLite/CSV), nunca dispara un
-fetch, así que es seguro de usar en tests."""
+fetch, así que es seguro de usar en tests.
+
+Puente de compatibilidad (F7.32): antes era el módulo plano `gabi.data_quality`;
+sus reglas están en `domain.market.data_quality` y sus consultas en
+`application.administration.data_quality`."""
 from datetime import UTC, datetime
 
 import pandas as pd
 
+from gabi import config, edgar, entity_master, scoring
 from gabi.application.administration import data_quality as quality_queries
 from gabi.application.market import cached_data
 from gabi.domain.market import data_quality as quality
@@ -24,8 +29,6 @@ from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.sec_cik import SqliteCikResolutions
-
-from . import config, edgar, entity_master, scoring
 
 PRICE_STALE_DAYS = quality.PRICE_STALE_DAYS
 STRUCTURAL_LIMITATIONS = list(quality.STRUCTURAL_LIMITATIONS)

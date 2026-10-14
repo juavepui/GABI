@@ -8,8 +8,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, data_quality, edgar, entity_master, identity, scoring, storage
+from gabi import config, edgar, entity_master, identity, scoring, storage
 from gabi.domain.market.fred import SERIES as FRED_SERIES
+from gabi.infrastructure.legacy import data_quality
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.insiders import SqliteInsiders
 

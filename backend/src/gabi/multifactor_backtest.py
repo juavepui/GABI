@@ -14,9 +14,10 @@ import pandas as pd
 
 from gabi.application.research import backtest_v1
 from gabi.application.research.backtest_market import BacktestMarket
+from gabi.domain.market import data_quality as quality_rules
 from gabi.domain.portfolio import backtest as rules
 
-from . import config, data_quality, historical_pit, identity, screener_asof, universe
+from . import config, historical_pit, identity, screener_asof, universe
 
 _MAX_DAYS_WITHOUT_FILING = rules.MAX_DAYS_WITHOUT_FILING
 _SAMPLE_SEED = rules.SAMPLE_SEED
@@ -30,7 +31,7 @@ def market() -> BacktestMarket:
     return BacktestMarket(
         membership=lambda as_of: universe.get_sp500_constituents_asof(as_of),
         ranking=lambda as_of, symbols: screener_asof.build_ranking_as_of(as_of, symbols=symbols)["table"],
-        quality=lambda ranked: data_quality.ranking_quality(ranked),
+        quality=lambda ranked: quality_rules.ranking_quality(ranked),
         prices=lambda symbols, as_of, owners=None: identity.backtest_prices(symbols, as_of, owners),
         last_filings=lambda symbols, as_of: identity.last_filings(symbols, as_of=as_of),
         owner=lambda symbol, as_of: identity.resolve(symbol, as_of)["entity_id"],

@@ -12,6 +12,11 @@ sys.path.insert(0, str(ROOT / 'backend/src'))
 
 
 def main():
+    # Retired flat modules imported by the captured sources (F7), shared with the parity tests.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "tests"))
+    import retired_modules
+
+    retired_modules.install()
     from gabi.domain.research.issuer_evidence import FRAME_SPECS
     from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
 
