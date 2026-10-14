@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gabi import app_mode, config, screener, storage
+from gabi import config, screener, storage
 from gabi import live_ledger as ledger
+from gabi.domain.market import model_policy
 from gabi.domain.research.live_performance import entry_session
 from gabi.infrastructure.legacy.live_ledger import live_report
 from gabi.infrastructure.legacy.periodic import build_periodic_tasks
@@ -23,9 +24,9 @@ def clock_and_no_network(monkeypatch):
 
 
 def payload(status="SIGNAL", picks=None, market="2024-01-10", version="model-v1"):
-    return {"model_id": app_mode.FROZEN_MODEL_ID, "model_version": version, "config_version": "config-v1",
+    return {"model_id": model_policy.FROZEN_MODEL_ID, "model_version": version, "config_version": "config-v1",
             "market_date": market, "status": status, "top_n": ["A"] if picks is None else picks,
-            "sources": {}, "data_fingerprint": "frozen-inputs", "git_commit": "abc", "configuration": {"weights": app_mode.FROZEN_WEIGHTS}}
+            "sources": {}, "data_fingerprint": "frozen-inputs", "git_commit": "abc", "configuration": {"weights": dict(model_policy.FROZEN_WEIGHTS)}}
 
 
 def test_append_chain_covers_whole_payload_and_db_rejects_mutation():
@@ -95,7 +96,7 @@ def test_stages_cannot_backdate_live_forward():
 
 
 def panel():
-    frame = pd.DataFrame({**{f"{b}_score": np.linspace(100, 50, 30) for b in app_mode.FROZEN_WEIGHTS},
+    frame = pd.DataFrame({**{f"{b}_score": np.linspace(100, 50, 30) for b in dict(model_policy.FROZEN_WEIGHTS)},
                           "composite_score": np.linspace(100, 50, 30), "score_coverage": 1., "confidence": 100.},
                          index=[f"A{i:02d}" for i in range(30)])
     frame.attrs["sources"] = {s: {"price_date": "2024-01-10", "close": 10., "adj_close": 10.,

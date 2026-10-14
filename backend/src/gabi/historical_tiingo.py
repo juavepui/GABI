@@ -19,21 +19,23 @@ import zipfile
 from pathlib import Path
 
 import pandas as pd
-import requests
 
-from gabi.application.research.tiingo_prices import PriceResponse, RawSnapshot
+from gabi.application.research.tiingo_prices import RawSnapshot
 from gabi.application.research.tiingo_prices import fetch as _fetch
 from gabi.application.research.tiingo_prices import import_cached as _import_cached
 from gabi.domain.research.tiingo_prices import END_EXCLUSIVE as END_EXCLUSIVE
-from gabi.domain.research.tiingo_prices import PACE_SECONDS, PRICES_URL, PriceWindow
+from gabi.domain.research.tiingo_prices import PACE_SECONDS, PriceWindow
 from gabi.domain.research.tiingo_prices import SOURCE_ID as SOURCE_ID
 from gabi.domain.research.tiingo_prices import START as START
 from gabi.domain.research.tiingo_prices import TICKERS_URL as TICKERS_URL
 from gabi.domain.research.tiingo_prices import WINDOWS as _WINDOWS
 from gabi.domain.research.tiingo_prices import current_listings as _current_listings
 from gabi.domain.research.tiingo_prices import eligible as eligible
+from gabi.infrastructure.providers.tiingo_prices import TiingoPrices
+from gabi.infrastructure.storage.historical_prices import pinned_files
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
 
-from . import config, historical_archive, storage, sync_state
+from . import config, historical_archive
 
 DIRECTORY = config.DATA_DIR / "history_refresh" / "tiingo"
 WINDOWS = dict(_WINDOWS)
@@ -46,13 +48,6 @@ def source_id(window: str) -> str:
 def _window(window: str) -> tuple[str, str, str, Path]:
     first, last, end_exclusive, subdirectory, _source = WINDOWS[window]
     return first, last, end_exclusive, DIRECTORY / subdirectory if subdirectory else DIRECTORY
-
-
-def _headers() -> dict:
-    key = config.load_tiingo_key()
-    if not key:
-        raise ValueError("Tiingo API key missing: set it in Configuración")
-    return {"Authorization": f"Token {key}", "Content-Type": "application/json"}
 
 
 def current_listings(path: Path) -> pd.DataFrame:
@@ -83,23 +78,9 @@ class _Cache:
             yield RawSnapshot(path.stem, body, hashlib.sha256(body).hexdigest())
 
 
-class _Source:
-    def request(self, symbol, first, last):
-        ticker = symbol.replace(".", "-").lower()
-        try:
-            response = requests.get(PRICES_URL.format(ticker=ticker, start=first, end=last), headers=_headers(), timeout=60)
-        except requests.RequestException as exc:
-            return PriceResponse(error_name=type(exc).__name__)
-        return PriceResponse(response.status_code, response.content if response.status_code == 200 else b"",
-                             response.json() if response.status_code == 200 else None)
-
-
 class _Archive:
     def pinned(self, source_id):
-        with storage.get_connection() as conn:
-            conn.executescript(historical_archive.SCHEMA)
-            row = conn.execute("SELECT metadata_json FROM historical_sources WHERE source_id=?", (source_id,)).fetchone()
-        return json.loads(row[0]).get("files_sha256", {}) if row else {}
+        return pinned_files(config.DB_PATH, source_id)
 
     def register(self, source_id, metadata):
         historical_archive.register_source(source_id, metadata)
@@ -111,18 +92,23 @@ class _Archive:
         return historical_archive.import_price_chunk(source_id, frame, symbols, first, last)
 
 
+def _events() -> OperationSyncEvents:
+    # The compatibility path is captured per operation, never mutated.
+    return OperationSyncEvents(config.DB_PATH)
+
+
 def _attempt(symbol, dataset):
-    return sync_state.Attempt("tiingo", symbol, dataset)
+    return measured_attempt(_events(), "tiingo", symbol, dataset)
 
 
 def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010-2015") -> dict:
     spec = PriceWindow(window, *WINDOWS[window])
-    return _fetch(symbols, spec, _Cache(_window(window)[3]), _Source(), attempt_factory=_attempt,
+    return _fetch(symbols, spec, _Cache(_window(window)[3]), TiingoPrices(config.load_tiingo_key), attempt_factory=_attempt,
                   wait=time.sleep, progress=lambda message: print(message, flush=True), pace=pace)
 
 
 def import_cached(window: str = "2010-2015") -> dict:
-    return _import_cached(PriceWindow(window, *WINDOWS[window]), _Cache(_window(window)[3]), _Archive(), sync_state,
+    return _import_cached(PriceWindow(window, *WINDOWS[window]), _Cache(_window(window)[3]), _Archive(), _events(),
                           attempt_factory=_attempt)
 
 

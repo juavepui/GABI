@@ -3,31 +3,26 @@
 import argparse
 import hashlib
 import json
-import os
-import subprocess
-import sys
-from contextlib import contextmanager
 from datetime import UTC, datetime
 
 import numpy as np
 import pandas as pd
 
+from gabi.application.market import cached_data
+from gabi.application.market.sec_reads import fetched_at as sec_fetched_at
+from gabi.domain.market import model_policy
+from gabi.domain.market.freshness import market_date as last_completed_session
 from gabi.domain.research.live_ledger import UNREADABLE, canonical, fingerprint, replay_decision, safe, verify_chain
+from gabi.infrastructure.providers import research_environment
+from gabi.infrastructure.storage import live_ledger_files
+from gabi.infrastructure.storage import live_ledger_writes as ledger_sql
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 
-from . import app_mode, config, edgar, identity, research_lab, storage
-from .history_refresh import last_completed_session
+from . import config, identity, research_lab
 
 STAGES = ("RETROSPECTIVE", "OOS", "LIVE_FORWARD")
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS live_ledger (
-    seq INTEGER PRIMARY KEY, prev_hash TEXT NOT NULL, record_hash TEXT NOT NULL,
-    payload_json TEXT NOT NULL
-);
-CREATE TRIGGER IF NOT EXISTS live_ledger_no_update BEFORE UPDATE ON live_ledger
-BEGIN SELECT RAISE(ABORT, 'live ledger is append-only'); END;
-CREATE TRIGGER IF NOT EXISTS live_ledger_no_delete BEFORE DELETE ON live_ledger
-BEGIN SELECT RAISE(ABORT, 'live ledger is append-only'); END;
-"""
+SCHEMA = ledger_sql.SCHEMA
 
 
 def _now() -> datetime:
@@ -41,44 +36,21 @@ def anchor_path():
     return config.DATA_DIR / "live_ledger" / "head.json"
 
 
-@contextmanager
 def _locked():
-    directory = anchor_path().parent
-    directory.mkdir(parents=True, exist_ok=True)
-    with (directory / "writer.lock").open("a+b") as lock:
-        lock.seek(0, os.SEEK_END)
-        if lock.tell() == 0:
-            lock.write(b"0")
-            lock.flush()
-        lock.seek(0)
-        if sys.platform == "win32":
-            import msvcrt
-            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-            getattr(fcntl, "flock")(lock.fileno(), getattr(fcntl, "LOCK_EX") | getattr(fcntl, "LOCK_NB"))
-        try:
-            yield
-        finally:
-            lock.seek(0)
-            if sys.platform == "win32":
-                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                getattr(fcntl, "flock")(lock.fileno(), getattr(fcntl, "LOCK_UN"))
+    return live_ledger_files.writer_lock(anchor_path().parent)
 
 
 def _write_anchor(seq: int, digest: str) -> None:
-    path = anchor_path()
-    pending = path.with_suffix(".json.tmp")
-    with pending.open("w", encoding="utf-8") as stream:
-        stream.write(canonical({"seq": seq, "hash": digest}) + "\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    pending.replace(path)
+    live_ledger_files.write_anchor(anchor_path(), canonical({"seq": seq, "hash": digest}) + "\n")
+
+
+def _connection():
+    # The compatibility path is captured per operation, never mutated.
+    return ledger_sql.connection(config.DB_PATH)
 
 
 def _verify(conn, *, require_anchor=True) -> dict:
-    rows = conn.execute("SELECT seq,prev_hash,record_hash,payload_json FROM live_ledger ORDER BY seq")
+    rows = ledger_sql.chain(conn)
     anchor = None
     if require_anchor:
         try:
@@ -89,14 +61,12 @@ def _verify(conn, *, require_anchor=True) -> dict:
 
 
 def verify_integrity() -> dict:
-    with _locked(), storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
+    with _locked(), _connection() as conn:
         return _verify(conn)
 
 
 def _append(payload: dict, *, recover=False) -> dict:
-    with _locked(), storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
+    with _locked(), _connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
         integrity = _verify(conn, require_anchor=not recover)
         if not integrity["ok"]:
@@ -104,26 +74,25 @@ def _append(payload: dict, *, recover=False) -> dict:
         if recover:
             old = payload["previous_anchor"]
             current = json.loads(anchor_path().read_text(encoding="utf-8")) if anchor_path().exists() else {"seq": 0, "hash": ""}
-            row = conn.execute("SELECT record_hash FROM live_ledger WHERE seq=?", (old["seq"],)).fetchone()
-            if current != old or old["seq"] > integrity["seq"] or (old["seq"] and (not row or row[0] != old["hash"])):
+            stored = ledger_sql.record_hash(conn, old["seq"])
+            if current != old or old["seq"] > integrity["seq"] or (old["seq"] and stored != old["hash"]):
                 raise ValueError("El prefijo del ancla cambió durante la recuperación.")
         seq, previous = integrity["seq"] + 1, integrity["hash"]
         payload = _safe(payload)
         digest = fingerprint({"seq": seq, "prev_hash": previous, "payload": payload})
-        conn.execute("INSERT INTO live_ledger VALUES (?,?,?,?)", (seq, previous, digest, canonical(payload)))
+        ledger_sql.insert(conn, seq, previous, digest, canonical(payload))
         conn.commit()
         _write_anchor(seq, digest)
     return {"seq": seq, "record_hash": digest, "payload": payload}
 
 
 def events() -> list[dict]:
-    with _locked(), storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
+    with _locked(), _connection() as conn:
         check = _verify(conn)
         if not check["ok"]:
             raise ValueError(f"Ledger no íntegro: {check['reason']}")
         return [{"seq": r[0], "record_hash": r[1], "payload": json.loads(r[2])}
-                for r in conn.execute("SELECT seq,record_hash,payload_json FROM live_ledger ORDER BY seq")]
+                for r in ledger_sql.entries(conn)]
 
 
 def append_decision(payload: dict, *, stage="LIVE_FORWARD", created_at: str | None = None) -> dict:
@@ -154,14 +123,13 @@ def recover_anchor(reason: str) -> dict:
     """Explicit recovery only if the old anchor is a valid prefix, never for deletion."""
     if not reason.strip():
         raise ValueError("La recuperación requiere un motivo.")
-    with _locked(), storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
+    with _locked(), _connection() as conn:
         check = _verify(conn, require_anchor=False)
         if not check["ok"]:
             raise ValueError("Cadena rota; no se puede recuperar el ancla.")
         old = json.loads(anchor_path().read_text(encoding="utf-8")) if anchor_path().exists() else {"seq": 0, "hash": ""}
-        row = conn.execute("SELECT record_hash FROM live_ledger WHERE seq=?", (old["seq"],)).fetchone()
-        if old["seq"] > check["seq"] or (old["seq"] and (not row or row[0] != old["hash"])):
+        stored = ledger_sql.record_hash(conn, old["seq"])
+        if old["seq"] > check["seq"] or (old["seq"] and stored != old["hash"]):
             raise ValueError("Ancla no es prefijo de la cadena; no se puede ocultar una eliminación.")
     return _append({"kind": "ANCHOR_RECOVERY", "created_at": _now().isoformat(), "previous_anchor": old,
                     "reason": reason}, recover=True)
@@ -169,17 +137,16 @@ def recover_anchor(reason: str) -> dict:
 
 def provenance(symbols: list[str]) -> dict:
     """Dates actually used in the current derived screener, without hashing 83 GiB."""
-    fundamentals = storage.get_fundamentals_fetched_at(symbols)
-    sec = edgar.get_edgar_fetched_at(symbols)
-    with storage.get_connection() as conn:
-        conn.executescript(storage.SCHEMA)
-        result = {}
-        for symbol in symbols:
-            price = conn.execute("SELECT date,close,adj_close FROM prices WHERE symbol=? "
-                                 "AND adj_close>0 ORDER BY date DESC LIMIT 1", (symbol,)).fetchone()
-            result[symbol] = {"price_date": price[0] if price else None, "close": price[1] if price else None,
-                              "adj_close": price[2] if price else None,
-                              "fundamentals_fetched_at": fundamentals.get(symbol), "sec_fetched_at": sec.get(symbol)}
+    cache = SqliteCacheReads(config.DB_PATH)
+    fundamentals = cached_data.fundamentals_fetched_at(cache, symbols)
+    sec = sec_fetched_at(SqliteSecReads(config.DB_PATH), symbols)
+    prices = cached_data.latest_adjusted(cache, symbols)
+    result = {}
+    for symbol in symbols:
+        price = prices.get(symbol)
+        result[symbol] = {"price_date": price[0] if price else None, "close": price[1] if price else None,
+                          "adj_close": price[2] if price else None,
+                          "fundamentals_fetched_at": fundamentals.get(symbol), "sec_fetched_at": sec.get(symbol)}
     return _safe(result)
 
 
@@ -192,15 +159,11 @@ def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") 
              "infrastructure/storage/evidence_catalog.py", "infrastructure/storage/published_factors.py",
              "workspace.py", "__init__.py")
     hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
-    specification = {"weights": weights if weights is not None else app_mode.FROZEN_WEIGHTS,
+    specification = {"weights": weights if weights is not None else dict(model_policy.FROZEN_WEIGHTS),
                      "universe_id": universe_id, "top_n": 20, "coverage": .70,
                      "ranking": "descending composite, ascending ticker", "report_cost_per_side": .001}
-    try:
-        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--", "backend/src/gabi"], cwd=config.BASE_DIR,
-                                    capture_output=True, text=True, timeout=5).stdout)
-    except OSError:
-        dirty = None
-    return {"model_id": app_mode.FROZEN_MODEL_ID, "configuration": specification,
+    dirty = research_environment.working_tree_modified(config.BASE_DIR, "backend/src/gabi")
+    return {"model_id": model_policy.FROZEN_MODEL_ID, "configuration": specification,
             "config_version": fingerprint(specification), "model_version": fingerprint({"spec": specification, "code": hashes}),
             "git_commit": research_lab._current_git_commit(), "working_tree_modified": dirty,
             "code_sha256": hashes, "dependencies": research_lab._dependency_versions(),
@@ -219,7 +182,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
     try:
         universe = screener.get_universe()
         symbols = universe.symbol.tolist()
-        table = screener.build_screener_table(universe, weights=app_mode.FROZEN_WEIGHTS)
+        table = screener.build_screener_table(universe, weights=dict(model_policy.FROZEN_WEIGHTS))
         if table.empty:
             table = table.reindex(columns=["composite_score", "score_coverage"])
         if table.index.has_duplicates:
@@ -291,7 +254,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
         try:
             context = {k: payload[k] for k in ("model_id", "model_version", "config_version", "git_commit", "data_fingerprint")}
             table.attrs["sources"] = payload["sources"]
-            evidence = evidence_confidence.build(table, app_mode.FROZEN_WEIGHTS, now=timestamp, market_date=actual_market, context=context)
+            evidence = evidence_confidence.build(table, dict(model_policy.FROZEN_WEIGHTS), now=timestamp, market_date=actual_market, context=context)
             payload["evidence"] = {s: evidence[s] for s in payload.get("proposed_top_n", [])}
         except Exception as exc:
             payload["evidence_error"] = f"{type(exc).__name__}: {exc}"

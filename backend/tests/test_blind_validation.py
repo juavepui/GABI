@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import blind_validation as bv
-from gabi import config, storage
+from gabi import config, screener_asof, storage
+from gabi.infrastructure.legacy import blind_validation as bv
 
 
 def _isolate(tmp_path, monkeypatch):
@@ -27,7 +27,7 @@ def _fake_ranking(monkeypatch, scores: dict):
         table = pd.DataFrame({"composite_score": [scores[s] for s in syms],
                               "score_coverage": [.9] * len(syms)}, index=syms)
         return {"table": table}
-    monkeypatch.setattr(bv.screener_asof, "build_ranking_as_of", _rank)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", _rank)
 
 
 WEIGHTS = {"value": .3, "quality": .35, "momentum": .25, "risk": .1}
@@ -145,3 +145,31 @@ def test_export_to_research_lab_requires_revealed_validation(tmp_path, monkeypat
     bv.break_seal_early(vid, "prueba")
     exp_id = bv.export_to_research_lab(vid)
     assert exp_id > 0
+
+
+def test_record_rebalance_uses_the_validation_weights_and_optional_ranking_snapshot(tmp_path, monkeypatch):
+    import json
+
+    _isolate(tmp_path, monkeypatch)
+    dates = pd.date_range("2024-01-01", periods=10, freq="D")
+    _seed_prices(dates, [("A", [100.0] * 10), ("B", [50.0] * 10), ("C", [20.0] * 10)])
+    seen = []
+
+    def _rank(day, symbols=None, weights=None):
+        seen.append(weights)
+        table = pd.DataFrame({"composite_score": [90, 80, None], "score_coverage": [.9, .9, .4]},
+                             index=["A", "B", "C"])
+        return {"table": table}
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", _rank)
+    value_only = {"value": 1.0, "quality": 0.0, "momentum": 0.0, "risk": 0.0}
+    vid = bv.create_validation("Valor", value_only, 2, 3, "2024-01-10", "2099-01-01", model_id="GABI-VALUE-v1")
+    bv.enable_ranking_snapshots(vid)
+    bv.record_rebalance(vid, as_of="2024-01-10")
+    assert seen == [value_only]
+    with storage.get_connection() as conn:
+        snapshot, digest = conn.execute("SELECT ranking_json, ranking_hash FROM blind_validation_rankings "
+                                        "WHERE validation_id=?", (vid,)).fetchone()
+    ranking = json.loads(snapshot)
+    assert ranking["A"]["eligible"] and not ranking["C"]["eligible"] and ranking["C"]["composite_score"] is None
+    assert len(digest) == 64
+    assert bv.verify_integrity(vid)["ok"]

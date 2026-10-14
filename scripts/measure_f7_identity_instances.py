@@ -20,11 +20,12 @@ sys.path.insert(0, str(ROOT / 'backend/src'))
 
 
 def main():
-    from gabi import historical_identity_audit as facade
+    from gabi import identity
     from gabi.application.research.identity_instances import scan
     from gabi.domain.research import historical_membership
     from gabi.domain.research.periods import P2010
     from gabi.domain.research.ticker_corrections import correct_symbols
+    from gabi.infrastructure.legacy import historical_identity_audit as facade
     from gabi.infrastructure.storage.identity_instances import LocalIdentityInstances, SqliteIdentityInstances
 
     reference = json.loads((ROOT / 'backend/tests/fixtures/identity_instances_migration.json').read_text(encoding='utf-8'))
@@ -63,7 +64,7 @@ def main():
         old = {**vars(facade), 'pd': pd, 're': re, 'bisect_right': bisect_right, 'etree': etree,
                'hashlib': hashlib, 'historical_membership': historical_membership, 'correct_symbols': correct_symbols,
                'config': SimpleNamespace(DATA_DIR=root), 'storage': SimpleNamespace(get_connection=connection),
-               'identity_nominations': lambda: ()}
+               'identity_nominations': lambda: (), 'identity': identity}
         for name in ('_common_stock_symbols', 'extract_sec_instance', 'scan_local_sec_instances'):
             exec(reference[name], old)
         expected, before = measure(old['scan_local_sec_instances'])

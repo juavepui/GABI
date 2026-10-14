@@ -3,6 +3,7 @@
 import argparse
 import json
 import sqlite3
+import sys
 import types
 from contextlib import closing
 from pathlib import Path
@@ -20,6 +21,14 @@ from gabi.infrastructure.storage.readonly import connect_readonly
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/historical_data_audit_migration.json").read_text(encoding="utf-8"))
 SOURCE_DIR = Path(__file__).parents[1] / "src/gabi"
+
+
+@pytest.fixture(autouse=True)
+def retired_sec_history(monkeypatch):
+    """Captured modules imported the flat sec_history retired in F7.31; the bridge keeps its names."""
+    from gabi.infrastructure.legacy import sec_history
+
+    monkeypatch.setitem(sys.modules, "gabi.sec_history", sec_history)
 
 
 def original_modules():

@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import app_mode
+from gabi.domain.market import model_policy
 from gabi.domain.portfolio.selection import target_portfolio
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
@@ -36,7 +36,7 @@ def test_without_cache_home_answers_at_once_and_compute_builds_the_frozen_target
     assert first["steps"]["universe"] is True and first["steps"]["fred_key"] is False
     assert first["steps"]["data_loaded"] is None
     computed = client.get("/api/v1/home", params={"compute": "true"}).json()
-    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
+    table = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
     expected = target_portfolio(table, 20)
     assert [row["symbol"] for row in computed["target"]] == list(expected.index)
     assert computed["target"][0]["weight_pct"] == pytest.approx(100 / len(expected))

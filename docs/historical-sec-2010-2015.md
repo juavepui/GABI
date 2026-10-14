@@ -90,11 +90,14 @@ puede seguir indefinido o exigir fechas compatibles. No se calcula todavía
 la estrategia con este inventario.
 
 Para reproducir la segunda pasada de identidad desde la caché local y
-regenerar los artefactos (el primer comando descarga solo archivos ausentes):
+regenerar los artefactos (el primer comando descarga solo archivos ausentes). Se
+produjeron originalmente con `python -m gabi.historical_identity_audit` (disponible en
+el commit c324aab de develop); desde F7.27 (ADR 0002) los mismos pasos usan
+`gabi_cli research identity-audit`:
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --fetch-unresolved-instances 58
-.venv/Scripts/python.exe -m gabi.historical_identity_audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --fetch-unresolved-instances 58
+.venv/Scripts/python.exe -m gabi_cli research identity-audit --scan-instances --import-evidence --evidence-csv docs/historical-identity-filing-evidence.csv --build-intervals --intervals-csv docs/historical-identity-intervals.csv --output docs/historical-identity-2010-2015.json
 .venv/Scripts/python.exe -m gabi_cli research historical-sec-audit
 ```
 

@@ -106,6 +106,36 @@ def rotation_experiment(settings: Settings, args: argparse.Namespace) -> None:
         args.output or settings.data_dir.parent / "docs" / "rotation-experiment", args.resume)
 
 
+# Fixed by docs/historical-revalidation-2011-2025/PROTOCOL.md; a test checks them against the engine.
+REVALIDATION_VARIANTS = ["acreditado", "acreditado-38", "operativo", "operativo-38"]
+REVALIDATION_VIEWS = ["acreditado", "acreditado-38-2016", "acreditado-38-continua", "operativo", "operativo-38"]
+
+
+def historical_validation(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.historical_validation import validation
+
+    print(json.dumps(validation(args.cache, args.output, args.analysis_only), ensure_ascii=False, indent=2))
+
+
+def historical_revalidation(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy import historical_validation as bridge
+
+    if args.analyze:
+        print(json.dumps(bridge.revalidation_analysis(args.analyze), ensure_ascii=False, indent=2))
+    if args.prepare:
+        print(json.dumps(bridge.revalidation_prepare(args.prepare)))
+    if args.evaluate:
+        print(json.dumps(bridge.revalidation_evaluate(args.evaluate), ensure_ascii=False, indent=2))
+    if args.summarize:
+        print(json.dumps(bridge.revalidation_overview(), ensure_ascii=False, indent=2)[:4000])
+
+
+def smallmid_feasibility(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.smallmid_feasibility import run
+
+    print(json.dumps(run(args.sample), ensure_ascii=False, indent=2))
+
+
 def value_hypothesis(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.legacy.value_hypothesis import preregister
 
@@ -132,6 +162,39 @@ def quarterly_coverage(settings: Settings, args: argparse.Namespace) -> None:
                                          resources / "historical_sources_1996_2015.json", resources / "legacy_filings_pilot.json")
         publish(reader, sessions, FileQuarterlyCoverage(args.output or directory / "coverage"),
                 progress=lambda message: print(message, flush=True))
+
+
+def sec_history(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.sec_history import command
+
+    command(instances=args.instances, quarterly=args.quarterly, companyfacts_gaps=args.companyfacts_gaps,
+            unmatched=args.unmatched)
+
+
+def history_refresh(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.history_refresh import run
+
+    run()
+
+
+def identity_audit(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.historical_identity_audit import command
+
+    # Checked before any step runs; the old module rejected these only after its downloads.
+    if args.evidence_csv or args.import_evidence:
+        if not args.scan_instances:
+            args.error("--evidence-csv and --import-evidence require --scan-instances")
+    if args.intervals_csv and not args.build_intervals:
+        args.error("--intervals-csv requires --build-intervals")
+    report = command(args.period, emit=lambda summary: print(json.dumps(summary), flush=True), output=args.output,
+                     scan_instances=args.scan_instances, fetch_candidates=args.fetch_candidate_instances,
+                     fetch_unresolved=args.fetch_unresolved_instances, import_period=args.import_period_filings,
+                     import_nominated=args.import_nominated_filings,
+                     annual_report_symbols=args.annual_report_symbols, fetch_issuer_names=args.fetch_issuer_names,
+                     evidence_csv=args.evidence_csv, import_evidence=args.import_evidence,
+                     build_intervals=args.build_intervals, intervals_csv=args.intervals_csv)
+    if report is not None:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
 
 
 def historical_data_audit(settings: Settings, args: argparse.Namespace) -> None:
@@ -277,6 +340,21 @@ def main(argv: list[str]) -> None:
     command.add_argument("--output", type=Path, help="Por defecto docs/rotation-experiment; usar un directorio nuevo")
     command.add_argument("--resume", action="store_true")
     command.set_defaults(run=rotation_experiment)
+    command = commands.add_parser("historical-validation", help="Validación 2010-2015 (#33): snapshot, backtests y análisis; escribe docs")
+    command.add_argument("--cache", type=Path, help="Por defecto <datos>/historical_validation_2010_2015")
+    command.add_argument("--output", type=Path, help="Por defecto docs/historical-validation-2010-2015")
+    command.add_argument("--analysis-only", action="store_true",
+                         help="Rehace solo el análisis sobre rankings y backtests ya congelados")
+    command.set_defaults(run=historical_validation)
+    command = commands.add_parser("historical-revalidation", help="Revalidación 2016-2025 y serie 2011-2025 (#35); escribe docs")
+    command.add_argument("--prepare", choices=REVALIDATION_VARIANTS)
+    command.add_argument("--evaluate", choices=REVALIDATION_VIEWS)
+    command.add_argument("--analyze", choices=REVALIDATION_VIEWS, help="Solo el análisis, sin repetir backtests")
+    command.add_argument("--summarize", action="store_true")
+    command.set_defaults(run=historical_revalidation)
+    command = commands.add_parser("smallmid-feasibility", help="Viabilidad fuera del S&P 500 (#44); escribe docs/smallmid-feasibility")
+    command.add_argument("--sample", action="store_true", help="Además, muestra con descarga de submissions SEC")
+    command.set_defaults(run=smallmid_feasibility)
     command = commands.add_parser("value-hypothesis", help="Preregistro de la hipótesis de valor (#43); comprueba uno existente")
     command.add_argument("--preregister", action="store_true", required=True)
     command.set_defaults(run=value_hypothesis)
@@ -292,6 +370,38 @@ def main(argv: list[str]) -> None:
     command.add_argument("--old-detail", type=Path)
     command.add_argument("--output", type=Path)
     command.set_defaults(run=historical_data_audit)
+    command = commands.add_parser("sec-history", help="Archivo estructurado SEC 2009-2015: importación por lotes, instancias originales o huecos de Company Facts (descargas fijadas)")
+    command.add_argument("--instances", type=int, default=0)
+    command.add_argument("--quarterly", action="store_true")
+    command.add_argument("--companyfacts-gaps", action="store_true")
+    command.add_argument("--unmatched", action="store_true")
+    command.set_defaults(run=sec_history)
+    command = commands.add_parser("history-refresh", help="Refresco de datos de fuentes gratuitas con copia previa; exige el registro de composición revisado hasta hoy")
+    command.set_defaults(run=history_refresh)
+    command = commands.add_parser("identity-audit", help="Identidad histórica 2010-2015/2016-2025 (#27, #34); descargas SEC solo con sus opciones")
+    command.add_argument("--period", default="2010-2015", help="Historical period (2010-2015 or 2016-2025)")
+    command.add_argument("--output", type=Path, help="Write the offline report as JSON")
+    command.add_argument("--scan-instances", action="store_true", help="Check locally cached original SEC XBRL files")
+    downloads = command.add_mutually_exclusive_group()
+    downloads.add_argument("--fetch-candidate-instances", type=int,
+                           help="Download up to N selected SEC XBRL covers of the period for candidate checks")
+    downloads.add_argument("--fetch-unresolved-instances", type=int,
+                           help="Download up to N extra SEC covers only for unresolved dated identity intervals")
+    command.add_argument("--import-period-filings", action="store_true",
+                         help="Index SEC bulk 10-K/10-Q submissions of the period's candidate CIKs")
+    command.add_argument("--import-nominated-filings", action="store_true",
+                         help="Index cached SEC bulk filings for reviewed CIK nominations")
+    command.add_argument("--annual-report-symbols", type=int,
+                         help="Download up to N 10-Ks for open intervals and store stated ticker symbols")
+    command.add_argument("--fetch-issuer-names", type=int,
+                         help="Download up to N SEC issuer name histories for unresolved CIKs")
+    command.add_argument("--evidence-csv", type=Path, help="Save accepted SEC filing-day identity evidence")
+    command.add_argument("--import-evidence", action="store_true",
+                         help="Idempotently archive SEC filing-day observations; does not create aliases")
+    command.add_argument("--build-intervals", action="store_true",
+                         help="Build a separate, retrospective SEC-corroborated identity tier")
+    command.add_argument("--intervals-csv", type=Path, help="Write interval status, dates and SEC provenance for review")
+    command.set_defaults(run=identity_audit, error=command.error)
     command = commands.add_parser("prospective-plan", help="Plan de análisis prospectivo (#42), sin leer resultados ciegos")
     command.add_argument("--write", action="store_true", help="Escribir el JSON del plan en el directorio de salida")
     command.add_argument("--gabi", action="store_true", help="Plan fijo de la prueba GABI id 1; por defecto, diseño secuencial")

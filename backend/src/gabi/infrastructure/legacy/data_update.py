@@ -1,4 +1,4 @@
-"""The old Configuración download and key storage through the unchanged screener/config."""
+"""The old Configuración download and key storage through the existing universe, refresh and config."""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -8,11 +8,12 @@ from gabi.application.errors import QueryError
 
 def run_data_update(options: dict, progress: Callable[[float, str], None] | None = None,
                     *, sec_sync: Callable[..., dict] | None = None) -> dict:
-    """Worker only (its LegacyExecutor checks the data directory): screener.refresh_data as the old button.
+    """Worker only (its LegacyExecutor checks the data directory): refresh_data as the old button.
 
     Progress: prices up to 10 % (no per-symbol callback), Yahoo fundamentals 10-55 %, SEC EDGAR 55-100 %."""
     from gabi import screener
     from gabi.application.administration.data_update import summarize_update
+    from gabi.infrastructure.legacy.data_fetch import refresh_data
 
     report = progress or (lambda fraction, phase: None)
     report(0.0, "Leyendo el universo")
@@ -28,7 +29,7 @@ def run_data_update(options: dict, progress: Callable[[float, str], None] | None
         report(0.55 + 0.45 * done / max(total, 1), f"SEC EDGAR: {done} de {total}")
 
     sync_options: dict = {"sec_sync": sec_sync} if sec_sync else {}
-    result = screener.refresh_data(symbols, force=force, progress_cb=fundamentals, edgar_progress_cb=edgar, **sync_options)
+    result = refresh_data(symbols, force=force, progress_cb=fundamentals, edgar_progress_cb=edgar, **sync_options)
     report(1.0, "Resumiendo fallos")
     return summarize_update(options, symbols, result)
 

@@ -12,11 +12,11 @@ import pandas as pd
 import pytest
 from lxml import etree
 
-from gabi import config, historical_membership
-from gabi import historical_identity_audit as facade
+from gabi import config, historical_membership, identity, storage
 from gabi.application.research.identity_instances import scan
 from gabi.domain.research.periods import P2010, P2016
 from gabi.domain.research.ticker_corrections import correct_symbols
+from gabi.infrastructure.legacy import historical_identity_audit as facade
 from gabi.infrastructure.storage.identity_instances import (
     InstanceBudgetExceeded,
     LocalIdentityInstances,
@@ -28,7 +28,9 @@ REFERENCE = json.loads((Path(__file__).parent / 'fixtures/identity_instances_mig
 
 def captured():
     scope = {**vars(facade), 'pd': pd, 're': re, 'bisect_right': bisect_right, 'etree': etree,
-             'historical_membership': historical_membership, 'correct_symbols': correct_symbols}
+             'historical_membership': historical_membership, 'correct_symbols': correct_symbols,
+             # The captured code used module globals the facade no longer imports.
+             'storage': storage, 'identity': identity}
     for name in ('_common_stock_symbols', 'extract_sec_instance', 'scan_local_sec_instances'):
         exec(REFERENCE[name], scope)
     return scope

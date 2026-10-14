@@ -171,21 +171,17 @@ def test_http_user_agent_and_timeouts_are_explicit(monkeypatch):
         source.submissions("0000000001")
 
 
-def test_legacy_entry_point_delegates_to_the_same_case(monkeypatch):
-    from gabi import insider
+def test_compatibility_operation_reuses_the_edgar_cik_map(tmp_path, monkeypatch):
+    from gabi import edgar
+    from gabi.infrastructure.legacy.insiders import SecInsiders, insider_operation
 
-    calls = []
-
-    def run(symbols, source, store, classify_error, **options):
-        calls.append((symbols, options))
-        assert source.resolve("AAA", {"AAA": "1"}) == "1"
-        return {"refreshed": 0, "failed": {}}
-
-    monkeypatch.setattr(insider, "sync_insiders", run)
-    monkeypatch.setattr(insider.edgar, "get_cik_for_symbol", lambda symbol, cik_map: (cik_map[symbol], None))
-    assert insider.ensure_insider_data(["AAA"], max_age_hours=0) == {"refreshed": 0, "failed": {}}
-    assert calls[0][0] == ["AAA"] and calls[0][1]["max_age_hours"] == 0
-    assert callable(calls[0][1]["now"])
+    monkeypatch.setattr(edgar, "get_cik_map", lambda: {"AAA": "0000000001"})
+    monkeypatch.setattr(edgar, "get_cik_for_symbol", lambda symbol, cik_map: (cik_map.get(symbol), None))
+    monkeypatch.setattr(SecInsiders, "attempts", lambda self, ciks, workers: [
+        InsiderAttempt(symbol, rows=REFERENCE["rows"]) for symbol in ciks])
+    operation = insider_operation(tmp_path, now=lambda: NOW)
+    assert operation(["AAA"], max_age_hours=0) == {"refreshed": 1, "failed": {}}
+    assert SqliteInsiders(tmp_path).fetched_at(["AAA"]) == {"AAA": NOW}
 
 
 def test_cli_bootstrap_supplies_directory_clock_and_sources(tmp_path, monkeypatch):

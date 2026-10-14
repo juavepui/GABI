@@ -21,13 +21,10 @@ def test_model_policy_reference(case):
 
 
 def test_modern_policy_has_no_file_or_legacy_configuration_dependency(monkeypatch):
-    from gabi import app_mode
-
     def forbidden(*args, **kwargs):
         raise AssertionError("implicit file access")
 
     monkeypatch.setattr(Path, "open", forbidden)
-    monkeypatch.setattr(app_mode, "FROZEN_WEIGHTS", {"other": 1.0})
     policy = create_policy()
     assert policy.frozen_weights == {"value": .3, "quality": .35, "momentum": .25, "risk": .1}
     assert policy.matches(policy.frozen_weights)
@@ -36,11 +33,8 @@ def test_modern_policy_has_no_file_or_legacy_configuration_dependency(monkeypatc
         model_policy.FROZEN_WEIGHTS["value"] = 1.0
 
 
-def test_legacy_facade_keeps_explicit_compatibility_overrides(monkeypatch):
-    from gabi import app_mode
-
+def test_rules_take_an_explicit_frozen_reference():
     weights = {"value": .5, "quality": .3, "momentum": .1, "risk": .1}
-    monkeypatch.setattr(app_mode, "FROZEN_WEIGHTS", weights)
-    assert app_mode.weights_match_frozen(weights)
-    assert app_mode.model_status(weights) == "FROZEN"
-    assert app_mode.experimental_banner_message(weights) is None
+    assert model_policy.weights_match_frozen(weights, frozen_weights=weights)
+    assert model_policy.model_status(weights, frozen_weights=weights) == "FROZEN"
+    assert model_policy.experimental_banner_message(weights, frozen_weights=weights) is None

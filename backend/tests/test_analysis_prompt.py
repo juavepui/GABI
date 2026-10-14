@@ -6,8 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import app_mode, scoring
+from gabi import scoring
 from gabi.application.market import prompt_text as ai_prompt
+from gabi.domain.market import model_policy
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 
@@ -27,7 +28,7 @@ def _files(root):
 def test_prompt_matches_the_old_ficha_and_writes_nothing(market):
     client, app, root = market
     before = _files(root)
-    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
+    table = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
     symbol = str(table.index[0])
     response = client.get(f"/api/v1/companies/{symbol}/analysis-prompt")
     assert response.status_code == 200, response.text

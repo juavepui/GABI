@@ -3,6 +3,7 @@
 import argparse
 import json
 import sqlite3
+import sys
 import types
 from contextlib import closing
 
@@ -16,6 +17,14 @@ from gabi.domain.research.coverage import CoverageParameters, unique_historical_
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.quarterly_coverage import FileQuarterlyCoverage, SqliteQuarterlyCoverage, read_facts
 from gabi.infrastructure.storage.readonly import connect_readonly
+
+
+@pytest.fixture(autouse=True)
+def retired_sec_history(monkeypatch):
+    """Captured modules imported the flat sec_history retired in F7.31; the bridge keeps its names."""
+    from gabi.infrastructure.legacy import sec_history
+
+    monkeypatch.setitem(sys.modules, "gabi.sec_history", sec_history)
 
 
 def make_quarterly_inputs(directory):

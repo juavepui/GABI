@@ -17,8 +17,8 @@ sys.path.insert(0, str(ROOT / 'backend/src'))
 
 
 def main():
-    from gabi import sec_history
     from gabi.application.research.sec_archive_download import download
+    from gabi.infrastructure.legacy import sec_history
     from gabi.infrastructure.storage.sec_archive_download import SecArchiveFiles, SqliteSecArchiveProvenance
 
     now = datetime(2020, 1, 2, tzinfo=UTC)

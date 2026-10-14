@@ -2,9 +2,14 @@
 
 import concurrent.futures as cf
 from collections.abc import Callable
+from datetime import UTC, datetime
+from functools import partial
+from pathlib import Path
 
-from gabi.application.market.insider_sync import InsiderAttempt, fetch_transactions
+from gabi.application.market.insider_sync import InsiderAttempt, fetch_transactions, sync_insiders
+from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.providers.form4 import SecForm4Documents
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 
 
 class SecInsiders:
@@ -42,12 +47,19 @@ class SecInsiders:
 
 
 def classify_error(exc: Exception) -> str:
-    from gabi.data_fetch import _classify_error
-
-    return _classify_error(exc, service="SEC EDGAR")[1]
+    return classify(str(exc), "SEC EDGAR")[1]
 
 
 def sec_user_agent() -> str:
     from gabi.config import SEC_USER_AGENT
 
     return SEC_USER_AGENT
+
+
+def insider_operation(data_dir: Path, *, now: Callable[[], datetime] | None = None,
+                      mapping_loader: Callable | None = None, cik_resolver: Callable | None = None):
+    """The Form 4 refresh; without a resolver it reuses the existing EDGAR CIK map."""
+    clock = now or (lambda: datetime.now(UTC))
+    source = SecInsiders(sec_user_agent(), mapping_loader=mapping_loader, cik_resolver=cik_resolver)
+    return partial(sync_insiders, source=source, store=SqliteInsiders(data_dir, now=clock),
+                   classify_error=classify_error, now=clock)

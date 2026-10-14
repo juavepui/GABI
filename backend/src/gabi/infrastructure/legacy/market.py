@@ -5,7 +5,7 @@ from gabi import config
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
 from gabi.domain.market import events as events_calendar
-from gabi.domain.market import model_policy as app_mode
+from gabi.domain.market import model_policy as policy
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
 from gabi.domain.market.risk import compute_risk_metrics
 from gabi.domain.market.technicals import TechnicalParameters, compute_technicals
@@ -20,8 +20,8 @@ def calculators() -> Calculators:
 
 
 def model_policy() -> ModelPolicy:
-    return ModelPolicy(dict(app_mode.FROZEN_WEIGHTS), app_mode.FROZEN_MODEL_ID,
-                       app_mode.weights_match_frozen, app_mode.model_status)
+    return ModelPolicy(dict(policy.FROZEN_WEIGHTS), policy.FROZEN_MODEL_ID,
+                       policy.weights_match_frozen, policy.model_status)
 
 
 def defaults() -> tuple[str, float]:

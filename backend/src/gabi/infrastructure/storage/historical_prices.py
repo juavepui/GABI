@@ -2,6 +2,8 @@
 
 import json
 import sqlite3
+from contextlib import closing
+from pathlib import Path
 
 import pandas as pd
 
@@ -64,3 +66,11 @@ class SqliteHistoricalPrices:
         with self.connection:
             self.connection.executemany("INSERT OR IGNORE INTO historical_prices VALUES (?,?,?,?,?,?,?,?,?,?)", records)
         return {"accepted": len(records), "rejected": rejected}
+
+
+def pinned_files(path: Path, source_id: str) -> dict:
+    """Pinned file hashes of an archived source; read-only, an absent database pins nothing."""
+    if not path.is_file():
+        return {}
+    with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+        return SqliteHistoricalPrices(connection).pinned(source_id)

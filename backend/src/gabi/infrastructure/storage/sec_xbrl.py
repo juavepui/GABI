@@ -13,7 +13,7 @@ from gabi.domain.market.identity import require_same_cik
 from gabi.domain.market.sec_xbrl import KEYS, normalize_cik
 from gabi.infrastructure.storage.identity_writes import ensure_schema, put_facts
 
-SCHEMA = """
+FACTS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS edgar_facts (
     symbol TEXT NOT NULL, tag TEXT NOT NULL, unit TEXT NOT NULL,
     start_date TEXT NOT NULL, end_date TEXT NOT NULL, val REAL NOT NULL,
@@ -21,12 +21,15 @@ CREATE TABLE IF NOT EXISTS edgar_facts (
     PRIMARY KEY(symbol,tag,unit,start_date,end_date,accn)
 );
 CREATE INDEX IF NOT EXISTS idx_edgar_facts_symbol_tag ON edgar_facts(symbol,tag);
+"""
+METRICS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS edgar_metrics (
     symbol TEXT PRIMARY KEY, cik TEXT, fetched_at TEXT NOT NULL,
     revenue_cagr_3y REAL, fcf_cagr_3y REAL, roic REAL,
     latest_10k_date TEXT, latest_10k_url TEXT, latest_10q_date TEXT, latest_10q_url TEXT
 );
 """
+SCHEMA = FACTS_SCHEMA + METRICS_SCHEMA
 METRICS = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url",
            "latest_10q_date", "latest_10q_url", "fetched_at"]
 FACT_COLUMNS = ["tag", "unit", "start_date", "end_date", "val", "form", "fp", "fy", "filed_date", "accn"]
@@ -131,3 +134,29 @@ class SqliteXbrl:
                 db.execute(f"INSERT OR REPLACE INTO edgar_metrics (symbol,cik,fetched_at,{','.join(METRICS[:-1])}) "
                            "VALUES (?,?,?,?,?,?,?,?,?,?)",
                            (symbol, cik, self.now().isoformat(), *(metrics.get(k) for k in METRICS[:-1])))
+
+    def _write(self, schema: str):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        db = sqlite3.connect(self.path, timeout=30)
+        db.execute("PRAGMA journal_mode=WAL")
+        db.executescript(schema)
+        return closing(db)
+
+    def store_facts(self, symbol: str, rows: list[dict], *, entity: str | None = None, cik: str | None = None) -> None:
+        """Ticker-keyed facts, and their issuer attribution when ``entity`` is given, in one commit."""
+        if not rows:
+            return
+        with self._write(FACTS_SCHEMA) as db:
+            db.executemany(f"INSERT OR REPLACE INTO edgar_facts (symbol,{','.join(FACT_COLUMNS)}) "
+                           "VALUES (?,?,?,?,?,?,?,?,?,?,?)", [(symbol, *(r[k] for k in FACT_COLUMNS)) for r in rows])
+            if entity is not None and cik is not None:
+                put_facts(db, entity, symbol, rows,
+                          f"https://data.sec.gov/api/xbrl/companyfacts/CIK{normalize_cik(cik)}.json")
+            db.commit()
+
+    def store_metrics(self, symbol: str, cik: str, metrics: dict) -> None:
+        with self._write(METRICS_SCHEMA) as db:
+            db.execute(f"INSERT OR REPLACE INTO edgar_metrics (symbol,cik,fetched_at,{','.join(METRICS[:-1])}) "
+                       "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                       (symbol, cik, self.now().isoformat(), *(metrics.get(k) for k in METRICS[:-1])))
+            db.commit()

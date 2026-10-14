@@ -16,6 +16,8 @@ class CacheReader(Protocol):
     def prices_multi(self, symbols: list[str]) -> list[tuple]: ...
     def price_coverage(self, symbols: list[str]) -> list[tuple]: ...
     def last_price(self, symbol: str, as_of: str) -> tuple | None: ...
+    def latest_adjusted(self, symbols: list[str]) -> dict[str, tuple]: ...
+    def prices_from(self, symbol: str, start: str) -> list[tuple]: ...
     def split_ratios_after(self, symbol: str, as_of: str) -> list[float]: ...
     def fundamentals(self, symbols: list[str]) -> list[tuple]: ...
     def fundamentals_fetched_at(self, symbols: list[str]) -> list[tuple]: ...
@@ -62,6 +64,10 @@ def price_coverage(reader: CacheReader, symbols: list[str]) -> dict[str, dict]:
             for symbol, count, latest in reader.price_coverage(symbols)}
 
 
+def latest_adjusted(reader: CacheReader, symbols: list[str]) -> dict[str, tuple]:
+    return reader.latest_adjusted(symbols) if symbols else {}
+
+
 def price_as_of(reader: CacheReader, symbol: str, as_of: str) -> float | None:
     row = reader.last_price(symbol, as_of)
     return float(row[0]) if row and row[0] is not None else None
@@ -95,3 +101,13 @@ def fundamentals_fetched_at(reader: CacheReader, symbols: list[str]) -> dict[str
 def recent_update_errors(reader: CacheReader, *, now: datetime, source: str | None = None,
                          since_hours: float = 24 * 7) -> pd.DataFrame:
     return _frame(reader.update_errors((now - timedelta(hours=since_hours)).isoformat(), source), ERROR_COLUMNS)
+
+
+WINDOW_COLUMNS = ["date", "open", "high", "low", "close", "adj_close", "volume"]
+
+
+def prices_from(reader: CacheReader, symbol: str, start: str) -> pd.DataFrame:
+    """Cached rows from ``start``, indexed by date, in the column order the price sync compares."""
+    frame = _frame(reader.prices_from(symbol, start), WINDOW_COLUMNS)
+    frame["date"] = pd.to_datetime(frame["date"])
+    return frame.set_index("date")

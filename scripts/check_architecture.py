@@ -16,6 +16,10 @@ PURE_LIBRARIES = {"numpy", "pandas", "scipy", "quantstats", "pypfopt", "backtest
 IO_MODULES = {"os", "pathlib", "sqlite3", "subprocess", "socket", "http", "urllib", "shutil", "tempfile",
               "multiprocessing", "concurrent", "importlib", "builtins", "io", "sys"}
 UI_MODULES = {"streamlit", "plotly", "fastapi", "starlette"}
+# ADR 0006: permanent compatibility modules never gain SQL, HTTP or processes.
+DIRECT_IO = {"sqlite3", "requests", "httpx", "urllib", "http", "socket", "subprocess", "yfinance", "lxml", "aiohttp"}
+COMPATIBILITY = ".github/architecture-compatibility.json"
+FROZEN_ENGINES = "backend/legacy-engine-hashes.json"
 IO_CALLS = {"open", "read_csv", "read_json", "read_sql", "read_sql_query", "read_sql_table", "read_pickle",
             "to_csv", "to_json", "to_sql", "to_pickle", "read_text", "write_text", "read_bytes", "write_bytes",
             "mkdir", "unlink", "rmdir"}
@@ -155,6 +159,7 @@ def check(root: Path) -> list[str]:
                for requirement in requirements):
             errors.append("backend/pyproject.toml: Streamlit dependency was retired; use React")
     current_legacy = set()
+    legacy_imports: dict[str, set[str]] = {}
     for path in files:
         relative = path.relative_to(root).as_posix()
         module = source_module(path, source) if path.is_relative_to(source) else "app." + path.stem
@@ -166,14 +171,15 @@ def check(root: Path) -> list[str]:
         own = layer(module)
         if own == "legacy":
             current_legacy.add(relative)
+            legacy_imports[relative] = {target.split(".")[0] for target, _ in dependencies}
             if relative not in baseline:
                 errors.append(f"{relative}: new flat/Streamlit module; use the architecture directories")
                 continue
-            # ADR 0003: replace compatibility SQL with concrete storage adapters.
-            # Storage cannot import legacy; mixed cycles are still rejected.
+            # ADR 0003/0004: replace compatibility SQL/HTTP with concrete storage/provider adapters.
+            # Neither imports legacy; mixed cycles are still rejected.
             tracked = {target for target, _ in dependencies if legacy_dependency(target)
                        and layer(target) not in {"domain", "application"}
-                       and not target.startswith("gabi.infrastructure.storage.")}
+                       and not target.startswith(("gabi.infrastructure.storage.", "gabi.infrastructure.providers."))}
             expected = set(baseline[relative])
             for target in sorted(tracked - expected):
                 errors.append(f"{relative}: new legacy dependency {target}; extract into the correct layer")
@@ -198,15 +204,76 @@ def check(root: Path) -> list[str]:
                     graph[module].add(target)
     for retired in sorted(set(baseline) - current_legacy):
         errors.append(f"{retired}: remove retired module from the legacy baseline")
+    errors.extend(compatibility_errors(root, legacy_imports))
     errors.extend("dependency cycle component: " + ", ".join(cycle) for cycle in dependency_cycles(graph))
+    return errors
+
+
+def compatibility_errors(root: Path, legacy_imports: dict[str, set[str]]) -> list[str]:
+    """ADR 0006: every non-frozen flat module is classified; permanent ones have no direct SQL/HTTP/process I/O."""
+    path = root / COMPATIBILITY
+    if not path.exists():
+        return []  # Removing the inventory is rejected by compare_baseline against the base ref.
+    inventory = json.loads(path.read_text(encoding="utf-8"))
+    permanent, pending = inventory.get("permanent", {}), inventory.get("pending", {})
+    frozen_file = root / FROZEN_ENGINES
+    frozen = {name.removesuffix(".py") for name in json.loads(frozen_file.read_text(encoding="utf-8"))}         if frozen_file.exists() else set()
+    flat = {Path(relative).stem: imported for relative, imported in legacy_imports.items()
+            if relative.startswith("backend/src/gabi/") and relative.count("/") == 3 and not relative.endswith("__init__.py")}
+    errors = [f"{COMPATIBILITY}: {name} is both permanent and pending" for name in sorted(set(permanent) & set(pending))]
+    errors.extend(f"{COMPATIBILITY}: frozen engine {name} is verified by hash, not listed"
+                  for name in sorted((set(permanent) | set(pending)) & frozen))
+    errors.extend(f"{COMPATIBILITY}: remove retired module {name}"
+                  for name in sorted((set(permanent) | set(pending)) - set(flat)))
+    for name in sorted(set(flat) - frozen - set(permanent) - set(pending)):
+        errors.append(f"backend/src/gabi/{name}.py: unclassified flat module; list it as permanent or pending (ADR 0006)")
+    for name, entry in sorted(permanent.items()):
+        if not entry.get("reason") or not entry.get("consumers"):
+            errors.append(f"{COMPATIBILITY}: permanent {name} needs a reason and its consumers")
+        if name not in flat:
+            continue
+        allowed = set(entry.get("io", []))
+        used = flat[name] & DIRECT_IO
+        errors.extend(f"backend/src/gabi/{name}.py: permanent compatibility module cannot use {target} (ADR 0006)"
+                      for target in sorted(used - allowed))
+        errors.extend(f"{COMPATIBILITY}: remove unused I/O exception {name} -> {target}"
+                      for target in sorted(allowed - used))
+    errors.extend(f"{COMPATIBILITY}: pending {name} needs the issue that retires or justifies it"
+                  for name, note in sorted(pending.items()) if not note)
+    return errors
+
+
+def compatibility_growth(previous: dict, current: dict | None) -> list[str]:
+    """The pending list and the I/O exceptions only shrink; a module is promoted only from pending."""
+    if current is None:
+        return [f"{COMPATIBILITY}: the compatibility inventory cannot be removed (ADR 0006)"]
+    before = set(previous.get("permanent", {})) | set(previous.get("pending", {}))
+    errors = [f"{COMPATIBILITY}: cannot add pending module {name}"
+              for name in sorted(set(current.get("pending", {})) - set(previous.get("pending", {})))]
+    errors.extend(f"{COMPATIBILITY}: cannot add permanent module {name} unless it was pending"
+                  for name in sorted(set(current.get("permanent", {})) - before))
+    for name, entry in sorted(current.get("permanent", {}).items()):
+        old = previous.get("permanent", {}).get(name)
+        granted = set(entry.get("io", [])) - (set(old.get("io", [])) if old else set())
+        errors.extend(f"{COMPATIBILITY}: cannot add I/O exception {name} -> {target}" for target in sorted(granted))
     return errors
 
 
 def baseline_growth(previous: dict, current: dict) -> list[str]:
     errors = [f"legacy baseline cannot add module {name}" for name in sorted(set(current) - set(previous))]
     for name in sorted(set(previous) & set(current)):
-        errors.extend(f"legacy baseline cannot add dependency {name} -> {target}"
-                      for target in sorted(set(current[name]) - set(previous[name])))
+        added = set(current[name]) - set(previous[name])
+        # ADR 0005: gabi.config may only replace a retired gabi.storage used to resolve the database path.
+        if "gabi.config" in added and "gabi.storage" in previous[name] and "gabi.storage" not in current[name]:
+            added.discard("gabi.config")
+        # ADR 0007: or a dependency on a flat module retired in the same change (paths and SEC user agent only).
+        retired = {dependency for dependency in set(previous[name]) - set(current[name])
+                   if dependency.count(".") == 1 and dependency.startswith("gabi.")
+                   and f"backend/src/gabi/{dependency[5:]}.py" in previous
+                   and f"backend/src/gabi/{dependency[5:]}.py" not in current}
+        if "gabi.config" in added and retired:
+            added.discard("gabi.config")
+        errors.extend(f"legacy baseline cannot add dependency {name} -> {target}" for target in sorted(added))
     return errors
 
 
@@ -219,7 +286,16 @@ def compare_baseline(root: Path, reference: str) -> list[str]:
         return []
     previous = subprocess.run(["git", "show", f"{reference}:{name}"], cwd=root,
                               capture_output=True, text=True, encoding="utf-8", check=True)
-    return baseline_growth(json.loads(previous.stdout), json.loads((root / name).read_text(encoding="utf-8")))
+    errors = baseline_growth(json.loads(previous.stdout), json.loads((root / name).read_text(encoding="utf-8")))
+    listing = subprocess.run(["git", "ls-tree", reference, "--", COMPATIBILITY], cwd=root,
+                             capture_output=True, text=True, check=True)
+    if listing.stdout.strip():
+        before = subprocess.run(["git", "show", f"{reference}:{COMPATIBILITY}"], cwd=root,
+                                capture_output=True, text=True, encoding="utf-8", check=True)
+        path = root / COMPATIBILITY
+        errors.extend(compatibility_growth(json.loads(before.stdout),
+                                           json.loads(path.read_text(encoding="utf-8")) if path.exists() else None))
+    return errors
 
 
 def main() -> int:

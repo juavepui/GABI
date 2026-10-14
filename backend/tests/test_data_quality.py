@@ -8,7 +8,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import config, data_quality, edgar, entity_master, identity, insider, macro, scoring, storage
+from gabi import config, edgar, entity_master, identity, scoring, storage
+from gabi.domain.market.fred import SERIES as FRED_SERIES
+from gabi.infrastructure.legacy import data_quality
+from gabi.infrastructure.storage.fred import SqliteFred
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 
 
 @pytest.fixture(autouse=True)
@@ -27,6 +31,14 @@ def isolated_offline_cache(tmp_path, monkeypatch):
 def _set_db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
+
+
+def _insiders():
+    return SqliteInsiders(config.DB_PATH.parent, database=config.DB_PATH)
+
+
+def _fred():
+    return SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))
 
 
 def _price_df(last_date: str, n: int = 3):
@@ -71,8 +83,8 @@ def test_universe_summary_fundamentals_and_edgar_freshness(tmp_path, monkeypatch
 
 def test_universe_summary_insider_and_macro(tmp_path, monkeypatch):
     _set_db(tmp_path, monkeypatch)
-    insider.upsert_insider_transactions("AAA", [])
-    macro.upsert_series("DGS10", [])
+    _insiders().save("AAA", [])
+    _fred().upsert("DGS10", [])
 
     summary = data_quality.universe_summary(["AAA", "BBB"])
     assert summary["sources"]["insider"]["coverage"] == 0.5
@@ -95,7 +107,7 @@ def test_symbol_provenance_reports_all_sources(tmp_path, monkeypatch):
     storage.upsert_prices("AAA", _price_df("2024-01-05"))
     storage.upsert_fundamentals("AAA", {}, None, None)
     edgar.upsert_edgar_metrics("AAA", "0000000001", {"latest_10k_date": "2023-11-01", "latest_10q_date": "2024-08-01"})
-    insider.upsert_insider_transactions("AAA", [])
+    _insiders().save("AAA", [])
 
     prov = data_quality.symbol_provenance("AAA")
     assert prov["prices"]["latest_date"] == "2024-01-05"
@@ -309,7 +321,7 @@ def test_cached_cik_without_csv_and_explicit_sector_reference():
 
 
 def test_empty_fred_download_is_not_data_coverage():
-    macro.upsert_series("DGS10", [])
+    _fred().upsert("DGS10", [])
     fred = data_quality.universe_summary(["AAA"])["sources"]["fred"]
     assert fred["coverage"] == 0
     assert fred["fresh"] == 0
@@ -330,7 +342,7 @@ def test_global_status_keeps_structural_degradation_visible():
 
 
 def test_fred_latest_observation_is_independent_of_download_time():
-    macro.upsert_series("DGS10", [("2020-01-01", 2.0)])
+    _fred().upsert("DGS10", [("2020-01-01", 2.0)])
     fred = data_quality.universe_summary(["AAA"])["sources"]["fred"]
     assert fred["latest_dates"]["DGS10"] == "2020-01-01"
-    assert fred["coverage"] == pytest.approx(1 / len(macro.SERIES))
+    assert fred["coverage"] == pytest.approx(1 / len(FRED_SERIES))

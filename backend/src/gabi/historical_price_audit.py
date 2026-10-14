@@ -8,7 +8,6 @@ adjustments, not ownership, and never fixes a delisting return.
 """
 import argparse
 import json
-import sqlite3
 from datetime import date
 from pathlib import Path
 
@@ -19,18 +18,18 @@ from gabi.application.research import historical_composition as composition
 from gabi.application.research import historical_price_audit as price_audit
 from gabi.domain.research import historical_price_audit as price_rules
 from gabi.domain.research import price_accreditation
+from gabi.domain.research.periods import P2010, Period
+from gabi.domain.research.periods import get as get_period
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_audit_writes import SCHEMA as _PROVENANCE_SCHEMA
 from gabi.infrastructure.storage.historical_audit_writes import SqliteHistoricalAuditWrites
-from gabi.infrastructure.storage.historical_price_audit import SqlitePriceAuditReads, series_from_connection
+from gabi.infrastructure.storage.historical_price_audit import SqlitePriceAuditReads
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
+from gabi.infrastructure.storage.reviewed_resources import identity_nominations
 
 from . import config, historical_membership
 from . import historical_issuer_evidence as issuer_evidence
-from .historical_period import P2010, Period
-from .historical_period import get as get_period
 from .historical_price_policy import YAHOO_SOURCE
-from .historical_ticker_corrections import identity_nominations
 from .historical_tiingo import SOURCE_ID as TIINGO_SOURCE
 from .historical_tiingo import source_id as tiingo_source
 from .historical_wiki import SOURCE_ID as WIKI_SOURCE
@@ -79,11 +78,6 @@ SERIES_END = P2010.series_end
 # after the next rebalance date; a week of slack covers holidays/weekends.
 FORWARD_SLACK_DAYS = 7
 ACCEPTED_ADJUSTMENTS = {"dividends_reconciled", "no_dividends_consistent"}
-
-
-def _series(conn: sqlite3.Connection, symbol: str, start: str, end: str,
-            *, archive: bool, source_id: str = PRICE_SOURCE) -> pd.DataFrame:
-    return series_from_connection(conn, symbol, start, end, archive=archive, source_id=source_id)
 
 
 assess_series = price_rules.assess_series

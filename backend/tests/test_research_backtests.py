@@ -262,7 +262,8 @@ def test_registration_matches_streamlit_experiment_fields():
 
 
 def test_register_job_logs_once_with_fingerprint_and_provenance(tmp_path, monkeypatch):
-    from gabi import config, data_quality, research_lab
+    from gabi import config, research_lab
+    from gabi.infrastructure.legacy import data_quality
     from gabi.infrastructure.legacy.jobs import LegacyExecutor
 
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
@@ -352,7 +353,7 @@ def test_v1_diagnostics_match_streamlit_tail_and_tax(tmp_path):
             assert got[field] == expected[field]
         assert got["tax_by_year"] == [{"year": year} | row for year, row in expected["tax_by_year"].items()]
     assert data["tax"]["limitations"] == tax_drag.LIMITATIONS
-    from gabi import data_quality
+    from gabi.infrastructure.legacy import data_quality
 
     assert data["quality_threshold"] == 0.7
     assert data["quality_warnings"] == [

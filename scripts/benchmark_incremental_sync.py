@@ -13,9 +13,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "src"))
 
 import exchange_calendars as xcals
 import pandas as pd
+import yfinance
 
-from gabi import config, data_fetch, price_sync, storage
-from gabi import sync_state as sync
+from gabi import config, storage
+from gabi.infrastructure.legacy import data_fetch
+from gabi.infrastructure.providers import source_retry
 
 
 def benchmark(output: Path) -> dict:
@@ -39,8 +41,8 @@ def benchmark(output: Path) -> dict:
                 count["payload_bytes"] += sum(len(selected.to_csv().encode()) for _ in tickers)
                 return pd.concat({s: selected for s in tickers}, axis=1)
 
-            with patch.multiple(config, DATA_DIR=root, DB_PATH=db), patch.object(data_fetch.yf, "download", download), \
-                    patch.object(sync, "_pace", lambda *_: None):
+            with patch.multiple(config, DATA_DIR=root, DB_PATH=db), patch.object(yfinance, "download", download), \
+                    patch.object(source_retry, "_pace", lambda *_: None):
                 storage.init_db()
                 if variant != "repeat_same_session":
                     for symbol in symbols:
@@ -52,7 +54,7 @@ def benchmark(output: Path) -> dict:
                     failed = data_fetch.fetch_prices_batch(symbols)
                     changed_rows = len(panel) * len(symbols)
                 else:
-                    result = price_sync.run(symbols, now=now)
+                    result = data_fetch.sync_prices(symbols, now=now)
                     failed = result["failed"]
                     changed_rows = result["metrics"]["new"] + result["metrics"]["revised"]
                 elapsed, cpu_elapsed = time.perf_counter() - start, time.process_time() - cpu

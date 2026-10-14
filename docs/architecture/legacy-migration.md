@@ -52,6 +52,57 @@ lectura local por lotes y migración/escritura atómicas; la selección de CIK,
 los checkpoints y el escaneo de identidad mantienen su compatibilidad.
 [F7.12](f7-storage-reads.md) retira las escrituras de esquema de las lecturas
 de `storage` y de las métricas EDGAR cacheadas; las escrituras siguen en sus fachadas.
+[F7.13](f7-sec-quarter-ingest.md) extrae la selección de CIK y de covers, los
+checkpoints trimestrales y la recuperación de instancias XBRL del archivo SEC.
+[F7.14](f7-legacy-facades.md) retira `storage` y otras dependencias planas de
+`edgar_sync`, `entity_master`, `screener`, `live_ledger` e `history_refresh`.
+[F7.15](f7-sync-state.md) lleva clasificación de errores, reintentos y checkpoints
+a dominio, aplicación e infraestructura; `sync_state` conserva el marcapasos único.
+[F7.16](f7-edgar-writes.md) retira `storage` de `edgar` (escrituras, resoluciones CIK)
+y extrae Company Facts por CIK de `sec_history`.
+[F7.17](f7-http-providers.md) aplica [ADR 0004](../adr/0004-legacy-provider-delegation.md):
+las fachadas delegan su HTTP en proveedores acotados de `infrastructure/providers`.
+[F7.18](f7-yahoo-provider.md) concentra `yfinance` en `infrastructure/providers/yahoo.py`.
+`edgar_sync` se retira: ya no tenía consumidores de producción y su única
+función delegaba en `edgar.synchronize_issuer`, que usan sus pruebas.
+[F7.19](f7-operational-sources.md) (#134) saca `macro`, `insider`, `price_sync` y
+`data_fetch` de la fachada `storage` y rompe el ciclo `data_fetch`↔`price_sync`;
+su segunda entrega lee la ruta de `sync_state`/`price_sync` desde `config` y saca
+`storage` de los puentes `entity_migration`, `historical_backfill` y `tenk_extraction`.
+[F7.20](f7-historical-core.md) (#130) mueve los periodos acreditados a `identity`
+(sin ciclo con `historical_pit`) y lee los registros revisados desde infraestructura.
+[F7.21](f7-historical-audits.md) (#131) lleva la descarga paralela y con ritmo de
+covers SEC a un caso de uso, saca `requests`/`lxml`/SQL de las auditorías históricas
+y retira `historical_data_audit`.
+[F7.22](f7-ranking-quality.md) (#132) saca `storage` de `screener_asof` y `data_quality`
+y retira cuatro alias pequeños; `rotation_policy` queda por la huella de `rotation_experiment`.
+[F7.23](f7-research-ledgers.md) (#133) lleva los registros de experimentos y de
+validación ciega a infraestructura; [ADR 0005](../adr/0005-legacy-config-path.md) permite
+sustituir `storage` por `config` cuando solo se usaba para la ruta de la base.
+Su segunda entrega pasa a `gabi_cli research` las órdenes de las validaciones
+#33/#35 y de la viabilidad #44, y deja `smallmid_test` (preregistro en curso).
+[F7.24](f7-backtest-inputs.md) (#132) pasa los backtests V1/V2 a casos de uso con
+entradas explícitas (`BacktestMarket`) y reglas puras en `domain/portfolio/backtest`;
+las fachadas conservan los nombres que parchean los motores congelados.
+[F7.25](f7-retire-source-facades.md) (#90) retira `price_sync`, `macro` e `insider`:
+`data_fetch`, `data_quality` e `history_refresh` usan directamente sus almacenes y
+proveedores, y los respaldos del worker comparten la composición del bootstrap.
+[F7.26](f7-retire-blind-validation.md) retira `blind_validation`: reglas al dominio, flujo
+al caso de uso `BlindLedger` y los nombres públicos en un adaptador de `infrastructure/legacy`.
+[F7.27](f7-identity-audit-command.md) pasa `historical_identity_audit` a
+`gabi_cli research identity-audit` (ADR 0002), con sus bucles en aplicación y sus reglas en dominio.
+[F7.28](f7-history-refresh-command.md) pasa `history_refresh` a `gabi_cli research history-refresh`,
+con su orden de pasos en un caso de uso y sus reglas en dominio.
+[F7.29](f7-retire-sync-state.md) retira `sync_state`: el marcapasos único y los reintentos pasan a
+`infrastructure/providers/source_retry`, y los checkpoints se leen de `OperationSyncEvents`.
+[F7.30](f7-retire-data-fetch.md) retira `data_fetch`: reglas de Yahoo al dominio, refrescos a
+`application/market/market_downloads` y descargas por lotes y `refresh_data` en un puente de `infrastructure/legacy`.
+[F7.31](f7-sec-history-command.md) pasa `sec_history` a `gabi_cli research sec-history` y la descarga
+fijada del archivo SEC a `infrastructure/storage/sec_archive_download.download_pinned`.
+[F7.32](f7-retire-data-quality.md) pasa `data_quality` a un puente de `infrastructure/legacy`;
+`multifactor_backtest` usa la calidad del ranking del dominio.
+[F7.33](f7-retire-app-mode.md) retira `app_mode`: la referencia congelada se lee de
+`domain.market.model_policy` y el estado del modelo de `ModelQueries`. Con ella, `pending` queda vacío.
 
 ## Responsabilidades y entregas
 
@@ -61,10 +112,10 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 | Grupo actual representativo | Destino de responsabilidades | Fase / comprobación |
 | --- | --- | --- |
 | `metrics`, `scoring`, `technicals`, `risk`, `valuation_expectations` | Dominio Mercado; entradas explícitas y determinismo | F2/F3: ranking/ficha y fixtures incompletas |
-| `screener`, `data_quality`, `evidence_confidence`, `app_mode` | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |
-| `storage`, `entity_master`, `entity_migration`, `identity`, `sync_state` | SQL al adaptador; política de identidad al dominio | F2/F4: alias, duplicidad de clases, lotes y cambios aditivos |
-| `data_fetch`, `universe`, `edgar`, `macro`, `academic_factors`, `insider`, `estimates`, `historical_*`, `sec_*` | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
-| `periodic_tasks`, `price_sync`, `edgar_sync`, `history_refresh` | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
+| `screener`, `evidence_confidence` (`data_quality`, `app_mode` retirados) | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |
+| `storage`, `entity_master`, `entity_migration`, `identity` (`sync_state` retirado) | SQL al adaptador; política de identidad al dominio | F2/F4: alias, duplicidad de clases, lotes y cambios aditivos |
+| `universe`, `edgar`, `academic_factors`, `estimates`, `historical_*`, `sec_*` (`data_fetch`, `macro`, `insider`, `sec_history` retirados) | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
+| `periodic_tasks` (`edgar_sync`, `price_sync`, `history_refresh` retirados) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
 | `capital_allocation`, `rotation_policy`, `broker_costs`, `tax_drag`, `portfolio_metrics` | Dominio Cartera; coordinación de lecturas/escrituras en aplicación | F5: selección, costes y rentabilidades idénticos |
 | `decision_engine`, `sim_portfolios`, `signal_monitor`, `evaluation`, `live_ledger` | Aplicación por capacidad y persistencia específica | F5: operaciones, ledger y contratos sin cambios de interpretación |
 | `research_lab`, `blind_validation`, `factor_lab`, `portfolio_lab`, auditorías/backtests/experimentos | Dominio de cálculos; casos de uso Investigación; jobs y artefactos en infraestructura | F6: protocolos, hashes, reservas, resultados y exportaciones |
@@ -74,6 +125,9 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 El listado completo de archivos/imports heredados está en
 [architecture-legacy.json](../../.github/architecture-legacy.json); las dependencias
 publicadas congeladas, en [legacy-engine-hashes.json](../../backend/legacy-engine-hashes.json).
+Qué módulos planos se quedan para siempre, por qué y el criterio de cierre de #90/#91
+están en el [inventario de compatibilidad](compatibility-inventory.md)
+([architecture-compatibility.json](../../.github/architecture-compatibility.json), ADR 0006).
 Los archivos no destacados en la tabla siguen el grupo de su flujo y las mismas
 reglas. No quedan fuera de la guarda por no aparecer en un ejemplo.
 

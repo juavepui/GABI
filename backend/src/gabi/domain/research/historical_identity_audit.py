@@ -337,3 +337,31 @@ def member_candidates(history, candidates, nominations, period: Period):
     # evidence below still decides the tier.
     by_symbol = apply_nominations(by_symbol, nominations)
     return memberships, by_symbol
+
+
+def nominated_windows(nominations) -> list[tuple[str, str, str, str]]:
+    """(label, cik, from, to) of each reviewed nomination, widened by its evidence window."""
+    return [(row["label"], row["cik"],
+             (date.fromisoformat(row["valid_from"]) - timedelta(days=row["evidence_window_days"])).isoformat(),
+             (date.fromisoformat(row["valid_to"]) + timedelta(days=row["evidence_window_days"])).isoformat())
+            for row in nominations]
+
+
+def annual_report_targets(rows: list[tuple], nominations) -> list[tuple]:
+    """Unresolved intervals, plus nominations still resting on one SEC ticker observation.
+
+    Community-name corroborations are left as they are."""
+    nominated = {(row["label"], row["cik"]) for row in nominations}
+    return [row for row in rows if row[4] == "unresolved" or (row[0], row[1]) in nominated]
+
+
+def reports_to_check(reports: list[dict], start: str, end: str) -> list[dict]:
+    """The first and last 10-K filed inside [start, end), once each."""
+    inside = [row for row in reports if start <= row["filed"] < end]
+    return [inside[index] for index in sorted({0, len(inside) - 1})] if inside else []
+
+
+def reviewed_tickers(nominations, cik: str, filed: str) -> set[str]:
+    """Tickers a reviewed nomination gives this CIK on the filing date."""
+    return {ticker for row in nominations if row["cik"] == cik
+            and row["valid_from"] <= filed < row["valid_to"] for ticker in row["sec_tickers"]}

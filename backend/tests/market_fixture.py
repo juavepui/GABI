@@ -6,7 +6,9 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from gabi import app_mode, blind_validation, edgar, identity, storage
+from gabi import edgar, identity, storage
+from gabi.domain.market import model_policy
+from gabi.infrastructure.legacy import blind_validation
 
 TODAY = date(2026, 9, 29)
 
@@ -17,7 +19,7 @@ def seed_fixture(root, companies=12, sessions=320, *, wal=False):
     universe = pd.DataFrame({"symbol": symbols, "name": [f"Company {s}" for s in symbols],
                              "sector": ["Information Technology"] * companies + ["Financials"] * 4})
     universe.to_csv(root / "sp500_constituents.csv", index=False)
-    (root / "weights.json").write_text(json.dumps(app_mode.FROZEN_WEIGHTS), encoding="utf-8")
+    (root / "weights.json").write_text(json.dumps(dict(model_policy.FROZEN_WEIGHTS)), encoding="utf-8")
     connection = sqlite3.connect(root / "gabi.db")
     if wal:
         connection.execute("PRAGMA journal_mode=WAL")

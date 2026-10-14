@@ -19,7 +19,6 @@ periodo:
 No cambia pesos, umbrales ni fechas en función del resultado.
 """
 
-import argparse
 import json
 from pathlib import Path
 
@@ -27,7 +26,10 @@ import exchange_calendars as xcals
 import numpy as np
 import pandas as pd
 
-from . import config, historical_pit, identity, scoring, storage
+from gabi.application.market import cached_data
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+
+from . import config, historical_pit, identity, scoring
 from . import factor_stability as fs
 from . import full_universe_audit as fua
 
@@ -165,7 +167,8 @@ def benchmarks_by_period(tables: dict[str, pd.DataFrame], manifest: dict) -> pd.
     calendar = xcals.get_calendar("XNYS")
     dates = manifest["dates"]
     boundaries = [*dates, manifest["end"]]
-    spy = storage.get_prices("SPY")["adj_close"]
+    # config.DB_PATH is read here because analyze() points it at the frozen snapshot.
+    spy = cached_data.prices(SqliteCacheReads(config.DB_PATH), "SPY")["adj_close"]
     rows = []
     for date, following in zip(dates, boundaries[1:], strict=True):
         table = tables[date]
@@ -283,18 +286,3 @@ def analyze(cache: Path, output: Path, manifest: dict, report: dict, *, issue: i
         "artifacts": {p.name: fs.content_hash(p) for p in output.glob("*.csv")}}
     fua._save(output / "audit.json", report)
     return report
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cache", type=Path, default=CACHE)
-    parser.add_argument("--output", type=Path, default=OUTPUT)
-    parser.add_argument("--analysis-only", action="store_true",
-                        help="Rehace solo el análisis sobre rankings y backtests ya congelados")
-    args = parser.parse_args()
-    report = run(args.cache, args.output, analysis_only=args.analysis_only)
-    print(json.dumps(fs._json_safe(report["historical_validation"]), ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()

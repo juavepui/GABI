@@ -20,55 +20,42 @@ fuera de él no cambia nada. La capa 2016-2025 (#34) se activa explícitamente c
 operativo (#35); sin activarla, los rankings 2016+ son los de siempre.
 """
 
-from collections.abc import Iterator
-from contextlib import contextmanager
-from datetime import date
 
 import pandas as pd
 
 from gabi.application.research import historical_pit as historical_queries
 from gabi.domain.market.sec_identity import accredited_resolution
 from gabi.domain.research import historical_pit as historical_rules
+from gabi.domain.research import periods as historical_period
 from gabi.infrastructure.storage.historical_pit import SqliteHistoricalPit
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
 
-from . import historical_membership, historical_period, identity
+from . import historical_membership, identity
 
 YAHOO_SOURCE = historical_rules.YAHOO_SOURCE
 ADJUSTED = historical_rules.ADJUSTED
 
 HISTORICAL_START = historical_period.P2010.start
 HISTORICAL_END = historical_period.P2010.end_exclusive
-TRAILING_DAYS = 365  # ~253 sesiones: la ventana que exigen momentum y riesgo
+TRAILING_DAYS = historical_queries.TRAILING_DAYS
 # Fechas auditadas por las auditorías trimestrales de precios (#28, #34). Cada
 # periodo solo tiene ventanas acreditadas si se ejecutó su auditoría.
-QUARTER_ENDS = {quarter for period in historical_period.PERIODS.values() for quarter in period.quarters}
-_active: tuple[historical_period.Period, ...] = (historical_period.P2010,)
-
-
-@contextmanager
-def accredited_periods(*keys: str) -> Iterator[None]:
-    """Activa temporalmente los periodos acreditados indicados (p. ej. 2016-2025)."""
-    global _active
-    previous = _active
-    _active = tuple(historical_period.get(key) for key in keys)
-    try:
-        yield
-    finally:
-        _active = previous
+QUARTER_ENDS = set(historical_queries.QUARTER_ENDS)
+# The active periods live with identity, which resolves issuers against them;
+# this context keeps the published entry point used by the frozen engines.
+accredited_periods = identity.accredited_periods
 
 
 def active_periods() -> tuple[str, ...]:
-    return tuple(period.key for period in _active)
+    return tuple(period.key for period in identity.active_accredited_periods())
 
 
 def period_for(as_of: str) -> historical_period.Period | None:
-    day = date.fromisoformat(as_of[:10]).isoformat()
-    return next((period for period in _active if period.covers(day)), None)
+    return identity.accredited_history().period_for(as_of)
 
 
 def covers(as_of: str) -> bool:
-    return period_for(as_of) is not None
+    return identity.accredited_history().covers(as_of)
 
 
 def _period(as_of: str) -> historical_period.Period:
@@ -106,7 +93,7 @@ def resolve(symbol: str, as_of: str) -> dict:
 
 
 def _intervals(entity_id: str) -> list[tuple]:
-    return historical_queries.intervals(_reader(), entity_id, {period.price_producer for period in _active})
+    return identity.accredited_history().intervals(entity_id)
 
 
 def _windows(entity_id: str, source_id: str, symbol: str, valid_from: str, valid_to: str) -> list[dict] | None:
@@ -118,9 +105,7 @@ def rankable(windows: list[dict] | None, day: str) -> bool:
 
 
 def has_series(entity_id: str | None, day: str) -> bool:
-    if not entity_id:
-        return False
-    return any(start <= day[:10] < end for _s, _y, start, end, _t in _intervals(entity_id))
+    return identity.accredited_history().has_series(entity_id, day)
 
 
 def _read(source_id: str, symbol: str, start: str, end: str) -> pd.DataFrame:
@@ -136,13 +121,11 @@ def _series_for(entity_id: str, row: tuple) -> pd.DataFrame:
 
 
 def ranking_series(entity_id: str | None, as_of: str) -> pd.DataFrame:
-    return historical_queries.ranking_series(_reader(), entity_id, as_of,
-        producers={period.price_producer for period in _active}, quarter_ends=QUARTER_ENDS, trailing_days=TRAILING_DAYS)
+    return identity.accredited_history().ranking_series(entity_id, as_of)
 
 
 def holding_series(entity_id: str | None, day: str) -> pd.DataFrame:
-    return historical_queries.holding_series(_reader(), entity_id, day,
-        producers={period.price_producer for period in _active})
+    return identity.accredited_history().holding_series(entity_id, day)
 
 
 def as_traded_close(frame: pd.DataFrame, as_of: str) -> float | None:

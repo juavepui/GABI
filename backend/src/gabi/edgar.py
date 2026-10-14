@@ -10,14 +10,15 @@ Yahoo son poco fiables o directamente no existen:
     de la empresa (justo lo que recomienda cualquier guía de aprendizaje).
 """
 import concurrent.futures as cf
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
 import pandas as pd
-import requests
 
 import gabi.domain.market.sec_facts as _sec_facts
+from gabi.application.administration.sync_events import SyncAttempt
 from gabi.application.market.sec_cik import current_map
 from gabi.application.market.sec_cik import resolve as resolve_cik
 from gabi.application.market.sec_reads import (
@@ -31,11 +32,19 @@ from gabi.application.market.sec_reads import (
 )
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
-from gabi.application.market.sec_xbrl import fetch_complete
+from gabi.application.market.sec_xbrl import fetch_complete, synchronize
+from gabi.domain.market import sync_events as sync_rules
+from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers import source_retry
+from gabi.infrastructure.providers.sec_cik import SecTickerMap
+from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
 
-from . import config, storage
-from .data_fetch import _classify_error
+from . import config
 
 TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
@@ -115,35 +124,18 @@ def _headers():
     return {"User-Agent": config.SEC_USER_AGENT}
 
 
-class _CikCache:
-    def exists(self):
-        return CIK_CACHE.exists()
-
-    def modified_at(self):
-        return CIK_CACHE.stat().st_mtime
-
-    def read(self):
-        return pd.read_csv(CIK_CACHE, dtype={"cik": str})
-
-    def save(self, frame):
-        config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-        pending = CIK_CACHE.with_suffix(".csv.tmp")
-        frame.to_csv(pending, index=False)
-        pending.replace(CIK_CACHE)
+def _cik_cache() -> FileCikMap:
+    return FileCikMap(CIK_CACHE)
 
 
 def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
     """Current SEC map, with the published weekly-cache and failure fallback."""
-    from . import sync_state
-
-    def fetch():
-        resp = requests.get(TICKER_CIK_URL, headers=_headers(), timeout=20)
-        resp.raise_for_status()
-        return resp.json()
-
-    return current_map(_CikCache(), fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
-                       sync_state.retry, lambda: sync_state.get("sec", "all", "ticker-map"),
-                       sync_state.fingerprint, lambda: datetime.now(UTC).timestamp(),
+    # The compatibility path is captured per operation, never mutated.
+    events = OperationSyncEvents(config.DB_PATH)
+    return current_map(_cik_cache(), SecTickerMap(config.SEC_USER_AGENT).fetch,
+                       lambda: measured_attempt(events, "sec", "all", "ticker-map"),
+                       source_retry.retry, lambda: events.get("sec", "all", "ticker-map"),
+                       sync_rules.fingerprint, lambda: datetime.now(UTC).timestamp(),
                        force_refresh=force_refresh)
 
 
@@ -172,23 +164,17 @@ CREATE TABLE IF NOT EXISTS cik_resolutions (
 """
 
 
+def _resolutions() -> SqliteCikResolutions:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteCikResolutions(config.DB_PATH, _now)
+
+
 def _remember_cik_resolution(symbol: str, cik: str, title: str):
-    with storage.get_connection() as conn:
-        conn.executescript(RESOLUTIONS_SCHEMA)
-        conn.execute(
-            "INSERT OR REPLACE INTO cik_resolutions (symbol, cik, title, resolved_at) VALUES (?,?,?,?)",
-            (symbol, cik, title, datetime.now(UTC).isoformat()),
-        )
-        conn.commit()
+    _resolutions().remember(symbol, cik, title)
 
 
 def _get_cached_cik_resolution(symbol: str):
-    with storage.get_connection() as conn:
-        conn.executescript(RESOLUTIONS_SCHEMA)
-        row = conn.execute(
-            "SELECT cik, title FROM cik_resolutions WHERE symbol = ?", (symbol,),
-        ).fetchone()
-    return (row[0], row[1]) if row else (None, None)
+    return _resolutions().cached(symbol)
 
 
 def get_resolved_title(symbol: str):
@@ -209,38 +195,15 @@ def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
     que hoy recicla ese ticker sería peor que no tener datos."""
     if cik_map is None:
         cik_map = get_cik_map()
-    return resolve_cik(symbol, cik_map, _CikResolutions())
-
-
-class _CikResolutions:
-    def cached_many(self, symbols):
-        return {symbol: self.cached(symbol) for symbol in symbols}
-
-    def remember_many(self, values):
-        for symbol, (cik, title) in values.items():
-            self.remember(symbol, cik, title)
-
-    def remember(self, symbol, cik, title):
-        _remember_cik_resolution(symbol, cik, title)
-
-    def cached(self, symbol):
-        return _get_cached_cik_resolution(symbol)
+    return resolve_cik(symbol, cik_map, _resolutions())
 
 
 def fetch_company_facts(cik: str) -> dict:
-    resp = requests.get(COMPANYFACTS_URL.format(cik=cik), headers=_headers(), timeout=30)
-    if resp.status_code == 404:
-        raise ValueError("SEC EDGAR no tiene datos XBRL estructurados para esta empresa")
-    resp.raise_for_status()
-    return resp.json()
+    return SecXbrl(config.SEC_USER_AGENT).companyfacts(cik)
 
 
 def fetch_submissions(cik: str) -> dict:
-    resp = requests.get(SUBMISSIONS_URL.format(cik=cik), headers=_headers(), timeout=30)
-    if resp.status_code == 404:
-        raise ValueError("SEC EDGAR no tiene historial de filings para esta empresa")
-    resp.raise_for_status()
-    return resp.json()
+    return SecXbrl(config.SEC_USER_AGENT).submissions(cik)
 
 
 _extract_annual_values = _sec_facts._extract_annual_values
@@ -252,29 +215,16 @@ _extract_instant_values = _sec_facts._extract_instant_values
 _extract_raw_facts = _sec_facts._extract_raw_facts
 
 
+def _xbrl() -> SqliteXbrl:
+    return SqliteXbrl(config.DB_PATH, _now)
+
+
 def upsert_edgar_facts(symbol: str, rows: list, *, cik: str | None = None):
     if not rows:
         return
     from . import identity
     entity_id = identity.ensure_entity(cik) if cik else None
-    with storage.get_connection() as conn:
-        conn.executescript(FACTS_SCHEMA)
-        conn.executemany(
-            "INSERT OR REPLACE INTO edgar_facts "
-            "(symbol, tag, unit, start_date, end_date, val, form, fp, fy, filed_date, accn) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            [
-                (
-                    symbol, r["tag"], r["unit"], r["start_date"], r["end_date"], r["val"],
-                    r["form"], r["fp"], r["fy"], r["filed_date"], r["accn"],
-                )
-                for r in rows
-            ],
-        )
-        if entity_id:
-            identity.put_observations(conn, entity_id, "edgar_facts", symbol, rows,
-                                      f"https://data.sec.gov/api/xbrl/companyfacts/CIK{identity.normalize_cik(cik)}.json")
-        conn.commit()
+    _xbrl().store_facts(symbol, rows, entity=entity_id, cik=cik)
 
 
 def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = None) -> pd.DataFrame:
@@ -398,22 +348,7 @@ def _fetch_one(symbol: str, cik: str) -> tuple:
 
 
 def upsert_edgar_metrics(symbol: str, cik: str, metrics: dict):
-    fetched_at = datetime.now(UTC).isoformat()
-    with storage.get_connection() as conn:
-        conn.executescript(SCHEMA)
-        conn.execute(
-            "INSERT OR REPLACE INTO edgar_metrics "
-            "(symbol, cik, fetched_at, revenue_cagr_3y, fcf_cagr_3y, roic, "
-            "latest_10k_date, latest_10k_url, latest_10q_date, latest_10q_url) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (
-                symbol, cik, fetched_at,
-                metrics.get("revenue_cagr_3y"), metrics.get("fcf_cagr_3y"), metrics.get("roic"),
-                metrics.get("latest_10k_date"), metrics.get("latest_10k_url"),
-                metrics.get("latest_10q_date"), metrics.get("latest_10q_url"),
-            ),
-        )
-        conn.commit()
+    _xbrl().store_metrics(symbol, cik, metrics)
 
 
 def get_edgar_metrics(symbols: list) -> dict:
@@ -434,12 +369,29 @@ def get_edgar_fetched_at(symbols: list) -> dict:
     return fetched_at(_fact_reader(), symbols)
 
 
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def synchronize_issuer(symbol: str, cik: str, *, full_refresh: bool = False) -> dict:
+    """Incremental issuer companyfacts sync with the same stores as the worker; path captured per operation."""
+    events = OperationSyncEvents(config.DB_PATH)
+
+    def attempt(source: str, entity: str, dataset: str) -> SyncAttempt:
+        return SyncAttempt(source, entity, dataset, events, now=_now, wall_time=time.perf_counter,
+                           cpu_time=time.thread_time)
+
+    return synchronize(symbol, cik, store=SqliteXbrl(config.DB_PATH, _now), submissions=fetch_submissions,
+                       companyfacts=fetch_company_facts, checkpoint=events.get, attempt_factory=attempt,
+                       retry=source_retry.retry, fingerprint=sync_rules.fingerprint, now=_now,
+                       full_refresh=full_refresh, fiscal_alignment=fiscal_alignment_enabled())
+
+
 def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,
                       *, full_refresh: bool = False, incremental: bool = True, synchronize_one=None) -> dict:
     def operation(symbol, cik):
         if incremental:
-            from . import edgar_sync
-            return (synchronize_one or edgar_sync.run_one)(symbol, cik, full_refresh=full_refresh)
+            return (synchronize_one or synchronize_issuer)(symbol, cik, full_refresh=full_refresh)
         metrics, rows = _fetch_one(symbol, cik)
         upsert_edgar_metrics(symbol, cik, metrics)
         upsert_edgar_facts(symbol, rows, cik=cik)
@@ -457,15 +409,14 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
                     error = exc
                 yield futures[future], error
     return run_batch(symbols, cik_by_symbol, operation=operation, runner=runner,
-                     classify_error=lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
+                     classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
                      progress_cb=progress_cb)
 
 
 class _SelectionStore:
     def current(self, symbols):
-        from . import sync_state
         failures = {}
-        for entity, dataset in sync_state.failed_datasets("sec"):
+        for entity, dataset in OperationSyncEvents(config.DB_PATH).failed_datasets("sec"):
             if dataset.startswith("facts:") and dataset.removeprefix("facts:") in symbols:
                 failures.setdefault(dataset.removeprefix("facts:"), set()).add(entity)
         return get_edgar_fetched_at(symbols), get_symbols_with_facts(symbols), failures
@@ -479,7 +430,7 @@ class _SelectionStore:
         return {entity for entity in entities if not identity.observations(entity, "edgar_facts").empty}
 
     def errors(self, failed):
-        storage.record_update_errors("sec_edgar", failed)
+        SqliteCacheWrites(config.DB_PATH, _now).update_errors("sec_edgar", failed)
 
 
 def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
@@ -489,8 +440,8 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
             options["synchronize_one"] = synchronize_one
         return fetch_edgar_batch(symbols, ciks, **options)
     return refresh_selection(symbols, store=_SelectionStore(), mapping=get_cik_map,
-                             resolutions=_CikResolutions(), download_batch=download,
-                             classify_error=lambda exc: _classify_error(exc, service="SEC EDGAR")[1],
-                             now=lambda: datetime.now(UTC), default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
+                             resolutions=_resolutions(), download_batch=download,
+                             classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
+                             now=_now, default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
                              force=force, max_age_hours=max_age_hours, progress_cb=progress_cb,
                              as_of=as_of, full_refresh=full_refresh)

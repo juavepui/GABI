@@ -80,8 +80,12 @@ descarga; se contrastaron mediante lectura en el navegador, sin archivar su bina
 ## Repetición y seguridad de los datos
 
 ```powershell
-.venv/Scripts/python.exe -m gabi.history_refresh
+.venv/Scripts/python.exe -m gabi_cli research history-refresh
 ```
+
+Este refresco se ejecutó originalmente con `python -m gabi.history_refresh`
+(disponible en el commit c324aab de develop); desde F7.28 (ADR 0002) el mismo
+proceso, con las mismas copias, informes y escrituras, se lanza con el comando de arriba.
 
 El comando exige un registro de composición revisado hasta la fecha de ejecución.
 Para una fecha posterior hay que ampliar y conciliar ese registro; no se prolonga

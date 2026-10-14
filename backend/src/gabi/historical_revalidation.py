@@ -20,7 +20,6 @@ operativo → acreditado (capa acreditada), acreditado → acreditado-38 (#38) y
 como control, operativo → operativo-38.
 """
 
-import argparse
 import json
 from contextlib import ExitStack
 from dataclasses import dataclass
@@ -109,15 +108,12 @@ def stale_issuer_facts(max_gap_days: int = 200) -> list[tuple[str, str | None, s
     """
     from datetime import date
 
-    from . import historical_archive, historical_period, storage
-    with storage.get_connection() as conn:
-        intervals = conn.execute(
-            "SELECT cik,MAX(valid_to) FROM historical_identity_intervals WHERE source_id=? AND status IN "
-            f"({','.join('?' * len(historical_archive.ACCREDITED_IDENTITY_TIERS))}) GROUP BY cik",
-            (historical_period.P2016.identity_source, *historical_archive.ACCREDITED_IDENTITY_TIERS)).fetchall()
-        latest = dict(conn.execute(
-            "SELECT substr(entity_id,5),MAX(json_extract(payload_json,'$.filed_date')) FROM entity_observations "
-            "WHERE dataset='edgar_facts' GROUP BY entity_id").fetchall())
+    from gabi.domain.research import periods as historical_period
+    from gabi.infrastructure.storage.issuer_facts_freshness import SqliteIssuerFactsFreshness
+
+    from . import historical_archive
+    intervals, latest = SqliteIssuerFactsFreshness(config.DB_PATH).evidence(
+        historical_period.P2016.identity_source, historical_archive.ACCREDITED_IDENTITY_TIERS)
     horizon = historical_period.P2016.last_day
     return [(cik, latest.get(cik), end) for cik, end in intervals
             if latest.get(cik) is None or
@@ -419,29 +415,3 @@ def summarize() -> dict:
                             for view in VIEWS for p in sorted((OUTPUT / view).glob("*.csv"))}
     fua._save(OUTPUT / "summary.json", summary)
     return summary
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--prepare", choices=sorted(VARIANTS))
-    parser.add_argument("--evaluate", choices=sorted(VIEWS))
-    parser.add_argument("--analyze", choices=sorted(VIEWS), help="Solo el análisis, sin repetir backtests")
-    parser.add_argument("--summarize", action="store_true")
-    args = parser.parse_args()
-    if args.analyze:
-        report = evaluate(args.analyze, analysis_only=True)
-        print(json.dumps(fs._json_safe(report.get("historical_validation", {}).get("summary", {})),
-                         ensure_ascii=False, indent=2))
-    if args.prepare:
-        manifest = prepare(args.prepare)
-        print(json.dumps({"variant": args.prepare, "dates": len(manifest["dates"])}))
-    if args.evaluate:
-        report = evaluate(args.evaluate)
-        print(json.dumps(fs._json_safe(report.get("historical_validation", {}).get("summary", {})),
-                         ensure_ascii=False, indent=2))
-    if args.summarize:
-        print(json.dumps(fs._json_safe(summarize()), ensure_ascii=False, indent=2)[:4000])
-
-
-if __name__ == "__main__":
-    main()

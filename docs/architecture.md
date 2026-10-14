@@ -157,8 +157,16 @@ reciben repositorios específicos, configuración y reloj; un `Protocol` se intr
 cuando existe un límite de I/O o de compatibilidad publicada que inyectar.
 Las fachadas planas existentes pueden sustituir su SQL por un adaptador concreto
 de `infrastructure/storage` según [ADR 0003](adr/0003-legacy-storage-delegation.md),
-sin nuevas dependencias de proveedores, ajustes o puentes legacy. Almacenamiento
-no importa módulos planos; siguen prohibidos los ciclos con capas nuevas.
+y su HTTP por un proveedor concreto de `infrastructure/providers` según
+[ADR 0004](adr/0004-legacy-provider-delegation.md), sin nuevas dependencias de
+ajustes o puentes legacy. Al retirar `storage`, una fachada puede leer la ruta
+de la base desde `config` en su lugar ([ADR 0005](adr/0005-legacy-config-path.md)), y lo mismo al retirar
+otro módulo plano del que solo tomaba rutas o el User-Agent SEC ([ADR 0007](adr/0007-config-for-retired-flat-dependency.md)).
+Ni almacenamiento ni proveedores importan módulos planos; siguen prohibidos los ciclos con capas nuevas.
+Los módulos planos que no se pueden retirar forman una lista cerrada
+([inventario de compatibilidad](architecture/compatibility-inventory.md),
+[ADR 0006](adr/0006-permanent-compatibility-inventory.md)): no usan SQL, HTTP ni
+procesos salvo excepción declarada, y los pendientes solo bajan.
 No añadir interfaces a funciones puras nuevas. Evitar reexports masivos en
 `__init__`; importar desde el módulo que define el contrato.
 

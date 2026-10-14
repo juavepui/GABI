@@ -1,0 +1,325 @@
+{
+  "_doc": "Lista cerrada de módulos planos no congelados (ADR 0006). permanent: se quedan, sin SQL/HTTP/procesos salvo 'io' justificado. pending: se retiran o se justifican; solo puede bajar. Ver docs/architecture/compatibility-inventory.md.",
+  "permanent": {
+    "academic_factors": {
+      "reason": "interfaz de motores congelados",
+      "consumers": [
+        "block_bootstrap (congelado)",
+        "cross_section_test (congelado)",
+        "factor_benchmark (congelado)",
+        "factor_history (congelado)",
+        "factor_stability (congelado)",
+        "r3_experiment (congelado)",
+        "tail_effect_test (congelado)"
+      ]
+    },
+    "edgar": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "cross_section_test (congelado)",
+        "r3_experiment (congelado)",
+        "overfitting_audit (huella de código)",
+        "live_ledger.model_metadata (model_version)",
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "entity_master": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "overfitting_audit (huella de código)"
+      ]
+    },
+    "evidence_catalog": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "factor_sector_stability (congelado)",
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "evidence_confidence": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "historical_archive": {
+      "reason": "interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15",
+      "consumers": [
+        "smallmid_test (#44)",
+        "historical_revalidation",
+        "historical_membership",
+        "historical_tiingo",
+        "historical_wiki",
+        "infrastructure/legacy/data_health",
+        "infrastructure/legacy/sec_validation",
+        "infrastructure/legacy/sec_history"
+      ]
+    },
+    "historical_issuer_evidence": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_membership": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_period": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_pit": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "cross_section_test (congelado)",
+        "r3_experiment (congelado)",
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_price_audit": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_price_policy": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_revalidation": {
+      "reason": "comando de reproducción #35 (ADR 0002); interfaz de motores congelados",
+      "consumers": [
+        "gabi_cli research historical-revalidation",
+        "cross_section_test (congelado)",
+        "factor_zoo (congelado)",
+        "placebo_engine (congelado)",
+        "r3_experiment (congelado)",
+        "tail_effect_test (congelado)"
+      ]
+    },
+    "historical_ticker_corrections": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "historical_tiingo": {
+      "reason": "interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15",
+      "consumers": [
+        "smallmid_test (#44)",
+        "smallmid_feasibility",
+        "historical_price_audit",
+        "infrastructure/legacy/periodic"
+      ]
+    },
+    "historical_validation": {
+      "reason": "comando de reproducción #33 (ADR 0002); interfaz de motores congelados",
+      "consumers": [
+        "gabi_cli research historical-validation",
+        "cross_section_test (congelado)"
+      ]
+    },
+    "historical_wiki": {
+      "reason": "interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15",
+      "consumers": [
+        "smallmid_test (#44)",
+        "historical_price_audit"
+      ]
+    },
+    "identity": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "full_universe_audit (congelado)",
+        "overfitting_audit (congelado)",
+        "overfitting_audit (huella de código)",
+        "full_universe_audit (huella de cachés)",
+        "rotation_experiment (protocol.json/audit.json sellados)"
+      ]
+    },
+    "live_ledger": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "membership_extension": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "metrics": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "multifactor_backtest": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "full_universe_audit (congelado)",
+        "overfitting_audit (congelado)",
+        "overfitting_audit (huella de código)",
+        "full_universe_audit (huella de cachés)"
+      ]
+    },
+    "portfolio_backtest": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "full_universe_audit (congelado)",
+        "r3_experiment (congelado)",
+        "full_universe_audit (huella de cachés)",
+        "rotation_experiment (protocol.json/audit.json sellados)"
+      ]
+    },
+    "portfolio_metrics": {
+      "reason": "interfaz de motores congelados",
+      "consumers": [
+        "full_universe_audit (congelado)"
+      ]
+    },
+    "research_lab": {
+      "reason": "interfaz de motores congelados",
+      "consumers": [
+        "block_bootstrap (congelado)",
+        "cross_section_test (congelado)",
+        "factor_history (congelado)",
+        "overfitting_audit (congelado)",
+        "r3_experiment (congelado)",
+        "rank_stability (congelado)"
+      ]
+    },
+    "risk": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "r3_experiment (congelado)",
+        "overfitting_audit (huella de código)",
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "rotation_experiment": {
+      "reason": "comando de reproducción sellado (ADR 0002): parchea motores congelados sobre una copia del snapshot",
+      "consumers": [
+        "gabi_cli research rotation-experiment"
+      ]
+    },
+    "rotation_policy": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "rotation_experiment (protocol.json/audit.json sellados)"
+      ]
+    },
+    "scoring": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "cross_section_test (congelado)",
+        "factor_history (congelado)",
+        "factor_zoo (congelado)",
+        "full_universe_audit (congelado)",
+        "overfitting_audit (congelado)",
+        "placebo_engine (congelado)",
+        "r3_experiment (congelado)",
+        "rank_stability (congelado)",
+        "overfitting_audit (huella de código)",
+        "full_universe_audit (huella de cachés)",
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "screener": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "screener_asof": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "full_universe_audit (congelado)",
+        "overfitting_audit (congelado)",
+        "r3_experiment (congelado)",
+        "overfitting_audit (huella de código)",
+        "full_universe_audit (huella de cachés)"
+      ]
+    },
+    "smallmid_feasibility": {
+      "reason": "estudio publicado docs/smallmid-feasibility que importa la prueba #44",
+      "consumers": [
+        "smallmid_test",
+        "gabi_cli research smallmid-feasibility"
+      ]
+    },
+    "smallmid_test": {
+      "reason": "prueba #44 preregistrada y en curso (PREREGISTRO-A1..A3, huella de funciones 69efba58…); los datos se congelan como tarde el 2027-01-15",
+      "consumers": [
+        "tareas periódicas Tiingo",
+        "infrastructure/legacy/smallmid"
+      ],
+      "io": [
+        "requests",
+        "yfinance"
+      ]
+    },
+    "stats_rigor": {
+      "reason": "interfaz de motores congelados",
+      "consumers": [
+        "overfitting_audit (congelado)",
+        "placebo_engine (congelado)",
+        "r3_experiment (congelado)"
+      ]
+    },
+    "storage": {
+      "reason": "leído por nombre para una huella publicada; get_connection solo para smallmid_test (#44)",
+      "consumers": [
+        "smallmid_test",
+        "overfitting_audit (huella de código)"
+      ],
+      "io": [
+        "sqlite3"
+      ]
+    },
+    "technicals": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "overfitting_audit (huella de código)",
+        "live_ledger.model_metadata (model_version)"
+      ]
+    },
+    "universe": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "full_universe_audit (congelado)",
+        "overfitting_audit (congelado)",
+        "overfitting_audit (huella de código)",
+        "historical_validation/historical_revalidation.extra_sources (audit.json publicados)"
+      ]
+    },
+    "value_hypothesis": {
+      "reason": "adaptador fino de spec_hash para el preregistro sellado docs/value-hypothesis (ADR 0002)",
+      "consumers": [
+        "gabi_cli research value-hypothesis",
+        "API de preregistros"
+      ]
+    },
+    "variant_validation": {
+      "reason": "interfaz de motores congelados; leído por nombre para una huella publicada",
+      "consumers": [
+        "r3_experiment (congelado)",
+        "rotation_experiment (protocol.json/audit.json sellados)"
+      ]
+    },
+    "workspace": {
+      "reason": "leído por nombre para una huella publicada",
+      "consumers": [
+        "live_ledger.model_metadata (model_version)"
+      ]
+    }
+  },
+  "pending": {}
+}

@@ -65,6 +65,51 @@ class SqliteCacheReads:
                               "AND date<=? ORDER BY date DESC LIMIT 1)", (symbol, as_of), max_rows=1)
             return rows[0] if rows else None
 
+    def adjusted_span(self, symbol: str) -> tuple[str | None, str | None]:
+        """First and last session with a positive adjusted close."""
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            if db is None or "prices" not in tables or self._adjusted(db) == "NULL":
+                return None, None
+            first, last = db.execute("SELECT MIN(date),MAX(date) FROM prices WHERE symbol=? AND adj_close>0",
+                                     (symbol,)).fetchone()
+            return first, last
+
+    def prices_from(self, symbol: str, start: str) -> list[tuple]:
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            if db is None or "prices" not in tables:
+                return []
+            return self._rows(db, f"SELECT date,open,high,low,close,{self._adjusted(db)} AS adj_close,volume FROM prices "
+                              "WHERE symbol=? AND date>=? ORDER BY date", (symbol, start), max_rows=self.max_series_rows)
+
+    def table_coverage(self) -> dict:
+        """Row counts and date span per cached table, and per macro series; absent tables count as empty."""
+        spans = (("prices", "date"), ("edgar_facts", "filed_date"), ("macro_series", "date"))
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            result = {}
+            for table, column in spans:
+                row = (db.execute(f"SELECT COUNT(*),MIN({column}),MAX({column}) FROM {table}").fetchone()
+                       if db is not None and table in tables else (0, None, None))
+                result[table] = dict(zip(["rows", "first", "last"], row, strict=True))
+            series = self._rows(db, "SELECT series_id,MIN(date),MAX(date),COUNT(*) FROM macro_series GROUP BY series_id") \
+                if db is not None and "macro_series" in tables else []
+            result["macro_by_series"] = {sid: {"first": lo, "last": hi, "rows": count} for sid, lo, hi, count in series}
+            return result
+
+    def latest_adjusted(self, symbols: list[str]) -> dict[str, tuple]:
+        """Newest (date, close, adj_close) with a positive adjusted close, per symbol, in one snapshot.
+
+        One indexed backward lookup per symbol stops at the first match; a set-wide MAX would scan histories."""
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            if db is None or "prices" not in tables or self._adjusted(db) == "NULL":
+                return {}
+            found = {}
+            for symbol in dict.fromkeys(symbols):
+                rows = self._rows(db, "SELECT * FROM (SELECT date,close,adj_close FROM prices WHERE symbol=? "
+                                  "AND adj_close>0 ORDER BY date DESC LIMIT 1)", (symbol,), max_rows=1)
+                if rows:
+                    found[symbol] = rows[0]
+            return found
+
     def split_ratios_after(self, symbol: str, as_of: str) -> list[float]:
         with read_only(self.path, self.max_field_bytes) as (db, tables):
             if db is None or "splits" not in tables:

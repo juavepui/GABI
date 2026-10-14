@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend/tests"))
 from market_fixture import TODAY, seed_fixture  # noqa: E402
 
-from gabi import app_mode, config, screener  # noqa: E402
+from gabi import config, screener  # noqa: E402
+from gabi.domain.market import model_policy  # noqa: E402
 from gabi.domain.market.selection import RankingFilter  # noqa: E402
 from gabi.infrastructure.settings import Settings  # noqa: E402
 from gabi_api.bootstrap import create_app  # noqa: E402
@@ -68,7 +69,7 @@ def main() -> None:
                             "adapter_rows_returned": repository.row_count - prior_rows}
 
         try:
-            legacy, baseline = measure(lambda: screener.build_screener_table(universe, app_mode.FROZEN_WEIGHTS))
+            legacy, baseline = measure(lambda: screener.build_screener_table(universe, dict(model_policy.FROZEN_WEIGHTS)))
             cold, cold_measure = measure(lambda: app.state.market.ranking(RankingFilter(hide_no_data=False)))
             warm, warm_measure = measure(lambda: app.state.market.ranking(RankingFilter(hide_no_data=False)))
             pd.testing.assert_frame_equal(legacy, cold.snapshot.table)

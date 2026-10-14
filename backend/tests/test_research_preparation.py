@@ -3,10 +3,11 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from gabi import config, data_fetch, edgar, multifactor_backtest, universe
+from gabi import config, edgar, multifactor_backtest, universe
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.errors import QueryError
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.legacy.preparation import prepare_history
 from gabi.infrastructure.settings import Settings

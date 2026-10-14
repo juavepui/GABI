@@ -13,9 +13,11 @@ import requests
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import app_mode, config, identity, screener, storage
+from gabi import config, identity, screener, storage
+from gabi.domain.market import model_policy
 from gabi.domain.market.selection import RankingFilter, filter_ranking
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.mode import FileMode
 from gabi_api.bootstrap import create_app
 
 
@@ -150,7 +152,7 @@ def test_streamlit_and_api_match_pre_migration_golden_all_metrics(api, monkeypat
     client, _, root = api
     monkeypatch.setattr(config, "DB_PATH", root / "gabi.db")
     universe = pd.read_csv(root / "sp500_constituents.csv")
-    table = screener.build_screener_table(universe, app_mode.FROZEN_WEIGHTS)
+    table = screener.build_screener_table(universe, dict(model_policy.FROZEN_WEIGHTS))
     expected = json.loads((Path(__file__).parent / "fixtures/api-ranking-v1.json").read_text(encoding="utf-8"))
     actual = json.loads(table.to_json(orient="split", double_precision=15, date_format="iso"))
     assert actual["columns"] == expected["columns"]
@@ -179,7 +181,7 @@ def test_streamlit_and_api_match_pre_migration_golden_all_metrics(api, monkeypat
 ])
 def test_selection_filters_limits_and_literal_search(api, query, filters, offset, limit):
     client, repository, _ = api
-    base = repository.ranking(app_mode.FROZEN_WEIGHTS, TODAY).table
+    base = repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
     selected = filter_ranking(base, filters)
     payload = client.get("/api/v1/ranking?" + query).json()
     assert payload["total"] == len(selected)
@@ -192,7 +194,7 @@ def test_investor_restrictions_cannot_be_bypassed_by_url(api, query):
     (root / "weights.json").write_text(json.dumps({"value": .25, "quality": .25, "momentum": .25, "risk": .25}))
     assert client.get("/api/v1/ranking?" + query).status_code == 403
     model = client.get("/api/v1/model").json()
-    assert model["weights"] == app_mode.FROZEN_WEIGHTS
+    assert model["weights"] == dict(model_policy.FROZEN_WEIGHTS)
     assert model["status"] == "FROZEN"
 
 
@@ -210,8 +212,6 @@ def test_mode_command_is_explicit_persistent_and_compatible_with_legacy(api, mon
     weights = {"value": .25, "quality": .25, "momentum": .25, "risk": .25}
     (root / "weights.json").write_text(json.dumps(weights))
     saved_weights = (root / "weights.json").read_bytes()
-    monkeypatch.setattr(app_mode, "MODE_PATH", root / "app_mode.json")
-    monkeypatch.setattr(config, "DATA_DIR", root)
 
     assert client.get("/api/v1/model").json()["mode"] == "INVESTOR"
     invalid = client.post("/api/v1/administration/mode", json={"mode": "ADMIN"})
@@ -223,18 +223,18 @@ def test_mode_command_is_explicit_persistent_and_compatible_with_legacy(api, mon
     assert research.json()["mode"] == "RESEARCH"
     assert research.json()["weights"] == weights
     assert research.json()["status"] == "EXPERIMENTAL"
-    assert app_mode.get_mode() == "RESEARCH"
+    assert json.loads((root / "app_mode.json").read_text(encoding="utf-8")) == {"mode": "RESEARCH"}
     assert client.get("/api/v1/model").json()["mode"] == "RESEARCH"
 
     investor = client.post("/api/v1/administration/mode", json={"mode": "INVESTOR"})
     assert investor.status_code == 200, investor.text
-    assert investor.json()["weights"] == app_mode.FROZEN_WEIGHTS
+    assert investor.json()["weights"] == dict(model_policy.FROZEN_WEIGHTS)
     assert investor.json()["status"] == "FROZEN"
-    assert app_mode.get_mode() == "INVESTOR"
+    assert json.loads((root / "app_mode.json").read_text(encoding="utf-8")) == {"mode": "INVESTOR"}
     assert (root / "weights.json").read_bytes() == saved_weights
     assert list(root.glob("app_mode.*.tmp")) == []
 
-    app_mode.set_mode("RESEARCH")
+    FileMode(root).save_mode("RESEARCH")  # the file the former Streamlit selector wrote
     assert client.get("/api/v1/model").json()["mode"] == "RESEARCH"
 
 
@@ -353,7 +353,7 @@ def test_stale_empty_and_corrupt_are_distinct(api):
 def test_metadata_evidence_never_reads_blind_payloads(api):
     client, repository, root = api
     with sqlite3.connect(root / "gabi.db") as writer:
-        writer.execute("INSERT INTO blind_validations(id,created_at,name,model_id,weights_json,n_positions,rebalance_months,start_date,unlock_date,status) VALUES(1,'2026-09-29','fixture','GABI-MF-v1',?,10,3,'2026-09-29','2027-09-29','locked')", (json.dumps(app_mode.FROZEN_WEIGHTS),))
+        writer.execute("INSERT INTO blind_validations(id,created_at,name,model_id,weights_json,n_positions,rebalance_months,start_date,unlock_date,status) VALUES(1,'2026-09-29','fixture','GABI-MF-v1',?,10,3,'2026-09-29','2027-09-29','locked')", (json.dumps(dict(model_policy.FROZEN_WEIGHTS)),))
         writer.execute("INSERT INTO blind_validation_periods(id,validation_id,rebalance_date,recorded_at,symbols_json,weights_json,entry_prices_json,record_hash) VALUES(1,1,'2026-09-29','2026-09-29','SECRET','SECRET','SECRET','SECRET')")
     model = client.get("/api/v1/model").json()
     assert model["status"] == "LIVE_FORWARD" and model["blind_validation_id"] == 1
@@ -465,7 +465,7 @@ def test_concurrent_cold_queries_share_one_calculation(api):
         return original(*args, **kwargs)
     repository.calculators = replace(repository.calculators, scores=scores)
     with ThreadPoolExecutor(max_workers=4) as executor:
-        results = list(executor.map(lambda _: repository.ranking(app_mode.FROZEN_WEIGHTS, TODAY), range(4)))
+        results = list(executor.map(lambda _: repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY), range(4)))
     assert len(calls) == 1
     assert sum(snapshot.cache_hit for snapshot in results) == 3
     assert len({snapshot.revision for snapshot in results}) == 1
@@ -482,7 +482,7 @@ def test_mid_query_change_is_rejected_instead_of_caching_mixed_data(api):
     repository.calculators = replace(repository.calculators, scores=scores)
     from gabi.application.errors import QueryError
     with pytest.raises(QueryError, match="cambiaron") as error:
-        repository.ranking(app_mode.FROZEN_WEIGHTS, TODAY)
+        repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY)
     assert error.value.status == 409
     assert not repository.cache
 
@@ -496,7 +496,7 @@ def test_search_preserves_legacy_unicode_lowercase_semantics():
 @pytest.mark.parametrize("direction", ["asc", "desc"])
 def test_sort_is_applied_to_full_filtered_universe_before_pagination(api, direction):
     client, repository, _ = api
-    table = repository.ranking(app_mode.FROZEN_WEIGHTS, TODAY).table
+    table = repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
     expected = table.sort_values("market_cap", ascending=direction == "asc", kind="stable", na_position="last")
     payload = client.get(f"/api/v1/ranking?order_by=market_cap&direction={direction}&hide_no_data=false&limit=3&offset=2").json()
     assert [row["symbol"] for row in payload["items"]] == list(expected.iloc[2:5].index)

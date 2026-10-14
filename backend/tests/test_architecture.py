@@ -70,19 +70,25 @@ def test_legacy_debt_cannot_expand_and_retired_exceptions_must_be_removed(tmp_pa
     assert any("new flat/Streamlit module" in error for error in GUARD["check"](tmp_path))
 
 
-def test_compatibility_facade_can_delegate_sql_only_to_storage(tmp_path):
+def test_compatibility_facade_can_delegate_sql_and_http_only_to_concrete_adapters(tmp_path):
     write(tmp_path, ".github/architecture-legacy.json", json.dumps({"backend/src/gabi/old.py": []}))
-    write(tmp_path, "backend/src/gabi/old.py", "from gabi.infrastructure.storage.sec_reads import Reader\n")
     write(tmp_path, "backend/src/gabi/infrastructure/storage/sec_reads.py", "class Reader: pass\n")
-    assert GUARD["check"](tmp_path) == []
-    for target in ("providers.sec", "legacy.sec", "settings", "storage"):
+    write(tmp_path, "backend/src/gabi/infrastructure/providers/sec.py", "class Source: pass\n")
+    for allowed in ("from gabi.infrastructure.storage.sec_reads import Reader\n",
+                    "from gabi.infrastructure.providers.sec import Source\n"):
+        write(tmp_path, "backend/src/gabi/old.py", allowed)
+        assert GUARD["check"](tmp_path) == []
+    for target in ("providers", "legacy.sec", "settings", "storage"):
         write(tmp_path, "backend/src/gabi/old.py", f"import gabi.infrastructure.{target}\n")
         assert any("new legacy dependency" in error for error in GUARD["check"](tmp_path))
-    write(tmp_path, "backend/src/gabi/old.py", "from gabi.infrastructure.storage.sec_reads import Reader\n")
-    write(tmp_path, "backend/src/gabi/infrastructure/storage/sec_reads.py", "from gabi import old\n")
-    errors = GUARD["check"](tmp_path)
-    assert any("infrastructure cannot depend on legacy" in error for error in errors)
-    assert any("dependency cycle" in error for error in errors)
+    for adapter, line in (("storage/sec_reads.py", "from gabi.infrastructure.storage.sec_reads import Reader\n"),
+                          ("providers/sec.py", "from gabi.infrastructure.providers.sec import Source\n")):
+        write(tmp_path, "backend/src/gabi/old.py", line)
+        write(tmp_path, f"backend/src/gabi/infrastructure/{adapter}", "from gabi import old\n")
+        errors = GUARD["check"](tmp_path)
+        assert any("infrastructure cannot depend on legacy" in error for error in errors)
+        assert any("dependency cycle" in error for error in errors)
+        write(tmp_path, f"backend/src/gabi/infrastructure/{adapter}", "VALUE = 1\n")
 
 
 def test_io_through_pandas_and_cycles_are_detected_without_executing_code(tmp_path):
@@ -122,6 +128,34 @@ def test_baseline_can_only_shrink_when_modules_or_dependencies_are_retired():
     assert GUARD["baseline_growth"](previous, {"old.py": ["gabi.storage"]}) == []
 
 
+def test_config_may_only_replace_a_retired_storage_dependency():
+    previous = {"old.py": ["gabi.storage", "pandas"], "other.py": ["pandas"]}
+    assert GUARD["baseline_growth"](previous, {"old.py": ["gabi.config", "pandas"], "other.py": ["pandas"]}) == []
+    kept = GUARD["baseline_growth"](previous, {"old.py": ["gabi.config", "gabi.storage", "pandas"]})
+    assert kept == ["legacy baseline cannot add dependency old.py -> gabi.config"]
+    unrelated = GUARD["baseline_growth"](previous, {"other.py": ["gabi.config", "pandas"]})
+    assert unrelated == ["legacy baseline cannot add dependency other.py -> gabi.config"]
+    other = GUARD["baseline_growth"](previous, {"old.py": ["gabi.edgar", "pandas"]})
+    assert other == ["legacy baseline cannot add dependency old.py -> gabi.edgar"]
+
+
+def test_config_may_replace_a_flat_module_retired_in_the_same_change():
+    flat = "backend/src/gabi/"
+    previous = {flat + "user.py": ["gabi.paths", "pathlib"], flat + "paths.py": ["gabi.config"],
+                flat + "other.py": ["pathlib"]}
+    retired = {flat + "user.py": ["gabi.config", "pathlib"], flat + "other.py": ["pathlib"]}
+    assert GUARD["baseline_growth"](previous, retired) == []
+    still_there = {**retired, flat + "paths.py": ["gabi.config"]}
+    assert GUARD["baseline_growth"](previous, still_there) == [
+        f"legacy baseline cannot add dependency {flat}user.py -> gabi.config"]
+    unrelated = {flat + "user.py": ["gabi.paths", "pathlib"], flat + "other.py": ["gabi.config", "pathlib"]}
+    assert GUARD["baseline_growth"](previous, unrelated) == [
+        f"legacy baseline cannot add dependency {flat}other.py -> gabi.config"]
+    other = {flat + "user.py": ["gabi.edgar", "pathlib"], flat + "other.py": ["pathlib"]}
+    assert GUARD["baseline_growth"](previous, other) == [
+        f"legacy baseline cannot add dependency {flat}user.py -> gabi.edgar"]
+
+
 def test_retired_streamlit_cannot_return_as_import_or_dependency(tmp_path):
     write(tmp_path, ".github/architecture-legacy.json", json.dumps({"backend/src/gabi/old.py": ["streamlit"]}))
     write(tmp_path, "backend/src/gabi/old.py", "import streamlit\n")
@@ -129,3 +163,55 @@ def test_retired_streamlit_cannot_return_as_import_or_dependency(tmp_path):
     errors = GUARD["check"](tmp_path)
     assert any("Streamlit import was retired" in error for error in errors)
     assert any("Streamlit dependency was retired" in error for error in errors)
+
+
+def compatibility_repo(root, permanent: dict, pending: dict, modules: dict) -> None:
+    write(root, ".github/architecture-legacy.json", json.dumps({f"backend/src/gabi/{name}.py": deps
+                                                               for name, (_, deps) in modules.items()}))
+    for name, (source, _) in modules.items():
+        write(root, f"backend/src/gabi/{name}.py", source)
+    write(root, "backend/legacy-engine-hashes.json", json.dumps({"engine.py": "0" * 64}))
+    write(root, ".github/architecture-compatibility.json", json.dumps({"permanent": permanent, "pending": pending}))
+
+
+def test_every_flat_module_is_classified_and_frozen_engines_are_not_listed(tmp_path):
+    keep = {"reason": "hashed by name", "consumers": ["engine"]}
+    compatibility_repo(tmp_path, {"kept": keep, "engine": keep}, {"later": "#90", "gone": "#90"},
+                       {"kept": ("", []), "later": ("", []), "engine": ("", []), "stray": ("", [])})
+    errors = GUARD["check"](tmp_path)
+    assert "backend/src/gabi/stray.py: unclassified flat module; list it as permanent or pending (ADR 0006)" in errors
+    assert any("frozen engine engine is verified by hash" in error for error in errors)
+    assert any("remove retired module gone" in error for error in errors)
+
+
+def test_permanent_modules_cannot_gain_sql_http_or_processes(tmp_path):
+    keep = {"reason": "hashed by name", "consumers": ["engine"]}
+    modules = {"kept": ("import requests\nimport sqlite3\nfrom urllib import request\n", ["requests", "sqlite3", "urllib"]),
+               "later": ("import subprocess\n", ["subprocess"])}
+    compatibility_repo(tmp_path, {"kept": keep | {"io": ["sqlite3", "yfinance"]}}, {"later": "#90"}, modules)
+    errors = GUARD["check"](tmp_path)
+    assert "backend/src/gabi/kept.py: permanent compatibility module cannot use requests (ADR 0006)" in errors
+    assert "backend/src/gabi/kept.py: permanent compatibility module cannot use urllib (ADR 0006)" in errors
+    assert not any("cannot use sqlite3" in error for error in errors)  # justified exception
+    assert any("remove unused I/O exception kept -> yfinance" in error for error in errors)
+    assert not any("later.py" in error for error in errors)  # pending modules are debt, not permanent
+
+
+def test_compatibility_inventory_only_shrinks():
+    previous = {"permanent": {"kept": {"io": ["sqlite3"]}}, "pending": {"later": "#90", "retired": "#90"}}
+    assert GUARD["compatibility_growth"](previous, {"permanent": {"kept": {}, "later": {}}, "pending": {}}) == []
+    errors = GUARD["compatibility_growth"](previous, {"permanent": {"kept": {"io": ["sqlite3", "requests"]}, "new": {}},
+                                                      "pending": {"later": "#90", "other": "#90"}})
+    assert errors == [".github/architecture-compatibility.json: cannot add pending module other",
+                      ".github/architecture-compatibility.json: cannot add permanent module new unless it was pending",
+                      ".github/architecture-compatibility.json: cannot add I/O exception kept -> requests"]
+    assert GUARD["compatibility_growth"](previous, None) == [
+        ".github/architecture-compatibility.json: the compatibility inventory cannot be removed (ADR 0006)"]
+
+
+def test_current_compatibility_inventory_is_closed():
+    inventory = json.loads((ROOT / ".github/architecture-compatibility.json").read_text(encoding="utf-8"))
+    frozen = {name.removesuffix(".py") for name in json.loads((ROOT / "backend/legacy-engine-hashes.json").read_text())}
+    flat = {path.stem for path in (ROOT / "backend/src/gabi").glob("*.py")} - {"__init__"}
+    assert set(inventory["permanent"]) | set(inventory["pending"]) | frozen == flat
+    assert {name for name, entry in inventory["permanent"].items() if entry.get("io")} == {"smallmid_test", "storage"}

@@ -19,8 +19,9 @@ def specification() -> dict:
 
 def preregister(output: Path) -> dict:
     """Congela la especificación, crea la prueba ciega con puntuaciones y registra el plan secuencial."""
-    from gabi import blind_validation, research_lab
     from gabi import factor_stability as fs
+    from gabi import research_lab
+    from gabi.infrastructure.legacy import blind_validation
 
     spec = specification()
     output.mkdir(parents=True, exist_ok=True)

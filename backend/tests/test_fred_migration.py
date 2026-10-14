@@ -74,7 +74,7 @@ def original(path, monkeypatch):
               "config": SimpleNamespace(load_fred_key=lambda: "synthetic-key")}
     source = REFERENCE["macro"].replace("from . import config, storage", "")
     source = source.replace("from datetime import UTC, date, datetime", "from datetime import UTC, date")
-    source = source.replace("from .data_fetch import _classify_error", "from gabi.data_fetch import _classify_error")
+    source = source.replace("from .data_fetch import _classify_error", "from gabi.infrastructure.legacy.data_fetch import _classify_error")
     source = source.replace("    from . import sync_state as sync\n", "")
     exec(source, module)
     return module, sync
@@ -261,13 +261,11 @@ def test_metadata_and_parser_equal_captured_source(tmp_path, monkeypatch):
     assert observations(payload, include_missing=True) == [("a", None), ("b", None), ("c", 4.2)]
 
 
-def test_bootstrap_uses_modern_macro_without_global_config_mutation(tmp_path, monkeypatch):
-    from gabi import macro
+def test_bootstrap_uses_modern_macro_without_global_config_mutation(tmp_path):
     from gabi.infrastructure.settings import Settings
     from gabi_cli.bootstrap import build_executor
     from gabi_cli.sources.bootstrap import build_fred_operation
 
-    monkeypatch.setattr(macro, "ensure_macro_data", lambda **kwargs: pytest.fail("legacy refresh"))
     settings = Settings(data_dir=tmp_path)
     operation = build_fred_operation(settings, now=lambda: NOW)
     assert operation()["reason"] == "no_api_key"
@@ -277,14 +275,13 @@ def test_bootstrap_uses_modern_macro_without_global_config_mutation(tmp_path, mo
 
 
 def test_legacy_snapshot_missing_values_and_dates_equal_original(tmp_path, monkeypatch):
-    from gabi import macro
+    from gabi.domain.market.fred import snapshot
     old, _ = original(tmp_path / "unused.db", monkeypatch)
     histories = {sid: pd.DataFrame(columns=["date", "value"]) for sid in SERIES}
     histories["DGS10"] = pd.DataFrame({"value": [3., 4., None]},
         index=pd.to_datetime(["2023-01-01", "2023-05-01", "2024-01-01"]))
     old["get_series_history"] = histories.__getitem__
-    monkeypatch.setattr(macro, "get_series_history", histories.__getitem__)
-    pd.testing.assert_frame_equal(macro.get_snapshot(), old["get_snapshot"]())
+    pd.testing.assert_frame_equal(snapshot(SERIES, histories), old["get_snapshot"]())
 
 
 def test_network_error_retains_retryable_type_without_exposing_key(monkeypatch):
@@ -296,12 +293,19 @@ def test_network_error_retains_retryable_type_without_exposing_key(monkeypatch):
     assert str(error.value) == "ConnectionError"
 
 
-def test_periodic_injects_modern_callback_and_preserves_full_refresh(monkeypatch):
-    from gabi import config, macro
+def test_periodic_injects_modern_callback_and_preserves_full_refresh():
+    from gabi import config
     from gabi.infrastructure.legacy.periodic import LegacyPeriodicOperations
     calls = []
-    monkeypatch.setattr(macro, "ensure_macro_data", lambda **kwargs: pytest.fail("legacy call"))
     operations = LegacyPeriodicOperations(config.DATA_DIR,
         macro_sync=lambda **kwargs: calls.append(kwargs) or {"ok": True})
     assert operations.refresh_macro(True) == {"ok": True}
     assert calls == [{"full_refresh": True}]
+
+
+def test_periodic_without_callback_uses_the_same_operation(tmp_path, monkeypatch):
+    from gabi import config
+    from gabi.infrastructure.legacy.periodic import LegacyPeriodicOperations
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    assert LegacyPeriodicOperations(tmp_path).refresh_macro(False)["reason"] == "no_api_key"
+    assert not (tmp_path / "gabi.db").exists()

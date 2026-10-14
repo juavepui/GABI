@@ -8,7 +8,8 @@ import pytest
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import app_mode, evidence_confidence, rank_stability
+from gabi import evidence_confidence, rank_stability
+from gabi.domain.market import model_policy
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 
@@ -30,8 +31,8 @@ def test_top_twenty_and_detail_match_the_old_screener(market):
     before = _files(root)
     top = client.get("/api/v1/evidence")
     assert top.status_code == 200, top.text
-    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
-    expected = evidence_confidence.build(table, dict(app_mode.FROZEN_WEIGHTS))
+    table = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
+    expected = evidence_confidence.build(table, dict(model_policy.FROZEN_WEIGHTS))
     ordered = sorted(expected, key=lambda s: (-(expected[s]["score"] if expected[s]["score"] is not None else -1), s))
     selected = [s for s in ordered if expected[s]["score"] is not None
                 and (expected[s]["score_coverage"] or 0) >= .70][:20]  # evidence_ui.render
@@ -55,8 +56,8 @@ def test_top_twenty_and_detail_match_the_old_screener(market):
 
 def test_stability_matches_rank_stability_and_depends_on_mode(market):
     client, app, root = market
-    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
-    summary, metrics, companies = rank_stability.analyze(table, dict(app_mode.FROZEN_WEIGHTS))
+    table = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
+    summary, metrics, companies = rank_stability.analyze(table, dict(model_policy.FROZEN_WEIGHTS))
     investor = client.get("/api/v1/ranking/stability").json()
     assert investor["summary"]["stability_score"] == summary["stability_score"]
     assert [row["symbol"] for row in investor["companies"]] == companies[companies.base_rank <= 20].index.tolist()
@@ -77,7 +78,7 @@ def test_the_portfolio_plan_reads_frozen_weight_evidence_in_research(market):
     experimental = client.get("/api/v1/evidence").json()
     frozen = client.get("/api/v1/evidence", params={"frozen": True}).json()
     assert experimental["weights"] == {"value": 0.7, "quality": 0.1, "momentum": 0.1, "risk": 0.1}
-    assert frozen["weights"] == dict(app_mode.FROZEN_WEIGHTS)
+    assert frozen["weights"] == dict(model_policy.FROZEN_WEIGHTS)
 
 
 def test_evidence_is_computed_once_per_ranking_revision(market, monkeypatch):
@@ -95,16 +96,16 @@ def test_evidence_is_computed_once_per_ranking_revision(market, monkeypatch):
 
 def test_dates_in_ranking_rows_no_longer_break_the_evidence(market):
     client, app, _ = market
-    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
+    table = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
     table.loc[table.index[0], "next_earnings_date"] = date(2026, 10, 28)
-    assert evidence_confidence.build(table, dict(app_mode.FROZEN_WEIGHTS))
+    assert evidence_confidence.build(table, dict(model_policy.FROZEN_WEIGHTS))
 
 
 def test_block_coverage_and_warnings_match_the_old_screener(market):
-    from gabi import data_quality
+    from gabi.infrastructure.legacy import data_quality
 
     client, app, root = market
-    table = app.state.market.repository.ranking(dict(app_mode.FROZEN_WEIGHTS), TODAY).table
+    table = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY).table
     blocks = data_quality.score_block_coverage(table)
     body = client.get("/api/v1/ranking/coverage", params={"threshold": 0.95}).json()
     assert {row["block"]: row["complete"] for row in body["blocks"]} == {b: v["complete"] for b, v in blocks.items()}

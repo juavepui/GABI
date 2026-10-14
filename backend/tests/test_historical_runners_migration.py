@@ -1,8 +1,10 @@
 """Captured runner parity, explicit effects and bounded historical reads."""
 
+import ast
 import hashlib
 import json
 import sqlite3
+import sys
 from contextlib import closing
 from datetime import date
 from pathlib import Path
@@ -12,12 +14,13 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from gabi import config, historical_archive, historical_identity_audit, historical_membership, sec_history, storage
+from gabi import config, historical_archive, historical_membership, storage
 from gabi import historical_price_audit as facade
 from gabi.application.research import historical_composition as composition
 from gabi.application.research import historical_identity_audit as identities
 from gabi.application.research import historical_price_audit as prices
 from gabi.domain.research.periods import P2010
+from gabi.infrastructure.legacy import historical_identity_audit, sec_history
 from gabi.infrastructure.storage.historical_archive_writes import SqliteHistoricalArchiveWrites
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_audit_writes import SqliteHistoricalAuditWrites
@@ -32,7 +35,17 @@ REFERENCE = json.loads((Path(__file__).parent / 'fixtures/historical_runners_mig
 def captured(name):
     scope = dict(__name__=f'gabi._captured_{name}', __package__='gabi',
                  __file__=str(Path(facade.__file__).with_name(name + '.py')))
-    exec(REFERENCE[name], scope)
+    # The retired historical_data_audit facade only held connect_readonly; use its captured source.
+    source = REFERENCE[name].replace('from .historical_data_audit import connect_readonly\n', '')
+    # historical_identity_audit (retired in F7.27) only gave it the 2010-2015 quarters.
+    source = source.replace('from .historical_identity_audit import QUARTERS\n', '')
+    scope['QUARTERS'] = P2010.quarters
+    annual = json.loads((Path(__file__).parent / 'fixtures/historical_data_audit_migration.json')
+                        .read_text(encoding='utf-8'))['annual_source']
+    scope.update(sqlite3=sqlite3, Path=Path)
+    exec(next(ast.get_source_segment(annual, node) for node in ast.parse(annual).body
+              if getattr(node, 'name', '') == 'connect_readonly'), scope)
+    exec(source, scope)
     return scope
 
 
@@ -66,6 +79,8 @@ def local(tmp_path, monkeypatch):
 
 
 def test_identity_build_and_quarterly_coverage_match_captured(local, monkeypatch):
+    # The captured audit imported the flat sec_history retired in F7.31; the bridge keeps its names.
+    monkeypatch.setitem(sys.modules, 'gabi.sec_history', sec_history)
     old = captured('historical_identity_audit')
     monkeypatch.setattr(historical_identity_audit.issuer_evidence, 'listing_life', lambda cik: None)
     old['identity_nominations'] = lambda: ()

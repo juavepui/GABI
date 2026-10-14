@@ -12,8 +12,9 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from gabi import config, sec_history
+from gabi import config
 from gabi.application.research.sec_bulk import import_quarter
+from gabi.infrastructure.legacy import sec_history
 from gabi.infrastructure.storage.sec_bulk import LocalSecQuarter, SqliteSecQuarter
 
 REFERENCE = json.loads((Path(__file__).parent / 'fixtures/sec_bulk_import_migration.json').read_text(encoding='utf-8'))

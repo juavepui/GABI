@@ -95,7 +95,7 @@ def test_empty_summary_does_not_invoke_readers_and_domain_uses_no_clock_or_io(mo
 
 
 def test_worker_uses_explicit_clock_and_the_shared_flow(tmp_path, monkeypatch):
-    from gabi import data_quality
+    from gabi.infrastructure.legacy import data_quality
     from gabi.infrastructure.legacy.data_health import LegacyDataHealth
 
     readers = memory_readers()

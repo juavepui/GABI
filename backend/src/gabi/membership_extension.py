@@ -1,19 +1,18 @@
 """Replay reviewed, dated index changes; never infer past members from today's list."""
-import json
 from datetime import date
-from pathlib import Path
 
 import pandas as pd
 
 from gabi.domain.research import membership
 from gabi.domain.research.membership import fingerprint as fingerprint
 from gabi.domain.research.membership import symbols as symbols
+from gabi.infrastructure.storage import reviewed_resources
 
-LEDGER_PATH = Path(__file__).with_name("resources") / "sp500_extension.json"
+LEDGER_PATH = reviewed_resources.MEMBERSHIP_LEDGER
 
 
 def reviewed_through() -> str:
-    return str(json.loads(LEDGER_PATH.read_text(encoding="utf-8"))["verified_through"])
+    return str(reviewed_resources.membership_ledger()["verified_through"])
 
 
 def extend_membership(history: pd.DataFrame, ledger: dict) -> pd.DataFrame:
@@ -21,5 +20,4 @@ def extend_membership(history: pd.DataFrame, ledger: dict) -> pd.DataFrame:
 
 
 def apply_reviewed_extension(history: pd.DataFrame) -> pd.DataFrame:
-    ledger = json.loads(LEDGER_PATH.read_text(encoding="utf-8"))
-    return membership.apply_reviewed_extension(history, ledger, today=date.today())
+    return membership.apply_reviewed_extension(history, reviewed_resources.membership_ledger(), today=date.today())

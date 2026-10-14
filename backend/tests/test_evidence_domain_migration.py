@@ -84,7 +84,8 @@ def test_domain_does_not_read_mutable_legacy_configuration(monkeypatch):
 
 
 def test_source_adapter_passes_its_clock_and_rule_settings(monkeypatch):
-    from gabi import evidence_catalog, history_refresh, live_ledger, rank_stability
+    from gabi import evidence_catalog, live_ledger, rank_stability
+    from gabi.domain.market import freshness
     from gabi.infrastructure.legacy.evidence import LegacyEvidence
 
     cat = synthetic_catalogue()
@@ -94,7 +95,7 @@ def test_source_adapter_passes_its_clock_and_rule_settings(monkeypatch):
     monkeypatch.setattr(rank_stability, "analyze", lambda frame, weights: (
         {}, pd.DataFrame(), pd.DataFrame({"top20_inclusion": [1.] * len(frame)}, index=frame.index)))
     seen = []
-    monkeypatch.setattr(history_refresh, "last_completed_session", lambda now: seen.append(now) or "2024-01-10")
+    monkeypatch.setattr(freshness, "market_date", lambda now: seen.append(now) or "2024-01-10")
     catalogue = SimpleNamespace(load=lambda: cat, matches=lambda *a: True)
     sources = LegacyEvidence(catalogue, now=lambda: NOW)
     _equal(sources.evidence(frame(), scoring.DEFAULT_WEIGHTS), REFERENCE["build"])

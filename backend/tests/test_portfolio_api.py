@@ -3,7 +3,7 @@
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
-from gabi import app_mode
+from gabi.domain.market import model_policy
 from gabi.domain.portfolio import selection
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
@@ -20,7 +20,7 @@ def test_plan_matches_legacy_selection_and_allocation_without_writing(tmp_path):
         })
         assert response.status_code == 200, response.text
         plan = response.json()
-        snapshot = app.state.market.repository.ranking(app_mode.FROZEN_WEIGHTS, TODAY)
+        snapshot = app.state.market.repository.ranking(dict(model_policy.FROZEN_WEIGHTS), TODAY)
         expected = selection.target_portfolio(snapshot.table, 5)
         allocation = selection.allocate_new_capital(expected, {"T000": 80, "OUT": 25}, 200)
         assert [row["symbol"] for row in plan["target"]] == expected.index.tolist()

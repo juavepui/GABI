@@ -5,20 +5,6 @@
   ],
   "backend/src/gabi/academic_factors.py": [
     "gabi.config",
-    "io",
-    "pandas",
-    "requests"
-  ],
-  "backend/src/gabi/app_mode.py": [
-    "gabi.blind_validation",
-    "gabi.config",
-    "gabi.research_lab"
-  ],
-  "backend/src/gabi/blind_validation.py": [
-    "gabi.research_lab._current_git_commit",
-    "gabi.research_lab.log_experiment",
-    "gabi.screener_asof",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/block_bootstrap.py": [
@@ -31,8 +17,6 @@
     "pathlib",
     "scipy.stats"
   ],
-  "backend/src/gabi/broker_costs.py": [],
-  "backend/src/gabi/capital_allocation.py": [],
   "backend/src/gabi/capital_input_audit.py": [
     "gabi.config",
     "gabi.factor_sector_stability",
@@ -68,47 +52,15 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/data_fetch.py": [
-    "concurrent.futures",
-    "gabi.config",
-    "gabi.identity",
-    "gabi.price_sync",
-    "gabi.storage",
-    "gabi.sync_state",
-    "pandas",
-    "yfinance"
-  ],
-  "backend/src/gabi/data_quality.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.entity_master",
-    "gabi.insider",
-    "gabi.macro",
-    "gabi.scoring",
-    "gabi.storage",
-    "pandas"
-  ],
   "backend/src/gabi/edgar.py": [
     "concurrent.futures",
     "gabi.config",
-    "gabi.data_fetch._classify_error",
-    "gabi.edgar_sync",
     "gabi.identity",
-    "gabi.storage",
-    "gabi.sync_state",
-    "pandas",
-    "requests"
-  ],
-  "backend/src/gabi/edgar_sync.py": [
-    "gabi.edgar",
-    "gabi.identity",
-    "gabi.storage",
-    "gabi.sync_state"
+    "pandas"
   ],
   "backend/src/gabi/entity_master.py": [
     "gabi.edgar",
     "gabi.identity",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/evidence_catalog.py": [
@@ -116,10 +68,8 @@
     "gabi.factor_sector_stability"
   ],
   "backend/src/gabi/evidence_confidence.py": [
-    "gabi.app_mode",
     "gabi.config",
     "gabi.evidence_catalog",
-    "gabi.history_refresh.last_completed_session",
     "gabi.live_ledger",
     "gabi.rank_stability",
     "gabi.scoring"
@@ -189,36 +139,13 @@
     "gabi.identity",
     "pandas"
   ],
-  "backend/src/gabi/historical_data_audit.py": [
-    "pathlib",
-    "sqlite3"
-  ],
-  "backend/src/gabi/historical_identity_audit.py": [
-    "concurrent.futures",
-    "gabi.config",
-    "gabi.historical_archive",
-    "gabi.historical_issuer_evidence",
-    "gabi.historical_period.P2010",
-    "gabi.historical_period.Period",
-    "gabi.historical_period.get",
-    "gabi.historical_ticker_corrections.identity_nominations",
-    "gabi.identity",
-    "gabi.sec_history",
-    "gabi.storage",
-    "pathlib",
-    "requests"
-  ],
   "backend/src/gabi/historical_issuer_evidence.py": [
-    "gabi.identity",
-    "gabi.sec_history",
-    "pathlib",
-    "requests"
+    "gabi.config",
+    "pathlib"
   ],
   "backend/src/gabi/historical_membership.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "gabi.historical_period.REFERENCE_SOURCE",
-    "gabi.historical_period.REFERENCE_SOURCE_FULL",
     "gabi.universe",
     "pandas",
     "pathlib"
@@ -226,7 +153,6 @@
   "backend/src/gabi/historical_period.py": [],
   "backend/src/gabi/historical_pit.py": [
     "gabi.historical_membership",
-    "gabi.historical_period",
     "gabi.identity",
     "pandas"
   ],
@@ -235,17 +161,12 @@
     "gabi.config",
     "gabi.historical_issuer_evidence",
     "gabi.historical_membership",
-    "gabi.historical_period.P2010",
-    "gabi.historical_period.Period",
-    "gabi.historical_period.get",
     "gabi.historical_price_policy.YAHOO_SOURCE",
-    "gabi.historical_ticker_corrections.identity_nominations",
     "gabi.historical_tiingo.SOURCE_ID",
     "gabi.historical_tiingo.source_id",
     "gabi.historical_wiki.SOURCE_ID",
     "pandas",
-    "pathlib",
-    "sqlite3"
+    "pathlib"
   ],
   "backend/src/gabi/historical_price_policy.py": [
     "gabi.identity",
@@ -257,28 +178,21 @@
     "gabi.factor_stability",
     "gabi.full_universe_audit",
     "gabi.historical_archive",
-    "gabi.historical_period",
     "gabi.historical_pit",
     "gabi.historical_validation",
     "gabi.multifactor_backtest",
     "gabi.overfitting_audit",
     "gabi.scoring",
-    "gabi.storage",
     "numpy",
     "pandas",
     "pathlib"
   ],
-  "backend/src/gabi/historical_ticker_corrections.py": [
-    "pathlib"
-  ],
+  "backend/src/gabi/historical_ticker_corrections.py": [],
   "backend/src/gabi/historical_tiingo.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "gabi.storage",
-    "gabi.sync_state",
     "pandas",
-    "pathlib",
-    "requests"
+    "pathlib"
   ],
   "backend/src/gabi/historical_validation.py": [
     "exchange_calendars",
@@ -288,7 +202,6 @@
     "gabi.historical_pit",
     "gabi.identity",
     "gabi.scoring",
-    "gabi.storage",
     "numpy",
     "pandas",
     "pathlib"
@@ -296,80 +209,32 @@
   "backend/src/gabi/historical_wiki.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "pathlib",
-    "requests"
-  ],
-  "backend/src/gabi/history_refresh.py": [
-    "gabi.config",
-    "gabi.data_fetch",
-    "gabi.edgar",
-    "gabi.identity",
-    "gabi.macro",
-    "gabi.membership_extension.LEDGER_PATH",
-    "gabi.membership_extension.extend_membership",
-    "gabi.membership_extension.symbols",
-    "gabi.storage",
-    "gabi.universe",
-    "io",
-    "pandas",
-    "requests",
-    "shutil",
-    "sqlite3",
-    "yfinance"
+    "pathlib"
   ],
   "backend/src/gabi/identity.py": [
     "gabi.config",
-    "gabi.historical_pit",
     "pandas"
   ],
-  "backend/src/gabi/insider.py": [
-    "concurrent.futures",
-    "gabi.config",
-    "gabi.data_fetch._classify_error",
-    "gabi.edgar",
-    "gabi.storage",
-    "pandas",
-    "requests"
-  ],
   "backend/src/gabi/live_ledger.py": [
-    "gabi.app_mode",
     "gabi.config",
-    "gabi.edgar",
     "gabi.evidence_confidence",
-    "gabi.history_refresh.last_completed_session",
     "gabi.identity",
     "gabi.research_lab",
     "gabi.screener",
-    "gabi.storage",
     "numpy",
-    "os",
-    "pandas",
-    "subprocess",
-    "sys"
-  ],
-  "backend/src/gabi/macro.py": [
-    "gabi.config",
-    "gabi.data_fetch._classify_error",
-    "gabi.storage",
-    "gabi.sync_state",
-    "pandas",
-    "requests"
+    "pandas"
   ],
   "backend/src/gabi/membership_extension.py": [
-    "pandas",
-    "pathlib"
+    "pandas"
   ],
   "backend/src/gabi/metrics.py": [],
   "backend/src/gabi/multifactor_backtest.py": [
     "exchange_calendars",
     "gabi.config",
-    "gabi.data_quality",
     "gabi.historical_pit",
     "gabi.identity",
-    "gabi.rotation_policy",
     "gabi.screener_asof",
     "gabi.universe",
-    "numpy",
     "pandas"
   ],
   "backend/src/gabi/overfitting_audit.py": [
@@ -399,34 +264,12 @@
     "scipy"
   ],
   "backend/src/gabi/portfolio_backtest.py": [
-    "exchange_calendars",
-    "gabi.broker_costs",
-    "gabi.data_quality",
-    "gabi.historical_pit",
-    "gabi.identity",
     "gabi.multifactor_backtest",
-    "gabi.rotation_policy",
-    "gabi.screener_asof",
-    "gabi.universe",
     "pandas"
   ],
   "backend/src/gabi/portfolio_metrics.py": [
     "gabi.config",
     "pandas"
-  ],
-  "backend/src/gabi/price_sync.py": [
-    "gabi.data_fetch._classify_error",
-    "gabi.data_fetch.normalize_symbol",
-    "gabi.data_fetch.yf",
-    "gabi.history_refresh.last_completed_session",
-    "gabi.identity",
-    "gabi.storage",
-    "gabi.sync_state",
-    "numpy",
-    "pandas"
-  ],
-  "backend/src/gabi/quality_persistence.py": [
-    "gabi.edgar"
   ],
   "backend/src/gabi/r3_experiment.py": [
     "gabi.academic_factors",
@@ -465,10 +308,7 @@
   ],
   "backend/src/gabi/research_lab.py": [
     "gabi.config",
-    "gabi.storage",
-    "importlib.metadata",
-    "pandas",
-    "subprocess"
+    "pandas"
   ],
   "backend/src/gabi/risk.py": [
     "gabi.config",
@@ -494,53 +334,30 @@
   "backend/src/gabi/scoring.py": [],
   "backend/src/gabi/screener.py": [
     "gabi.config",
-    "gabi.data_fetch",
-    "gabi.edgar",
     "gabi.entity_master",
-    "gabi.macro",
-    "gabi.metrics",
     "gabi.risk",
     "gabi.scoring",
-    "gabi.storage",
     "gabi.technicals",
     "gabi.universe",
     "pandas"
   ],
   "backend/src/gabi/screener_asof.py": [
-    "gabi.capital_allocation",
     "gabi.edgar",
     "gabi.entity_master",
-    "gabi.historical_pit",
     "gabi.identity",
-    "gabi.quality_persistence",
     "gabi.risk",
     "gabi.scoring",
-    "gabi.storage",
     "gabi.technicals",
     "gabi.universe",
-    "gabi.valuation_expectations.expectations_metrics",
     "pandas"
-  ],
-  "backend/src/gabi/sec_history.py": [
-    "gabi.config",
-    "gabi.edgar",
-    "gabi.historical_archive",
-    "gabi.storage",
-    "lxml",
-    "pandas",
-    "pathlib",
-    "requests",
-    "sqlite3"
   ],
   "backend/src/gabi/smallmid_feasibility.py": [
     "gabi.config",
     "gabi.factor_stability",
     "gabi.historical_issuer_evidence",
     "gabi.historical_membership",
-    "gabi.historical_period",
     "gabi.historical_tiingo",
     "gabi.identity",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/smallmid_test.py": [
@@ -571,7 +388,6 @@
   "backend/src/gabi/stats_rigor.py": [],
   "backend/src/gabi/storage.py": [
     "gabi.config",
-    "gabi.identity.put_observations",
     "pandas",
     "sqlite3"
   ],
@@ -584,12 +400,6 @@
     "pathlib",
     "scipy",
     "sqlite3"
-  ],
-  "backend/src/gabi/sync_state.py": [
-    "gabi.data_fetch.RETRYABLE_CATEGORIES",
-    "gabi.data_fetch._classify_error",
-    "gabi.storage",
-    "requests"
   ],
   "backend/src/gabi/tail_effect_test.py": [
     "gabi.academic_factors",
@@ -608,13 +418,8 @@
   "backend/src/gabi/universe.py": [
     "gabi.config",
     "gabi.historical_pit",
-    "gabi.historical_ticker_corrections.correct_symbols",
-    "gabi.membership_extension.apply_reviewed_extension",
-    "io",
-    "pandas",
-    "requests"
+    "pandas"
   ],
-  "backend/src/gabi/valuation_expectations.py": [],
   "backend/src/gabi/value_hypothesis.py": [
     "gabi.scoring"
   ],

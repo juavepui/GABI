@@ -107,7 +107,7 @@ def test_syncs_are_explicit_jobs_with_their_failure_reason(company, monkeypatch,
 
 
 def _seed_insiders(root):
-    from gabi import insider
+    from gabi.infrastructure.storage.insiders import SCHEMA
 
     recent = (TODAY - timedelta(days=30)).isoformat()
     old = "2020-01-02"
@@ -116,18 +116,19 @@ def _seed_insiders(root):
             ("T001", "1", "a3", 1, "Ann", "CEO", 1, 0, 0, 0, recent, "M", "A", 10.0, None, 1010.0, recent),
             ("T001", "1", "a4", 1, "Old", "Director", 0, 1, 0, 0, old, "P", "A", 5.0, 10.0, 5.0, old)]
     with closing(sqlite3.connect(root / "gabi.db")) as db:
-        db.executescript(insider.SCHEMA)
+        db.executescript(SCHEMA)
         db.executemany(f"INSERT INTO insider_transactions VALUES ({','.join('?' * 17)})", rows)
         db.execute("INSERT INTO insider_fetch_meta VALUES ('T001', '2026-09-28T10:00:00+00:00')")
         db.commit()
 
 
 def test_insiders_match_the_old_ficha_summary_read_only(company):
-    from gabi import insider
+    from gabi.domain.market import insiders
+    from gabi.infrastructure.storage.insiders import SqliteInsiders
 
     client, root = company
     _seed_insiders(root)
-    legacy = insider.summarize_insider_activity("T001", months=6)
+    legacy = insiders.summarize_insider_activity(SqliteInsiders(root).transactions("T001"), 6, as_of=TODAY)
     before = (root / "gabi.db").read_bytes()
     body = client.get("/api/v1/companies/t001/insiders").json()
     assert (root / "gabi.db").read_bytes() == before
@@ -137,7 +138,7 @@ def test_insiders_match_the_old_ficha_summary_read_only(company):
                                      "has_10b5_1_only_buys")}
     assert (body["n_buys"], body["n_sells"], body["net_value"]) == (1, 1, 100 * 50.0 - 40 * 55.0)
     assert [row["transaction_code"] for row in body["recent"]] == legacy["recent"]["transaction_code"].tolist()
-    assert body["recent"][0]["transaction_label"] in insider.TRANSACTION_CODES.values()
+    assert body["recent"][0]["transaction_label"] in insiders.TRANSACTION_CODES.values()
     assert body["recent_total"] == 3 and body["fetched_at"] == "2026-09-28T10:00:00+00:00"
     assert client.get("/api/v1/companies/T002/insiders").json()["recent"] == []
 

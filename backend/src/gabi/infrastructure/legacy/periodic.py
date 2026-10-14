@@ -6,9 +6,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from gabi.application.administration.periodic import PeriodicTasks
+from gabi.application.administration.sync_events import SyncAttempt
 from gabi.application.research.blind import BlindValidationQueries
+from gabi.domain.market import sync_events as sync_rules
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.periodic import PeriodicFiles
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
 
 class LegacyPeriodicOperations:
@@ -20,29 +23,24 @@ class LegacyPeriodicOperations:
 
         if config.DATA_DIR.resolve() != data_dir.resolve():
             raise ValueError("El mantenimiento y los motores legacy no usan el mismo directorio de datos.")
+        self.data_dir = data_dir
+        self.events = OperationSyncEvents(data_dir / "gabi.db")
         self.tiingo_fetch, self.tiingo_import = tiingo_fetch, tiingo_import
         self.macro_sync = macro_sync
         self.sec_sync = sec_sync
 
     def latest_event_id(self):
-        from gabi.sync_state import latest_event_id
-
-        return latest_event_id()
+        return self.events.latest_event_id()
 
     def universe_checkpoint(self):
-        from gabi import sync_state
-
-        return sync_state.get("universe", "SP500", "members")
+        return self.events.get("universe", "SP500", "members")
 
     def universe_due(self, checkpoint):
-        from gabi import sync_state
-
-        return sync_state.due(checkpoint, 24)
+        return sync_rules.due(checkpoint, 24, datetime.now(UTC))
 
     def universe_attempt(self):
-        from gabi.sync_state import Attempt
-
-        return Attempt("universe", "SP500", "members")
+        return SyncAttempt("universe", "SP500", "members", self.events, now=lambda: datetime.now(UTC),
+                           wall_time=lambda: time.perf_counter(), cpu_time=lambda: time.thread_time())
 
     def universe(self, refresh):
         from gabi import screener
@@ -50,37 +48,32 @@ class LegacyPeriodicOperations:
         return screener.get_universe(force_refresh=refresh)
 
     def fingerprint(self, records):
-        from gabi.sync_state import fingerprint
-
-        return fingerprint(records)
+        return sync_rules.fingerprint(records)
 
     def refresh_symbols(self, symbols, full_refresh):
-        from gabi import screener
+        from gabi.infrastructure.legacy.data_fetch import refresh_data
 
         options: dict = {"full_refresh": True} if full_refresh else {}
         if self.sec_sync is not None:
             options["sec_sync"] = self.sec_sync
-        return screener.refresh_data(symbols, **options)
+        return refresh_data(symbols, **options)
 
     def refresh_macro(self, full_refresh):
-        if self.macro_sync is not None:
-            return self.macro_sync(full_refresh=full_refresh)
-        from gabi import macro
+        operation = self.macro_sync
+        if operation is None:  # Compatibility callers; the CLI bootstrap supplies the explicit ports.
+            from gabi.infrastructure.legacy.fred import fred_operation
 
-        return macro.ensure_macro_data(full_refresh=full_refresh)
+            operation = fred_operation(self.data_dir)
+        return operation(full_refresh=full_refresh)
 
     def events_since(self, event_id):
-        from gabi.sync_state import events_since
-
-        return events_since(event_id)
+        return self.events.events_since(event_id)
 
     def totals(self, events):
-        from gabi.sync_state import totals
-
-        return totals(events)
+        return sync_rules.totals(events)
 
     def record_rebalance(self, validation_id):
-        from gabi.blind_validation import record_rebalance
+        from gabi.infrastructure.legacy.blind_validation import record_rebalance
 
         return record_rebalance(validation_id)
 

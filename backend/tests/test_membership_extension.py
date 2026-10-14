@@ -1,12 +1,16 @@
 import copy
 import json
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+import yfinance
 
 from gabi import universe
-from gabi.history_refresh import last_completed_session, period_symbols
+from gabi.domain.market.freshness import market_date as last_completed_session
+from gabi.domain.research.history_refresh import period_symbols
+from gabi.infrastructure.legacy import history_refresh
 from gabi.membership_extension import LEDGER_PATH, extend_membership, fingerprint
 
 
@@ -59,13 +63,24 @@ def test_refresh_stale_upstream_keeps_local_extension(reviewed, monkeypatch, tmp
     monkeypatch.setattr(universe, "HISTORICAL_MEMBERSHIP_CACHE", cache)
     monkeypatch.setattr(universe, "apply_reviewed_extension", lambda h: extend_membership(h, ledger))
 
+    import requests
+
     class Response:
         content = history.to_csv(index=False).encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
 
         def raise_for_status(self):
             pass
 
-    monkeypatch.setattr(universe.requests, "get", lambda *args, **kwargs: Response())
+        def iter_content(self, size):
+            yield self.content
+
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Response())
     pd.testing.assert_frame_equal(universe.get_historical_membership(force_refresh=True), extended)
     pd.testing.assert_frame_equal(pd.read_csv(cache), extended)
 
@@ -103,7 +118,7 @@ def test_legacy_duplicate_dates_are_preserved(reviewed):
 
 
 def test_renamed_price_series_excludes_later_prices_but_keeps_adjusting_splits(monkeypatch):
-    from gabi import history_refresh, identity
+    from gabi import identity
     frame = pd.DataFrame({"Close": [20., 21., 11.], "Adj Close": [10., 10.5, 11.],
                           "Stock Splits": [0., 0., 2.]},
                          index=pd.to_datetime(["2025-11-10", "2025-11-11", "2026-01-02"]))
@@ -114,18 +129,18 @@ def test_renamed_price_series_excludes_later_prices_but_keeps_adjusting_splits(m
             assert kwargs["end"] == "2026-01-03"
             return frame
 
-    monkeypatch.setattr(history_refresh.yf, "Ticker", lambda s: Ticker())
+    monkeypatch.setattr(yfinance, "Ticker", lambda s: Ticker())
     monkeypatch.setattr(identity, "resolve", lambda *a: {"entity_id": None})
     saved = {}
-    monkeypatch.setattr(history_refresh.storage, "upsert_prices", lambda s, f, **kw: saved.update(prices=f))
-    monkeypatch.setattr(history_refresh.storage, "upsert_splits", lambda s, f, **kw: saved.update(splits=f))
+    monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(
+        prices=lambda s, f, **kw: saved.update(prices=f), splits=lambda s, f, **kw: saved.update(splits=f)))
     assert history_refresh.refresh_prices("OLD", "NEW", "2026-01-03", "2025-11-11") == 1
     assert saved["prices"].index.max() == pd.Timestamp("2025-11-10")
     assert saved["splits"] == {"2026-01-02": 2.}
 
 
 def test_empty_provider_rows_cannot_erase_cached_close(monkeypatch):
-    from gabi import history_refresh, identity
+    from gabi import identity
     frame = pd.DataFrame({"Close": [10., float("nan")], "Adj Close": [10., float("nan")]},
                          index=pd.to_datetime(["2026-09-21", "2026-09-22"]))
 
@@ -133,26 +148,26 @@ def test_empty_provider_rows_cannot_erase_cached_close(monkeypatch):
         def history(self, **kwargs):
             return frame
 
-    monkeypatch.setattr(history_refresh.yf, "Ticker", lambda s: Ticker())
+    monkeypatch.setattr(yfinance, "Ticker", lambda s: Ticker())
     monkeypatch.setattr(identity, "resolve", lambda *a: {"entity_id": None})
     saved = {}
-    monkeypatch.setattr(history_refresh.storage, "upsert_prices", lambda s, f, **kw: saved.update(prices=f))
-    monkeypatch.setattr(history_refresh.storage, "upsert_splits", lambda *a, **kw: None)
+    monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(
+        prices=lambda s, f, **kw: saved.update(prices=f), splits=lambda *a, **kw: None))
     assert history_refresh.refresh_prices("AAA", "AAA", "2026-09-23") == 1
     assert list(saved["prices"].index) == [pd.Timestamp("2026-09-21")]
 
 
 @pytest.mark.parametrize("different_basis", [False, True])
 def test_share_class_cache_requires_matching_adjustments(monkeypatch, different_basis):
-    from gabi import history_refresh
     source = pd.DataFrame({"close": [10.] * 7, "adj_close": [10.] * 7},
                           index=pd.date_range("2026-09-17", periods=7))
     target = source.iloc[:5].copy()
     if different_basis:
         target["adj_close"] *= .5
-    monkeypatch.setattr(history_refresh.storage, "get_prices", lambda s: source if "." in s else target)
+    monkeypatch.setattr(history_refresh, "cached_data", SimpleNamespace(
+        prices=lambda cache, s: source if "." in s else target))
     saved = {}
-    monkeypatch.setattr(history_refresh.storage, "upsert_prices", lambda s, f: saved.update({s: f}))
+    monkeypatch.setattr(history_refresh, "_writes", lambda: SimpleNamespace(prices=lambda s, f: saved.update({s: f})))
     result = history_refresh.restore_share_class_spelling("2026-09-23")
     if different_basis:
         assert result == saved == {}

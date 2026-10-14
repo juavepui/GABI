@@ -53,7 +53,10 @@ class FredSource:
         return payload
 
     def fetch(self, series_id: str, api_key: str, units: str = "lin", limit: int = 260,
-              *, observation_start: str | None = None, include_missing: bool = False) -> list:
+              *, observation_start: str | None = None, include_missing: bool = False,
+              require_complete: bool = True) -> list:
+        """Newest first. ``require_complete=False`` keeps the compatibility behaviour of
+        returning only the newest ``limit`` rows when FRED has more."""
         if not 1 <= limit <= self.max_rows:
             raise ValueError("La ventana FRED supera el límite de observaciones.")
         params = {"series_id": series_id, "api_key": api_key, "file_type": "json",
@@ -62,7 +65,7 @@ class FredSource:
             params["observation_start"] = observation_start
         payload = self._payload(BASE_URL, params, observations_request=True)
         rows = payload.get("observations", [])
-        if len(rows) > limit or int(payload.get("count", len(rows))) > limit:
+        if len(rows) > limit or require_complete and int(payload.get("count", len(rows))) > limit:
             raise ValueError("La respuesta FRED requiere paginación; checkpoint conservado.")
         return observations(payload, include_missing=include_missing)
 

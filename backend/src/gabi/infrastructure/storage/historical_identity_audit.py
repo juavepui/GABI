@@ -58,6 +58,13 @@ class SqliteIdentityAuditReads:
     def coverage_inputs(self, period):
         return self._inputs(period, coverage=True)
 
+    def issuer_candidates(self) -> list[tuple]:
+        with read_only(self.path, self.limits['max_field_bytes']) as (db, tables):
+            if 'historical_issuer_candidates' not in tables:
+                raise ValueError('Missing local identity tables: historical_issuer_candidates')
+            return bounded_rows(db, 'SELECT symbol,cik,name,date_added,date_removed,observed_from '
+                                'FROM historical_issuer_candidates WHERE source_id=?', (CANDIDATE_SOURCE,), **self.limits)
+
     def counts(self):
         with read_only(self.path, self.limits['max_field_bytes']) as (db, tables):
             return {key: db.execute(query).fetchone()[0] if table in tables else 0

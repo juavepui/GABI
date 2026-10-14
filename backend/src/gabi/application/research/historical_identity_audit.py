@@ -30,3 +30,64 @@ def build_evidence_intervals(reader: IdentityAuditReader, official_names: Callab
 def coverage_report(reader: IdentityAuditReader, period: Period = P2010) -> dict:
     history, candidates, aliases, intervals, names = reader.coverage_inputs(period)
     return rules.coverage_report(history, candidates, aliases, intervals, names, period)
+
+
+def annual_report_symbol_evidence[Document](
+        rows: Callable[[], list[tuple]], nominations, limit: int, *, extended: bool,
+        listing_life: Callable[[str], dict | None], fetch_annual_report: Callable[[str, dict], tuple[str, Document]],
+        text: Callable[[Document], str], digest: Callable[[Document], str],
+        symbols: Callable[[str, bool], set[str]]) -> tuple[list[dict], int, int]:
+    """Ticker proofs from 10-K text for intervals the XBRL covers left open.
+
+    Early XBRL covers often omit ``dei:TradingSymbol``; the annual report's market section states
+    it. A report naming exactly one symbol is a proof (URL + SHA-256); otherwise it is ignored.
+    Returns the records, the number of target intervals and the reports downloaded."""
+    if limit < 0:
+        raise ValueError("limit must be nonnegative")
+    targets = rules.annual_report_targets(rows(), nominations)
+    downloads = 0
+    records = []
+    for _symbol, cik, start, end, _status in targets:
+        life = listing_life(cik)
+        if life is None:
+            continue
+        for report in rules.reports_to_check(life["annual_reports"], start, end):
+            if downloads >= limit:
+                break
+            url, path = fetch_annual_report(cik, report)
+            downloads += 1
+            found = symbols(text(path), extended)
+            if extended and len(found) > 1:
+                # Other companies' symbols (investees, spin-offs) appear in the
+                # text; keep the one reviewed ticker of this CIK, if unique.
+                found &= rules.reviewed_tickers(nominations, cik, report["filed"])
+            if len(found) != 1:
+                continue
+            records.append({"symbol": next(iter(found)), "cik": cik, "accession": report["accession"],
+                            "filed_date": report["filed"], "historical_name": life["name"],
+                            "historical_name_source": "sec_10k_text", "sha256": digest(path), "source_url": url})
+    return records, len(targets), downloads
+
+
+def fetch_issuer_name_histories(read_ciks: Callable[[], list[str]], limit: int, *, cached: Callable[[str], bool],
+                                download: Callable[[str], dict], errors: tuple[type[BaseException], ...],
+                                log: Callable[[str], None]) -> dict:
+    """Cache SEC's official name chain for still-unresolved historical CIKs."""
+    if limit < 0:
+        raise ValueError("limit must be nonnegative")
+    ciks = read_ciks()
+    already = fetched = failed = 0
+    for cik in ciks:
+        if cached(cik):
+            already += 1
+            continue
+        if fetched + failed >= limit:
+            break
+        try:
+            if normalize_cik(download(cik)["cik"]) != cik:
+                raise ValueError("SEC submissions issuer CIK mismatch")
+            fetched += 1
+        except errors as exc:
+            failed += 1
+            log(f"SEC issuer name history failed {cik}: {exc}")
+    return {"candidate_ciks": len(ciks), "cached": already, "fetched": fetched, "failed": failed}

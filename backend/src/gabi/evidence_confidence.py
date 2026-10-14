@@ -3,9 +3,10 @@ from datetime import UTC, datetime
 
 from gabi.application.market.evidence_assessment import build_evidence
 from gabi.domain.market import evidence as rules
+from gabi.domain.market import model_policy
+from gabi.domain.market.freshness import market_date as last_completed_session
 
-from . import app_mode, config, evidence_catalog, live_ledger, rank_stability, scoring
-from .history_refresh import last_completed_session
+from . import config, evidence_catalog, live_ledger, rank_stability, scoring
 
 RULE_VERSION = rules.RULE_VERSION
 _number = rules._number
@@ -38,5 +39,5 @@ def build(frame, weights, *, universe_id="SP500_CURRENT", stage="LIVE_FORWARD", 
     return build_evidence(frame, weights, universe_id=universe_id, stage=stage, now=now, market_date=market_date,
                           catalogue=catalogue, matching=evidence_catalog.matches(catalogue, weights, universe_id),
                           metadata=live_ledger.model_metadata(weights=weights, universe_id=universe_id) if not context else {},
-                          analyze_stability=rank_stability.analyze, model_id=app_mode.FROZEN_MODEL_ID,
+                          analyze_stability=rank_stability.analyze, model_id=model_policy.FROZEN_MODEL_ID,
                           benchmark=config.BENCHMARK_SYMBOL, rules=_rules(), context=context)

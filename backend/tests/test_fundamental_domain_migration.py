@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from gabi import config, edgar, historical_period, live_ledger, quality_persistence, scoring, storage
+from gabi import config, edgar, historical_period, live_ledger, scoring, storage
 from gabi.application.market.quality import quality_as_of
 from gabi.domain.market import quality_persistence as quality
 from gabi.domain.market import scoring as domain_scoring
@@ -116,7 +116,6 @@ def test_legacy_functions_and_ranking_use_single_domain_implementations():
     pd.testing.assert_series_equal(scoring.compute_confidence(frame), domain_scoring.compute_confidence(frame))
     assert calculators().scores is domain_scoring.build_scores
     assert calculators().confidence is domain_scoring.compute_confidence
-    assert quality_persistence.from_facts is quality.from_facts
     assert historical_period.Period is periods.Period
     assert historical_period.P2010 is periods.P2010
     assert edgar._extract_annual_values is sec_facts._extract_annual_values

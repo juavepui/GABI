@@ -7,6 +7,7 @@ The legacy source comes from Git; neither operational data nor reserved studies 
 import json
 import sqlite3
 import subprocess
+import sys
 import tempfile
 import time
 import tracemalloc
@@ -28,6 +29,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    # Retired flat modules imported by the captured sources (F7), shared with the parity tests.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "tests"))
+    import retired_modules
+
+    retired_modules.install()
     source = subprocess.run(["git", "show", f"{BASELINE}:backend/src/gabi/periodic_tasks.py"],
                             cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True).stdout
     legacy = types.ModuleType("gabi.periodic_benchmark")

@@ -1,0 +1,154 @@
+"""Download and validate SEC's 2009-2015 structured archive, without inventing dates (``gabi_cli research sec-history``).
+
+NUM.ddate and qtrs are rounded by SEC. Raw records are retained separately;
+only original XBRL contexts supply exact dates for GABI's fact schema. This
+bridge composes the SEC ingest use cases with the archive and EDGAR modules.
+"""
+import json
+import zipfile
+from pathlib import Path
+
+import pandas as pd
+
+from gabi import config, edgar, historical_archive
+from gabi.application.research import sec_bulk
+from gabi.application.research import sec_quarter_ingest as quarter_ingest
+from gabi.domain.market.sec_facts import issuer_companyfacts_rows
+from gabi.domain.research import sec_bulk as bulk_rules
+from gabi.infrastructure.providers import sec_archive
+from gabi.infrastructure.storage import sec_bulk as bulk_storage
+from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
+from gabi.infrastructure.storage.backups import backup_once
+from gabi.infrastructure.storage.sec_archive_download import download_pinned
+
+SCHEMA = bulk_storage.SCHEMA
+DIRECTORY = config.DATA_DIR / "history_refresh" / "validation_1996_2015"
+TRACKED = set(edgar.TRACKED_TAGS + edgar.SHARES_TAGS)
+
+
+ensure_schema = bulk_storage.initialize_compatibility
+
+
+def download(url: str, path: Path) -> Path:
+    return download_pinned(url, path, database=config.DB_PATH, user_agent=config.SEC_USER_AGENT)
+
+
+def _download_chunks(url: str):
+    yield from sec_archive.SecArchiveChunks(config.SEC_USER_AGENT).chunks(url)
+
+
+date8 = bulk_rules.date8
+
+
+def import_quarter(path: Path, source_url: str, ciks: set[str], *, facts: bool = True) -> dict:
+    return sec_bulk.import_quarter(bulk_storage.LocalSecQuarter(path), bulk_storage.SqliteSecQuarter(config.DB_PATH),
+                                   source_url, ciks, tracked=TRACKED, shares=set(edgar.SHARES_TAGS), facts=facts)
+
+
+def parse_instance(content: bytes, *, cik: str, accn: str, filed_date: str, form: str, fp: str, fy: str) -> list[dict]:
+    """Consolidated standard facts only; exact XBRL context dates, never NUM dates."""
+    return bulk_rules.instance_facts(*ingest_storage.decode_instance(content), cik=cik, accn=accn,
+                                     filed_date=filed_date, form=form, fp=fp, fy=fy,
+                                     tracked=TRACKED, shares=set(edgar.SHARES_TAGS))
+
+
+def _selection() -> ingest_storage.SqliteSecIngestSelection:
+    # The compatibility setting is captured per operation, never mutated.
+    return ingest_storage.SqliteSecIngestSelection(config.DB_PATH)
+
+
+def _download_to_directory(url: str, name: str) -> Path:
+    return download(url, DIRECTORY / name)
+
+
+def _import(path: Path, url: str, ciks: set[str], facts: bool) -> dict:
+    return import_quarter(path, url, ciks, facts=facts)
+
+
+def target_ciks() -> set[str]:
+    return _selection().candidate_ciks_before("2016-01-01")
+
+
+def run_bulk() -> dict:
+    DIRECTORY.mkdir(parents=True, exist_ok=True)
+    backup_once(config.DB_PATH, DIRECTORY / "before_validation.db")
+    return quarter_ingest.ingest_quarters(
+        bulk_rules.quarter_keys(range(2009, 2016)), target_ciks(), download=_download_to_directory,
+        import_quarter=_import, checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "bulk_report.json"),
+        errors=(sec_archive.REQUEST_ERROR, ValueError, zipfile.BadZipFile), log=_log)
+
+
+def _log(*values) -> None:
+    print(*values, flush=True)
+
+
+def recover_instances(limit: int = 100, *, quarterly: bool = False, unmatched: bool = False) -> dict:
+    """Recover original contexts for filings lacking exact facts in the local cache."""
+    historical_archive.register_source("sec-original-xbrl", {
+        "start": "2009-01-01", "end_exclusive": "2016-01-01",
+        "quality": "exact_contexts_from_original_SEC_XBRL; ticker_identity_not_certified",
+        "provenance": "sec_archive_files and instances_report.json contain URLs and file hashes",
+    })
+    reviewed = set(pd.read_csv(DIRECTORY / "sec-unmatched.csv").accn) if unmatched else None
+
+    def import_facts(symbol: str, cik: str, rows: list[dict], url: str) -> None:
+        # The source symbol is explicitly a CIK placeholder, never a ticker alias.
+        historical_archive.import_sec_facts("sec-original-xbrl", symbol, cik, rows, source_url=url)
+
+    return quarter_ingest.recover_instances(
+        _selection(), limit=limit, quarterly=quarterly, unmatched=reviewed,
+        checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "instances_report.json"),
+        fetch=lambda url, name: _download_to_directory(url, name).read_bytes(), parse=parse_instance, import_facts=import_facts,
+        errors=(sec_archive.REQUEST_ERROR, ValueError, ingest_storage.XML_ERROR), log=_log)
+
+
+def _companyfacts(url: str, name: str) -> dict:
+    return json.loads(_download_to_directory(url, name).read_text(encoding="utf-8"))
+
+
+def _issuer_rows(window: tuple[str, str] | None = None):
+    def rows(payload: dict, cik: str) -> list:
+        return issuer_companyfacts_rows(payload, cik, tracked=edgar.TRACKED_TAGS, shares=edgar.SHARES_TAGS,
+                                        filed_window=window)
+    return rows
+
+
+def recover_companyfacts_gaps() -> dict:
+    """Resolve unmatched bulk issuers directly by CIK; no ticker mapping needed."""
+    historical_archive.register_source("sec-companyfacts-gap-recovery", {
+        "start": "2009-01-01", "end_exclusive": "2016-01-01",
+        "quality": "SEC issuer facts; historical ticker identity not certified",
+        "provenance": "companyfacts_gaps_report.json and sec_archive_files",
+    })
+    gaps = pd.read_csv(DIRECTORY / "sec-unmatched.csv", dtype={"cik": str})
+
+    def save(cik: str, rows: list, url: str) -> None:
+        historical_archive.import_sec_facts("sec-companyfacts-gap-recovery", f"CIK{cik}", cik, rows, source_url=url)
+
+    return quarter_ingest.ingest_companyfacts(
+        sorted(set(gaps.cik)), fetch=_companyfacts, rows_for=_issuer_rows(("2009-01-01", "2016-01-01")), save=save,
+        errors=(sec_archive.REQUEST_ERROR, ValueError), with_url=True,
+        checkpoints=ingest_storage.JsonQuarterReport(DIRECTORY / "companyfacts_gaps_report.json"), log=_log)
+
+
+def ingest_issuer_companyfacts(ciks: set[str]) -> dict:
+    """Company Facts for historical issuers, attributed by CIK only (#32).
+
+    Rows go to ``entity_observations`` under a ``CIK##########`` placeholder
+    symbol, never under a ticker, so the legacy ticker-keyed table cannot mix
+    a predecessor's facts with a later company reusing the symbol.
+    """
+    return quarter_ingest.ingest_companyfacts(
+        sorted(str(value).zfill(10) for value in ciks), fetch=_companyfacts, rows_for=_issuer_rows(),
+        save=lambda cik, rows, url: edgar.upsert_edgar_facts(f"CIK{cik}", rows, cik=cik),
+        errors=(sec_archive.REQUEST_ERROR, ValueError, KeyError), with_url=False)
+
+
+def command(*, instances: int = 0, quarterly: bool = False, companyfacts_gaps: bool = False,
+            unmatched: bool = False) -> dict:
+    """The published steps: bulk import by default, original instances, or Company Facts gaps."""
+    if companyfacts_gaps:
+        return recover_companyfacts_gaps()
+    if instances:
+        return recover_instances(instances, quarterly=quarterly, unmatched=unmatched)
+    return run_bulk()

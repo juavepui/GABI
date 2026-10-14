@@ -3,7 +3,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import data_fetch
+import yfinance
+
+from gabi.infrastructure.legacy import data_fetch
 
 
 def test_classify_rate_limit():
@@ -141,6 +143,6 @@ def test_single_ticker_multiindex_download_keeps_adjusted_close(tmp_path, monkey
     columns = pd.MultiIndex.from_product([["AAA"], ["Open", "High", "Low", "Close", "Adj Close", "Volume"]])
     downloaded = pd.DataFrame([[10, 10, 10, 10, 9, 100]],
                               index=pd.to_datetime(["2026-09-15"]), columns=columns)
-    monkeypatch.setattr(data_fetch.yf, "download", lambda *args, **kwargs: downloaded)
+    monkeypatch.setattr(yfinance, "download", lambda *args, **kwargs: downloaded)
     assert data_fetch.fetch_prices_batch(["AAA"]) == {}
     assert storage.get_prices("AAA")["adj_close"].iloc[0] == 9
