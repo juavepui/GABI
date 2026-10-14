@@ -197,9 +197,14 @@ detalle en `pasos/<paso>/atribucion-*.csv`):
 
 ## Reproducibilidad
 
-- **Código**: `python -m gabi.historical_revalidation --prepare <variante>`,
+- **Código**: `python -m gabi_cli research historical-revalidation --prepare <variante>`,
   `--evaluate <vista>` y `--summarize`; `--analyze <vista>` rehace solo el
-  análisis.
+  análisis. Los resultados publicados se generaron con
+  `python -m gabi.historical_revalidation` en el commit `58a2ed3` (su
+  `analysis_sha256` es el de ese fichero); desde el
+  [ADR 0002](../adr/0002-reproducible-research-commands.md) la misma orden, con los
+  mismos argumentos, es el subcomando de `gabi_cli research`. El protocolo cita la
+  orden antigua y no se edita.
 - **Protocolo**: `eda8d64`.
 - **Fingerprints**: cada caché (`data/revalidation_2011_2025/<variante>`)
   guarda en `manifest.json` el SHA-256 de su snapshot, de cada ranking y de los

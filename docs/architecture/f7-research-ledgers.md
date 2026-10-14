@@ -90,5 +90,39 @@ de 40 periodos, resultados idénticos. Mediana de 5 en dos ejecuciones:
 
 Sin cambio apreciable.
 
-Pendiente de #133: clasificar y mover a `gabi_cli research` los comandos que solo
-reproducen documentos publicados, cada uno con prueba de hashes de sus artefactos.
+## Segunda entrega: comandos de reproducción ([ADR 0002](../adr/0002-reproducible-research-commands.md))
+
+Clasificación de los módulos de #133 que tenían o tienen una orden propia:
+
+| Módulo | Clase | Ahora |
+| --- | --- | --- |
+| `historical_validation` (#33) | reproduce `docs/historical-validation-2010-2015` (no sellado) | `gabi_cli research historical-validation`; puente `infrastructure/legacy/historical_validation`; el módulo pierde `main` y `storage` (SPY con `cached_data` sobre `config.DB_PATH`, que `analyze` sigue apuntando al snapshot) |
+| `historical_revalidation` (#35) | reproduce `docs/historical-revalidation-2011-2025` (no sellado; `PROTOCOL.md` cita la orden antigua y no se edita) | `gabi_cli research historical-revalidation`; el control de hechos SEC desactualizados lee `SqliteIssuerFactsFreshness` en solo lectura |
+| `smallmid_feasibility` (#44) | reproduce `docs/smallmid-feasibility` (no sellado) | `gabi_cli research smallmid-feasibility`; la consulta constante `SELECT '2025'` pasa a ser el literal `2025` |
+| `smallmid_test` (#44) | prueba prospectiva preregistrada y en curso (`PREREGISTRO*.md`, huella de funciones `69efba58…`, datos aún sin congelar) | se queda; sus `--rankings`/`--analyze` no son reproducción y sus tareas periódicas lo usan |
+| `rotation_experiment` | sellado (`protocol.json`, `audit.json`) | ya era `gabi_cli research rotation-experiment` (excepción del ADR 0002) |
+| `value_hypothesis` | sellado (`preregistro.json`) | ya era `gabi_cli research value-hypothesis`; adaptador fino de `spec_hash` |
+| `variant_validation`, `evidence_confidence`, `evidence_catalog` | bibliotecas sin orden propia (motores congelados, API) | sin cambio en esta entrega |
+
+Los tres módulos trasladados siguen en su sitio porque los importan motores congelados
+(`cross_section_test`, `factor_zoo`, `placebo_engine`, `tail_effect_test`,
+`r3_experiment`) o `smallmid_test`. Ni `historical_validation.py` ni
+`historical_revalidation.py` figuran en las fuentes que determinan una caché
+(`extra_sources`), así que quitar su `main` no invalida rankings. Su
+`analysis_sha256` ya no era el publicado: cada README indica la orden y el commit
+originales (`3e43efb` y `58a2ed3`). Inventario: los tres pierden `gabi.storage`.
+
+Cambio de comportamiento acotado: sin las tablas de identidad, `stale_issuer_facts`
+lanza `ValueError` sin crear la base, en lugar de `sqlite3.OperationalError`.
+
+Validación: `test_research_commands_migration.py` con
+`research_commands_migration.json` (código de `dc63e5d`). Ejecuta el `main` capturado
+de cada módulo y el subcomando nuevo con los motores sustituidos por registradores:
+mismas llamadas, mismos argumentos y mismos bytes impresos (incluido el recorte a
+4.000 caracteres de `--summarize`). Compara `stale_issuer_facts` capturado y nuevo
+sobre una base temporal, comprueba que la serie SPY se lee del snapshot redirigido y
+que los artefactos publicados de #33 y #35 conservan los hashes que registran
+(`audit.json`, `summary.json`). Una mutación deliberada del filtro de niveles
+acreditados hace fallar la prueba. El acceso a datos no cambia: las dos consultas se
+hacen en una transacción de lectura.
+Validación del 2026-10-14: suite Python completa de 2.109 pruebas correcta.

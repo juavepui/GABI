@@ -220,7 +220,6 @@
     "gabi.multifactor_backtest",
     "gabi.overfitting_audit",
     "gabi.scoring",
-    "gabi.storage",
     "numpy",
     "pandas",
     "pathlib"
@@ -241,7 +240,6 @@
     "gabi.historical_pit",
     "gabi.identity",
     "gabi.scoring",
-    "gabi.storage",
     "numpy",
     "pandas",
     "pathlib"
@@ -446,7 +444,6 @@
     "gabi.historical_membership",
     "gabi.historical_tiingo",
     "gabi.identity",
-    "gabi.storage",
     "pandas"
   ],
   "backend/src/gabi/smallmid_test.py": [
