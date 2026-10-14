@@ -8,7 +8,8 @@ import requests
 import sync_checkpoints as sync
 import yfinance
 
-from gabi import config, data_fetch, edgar, historical_tiingo, storage
+from gabi import config, edgar, historical_tiingo, storage
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
@@ -288,7 +289,7 @@ def test_periodic_task_integrates_checkpoints_and_full_refresh(monkeypatch):
 
     flags = []
     monkeypatch.setattr(screener, "get_universe", lambda **k: flags.append(k) or pd.DataFrame({"symbol": ["A"]}))
-    monkeypatch.setattr(screener, "refresh_data", lambda *a, **k: flags.append(k) or {"failed": {}})
+    monkeypatch.setattr(data_fetch, "refresh_data", lambda *a, **k: flags.append(k) or {"failed": {}})
     def periodic():
         return build_periodic_tasks(config.DATA_DIR, macro_sync=lambda **k: {"ok": True})
 

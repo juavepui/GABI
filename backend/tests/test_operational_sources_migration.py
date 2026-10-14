@@ -16,7 +16,8 @@ import pandas as pd
 import pytest
 import yfinance
 
-from gabi import config, data_fetch, identity, storage
+from gabi import config, identity, storage
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.insiders import SqliteInsiders
 
@@ -67,6 +68,12 @@ def dump(path: Path) -> dict:
     with closing(sqlite3.connect(path)) as db:
         tables = sorted(n for n, in db.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name<>'sqlite_sequence'"))
         return {t: sorted(map(repr, db.execute(f"SELECT * FROM {t}").fetchall())) for t in tables}
+
+
+@pytest.fixture(autouse=True)
+def retired_data_fetch(monkeypatch):
+    """The captured modules imported the flat data_fetch retired in F7.30; the bridge keeps its names."""
+    monkeypatch.setitem(sys.modules, "gabi.data_fetch", data_fetch)
 
 
 @pytest.fixture

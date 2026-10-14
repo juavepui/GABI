@@ -205,10 +205,10 @@ class LegacyExecutor:
             assert command.update is not None
             return run_data_update(command.update, progress, sec_sync=self.sec_sync)
         if command.kind == "symbols":
-            from gabi import screener
+            from gabi.infrastructure.legacy.data_fetch import refresh_data
 
             options: dict = {"sec_sync": self.sec_sync} if self.sec_sync else {}
-            result = screener.refresh_data(list(command.symbols), **options)
+            result = refresh_data(list(command.symbols), **options)
             if result.get("failed"):
                 raise RuntimeError("Una o más fuentes fallaron.")
             return {"symbols": list(command.symbols), "updated": len(command.symbols)}

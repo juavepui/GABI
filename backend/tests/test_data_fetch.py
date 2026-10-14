@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import yfinance
 
-from gabi import data_fetch
+from gabi.infrastructure.legacy import data_fetch
 
 
 def test_classify_rate_limit():

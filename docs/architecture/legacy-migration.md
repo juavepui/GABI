@@ -95,6 +95,8 @@ al caso de uso `BlindLedger` y los nombres públicos en un adaptador de `infrast
 con su orden de pasos en un caso de uso y sus reglas en dominio.
 [F7.29](f7-retire-sync-state.md) retira `sync_state`: el marcapasos único y los reintentos pasan a
 `infrastructure/providers/source_retry`, y los checkpoints se leen de `OperationSyncEvents`.
+[F7.30](f7-retire-data-fetch.md) retira `data_fetch`: reglas de Yahoo al dominio, refrescos a
+`application/market/market_downloads` y descargas por lotes y `refresh_data` en un puente de `infrastructure/legacy`.
 
 ## Responsabilidades y entregas
 
@@ -106,7 +108,7 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 | `metrics`, `scoring`, `technicals`, `risk`, `valuation_expectations` | Dominio Mercado; entradas explícitas y determinismo | F2/F3: ranking/ficha y fixtures incompletas |
 | `screener`, `data_quality`, `evidence_confidence`, `app_mode` | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |
 | `storage`, `entity_master`, `entity_migration`, `identity` (`sync_state` retirado) | SQL al adaptador; política de identidad al dominio | F2/F4: alias, duplicidad de clases, lotes y cambios aditivos |
-| `data_fetch`, `universe`, `edgar`, `academic_factors`, `estimates`, `historical_*`, `sec_*` (`macro`, `insider` retirados) | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
+| `universe`, `edgar`, `academic_factors`, `estimates`, `historical_*`, `sec_*` (`data_fetch`, `macro`, `insider` retirados) | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
 | `periodic_tasks` (`edgar_sync`, `price_sync`, `history_refresh` retirados) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
 | `capital_allocation`, `rotation_policy`, `broker_costs`, `tax_drag`, `portfolio_metrics` | Dominio Cartera; coordinación de lecturas/escrituras en aplicación | F5: selección, costes y rentabilidades idénticos |
 | `decision_engine`, `sim_portfolios`, `signal_monitor`, `evaluation`, `live_ledger` | Aplicación por capacidad y persistencia específica | F5: operaciones, ledger y contratos sin cambios de interpretación |

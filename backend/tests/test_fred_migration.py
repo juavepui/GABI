@@ -74,7 +74,7 @@ def original(path, monkeypatch):
               "config": SimpleNamespace(load_fred_key=lambda: "synthetic-key")}
     source = REFERENCE["macro"].replace("from . import config, storage", "")
     source = source.replace("from datetime import UTC, date, datetime", "from datetime import UTC, date")
-    source = source.replace("from .data_fetch import _classify_error", "from gabi.data_fetch import _classify_error")
+    source = source.replace("from .data_fetch import _classify_error", "from gabi.infrastructure.legacy.data_fetch import _classify_error")
     source = source.replace("    from . import sync_state as sync\n", "")
     exec(source, module)
     return module, sync

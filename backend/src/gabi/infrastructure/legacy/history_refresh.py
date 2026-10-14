@@ -117,7 +117,8 @@ class RefreshRun:
 
 
 def run() -> dict:
-    from gabi import config, data_fetch, edgar, universe
+    from gabi import config, edgar, universe
+    from gabi.infrastructure.legacy import data_fetch
 
     sources = SP500Sources(config.SEC_USER_AGENT)
     series = SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))

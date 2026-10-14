@@ -65,8 +65,8 @@ def test_simulations_get_is_inert_and_rejects_uncached_trade(tmp_path):
 
 
 def test_price_buttons_download_the_old_symbol_sets(tmp_path, monkeypatch):
-    from gabi import data_fetch
     from gabi.application.errors import QueryError
+    from gabi.infrastructure.legacy import data_fetch
 
     seed_fixture(tmp_path)
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)

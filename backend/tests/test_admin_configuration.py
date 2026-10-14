@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from gabi import config, screener
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs
@@ -39,7 +40,7 @@ def test_update_summarizes_failures_by_reason_and_retries_only_the_failed(client
                 "failed": {"BBB": {"fundamentales": "límite de peticiones", "edgar": "sin CIK"},
                            "CCC": {"fundamentales": "límite de peticiones"}}}
 
-    monkeypatch.setattr(screener, "refresh_data", refresh)
+    monkeypatch.setattr(data_fetch, "refresh_data", refresh)
     first = _run(client, {"universe_limit": 50, "force": False}, "update-1")
     job_id = client.get("/api/v1/jobs").json()["jobs"][0]["id"]
     job = client.get(f"/api/v1/jobs/{job_id}").json()

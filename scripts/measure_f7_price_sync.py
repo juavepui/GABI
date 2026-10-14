@@ -26,8 +26,9 @@ def main():
     import sync_checkpoints as sync
     import yfinance
 
-    from gabi import config, data_fetch, identity, storage
+    from gabi import config, identity, storage
     from gabi.domain.market import freshness
+    from gabi.infrastructure.legacy import data_fetch
 
     reference = json.loads((ROOT / "backend/tests/fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
     symbols = [f"S{i}" for i in range(SYMBOLS)]

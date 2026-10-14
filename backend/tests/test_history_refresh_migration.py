@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+import sys
 from contextlib import closing
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -10,7 +11,8 @@ from types import ModuleType
 import pandas as pd
 import pytest
 
-from gabi import config, data_fetch, edgar, identity, storage, universe
+from gabi import config, edgar, identity, storage, universe
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.legacy import history_refresh as bridge
 from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.fred import FredSource
@@ -33,7 +35,9 @@ class FixedDate(date):
         return NOW.date()
 
 
-def captured() -> ModuleType:
+def captured(monkeypatch) -> ModuleType:
+    # It imported the flat data_fetch retired in F7.30; the bridge keeps its names.
+    monkeypatch.setitem(sys.modules, "gabi.data_fetch", data_fetch)
     module = ModuleType("gabi.history_refresh")
     module.__package__ = "gabi"
     exec(compile(REFERENCE["history_refresh"], "captured_history_refresh.py", "exec"), module.__dict__)
@@ -125,7 +129,7 @@ def test_refresh_matches_the_captured_module(tmp_path, monkeypatch, sources, cap
         ledger, root = workspace(tmp_path / label, monkeypatch)
         sources.clear()
         if label == "old":
-            module = captured()
+            module = captured(monkeypatch)
             module.datetime, module.date, module.LEDGER_PATH = FixedDatetime, FixedDate, ledger
             run = module.run
         else:

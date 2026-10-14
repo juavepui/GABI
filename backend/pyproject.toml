@@ -64,7 +64,6 @@ exclude = ["^tests/"]
 # a ciegas. Quitar de esta lista según se vayan tipando módulo a módulo.
 module = [
     "gabi.storage",
-    "gabi.data_fetch",
     "gabi.edgar",
     "gabi.multifactor_backtest",
 ]

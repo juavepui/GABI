@@ -276,7 +276,6 @@ def seed_market(path: Path) -> None:
 def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
     from gabi import (
         app_mode,
-        data_fetch,
         edgar,
         entity_master,
         metrics,
@@ -288,6 +287,7 @@ def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
     )
     from gabi.application.market.ranking import Calculators, MarketBatch, MemoryInputs, build_ranking
     from gabi.domain.market import events as events_calendar
+    from gabi.infrastructure.legacy import data_fetch
     from gabi.infrastructure.storage.fred import SqliteFred
 
     path = tmp_path / "gabi.db"

@@ -28,7 +28,7 @@ def run_estimate_analysis(data_dir: Path, cutoff: date) -> dict:
 
 def _fetch_estimate_snapshot_attempt(symbol: str) -> dict:
 
-    from gabi.data_fetch import normalize_symbol
+    from gabi.domain.market.price_sync import yahoo_symbol as normalize_symbol
 
     t = yahoo.ticker(normalize_symbol(symbol))
     return {

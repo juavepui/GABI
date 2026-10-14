@@ -14,8 +14,9 @@ import pytest
 import sync_checkpoints as sync
 import yfinance
 
-from gabi import config, data_fetch, identity, storage
+from gabi import config, identity, storage
 from gabi.domain.market import freshness
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.storage import sync_events as event_store
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/price_sync_migration.json").read_text(encoding="utf-8"))

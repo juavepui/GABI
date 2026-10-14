@@ -9,7 +9,8 @@ def _merge(failures: dict, stage: str, failed: dict) -> None:
 
 
 def prepare_history(start: str, end: str | None, options: dict) -> dict:
-    from gabi import data_fetch, edgar, multifactor_backtest, universe
+    from gabi import edgar, multifactor_backtest, universe
+    from gabi.infrastructure.legacy import data_fetch
 
     failures: dict[str, dict[str, str]] = {}
     if options["scope"] == "date":

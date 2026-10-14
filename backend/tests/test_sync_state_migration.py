@@ -13,9 +13,10 @@ import pytest
 import requests
 import sync_checkpoints as sync_state
 
-from gabi import config, data_fetch, storage
+from gabi import config, storage
 from gabi.domain.market import source_errors
 from gabi.domain.market.sync_events import event_checkpoint, validate_status
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.providers import source_retry
 from gabi.infrastructure.storage import sync_events as event_store
 
