@@ -65,7 +65,6 @@
     "concurrent.futures",
     "gabi.config",
     "gabi.identity",
-    "gabi.price_sync",
     "gabi.sync_state",
     "pandas"
   ],
@@ -73,8 +72,6 @@
     "gabi.config",
     "gabi.edgar",
     "gabi.entity_master",
-    "gabi.insider",
-    "gabi.macro",
     "gabi.scoring",
     "pandas"
   ],
@@ -252,19 +249,12 @@
     "gabi.data_fetch",
     "gabi.edgar",
     "gabi.identity",
-    "gabi.macro",
     "gabi.universe",
     "pandas",
     "shutil"
   ],
   "backend/src/gabi/identity.py": [
     "gabi.config",
-    "pandas"
-  ],
-  "backend/src/gabi/insider.py": [
-    "concurrent.futures",
-    "gabi.config",
-    "gabi.edgar",
     "pandas"
   ],
   "backend/src/gabi/live_ledger.py": [
@@ -275,11 +265,6 @@
     "gabi.research_lab",
     "gabi.screener",
     "numpy",
-    "pandas"
-  ],
-  "backend/src/gabi/macro.py": [
-    "gabi.config",
-    "gabi.sync_state",
     "pandas"
   ],
   "backend/src/gabi/membership_extension.py": [
@@ -329,11 +314,6 @@
   "backend/src/gabi/portfolio_metrics.py": [
     "gabi.config",
     "pandas"
-  ],
-  "backend/src/gabi/price_sync.py": [
-    "gabi.config",
-    "gabi.identity",
-    "gabi.sync_state"
   ],
   "backend/src/gabi/r3_experiment.py": [
     "gabi.academic_factors",

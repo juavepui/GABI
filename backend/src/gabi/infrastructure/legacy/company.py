@@ -32,9 +32,9 @@ def sync_company(data_dir: Path, symbol: str, dataset: str, *, today: date | Non
 
     if dataset == "insiders":  # Preserve the historical max_age_hours=0 -> 24 h behavior.
         if insider_sync is None:  # Compatibility callers; CLI bootstrap supplies the explicit ports.
-            from gabi.insider import ensure_insider_data
+            from gabi.infrastructure.legacy.insiders import insider_operation
 
-            insider_sync = ensure_insider_data
+            insider_sync = insider_operation(data_dir)
         failed = insider_sync([symbol], max_age_hours=0)["failed"]
     elif dataset == "surprises":
         failed = sync_earnings_surprises(data_dir, [symbol], today=today)

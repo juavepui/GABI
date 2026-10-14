@@ -65,9 +65,7 @@ exclude = ["^tests/"]
 module = [
     "gabi.storage",
     "gabi.data_fetch",
-    "gabi.macro",
     "gabi.edgar",
-    "gabi.insider",
     "gabi.multifactor_backtest",
     "gabi.blind_validation",
 ]

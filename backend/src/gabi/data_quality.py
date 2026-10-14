@@ -18,11 +18,14 @@ import pandas as pd
 from gabi.application.administration import data_quality as quality_queries
 from gabi.application.market import cached_data
 from gabi.domain.market import data_quality as quality
+from gabi.domain.market import fred
 from gabi.infrastructure.storage import data_fingerprint
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.fred import SqliteFred
+from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.sec_cik import SqliteCikResolutions
 
-from . import config, edgar, entity_master, insider, macro, scoring
+from . import config, edgar, entity_master, scoring
 
 PRICE_STALE_DAYS = quality.PRICE_STALE_DAYS
 STRUCTURAL_LIMITATIONS = list(quality.STRUCTURAL_LIMITATIONS)
@@ -58,12 +61,15 @@ def _cache():
 
 
 def _readers():
+    # Read-only: the stores' clocks only stamp writes.
+    insiders = SqliteInsiders(config.DB_PATH.parent, database=config.DB_PATH)
+    macro = SqliteFred(config.DB_PATH, lambda: datetime.now(UTC))
     return quality_queries.QualityReaders(
         lambda symbols: cached_data.price_coverage(_cache(), symbols),
         lambda symbols: cached_data.fundamentals_fetched_at(_cache(), symbols),
-        edgar.get_edgar_fetched_at, insider.get_insider_fetched_at, edgar.get_symbols_with_facts,
+        edgar.get_edgar_fetched_at, insiders.fetched_at, edgar.get_symbols_with_facts,
         entity_master.get_sector_asof, local_cik_status, edgar.CIK_CACHE.exists(),
-        macro.get_all_fetched_at, tuple(macro.SERIES), macro.get_series_history,
+        macro.fetched_at_all, tuple(fred.SERIES), macro.history,
         lambda symbols: cached_data.fundamentals(_cache(), symbols), edgar.get_edgar_metrics)
 
 

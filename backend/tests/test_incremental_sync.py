@@ -7,7 +7,7 @@ import pytest
 import requests
 import yfinance
 
-from gabi import config, data_fetch, edgar, historical_tiingo, macro, price_sync, storage
+from gabi import config, data_fetch, edgar, historical_tiingo, storage
 from gabi import sync_state as sync
 from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
@@ -35,10 +35,10 @@ def test_new_prices_then_same_session_uses_no_network_and_no_duplicates(monkeypa
         return prices()
 
     monkeypatch.setattr(yfinance, "download", download)
-    first = price_sync.run(["A", "A"], now=NOW)
+    first = data_fetch.sync_prices(["A", "A"], now=NOW)
     assert first["events"][0]["status"] == "new"
     assert first["events"][0]["new"] == 7
-    again = price_sync.run(["A"], now=NOW)
+    again = data_fetch.sync_prices(["A"], now=NOW)
     assert len(calls) == 1
     assert again["metrics"]["calls"] == 0
     assert again["events"][0]["skipped"]
@@ -51,7 +51,7 @@ def test_incremental_starts_at_last_valid_close_minus_overlap_and_classifies_rev
     panel = prices()
     panel.loc[pd.Timestamp("2024-01-09"), "Volume"] = 150
     monkeypatch.setattr(yfinance, "download", lambda *a, **k: calls.append(k) or panel)
-    event = price_sync.run(["A"], now=NOW)["events"][0]
+    event = data_fetch.sync_prices(["A"], now=NOW)["events"][0]
     assert calls[0]["start"] == "2023-12-26"
     assert "period" not in calls[0]
     assert event["status"] == "revised"
@@ -68,7 +68,7 @@ def test_adjustment_change_repairs_all_cached_history_before_advancing(monkeypat
     complete["Adj Close"] = 5
     calls = []
     monkeypatch.setattr(yfinance, "download", lambda *a, **k: calls.append(k) or (recent if len(calls) == 1 else complete))
-    event = price_sync.run(["A"], now=NOW)["events"][0]
+    event = data_fetch.sync_prices(["A"], now=NOW)["events"][0]
     assert len(calls) == 2
     assert calls[1]["start"] == "2023-09-01"
     assert "reparación histórica" in event["reason"]
@@ -80,7 +80,7 @@ def test_failed_adjustment_repair_preserves_entire_series_and_checkpoint(monkeyp
     old = storage.get_prices("A")
     recent = prices().assign(**{"Adj Close": 5.})
     monkeypatch.setattr(yfinance, "download", lambda *a, **k: recent)
-    event = price_sync.run(["A"], now=NOW)["events"][0]
+    event = data_fetch.sync_prices(["A"], now=NOW)["events"][0]
     assert event["status"] == "failed"
     assert "watermark" not in sync.get("yahoo", "ticker:A", "prices:A")
     pd.testing.assert_frame_equal(old, storage.get_prices("A"))
@@ -91,7 +91,7 @@ def test_history_repair_rejects_missing_cached_interior_session(monkeypatch):
     panel = prices().assign(**{"Adj Close": 5.})
     panel = panel.drop(pd.Timestamp("2024-01-05"))
     monkeypatch.setattr(yfinance, "download", lambda *a, **k: panel)
-    assert price_sync.run(["A"], now=NOW, full_refresh=True)["events"][0]["status"] == "failed"
+    assert data_fetch.sync_prices(["A"], now=NOW, full_refresh=True)["events"][0]["status"] == "failed"
     assert (storage.get_prices("A").adj_close == 10).all()
 
 
@@ -107,10 +107,10 @@ def test_interruption_after_data_write_resumes_without_double_insertion(monkeypa
 
     monkeypatch.setattr(SqliteCacheWrites, "prices", interrupted)
     with pytest.raises(KeyboardInterrupt):
-        price_sync.run(["A"], now=NOW)
+        data_fetch.sync_prices(["A"], now=NOW)
     assert not sync.get("yahoo", "ticker:A", "prices:A")
     monkeypatch.setattr(SqliteCacheWrites, "prices", original)
-    event = price_sync.run(["A"], now=NOW)["events"][0]
+    event = data_fetch.sync_prices(["A"], now=NOW)["events"][0]
     assert event["status"] == "unchanged" and event["new"] == 0
     assert sync.get("yahoo", "ticker:A", "prices:A")["watermark"] == "2024-01-10"
     assert len(storage.get_prices("A")) == 7
@@ -120,7 +120,7 @@ def test_explicit_full_refresh_uses_max_and_rejects_partial_live_bar(monkeypatch
     calls = []
     panel = prices(end="2024-01-11")
     monkeypatch.setattr(yfinance, "download", lambda *a, **k: calls.append(k) or panel)
-    price_sync.run(["A"], now=NOW, full_refresh=True)
+    data_fetch.sync_prices(["A"], now=NOW, full_refresh=True)
     assert calls[0]["period"] == "max"
     assert storage.get_prices("A").index.max() == pd.Timestamp("2024-01-10")
 
@@ -129,7 +129,7 @@ def test_incomplete_invalid_payload_never_moves_watermark(monkeypatch):
     panel = prices()
     panel.iloc[-1, panel.columns.get_loc("Adj Close")] = np.nan
     monkeypatch.setattr(yfinance, "download", lambda *a, **k: panel)
-    assert price_sync.run(["A"], now=NOW)["events"][0]["status"] == "failed"
+    assert data_fetch.sync_prices(["A"], now=NOW)["events"][0]["status"] == "failed"
     assert storage.get_prices("A").empty
 
 
@@ -247,25 +247,31 @@ def test_cik_map_lookup_without_explicit_frame_and_full_refresh(monkeypatch, tmp
 
 
 def test_fred_overlap_revision_withdrawal_and_monthly_full_audit(monkeypatch):
-    monkeypatch.setattr(macro, "SERIES", {"TEST": {"units_param": "lin"}})
+    from gabi.infrastructure.legacy import fred
+    from gabi.infrastructure.providers.fred import FredSource
+    from gabi.infrastructure.storage.fred import SqliteFred
+
+    monkeypatch.setattr(fred, "SERIES", {"TEST": {"units_param": "lin"}})
+    (config.DATA_DIR / "fred_api_key.txt").write_text("fake-key")
     calls = []
     payload = [("2020-01-01", 1.), ("2024-01-01", 2.)]
-    monkeypatch.setattr(macro, "fetch_series", lambda *a, **k: calls.append(k) or payload)
-    macro.ensure_macro_data(force=True)
+    monkeypatch.setattr(FredSource, "fetch", lambda self, *a, **k: calls.append(k) or payload)
+    sync_macro = fred.fred_operation(config.DATA_DIR)
+    sync_macro(force=True)
     assert calls[0]["observation_start"] == "1776-07-04"
     payload = [("2024-01-01", None), ("2024-02-01", 3.)]
-    macro.ensure_macro_data(force=True)
+    sync_macro(force=True)
     assert calls[1]["observation_start"] == "2022-11-27"
-    assert macro.get_series_history("TEST").loc["2024-01-01", "value"] != 2
+    assert SqliteFred(config.DB_PATH, datetime.now).history("TEST").loc["2024-01-01", "value"] != 2
     event = sync.events_since()[-1]
     assert event["new"] == 1 and event["revised"] == 1
     # No work on an immediate routine run.
-    macro.ensure_macro_data()
+    sync_macro()
     assert len(calls) == 2
     cp = sync.get("fred", "TEST", "observations:lin")
     cp["full_audited_at"] = (datetime.now(UTC) - timedelta(days=31)).isoformat()
     sync.Attempt("fred", "TEST", "observations:lin").finish("unchanged", state=cp)
-    macro.ensure_macro_data(force=True)
+    sync_macro(force=True)
     assert calls[-1]["observation_start"] == "1776-07-04"
 
 
@@ -283,13 +289,15 @@ def test_periodic_task_integrates_checkpoints_and_full_refresh(monkeypatch):
     flags = []
     monkeypatch.setattr(screener, "get_universe", lambda **k: flags.append(k) or pd.DataFrame({"symbol": ["A"]}))
     monkeypatch.setattr(screener, "refresh_data", lambda *a, **k: flags.append(k) or {"failed": {}})
-    monkeypatch.setattr(macro, "ensure_macro_data", lambda **k: {"ok": True})
-    first = build_periodic_tasks(config.DATA_DIR).refresh_data()
-    again = build_periodic_tasks(config.DATA_DIR).refresh_data()
+    def periodic():
+        return build_periodic_tasks(config.DATA_DIR, macro_sync=lambda **k: {"ok": True})
+
+    first = periodic().refresh_data()
+    again = periodic().refresh_data()
     assert flags[0] == {"force_refresh": True}
     assert flags[2] == {"force_refresh": False}
     assert first["sync"]["calls"] == 1 and again["sync"]["calls"] == 0
-    build_periodic_tasks(config.DATA_DIR).refresh_data(full_refresh=True)
+    periodic().refresh_data(full_refresh=True)
     assert flags[-1] == {"full_refresh": True}
 
 

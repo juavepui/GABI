@@ -84,6 +84,9 @@ Su segunda entrega pasa a `gabi_cli research` las órdenes de las validaciones
 [F7.24](f7-backtest-inputs.md) (#132) pasa los backtests V1/V2 a casos de uso con
 entradas explícitas (`BacktestMarket`) y reglas puras en `domain/portfolio/backtest`;
 las fachadas conservan los nombres que parchean los motores congelados.
+[F7.25](f7-retire-source-facades.md) (#90) retira `price_sync`, `macro` e `insider`:
+`data_fetch`, `data_quality` e `history_refresh` usan directamente sus almacenes y
+proveedores, y los respaldos del worker comparten la composición del bootstrap.
 
 ## Responsabilidades y entregas
 
@@ -95,8 +98,8 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 | `metrics`, `scoring`, `technicals`, `risk`, `valuation_expectations` | Dominio Mercado; entradas explícitas y determinismo | F2/F3: ranking/ficha y fixtures incompletas |
 | `screener`, `data_quality`, `evidence_confidence`, `app_mode` | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |
 | `storage`, `entity_master`, `entity_migration`, `identity`, `sync_state` | SQL al adaptador; política de identidad al dominio | F2/F4: alias, duplicidad de clases, lotes y cambios aditivos |
-| `data_fetch`, `universe`, `edgar`, `macro`, `academic_factors`, `insider`, `estimates`, `historical_*`, `sec_*` | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
-| `periodic_tasks`, `price_sync`, `history_refresh` (`edgar_sync` retirado) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
+| `data_fetch`, `universe`, `edgar`, `academic_factors`, `estimates`, `historical_*`, `sec_*` (`macro`, `insider` retirados) | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
+| `periodic_tasks`, `history_refresh` (`edgar_sync`, `price_sync` retirados) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
 | `capital_allocation`, `rotation_policy`, `broker_costs`, `tax_drag`, `portfolio_metrics` | Dominio Cartera; coordinación de lecturas/escrituras en aplicación | F5: selección, costes y rentabilidades idénticos |
 | `decision_engine`, `sim_portfolios`, `signal_monitor`, `evaluation`, `live_ledger` | Aplicación por capacidad y persistencia específica | F5: operaciones, ledger y contratos sin cambios de interpretación |
 | `research_lab`, `blind_validation`, `factor_lab`, `portfolio_lab`, auditorías/backtests/experimentos | Dominio de cálculos; casos de uso Investigación; jobs y artefactos en infraestructura | F6: protocolos, hashes, reservas, resultados y exportaciones |

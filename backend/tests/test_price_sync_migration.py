@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 import yfinance
 
-from gabi import config, data_fetch, history_refresh, identity, price_sync, storage
+from gabi import config, data_fetch, history_refresh, identity, storage
 from gabi import sync_state as sync
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
@@ -81,7 +81,7 @@ def test_scenario_sequence_matches_capture(tmp_path, monkeypatch):
         path.parent.mkdir()
         monkeypatch.setattr(config, "DATA_DIR", path.parent)
         monkeypatch.setattr(config, "DB_PATH", path)
-        run = legacy_run() if label == "old" else price_sync.run
+        run = legacy_run() if label == "old" else data_fetch.sync_prices
         outcomes = []
         for answer, options in scenario_steps():
             calls = []

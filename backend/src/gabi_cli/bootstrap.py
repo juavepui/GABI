@@ -16,16 +16,14 @@ from pathlib import Path
 
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
-from gabi.application.market.insider_sync import sync_insiders
 from gabi.application.research.academic_factors import prepare_factor_snapshot
 from gabi.domain.market.selection import RankingFilter
 from gabi.infrastructure.jobs.worker import Worker
-from gabi.infrastructure.legacy.insiders import SecInsiders, classify_error, sec_user_agent
+from gabi.infrastructure.legacy.insiders import insider_operation, sec_user_agent
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.academic_factors import FileFactorCache
-from gabi.infrastructure.storage.insiders import SqliteInsiders
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi_api.bootstrap import create_app
 from gabi_cli.sources.bootstrap import (
@@ -49,9 +47,7 @@ def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = N
     clock = now or (lambda: datetime.now(UTC))
     user_agent = sec_user_agent()
     ciks = build_cik_resolver(settings, user_agent, now=clock)
-    source = SecInsiders(user_agent, mapping_loader=ciks.mapping, cik_resolver=ciks.resolve)
-    store = SqliteInsiders(settings.data_dir, now=clock)
-    insiders = partial(sync_insiders, source=source, store=store, classify_error=classify_error, now=clock)
+    insiders = insider_operation(settings.data_dir, now=clock, mapping_loader=ciks.mapping, cik_resolver=ciks.resolve)
     factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())
     tiingo_fetch, tiingo_import = build_tiingo_operations(settings, now=clock)
     return LegacyExecutor(settings, insider_sync=insiders, factor_loader=factors,

@@ -302,9 +302,6 @@
     "historical_tiingo": "#90: importación Tiingo; la usa smallmid_test",
     "historical_wiki": "#90: importación WIKI; la usa smallmid_test",
     "history_refresh": "#90: refresco histórico; usa shutil para copias de seguridad",
-    "insider": "#90: fachada de insiders (#136)",
-    "macro": "#90: fachada FRED (#136)",
-    "price_sync": "#90: fachada del caso de uso de precios (#136)",
     "sec_history": "#90: descargas SEC fijadas",
     "sync_state": "#90: checkpoints y reintentos; requests solo para clasificar errores transitorios"
   }

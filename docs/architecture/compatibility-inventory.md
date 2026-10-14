@@ -7,8 +7,9 @@ Lista cerrada de los módulos planos de `backend/src/gabi` que no están congela
 permanentes no usan SQL, HTTP ni procesos salvo la excepción declarada y que los
 pendientes solo bajan.
 
-Estado del 2026-10-14 (pila hasta #144): 69 módulos planos =
-18 congelados + 37 permanentes + 14 pendientes.
+Estado del 2026-10-14 (pila hasta #145 y [F7.25](f7-retire-source-facades.md)):
+66 módulos planos = 18 congelados + 37 permanentes + 11 pendientes. F7.25 retira
+`price_sync`, `macro` e `insider`.
 
 ## Criterio de cierre de #90 y #91
 
@@ -68,7 +69,7 @@ importa y usa sus nombres públicos.
 | `variant_validation` | interfaz de motores congelados; leído por nombre para una huella publicada | r3_experiment (congelado); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `workspace` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 
-## Pendientes (14)
+## Pendientes (11)
 
 | Módulo | Siguiente paso |
 | --- | --- |
@@ -81,9 +82,6 @@ importa y usa sus nombres públicos.
 | `historical_tiingo` | #90: importación Tiingo; la usa smallmid_test |
 | `historical_wiki` | #90: importación WIKI; la usa smallmid_test |
 | `history_refresh` | #90: refresco histórico; usa shutil para copias de seguridad |
-| `insider` | #90: fachada de insiders (#136) |
-| `macro` | #90: fachada FRED (#136) |
-| `price_sync` | #90: fachada del caso de uso de precios (#136) |
 | `sec_history` | #90: descargas SEC fijadas |
 | `sync_state` | #90: checkpoints y reintentos; requests solo para clasificar errores transitorios |
 

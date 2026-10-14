@@ -12,6 +12,8 @@ from datetime import UTC, datetime
 import pandas as pd
 
 from gabi.application.market import cached_data
+from gabi.application.market.price_sync import run as run_price_sync
+from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.price_sync import yahoo_symbol
 from gabi.domain.market.source_errors import RETRYABLE_CATEGORIES as RETRYABLE
 from gabi.domain.market.source_errors import classify
@@ -32,6 +34,36 @@ def _reads() -> SqliteCacheReads:
 
 def _writes() -> SqliteCacheWrites:
     return SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC))
+
+
+class _PriceStore:
+    def __init__(self, reads: SqliteCacheReads, writes: SqliteCacheWrites):
+        self.reads, self.writes = reads, writes
+
+    def adjusted_span(self, symbol):
+        return self.reads.adjusted_span(symbol)
+
+    def prices_from(self, symbol, start):
+        return cached_data.prices_from(self.reads, symbol, start)
+
+    def prices(self, symbol):
+        return cached_data.prices(self.reads, symbol)
+
+    def write(self, symbol, frame, entity_id):
+        self.writes.prices(symbol, frame, entity_id=entity_id)
+
+
+def sync_prices(symbols: list, *, force: bool = False, full_refresh: bool = False, now=None) -> dict:
+    """Incremental Yahoo prices, with overlap and explicit adjustment repair."""
+    from . import sync_state as sync
+
+    now = now or datetime.now(UTC)
+    return run_price_sync(symbols, store=_PriceStore(_reads(), _writes()),
+                          owner=lambda symbol, day: identity.resolve(symbol, day)["entity_id"],
+                          attempt=sync.Attempt, checkpoint=sync.get, due=sync.due, retry=sync.retry,
+                          download=yahoo.download, classify=lambda exc: classify(str(exc))[1],
+                          payload_size=lambda frame: len(frame.to_csv().encode()), now=now,
+                          session=last_completed_session(now).isoformat(), force=force, full_refresh=full_refresh)
 
 
 def normalize_symbol(symbol: str) -> str:
@@ -295,8 +327,7 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     symbols = list(dict.fromkeys(symbols))  # dedup preservando orden
     price_symbols = symbols if config.BENCHMARK_SYMBOL in symbols else symbols + [config.BENCHMARK_SYMBOL]
 
-    from . import price_sync
-    price_result = price_sync.run(price_symbols, force=force, full_refresh=full_refresh)
+    price_result = sync_prices(price_symbols, force=force, full_refresh=full_refresh)
     needs_price_refresh = any(not e["skipped"] for e in price_result["events"])
     price_failed = price_result["failed"]
 
