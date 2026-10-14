@@ -158,13 +158,6 @@
     "gabi.identity",
     "pandas"
   ],
-  "backend/src/gabi/historical_identity_audit.py": [
-    "gabi.config",
-    "gabi.historical_archive",
-    "gabi.historical_issuer_evidence",
-    "gabi.sec_history",
-    "pathlib"
-  ],
   "backend/src/gabi/historical_issuer_evidence.py": [
     "gabi.sec_history",
     "pathlib"

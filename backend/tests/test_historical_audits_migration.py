@@ -15,9 +15,10 @@ import pytest
 import requests
 from test_sec_quarter_ingest_migration import NOMINATIONS, PERIODS, connection_factory, seed
 
-from gabi import config, historical_identity_audit, historical_issuer_evidence, historical_tiingo, sec_history
+from gabi import config, historical_issuer_evidence, historical_tiingo, sec_history
 from gabi.application.research import sec_cover_downloads
 from gabi.domain.market.identity import normalize_cik
+from gabi.infrastructure.legacy import historical_identity_audit
 from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage import historical_prices
 

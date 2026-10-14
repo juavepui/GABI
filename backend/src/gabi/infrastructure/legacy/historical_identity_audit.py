@@ -1,26 +1,27 @@
-"""Offline identity coverage for the archived S&P 500 universe, per period.
+"""Offline identity coverage for the archived S&P 500 universe, per period (``gabi_cli research identity-audit``).
 
 2010-2015 (#27) and 2016-2025 (#34) use the same rules; each period writes
-its own interval source (``historical_period``).
+its own interval source (``historical_period``). This bridge composes the
+use cases with the archive, SEC history and issuer evidence modules.
 
 Community ticker/CIK rows are candidates. Direct SEC ticker evidence and
 retrospective issuer corroboration have separate tiers; an issuer name alone
 cannot certify a ticker or activate an operational alias.
 """
 
-import argparse
 import hashlib
 import json
 import time
-from datetime import date, timedelta
+from collections.abc import Callable
 from pathlib import Path
 
+from gabi import config, historical_archive, sec_history
+from gabi import historical_issuer_evidence as issuer_evidence
 from gabi.application.research import historical_audit_exports as audit_exports
 from gabi.application.research import historical_identity_audit as identity_audit
 from gabi.application.research import identity_instances as instance_scan
 from gabi.application.research import sec_cover_downloads as cover_downloads
 from gabi.application.research import sec_quarter_ingest as quarter_ingest
-from gabi.domain.market.identity import normalize_cik
 from gabi.domain.research import historical_identity_audit as identity_rules
 from gabi.domain.research import identity_instances as instance_rules
 from gabi.domain.research import sec_bulk as bulk_rules
@@ -33,9 +34,6 @@ from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIss
 from gabi.infrastructure.storage.identity_instances import LocalIdentityInstances, SqliteIdentityInstances
 from gabi.infrastructure.storage.reviewed_resources import identity_nominations
 from gabi.infrastructure.storage.sec_quarter_ingest import SqliteSecIngestSelection
-
-from . import config, historical_archive, sec_history
-from . import historical_issuer_evidence as issuer_evidence
 
 QUARTERS = P2010.quarters
 TICKER_RE = instance_rules.TICKER_RE
@@ -82,10 +80,7 @@ def fetch_candidate_instances(limit: int, *, prioritize_unresolved: bool = False
     """
     if limit < 0:
         raise ValueError("limit must be nonnegative")
-    nominated = [(row["label"], row["cik"],
-                  (date.fromisoformat(row["valid_from"]) - timedelta(days=row["evidence_window_days"])).isoformat(),
-                  (date.fromisoformat(row["valid_to"]) + timedelta(days=row["evidence_window_days"])).isoformat())
-                 for row in identity_nominations()]
+    nominated = identity_rules.nominated_windows(identity_nominations())
     selected, missing_candidates = quarter_ingest.cover_filings(
         _ingest_selection(), CANDIDATE_SOURCE, start=period.start, end_exclusive=period.end_exclusive,
         nominated=nominated, identity_source=period.identity_source, prioritize_unresolved=prioritize_unresolved)
@@ -156,49 +151,19 @@ def import_period_filings(period: Period) -> dict:
 
 
 def annual_report_symbol_evidence(limit: int, period: Period = P2010) -> dict:
-    """Ticker proofs from 10-K text for intervals the XBRL covers left open.
+    """Ticker proofs from 10-K text for intervals the XBRL covers left open (see the use case)."""
+    def digest(path: Path) -> str:
+        with path.open("rb") as source:
+            return hashlib.file_digest(source, "sha256").hexdigest()
 
-    Early XBRL covers often omit ``dei:TradingSymbol``. The annual report's
-    market section states the symbol; a report naming exactly one symbol is
-    stored like a cover proof (URL + SHA-256), otherwise it is ignored.
-    """
-    if limit < 0:
-        raise ValueError("limit must be nonnegative")
-    rows = _ingest_selection().intervals(period.identity_source, ("unresolved", "corroborated_candidate"))
-    nominated = {(row["label"], row["cik"]) for row in identity_nominations()}
-    # Unresolved intervals, plus nominations still resting on one SEC ticker
-    # observation; community-name corroborations are left as they are.
-    targets = [row for row in rows if row[4] == "unresolved" or (row[0], row[1]) in nominated]
-    downloads = 0
-    records = []
-    for _symbol, cik, start, end, _status in targets:
-        life = issuer_evidence.listing_life(cik)
-        if life is None:
-            continue
-        reports = [row for row in life["annual_reports"] if start <= row["filed"] < end]
-        for report in [reports[index] for index in sorted({0, len(reports) - 1})] if reports else []:
-            if downloads >= limit:
-                break
-            url, path = issuer_evidence.fetch_annual_report(cik, report)
-            downloads += 1
-            extended = period is not P2010
-            symbols = issuer_evidence.annual_report_symbols(path.read_text(encoding="utf-8", errors="ignore"),
-                                                            extended=extended)
-            if extended and len(symbols) > 1:
-                # Other companies' symbols (investees, spin-offs) appear in the
-                # text; keep the one reviewed ticker of this CIK, if unique.
-                reviewed = {ticker for row in identity_nominations() if row["cik"] == cik
-                            and row["valid_from"] <= report["filed"] < row["valid_to"] for ticker in row["sec_tickers"]}
-                symbols &= reviewed
-            if len(symbols) != 1:
-                continue
-            with path.open("rb") as source:
-                digest = hashlib.file_digest(source, "sha256").hexdigest()
-            records.append({"symbol": next(iter(symbols)), "cik": cik, "accession": report["accession"],
-                            "filed_date": report["filed"], "historical_name": life["name"],
-                            "historical_name_source": "sec_10k_text", "sha256": digest, "source_url": url})
+    records, targets, downloads = identity_audit.annual_report_symbol_evidence(
+        lambda: _ingest_selection().intervals(period.identity_source, ("unresolved", "corroborated_candidate")),
+        identity_nominations(), limit, extended=period is not P2010, listing_life=issuer_evidence.listing_life,
+        fetch_annual_report=issuer_evidence.fetch_annual_report,
+        text=lambda path: path.read_text(encoding="utf-8", errors="ignore"), digest=digest,
+        symbols=lambda text, extended: issuer_evidence.annual_report_symbols(text, extended=extended))
     imported = historical_archive.import_filing_identity_evidence(records)
-    return {"intervals": len(targets), "reports": downloads, "symbol_proofs": imported}
+    return {"intervals": targets, "reports": downloads, "symbol_proofs": imported}
 
 
 _name_tokens = identity_rules._name_tokens
@@ -209,29 +174,17 @@ _name_matches = identity_rules._name_matches
 
 def fetch_issuer_name_histories(limit: int, period: Period = P2010) -> dict:
     """Cache SEC's official name chain for still-unresolved historical CIKs."""
-    if limit < 0:
-        raise ValueError("limit must be nonnegative")
-    ciks = _ingest_selection().unresolved_ciks_with_filings(period.identity_source)
     directory = config.DATA_DIR / "history_refresh" / "validation_1996_2015" / "identity_submissions"
-    cached = fetched = failed = 0
-    for cik in ciks:
+
+    def download(cik: str) -> dict:
         path = directory / f"CIK{cik}.json"
-        if path.exists():
-            cached += 1
-            continue
-        if fetched + failed >= limit:
-            break
-        url = f"https://data.sec.gov/submissions/CIK{cik}.json"
-        try:
-            sec_history.download(url, path)
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            if normalize_cik(payload["cik"]) != cik:
-                raise ValueError("SEC submissions issuer CIK mismatch")
-            fetched += 1
-        except (sec_archive.REQUEST_ERROR, OSError, ValueError, KeyError) as exc:
-            failed += 1
-            print(f"SEC issuer name history failed {cik}: {exc}", flush=True)
-    return {"candidate_ciks": len(ciks), "cached": cached, "fetched": fetched, "failed": failed}
+        sec_history.download(f"https://data.sec.gov/submissions/CIK{cik}.json", path)
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    return identity_audit.fetch_issuer_name_histories(
+        lambda: _ingest_selection().unresolved_ciks_with_filings(period.identity_source), limit,
+        cached=lambda cik: (directory / f"CIK{cik}.json").exists(), download=download,
+        errors=(sec_archive.REQUEST_ERROR, OSError, ValueError, KeyError), log=_log)
 
 
 def _official_name_chain(cik: str) -> dict | None:
@@ -254,88 +207,60 @@ def coverage_report(period: Period = P2010) -> dict:
     return identity_audit.coverage_report(SqliteIdentityAuditReads(config.DB_PATH), period)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--period", default=P2010.key, help="Historical period (2010-2015 or 2016-2025)")
-    parser.add_argument("--output", type=Path, help="Write the offline report as JSON")
-    parser.add_argument("--scan-instances", action="store_true", help="Check locally cached original SEC XBRL files")
-    parser.add_argument("--fetch-candidate-instances", type=int,
-                        help="Download up to N selected SEC XBRL covers of the period for candidate checks")
-    parser.add_argument("--fetch-unresolved-instances", type=int,
-                        help="Download up to N extra SEC covers only for unresolved dated identity intervals")
-    parser.add_argument("--import-period-filings", action="store_true",
-                        help="Index SEC bulk 10-K/10-Q submissions of the period's candidate CIKs")
-    parser.add_argument("--import-nominated-filings", action="store_true",
-                        help="Index cached SEC bulk filings for reviewed CIK nominations")
-    parser.add_argument("--annual-report-symbols", type=int,
-                        help="Download up to N 10-Ks for open intervals and store stated ticker symbols")
-    parser.add_argument("--fetch-issuer-names", type=int,
-                        help="Download up to N SEC issuer name histories for unresolved CIKs")
-    parser.add_argument("--evidence-csv", type=Path, help="Save accepted SEC filing-day identity evidence")
-    parser.add_argument("--import-evidence", action="store_true",
-                        help="Idempotently archive SEC filing-day observations; does not create aliases")
-    parser.add_argument("--build-intervals", action="store_true",
-                        help="Build a separate, retrospective SEC-corroborated identity tier")
-    parser.add_argument("--intervals-csv", type=Path,
-                        help="Write interval status, dates and SEC provenance for review")
-    args = parser.parse_args()
-    period = get_period(args.period)
+def command(period_key: str, *, emit: Callable[[dict], None], output: Path | None = None,
+            scan_instances: bool = False, fetch_candidates: int | None = None, fetch_unresolved: int | None = None,
+            import_period: bool = False, import_nominated: bool = False, annual_report_symbols: int | None = None,
+            fetch_issuer_names: int | None = None, evidence_csv: Path | None = None, import_evidence: bool = False,
+            build_intervals: bool = False, intervals_csv: Path | None = None) -> dict | None:
+    """The command's steps in their published order; ``emit`` receives each step's summary.
+
+    Returns the coverage report, or None when it was written to ``output``."""
+    period = get_period(period_key)
     fetch_summary = None
-    if args.import_period_filings:
-        print(json.dumps(import_period_filings(period)), flush=True)
-    if args.import_nominated_filings:
-        print(json.dumps(import_nominated_filings(period)), flush=True)
-    if args.annual_report_symbols is not None:
-        print(json.dumps(annual_report_symbol_evidence(args.annual_report_symbols, period)), flush=True)
-    if args.fetch_candidate_instances is not None and args.fetch_unresolved_instances is not None:
-        parser.error("Choose only one SEC instance download mode")
-    if args.fetch_candidate_instances is not None or args.fetch_unresolved_instances is not None:
-        fetch_summary = fetch_candidate_instances(
-            args.fetch_candidate_instances if args.fetch_candidate_instances is not None else args.fetch_unresolved_instances,
-            prioritize_unresolved=args.fetch_unresolved_instances is not None, period=period)
-        print(json.dumps(fetch_summary), flush=True)
-    if args.fetch_issuer_names is not None:
-        name_fetch = fetch_issuer_name_histories(args.fetch_issuer_names, period)
-        print(json.dumps(name_fetch), flush=True)
-    if (args.evidence_csv or args.import_evidence) and not args.scan_instances:
-        parser.error("--evidence-csv and --import-evidence require --scan-instances")
-    if args.intervals_csv and not args.build_intervals:
-        parser.error("--intervals-csv requires --build-intervals")
+    if import_period:
+        emit(import_period_filings(period))
+    if import_nominated:
+        emit(import_nominated_filings(period))
+    if annual_report_symbols is not None:
+        emit(annual_report_symbol_evidence(annual_report_symbols, period))
+    cover_limit = fetch_candidates if fetch_candidates is not None else fetch_unresolved
+    if cover_limit is not None:
+        fetch_summary = fetch_candidate_instances(cover_limit, prioritize_unresolved=fetch_unresolved is not None,
+                                                  period=period)
+        emit(fetch_summary)
+    if fetch_issuer_names is not None:
+        name_fetch = fetch_issuer_name_histories(fetch_issuer_names, period)
+        emit(name_fetch)
     evidence_summary = None
-    if args.scan_instances:
+    if scan_instances:
         records, summary = scan_local_sec_instances(period)
         evidence_summary = summary
-        if args.import_evidence:
+        if import_evidence:
             summary["imported_observations"] = historical_archive.import_filing_identity_evidence(records)
             summary.update(SqliteIdentityAuditReads(config.DB_PATH).counts())
-        if args.evidence_csv:
-            audit_exports.export_evidence(HistoricalAuditFiles(), records, str(args.evidence_csv))
-    if args.build_intervals:
+        if evidence_csv:
+            audit_exports.export_evidence(HistoricalAuditFiles(), records, str(evidence_csv))
+    if build_intervals:
         intervals = build_evidence_intervals(period)
         historical_archive.replace_identity_intervals(period.identity_source, intervals)
         counts = {status: sum(row["status"] == status for row in intervals)
                   for status in ("confirmed_by_multiple_evidence", "confirmed_historical_ticker",
                                  "corroborated_candidate",
                                  "ambiguous", "unresolved")}
-        if args.intervals_csv:
-            audit_exports.export_intervals(HistoricalAuditFiles(), intervals, str(args.intervals_csv))
+        if intervals_csv:
+            audit_exports.export_intervals(HistoricalAuditFiles(), intervals, str(intervals_csv))
     report = coverage_report(period)
     if fetch_summary:
         report["sec_candidate_download"] = fetch_summary
-    if args.fetch_issuer_names is not None:
+    if fetch_issuer_names is not None:
         report["sec_name_history_download"] = name_fetch
     if evidence_summary:
         report["sec_instance_evidence"] = evidence_summary
-    if args.build_intervals:
+    if build_intervals:
         report["evidence_intervals"] = {"source_id": period.identity_source, "count": len(intervals),
                                         "statuses": counts,
                                         "note": "Retrospective corroboration, not a reviewed operational alias"}
-    payload = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
-    if args.output:
-        audit_exports.export_report(HistoricalAuditFiles(), report, str(args.output))
-    else:
-        print(payload, end="")
-
-
-if __name__ == "__main__":
-    main()
+    if output:
+        audit_exports.export_report(HistoricalAuditFiles(), report, str(output))
+        return None
+    return report

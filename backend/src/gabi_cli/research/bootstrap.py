@@ -164,6 +164,26 @@ def quarterly_coverage(settings: Settings, args: argparse.Namespace) -> None:
                 progress=lambda message: print(message, flush=True))
 
 
+def identity_audit(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.historical_identity_audit import command
+
+    # Checked before any step runs; the old module rejected these only after its downloads.
+    if args.evidence_csv or args.import_evidence:
+        if not args.scan_instances:
+            args.error("--evidence-csv and --import-evidence require --scan-instances")
+    if args.intervals_csv and not args.build_intervals:
+        args.error("--intervals-csv requires --build-intervals")
+    report = command(args.period, emit=lambda summary: print(json.dumps(summary), flush=True), output=args.output,
+                     scan_instances=args.scan_instances, fetch_candidates=args.fetch_candidate_instances,
+                     fetch_unresolved=args.fetch_unresolved_instances, import_period=args.import_period_filings,
+                     import_nominated=args.import_nominated_filings,
+                     annual_report_symbols=args.annual_report_symbols, fetch_issuer_names=args.fetch_issuer_names,
+                     evidence_csv=args.evidence_csv, import_evidence=args.import_evidence,
+                     build_intervals=args.build_intervals, intervals_csv=args.intervals_csv)
+    if report is not None:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
 def historical_data_audit(settings: Settings, args: argparse.Namespace) -> None:
     from contextlib import closing
 
@@ -337,6 +357,30 @@ def main(argv: list[str]) -> None:
     command.add_argument("--old-detail", type=Path)
     command.add_argument("--output", type=Path)
     command.set_defaults(run=historical_data_audit)
+    command = commands.add_parser("identity-audit", help="Identidad histórica 2010-2015/2016-2025 (#27, #34); descargas SEC solo con sus opciones")
+    command.add_argument("--period", default="2010-2015", help="Historical period (2010-2015 or 2016-2025)")
+    command.add_argument("--output", type=Path, help="Write the offline report as JSON")
+    command.add_argument("--scan-instances", action="store_true", help="Check locally cached original SEC XBRL files")
+    downloads = command.add_mutually_exclusive_group()
+    downloads.add_argument("--fetch-candidate-instances", type=int,
+                           help="Download up to N selected SEC XBRL covers of the period for candidate checks")
+    downloads.add_argument("--fetch-unresolved-instances", type=int,
+                           help="Download up to N extra SEC covers only for unresolved dated identity intervals")
+    command.add_argument("--import-period-filings", action="store_true",
+                         help="Index SEC bulk 10-K/10-Q submissions of the period's candidate CIKs")
+    command.add_argument("--import-nominated-filings", action="store_true",
+                         help="Index cached SEC bulk filings for reviewed CIK nominations")
+    command.add_argument("--annual-report-symbols", type=int,
+                         help="Download up to N 10-Ks for open intervals and store stated ticker symbols")
+    command.add_argument("--fetch-issuer-names", type=int,
+                         help="Download up to N SEC issuer name histories for unresolved CIKs")
+    command.add_argument("--evidence-csv", type=Path, help="Save accepted SEC filing-day identity evidence")
+    command.add_argument("--import-evidence", action="store_true",
+                         help="Idempotently archive SEC filing-day observations; does not create aliases")
+    command.add_argument("--build-intervals", action="store_true",
+                         help="Build a separate, retrospective SEC-corroborated identity tier")
+    command.add_argument("--intervals-csv", type=Path, help="Write interval status, dates and SEC provenance for review")
+    command.set_defaults(run=identity_audit, error=command.error)
     command = commands.add_parser("prospective-plan", help="Plan de análisis prospectivo (#42), sin leer resultados ciegos")
     command.add_argument("--write", action="store_true", help="Escribir el JSON del plan en el directorio de salida")
     command.add_argument("--gabi", action="store_true", help="Plan fijo de la prueba GABI id 1; por defecto, diseño secuencial")

@@ -20,7 +20,8 @@ sustituye la evidencia del otro.
 | Tiingo | `tiingo:daily-2026-09` | `tiingo:daily-2026-09:2016-2025` |
 | Horizonte | frames SEC hasta CY2016, FINSABER hasta 2015-12-31, baja «sin float posterior» solo antes de 2016 | frames hasta CY2025, FINSABER hasta 2024-12-31, regla de baja hasta 2025 |
 
-Los módulos `historical_identity_audit`, `historical_price_audit`,
+La auditoría de identidad (`gabi_cli research identity-audit`, antes
+`gabi.historical_identity_audit`) y los módulos `historical_price_audit`,
 `historical_issuer_evidence`, `historical_membership` y
 `historical_pit` reciben el periodo (`--period 2016-2025` en línea de comandos).
 El valor por defecto sigue siendo 2010–2015.
@@ -287,5 +288,6 @@ repetidas no son independientes.
   no estrictos.
 - En 2025 el Tier B depende solo de Tiingo, porque FINSABER termina en 2024.
 - Reproducir: `python -m gabi.historical_membership --import-full-reference`;
-  `python -m gabi.historical_identity_audit --period 2016-2025 …`;
+  `python -m gabi_cli research identity-audit --period 2016-2025 …` (originalmente
+  `python -m gabi.historical_identity_audit`, disponible en el commit c324aab de develop);
   `python -m gabi.historical_price_audit --period 2016-2025 --quarterly --terminal-events --promote`.

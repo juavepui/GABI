@@ -13,10 +13,10 @@ import pytest
 from lxml import etree
 
 from gabi import config, historical_membership, identity, storage
-from gabi import historical_identity_audit as facade
 from gabi.application.research.identity_instances import scan
 from gabi.domain.research.periods import P2010, P2016
 from gabi.domain.research.ticker_corrections import correct_symbols
+from gabi.infrastructure.legacy import historical_identity_audit as facade
 from gabi.infrastructure.storage.identity_instances import (
     InstanceBudgetExceeded,
     LocalIdentityInstances,

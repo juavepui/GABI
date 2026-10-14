@@ -89,6 +89,8 @@ las fachadas conservan los nombres que parchean los motores congelados.
 proveedores, y los respaldos del worker comparten la composición del bootstrap.
 [F7.26](f7-retire-blind-validation.md) retira `blind_validation`: reglas al dominio, flujo
 al caso de uso `BlindLedger` y los nombres públicos en un adaptador de `infrastructure/legacy`.
+[F7.27](f7-identity-audit-command.md) pasa `historical_identity_audit` a
+`gabi_cli research identity-audit` (ADR 0002), con sus bucles en aplicación y sus reglas en dominio.
 
 ## Responsabilidades y entregas
 

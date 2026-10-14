@@ -297,7 +297,6 @@
     "data_fetch": "#90: descarga operativa; caso de uso compartido con el worker",
     "data_quality": "#90: ranking_quality y fachada de lecturas (#139)",
     "historical_archive": "#90: fachada del archivo histórico (F7.7)",
-    "historical_identity_audit": "#90: auditoría de identidad (#131)",
     "historical_tiingo": "#90: importación Tiingo; la usa smallmid_test",
     "historical_wiki": "#90: importación WIKI; la usa smallmid_test",
     "history_refresh": "#90: refresco histórico; usa shutil para copias de seguridad",
