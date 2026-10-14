@@ -21,10 +21,10 @@ ISSUERS, YEARS = 600, range(2009, 2016)
 
 
 def main():
-    from gabi import historical_identity_audit, sec_history
     from gabi.application.research import sec_quarter_ingest
     from gabi.domain.market.identity import normalize_cik
     from gabi.domain.research import sec_bulk
+    from gabi.infrastructure.legacy import historical_identity_audit, sec_history
     from gabi.infrastructure.storage.sec_quarter_ingest import SqliteSecIngestSelection
 
     reference = json.loads((ROOT / "backend/tests/fixtures/sec_quarter_ingest_migration.json").read_text(encoding="utf-8"))

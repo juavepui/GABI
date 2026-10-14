@@ -241,8 +241,9 @@ def download_factory(directory: Path, log: list):
 
 @pytest.mark.parametrize("flow", ["gaps", "issuers"])
 def test_companyfacts_recovery_matches_capture(tmp_path, monkeypatch, capsys, flow):
-    from gabi import edgar, sec_history
+    from gabi import edgar
     from gabi.domain.market import sec_facts
+    from gabi.infrastructure.legacy import sec_history
 
     monkeypatch.setattr(identity, "date", FixedDate)
     ciks = ["0000000001", "0000000002", "0000000004", "0000000005", "0000000006"]

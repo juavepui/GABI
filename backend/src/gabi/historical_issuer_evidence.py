@@ -1,7 +1,7 @@
 """SEC issuer evidence for attributing historical price series (#28, #34).
 
 Three kinds of free, archived SEC evidence are used, each cached with its URL
-and SHA-256 through ``sec_history.download``:
+and SHA-256 through ``download`` (the pinned SEC archive store):
 
 - submissions JSON: listing life of a CIK (first periodic report, holding
   company successions, delisting/deregistration followed by silence);
@@ -23,12 +23,20 @@ from gabi.domain.research import issuer_evidence as issuer_rules
 from gabi.domain.research.sec_bulk import instance_url
 from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIssuerFiles
+from gabi.infrastructure.storage.sec_archive_download import download_pinned
 
-from . import sec_history
+from . import config
 
-DIRECTORY = sec_history.DIRECTORY
+DIRECTORY = config.DATA_DIR / "history_refresh" / "validation_1996_2015"
 FRAMES_DIR = DIRECTORY / "frames"
 SUBMISSIONS_DIR = DIRECTORY / "identity_submissions"
+
+
+def download(url: str, path: Path) -> Path:
+    """Pinned SEC archive download; the path and User-Agent are read per call (ADR 0005)."""
+    return download_pinned(url, path, database=config.DB_PATH, user_agent=config.SEC_USER_AGENT)
+
+
 FRAME_URL = issuer_rules.FRAME_URL
 SUBMISSIONS_URL = issuer_rules.SUBMISSIONS_URL
 FRAME_SPECS = issuer_rules.FRAME_SPECS
@@ -90,7 +98,7 @@ class _Documents:
         return (self.directory / name).exists()
 
     def download(self, url: str, name: str) -> Path:
-        return sec_history.download(url, self.directory / name)
+        return download(url, self.directory / name)
 
     def read(self, name: str) -> dict:
         return json.loads((self.directory / name).read_text(encoding="utf-8"))
@@ -177,7 +185,7 @@ annual_report_symbols = issuer_rules.annual_report_symbols
 
 def fetch_annual_report(cik: str, report: dict) -> tuple[str, Path]:
     url = instance_url(cik, report["accession"], report["primary"])
-    return url, sec_history.download(url, ANNUAL_DIR / f"{report['accession']}_{Path(report['primary']).name}")
+    return url, download(url, ANNUAL_DIR / f"{report['accession']}_{Path(report['primary']).name}")
 
 
 TERMINAL_DIR = DIRECTORY / "terminal_8k"
@@ -202,7 +210,7 @@ completion_reports = issuer_rules.completion_reports
 
 def fetch_report(cik: str, report: dict) -> tuple[str, Path]:
     url = instance_url(cik, report["accession"], report["primary"])
-    return url, sec_history.download(url, TERMINAL_DIR / f"{report['accession']}_{Path(report['primary']).name}")
+    return url, download(url, TERMINAL_DIR / f"{report['accession']}_{Path(report['primary']).name}")
 
 
 extract_terms = issuer_rules.extract_terms

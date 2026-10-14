@@ -14,9 +14,9 @@ import pytest
 import requests
 from lxml import etree
 
-from gabi import config, sec_history
+from gabi import config
 from gabi.domain.market.identity import normalize_cik
-from gabi.infrastructure.legacy import historical_identity_audit
+from gabi.infrastructure.legacy import historical_identity_audit, sec_history
 from gabi.infrastructure.storage.backups import backup_once
 from gabi.infrastructure.storage.sec_quarter_ingest import JsonQuarterReport, SqliteSecIngestSelection
 

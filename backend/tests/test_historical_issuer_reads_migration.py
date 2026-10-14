@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,14 @@ from gabi.infrastructure.storage.historical_issuer_evidence import HistoricalIss
 
 PERIODS = ['CY2012Q1', 'CY2013Q1', 'CY2016Q1', 'CY2017Q1']
 REFERENCE = json.loads((Path(__file__).parent / 'fixtures/historical_runners_migration.json').read_text(encoding='utf-8'))
+
+
+@pytest.fixture(autouse=True)
+def retired_sec_history(monkeypatch):
+    """Captured modules imported the flat sec_history retired in F7.31; the bridge keeps its names."""
+    from gabi.infrastructure.legacy import sec_history
+
+    monkeypatch.setitem(sys.modules, "gabi.sec_history", sec_history)
 
 
 def captured(frames, submissions):

@@ -15,7 +15,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from gabi import config, historical_archive, sec_history
+from gabi import config, historical_archive
 from gabi import historical_issuer_evidence as issuer_evidence
 from gabi.application.research import historical_audit_exports as audit_exports
 from gabi.application.research import historical_identity_audit as identity_audit
@@ -27,6 +27,7 @@ from gabi.domain.research import identity_instances as instance_rules
 from gabi.domain.research import sec_bulk as bulk_rules
 from gabi.domain.research.periods import P2010, Period
 from gabi.domain.research.periods import get as get_period
+from gabi.infrastructure.legacy import sec_history
 from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage.historical_audit_exports import HistoricalAuditFiles
 from gabi.infrastructure.storage.historical_identity_audit import SqliteIdentityAuditReads

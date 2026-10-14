@@ -195,7 +195,8 @@ def test_tiingo_and_wiki_requests(web, monkeypatch):
 
 
 def test_sec_archive_chunks(web, monkeypatch):
-    from gabi import edgar, sec_history
+    from gabi import edgar
+    from gabi.infrastructure.legacy import sec_history
 
     old = captured("sec_history", {"_download_chunks"}, {"requests": requests, "time": time, "edgar": edgar})
     url = "https://www.sec.gov/files/dera/data/financial-statement-data-sets/2010q1.zip"

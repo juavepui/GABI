@@ -3,7 +3,8 @@ import zipfile
 import pandas as pd
 import pytest
 
-from gabi import config, sec_history, storage
+from gabi import config, storage
+from gabi.infrastructure.legacy import sec_history
 
 
 @pytest.fixture

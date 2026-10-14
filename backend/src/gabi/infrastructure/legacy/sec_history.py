@@ -1,17 +1,17 @@
-"""Download and validate SEC's 2009-2015 structured archive, without inventing dates.
+"""Download and validate SEC's 2009-2015 structured archive, without inventing dates (``gabi_cli research sec-history``).
 
 NUM.ddate and qtrs are rounded by SEC. Raw records are retained separately;
-only original XBRL contexts supply exact dates for GABI's fact schema.
+only original XBRL contexts supply exact dates for GABI's fact schema. This
+bridge composes the SEC ingest use cases with the archive and EDGAR modules.
 """
-import argparse
 import json
 import zipfile
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
 
-from gabi.application.research import sec_archive_download, sec_bulk
+from gabi import config, edgar, historical_archive
+from gabi.application.research import sec_bulk
 from gabi.application.research import sec_quarter_ingest as quarter_ingest
 from gabi.domain.market.sec_facts import issuer_companyfacts_rows
 from gabi.domain.research import sec_bulk as bulk_rules
@@ -19,9 +19,7 @@ from gabi.infrastructure.providers import sec_archive
 from gabi.infrastructure.storage import sec_bulk as bulk_storage
 from gabi.infrastructure.storage import sec_quarter_ingest as ingest_storage
 from gabi.infrastructure.storage.backups import backup_once
-from gabi.infrastructure.storage.sec_archive_download import SecArchiveFiles, SqliteSecArchiveProvenance
-
-from . import config, edgar, historical_archive
+from gabi.infrastructure.storage.sec_archive_download import download_pinned
 
 SCHEMA = bulk_storage.SCHEMA
 DIRECTORY = config.DATA_DIR / "history_refresh" / "validation_1996_2015"
@@ -32,10 +30,7 @@ ensure_schema = bulk_storage.initialize_compatibility
 
 
 def download(url: str, path: Path) -> Path:
-    sec_archive_download.download(url, str(path), files=SecArchiveFiles(),
-        provenance=SqliteSecArchiveProvenance(config.DB_PATH), source=_download_chunks,
-        now=lambda: datetime.now(UTC))
-    return path
+    return download_pinned(url, path, database=config.DB_PATH, user_agent=config.SEC_USER_AGENT)
 
 
 def _download_chunks(url: str):
@@ -149,16 +144,11 @@ def ingest_issuer_companyfacts(ciks: set[str]) -> dict:
         errors=(sec_archive.REQUEST_ERROR, ValueError, KeyError), with_url=False)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--instances", type=int, default=0)
-    parser.add_argument("--quarterly", action="store_true")
-    parser.add_argument("--companyfacts-gaps", action="store_true")
-    parser.add_argument("--unmatched", action="store_true")
-    args = parser.parse_args()
-    if args.companyfacts_gaps:
-        recover_companyfacts_gaps()
-    elif args.instances:
-        recover_instances(args.instances, quarterly=args.quarterly, unmatched=args.unmatched)
-    else:
-        run_bulk()
+def command(*, instances: int = 0, quarterly: bool = False, companyfacts_gaps: bool = False,
+            unmatched: bool = False) -> dict:
+    """The published steps: bulk import by default, original instances, or Company Facts gaps."""
+    if companyfacts_gaps:
+        return recover_companyfacts_gaps()
+    if instances:
+        return recover_instances(instances, quarterly=quarterly, unmatched=unmatched)
+    return run_bulk()

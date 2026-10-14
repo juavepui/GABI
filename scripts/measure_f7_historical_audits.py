@@ -50,8 +50,9 @@ def connections(path: Path):
 def main():
     import requests
 
-    from gabi import config, historical_identity_audit, historical_tiingo, sec_history
+    from gabi import config, historical_tiingo
     from gabi.domain.market.identity import normalize_cik
+    from gabi.infrastructure.legacy import historical_identity_audit, sec_history
     from gabi.infrastructure.storage import historical_prices
 
     results = {}

@@ -164,6 +164,13 @@ def quarterly_coverage(settings: Settings, args: argparse.Namespace) -> None:
                 progress=lambda message: print(message, flush=True))
 
 
+def sec_history(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.sec_history import command
+
+    command(instances=args.instances, quarterly=args.quarterly, companyfacts_gaps=args.companyfacts_gaps,
+            unmatched=args.unmatched)
+
+
 def history_refresh(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.legacy.history_refresh import run
 
@@ -363,6 +370,12 @@ def main(argv: list[str]) -> None:
     command.add_argument("--old-detail", type=Path)
     command.add_argument("--output", type=Path)
     command.set_defaults(run=historical_data_audit)
+    command = commands.add_parser("sec-history", help="Archivo estructurado SEC 2009-2015: importación por lotes, instancias originales o huecos de Company Facts (descargas fijadas)")
+    command.add_argument("--instances", type=int, default=0)
+    command.add_argument("--quarterly", action="store_true")
+    command.add_argument("--companyfacts-gaps", action="store_true")
+    command.add_argument("--unmatched", action="store_true")
+    command.set_defaults(run=sec_history)
     command = commands.add_parser("history-refresh", help="Refresco de datos de fuentes gratuitas con copia previa; exige el registro de composición revisado hasta hoy")
     command.set_defaults(run=history_refresh)
     command = commands.add_parser("identity-audit", help="Identidad histórica 2010-2015/2016-2025 (#27, #34); descargas SEC solo con sus opciones")

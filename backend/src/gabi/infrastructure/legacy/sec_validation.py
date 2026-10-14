@@ -29,9 +29,10 @@ def run_reconciliation(data_dir: Path) -> dict:
 
 def run_legacy_pilot(data_dir: Path) -> dict:
     """Explicit write: downloads the three pinned filings once and imports their reviewed facts."""
-    from gabi import historical_archive, sec_history
+    from gabi import historical_archive
+    from gabi.infrastructure.legacy import sec_history
 
-    manifest = Path(sec_history.__file__).with_name("resources") / "legacy_filings_pilot.json"
+    manifest = Path(historical_archive.__file__).with_name("resources") / "legacy_filings_pilot.json"
     output = directory(data_dir)
     report = {}
     for contract in json.loads(manifest.read_text(encoding="utf-8")):

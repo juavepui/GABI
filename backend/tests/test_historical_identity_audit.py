@@ -5,9 +5,10 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from gabi import config, historical_archive, historical_membership, identity, sec_history, storage
+from gabi import config, historical_archive, historical_membership, identity, storage
 from gabi.historical_membership import REFERENCE_SOURCE
 from gabi.infrastructure.legacy import historical_identity_audit as audit
+from gabi.infrastructure.legacy import sec_history
 
 
 @pytest.fixture(autouse=True)

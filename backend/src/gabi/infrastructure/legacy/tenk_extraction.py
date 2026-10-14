@@ -10,10 +10,11 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from gabi import config, edgar, identity, sec_history
+from gabi import config, edgar, identity
 from gabi import factor_stability as fs
 from gabi import historical_issuer_evidence as ie
 from gabi.domain.research import tenk_extraction as pilot
+from gabi.infrastructure.legacy import sec_history
 from gabi.infrastructure.storage.historical_identity_audit import SqliteIdentityAuditReads
 
 TAGS = {

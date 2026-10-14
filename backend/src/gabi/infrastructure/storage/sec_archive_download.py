@@ -4,8 +4,11 @@ import hashlib
 import os
 import tempfile
 from collections.abc import Iterable
+from datetime import UTC, datetime
 from pathlib import Path
 
+from gabi.application.research import sec_archive_download
+from gabi.infrastructure.providers.sec_archive import SecArchiveChunks
 from gabi.infrastructure.storage.historical_write import transaction
 
 
@@ -67,3 +70,10 @@ class SqliteSecArchiveProvenance:
                 raise ValueError('Cached source changed; review before replacing its provenance')
             db.execute('INSERT OR IGNORE INTO sec_archive_files VALUES (?,?,?,?)',
                        (url, digest, size, fetched_at))
+
+
+def download_pinned(url: str, path: Path, *, database: Path, user_agent: str) -> Path:
+    """A SEC archive file kept once on disk, with its URL, SHA-256 and size recorded in ``database``."""
+    sec_archive_download.download(url, str(path), files=SecArchiveFiles(), provenance=SqliteSecArchiveProvenance(database),
+                                  source=SecArchiveChunks(user_agent).chunks, now=lambda: datetime.now(UTC))
+    return path

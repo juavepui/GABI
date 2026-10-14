@@ -12,8 +12,10 @@ from types import SimpleNamespace
 import pytest
 import requests
 
-from gabi import config, sec_history, storage
+from gabi import config, storage
 from gabi.application.research.sec_archive_download import download
+from gabi.infrastructure.legacy import sec_history
+from gabi.infrastructure.storage import sec_archive_download as archive_store
 from gabi.infrastructure.storage.sec_archive_download import SecArchiveFiles, SqliteSecArchiveProvenance
 
 NOW = datetime(2020, 1, 2, tzinfo=UTC)
@@ -68,7 +70,7 @@ def test_captured_download_parity_and_cached_idempotence(tmp_path, monkeypatch, 
                  edgar=sec_history.edgar, storage=storage, ensure_schema=sec_history.ensure_schema,
                  datetime=clock, UTC=UTC)
     exec(reference['download'], scope)
-    monkeypatch.setattr(sec_history, 'datetime', clock)
+    monkeypatch.setattr(archive_store, 'datetime', clock)
     results = []
     for label, action in [('old', scope['download']), ('new', sec_history.download)]:
         database = tmp_path / f'{label}.db'

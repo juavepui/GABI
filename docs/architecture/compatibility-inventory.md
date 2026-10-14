@@ -10,12 +10,13 @@ pendientes solo bajan.
 Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.28:
 [F7.25](f7-retire-source-facades.md), [F7.26](f7-retire-blind-validation.md),
 [F7.27](f7-identity-audit-command.md), [F7.28](f7-history-refresh-command.md)):
-61 módulos planos = 18 congelados + 40 permanentes + 3 pendientes. F7.25 retira
+60 módulos planos = 18 congelados + 40 permanentes + 2 pendientes. F7.25 retira
 `price_sync`, `macro` e `insider`; F7.26, `blind_validation`; F7.27,
 `historical_identity_audit`; F7.28, `history_refresh`. `historical_archive`,
 `historical_tiingo` y `historical_wiki` pasan a permanentes porque los importa la
 prueba #44 preregistrada (decisión del 2026-10-14). [F7.29](f7-retire-sync-state.md) retira
-`sync_state` y [F7.30](f7-retire-data-fetch.md), `data_fetch`.
+`sync_state` y [F7.30](f7-retire-data-fetch.md), `data_fetch`;
+[F7.31](f7-sec-history-command.md), `sec_history`.
 
 ## Criterio de cierre de #90 y #91
 
@@ -44,7 +45,7 @@ importa y usa sus nombres públicos.
 | `entity_master` | leído por nombre para una huella publicada | overfitting_audit (huella de código) | ninguno |
 | `evidence_catalog` | interfaz de motores congelados; leído por nombre para una huella publicada | factor_sector_stability (congelado); live_ledger.model_metadata (model_version) | ninguno |
 | `evidence_confidence` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
-| `historical_archive` | interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15 | smallmid_test (#44); historical_revalidation; historical_membership; historical_tiingo; historical_wiki; sec_history; infrastructure/legacy/data_health; infrastructure/legacy/sec_validation | ninguno |
+| `historical_archive` | interfaz de la prueba #44 preregistrada: smallmid_test (SHA-256 en PREREGISTRO-A1..A3) lo importa; se revisa al terminar #44, como tarde tras congelar sus datos el 2027-01-15 | smallmid_test (#44); historical_revalidation; historical_membership; historical_tiingo; historical_wiki; infrastructure/legacy/data_health; infrastructure/legacy/sec_validation; infrastructure/legacy/sec_history | ninguno |
 | `historical_issuer_evidence` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
 | `historical_membership` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
 | `historical_period` | leído por nombre para una huella publicada | historical_validation/historical_revalidation.extra_sources (audit.json publicados) | ninguno |
@@ -80,13 +81,12 @@ importa y usa sus nombres públicos.
 | `variant_validation` | interfaz de motores congelados; leído por nombre para una huella publicada | r3_experiment (congelado); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `workspace` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 
-## Pendientes (3)
+## Pendientes (2)
 
 | Módulo | Siguiente paso |
 | --- | --- |
 | `app_mode` | #91: estado del modelo; consumidores en API y live_ledger |
 | `data_quality` | #90: ranking_quality y fachada de lecturas (#139) |
-| `sec_history` | #90: descargas SEC fijadas |
 
 ## `model_version` del ledger
 
