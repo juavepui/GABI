@@ -4,6 +4,7 @@ recovery by CIK after their SQL moved to explicit infrastructure adapters."""
 import ast
 import json
 import sqlite3
+import sys
 from contextlib import closing, contextmanager
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -144,7 +145,10 @@ def test_cik_resolutions_match_capture(tmp_path, monkeypatch):
 
 
 def test_cik_map_cache_matches_capture(tmp_path, monkeypatch):
-    from gabi import edgar, sync_state
+    import sync_checkpoints as sync_state
+
+    from gabi import edgar
+    from gabi.infrastructure.providers import source_retry
 
     payload = {"0": {"cik_str": 1, "ticker": "AAA", "title": "Alpha"}, "1": {"cik_str": 22, "ticker": "BRK-B", "title": "B"}}
 
@@ -167,7 +171,9 @@ def test_cik_map_cache_matches_capture(tmp_path, monkeypatch):
             yield json.dumps(payload).encode()
 
     monkeypatch.setattr(requests, "get", lambda *a, **k: Response())
-    monkeypatch.setattr(sync_state, "_pace", lambda *a: None)
+    monkeypatch.setattr(source_retry, "_pace", lambda *a: None)
+    # The captured get_cik_map imported the flat sync_state retired in F7.29.
+    monkeypatch.setitem(sys.modules, "gabi.sync_state", sync_state)
     results = []
     for label in ("old", "new"):
         directory = tmp_path / label

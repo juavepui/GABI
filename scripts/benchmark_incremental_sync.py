@@ -16,7 +16,7 @@ import pandas as pd
 import yfinance
 
 from gabi import config, data_fetch, storage
-from gabi import sync_state as sync
+from gabi.infrastructure.providers import source_retry
 
 
 def benchmark(output: Path) -> dict:
@@ -41,7 +41,7 @@ def benchmark(output: Path) -> dict:
                 return pd.concat({s: selected for s in tickers}, axis=1)
 
             with patch.multiple(config, DATA_DIR=root, DB_PATH=db), patch.object(yfinance, "download", download), \
-                    patch.object(sync, "_pace", lambda *_: None):
+                    patch.object(source_retry, "_pace", lambda *_: None):
                 storage.init_db()
                 if variant != "repeat_same_session":
                     for symbol in symbols:

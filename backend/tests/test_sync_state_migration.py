@@ -11,10 +11,13 @@ from types import SimpleNamespace
 
 import pytest
 import requests
+import sync_checkpoints as sync_state
 
-from gabi import config, data_fetch, storage, sync_state
+from gabi import config, data_fetch, storage
 from gabi.domain.market import source_errors
 from gabi.domain.market.sync_events import event_checkpoint, validate_status
+from gabi.infrastructure.providers import source_retry
+from gabi.infrastructure.storage import sync_events as event_store
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/sync_state_migration.json").read_text(encoding="utf-8"))
 MESSAGES = ["429 Client Error: Too Many Requests", "Rate limit exceeded", "possibly delisted; no price data found",
@@ -100,7 +103,7 @@ def test_checkpoints_events_and_failures_match_capture(tmp_path, monkeypatch):
         times = iter(range(100))
         target = captured_sync(path, Clock) if label == "old" else sync_state
         if label == "new":
-            monkeypatch.setattr(sync_state, "datetime", Clock)
+            monkeypatch.setattr(event_store, "datetime", Clock)
         outcomes = [target.get("sec", "cik:1", "facts:A"), target.events_since(), target.latest_event_id(),
                     sorted(target.failed_datasets("sec"))]
         attempt = target.Attempt("sec", "cik:1", "facts:A")
@@ -167,8 +170,8 @@ def test_retry_waits_pacing_and_outcomes_match_capture(tmp_path, monkeypatch, er
         if label == "old":
             target = captured_sync(tmp_path / "old.db", Clock)
         else:
-            target = sync_state
-            monkeypatch.setattr(sync_state, "_NEXT_REQUEST", {})
+            target = source_retry
+            monkeypatch.setattr(source_retry, "_NEXT_REQUEST", {})
         attempt = SimpleNamespace(source=source, calls=0)
         try:
             outcome = target.retry(failing(errors), attempt, pace=pace)
@@ -180,7 +183,7 @@ def test_retry_waits_pacing_and_outcomes_match_capture(tmp_path, monkeypatch, er
 
 def test_pacing_is_shared_with_the_bootstrap_bridge():
     from gabi.infrastructure.legacy import source_errors as bridge
-    assert bridge.retry is sync_state.retry
+    assert bridge.retry is source_retry.retry
     assert bridge.fingerprint({"a": 1}) == sync_state.fingerprint({"a": 1})
     for message in MESSAGES:
         assert bridge.sec_error(Exception(message)) == data_fetch._classify_error(Exception(message), "SEC EDGAR")[1]

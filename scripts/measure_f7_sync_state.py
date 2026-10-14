@@ -13,11 +13,15 @@ from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend/src"))
+# The retired sync_state names (F7.29) over the production stores, shared with the tests.
+sys.path.insert(0, str(ROOT / "backend/tests"))
 ENTITIES = 500
 
 
 def main():
-    from gabi import config, sync_state
+    import sync_checkpoints as sync_state
+
+    from gabi import config
 
     reference = json.loads((ROOT / "backend/tests/fixtures/sync_state_migration.json").read_text(encoding="utf-8"))
     results = {}

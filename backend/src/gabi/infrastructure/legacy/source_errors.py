@@ -2,7 +2,7 @@
 
 from gabi.domain.market.source_errors import classify
 from gabi.domain.market.sync_events import fingerprint as fingerprint
-from gabi.sync_state import retry as retry
+from gabi.infrastructure.providers.source_retry import retry as retry
 
 
 def fred_error(exc: Exception) -> str:

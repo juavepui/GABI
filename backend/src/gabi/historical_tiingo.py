@@ -33,8 +33,9 @@ from gabi.domain.research.tiingo_prices import current_listings as _current_list
 from gabi.domain.research.tiingo_prices import eligible as eligible
 from gabi.infrastructure.providers.tiingo_prices import TiingoPrices
 from gabi.infrastructure.storage.historical_prices import pinned_files
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
 
-from . import config, historical_archive, sync_state
+from . import config, historical_archive
 
 DIRECTORY = config.DATA_DIR / "history_refresh" / "tiingo"
 WINDOWS = dict(_WINDOWS)
@@ -91,8 +92,13 @@ class _Archive:
         return historical_archive.import_price_chunk(source_id, frame, symbols, first, last)
 
 
+def _events() -> OperationSyncEvents:
+    # The compatibility path is captured per operation, never mutated.
+    return OperationSyncEvents(config.DB_PATH)
+
+
 def _attempt(symbol, dataset):
-    return sync_state.Attempt("tiingo", symbol, dataset)
+    return measured_attempt(_events(), "tiingo", symbol, dataset)
 
 
 def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010-2015") -> dict:
@@ -102,7 +108,7 @@ def fetch(symbols: list[str], *, pace: float = PACE_SECONDS, window: str = "2010
 
 
 def import_cached(window: str = "2010-2015") -> dict:
-    return _import_cached(PriceWindow(window, *WINDOWS[window]), _Cache(_window(window)[3]), _Archive(), sync_state,
+    return _import_cached(PriceWindow(window, *WINDOWS[window]), _Cache(_window(window)[3]), _Archive(), _events(),
                           attempt_factory=_attempt)
 
 

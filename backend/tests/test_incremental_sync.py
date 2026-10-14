@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import requests
+import sync_checkpoints as sync
 import yfinance
 
 from gabi import config, data_fetch, edgar, historical_tiingo, storage
-from gabi import sync_state as sync
 from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)

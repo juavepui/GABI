@@ -33,16 +33,18 @@ from gabi.application.market.sec_reads import (
 from gabi.application.market.sec_selection import batch as run_batch
 from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete, synchronize
+from gabi.domain.market import sync_events as sync_rules
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure.providers import source_retry
 from gabi.infrastructure.providers.sec_cik import SecTickerMap
 from gabi.infrastructure.providers.sec_xbrl import SecXbrl
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
 from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
-from gabi.infrastructure.storage.sync_events import OperationSyncEvents
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
 
-from . import config, sync_state
+from . import config
 
 TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
@@ -128,11 +130,12 @@ def _cik_cache() -> FileCikMap:
 
 def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
     """Current SEC map, with the published weekly-cache and failure fallback."""
-    from . import sync_state
-
-    return current_map(_cik_cache(), SecTickerMap(config.SEC_USER_AGENT).fetch, lambda: sync_state.Attempt("sec", "all", "ticker-map"),
-                       sync_state.retry, lambda: sync_state.get("sec", "all", "ticker-map"),
-                       sync_state.fingerprint, lambda: datetime.now(UTC).timestamp(),
+    # The compatibility path is captured per operation, never mutated.
+    events = OperationSyncEvents(config.DB_PATH)
+    return current_map(_cik_cache(), SecTickerMap(config.SEC_USER_AGENT).fetch,
+                       lambda: measured_attempt(events, "sec", "all", "ticker-map"),
+                       source_retry.retry, lambda: events.get("sec", "all", "ticker-map"),
+                       sync_rules.fingerprint, lambda: datetime.now(UTC).timestamp(),
                        force_refresh=force_refresh)
 
 
@@ -380,7 +383,7 @@ def synchronize_issuer(symbol: str, cik: str, *, full_refresh: bool = False) -> 
 
     return synchronize(symbol, cik, store=SqliteXbrl(config.DB_PATH, _now), submissions=fetch_submissions,
                        companyfacts=fetch_company_facts, checkpoint=events.get, attempt_factory=attempt,
-                       retry=sync_state.retry, fingerprint=sync_state.fingerprint, now=_now,
+                       retry=source_retry.retry, fingerprint=sync_rules.fingerprint, now=_now,
                        full_refresh=full_refresh, fiscal_alignment=fiscal_alignment_enabled())
 
 
@@ -413,7 +416,7 @@ def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, 
 class _SelectionStore:
     def current(self, symbols):
         failures = {}
-        for entity, dataset in sync_state.failed_datasets("sec"):
+        for entity, dataset in OperationSyncEvents(config.DB_PATH).failed_datasets("sec"):
             if dataset.startswith("facts:") and dataset.removeprefix("facts:") in symbols:
                 failures.setdefault(dataset.removeprefix("facts:"), set()).add(entity)
         return get_edgar_fetched_at(symbols), get_symbols_with_facts(symbols), failures

@@ -5,6 +5,7 @@ The retired `macro`/`insider` facades are compared through the stores that repla
 import ast
 import json
 import sqlite3
+import sys
 import time
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime, timedelta
@@ -70,8 +71,8 @@ def dump(path: Path) -> dict:
 
 @pytest.fixture
 def clock(monkeypatch):
-    from gabi import sync_state
-    for module in (data_fetch, sync_state):
+    from gabi.infrastructure.storage import sync_events
+    for module in (data_fetch, sync_events):
         monkeypatch.setattr(module, "datetime", FixedDatetime)
     monkeypatch.setattr(time, "perf_counter", lambda: 3.)
     monkeypatch.setattr(time, "thread_time", lambda: 1.)
@@ -157,6 +158,10 @@ def test_data_fetch_batches_match_capture(tmp_path, monkeypatch, clock):
         monkeypatch.setattr(config, "DATA_DIR", path.parent)
         monkeypatch.setattr(config, "DB_PATH", path)
         if label == "old":
+            import sync_checkpoints
+
+            # The captured data_fetch imported the flat sync_state retired in F7.29.
+            monkeypatch.setitem(sys.modules, "gabi.sync_state", sync_checkpoints)
             target = legacy_module("data_fetch", config=config, identity=identity, storage=storage)
             target.datetime = FixedDatetime
             monkeypatch.setattr(storage, "datetime", FixedDatetime)
