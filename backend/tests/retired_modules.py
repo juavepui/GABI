@@ -38,6 +38,7 @@ def facades() -> dict[str, ModuleType]:
 def stand_ins() -> dict[str, ModuleType]:
     import sync_checkpoints
 
+    from gabi.domain.market import model_policy
     from gabi.domain.market.price_sync import COLS
     from gabi.infrastructure.legacy import (
         blind_validation,
@@ -51,6 +52,11 @@ def stand_ins() -> dict[str, ModuleType]:
 
     return {
         **facades(),
+        # F7.33: the frozen reference and its rules, as the facade exposed them (weights as a plain dict).
+        "app_mode": _module("app_mode", **{name: getattr(model_policy, name) for name in (
+            "MODES", "DEFAULT_MODE", "MODEL_STATUSES", "FROZEN_MODEL_ID", "FROZEN_LABEL", "FROZEN_WEIGHTS_TOLERANCE",
+            "weights_match_frozen", "model_status", "experimental_banner_message")},
+            FROZEN_WEIGHTS=dict(model_policy.FROZEN_WEIGHTS)),
         "blind_validation": blind_validation,
         "data_fetch": data_fetch,
         "data_quality": data_quality,

@@ -2,7 +2,6 @@
 
 import json
 import sqlite3
-import sys
 from contextlib import closing
 from pathlib import Path
 from types import ModuleType
@@ -11,8 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import gabi
-from gabi import app_mode, config, research_lab, screener_asof, storage
+from gabi import config, research_lab, screener_asof, storage
 from gabi.infrastructure.legacy import blind_validation
 from gabi.infrastructure.providers import research_environment
 
@@ -215,43 +213,6 @@ def test_blind_reads_never_create_the_database(env, monkeypatch):
                        outcome(env["blind"].get_status, 1), outcome(env["blind"].export_to_research_lab, 1)]
 
 
-@pytest.mark.parametrize("scenario", ["empty", "weak", "strong", "broken", "other_weights", "no_periods"])
-def test_model_status_matches_capture(env, monkeypatch, scenario):
-    frozen = dict(app_mode.FROZEN_WEIGHTS)
-    other = {"value": 1.0, "quality": 0.0, "momentum": 0.0, "risk": 0.0}
-    monkeypatch.setattr(screener_asof, "build_ranking_as_of", lambda day, symbols=None, weights=None: {
-        "table": pd.DataFrame({"composite_score": [90.0], "score_coverage": [.9]}, index=["A"])})
-    results = {}
-    for label in ("old", "new"):
-        path = use(env["root"], label, monkeypatch)
-        monkeypatch.setattr(config, "load_weights", lambda: dict(frozen))
-        if scenario != "empty":
-            storage.init_db()
-            seed_prices({"A": [10.0] * 5})
-        if scenario == "weak":
-            research_lab.log_experiment("M", "LIVE_FORWARD", True)
-        if scenario in {"strong", "broken", "other_weights", "no_periods"}:
-            vid = blind_validation.create_validation("V", other if scenario == "other_weights" else frozen, 1, 3,
-                                                     "2024-01-01", "2099-01-01")
-            if scenario != "no_periods":
-                blind_validation.record_rebalance(vid, "2024-01-03")
-            if scenario == "broken":
-                blind_validation.break_seal_early(vid, "motivo")
-        if label == "old":
-            # The captured app_mode imported the flat blind_validation retired in F7.26.
-            with monkeypatch.context() as patch:
-                patch.setattr(gabi, "research_lab", env["lab"])
-                patch.setattr(gabi, "blind_validation", env["blind"], raising=False)
-                patch.setitem(sys.modules, "gabi.research_lab", env["lab"])
-                patch.setitem(sys.modules, "gabi.blind_validation", env["blind"])
-                results[label] = captured("app_mode").current_model_status()
-        else:
-            before = path.read_bytes() if path.exists() else None
-            results[label] = app_mode.current_model_status()
-            assert (path.read_bytes() if path.exists() else None) == before
-    assert results["new"] == results["old"]
-
-
 def test_environment_provider_matches_capture(tmp_path, monkeypatch):
     lab = captured("research_lab")
     monkeypatch.setattr(config, "BASE_DIR", tmp_path)
@@ -266,13 +227,11 @@ def test_environment_provider_matches_capture(tmp_path, monkeypatch):
 def test_facades_no_longer_import_storage_sqlite_or_subprocess():
     import ast
 
-    for module in (research_lab, blind_validation, app_mode):
+    for module in (research_lab, blind_validation):
         tree = ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
         names = {alias.name for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
         names |= {node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and not node.level}
         names |= {alias.name for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.level
                   for alias in node.names}
         forbidden = {"storage", "sqlite3", "subprocess", "importlib.metadata"}
-        if module is app_mode:
-            forbidden |= {"research_lab", "blind_validation"}
         assert not names & forbidden, module.__name__

@@ -21,9 +21,6 @@ def _default_isolated_data(tmp_path_factory, monkeypatch):
     for name, value in list(vars(config).items()):
         if isinstance(value, Path) and value.is_relative_to(previous_data):
             monkeypatch.setattr(config, name, root / value.relative_to(previous_data))
-    from gabi import app_mode
-
-    monkeypatch.setattr(app_mode, "MODE_PATH", root / "app_mode.json")
 
 
 @pytest.fixture(autouse=True)

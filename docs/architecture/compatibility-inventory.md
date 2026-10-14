@@ -7,16 +7,18 @@ Lista cerrada de los módulos planos de `backend/src/gabi` que no están congela
 permanentes no usan SQL, HTTP ni procesos salvo la excepción declarada y que los
 pendientes solo bajan.
 
-Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.28:
-[F7.25](f7-retire-source-facades.md), [F7.26](f7-retire-blind-validation.md),
-[F7.27](f7-identity-audit-command.md), [F7.28](f7-history-refresh-command.md)):
-59 módulos planos = 18 congelados + 40 permanentes + 1 pendiente. F7.25 retira
-`price_sync`, `macro` e `insider`; F7.26, `blind_validation`; F7.27,
-`historical_identity_audit`; F7.28, `history_refresh`. `historical_archive`,
-`historical_tiingo` y `historical_wiki` pasan a permanentes porque los importa la
-prueba #44 preregistrada (decisión del 2026-10-14). [F7.29](f7-retire-sync-state.md) retira
-`sync_state` y [F7.30](f7-retire-data-fetch.md), `data_fetch`;
-[F7.31](f7-sec-history-command.md), `sec_history`; [F7.32](f7-retire-data-quality.md), `data_quality`.
+Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.33): 58 módulos planos =
+18 congelados + 40 permanentes + 0 pendientes. `pending` queda vacío:
+
+- se retiran `price_sync`, `macro` e `insider` ([F7.25](f7-retire-source-facades.md)),
+  `blind_validation` ([F7.26](f7-retire-blind-validation.md)), `historical_identity_audit`
+  ([F7.27](f7-identity-audit-command.md)), `history_refresh`
+  ([F7.28](f7-history-refresh-command.md)), `sync_state` ([F7.29](f7-retire-sync-state.md)),
+  `data_fetch` ([F7.30](f7-retire-data-fetch.md)), `sec_history`
+  ([F7.31](f7-sec-history-command.md)), `data_quality` ([F7.32](f7-retire-data-quality.md))
+  y `app_mode` ([F7.33](f7-retire-app-mode.md));
+- `historical_archive`, `historical_tiingo` y `historical_wiki` pasan a permanentes porque
+  los importa la prueba #44 preregistrada (decisión del 2026-10-14).
 
 ## Criterio de cierre de #90 y #91
 
@@ -81,11 +83,9 @@ importa y usa sus nombres públicos.
 | `variant_validation` | interfaz de motores congelados; leído por nombre para una huella publicada | r3_experiment (congelado); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `workspace` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 
-## Pendientes (1)
+## Pendientes (0)
 
-| Módulo | Siguiente paso |
-| --- | --- |
-| `app_mode` | #91: estado del modelo; consumidores en API y live_ledger |
+Ninguno. El primer punto del criterio de cierre se cumple.
 
 ## `model_version` del ledger
 

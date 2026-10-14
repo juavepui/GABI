@@ -275,7 +275,6 @@ def seed_market(path: Path) -> None:
 
 def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
     from gabi import (
-        app_mode,
         edgar,
         entity_master,
         metrics,
@@ -287,6 +286,7 @@ def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
     )
     from gabi.application.market.ranking import Calculators, MarketBatch, MemoryInputs, build_ranking
     from gabi.domain.market import events as events_calendar
+    from gabi.domain.market import model_policy
     from gabi.infrastructure.legacy import data_fetch
     from gabi.infrastructure.storage.fred import SqliteFred
 
@@ -306,7 +306,7 @@ def test_screener_table_matches_captured_facade(tmp_path, monkeypatch):
         "data_fetch": data_fetch, "entity_master": entity_master, "universe": universe})
     universe_df = pd.DataFrame({"symbol": ["AAA", "BBB", "CCC", "ZZZ"], "name": list("ABCZ"),
                                 "sector": ["Tech", "Tech", "Health", "Tech"], "industry": list("xyzw")})
-    for weights in (None, app_mode.FROZEN_WEIGHTS):
+    for weights in (None, dict(model_policy.FROZEN_WEIGHTS)):
         assert_frame_equal(screener.build_screener_table(universe_df, weights),
                            old["build_screener_table"](universe_df, weights))
     assert screener._get_risk_free_rate() == old["_get_risk_free_rate"]() == pytest.approx(.0425)

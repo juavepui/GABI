@@ -7,9 +7,6 @@
     "gabi.config",
     "pandas"
   ],
-  "backend/src/gabi/app_mode.py": [
-    "gabi.config"
-  ],
   "backend/src/gabi/block_bootstrap.py": [
     "exchange_calendars",
     "gabi.academic_factors",
@@ -71,7 +68,6 @@
     "gabi.factor_sector_stability"
   ],
   "backend/src/gabi/evidence_confidence.py": [
-    "gabi.app_mode",
     "gabi.config",
     "gabi.evidence_catalog",
     "gabi.live_ledger",
@@ -220,7 +216,6 @@
     "pandas"
   ],
   "backend/src/gabi/live_ledger.py": [
-    "gabi.app_mode",
     "gabi.config",
     "gabi.evidence_confidence",
     "gabi.identity",

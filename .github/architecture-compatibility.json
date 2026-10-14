@@ -321,7 +321,5 @@
       ]
     }
   },
-  "pending": {
-    "app_mode": "#91: estado del modelo; consumidores en API y live_ledger"
-  }
+  "pending": {}
 }

@@ -10,6 +10,7 @@ import pandas as pd
 
 from gabi.application.market import cached_data
 from gabi.application.market.sec_reads import fetched_at as sec_fetched_at
+from gabi.domain.market import model_policy
 from gabi.domain.market.freshness import market_date as last_completed_session
 from gabi.domain.research.live_ledger import UNREADABLE, canonical, fingerprint, replay_decision, safe, verify_chain
 from gabi.infrastructure.providers import research_environment
@@ -18,7 +19,7 @@ from gabi.infrastructure.storage import live_ledger_writes as ledger_sql
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 
-from . import app_mode, config, identity, research_lab
+from . import config, identity, research_lab
 
 STAGES = ("RETROSPECTIVE", "OOS", "LIVE_FORWARD")
 SCHEMA = ledger_sql.SCHEMA
@@ -158,11 +159,11 @@ def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") 
              "infrastructure/storage/evidence_catalog.py", "infrastructure/storage/published_factors.py",
              "workspace.py", "__init__.py")
     hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
-    specification = {"weights": weights if weights is not None else app_mode.FROZEN_WEIGHTS,
+    specification = {"weights": weights if weights is not None else dict(model_policy.FROZEN_WEIGHTS),
                      "universe_id": universe_id, "top_n": 20, "coverage": .70,
                      "ranking": "descending composite, ascending ticker", "report_cost_per_side": .001}
     dirty = research_environment.working_tree_modified(config.BASE_DIR, "backend/src/gabi")
-    return {"model_id": app_mode.FROZEN_MODEL_ID, "configuration": specification,
+    return {"model_id": model_policy.FROZEN_MODEL_ID, "configuration": specification,
             "config_version": fingerprint(specification), "model_version": fingerprint({"spec": specification, "code": hashes}),
             "git_commit": research_lab._current_git_commit(), "working_tree_modified": dirty,
             "code_sha256": hashes, "dependencies": research_lab._dependency_versions(),
@@ -181,7 +182,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
     try:
         universe = screener.get_universe()
         symbols = universe.symbol.tolist()
-        table = screener.build_screener_table(universe, weights=app_mode.FROZEN_WEIGHTS)
+        table = screener.build_screener_table(universe, weights=dict(model_policy.FROZEN_WEIGHTS))
         if table.empty:
             table = table.reindex(columns=["composite_score", "score_coverage"])
         if table.index.has_duplicates:
@@ -253,7 +254,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
         try:
             context = {k: payload[k] for k in ("model_id", "model_version", "config_version", "git_commit", "data_fingerprint")}
             table.attrs["sources"] = payload["sources"]
-            evidence = evidence_confidence.build(table, app_mode.FROZEN_WEIGHTS, now=timestamp, market_date=actual_market, context=context)
+            evidence = evidence_confidence.build(table, dict(model_policy.FROZEN_WEIGHTS), now=timestamp, market_date=actual_market, context=context)
             payload["evidence"] = {s: evidence[s] for s in payload.get("proposed_top_n", [])}
         except Exception as exc:
             payload["evidence_error"] = f"{type(exc).__name__}: {exc}"
