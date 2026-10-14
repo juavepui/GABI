@@ -1,6 +1,9 @@
 # Viabilidad de probar GABI fuera del S&P 500 con datos gratuitos (#44)
 
-Código: `gabi.smallmid_feasibility`. Datos en esta carpeta.
+Código: `gabi.smallmid_feasibility`; se ejecuta con
+`python -m gabi_cli research smallmid-feasibility [--sample]` (antes
+`python -m gabi.smallmid_feasibility`, último commit con esa orden: `dc63e5d`;
+[ADR 0002](../adr/0002-reproducible-research-commands.md)). Datos en esta carpeta.
 
 > **Corrección del 2026-10-03:** este piloto ya se realizó en septiembre. La
 > [auditoría posterior](AUDITORIA-2026-10-03.md) reproduce los CSV y separa

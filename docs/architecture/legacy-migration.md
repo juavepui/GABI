@@ -79,6 +79,8 @@ y retira cuatro alias pequeños; `rotation_policy` queda por la huella de `rotat
 [F7.23](f7-research-ledgers.md) (#133) lleva los registros de experimentos y de
 validación ciega a infraestructura; [ADR 0005](../adr/0005-legacy-config-path.md) permite
 sustituir `storage` por `config` cuando solo se usaba para la ruta de la base.
+Su segunda entrega pasa a `gabi_cli research` las órdenes de las validaciones
+#33/#35 y de la viabilidad #44, y deja `smallmid_test` (preregistro en curso).
 
 ## Responsabilidades y entregas
 

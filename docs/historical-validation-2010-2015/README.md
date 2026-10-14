@@ -35,7 +35,11 @@ Idéntica a la auditoría 2016+:
 
 ## Reproducibilidad
 
-`python -m gabi.historical_validation` (sin red). Snapshot congelado de la base
+`python -m gabi_cli research historical-validation` (sin red; `--analysis-only`
+rehace solo el análisis). Los resultados publicados se generaron con
+`python -m gabi.historical_validation` en el commit `3e43efb` (su `analysis_sha256`
+es el de ese fichero); desde el [ADR 0002](../adr/0002-reproducible-research-commands.md)
+se usa el subcomando, con los mismos argumentos. Snapshot congelado de la base
 `e741df073bc4451ed31299b736a050996aa2c2ad5402341afb97fc79114a6370`; el manifiesto
 de `data/historical_validation_2010_2015/` guarda el SHA-256 de cada ranking y
 de las entradas (motores V1/V2, `screener_asof`, `scoring`, `identity`,

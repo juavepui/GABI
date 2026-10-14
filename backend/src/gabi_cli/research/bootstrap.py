@@ -106,6 +106,36 @@ def rotation_experiment(settings: Settings, args: argparse.Namespace) -> None:
         args.output or settings.data_dir.parent / "docs" / "rotation-experiment", args.resume)
 
 
+# Fixed by docs/historical-revalidation-2011-2025/PROTOCOL.md; a test checks them against the engine.
+REVALIDATION_VARIANTS = ["acreditado", "acreditado-38", "operativo", "operativo-38"]
+REVALIDATION_VIEWS = ["acreditado", "acreditado-38-2016", "acreditado-38-continua", "operativo", "operativo-38"]
+
+
+def historical_validation(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.historical_validation import validation
+
+    print(json.dumps(validation(args.cache, args.output, args.analysis_only), ensure_ascii=False, indent=2))
+
+
+def historical_revalidation(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy import historical_validation as bridge
+
+    if args.analyze:
+        print(json.dumps(bridge.revalidation_analysis(args.analyze), ensure_ascii=False, indent=2))
+    if args.prepare:
+        print(json.dumps(bridge.revalidation_prepare(args.prepare)))
+    if args.evaluate:
+        print(json.dumps(bridge.revalidation_evaluate(args.evaluate), ensure_ascii=False, indent=2))
+    if args.summarize:
+        print(json.dumps(bridge.revalidation_overview(), ensure_ascii=False, indent=2)[:4000])
+
+
+def smallmid_feasibility(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.infrastructure.legacy.smallmid_feasibility import run
+
+    print(json.dumps(run(args.sample), ensure_ascii=False, indent=2))
+
+
 def value_hypothesis(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.legacy.value_hypothesis import preregister
 
@@ -277,6 +307,21 @@ def main(argv: list[str]) -> None:
     command.add_argument("--output", type=Path, help="Por defecto docs/rotation-experiment; usar un directorio nuevo")
     command.add_argument("--resume", action="store_true")
     command.set_defaults(run=rotation_experiment)
+    command = commands.add_parser("historical-validation", help="Validación 2010-2015 (#33): snapshot, backtests y análisis; escribe docs")
+    command.add_argument("--cache", type=Path, help="Por defecto <datos>/historical_validation_2010_2015")
+    command.add_argument("--output", type=Path, help="Por defecto docs/historical-validation-2010-2015")
+    command.add_argument("--analysis-only", action="store_true",
+                         help="Rehace solo el análisis sobre rankings y backtests ya congelados")
+    command.set_defaults(run=historical_validation)
+    command = commands.add_parser("historical-revalidation", help="Revalidación 2016-2025 y serie 2011-2025 (#35); escribe docs")
+    command.add_argument("--prepare", choices=REVALIDATION_VARIANTS)
+    command.add_argument("--evaluate", choices=REVALIDATION_VIEWS)
+    command.add_argument("--analyze", choices=REVALIDATION_VIEWS, help="Solo el análisis, sin repetir backtests")
+    command.add_argument("--summarize", action="store_true")
+    command.set_defaults(run=historical_revalidation)
+    command = commands.add_parser("smallmid-feasibility", help="Viabilidad fuera del S&P 500 (#44); escribe docs/smallmid-feasibility")
+    command.add_argument("--sample", action="store_true", help="Además, muestra con descarga de submissions SEC")
+    command.set_defaults(run=smallmid_feasibility)
     command = commands.add_parser("value-hypothesis", help="Preregistro de la hipótesis de valor (#43); comprueba uno existente")
     command.add_argument("--preregister", action="store_true", required=True)
     command.set_defaults(run=value_hypothesis)

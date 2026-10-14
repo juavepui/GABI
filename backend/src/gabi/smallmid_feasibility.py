@@ -13,7 +13,6 @@ informes en los 18 meses siguientes (las que un universo con sesgo de
 supervivencia perdería).
 """
 
-import argparse
 import json
 import random
 import zipfile
@@ -23,7 +22,7 @@ import pandas as pd
 
 from gabi.domain.research import periods as historical_period
 
-from . import config, historical_membership, identity, storage
+from . import config, historical_membership, identity
 from . import factor_stability as fs
 from . import historical_issuer_evidence as ie
 
@@ -142,19 +141,8 @@ def run(*, sample: bool = False) -> dict:
                 "algun_precio_gratuito": float((g.tiingo_ticker_actual_cubre_ventana
                                                 | g.tiingo_ticker_recuperado_cubre_ventana).mean())}
             for (day, alive), g in table.groupby(["fecha", "sigue_presentando_18m"])}
-    with storage.get_connection() as conn:
-        report["frames_ultimo_ano"] = max(int(r[0][:4]) for r in conn.execute("SELECT '2025'"))
+    # The original query was the constant ``SELECT '2025'``: the last XBRL frames year studied.
+    report["frames_ultimo_ano"] = 2025
     (OUTPUT / "viabilidad.json").write_text(json.dumps(fs._json_safe(report), ensure_ascii=False, indent=2) + "\n",
                                             encoding="utf-8")
     return report
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sample", action="store_true", help="Además, muestra con descarga de submissions SEC")
-    args = parser.parse_args()
-    print(json.dumps(fs._json_safe(run(sample=args.sample)), ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()
