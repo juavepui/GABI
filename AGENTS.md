@@ -30,6 +30,9 @@ No añadir módulos planos a `gabi` ni páginas Streamlit nuevas. El inventario
 permitidas para funcionalidad nueva. No ampliar sus excepciones para hacer pasar
 CI; al retirar un import o módulo, retirar su excepción. Un módulo antiguo puede
 delegar en `domain`/`application` nuevos mientras conserva su interfaz pública.
+`.github/architecture-compatibility.json` clasifica cada módulo plano no congelado
+como permanente (sin SQL/HTTP/procesos salvo excepción declarada) o pendiente; al
+retirar un módulo, quitarlo de la lista (ADR 0006).
 
 ## Reglas de comportamiento
 

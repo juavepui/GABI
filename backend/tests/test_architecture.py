@@ -146,3 +146,55 @@ def test_retired_streamlit_cannot_return_as_import_or_dependency(tmp_path):
     errors = GUARD["check"](tmp_path)
     assert any("Streamlit import was retired" in error for error in errors)
     assert any("Streamlit dependency was retired" in error for error in errors)
+
+
+def compatibility_repo(root, permanent: dict, pending: dict, modules: dict) -> None:
+    write(root, ".github/architecture-legacy.json", json.dumps({f"backend/src/gabi/{name}.py": deps
+                                                               for name, (_, deps) in modules.items()}))
+    for name, (source, _) in modules.items():
+        write(root, f"backend/src/gabi/{name}.py", source)
+    write(root, "backend/legacy-engine-hashes.json", json.dumps({"engine.py": "0" * 64}))
+    write(root, ".github/architecture-compatibility.json", json.dumps({"permanent": permanent, "pending": pending}))
+
+
+def test_every_flat_module_is_classified_and_frozen_engines_are_not_listed(tmp_path):
+    keep = {"reason": "hashed by name", "consumers": ["engine"]}
+    compatibility_repo(tmp_path, {"kept": keep, "engine": keep}, {"later": "#90", "gone": "#90"},
+                       {"kept": ("", []), "later": ("", []), "engine": ("", []), "stray": ("", [])})
+    errors = GUARD["check"](tmp_path)
+    assert "backend/src/gabi/stray.py: unclassified flat module; list it as permanent or pending (ADR 0006)" in errors
+    assert any("frozen engine engine is verified by hash" in error for error in errors)
+    assert any("remove retired module gone" in error for error in errors)
+
+
+def test_permanent_modules_cannot_gain_sql_http_or_processes(tmp_path):
+    keep = {"reason": "hashed by name", "consumers": ["engine"]}
+    modules = {"kept": ("import requests\nimport sqlite3\nfrom urllib import request\n", ["requests", "sqlite3", "urllib"]),
+               "later": ("import subprocess\n", ["subprocess"])}
+    compatibility_repo(tmp_path, {"kept": keep | {"io": ["sqlite3", "yfinance"]}}, {"later": "#90"}, modules)
+    errors = GUARD["check"](tmp_path)
+    assert "backend/src/gabi/kept.py: permanent compatibility module cannot use requests (ADR 0006)" in errors
+    assert "backend/src/gabi/kept.py: permanent compatibility module cannot use urllib (ADR 0006)" in errors
+    assert not any("cannot use sqlite3" in error for error in errors)  # justified exception
+    assert any("remove unused I/O exception kept -> yfinance" in error for error in errors)
+    assert not any("later.py" in error for error in errors)  # pending modules are debt, not permanent
+
+
+def test_compatibility_inventory_only_shrinks():
+    previous = {"permanent": {"kept": {"io": ["sqlite3"]}}, "pending": {"later": "#90", "retired": "#90"}}
+    assert GUARD["compatibility_growth"](previous, {"permanent": {"kept": {}, "later": {}}, "pending": {}}) == []
+    errors = GUARD["compatibility_growth"](previous, {"permanent": {"kept": {"io": ["sqlite3", "requests"]}, "new": {}},
+                                                      "pending": {"later": "#90", "other": "#90"}})
+    assert errors == [".github/architecture-compatibility.json: cannot add pending module other",
+                      ".github/architecture-compatibility.json: cannot add permanent module new unless it was pending",
+                      ".github/architecture-compatibility.json: cannot add I/O exception kept -> requests"]
+    assert GUARD["compatibility_growth"](previous, None) == [
+        ".github/architecture-compatibility.json: the compatibility inventory cannot be removed (ADR 0006)"]
+
+
+def test_current_compatibility_inventory_is_closed():
+    inventory = json.loads((ROOT / ".github/architecture-compatibility.json").read_text(encoding="utf-8"))
+    frozen = {name.removesuffix(".py") for name in json.loads((ROOT / "backend/legacy-engine-hashes.json").read_text())}
+    flat = {path.stem for path in (ROOT / "backend/src/gabi").glob("*.py")} - {"__init__"}
+    assert set(inventory["permanent"]) | set(inventory["pending"]) | frozen == flat
+    assert {name for name, entry in inventory["permanent"].items() if entry.get("io")} == {"smallmid_test", "storage"}

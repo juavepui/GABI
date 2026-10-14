@@ -162,6 +162,10 @@ y su HTTP por un proveedor concreto de `infrastructure/providers` según
 ajustes o puentes legacy. Al retirar `storage`, una fachada puede leer la ruta
 de la base desde `config` en su lugar ([ADR 0005](adr/0005-legacy-config-path.md)). Ni almacenamiento ni proveedores importan módulos
 planos; siguen prohibidos los ciclos con capas nuevas.
+Los módulos planos que no se pueden retirar forman una lista cerrada
+([inventario de compatibilidad](architecture/compatibility-inventory.md),
+[ADR 0006](adr/0006-permanent-compatibility-inventory.md)): no usan SQL, HTTP ni
+procesos salvo excepción declarada, y los pendientes solo bajan.
 No añadir interfaces a funciones puras nuevas. Evitar reexports masivos en
 `__init__`; importar desde el módulo que define el contrato.
 
