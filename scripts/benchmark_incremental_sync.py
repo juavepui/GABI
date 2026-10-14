@@ -15,7 +15,8 @@ import exchange_calendars as xcals
 import pandas as pd
 import yfinance
 
-from gabi import config, data_fetch, storage
+from gabi import config, storage
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.providers import source_retry
 
 

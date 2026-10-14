@@ -55,12 +55,6 @@
     "pathlib",
     "scipy"
   ],
-  "backend/src/gabi/data_fetch.py": [
-    "concurrent.futures",
-    "gabi.config",
-    "gabi.identity",
-    "pandas"
-  ],
   "backend/src/gabi/data_quality.py": [
     "gabi.config",
     "gabi.edgar",
@@ -353,8 +347,6 @@
   "backend/src/gabi/scoring.py": [],
   "backend/src/gabi/screener.py": [
     "gabi.config",
-    "gabi.data_fetch",
-    "gabi.edgar",
     "gabi.entity_master",
     "gabi.risk",
     "gabi.scoring",

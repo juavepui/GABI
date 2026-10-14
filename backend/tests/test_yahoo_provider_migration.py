@@ -10,7 +10,8 @@ import pandas as pd
 import pytest
 import yfinance
 
-from gabi import config, data_fetch
+from gabi import config
+from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.providers import yahoo
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/yahoo_provider_migration.json").read_text(encoding="utf-8"))

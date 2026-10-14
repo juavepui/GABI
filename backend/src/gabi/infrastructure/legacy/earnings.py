@@ -15,7 +15,7 @@ from gabi.infrastructure.storage.earnings import SqliteEarnings
 class YahooEarnings:
     @staticmethod
     def fetch(symbol: str) -> pd.DataFrame:
-        from gabi.data_fetch import normalize_symbol
+        from gabi.domain.market.price_sync import yahoo_symbol as normalize_symbol
 
         table = yahoo.ticker(normalize_symbol(symbol)).earnings_dates
         return table if table is not None else pd.DataFrame()
