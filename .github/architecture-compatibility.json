@@ -294,7 +294,6 @@
   },
   "pending": {
     "app_mode": "#91: estado del modelo; consumidores en API y live_ledger",
-    "blind_validation": "#91: validaciones ciegas ya sobre infraestructura (#140); retirar al migrar sus consumidores",
     "data_fetch": "#90: descarga operativa; caso de uso compartido con el worker",
     "data_quality": "#90: ranking_quality y fachada de lecturas (#139)",
     "historical_archive": "#90: fachada del archivo histórico (F7.7)",

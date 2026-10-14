@@ -3,8 +3,8 @@ from datetime import UTC, date, datetime
 import pandas as pd
 import pytest
 
-from gabi import blind_validation as bv
 from gabi import config, storage
+from gabi.infrastructure.legacy import blind_validation as bv
 from gabi.infrastructure.legacy.periodic import build_periodic_tasks
 
 WEIGHTS = {"value": .3, "quality": .35, "momentum": .25, "risk": .1}

@@ -5,8 +5,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from gabi import blind_validation, config, evidence_confidence, history_refresh, live_ledger, research_lab
+from gabi import config, evidence_confidence, history_refresh, live_ledger, research_lab
 from gabi.domain.market import freshness
+from gabi.infrastructure.legacy import blind_validation
 from gabi.infrastructure.providers import research_environment
 from gabi.infrastructure.storage import live_ledger_files
 

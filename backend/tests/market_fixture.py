@@ -6,7 +6,8 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from gabi import app_mode, blind_validation, edgar, identity, storage
+from gabi import app_mode, edgar, identity, storage
+from gabi.infrastructure.legacy import blind_validation
 
 TODAY = date(2026, 9, 29)
 

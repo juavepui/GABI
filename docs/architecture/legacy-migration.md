@@ -87,6 +87,8 @@ las fachadas conservan los nombres que parchean los motores congelados.
 [F7.25](f7-retire-source-facades.md) (#90) retira `price_sync`, `macro` e `insider`:
 `data_fetch`, `data_quality` e `history_refresh` usan directamente sus almacenes y
 proveedores, y los respaldos del worker comparten la composición del bootstrap.
+[F7.26](f7-retire-blind-validation.md) retira `blind_validation`: reglas al dominio, flujo
+al caso de uso `BlindLedger` y los nombres públicos en un adaptador de `infrastructure/legacy`.
 
 ## Responsabilidades y entregas
 

@@ -7,12 +7,12 @@ import pytest
 from fastapi.testclient import TestClient
 from test_blind_validation import WEIGHTS, _fake_ranking, _seed_prices
 
-from gabi import blind_validation as bv
 from gabi import config
 from gabi import research_lab as rl
 from gabi.application.administration.periodic import PeriodicTasks
 from gabi.application.research.blind import run_performance
 from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy import blind_validation as bv
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.jobs import SqliteJobs

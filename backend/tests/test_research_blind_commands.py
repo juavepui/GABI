@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from gabi import blind_validation as bv
 from gabi import config, research_lab
 from gabi.domain.research.blind import disclosure
+from gabi.infrastructure.legacy import blind_validation as bv
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 

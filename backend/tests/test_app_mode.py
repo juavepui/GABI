@@ -6,7 +6,8 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gabi import app_mode, blind_validation, config, research_lab, storage
+from gabi import app_mode, config, research_lab, screener_asof, storage
+from gabi.infrastructure.legacy import blind_validation
 
 
 def _isolate_db(tmp_path, monkeypatch):
@@ -27,7 +28,7 @@ def _fake_ranking(monkeypatch, scores: dict):
         table = pd.DataFrame({"composite_score": [scores[s] for s in syms],
                               "score_coverage": [.9] * len(syms)}, index=syms)
         return {"table": table}
-    monkeypatch.setattr(blind_validation.screener_asof, "build_ranking_as_of", _rank)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", _rank)
 
 
 def _create_and_record_validation(monkeypatch, weights, *, as_of="2024-01-10", unlock="2099-01-01"):
@@ -223,7 +224,7 @@ def test_record_rebalance_uses_the_validation_weights_and_optional_ranking_snaps
         table = pd.DataFrame({"composite_score": [90, 80, None], "score_coverage": [.9, .9, .4]},
                              index=["A", "B", "C"])
         return {"table": table}
-    monkeypatch.setattr(blind_validation.screener_asof, "build_ranking_as_of", _rank)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", _rank)
     value_only = {"value": 1.0, "quality": 0.0, "momentum": 0.0, "risk": 0.0}
     vid = blind_validation.create_validation("Valor", value_only, 2, 3, "2024-01-10", "2099-01-01",
                                              model_id="GABI-VALUE-v1")

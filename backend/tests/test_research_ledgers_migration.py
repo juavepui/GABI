@@ -12,7 +12,8 @@ import pandas as pd
 import pytest
 
 import gabi
-from gabi import app_mode, blind_validation, config, research_lab, screener_asof, storage
+from gabi import app_mode, config, research_lab, screener_asof, storage
+from gabi.infrastructure.legacy import blind_validation
 from gabi.infrastructure.providers import research_environment
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/research_ledgers_migration.json").read_text(encoding="utf-8"))
@@ -237,15 +238,13 @@ def test_model_status_matches_capture(env, monkeypatch, scenario):
             if scenario == "broken":
                 blind_validation.break_seal_early(vid, "motivo")
         if label == "old":
-            monkeypatch.setattr(gabi, "research_lab", env["lab"])
-            monkeypatch.setattr(gabi, "blind_validation", env["blind"])
-            monkeypatch.setitem(sys.modules, "gabi.research_lab", env["lab"])
-            monkeypatch.setitem(sys.modules, "gabi.blind_validation", env["blind"])
-            results[label] = captured("app_mode").current_model_status()
-            monkeypatch.setattr(gabi, "research_lab", research_lab)
-            monkeypatch.setattr(gabi, "blind_validation", blind_validation)
-            monkeypatch.setitem(sys.modules, "gabi.research_lab", research_lab)
-            monkeypatch.setitem(sys.modules, "gabi.blind_validation", blind_validation)
+            # The captured app_mode imported the flat blind_validation retired in F7.26.
+            with monkeypatch.context() as patch:
+                patch.setattr(gabi, "research_lab", env["lab"])
+                patch.setattr(gabi, "blind_validation", env["blind"], raising=False)
+                patch.setitem(sys.modules, "gabi.research_lab", env["lab"])
+                patch.setitem(sys.modules, "gabi.blind_validation", env["blind"])
+                results[label] = captured("app_mode").current_model_status()
         else:
             before = path.read_bytes() if path.exists() else None
             results[label] = app_mode.current_model_status()
