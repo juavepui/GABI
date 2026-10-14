@@ -35,7 +35,8 @@ def median(function) -> tuple[object, float]:
 
 
 def main():
-    from gabi import blind_validation, config, research_lab, screener_asof, storage
+    from gabi import config, research_lab, screener_asof, storage
+    from gabi.infrastructure.legacy import blind_validation
 
     reference = json.loads((ROOT / "backend/tests/fixtures/research_ledgers_migration.json").read_text(encoding="utf-8"))
     research_lab._current_git_commit = lambda: "abc1234"

@@ -67,7 +67,6 @@ module = [
     "gabi.data_fetch",
     "gabi.edgar",
     "gabi.multifactor_backtest",
-    "gabi.blind_validation",
 ]
 ignore_errors = true
 

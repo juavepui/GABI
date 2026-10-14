@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from gabi import blind_validation as bv
-from gabi import config, storage
+from gabi import config, screener_asof, storage
+from gabi.infrastructure.legacy import blind_validation as bv
 
 
 def _isolate(tmp_path, monkeypatch):
@@ -27,7 +27,7 @@ def _fake_ranking(monkeypatch, scores: dict):
         table = pd.DataFrame({"composite_score": [scores[s] for s in syms],
                               "score_coverage": [.9] * len(syms)}, index=syms)
         return {"table": table}
-    monkeypatch.setattr(bv.screener_asof, "build_ranking_as_of", _rank)
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of", _rank)
 
 
 WEIGHTS = {"value": .3, "quality": .35, "momentum": .25, "risk": .1}

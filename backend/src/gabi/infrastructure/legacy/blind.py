@@ -1,4 +1,4 @@
-"""Blind validation writes through the unchanged blind_validation module."""
+"""Blind validation writes and worker jobs through the blind ledger use case."""
 
 from pathlib import Path
 
@@ -10,8 +10,9 @@ class LegacyBlindWriter:
         self.data_dir = data_dir
 
     def _module(self):
-        # blind_validation writes to the immutable project-root config, like the worker's legacy jobs.
-        from gabi import blind_validation, config
+        # The ledger writes to the immutable project-root config, like the worker's legacy jobs.
+        from gabi import config
+        from gabi.infrastructure.legacy import blind_validation
 
         if config.DATA_DIR.resolve() != self.data_dir.resolve():
             raise QueryError("blind_unavailable", "Las validaciones ciegas no usan el directorio de datos de la API.", 503)
@@ -30,8 +31,8 @@ def run_blind_job(kind: str, data_dir: Path, plans_root: Path, options: dict) ->
     """Worker only (its LegacyExecutor checks the data directory): rebalance, performance or export."""
     from datetime import date
 
-    from gabi import blind_validation
     from gabi.application.research import blind
+    from gabi.infrastructure.legacy import blind_validation
     from gabi.infrastructure.legacy.periodic import build_periodic_tasks
     from gabi.infrastructure.storage.blind import SqliteBlindStore
     from gabi.infrastructure.storage.blind_plans import FileBlindPlans

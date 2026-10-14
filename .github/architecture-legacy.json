@@ -10,12 +10,6 @@
   "backend/src/gabi/app_mode.py": [
     "gabi.config"
   ],
-  "backend/src/gabi/blind_validation.py": [
-    "gabi.config",
-    "gabi.research_lab.log_experiment",
-    "gabi.screener_asof",
-    "pandas"
-  ],
   "backend/src/gabi/block_bootstrap.py": [
     "exchange_calendars",
     "gabi.academic_factors",

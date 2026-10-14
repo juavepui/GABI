@@ -7,9 +7,10 @@ Lista cerrada de los módulos planos de `backend/src/gabi` que no están congela
 permanentes no usan SQL, HTTP ni procesos salvo la excepción declarada y que los
 pendientes solo bajan.
 
-Estado del 2026-10-14 (pila hasta #145 y [F7.25](f7-retire-source-facades.md)):
-66 módulos planos = 18 congelados + 37 permanentes + 11 pendientes. F7.25 retira
-`price_sync`, `macro` e `insider`.
+Estado del 2026-10-14 (pila hasta #145, [F7.25](f7-retire-source-facades.md) y
+[F7.26](f7-retire-blind-validation.md)): 65 módulos planos = 18 congelados +
+37 permanentes + 10 pendientes. F7.25 retira `price_sync`, `macro` e `insider`; F7.26,
+`blind_validation`.
 
 ## Criterio de cierre de #90 y #91
 
@@ -69,12 +70,11 @@ importa y usa sus nombres públicos.
 | `variant_validation` | interfaz de motores congelados; leído por nombre para una huella publicada | r3_experiment (congelado); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `workspace` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 
-## Pendientes (11)
+## Pendientes (10)
 
 | Módulo | Siguiente paso |
 | --- | --- |
 | `app_mode` | #91: estado del modelo; consumidores en API y live_ledger |
-| `blind_validation` | #91: validaciones ciegas ya sobre infraestructura (#140); retirar al migrar sus consumidores |
 | `data_fetch` | #90: descarga operativa; caso de uso compartido con el worker |
 | `data_quality` | #90: ranking_quality y fachada de lecturas (#139) |
 | `historical_archive` | #90: fachada del archivo histórico (F7.7) |

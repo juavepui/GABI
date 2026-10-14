@@ -73,7 +73,7 @@ class LegacyPeriodicOperations:
         return sync_rules.totals(events)
 
     def record_rebalance(self, validation_id):
-        from gabi.blind_validation import record_rebalance
+        from gabi.infrastructure.legacy.blind_validation import record_rebalance
 
         return record_rebalance(validation_id)
 
