@@ -16,6 +16,15 @@ def git_commit(checkout: Path) -> str | None:
         return None
 
 
+def working_tree_modified(checkout: Path, pathspec: str) -> bool | None:
+    """Uncommitted changes under ``pathspec``; None when git cannot be started."""
+    try:
+        return bool(subprocess.run(["git", "status", "--porcelain", "--", pathspec], cwd=checkout,
+                                   capture_output=True, text=True, timeout=5).stdout)
+    except OSError:
+        return None
+
+
 def dependency_versions(packages: list[str]) -> dict:
     """Installed versions of the listed packages; absent packages are omitted."""
     versions = {}

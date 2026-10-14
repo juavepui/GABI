@@ -126,3 +126,44 @@ que los artefactos publicados de #33 y #35 conservan los hashes que registran
 acreditados hace fallar la prueba. El acceso a datos no cambia: las dos consultas se
 hacen en una transacción de lectura.
 Validación del 2026-10-14: suite Python completa de 2.109 pruebas correcta.
+
+## Tercera entrega: inventario de #133
+
+Reducciones (−6 dependencias):
+
+| Módulo | Sale del inventario | Ahora |
+| --- | --- | --- |
+| `live_ledger` | `os`, `sys` | bloqueo de un solo escritor y ancla atómica en `infrastructure/storage/live_ledger_files` (`_locked` y `_write_anchor` se conservan como envoltorios, porque las pruebas los sustituyen) |
+| `live_ledger` | `subprocess` | `research_environment.working_tree_modified` (mismo `git status --porcelain`; solo `OSError` da `None`, como antes) |
+| `live_ledger`, `evidence_confidence` | `history_refresh.last_completed_session` | `domain.market.freshness.market_date`, al que también delega `history_refresh` |
+| `blind_validation` | `research_lab._current_git_commit` | `research_environment.git_commit(config.BASE_DIR)`, el mismo proveedor que usa `research_lab` |
+
+`live_ledger.py` y `evidence_confidence.py` forman parte de los hashes de
+`live_ledger.model_metadata`. La pila ya cambia `live_ledger.py`, `screener.py` y
+`edgar.py`, así que `model_version` cambia una sola vez al integrarla; esta entrega no
+añade otro cambio de versión.
+
+Excepciones que quedan, justificadas:
+
+| Módulo | Dependencias | Motivo |
+| --- | --- | --- |
+| `research_lab` | `config`, `pandas` | ruta por operación (ADR 0005); interfaz publicada en `DataFrame` que usan seis motores congelados |
+| `blind_validation` | `config`, `research_lab.log_experiment`, `screener_asof`, `pandas` | exporta al registro público de experimentos; los rankings ciegos usan el motor histórico, cuyas entradas explícitas son #132 |
+| `app_mode` | `config` | ruta por operación (ADR 0005) |
+| `evidence_confidence` | `app_mode`, `config`, `evidence_catalog`, `live_ledger`, `rank_stability`, `scoring` | modelo congelado, catálogo publicado, metadatos del modelo y `rank_stability` (motor reubicado); mover estos ficheros cambia `model_version` |
+| `evidence_catalog` | `config`, `factor_sector_stability` | lee factores publicados por un motor congelado |
+| `live_ledger` | `app_mode`, `config`, `evidence_confidence`, `identity`, `research_lab`, `screener`, `numpy`, `pandas` | decisión LIVE_FORWARD con el screener vigente y la misma huella de entorno que el laboratorio. Su orden `--verify`/`--recover-anchor` es administración, no reproducción: queda para #135 |
+| `variant_validation` | `portfolio_backtest` | biblioteca de `r3_experiment` (congelado) y `rotation_experiment` |
+| `value_hypothesis` | `scoring` | adaptador fino de `spec_hash` para un preregistro sellado (ADR 0002) |
+| `rotation_experiment` | motores antiguos y `shutil` | excepción explícita del ADR 0002: parchea motores congelados sobre una copia del snapshot |
+| `historical_validation`, `historical_revalidation` | `full_universe_audit`, `overfitting_audit`, `multifactor_backtest`, `historical_pit`, `identity`, `scoring`… | motores que importan `cross_section_test`, `factor_zoo`, `placebo_engine`, `tail_effect_test` y `r3_experiment`; `analyze` apunta `config.DB_PATH` al snapshot congelado (comportamiento previo, no ampliado) |
+| `smallmid_feasibility` | `historical_issuer_evidence`, `historical_membership`, `historical_tiingo`, `identity`… | estudio publicado que importa `smallmid_test` |
+| `smallmid_test` | `storage`, `requests`, `yfinance` y motores históricos | prueba #44 preregistrada y en curso (los datos se congelan como tarde el 15 de enero de 2027; huella de funciones `69efba58…`). Se revisa al cerrarse #44; hasta entonces no se refactoriza |
+
+Con esto `storage.get_connection` solo tiene un uso fuera de `storage`
+(`smallmid_test`), y #133 no deja comandos de reproducción en módulos planos.
+
+Validación: `test_research_inventory_migration.py` (bloqueo exclusivo y liberado,
+bytes del ancla en modo texto como antes, reglas de fallo de `git status`, fecha de
+mercado igual en los cuatro nombres y el mismo commit en laboratorio y validación ciega).
+Validación del 2026-10-14: suite Python completa de 2.116 pruebas correcta.

@@ -3,9 +3,9 @@ from datetime import UTC, datetime
 
 from gabi.application.market.evidence_assessment import build_evidence
 from gabi.domain.market import evidence as rules
+from gabi.domain.market.freshness import market_date as last_completed_session
 
 from . import app_mode, config, evidence_catalog, live_ledger, rank_stability, scoring
-from .history_refresh import last_completed_session
 
 RULE_VERSION = rules.RULE_VERSION
 _number = rules._number

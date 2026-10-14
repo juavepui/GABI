@@ -3,10 +3,6 @@
 import argparse
 import hashlib
 import json
-import os
-import subprocess
-import sys
-from contextlib import contextmanager
 from datetime import UTC, datetime
 
 import numpy as np
@@ -14,13 +10,15 @@ import pandas as pd
 
 from gabi.application.market import cached_data
 from gabi.application.market.sec_reads import fetched_at as sec_fetched_at
+from gabi.domain.market.freshness import market_date as last_completed_session
 from gabi.domain.research.live_ledger import UNREADABLE, canonical, fingerprint, replay_decision, safe, verify_chain
+from gabi.infrastructure.providers import research_environment
+from gabi.infrastructure.storage import live_ledger_files
 from gabi.infrastructure.storage import live_ledger_writes as ledger_sql
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 
 from . import app_mode, config, identity, research_lab
-from .history_refresh import last_completed_session
 
 STAGES = ("RETROSPECTIVE", "OOS", "LIVE_FORWARD")
 SCHEMA = ledger_sql.SCHEMA
@@ -37,40 +35,12 @@ def anchor_path():
     return config.DATA_DIR / "live_ledger" / "head.json"
 
 
-@contextmanager
 def _locked():
-    directory = anchor_path().parent
-    directory.mkdir(parents=True, exist_ok=True)
-    with (directory / "writer.lock").open("a+b") as lock:
-        lock.seek(0, os.SEEK_END)
-        if lock.tell() == 0:
-            lock.write(b"0")
-            lock.flush()
-        lock.seek(0)
-        if sys.platform == "win32":
-            import msvcrt
-            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-            getattr(fcntl, "flock")(lock.fileno(), getattr(fcntl, "LOCK_EX") | getattr(fcntl, "LOCK_NB"))
-        try:
-            yield
-        finally:
-            lock.seek(0)
-            if sys.platform == "win32":
-                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                getattr(fcntl, "flock")(lock.fileno(), getattr(fcntl, "LOCK_UN"))
+    return live_ledger_files.writer_lock(anchor_path().parent)
 
 
 def _write_anchor(seq: int, digest: str) -> None:
-    path = anchor_path()
-    pending = path.with_suffix(".json.tmp")
-    with pending.open("w", encoding="utf-8") as stream:
-        stream.write(canonical({"seq": seq, "hash": digest}) + "\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    pending.replace(path)
+    live_ledger_files.write_anchor(anchor_path(), canonical({"seq": seq, "hash": digest}) + "\n")
 
 
 def _connection():
@@ -191,11 +161,7 @@ def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") 
     specification = {"weights": weights if weights is not None else app_mode.FROZEN_WEIGHTS,
                      "universe_id": universe_id, "top_n": 20, "coverage": .70,
                      "ranking": "descending composite, ascending ticker", "report_cost_per_side": .001}
-    try:
-        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--", "backend/src/gabi"], cwd=config.BASE_DIR,
-                                    capture_output=True, text=True, timeout=5).stdout)
-    except OSError:
-        dirty = None
+    dirty = research_environment.working_tree_modified(config.BASE_DIR, "backend/src/gabi")
     return {"model_id": app_mode.FROZEN_MODEL_ID, "configuration": specification,
             "config_version": fingerprint(specification), "model_version": fingerprint({"spec": specification, "code": hashes}),
             "git_commit": research_lab._current_git_commit(), "working_tree_modified": dirty,

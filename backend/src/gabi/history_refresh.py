@@ -26,7 +26,7 @@ from .domain.market import freshness
 
 
 def last_completed_session(now: datetime) -> str:
-    return freshness.last_completed_session(now).isoformat()
+    return freshness.market_date(now)
 
 
 def period_symbols(history: pd.DataFrame, start: str, end: str) -> list[str]:

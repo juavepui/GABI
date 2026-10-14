@@ -12,7 +12,6 @@
   ],
   "backend/src/gabi/blind_validation.py": [
     "gabi.config",
-    "gabi.research_lab._current_git_commit",
     "gabi.research_lab.log_experiment",
     "gabi.screener_asof",
     "pandas"
@@ -99,7 +98,6 @@
     "gabi.app_mode",
     "gabi.config",
     "gabi.evidence_catalog",
-    "gabi.history_refresh.last_completed_session",
     "gabi.live_ledger",
     "gabi.rank_stability",
     "gabi.scoring"
@@ -273,15 +271,11 @@
     "gabi.app_mode",
     "gabi.config",
     "gabi.evidence_confidence",
-    "gabi.history_refresh.last_completed_session",
     "gabi.identity",
     "gabi.research_lab",
     "gabi.screener",
     "numpy",
-    "os",
-    "pandas",
-    "subprocess",
-    "sys"
+    "pandas"
   ],
   "backend/src/gabi/macro.py": [
     "gabi.config",
