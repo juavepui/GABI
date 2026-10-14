@@ -10,11 +10,12 @@ pendientes solo bajan.
 Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.28:
 [F7.25](f7-retire-source-facades.md), [F7.26](f7-retire-blind-validation.md),
 [F7.27](f7-identity-audit-command.md), [F7.28](f7-history-refresh-command.md)):
-63 módulos planos = 18 congelados + 40 permanentes + 5 pendientes. F7.25 retira
+62 módulos planos = 18 congelados + 40 permanentes + 4 pendientes. F7.25 retira
 `price_sync`, `macro` e `insider`; F7.26, `blind_validation`; F7.27,
 `historical_identity_audit`; F7.28, `history_refresh`. `historical_archive`,
 `historical_tiingo` y `historical_wiki` pasan a permanentes porque los importa la
-prueba #44 preregistrada (decisión del 2026-10-14).
+prueba #44 preregistrada (decisión del 2026-10-14). [F7.29](f7-retire-sync-state.md) retira
+`sync_state`.
 
 ## Criterio de cierre de #90 y #91
 
@@ -79,7 +80,7 @@ importa y usa sus nombres públicos.
 | `variant_validation` | interfaz de motores congelados; leído por nombre para una huella publicada | r3_experiment (congelado); rotation_experiment (protocol.json/audit.json sellados) | ninguno |
 | `workspace` | leído por nombre para una huella publicada | live_ledger.model_metadata (model_version) | ninguno |
 
-## Pendientes (5)
+## Pendientes (4)
 
 | Módulo | Siguiente paso |
 | --- | --- |
@@ -87,7 +88,6 @@ importa y usa sus nombres públicos.
 | `data_fetch` | #90: descarga operativa; caso de uso compartido con el worker |
 | `data_quality` | #90: ranking_quality y fachada de lecturas (#139) |
 | `sec_history` | #90: descargas SEC fijadas |
-| `sync_state` | #90: checkpoints y reintentos; requests solo para clasificar errores transitorios |
 
 ## `model_version` del ledger
 

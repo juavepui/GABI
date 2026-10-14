@@ -11,11 +11,12 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 import pytest
+import sync_checkpoints as sync
 import yfinance
 
 from gabi import config, data_fetch, identity, storage
-from gabi import sync_state as sync
 from gabi.domain.market import freshness
+from gabi.infrastructure.storage import sync_events as event_store
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
@@ -75,7 +76,9 @@ def test_scenario_sequence_matches_capture(tmp_path, monkeypatch):
     monkeypatch.setattr(time, "perf_counter", lambda: 5.)
     monkeypatch.setattr(time, "thread_time", lambda: 1.)
     monkeypatch.setattr(identity, "resolve", lambda symbol, day: {"entity_id": None})
-    monkeypatch.setattr(sync, "datetime", SimpleNamespace(now=lambda tz=None: NOW, fromisoformat=datetime.fromisoformat))
+    fixed = SimpleNamespace(now=lambda tz=None: NOW, fromisoformat=datetime.fromisoformat)
+    monkeypatch.setattr(sync, "datetime", fixed)
+    monkeypatch.setattr(event_store, "datetime", fixed)
     results = []
     for label in ("old", "new"):
         path = tmp_path / label / "gabi.db"

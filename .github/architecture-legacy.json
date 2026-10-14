@@ -59,7 +59,6 @@
     "concurrent.futures",
     "gabi.config",
     "gabi.identity",
-    "gabi.sync_state",
     "pandas"
   ],
   "backend/src/gabi/data_quality.py": [
@@ -73,7 +72,6 @@
     "concurrent.futures",
     "gabi.config",
     "gabi.identity",
-    "gabi.sync_state",
     "pandas"
   ],
   "backend/src/gabi/entity_master.py": [
@@ -210,7 +208,6 @@
   "backend/src/gabi/historical_tiingo.py": [
     "gabi.config",
     "gabi.historical_archive",
-    "gabi.sync_state",
     "pandas",
     "pathlib"
   ],
@@ -431,10 +428,6 @@
     "pathlib",
     "scipy",
     "sqlite3"
-  ],
-  "backend/src/gabi/sync_state.py": [
-    "gabi.config",
-    "requests"
   ],
   "backend/src/gabi/tail_effect_test.py": [
     "gabi.academic_factors",

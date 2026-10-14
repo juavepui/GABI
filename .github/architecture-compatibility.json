@@ -325,7 +325,6 @@
     "app_mode": "#91: estado del modelo; consumidores en API y live_ledger",
     "data_fetch": "#90: descarga operativa; caso de uso compartido con el worker",
     "data_quality": "#90: ranking_quality y fachada de lecturas (#139)",
-    "sec_history": "#90: descargas SEC fijadas",
-    "sync_state": "#90: checkpoints y reintentos; requests solo para clasificar errores transitorios"
+    "sec_history": "#90: descargas SEC fijadas"
   }
 }

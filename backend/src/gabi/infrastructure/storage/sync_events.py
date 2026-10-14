@@ -2,9 +2,12 @@
 
 import json
 import sqlite3
+import time
 from contextlib import closing
+from datetime import UTC, datetime
 from pathlib import Path
 
+from gabi.application.administration.sync_events import SyncAttempt
 from gabi.infrastructure.storage.bounded_reads import bounded_rows, read_only
 
 SCHEMA = """
@@ -90,3 +93,9 @@ class OperationSyncEvents:
     def failed_datasets(self, source: str) -> set[tuple[str, str]]:
         return set(self._rows("sync_checkpoints", "SELECT entity,dataset FROM sync_checkpoints WHERE source=? "
                               "AND json_extract(state_json,'$.status')='failed'", (source,)))
+
+
+def measured_attempt(events: OperationSyncEvents, source: str, entity: str, dataset: str) -> SyncAttempt:
+    """A source attempt timed with wall and thread CPU clocks, recorded in ``events``."""
+    return SyncAttempt(source, entity, dataset, events, now=lambda: datetime.now(UTC),
+                       wall_time=lambda: time.perf_counter(), cpu_time=lambda: time.thread_time())

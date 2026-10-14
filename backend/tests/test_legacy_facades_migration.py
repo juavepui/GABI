@@ -155,13 +155,14 @@ def test_failed_attribution_rolls_back_the_price_rows(tmp_path, monkeypatch):
 def test_issuer_sync_uses_the_verified_modern_composition(tmp_path, monkeypatch):
     import test_sec_xbrl_migration as xbrl
 
-    from gabi import edgar, storage, sync_state
+    from gabi import edgar, storage
+    from gabi.infrastructure.providers import source_retry
 
     path = tmp_path / "facade" / "gabi.db"
     monkeypatch.setattr(config, "DB_PATH", path)
     monkeypatch.setattr(edgar, "_now", lambda: xbrl.NOW)
     monkeypatch.setattr(edgar, "time", SimpleNamespace(perf_counter=lambda: 4., thread_time=lambda: 2.))
-    monkeypatch.setattr(sync_state, "retry", xbrl.counted)
+    monkeypatch.setattr(source_retry, "retry", xbrl.counted)
     monkeypatch.setattr(edgar, "fetch_submissions", lambda cik: xbrl.filings())
     monkeypatch.setattr(edgar, "fetch_company_facts", lambda cik: xbrl.payload())
     monkeypatch.setattr(storage, "get_connection", lambda: pytest.fail("legacy connection"))

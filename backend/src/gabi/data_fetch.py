@@ -13,13 +13,15 @@ import pandas as pd
 
 from gabi.application.market import cached_data
 from gabi.application.market.price_sync import run as run_price_sync
+from gabi.domain.market import sync_events as sync_rules
 from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.price_sync import yahoo_symbol
 from gabi.domain.market.source_errors import RETRYABLE_CATEGORIES as RETRYABLE
 from gabi.domain.market.source_errors import classify
-from gabi.infrastructure.providers import yahoo
+from gabi.infrastructure.providers import source_retry, yahoo
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites, statement_json
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
 
 from . import config, identity
 
@@ -34,6 +36,10 @@ def _reads() -> SqliteCacheReads:
 
 def _writes() -> SqliteCacheWrites:
     return SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC))
+
+
+def _events() -> OperationSyncEvents:
+    return OperationSyncEvents(config.DB_PATH)
 
 
 class _PriceStore:
@@ -55,12 +61,12 @@ class _PriceStore:
 
 def sync_prices(symbols: list, *, force: bool = False, full_refresh: bool = False, now=None) -> dict:
     """Incremental Yahoo prices, with overlap and explicit adjustment repair."""
-    from . import sync_state as sync
-
     now = now or datetime.now(UTC)
+    events = _events()
     return run_price_sync(symbols, store=_PriceStore(_reads(), _writes()),
                           owner=lambda symbol, day: identity.resolve(symbol, day)["entity_id"],
-                          attempt=sync.Attempt, checkpoint=sync.get, due=sync.due, retry=sync.retry,
+                          attempt=lambda *key: measured_attempt(events, *key), checkpoint=events.get,
+                          due=sync_rules.due, retry=source_retry.retry,
                           download=yahoo.download, classify=lambda exc: classify(str(exc))[1],
                           payload_size=lambda frame: len(frame.to_csv().encode()), now=now,
                           session=last_completed_session(now).isoformat(), force=force, full_refresh=full_refresh)
@@ -271,20 +277,20 @@ def fetch_fundamentals_batch(symbols: list, max_workers: int = 6, progress_cb=No
     total = len(symbols)
     if total == 0:
         return failed
-    from . import sync_state as sync
+    events = _events()
     previous = cached_data.fundamentals(_reads(), symbols)
 
     def sync_one(sym):
         owner = identity.resolve(sym, datetime.now(UTC).date().isoformat())["entity_id"]
-        attempt = sync.Attempt("yahoo", owner or f"ticker:{sym}", f"fundamentals:{sym}")
+        attempt = measured_attempt(events, "yahoo", owner or f"ticker:{sym}", f"fundamentals:{sym}")
         try:
-            info, qi, qcf = sync.retry(lambda: _fetch_fundamentals_attempt(sym), attempt)
+            info, qi, qcf = source_retry.retry(lambda: _fetch_fundamentals_attempt(sym), attempt)
             payload = {"info": info, "quarterly_income": json.loads(statement_json(qi)),
                        "quarterly_cashflow": json.loads(statement_json(qcf))}
             attempt.payload(payload)
-            digest = sync.fingerprint(payload)
+            digest = sync_rules.fingerprint(payload)
             old = previous.get(sym)
-            status = "new" if not old else "unchanged" if digest == sync.fingerprint(
+            status = "new" if not old else "unchanged" if digest == sync_rules.fingerprint(
                 {k: v for k, v in old.items() if k != "fetched_at"}) else "revised"
             # Refresh the snapshot timestamp even when values agree; no historical reprocessing.
             _writes().fundamentals(sym, info, qi, qcf, entity_id=owner)
@@ -333,8 +339,7 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
 
     fetched_at = cached_data.fundamentals_fetched_at(_reads(), symbols)
     now = datetime.now(UTC)
-    from . import sync_state
-    failed_fundamentals = {dataset.removeprefix("fundamentals:") for _, dataset in sync_state.failed_datasets("yahoo")
+    failed_fundamentals = {dataset.removeprefix("fundamentals:") for _, dataset in _events().failed_datasets("yahoo")
                            if dataset.startswith("fundamentals:")}
     stale = [
         s for s in symbols

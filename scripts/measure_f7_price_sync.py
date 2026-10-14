@@ -16,15 +16,17 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend/src"))
+# The retired sync_state names (F7.29) over the production stores, shared with the tests.
+sys.path.insert(0, str(ROOT / "backend/tests"))
 SYMBOLS = 100
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
 
 
 def main():
+    import sync_checkpoints as sync
     import yfinance
 
     from gabi import config, data_fetch, identity, storage
-    from gabi import sync_state as sync
     from gabi.domain.market import freshness
 
     reference = json.loads((ROOT / "backend/tests/fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
