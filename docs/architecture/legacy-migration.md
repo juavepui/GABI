@@ -91,6 +91,8 @@ proveedores, y los respaldos del worker comparten la composición del bootstrap.
 al caso de uso `BlindLedger` y los nombres públicos en un adaptador de `infrastructure/legacy`.
 [F7.27](f7-identity-audit-command.md) pasa `historical_identity_audit` a
 `gabi_cli research identity-audit` (ADR 0002), con sus bucles en aplicación y sus reglas en dominio.
+[F7.28](f7-history-refresh-command.md) pasa `history_refresh` a `gabi_cli research history-refresh`,
+con su orden de pasos en un caso de uso y sus reglas en dominio.
 
 ## Responsabilidades y entregas
 
@@ -103,7 +105,7 @@ tabla indica destinos, no un movimiento ciego de archivos enteros.
 | `screener`, `data_quality`, `evidence_confidence`, `app_mode` | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |
 | `storage`, `entity_master`, `entity_migration`, `identity`, `sync_state` | SQL al adaptador; política de identidad al dominio | F2/F4: alias, duplicidad de clases, lotes y cambios aditivos |
 | `data_fetch`, `universe`, `edgar`, `academic_factors`, `estimates`, `historical_*`, `sec_*` (`macro`, `insider` retirados) | Proveedores/archivos en infraestructura; actualización en aplicación | F4/F5/F6: caché ausente no inicia descargas; rate limits y checkpoints |
-| `periodic_tasks`, `history_refresh` (`edgar_sync`, `price_sync` retirados) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
+| `periodic_tasks` (`edgar_sync`, `price_sync`, `history_refresh` retirados) | Casos de uso compartidos, adaptadores CLI y worker persistente | F4: continuidad sin navegador, idempotencia y reinicio |
 | `capital_allocation`, `rotation_policy`, `broker_costs`, `tax_drag`, `portfolio_metrics` | Dominio Cartera; coordinación de lecturas/escrituras en aplicación | F5: selección, costes y rentabilidades idénticos |
 | `decision_engine`, `sim_portfolios`, `signal_monitor`, `evaluation`, `live_ledger` | Aplicación por capacidad y persistencia específica | F5: operaciones, ledger y contratos sin cambios de interpretación |
 | `research_lab`, `blind_validation`, `factor_lab`, `portfolio_lab`, auditorías/backtests/experimentos | Dominio de cálculos; casos de uso Investigación; jobs y artefactos en infraestructura | F6: protocolos, hashes, reservas, resultados y exportaciones |

@@ -12,7 +12,7 @@ def live_report(*, model_version: str | None = None, as_of: str | None = None) -
     import pandas as pd
 
     from gabi import config, identity, live_ledger, storage
-    from gabi.history_refresh import last_completed_session
+    from gabi.domain.market.freshness import market_date as last_completed_session
 
     def history(symbol: str, payload: dict) -> pd.DataFrame:
         owner = payload.get("sources", {}).get(symbol, {}).get("entity_id")

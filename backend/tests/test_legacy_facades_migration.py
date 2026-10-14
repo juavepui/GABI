@@ -370,7 +370,7 @@ def test_provenance_matches_captured_ledger(tmp_path, monkeypatch):
 
 
 def test_history_refresh_reads_and_writes_match_captured(tmp_path, monkeypatch):
-    from gabi import history_refresh
+    from gabi.infrastructure.legacy import history_refresh
 
     results = []
     for label in ("old", "new"):
@@ -400,7 +400,7 @@ def test_history_refresh_reads_and_writes_match_captured(tmp_path, monkeypatch):
 
 
 def test_refresh_prices_writes_like_the_captured_facade(tmp_path, monkeypatch):
-    from gabi import history_refresh
+    from gabi.infrastructure.legacy import history_refresh
 
     download = prices_frame(6, start="2024-02-01")
     download["Stock Splits"] = [0, 0, 2.0, 0, float("nan"), 0]

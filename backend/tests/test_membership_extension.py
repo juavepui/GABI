@@ -8,7 +8,9 @@ import pytest
 import yfinance
 
 from gabi import universe
-from gabi.history_refresh import last_completed_session, period_symbols
+from gabi.domain.market.freshness import market_date as last_completed_session
+from gabi.domain.research.history_refresh import period_symbols
+from gabi.infrastructure.legacy import history_refresh
 from gabi.membership_extension import LEDGER_PATH, extend_membership, fingerprint
 
 
@@ -116,7 +118,7 @@ def test_legacy_duplicate_dates_are_preserved(reviewed):
 
 
 def test_renamed_price_series_excludes_later_prices_but_keeps_adjusting_splits(monkeypatch):
-    from gabi import history_refresh, identity
+    from gabi import identity
     frame = pd.DataFrame({"Close": [20., 21., 11.], "Adj Close": [10., 10.5, 11.],
                           "Stock Splits": [0., 0., 2.]},
                          index=pd.to_datetime(["2025-11-10", "2025-11-11", "2026-01-02"]))
@@ -138,7 +140,7 @@ def test_renamed_price_series_excludes_later_prices_but_keeps_adjusting_splits(m
 
 
 def test_empty_provider_rows_cannot_erase_cached_close(monkeypatch):
-    from gabi import history_refresh, identity
+    from gabi import identity
     frame = pd.DataFrame({"Close": [10., float("nan")], "Adj Close": [10., float("nan")]},
                          index=pd.to_datetime(["2026-09-21", "2026-09-22"]))
 
@@ -157,7 +159,6 @@ def test_empty_provider_rows_cannot_erase_cached_close(monkeypatch):
 
 @pytest.mark.parametrize("different_basis", [False, True])
 def test_share_class_cache_requires_matching_adjustments(monkeypatch, different_basis):
-    from gabi import history_refresh
     source = pd.DataFrame({"close": [10.] * 7, "adj_close": [10.] * 7},
                           index=pd.date_range("2026-09-17", periods=7))
     target = source.iloc[:5].copy()

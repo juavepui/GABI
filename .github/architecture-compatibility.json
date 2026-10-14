@@ -299,7 +299,6 @@
     "historical_archive": "#90: fachada del archivo histórico (F7.7)",
     "historical_tiingo": "#90: importación Tiingo; la usa smallmid_test",
     "historical_wiki": "#90: importación WIKI; la usa smallmid_test",
-    "history_refresh": "#90: refresco histórico; usa shutil para copias de seguridad",
     "sec_history": "#90: descargas SEC fijadas",
     "sync_state": "#90: checkpoints y reintentos; requests solo para clasificar errores transitorios"
   }

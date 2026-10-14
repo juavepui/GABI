@@ -11,9 +11,11 @@ from pathlib import Path
 import pandas as pd
 
 from gabi import config, edgar, historical_archive
+from gabi.domain.market.freshness import market_date as last_completed_session
 from gabi.domain.research.historical_backfill import overlaps_membership
+from gabi.domain.research.history_refresh import period_symbols
 from gabi.historical_membership import historical_backfill_manifest
-from gabi.history_refresh import database_coverage, last_completed_session, period_symbols
+from gabi.infrastructure.legacy.history_refresh import database_coverage
 from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.pinned_files import download_pinned, matches
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites

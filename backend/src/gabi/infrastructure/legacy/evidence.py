@@ -20,7 +20,7 @@ class LegacyEvidence:
 
     def evidence(self, table: pd.DataFrame, weights: dict) -> dict[str, dict]:
         from gabi import live_ledger, rank_stability
-        from gabi.history_refresh import last_completed_session
+        from gabi.domain.market.freshness import market_date as last_completed_session
 
         now = self.now()
         catalogue = self.catalogue.load()
