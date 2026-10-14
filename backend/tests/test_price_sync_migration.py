@@ -13,8 +13,9 @@ import pandas as pd
 import pytest
 import yfinance
 
-from gabi import config, data_fetch, history_refresh, identity, storage
+from gabi import config, data_fetch, identity, storage
 from gabi import sync_state as sync
+from gabi.domain.market import freshness
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
@@ -41,7 +42,7 @@ def legacy_run():
         "from .history_refresh import last_completed_session\n", "")
     namespace.update(identity=identity, storage=storage, sync=sync, _classify_error=data_fetch._classify_error,
                      normalize_symbol=data_fetch.normalize_symbol, yf=SimpleNamespace(download=lambda *a, **k: yfinance.download(*a, **k)),
-                     last_completed_session=history_refresh.last_completed_session)
+                     last_completed_session=freshness.market_date)
     exec(source, namespace)
     return namespace["run"]
 

@@ -231,15 +231,6 @@
     "gabi.historical_archive",
     "pathlib"
   ],
-  "backend/src/gabi/history_refresh.py": [
-    "gabi.config",
-    "gabi.data_fetch",
-    "gabi.edgar",
-    "gabi.identity",
-    "gabi.universe",
-    "pandas",
-    "shutil"
-  ],
   "backend/src/gabi/identity.py": [
     "gabi.config",
     "pandas"

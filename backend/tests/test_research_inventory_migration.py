@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from gabi import config, evidence_confidence, history_refresh, live_ledger, research_lab
+from gabi import config, evidence_confidence, live_ledger, research_lab
 from gabi.domain.market import freshness
 from gabi.infrastructure.legacy import blind_validation
 from gabi.infrastructure.providers import research_environment
@@ -50,7 +50,7 @@ def test_working_tree_flag_keeps_its_failure_rules(tmp_path, monkeypatch):
                                  datetime(2026, 2, 7, 12, tzinfo=UTC)])
 def test_market_date_is_the_previous_string_session(now):
     expected = freshness.last_completed_session(now).isoformat()
-    assert freshness.market_date(now) == history_refresh.last_completed_session(now) == expected
+    assert freshness.market_date(now) == expected
     assert live_ledger.last_completed_session(now) == evidence_confidence.last_completed_session(now) == expected
 
 

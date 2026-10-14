@@ -23,8 +23,9 @@ NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
 def main():
     import yfinance
 
-    from gabi import config, data_fetch, history_refresh, identity, storage
+    from gabi import config, data_fetch, identity, storage
     from gabi import sync_state as sync
+    from gabi.domain.market import freshness
 
     reference = json.loads((ROOT / "backend/tests/fixtures/price_sync_migration.json").read_text(encoding="utf-8"))
     symbols = [f"S{i}" for i in range(SYMBOLS)]
@@ -43,7 +44,7 @@ def main():
     namespace = {"__name__": "captured_price_sync", "identity": identity, "storage": storage, "sync": sync,
                  "_classify_error": data_fetch._classify_error, "normalize_symbol": data_fetch.normalize_symbol,
                  "yf": SimpleNamespace(download=lambda *a, **k: yfinance.download(*a, **k)),
-                 "last_completed_session": history_refresh.last_completed_session}
+                 "last_completed_session": freshness.market_date}
     exec(source, namespace)
     rows = {}
     with tempfile.TemporaryDirectory(prefix="gabi-price-sync-") as directory:
