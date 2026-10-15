@@ -3,6 +3,10 @@
 Fuente normativa: [arquitectura de GABI](../architecture.md). Este plan aplica sus
 reglas al código antiguo sin modificar de golpe cálculos o artefactos publicados.
 
+El [balance vigente de F7](f7-balance.md) es la referencia del estado integrado y
+de la evidencia de cierre de #90/#91. Las entregas siguientes describen el avance
+histórico; un pendiente citado en ellas no implica que siga pendiente hoy.
+
 ## Cómo evolucionar un módulo antiguo
 
 1. Localizar sus consumidores, dependencias y archivos sellados. Capturar una
@@ -109,7 +113,7 @@ fijada del archivo SEC a `infrastructure/storage/sec_archive_download.download_p
 Cada grupo puede requerir dividir un módulo que hoy mezcla responsabilidades; la
 tabla indica destinos, no un movimiento ciego de archivos enteros.
 
-| Grupo actual representativo | Destino de responsabilidades | Fase / comprobación |
+| Grupo histórico representativo | Destino de responsabilidades | Fase / comprobación |
 | --- | --- | --- |
 | `metrics`, `scoring`, `technicals`, `risk`, `valuation_expectations` | Dominio Mercado; entradas explícitas y determinismo | F2/F3: ranking/ficha y fixtures incompletas |
 | `screener`, `evidence_confidence` (`data_quality`, `app_mode` retirados) | Casos de uso Mercado/Administración; reglas puras al dominio; lecturas al adaptador | F2: consulta sin red/escritura; Investor/Research por backend |

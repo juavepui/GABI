@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "commit": "1a1320b5c65328f1651050bd075be0197e63992c",
+  "tracked_worktree_dirty": true,
+  "benchmark_sha256": "5fa93745f991cbab1d4c4e945d4ec4354175bc1bff45280310937aaf15f9685f",
+  "fixture_sha256": "9ae44683974ce16c5d9908c8826fa7dd4f29af56e750fb959243673b4d290712",
+  "python": "3.13.7",
+  "platform": "Windows-11-10.0.22621-SP0",
+  "fixture": {
+    "seed": 64,
+    "today": "2026-09-29",
+    "companies": 500,
+    "sessions": 1250,
+    "price_rows": 623755,
+    "wal": true
+  },
+  "repetitions": 3,
+  "scope": "HTTP via TestClient/ASGI: routing, validation, serialization, buffered response; no TCP/browser",
+  "cold_scope": "empty ranking cache, no prewarm; OS cache not flushed (fixture just written)",
+  "memory_scope": "tracemalloc Python peak; separate process RSS endpoints, not sampled peak or per-request delta",
+  "timing_scope": "tracemalloc and SQL authorizer/trace enabled; GC and client JSON parsing excluded",
+  "comparison": "current baseline only; earlier F2 case-use/local-data timings are not directly comparable",
+  "checks": {
+    "exact_cold_warm_prewarmed_parity": true,
+    "filter_page_parity": true,
+    "company_universe_metrics_equal": true,
+    "historical_wal_correction_invalidates": true,
+    "latest_date_unchanged": true,
+    "corrected_matches_fresh_calculation": true,
+    "get_inputs_unchanged": true,
+    "network_and_sql_writes_blocked": true
+  },
+  "cases": {
+    "ranking_cold": {
+      "samples": [
+        {
+          "seconds": 23.51054590009153,
+          "peak_python_mib": 29.251127243041992,
+          "process_rss_before_mib": 174.640625,
+          "process_rss_after_mib": 205.0078125,
+          "sql_statements": 142,
+          "select_queries": 104,
+          "adapter_queries": 139,
+          "adapter_rows_returned": 625552,
+          "response_bytes": 2526647,
+          "cache_hit": false
+        },
+        {
+          "seconds": 28.4535083998926,
+          "peak_python_mib": 28.60004997253418,
+          "process_rss_before_mib": 228.2578125,
+          "process_rss_after_mib": 242.203125,
+          "sql_statements": 142,
+          "select_queries": 104,
+          "adapter_queries": 139,
+          "adapter_rows_returned": 625552,
+          "response_bytes": 2526647,
+          "cache_hit": false
+        },
+        {
+          "seconds": 33.620057200081646,
+          "peak_python_mib": 28.600346565246582,
+          "process_rss_before_mib": 240.65234375,
+          "process_rss_after_mib": 250.41015625,
+          "sql_statements": 142,
+          "select_queries": 104,
+          "adapter_queries": 139,
+          "adapter_rows_returned": 625552,
+          "response_bytes": 2526647,
+          "cache_hit": false
+        }
+      ],
+      "median_seconds": 28.4535083998926
+    },
+    "ranking_warm": {
+      "samples": [
+        {
+          "seconds": 6.792313400190324,
+          "peak_python_mib": 27.200471878051758,
+          "process_rss_before_mib": 204.79296875,
+          "process_rss_after_mib": 211.640625,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 2526646,
+          "cache_hit": true
+        },
+        {
+          "seconds": 8.215224700048566,
+          "peak_python_mib": 27.198100090026855,
+          "process_rss_before_mib": 241.859375,
+          "process_rss_after_mib": 249.546875,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 2526646,
+          "cache_hit": true
+        },
+        {
+          "seconds": 7.487047499977052,
+          "peak_python_mib": 27.197657585144043,
+          "process_rss_before_mib": 244.40625,
+          "process_rss_after_mib": 251.3828125,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 2526646,
+          "cache_hit": true
+        }
+      ],
+      "median_seconds": 7.487047499977052
+    },
+    "ranking_filtered_page": {
+      "samples": [
+        {
+          "seconds": 0.12880360009148717,
+          "peak_python_mib": 1.0099906921386719,
+          "process_rss_before_mib": 215.859375,
+          "process_rss_after_mib": 217.4765625,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 10353,
+          "cache_hit": true
+        },
+        {
+          "seconds": 0.1503202999010682,
+          "peak_python_mib": 1.0076484680175781,
+          "process_rss_before_mib": 241.890625,
+          "process_rss_after_mib": 243.0234375,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 10353,
+          "cache_hit": true
+        },
+        {
+          "seconds": 0.15303919976577163,
+          "peak_python_mib": 1.0068092346191406,
+          "process_rss_before_mib": 248.55859375,
+          "process_rss_after_mib": 248.48046875,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 10353,
+          "cache_hit": true
+        }
+      ],
+      "median_seconds": 0.1503202999010682
+    },
+    "company_cold": {
+      "samples": [
+        {
+          "seconds": 22.21121249999851,
+          "peak_python_mib": 8.595785140991211,
+          "process_rss_before_mib": 213.32421875,
+          "process_rss_after_mib": 225.90625,
+          "sql_statements": 147,
+          "select_queries": 106,
+          "adapter_queries": 144,
+          "adapter_rows_returned": 625678,
+          "response_bytes": 13819,
+          "cache_hit": null
+        },
+        {
+          "seconds": 25.045153900049627,
+          "peak_python_mib": 8.595739364624023,
+          "process_rss_before_mib": 237.4140625,
+          "process_rss_after_mib": 242.0859375,
+          "sql_statements": 147,
+          "select_queries": 106,
+          "adapter_queries": 144,
+          "adapter_rows_returned": 625678,
+          "response_bytes": 13819,
+          "cache_hit": null
+        },
+        {
+          "seconds": 25.466490099672228,
+          "peak_python_mib": 8.594691276550293,
+          "process_rss_before_mib": 243.2890625,
+          "process_rss_after_mib": 248.09765625,
+          "sql_statements": 147,
+          "select_queries": 106,
+          "adapter_queries": 144,
+          "adapter_rows_returned": 625678,
+          "response_bytes": 13819,
+          "cache_hit": null
+        }
+      ],
+      "median_seconds": 25.045153900049627
+    },
+    "company_warm": {
+      "samples": [
+        {
+          "seconds": 0.09060630016028881,
+          "peak_python_mib": 1.1579666137695312,
+          "process_rss_before_mib": 225.91796875,
+          "process_rss_after_mib": 227.13671875,
+          "sql_statements": 9,
+          "select_queries": 5,
+          "adapter_queries": 9,
+          "adapter_rows_returned": 143,
+          "response_bytes": 13819,
+          "cache_hit": null
+        },
+        {
+          "seconds": 0.11207590019330382,
+          "peak_python_mib": 1.1563329696655273,
+          "process_rss_before_mib": 242.09375,
+          "process_rss_after_mib": 243.25390625,
+          "sql_statements": 9,
+          "select_queries": 5,
+          "adapter_queries": 9,
+          "adapter_rows_returned": 143,
+          "response_bytes": 13819,
+          "cache_hit": null
+        },
+        {
+          "seconds": 0.09815220022574067,
+          "peak_python_mib": 1.155623435974121,
+          "process_rss_before_mib": 248.10546875,
+          "process_rss_after_mib": 249.1953125,
+          "sql_statements": 9,
+          "select_queries": 5,
+          "adapter_queries": 9,
+          "adapter_rows_returned": 143,
+          "response_bytes": 13819,
+          "cache_hit": null
+        }
+      ],
+      "median_seconds": 0.09815220022574067
+    },
+    "ranking_prewarmed": {
+      "samples": [
+        {
+          "seconds": 7.190101600252092,
+          "peak_python_mib": 27.248496055603027,
+          "process_rss_before_mib": 229.578125,
+          "process_rss_after_mib": 229.89453125,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 2526646,
+          "cache_hit": true,
+          "prewarm_seconds_without_tracemalloc": 6.745172599796206
+        },
+        {
+          "seconds": 7.592571900226176,
+          "peak_python_mib": 27.24739646911621,
+          "process_rss_before_mib": 244.82421875,
+          "process_rss_after_mib": 243.9921875,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 2526646,
+          "cache_hit": true,
+          "prewarm_seconds_without_tracemalloc": 7.965503899846226
+        },
+        {
+          "seconds": 7.201099999714643,
+          "peak_python_mib": 27.247455596923828,
+          "process_rss_before_mib": 250.7109375,
+          "process_rss_after_mib": 249.17578125,
+          "sql_statements": 4,
+          "select_queries": 3,
+          "adapter_queries": 4,
+          "adapter_rows_returned": 17,
+          "response_bytes": 2526646,
+          "cache_hit": true,
+          "prewarm_seconds_without_tracemalloc": 7.741609999909997
+        }
+      ],
+      "median_seconds": 7.201099999714643
+    },
+    "ranking_invalidated": {
+      "samples": [
+        {
+          "seconds": 30.05929009988904,
+          "peak_python_mib": 28.587615966796875,
+          "process_rss_before_mib": 246.1015625,
+          "process_rss_after_mib": 252.22265625,
+          "sql_statements": 141,
+          "select_queries": 104,
+          "adapter_queries": 139,
+          "adapter_rows_returned": 625552,
+          "response_bytes": 2526739,
+          "cache_hit": false
+        }
+      ],
+      "median_seconds": 30.05929009988904
+    },
+    "company_after_correction": {
+      "samples": [
+        {
+          "seconds": 0.09446949977427721,
+          "peak_python_mib": 1.1546344757080078,
+          "process_rss_before_mib": 250.38671875,
+          "process_rss_after_mib": 251.609375,
+          "sql_statements": 9,
+          "select_queries": 5,
+          "adapter_queries": 9,
+          "adapter_rows_returned": 143,
+          "response_bytes": 13804,
+          "cache_hit": null
+        }
+      ],
+      "median_seconds": 0.09446949977427721
+    },
+    "ranking_corrected_fresh": {
+      "samples": [
+        {
+          "seconds": 29.187981999944896,
+          "peak_python_mib": 28.59937572479248,
+          "process_rss_before_mib": 251.29296875,
+          "process_rss_after_mib": 255.01953125,
+          "sql_statements": 142,
+          "select_queries": 104,
+          "adapter_queries": 139,
+          "adapter_rows_returned": 625552,
+          "response_bytes": 2526739,
+          "cache_hit": false
+        }
+      ],
+      "median_seconds": 29.187981999944896
+    }
+  }
+}
