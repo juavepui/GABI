@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, DatabaseZap, RefreshCw, ShieldCheck } from 'lucide-react';
 import {
@@ -9,6 +10,7 @@ import {
   getJobs,
   getLocalSettings,
   getModel,
+  retryJob,
 } from '@/shared/api/client';
 import type { CreateJobRequest, JobResponse } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
@@ -33,10 +35,14 @@ function JobRow({
   job,
   onCancel,
   onResult,
+  onRetry,
+  retryPending,
 }: {
   job: JobResponse;
   onCancel: (id: string) => void;
   onResult: (id: string) => void;
+  onRetry: (id: string) => void;
+  retryPending: boolean;
 }) {
   const [activity, setActivity] = useState(false);
   const detail = useQuery({
@@ -46,13 +52,19 @@ function JobRow({
     refetchInterval: activity && job.status === 'running' ? 3000 : false,
   });
   return (
-    <li className="rounded-lg border p-4" aria-label={jobName(job.kind)}>
+    <li
+      id={'job-' + job.id}
+      className="scroll-mt-4 rounded-lg border p-4"
+      aria-label={jobName(job.kind)}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-medium">{jobName(job.kind)}</p>
           <p className="text-xs text-muted-foreground">
             {new Date(job.created_at).toLocaleString('es-ES')} ·{' '}
             {job.origin === 'scheduler' ? 'Programador' : 'Manual'}
+            {' · #'}
+            {job.id.slice(0, 8)}
           </p>
         </div>
         <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
@@ -68,7 +80,19 @@ function JobRow({
       )}
       {job.status === 'failed' && (
         <p className="mt-2 text-sm text-destructive">
-          El trabajo falló. Revisa las fuentes locales antes de repetirlo.
+          {job.error_code === 'worker_interrupted'
+            ? 'El worker se interrumpió. No se publicó un resultado. Puedes solicitar un nuevo intento cuando vuelva a estar en marcha.'
+            : 'El trabajo falló y no publicó un resultado. Revisa las fuentes locales antes de repetirlo.'}
+        </p>
+      )}
+      {job.status === 'cancelled' && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Cancelación completada. No se publicó un resultado.
+        </p>
+      )}
+      {job.status === 'running' && job.cancel_requested && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          La cancelación está solicitada. El trabajo sigue en curso hasta alcanzar un punto seguro.
         </p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
@@ -85,6 +109,17 @@ function JobRow({
             {job.cancel_requested ? 'Cancelación solicitada' : 'Cancelar'}
           </Button>
         )}
+        {['failed', 'cancelled'].includes(job.status) &&
+          ['refresh', 'quality'].includes(job.kind) && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={retryPending}
+              onClick={() => onRetry(job.id)}
+            >
+              Solicitar nuevo intento
+            </Button>
+          )}
         {job.status === 'succeeded' &&
           job.result_ref &&
           !['maintenance', 'tiingo'].includes(job.kind) && (
@@ -137,6 +172,9 @@ function qualityRows(value: unknown): { name: string; covered: number; total: nu
 
 export function AdministrationPage() {
   const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const retryInFlight = useRef(false);
+  const retryKeys = useRef(new Map<string, string>());
   const [symbols, setSymbols] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
@@ -173,7 +211,50 @@ export function AdministrationPage() {
     },
     onError: (cause: Error) => setError(cause.message),
   });
+  const repeat = useMutation({
+    mutationFn: ({ id, key }: { id: string; key: string }) => retryJob(id, key),
+    onSuccess: (job, { id }) => {
+      setError('');
+      setResult(null);
+      retryKeys.current.delete(id);
+      try {
+        sessionStorage.removeItem('gabi-job-retry:' + id);
+      } catch {
+        /* Optional persistence. */
+      }
+      setParams((previous) => {
+        const next = new URLSearchParams(previous);
+        next.set('retry_job', job.id);
+        return next;
+      });
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+    onError: (cause: Error) => setError(cause.message),
+    onSettled: () => {
+      retryInFlight.current = false;
+    },
+  });
+  function repeatJob(id: string) {
+    if (retryInFlight.current) return;
+    retryInFlight.current = true;
+    let key = retryKeys.current.get(id);
+    try {
+      key ??= sessionStorage.getItem('gabi-job-retry:' + id) ?? undefined;
+    } catch {
+      /* Optional persistence. */
+    }
+    key ??= crypto.randomUUID();
+    retryKeys.current.set(id, key);
+    try {
+      sessionStorage.setItem('gabi-job-retry:' + id, key);
+    } catch {
+      /* Keep in memory. */
+    }
+    repeat.mutate({ id, key });
+  }
+  const retriedJob = params.get('retry_job');
   async function showResult(id: string) {
+    setResult(null);
     try {
       setResult(await getJobResult(id));
       setError('');
@@ -363,6 +444,14 @@ export function AdministrationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {retriedJob && /^[a-f0-9]{32}$/.test(retriedJob) && (
+            <p role="status" className="mb-4 text-sm">
+              Se ha solicitado un nuevo trabajo; el anterior conserva su estado.{' '}
+              <a className="font-medium text-primary underline" href={'#job-' + retriedJob}>
+                Ver nuevo intento #{retriedJob.slice(0, 8)}
+              </a>
+            </p>
+          )}
           {jobs.isLoading ? (
             <p className="text-sm text-muted-foreground">Cargando trabajos…</p>
           ) : jobs.isError ? (
@@ -377,6 +466,8 @@ export function AdministrationPage() {
                   job={job}
                   onCancel={(id) => cancel.mutate(id)}
                   onResult={(id) => void showResult(id)}
+                  onRetry={repeatJob}
+                  retryPending={repeat.isPending}
                 />
               ))}
             </ul>

@@ -122,6 +122,17 @@ def cancel_job(job_id: JobId, service: Service) -> dict:
     return service.cancel(job_id)
 
 
+class RetryJobRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    idempotency_key: str = Field(min_length=8, max_length=50)
+
+
+@router.post("/jobs/{job_id}/retry", response_model=JobResponse, status_code=202)
+def retry_job(job_id: JobId, body: RetryJobRequest, service: Service) -> dict:
+    return service.retry(job_id, body.idempotency_key)
+
+
 @router.get("/jobs/{job_id}/result")
 def job_result(job_id: JobId, service: Service) -> dict:
     return service.result(job_id)

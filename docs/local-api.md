@@ -32,6 +32,13 @@ La interfaz React y el worker se arrancan juntos con `uv run --project backend p
 
 ## Contrato v1
 
+La [recuperación operativa](architecture/market-data-and-job-recovery.md) añade
+`POST /api/v1/jobs/{id}/retry`: nuevo intento explícito y deduplicado, solo para
+refrescos y auditorías de cobertura fallidos/cancelados. El backend relee y valida
+el origen. No permite repetir genéricamente investigación ni mantenimiento ciego.
+La [medición de worker/API](architecture/worker-api-baseline.md) documenta el
+comportamiento concurrente de estos flujos con fuentes simuladas.
+
 | GET | Resultado |
 | --- | --- |
 | `/api/v1/health` | Salud del proceso; no consulta ni crea datos |

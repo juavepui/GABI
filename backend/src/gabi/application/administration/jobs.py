@@ -193,6 +193,22 @@ class Jobs:
     def list(self) -> list[dict]:
         return self.repository.list()
 
+    def retry(self, job_id: str, key: str) -> dict:
+        """Explicit new command for safe operational jobs; never resume arbitrary research."""
+        source = self.repository.get(job_id)
+        if source["kind"] not in {"refresh", "quality"}:
+            raise QueryError("retry_forbidden", "Solo se pueden repetir refrescos y auditorías de cobertura.", 403)
+        if source["status"] not in {"failed", "cancelled"}:
+            raise QueryError("retry_unavailable", "Solo se puede repetir un trabajo fallido o cancelado.", 409)
+        parameters = source["parameters"]
+        if set(parameters) != {"symbols", "start", "end"}:
+            raise QueryError("invalid_job", "Los parámetros del trabajo de origen no son compatibles.", 422)
+        if not 8 <= len(key) <= 50 or not re.fullmatch(r"[A-Za-z0-9._:-]+", key):
+            raise QueryError("invalid_job", "La clave de repetición no es válida.", 422)
+        command = JobCommand(source["kind"], tuple(parameters["symbols"]), parameters["start"], parameters["end"])
+        # Namespace the request by its source. A lost HTTP response can safely be retried.
+        return self.submit(command, f"retry:{job_id}:{key}")
+
     def get(self, job_id: str) -> dict:
         return self.repository.get(job_id)
 

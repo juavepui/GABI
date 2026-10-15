@@ -5788,6 +5788,16 @@ export type ResearchOverview = {
 };
 
 /**
+ * RetryJobRequest
+ */
+export type RetryJobRequest = {
+    /**
+     * Idempotency Key
+     */
+    idempotency_key: string;
+};
+
+/**
  * SaveEvaluationRequest
  */
 export type SaveEvaluationRequest = {
@@ -8207,6 +8217,56 @@ export type JobResultApiV1JobsJobIdResultGetResponses = {
 };
 
 export type JobResultApiV1JobsJobIdResultGetResponse = JobResultApiV1JobsJobIdResultGetResponses[keyof JobResultApiV1JobsJobIdResultGetResponses];
+
+export type RetryJobApiV1JobsJobIdRetryPostData = {
+    body: RetryJobRequest;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/jobs/{job_id}/retry';
+};
+
+export type RetryJobApiV1JobsJobIdRetryPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RetryJobApiV1JobsJobIdRetryPostError = RetryJobApiV1JobsJobIdRetryPostErrors[keyof RetryJobApiV1JobsJobIdRetryPostErrors];
+
+export type RetryJobApiV1JobsJobIdRetryPostResponses = {
+    /**
+     * Successful Response
+     */
+    202: JobResponse;
+};
+
+export type RetryJobApiV1JobsJobIdRetryPostResponse = RetryJobApiV1JobsJobIdRetryPostResponses[keyof RetryJobApiV1JobsJobIdRetryPostResponses];
 
 export type MetricGlossaryApiV1LearnMetricsGetData = {
     body?: never;
