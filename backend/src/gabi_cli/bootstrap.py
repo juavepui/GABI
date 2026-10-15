@@ -1,10 +1,11 @@
 """Queue scheduled tasks and run the separate local worker.
 
-Usage: python -m gabi_cli serve | worker | schedule daily | schedule tiingo | periodic <options> | research <command>
+Usage: python -m gabi_cli serve [--port N] | worker | schedule daily | schedule tiingo | periodic <options> | research <command>
 """
 
 import argparse
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -43,6 +44,20 @@ def warm_rankings(app) -> None:
         pass  # No cached data yet: the pages show their own empty state.
 
 
+def port_in_use(port: int) -> bool:
+    """True if something already answers on 127.0.0.1:port or the port cannot be bound there."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(0.5)
+        if probe.connect_ex(("127.0.0.1", port)) == 0:
+            return True
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        try:
+            probe.bind(("127.0.0.1", port))
+        except OSError:
+            return True
+    return False
+
+
 def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = None) -> LegacyExecutor:
     clock = now or (lambda: datetime.now(UTC))
     user_agent = sec_user_agent()
@@ -77,6 +92,7 @@ def main() -> None:
     parser.add_argument("kind", nargs="?", choices=["daily", "tiingo"])
     parser.add_argument("--once", action="store_true", help="Procesa un trabajo y termina")
     parser.add_argument("--force", action="store_true", help="Permite encolar Tiingo fuera del día 2")
+    parser.add_argument("--port", type=int, default=8000, help="Puerto local de serve (solo 127.0.0.1; 8000 por defecto)")
     args = parser.parse_args()
     settings = Settings.from_environment()
     if args.action == "serve":
@@ -86,12 +102,19 @@ def main() -> None:
         dist = Path(configured_dist) if configured_dist else settings.data_dir.parent / "frontend" / "dist"
         if not (dist / "index.html").is_file():
             parser.error("Falta el build React; ejecuta npm --prefix frontend run build.")
+        if not 1 <= args.port <= 65535:
+            parser.error("--port debe estar entre 1 y 65535")
+        # Checked before starting the worker: otherwise a busy port leaves a worker without a server.
+        if port_in_use(args.port):
+            parser.error(f"El puerto {args.port} ya está en uso en 127.0.0.1 (¿otro serve o un servicio de WSL?). "
+                         f"Detén ese proceso o usa --port, por ejemplo --port {args.port + 10}.")
         worker_process = subprocess.Popen([sys.executable, "-m", "gabi_cli", "worker"])
         app = create_app(settings, frontend_dist=dist)
         # The first ranking takes about a minute with a full cache: compute it while the server starts.
         threading.Thread(target=warm_rankings, args=(app,), name="gabi-warm-ranking", daemon=True).start()
         try:
-            uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False)
+            print(f"GABI en http://127.0.0.1:{args.port}", flush=True)
+            uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)
         finally:
             worker_process.terminate()
             try:
