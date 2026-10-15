@@ -38,6 +38,9 @@ export function ErrorState({ error, retry }: { error: Error; retry: () => void }
           Reintentar
         </Button>
       </div>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Reintentar vuelve a consultar los datos locales; no inicia una descarga.
+      </p>
     </section>
   );
 }
