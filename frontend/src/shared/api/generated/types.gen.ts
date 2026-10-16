@@ -3846,6 +3846,10 @@ export type JobResponse = {
      */
     created_at: string;
     /**
+     * Diagnostic
+     */
+    diagnostic?: boolean;
+    /**
      * Error Code
      */
     error_code: string | null;

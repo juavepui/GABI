@@ -184,9 +184,14 @@ backtest, y su primer acceso aún puede tardar segundos con históricos grandes.
 El plazo es solo una cota: la validez la decide la clave, que cambia con la fecha,
 los pesos, el universo y la revisión SQLite. Antes era de cinco minutos y, sin
 cambios en los datos, dejar GABI unos minutos sin uso obligaba a recalcular el
-ranking entero (#73). `gabi_cli serve` además calcula en segundo plano, al
-arrancar, el ranking congelado (portada y Cartera) y el del modelo activo
-(Mercado); es de solo lectura, no retrasa el arranque y, sin datos, no hace nada.
+ranking entero (#73). `gabi_cli serve` y `python -m gabi_api.bootstrap` además
+calculan en segundo plano, al arrancar, el ranking congelado (portada y Cartera) y
+el del modelo activo (Mercado); es de solo lectura, no retrasa el arranque y, sin
+datos, no hace nada. Cada 60 s vuelven a comprobar la clave (#164): si un trabajo
+cambió los datos, recalculan antes de la siguiente visita; si no, es un acierto de
+caché. Medido el 2026-10-16 con la base local completa, solo lectura y sin red:
+25,7 s la pasada en frío y 0,14-0,15 s cada pasada sin cambios. Antes, la primera
+consulta tras un `data_update` tardó 19,4 s en `/api/v1/data/status`.
 
 Medición con la base local completa (2026-10-02, solo lectura y sin red):
 

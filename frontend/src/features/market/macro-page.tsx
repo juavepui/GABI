@@ -81,7 +81,7 @@ export function MacroPage() {
             ))}
           </div>
           <p className="text-sm text-muted-foreground">
-            Para actualizar las series, usa el job «Actualizar datos del mercado» en{' '}
+            Para actualizar las series, usa «Actualización completa» en{' '}
             <Link className="text-primary underline" to="/administracion">
               Administración
             </Link>

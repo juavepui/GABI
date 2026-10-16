@@ -1,6 +1,6 @@
 /** Spanish names of the local job kinds and states, shared by Administración and the header indicator. */
 export const JOB_NAMES: Record<string, string> = {
-  refresh: 'Actualizar datos del mercado',
+  refresh: 'Actualización completa',
   symbols: 'Descargar símbolos indicados',
   quality: 'Auditar cobertura local',
   backtest: 'Backtest exploratorio',
@@ -28,7 +28,7 @@ export const JOB_NAMES: Record<string, string> = {
   blind_export: 'Exportar validación ciega',
   portfolio_lab: 'Portfolio Lab',
   company_sync: 'Sincronizar datos de una empresa',
-  data_update: 'Actualizar datos (Yahoo y SEC)',
+  data_update: 'Actualizar datos',
   data_health: 'Comprobar calidad de los datos',
 };
 

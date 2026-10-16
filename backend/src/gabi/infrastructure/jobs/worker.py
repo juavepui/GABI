@@ -3,13 +3,16 @@
 import hashlib
 import json
 import os
+import sys
 import threading
+import traceback
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
-from gabi.application.administration.jobs import JobCommand, SourceFailures
+from gabi.application.administration.jobs import BLIND_KINDS, JobCommand, SourceFailures
 from gabi.infrastructure.storage.jobs import SqliteJobs
 
 
@@ -48,6 +51,28 @@ def process_lock(data_dir: Path) -> Iterator[bool]:
 
 class _Cancelled(Exception):
     """Cancellation requested while the executor was reporting progress."""
+
+
+# Their exception text may quote blind or pending #43/#44 output; the trace keeps only types and frames.
+_QUIET_KINDS = BLIND_KINDS | {"maintenance", "tiingo"}
+
+
+def write_diagnostic(data_dir: Path, job_id: str, kind: str, exc: BaseException) -> bool:
+    """Local trace of an unexpected failure at `jobs/logs/<id>.log`; never raises and never reaches HTTP."""
+    try:
+        if kind in _QUIET_KINDS:
+            lines = ["Traceback (most recent call last):\n", *traceback.format_tb(exc.__traceback__),
+                     f"{type(exc).__module__}.{type(exc).__qualname__} (mensaje omitido)\n"]
+        else:
+            lines = traceback.format_exception(exc)
+        directory = data_dir / "jobs" / "logs"
+        directory.mkdir(parents=True, exist_ok=True)
+        header = f"job {job_id} · {kind} · {datetime.now(UTC).isoformat()}\n\n"
+        (directory / f"{job_id}.log").write_text(header + "".join(lines), encoding="utf-8")
+        print(f"Job {job_id} ({kind}) falló; traza en jobs/logs/{job_id}.log", file=sys.stderr)
+        return True
+    except Exception:
+        return False
 
 
 class Worker:
@@ -141,9 +166,11 @@ class Worker:
         except SourceFailures as exc:
             self.store.finish(job_id, token, "failed", error=exc.code,
                               checkpoint={"stage": "failed", "failures": exc.failures, "failures_total": exc.total})
-        except Exception:
-            # No exception text, local paths, credentials or blind output in the HTTP log.
-            self.store.finish(job_id, token, "failed", error="job_failed")
+        except Exception as exc:
+            # No exception text, local paths, credentials or blind output over HTTP: only whether a local trace exists.
+            diagnostic = write_diagnostic(self.data_dir, job_id, job["kind"], exc)
+            self.store.finish(job_id, token, "failed", error="job_failed",
+                              checkpoint={"stage": "failed", "diagnostic": diagnostic})
             if artifact is not None:
                 artifact.unlink(missing_ok=True)
         finally:

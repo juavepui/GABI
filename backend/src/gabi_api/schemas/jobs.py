@@ -189,6 +189,8 @@ class JobResponse(BaseModel):
     checkpoint: dict
     failures: list[JobSourceFailure] = []
     failures_total: int = 0
+    # A local trace exists at `jobs/logs/<id>.log` in the data folder; its content never travels over HTTP.
+    diagnostic: bool = False
     events: list[JobEvent] | None = None
 
 

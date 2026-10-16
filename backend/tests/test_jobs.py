@@ -127,6 +127,39 @@ def test_running_cancellation_and_failed_execution_never_publish(tmp_path):
     assert failed["error_code"] == "job_failed"
     assert "secret" not in json.dumps(failed)
     assert failed["failures"] == [] and failed["failures_total"] == 0
+    assert failed["diagnostic"] is True
+    trace = (tmp_path / "jobs" / "logs" / f"{second['id']}.log").read_text(encoding="utf-8")
+    assert "RuntimeError: secret value and local path" in trace and "in fails" in trace
+
+
+def test_unexpected_failure_trace_omits_message_for_blind_and_maintenance(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("maintenance"), "maintenance-trace", "scheduler")
+
+    def fails(_):
+        computed = round(1 + 0.23, 2)
+        raise ValueError(f"pending blind result {computed}")
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(job["id"])
+    assert failed["error_code"] == "job_failed" and failed["diagnostic"] is True
+    trace = (tmp_path / "jobs" / "logs" / f"{job['id']}.log").read_text(encoding="utf-8")
+    assert "builtins.ValueError (mensaje omitido)" in trace and "in fails" in trace
+    assert "1.23" not in trace
+
+
+def test_unwritable_trace_still_finishes_failed_without_diagnostic(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("quality"), "quality-unwritable", "ui")
+    (tmp_path / "jobs").mkdir(exist_ok=True)
+    (tmp_path / "jobs" / "logs").write_text("not a directory")
+
+    def fails(_):
+        raise RuntimeError("boom")
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(job["id"])
+    assert failed["status"] == "failed" and failed["diagnostic"] is False
 
 
 def test_source_failures_publish_pairs_without_reasons(tmp_path):

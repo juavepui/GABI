@@ -95,6 +95,7 @@ class SqliteJobs:
         failed = result["status"] == "failed"
         result["failures"] = result["checkpoint"].get("failures", []) if failed else []
         result["failures_total"] = result["checkpoint"].get("failures_total", 0) if failed else 0
+        result["diagnostic"] = bool(result["checkpoint"].get("diagnostic")) if failed else False
         if events is not None:
             result["events"] = [{"at": event["at"], "message": event["message"]} for event in events]
         return result

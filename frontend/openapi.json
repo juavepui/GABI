@@ -7410,6 +7410,11 @@
             "title": "Created At",
             "type": "string"
           },
+          "diagnostic": {
+            "default": false,
+            "title": "Diagnostic",
+            "type": "boolean"
+          },
           "error_code": {
             "anyOf": [
               {
