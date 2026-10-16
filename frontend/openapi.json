@@ -7435,6 +7435,19 @@
             ],
             "title": "Events"
           },
+          "failures": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/JobSourceFailure"
+            },
+            "title": "Failures",
+            "type": "array"
+          },
+          "failures_total": {
+            "default": 0,
+            "title": "Failures Total",
+            "type": "integer"
+          },
           "finished_at": {
             "anyOf": [
               {
@@ -7527,6 +7540,24 @@
           "checkpoint"
         ],
         "title": "JobResponse",
+        "type": "object"
+      },
+      "JobSourceFailure": {
+        "properties": {
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "symbol"
+        ],
+        "title": "JobSourceFailure",
         "type": "object"
       },
       "JournalCreate": {

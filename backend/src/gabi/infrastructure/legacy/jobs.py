@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from gabi.application.administration.jobs import JobCommand
+from gabi.application.administration.jobs import JobCommand, SourceFailures, refresh_failures
 from gabi.application.research.academic_factors import FactorSnapshot
 from gabi.infrastructure.settings import Settings
 
@@ -210,7 +210,7 @@ class LegacyExecutor:
             options: dict = {"sec_sync": self.sec_sync} if self.sec_sync else {}
             result = refresh_data(list(command.symbols), **options)
             if result.get("failed"):
-                raise RuntimeError("Una o más fuentes fallaron.")
+                raise SourceFailures(refresh_failures(result))
             return {"symbols": list(command.symbols), "updated": len(command.symbols)}
         if command.kind == "refresh":
             from gabi.infrastructure.legacy.periodic import build_periodic_tasks
@@ -219,7 +219,7 @@ class LegacyExecutor:
                                           tiingo_import=self.tiingo_import, macro_sync=self.macro_sync,
                                           sec_sync=self.sec_sync).refresh_data()
             if result["fallos"] or result["failed_events"]:
-                raise RuntimeError("Una o más fuentes fallaron.")
+                raise SourceFailures(refresh_failures(result))
             return {"symbols": result["simbolos"], "sync": result["sync"]}
         if command.kind == "backtest":
             from gabi import multifactor_backtest

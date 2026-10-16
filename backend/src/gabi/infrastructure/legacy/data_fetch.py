@@ -243,14 +243,15 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
 
 
 def refresh_data(symbols: list, force: bool = False, progress_cb=None, edgar_progress_cb=None,
-                 *, full_refresh: bool = False, sec_sync=None) -> dict:
+                 *, full_refresh: bool = False, sec_sync=None, sec_symbols: list | None = None) -> dict:
     """Yahoo (prices and fundamentals) and SEC EDGAR, with both sources' failures per company.
+    ``sec_symbols`` restricts SEC to issuers (default: every symbol).
 
     Moved from ``screener`` (F7.30); only worker and periodic adapters call it."""
     from gabi import edgar
 
     result = ensure_universe_data(symbols, force=force, progress_cb=progress_cb, full_refresh=full_refresh)
-    edgar_result = (sec_sync or edgar.ensure_edgar_data)(symbols, force=force, progress_cb=edgar_progress_cb or progress_cb,
+    edgar_result = (sec_sync or edgar.ensure_edgar_data)(symbols if sec_symbols is None else sec_symbols, force=force, progress_cb=edgar_progress_cb or progress_cb,
                                                          full_refresh=full_refresh)
     for sym, reason in edgar_result["failed"].items():
         result["failed"].setdefault(sym, {})["edgar"] = reason

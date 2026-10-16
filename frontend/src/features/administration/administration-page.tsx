@@ -29,6 +29,37 @@ const sourceNames: Record<string, string> = {
   edgar_metrics: 'SEC EDGAR',
 };
 
+const failureSources: Record<string, string> = {
+  yahoo: 'Yahoo',
+  sec: 'SEC EDGAR',
+  universe: 'Universo',
+  fred: 'FRED',
+};
+
+function SourceFailures({
+  failures,
+  total,
+}: {
+  failures: NonNullable<JobResponse['failures']>;
+  total: number;
+}) {
+  return (
+    <ul className="mt-2 flex flex-wrap gap-2 text-xs" aria-label="Fuentes fallidas">
+      {failures.map((failure) => (
+        <li
+          key={`${failure.source}-${failure.symbol}`}
+          className="rounded-md border border-destructive/40 px-2 py-1"
+        >
+          {failureSources[failure.source] ?? failure.source} · {failure.symbol}
+        </li>
+      ))}
+      {total > failures.length && (
+        <li className="px-2 py-1 text-muted-foreground">y {total - failures.length} más</li>
+      )}
+    </ul>
+  );
+}
+
 function JobRow({
   job,
   onCancel,
@@ -68,8 +99,13 @@ function JobRow({
       )}
       {job.status === 'failed' && (
         <p className="mt-2 text-sm text-destructive">
-          El trabajo falló. Revisa las fuentes locales antes de repetirlo.
+          {job.error_code === 'sources_failed'
+            ? 'Fallaron fuentes externas para estos símbolos. El resto de los datos se actualizó; no se publicó un resultado.'
+            : 'El trabajo falló. Revisa las fuentes locales antes de repetirlo.'}
         </p>
+      )}
+      {job.status === 'failed' && job.failures && job.failures.length > 0 && (
+        <SourceFailures failures={job.failures} total={job.failures_total ?? job.failures.length} />
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" variant="ghost" onClick={() => setActivity(!activity)}>

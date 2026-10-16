@@ -288,8 +288,10 @@ def test_periodic_task_integrates_checkpoints_and_full_refresh(monkeypatch):
     from gabi import screener
 
     flags = []
+    symbols = []
     monkeypatch.setattr(screener, "get_universe", lambda **k: flags.append(k) or pd.DataFrame({"symbol": ["A"]}))
-    monkeypatch.setattr(data_fetch, "refresh_data", lambda *a, **k: flags.append(k) or {"failed": {}})
+    monkeypatch.setattr(data_fetch, "refresh_data",
+                        lambda s, **k: symbols.append(s) or flags.append(k) or {"failed": {}})
     def periodic():
         return build_periodic_tasks(config.DATA_DIR, macro_sync=lambda **k: {"ok": True})
 
@@ -297,9 +299,22 @@ def test_periodic_task_integrates_checkpoints_and_full_refresh(monkeypatch):
     again = periodic().refresh_data()
     assert flags[0] == {"force_refresh": True}
     assert flags[2] == {"force_refresh": False}
+    # Benchmark funds get prices but are never sent to SEC companyfacts.
+    assert symbols[0] == ["A", "SPY", "RSP"] and flags[1] == {"sec_symbols": ["A"]}
     assert first["sync"]["calls"] == 1 and again["sync"]["calls"] == 0
     periodic().refresh_data(full_refresh=True)
-    assert flags[-1] == {"full_refresh": True}
+    assert flags[-1] == {"sec_symbols": ["A"], "full_refresh": True}
+
+
+def test_refresh_data_restricts_sec_to_issuers(monkeypatch):
+    monkeypatch.setattr(data_fetch, "ensure_universe_data", lambda symbols, **k: {"failed": {}})
+    sent = []
+    def sec(symbols, **k):
+        sent.append(symbols)
+        return {"failed": {}, "edgar_refreshed": len(symbols)}
+    data_fetch.refresh_data(["A", "SPY"], sec_sync=sec, sec_symbols=["A"])
+    data_fetch.refresh_data(["A", "SPY"], sec_sync=sec)
+    assert sent == [["A"], ["A", "SPY"]]
 
 
 def test_periodic_universe_failure_keeps_the_previous_checkpoint(monkeypatch):

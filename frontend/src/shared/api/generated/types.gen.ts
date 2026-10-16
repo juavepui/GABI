@@ -3854,6 +3854,14 @@ export type JobResponse = {
      */
     events?: Array<JobEvent> | null;
     /**
+     * Failures
+     */
+    failures?: Array<JobSourceFailure>;
+    /**
+     * Failures Total
+     */
+    failures_total?: number;
+    /**
      * Finished At
      */
     finished_at: string | null;
@@ -3899,6 +3907,20 @@ export type JobResponse = {
      * Status
      */
     status: string;
+};
+
+/**
+ * JobSourceFailure
+ */
+export type JobSourceFailure = {
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
 };
 
 /**
