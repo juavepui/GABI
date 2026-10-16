@@ -37,8 +37,18 @@ def test_selection_caps_divisions_breaks_ties_by_symbol_and_keeps_cash():
                    {"symbol": "A", "division": "D", "entity_id": "a"},
                    {"symbol": "C", "division": "E", "entity_id": "c"}])
     chosen, cash = ens.select(pd.Series([1.0, 1.0, 0.5], index=table.index), table, rules)
-    assert chosen == frozenset({"a", "c"})  # A wins the tie with B; D is capped at one
+    assert chosen == ["A", "C"]  # A wins the tie with B; D is capped at one
     assert cash == 1
+
+
+def test_two_share_classes_of_one_issuer_are_two_positions_and_a_ticker_change_is_not_turnover():
+    table = frame([{"symbol": "GOOG", "entity_id": "cik:1"}, {"symbol": "GOOGL", "entity_id": "cik:1"},
+                   {"symbol": "KORS", "entity_id": "cik:2"}])
+    before = ens.positions(table, ["GOOG", "GOOGL", "KORS"])
+    renamed = frame([{"symbol": "GOOG", "entity_id": "cik:1"}, {"symbol": "CPRI", "entity_id": "cik:2"}])
+    after = ens.positions(renamed, ["GOOG", "CPRI"])
+    assert before["cik:1"] == 2
+    assert ens.turnover(before, after, 3) == pytest.approx(1 / 3)  # only the second share class left
 
 
 def synthetic_dates(rng: np.random.Generator, dates: list[str], n: int = 50) -> pd.DataFrame:
@@ -50,6 +60,8 @@ def synthetic_dates(rng: np.random.Generator, dates: list[str], n: int = 50) -> 
             row.update(dict(zip(columns, rng.uniform(0, 1, len(columns)), strict=True)))
             if i % 7 == 0:
                 row["pb_pct"] = np.nan  # value still available with two metrics
+            if i in (5, 6):
+                row["entity_id"] = "E-dual"  # two share classes of one issuer
             if i % 11 == 0:
                 row["expectations_gap_pct"] = np.nan  # outside U_t
             rows.append(row)
@@ -87,7 +99,8 @@ def test_array_noise_path_equals_the_pandas_definition():
     fast = ens._fast_signals(table[ens.metric_columns(spec())].to_numpy(dtype=float) + draws, spec())
     for position, name in enumerate(ens.SIGNALS):
         assert np.array_equal(reference[name].to_numpy(), fast[position], equal_nan=True)
-        assert ens._fast_select(fast[position], table, spec()) == ens.select(reference[name], table, spec())[0]
+        assert ens._fast_select(fast[position], table, spec()) == ens.positions(
+            table, ens.select(reference[name], table, spec())[0])
 
 
 def test_bootstrap_refuses_gaps_and_brackets_a_constant_difference():

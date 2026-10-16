@@ -31,8 +31,9 @@ def analyze(inputs: EnsembleInputs) -> tuple[dict, dict[str, pd.DataFrame]]:
     if ens.fingerprint(spec) != record["sha256"] or record["sha256"] != SEALED_SPEC_SHA256:
         raise ValueError("La especificación sellada de #53 ha cambiado.")
     scores = inputs.scores(spec["inputs"]["scores"]["columns"])
-    if scores.duplicated(["fecha", "symbol"]).any() or scores.duplicated(["fecha", "entity_id"]).any():
-        raise ValueError("Empresas duplicadas en una fecha.")
+    if scores.duplicated(["fecha", "symbol"]).any() or scores.entity_id.isna().any():
+        raise ValueError("Símbolos duplicados o emisores sin identidad en una fecha.")
+    # Two symbols of one issuer on a date are kept and counted as positions (CORRECCION.md).
     ens.check_published_blocks(scores, spec)  # before any other calculation
 
     calendar = sorted(scores.fecha.unique())
@@ -64,7 +65,8 @@ def analyze(inputs: EnsembleInputs) -> tuple[dict, dict[str, pd.DataFrame]]:
         metrics, selections = ens.date_metrics(frame, risk.loc[frame.index], spec)
         row.update(metrics)
         for name, chosen in selections.items():
-            selection_rows += [{"fecha": date, "signal": name, "entity_id": entity} for entity in sorted(chosen)]
+            selection_rows += [{"fecha": date, "signal": name, "entity_id": entity, "positions": count}
+                               for entity, count in sorted(chosen.items())]
         for delta in deltas:
             persistence = ens.noise_persistence(frame, spec, selections, generators[delta], delta)
             noise_rows.append({"fecha": date, "delta": delta, **persistence})
@@ -73,8 +75,8 @@ def analyze(inputs: EnsembleInputs) -> tuple[dict, dict[str, pd.DataFrame]]:
             transitions.append({"fecha": date, "window": _window(date),
                                 **{name: ens.turnover(before_selections[name], selections[name], slots)
                                    for name in ens.SIGNALS},
-                                **{f"autocorr_{name}": value
-                                   for name, value in ens.autocorrelation(before_frame, frame, spec).items()}})
+                                **{(key if key.startswith("excluded") else f"autocorr_{key}"): value
+                                   for key, value in ens.autocorrelation(before_frame, frame, spec).items()}})
         previous = (frame, selections)
         rows.append(row)
 
@@ -109,6 +111,9 @@ def analyze(inputs: EnsembleInputs) -> tuple[dict, dict[str, pd.DataFrame]]:
                          for column in evaluable if column.startswith("jaccard_")},
         "dominance_mean": dominance,
         "score_autocorrelation_mean": {name: float(turnover[f"autocorr_{name}"].mean()) for name in ens.SIGNALS},
+        "duplicated_entity_dates": int(scores.duplicated(["fecha", "entity_id"], keep=False).groupby(
+            scores.fecha).any().sum()),
+        "autocorrelation_excluded_entities_total": int(turnover.excluded_duplicated_entities.sum()),
         "concentration_mean": {name: {"divisions": float(evaluable[f"{name}_divisions"].mean()),
                                       "division_hhi": float(evaluable[f"{name}_division_hhi"].mean()),
                                       "cash_slots": float(evaluable[f"{name}_cash_slots"].mean())}

@@ -7,6 +7,7 @@ block/metric percentiles, SIC divisions and ex ante risk features; no return ent
 import hashlib
 import json
 import math
+from collections import Counter
 from itertools import combinations
 
 import numpy as np
@@ -79,8 +80,8 @@ def universe(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.loc[frame[list(BLOCKS)].notna().all(axis=1)].sort_values("symbol")
 
 
-def select(score: pd.Series, frame: pd.DataFrame, spec: dict) -> tuple[frozenset, int]:
-    """Top-N with a per-division cap; ties by symbol; empty slots are cash."""
+def select(score: pd.Series, frame: pd.DataFrame, spec: dict) -> tuple[list[str], int]:
+    """Top-N symbols with a per-division cap; ties by symbol; empty slots are cash."""
     rules = spec["portfolios"]
     ordered = pd.DataFrame({"score": score, "symbol": frame["symbol"], "division": frame["division"],
                             "entity_id": frame["entity_id"]}).rename_axis(None).sort_values(["score", "symbol"], ascending=[False, True])
@@ -92,24 +93,30 @@ def select(score: pd.Series, frame: pd.DataFrame, spec: dict) -> tuple[frozenset
         if counts.get(row.division, 0) >= rules["maximum_per_division"]:
             continue
         counts[row.division] = counts.get(row.division, 0) + 1
-        chosen.append(row.entity_id)
-    return frozenset(chosen), rules["slots"] - len(chosen)
+        chosen.append(row.symbol)
+    return chosen, rules["slots"] - len(chosen)
 
 
-def _share(a: frozenset, b: frozenset, slots: int) -> float:
-    return len(a & b) / slots
+def positions(frame: pd.DataFrame, symbols: list[str]) -> Counter:
+    """Positions by entity_id as a multiset (CORRECCION.md): two share classes of one issuer fill two
+    slots, and a ticker change of the same issuer is not turnover. ``frame`` is indexed by symbol."""
+    return Counter(frame.loc[symbols, "entity_id"])
 
 
-def _jaccard(a: frozenset, b: frozenset) -> float:
-    union = a | b
-    return len(a & b) / len(union) if union else math.nan
+def _share(a: Counter, b: Counter, slots: int) -> float:
+    return sum((a & b).values()) / slots
+
+
+def _jaccard(a: Counter, b: Counter) -> float:
+    union = sum((a | b).values())
+    return sum((a & b).values()) / union if union else math.nan
 
 
 def _spearman(a: pd.Series, b: pd.Series) -> float:
     return float(a.rank().corr(b.rank()))
 
 
-def noise_persistence(frame: pd.DataFrame, spec: dict, base: dict[str, frozenset],
+def noise_persistence(frame: pd.DataFrame, spec: dict, base: dict[str, Counter],
                       rng: np.random.Generator, delta: float) -> dict[str, float]:
     """Mean share of each base Top-20 that survives uniform percentile noise; same draws for all signals."""
     rules = spec["endpoints"]["P2_noise_persistence"]
@@ -143,7 +150,7 @@ def _fast_signals(metrics: np.ndarray, spec: dict) -> list[np.ndarray]:
     return [ensemble, *result]
 
 
-def _fast_select(score: np.ndarray, frame: pd.DataFrame, spec: dict) -> frozenset:
+def _fast_select(score: np.ndarray, frame: pd.DataFrame, spec: dict) -> Counter:
     """Array twin of ``select`` for frames already ordered by symbol (``universe``)."""
     rules = spec["portfolios"]
     order = np.lexsort((np.arange(len(score)), -score))
@@ -158,19 +165,19 @@ def _fast_select(score: np.ndarray, frame: pd.DataFrame, spec: dict) -> frozense
             continue
         counts[divisions[index]] = counts.get(divisions[index], 0) + 1
         chosen.append(entities[index])
-    return frozenset(chosen)
+    return Counter(chosen)
 
 
-def date_metrics(frame: pd.DataFrame, risk: pd.DataFrame, spec: dict) -> tuple[dict, dict[str, frozenset]]:
+def date_metrics(frame: pd.DataFrame, risk: pd.DataFrame, spec: dict) -> tuple[dict, dict[str, Counter]]:
     """Per-date descriptive metrics on U_t, plus the four base selections."""
     scores = signals(frame, spec)
     slots = spec["portfolios"]["slots"]
-    selections: dict[str, frozenset] = {}
+    selections: dict[str, Counter] = {}
     row: dict = {"n_universe": len(frame)}
     for name in SIGNALS:
         chosen, cash = select(scores[name], frame, spec)
-        selections[name] = chosen
-        members = frame.loc[frame.entity_id.isin(chosen)]
+        selections[name] = positions(frame, chosen)
+        members = frame.loc[chosen]
         weights = members.division.value_counts() / slots
         row[f"{name}_cash_slots"] = cash
         row[f"{name}_divisions"] = int(members.division.nunique())
@@ -194,17 +201,25 @@ def date_metrics(frame: pd.DataFrame, risk: pd.DataFrame, spec: dict) -> tuple[d
     return row, selections
 
 
-def turnover(previous: frozenset, current: frozenset, slots: int) -> float:
-    return 1 - len(previous & current) / slots
+def turnover(previous: Counter, current: Counter, slots: int) -> float:
+    return 1 - sum((previous & current).values()) / slots
 
 
 def autocorrelation(previous: pd.DataFrame, current: pd.DataFrame, spec: dict) -> dict[str, float]:
-    """Spearman of each signal between consecutive dates for entities in U at both."""
+    """Spearman of each signal between consecutive dates for entities in U at both.
+
+    Entities with two rows on either date (share classes) are excluded and counted.
+    """
+    duplicated = set(previous.entity_id[previous.entity_id.duplicated()]) | set(
+        current.entity_id[current.entity_id.duplicated()])
     before = signals(previous, spec).set_axis(previous.entity_id)
     after = signals(current, spec).set_axis(current.entity_id)
-    common = before.index.intersection(after.index)
-    return {name: _spearman(before.loc[common, name], after.loc[common, name]) if len(common) >= 3 else math.nan
-            for name in SIGNALS}
+    common = before.index.intersection(after.index).difference(pd.Index(sorted(duplicated)))
+    result: dict[str, float] = {
+        name: _spearman(before.loc[common, name], after.loc[common, name]) if len(common) >= 3 else math.nan
+        for name in SIGNALS}
+    result["excluded_duplicated_entities"] = len(duplicated)
+    return result
 
 
 def circular_indices(n: int, block: int, replicas: int, rng: np.random.Generator) -> np.ndarray:
