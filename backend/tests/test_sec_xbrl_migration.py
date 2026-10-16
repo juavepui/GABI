@@ -255,6 +255,17 @@ def test_source_calls_have_no_open_database_and_empty_payload_keeps_success(tmp_
     assert cp["status"] == "failed" and cp["facts_hash"] == json.loads(before["sync_checkpoints"][0][3])["facts_hash"]
 
 
+def test_new_issuer_without_tracked_facts_is_absent_coverage_not_failure(tmp_path):
+    service = modern(tmp_path)
+    service.source.companyfacts = lambda cik: {"cik": 1, "facts": {}}
+    for _ in range(2):  # The next run asks again: the first XBRL filing ends the absence.
+        event = service.run()
+        assert event["status"] == "unchanged" and event["new"] == 0 and "cobertura ausente" in event["reason"]
+    assert not service.store.has_facts("cik:0000000001") and service.store.metrics("A") is None
+    service.source.companyfacts = lambda cik: payload()
+    assert service.run()["status"] == "new"
+
+
 def test_reads_do_not_create_database_or_schema_and_enforce_limits(tmp_path):
     service = modern(tmp_path / "absent")
     assert not service.store.has_facts("cik:0000000001")

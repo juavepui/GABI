@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from gabi.application.administration.jobs import JobCommand
+from gabi.application.administration.jobs import JobCommand, SourceFailures
 from gabi.infrastructure.storage.jobs import SqliteJobs
 
 
@@ -138,6 +138,9 @@ class Worker:
                 artifact.unlink(missing_ok=True)
         except _Cancelled:
             self.store.finish(job_id, token, "cancelled")
+        except SourceFailures as exc:
+            self.store.finish(job_id, token, "failed", error=exc.code,
+                              checkpoint={"stage": "failed", "failures": exc.failures, "failures_total": exc.total})
         except Exception:
             # No exception text, local paths, credentials or blind output in the HTTP log.
             self.store.finish(job_id, token, "failed", error="job_failed")

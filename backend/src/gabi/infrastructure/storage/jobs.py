@@ -92,6 +92,9 @@ class SqliteJobs:
         result["parameters"] = json.loads(result["parameters"])
         result["checkpoint"] = json.loads(result["checkpoint"])
         result["cancel_requested"] = bool(result["cancel_requested"])
+        failed = result["status"] == "failed"
+        result["failures"] = result["checkpoint"].get("failures", []) if failed else []
+        result["failures_total"] = result["checkpoint"].get("failures_total", 0) if failed else 0
         if events is not None:
             result["events"] = [{"at": event["at"], "message": event["message"]} for event in events]
         return result
@@ -244,7 +247,7 @@ class SqliteJobs:
             return bool(row["cancel_requested"])
 
     def finish(self, job_id: str, token: str, status: str, *, error: str | None = None,
-               ref: str | None = None, digest: str | None = None) -> bool:
+               ref: str | None = None, digest: str | None = None, checkpoint: dict | None = None) -> bool:
         with self.connection(write=True) as db:
             assert db is not None
             db.execute("BEGIN IMMEDIATE")
@@ -258,5 +261,7 @@ class SqliteJobs:
             db.execute("UPDATE jobs SET status=?, progress=?, phase=?, finished_at=?, error_code=?, "
                        "result_ref=?, result_sha256=?, worker_token=NULL, lease_until=NULL WHERE id=?",
                        (status, 100 if status == "succeeded" else 0, phase, now(), error, ref, digest, job_id))
+            if checkpoint is not None and status == "failed":
+                db.execute("UPDATE jobs SET checkpoint=? WHERE id=?", (json.dumps(checkpoint), job_id))
             db.execute("INSERT INTO job_events(job_id,at,message) VALUES(?,?,?)", (job_id, now(), phase))
             return status == "succeeded"

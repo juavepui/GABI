@@ -166,6 +166,11 @@ class JobEvent(BaseModel):
     message: str
 
 
+class JobSourceFailure(BaseModel):
+    source: str
+    symbol: str
+
+
 class JobResponse(BaseModel):
     id: str
     kind: str
@@ -182,6 +187,8 @@ class JobResponse(BaseModel):
     result_ref: str | None
     result_sha256: str | None
     checkpoint: dict
+    failures: list[JobSourceFailure] = []
+    failures_total: int = 0
     events: list[JobEvent] | None = None
 
 

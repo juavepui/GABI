@@ -50,10 +50,12 @@ class LegacyPeriodicOperations:
     def fingerprint(self, records):
         return sync_rules.fingerprint(records)
 
-    def refresh_symbols(self, symbols, full_refresh):
+    def refresh_symbols(self, symbols, full_refresh, sec_symbols):
         from gabi.infrastructure.legacy.data_fetch import refresh_data
 
-        options: dict = {"full_refresh": True} if full_refresh else {}
+        options: dict = {"sec_symbols": sec_symbols}
+        if full_refresh:
+            options["full_refresh"] = True
         if self.sec_sync is not None:
             options["sec_sync"] = self.sec_sync
         return refresh_data(symbols, **options)

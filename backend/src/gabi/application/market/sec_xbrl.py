@@ -59,6 +59,10 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
                                   reason="companyfacts idéntico; no se reprocesa el histórico")
         raw = _extract_raw_facts(facts, TRACKED_TAGS, unit="USD")
         raw += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
+        if not raw and not has_facts:
+            # New issuer before its first XBRL filing: absent coverage, not a source failure.
+            return attempt.finish("unchanged", state=state,
+                                  reason="emisor sin hechos XBRL rastreados todavía; cobertura ausente, sin métricas")
         if not raw:
             raise ValueError("SEC no devolvió hechos XBRL utilizables; checkpoint conservado.")
         incoming = pd.DataFrame(raw).drop_duplicates(KEYS, keep="last").set_index(KEYS)[FIELDS]

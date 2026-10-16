@@ -10,7 +10,7 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from gabi.application.administration.jobs import JobCommand
+from gabi.application.administration.jobs import JobCommand, SourceFailures, refresh_failures
 from gabi.infrastructure.jobs.worker import Worker, process_lock
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
@@ -126,6 +126,31 @@ def test_running_cancellation_and_failed_execution_never_publish(tmp_path):
     assert failed["status"] == "failed"
     assert failed["error_code"] == "job_failed"
     assert "secret" not in json.dumps(failed)
+    assert failed["failures"] == [] and failed["failures_total"] == 0
+
+
+def test_source_failures_publish_pairs_without_reasons(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("refresh"), "refresh-sources", "ui")
+    result = {"failed": {"VYLR": {"edgar": "secret reason C:\\local"}, "AAA": {"precio": "x", "fundamentales": "y"}},
+              "failed_events": [{"source": "sec", "entity": "cik:0002128626", "dataset": "facts:VYLR",
+                                 "reason": "secret reason"},
+                                {"source": "universe", "entity": "SP500", "dataset": "members", "reason": "x"}]}
+
+    def fails(_):
+        raise SourceFailures(refresh_failures(result))
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(job["id"])
+    assert failed["status"] == "failed" and failed["error_code"] == "sources_failed"
+    assert failed["failures"] == [{"source": "sec", "symbol": "VYLR"}, {"source": "universe", "symbol": "SP500"},
+                                  {"source": "yahoo", "symbol": "AAA"}]
+    assert failed["failures_total"] == 3 and "secret" not in json.dumps(failed)
+
+
+def test_source_failures_are_bounded():
+    failures = SourceFailures([("sec", f"S{i:03}") for i in range(30)])
+    assert failures.total == 30 and len(failures.failures) == 20
 
 
 def test_parallel_idempotent_requests_create_one_row(tmp_path):

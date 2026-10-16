@@ -28,6 +28,35 @@ DERIVED_SOURCES = {"backtest_factors": ("factor_contrast", {"backtest_v1", "back
                    "backtest_register": ("research_log", {"backtest_v1", "backtest_v2"}),
                    "historical_outcomes": ("outcomes", {"historical_ranking"})}
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
+MAX_FAILURES = 20
+
+
+class SourceFailures(Exception):
+    """Sources failed for named symbols. Only source/symbol pairs are stored, never reasons:
+    they can carry provider text, paths or credentials."""
+
+    code = "sources_failed"
+
+    def __init__(self, failures: list[tuple[str, str]]):
+        unique = sorted(set(failures))
+        self.total = len(unique)
+        self.failures = [{"source": source, "symbol": symbol} for source, symbol in unique[:MAX_FAILURES]]
+        super().__init__(f"{self.total} fuentes fallaron")
+
+
+REFRESH_SOURCES = {"precio": "yahoo", "fundamentales": "yahoo", "edgar": "sec"}
+
+
+def refresh_failures(result: dict) -> list[tuple[str, str]]:
+    """Source/symbol pairs from `PeriodicTasks.refresh_data`: per-symbol results and failed sync events,
+    named like sync events so that both views of one failure collapse into one pair."""
+    pairs = [(REFRESH_SOURCES.get(source, source), symbol) for symbol, sources in result.get("failed", {}).items()
+             for source in (sources if isinstance(sources, dict) else {"datos": None})]
+    for event in result.get("failed_events", []):
+        dataset, entity = str(event.get("dataset") or ""), str(event.get("entity") or "")
+        symbol = dataset.split(":", 1)[1] if ":" in dataset else entity.split(":", 1)[-1]
+        pairs.append((str(event.get("source") or "desconocida"), symbol))
+    return pairs
 
 
 @dataclass(frozen=True)
