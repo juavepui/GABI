@@ -45,7 +45,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/administration/mode",
                                          "/api/v1/jobs",
                                          "/api/v1/jobs/{job_id}", "/api/v1/jobs/{job_id}/cancel",
-                                         "/api/v1/jobs/{job_id}/result",
+                                         "/api/v1/jobs/{job_id}/result", "/api/v1/jobs/{job_id}/retry",
                                          "/api/v1/portfolio/journal",
                                          "/api/v1/portfolio/journal/{entry_id}/review",
                                          "/api/v1/portfolio/journal/{entry_id}/delete",

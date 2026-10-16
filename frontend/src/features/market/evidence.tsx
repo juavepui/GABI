@@ -1,7 +1,7 @@
-import { Info, Clock3 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import type { ModelResponse, DataResponse } from '@/shared/api/generated/types.gen';
 import { Badge } from '@/shared/ui/badge';
-import { dateLabel } from '@/shared/lib/format';
+import { DataStatus } from './data-status';
 
 export function Evidence({ model, data }: { model: ModelResponse; data: DataResponse }) {
   const status = {
@@ -28,28 +28,7 @@ export function Evidence({ model, data }: { model: ModelResponse; data: DataResp
           </p>
         </div>
       </section>
-      {data.status === 'stale' && (
-        <p
-          role="status"
-          className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
-        >
-          <Clock3 size={18} aria-hidden="true" />
-          Datos obsoletos. Último precio: {dateLabel(data.latest_price_date)}. Actualiza la caché
-          desde Administración.
-        </p>
-      )}
-      {data.warnings.length > 0 && (
-        <details className="text-xs text-muted-foreground">
-          <summary className="cursor-pointer py-1">
-            Avisos de datos ({data.warnings.length})
-          </summary>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {data.warnings.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </details>
-      )}
+      <DataStatus data={data} />
     </div>
   );
 }

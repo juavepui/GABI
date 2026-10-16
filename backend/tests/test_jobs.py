@@ -139,6 +139,75 @@ def test_parallel_idempotent_requests_create_one_row(tmp_path):
     assert len(store.list()) == 1
 
 
+def test_retry_failed_and_cancelled_operational_jobs_is_new_and_idempotent(tmp_path):
+    store = SqliteJobs(tmp_path)
+    with client(tmp_path) as api:
+        original = create_job(api).json()
+
+        def fails(_):
+            raise RuntimeError("not exposed")
+
+        Worker(store, fails, tmp_path).run_once()
+        retry_url = f"/api/v1/jobs/{original['id']}/retry"
+        payload = {"idempotency_key": "new-attempt-key"}
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            responses = list(pool.map(lambda _: api.post(retry_url, json=payload), range(4)))
+        assert all(response.status_code == 202 for response in responses)
+        retried = responses[0].json()
+        assert len({response.json()["id"] for response in responses}) == 1
+        assert retried["id"] != original["id"]
+        assert retried["parameters"] == original["parameters"]
+        assert retried["origin"] == "ui" and retried["result_ref"] is None
+        assert api.get(f"/api/v1/jobs/{original['id']}").json()["status"] == "failed"
+        assert api.get(f"/api/v1/jobs/{original['id']}/result").status_code == 404
+        assert api.post(retry_url, json={"idempotency_key": "different-key"}).status_code == 409
+        cancelled = api.post(f"/api/v1/jobs/{retried['id']}/cancel").json()
+        assert cancelled["status"] == "cancelled"
+        response = api.post(f"/api/v1/jobs/{retried['id']}/retry", json=payload)
+        assert response.status_code == 202
+        assert response.json()["id"] != retried["id"]  # Same client key, different source namespace.
+        assert Worker(store, lambda _: {"ok": True}, tmp_path).run_once()
+        assert api.post(f"/api/v1/jobs/{response.json()['id']}/retry", json=payload).status_code == 409
+
+
+def test_retry_revalidates_parameters_and_excludes_other_kinds(tmp_path):
+    store = SqliteJobs(tmp_path)
+    with client(tmp_path) as api:
+        job = create_job(api, kind="refresh").json()
+        url = f"/api/v1/jobs/{job['id']}/retry"
+        payload = {"idempotency_key": "retry-valid-key"}
+        assert api.post(url, json=payload).status_code == 409
+        api.post(f"/api/v1/jobs/{job['id']}/cancel")
+        assert api.post(url, json=payload | {"kind": "quality"}).status_code == 422
+        with store.connection(write=True) as db:
+            db.execute("UPDATE jobs SET parameters=? WHERE id=?",
+                       (json.dumps({"symbols": [], "start": "2020-01-01", "end": None}), job["id"]))
+        assert api.post(url, json=payload).status_code == 422
+        for kind in ("maintenance", "tiingo", "symbols", "backtest_register"):
+            with store.connection(write=True) as db:
+                db.execute("UPDATE jobs SET kind=? WHERE id=?", (kind, job["id"]))
+            assert api.post(url, json=payload).status_code == 403
+
+
+def test_retry_after_worker_interruption_and_browser_reload(tmp_path):
+    store = SqliteJobs(tmp_path)
+    source = store.enqueue(JobCommand("refresh"), "interrupted-refresh", "ui")
+    store.claim("previous-process")
+    with store.connection(write=True) as db:
+        db.execute("UPDATE jobs SET lease_until=? WHERE id=?", ("2000-01-01T00:00:00+00:00", source["id"]))
+    assert store.claim("replacement-process") is None
+    with client(tmp_path) as api:
+        recovered = api.get(f"/api/v1/jobs/{source['id']}").json()
+        assert recovered["error_code"] == "worker_interrupted" and recovered["result_ref"] is None
+        response = api.post(f"/api/v1/jobs/{source['id']}/retry", json={"idempotency_key": "restart-request"})
+        assert response.status_code == 202
+        new_id = response.json()["id"]
+    with client(tmp_path) as reloaded:
+        assert reloaded.get(f"/api/v1/jobs/{new_id}").json()["status"] == "queued"
+        assert Worker(store, lambda _: {"restored": True}, tmp_path).run_once()
+        assert reloaded.get(f"/api/v1/jobs/{new_id}/result").json() == {"restored": True}
+
+
 def test_job_validation_blocks_arbitrary_paths_and_scheduler_only_ops(tmp_path):
     with client(tmp_path) as api:
         assert create_job(api, kind="symbols", symbols=["../../secret"]).status_code == 422
