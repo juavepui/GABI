@@ -58,6 +58,26 @@ def ledger(settings: Settings, args: argparse.Namespace) -> None:
         print(json.dumps(search_ledger.write(root, args.write)["counts"]))
 
 
+def ensemble_robustness(settings: Settings, args: argparse.Namespace) -> None:
+    import tempfile
+
+    from gabi.application.research.ensemble_robustness import analyze
+    from gabi.infrastructure.storage import ensemble_inputs
+
+    root = settings.data_dir.parent
+    published = root / "docs" / "ensemble-robustness"
+    if args.verify:
+        with tempfile.TemporaryDirectory() as scratch:
+            result = ensemble_inputs.verify(root, published, Path(scratch) / "reproduccion")
+        print(f"Resultado de #53 reproducido: {result['sha256']}")
+        return
+    destination = args.output or published
+    if (destination / "resultado.json").exists():
+        raise SystemExit(f"Ya existe un resultado en {destination}; usar --output con una carpeta nueva.")
+    result = ensemble_inputs.save(destination, *analyze(ensemble_inputs.PublishedEnsembleInputs(root)))
+    print(json.dumps({"sha256": result["sha256"], "decision": result["decision"]["label"]}, ensure_ascii=False))
+
+
 def entity_migration(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.legacy import entity_migration as migration
 
@@ -420,6 +440,12 @@ def main(argv: list[str]) -> None:
     command.add_argument("--cache", type=Path)
     command.add_argument("--db", type=Path)
     command.set_defaults(run=tiingo_prices)
+    command = commands.add_parser("ensemble-robustness", help="Robustez sin retornos del ensemble V+Q+E preregistrado (#53)")
+    actions = command.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--analyze", action="store_true", help="Calcular; nunca sobrescribe un resultado")
+    actions.add_argument("--verify", action="store_true", help="Recalcular y exigir la huella publicada")
+    command.add_argument("--output", type=Path, help="Por defecto docs/ensemble-robustness; usar un directorio nuevo")
+    command.set_defaults(run=ensemble_robustness)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")
