@@ -11,7 +11,13 @@ casos de uso y adaptadores separados; un cliente React por capacidades; SQLite
 y archivos compartidos en `data/`. API y worker son procesos del mismo backend,
 con los mismos modelos y servicios. No requieren despliegues independientes.
 
-El backend conserva 76 módulos planos como compatibilidad; [F7](https://github.com/juavepui/GABI/issues/91) los retira por fases. Las hojas de F7.4
+El [balance vigente de F7](architecture/f7-balance.md) reconcilia el código integrado,
+los inventarios y los criterios de cierre de #90/#91. La categoría `pending`
+está vacía; permanecen los congelados y las fachadas justificadas,
+con dos excepciones de I/O ligadas a #44 que impiden el cierre global.
+Los siguientes enlaces describen las entregas históricas de
+[F7](https://github.com/juavepui/GABI/issues/91); los pendientes citados en cada
+entrega corresponden a ese momento. Las hojas de F7.4
 [delegan sus cálculos en el dominio](architecture/f7-domain-leaves.md), incluidos
 [indicadores y estadísticas](architecture/f7-quantitative-domain.md) y
 [scoring y fundamentos SEC](architecture/f7-fundamental-domain.md), mientras conservan consumidores legacy.
@@ -20,12 +26,14 @@ caso de uso entre API y ledger.
 [El catálogo de estudios](architecture/f7-evidence-catalog.md) usa fuentes explícitas
 y verificación cacheada con invalidación por archivos.
 [Calidad de datos](architecture/f7-data-quality.md) comparte reglas de dominio y
-casos de uso con reloj explícito; conserva pendientes sus lectores de compatibilidad.
+casos de uso con reloj explícito; [F7.32](architecture/f7-retire-data-quality.md)
+retiró después su módulo plano.
 [Eventos corporativos](architecture/f7-corporate-events.md) retira el módulo plano y
 comparte análisis de fechas, sincronización explícita y almacenamiento.
 [El análisis de insiders](architecture/f7-insider-analysis.md) interpreta Form 4
 y resume operaciones con filas y fecha explícitas. [Su sincronización](architecture/f7-insider-sync.md)
-comparte puertos de documentos y almacenamiento; conserva pendiente la resolución CIK legacy.
+comparte puertos de documentos y almacenamiento; [el mapa SEC](architecture/f7-sec-cik.md)
+extrajo después la resolución CIK.
 [El arnés de variantes](architecture/f7-variant-validation.md) comparte protocolo
 y métricas con un runner explícito y conserva la fachada usada por R3 congelado.
 [La identidad y estado del modelo](architecture/f7-model-policy.md) usa reglas
@@ -113,9 +121,9 @@ la matriz de capas siguiente. La API usa interfaces de aplicación; `bootstrap.p
 construye los adaptadores concretos y los inyecta. El worker recibe identificadores
 y parámetros, no conexiones SQLite ni DataFrames enviados desde el navegador.
 
-En desarrollo Vite y FastAPI tendrán orígenes locales con CORS limitado. Al finalizar
-F6, FastAPI servirá el build del cliente bajo el mismo origen. El arranque local
-incluirá el worker cuando un flujo lo necesite, con parada controlada y logs. No se
+En desarrollo Vite y FastAPI tienen orígenes locales con CORS limitado. Desde
+F6, FastAPI sirve el build del cliente bajo el mismo origen. El arranque local
+incluye el worker, con parada controlada y logs. No se
 abre escucha pública ni se crea una dependencia de nube.
 
 ## Backend: estructura y responsabilidades
@@ -320,7 +328,8 @@ comentarios como imports. Las guardas no prueban toda la semántica: callbacks,
 efectos ocultos o fórmulas duplicadas requieren pruebas de comportamiento y revisión.
 
 La deuda plana está enumerada por archivo e import en
-`.github/architecture-legacy.json` (82 módulos backend tras #87, #88 y #89, ADR 0002).
+`.github/architecture-legacy.json`; el [balance vigente](architecture/f7-balance.md)
+lo contrasta con el inventario de compatibilidad y los archivos existentes.
 La CI rechaza módulos planos nuevos y dependencias legacy nuevas. Al eliminar
 dependencias se retiran sus excepciones. Compara además el inventario con el primer
 padre Git (`HEAD^`, o base del merge de una PR): ampliar la lista también falla.

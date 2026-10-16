@@ -19,6 +19,8 @@ uv run --project backend python -m gabi_cli serve
 
 Abre **http://127.0.0.1:8000**. `serve` escucha solo en loopback, atiende
 React y `/api/v1` en ese origen e inicia el worker. Ctrl+C detiene ambos.
+`--port N` elige otro puerto local; si el puerto está ocupado, `serve` lo
+indica y se detiene antes de iniciar el worker.
 El build debe repetirse al actualizar el frontend. Los datos permanecen en
 `data/`; el build no los copia. El catálogo de Investigación se lee de los
 metadatos publicados del checkout. Es la única interfaz de GABI: Streamlit se

@@ -22,12 +22,19 @@ export default defineConfig({
         '**/administration.spec.ts',
         '**/portfolio.spec.ts',
         '**/research.spec.ts',
+        '**/data-states.spec.ts',
+        '**/job-recovery.spec.ts',
       ],
     },
     {
       name: 'mobile',
       use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 } },
-      testMatch: ['**/mobile.spec.ts', '**/administration.spec.ts'],
+      testMatch: [
+        '**/mobile.spec.ts',
+        '**/administration.spec.ts',
+        '**/data-states.spec.ts',
+        '**/job-recovery.spec.ts',
+      ],
     },
   ],
   webServer: [

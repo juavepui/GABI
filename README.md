@@ -96,7 +96,8 @@ detallan la primera vez; después basta con:
 uv run --project backend python -m gabi_cli serve
 ```
 
-Abre **http://127.0.0.1:8000**. Todo escucha solo en este equipo y Ctrl+C lo
+Abre **http://127.0.0.1:8000**. Si ese puerto está ocupado, `serve` lo indica y
+no arranca; usa otro con `--port 8010`. Todo escucha solo en este equipo y Ctrl+C lo
 detiene. Al actualizar GABI (`git pull`), repite `uv sync --project backend --locked --all-groups`,
 `npm --prefix frontend ci` y `npm --prefix frontend run build` antes de arrancar.
 

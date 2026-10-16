@@ -7,7 +7,9 @@ Lista cerrada de los módulos planos de `backend/src/gabi` que no están congela
 permanentes no usan SQL, HTTP ni procesos salvo la excepción declarada y que los
 pendientes solo bajan.
 
-Estado del 2026-10-14 (pila hasta #145 y F7.25–F7.33): 58 módulos planos =
+El [balance F7](f7-balance.md) contrasta el estado integrado con los archivos y
+documenta la evidencia de cierre. La clasificación introducida el 2026-10-14
+(F7.25–F7.33), integrada en `5467954`, conserva 58 módulos planos =
 18 congelados + 40 permanentes + 0 pendientes. `pending` queda vacío:
 
 - se retiran `price_sync`, `macro` e `insider` ([F7.25](f7-retire-source-facades.md)),

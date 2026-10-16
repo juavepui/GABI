@@ -32,6 +32,13 @@ La interfaz React y el worker se arrancan juntos con `uv run --project backend p
 
 ## Contrato v1
 
+La [recuperación operativa](architecture/market-data-and-job-recovery.md) añade
+`POST /api/v1/jobs/{id}/retry`: nuevo intento explícito y deduplicado, solo para
+refrescos y auditorías de cobertura fallidos/cancelados. El backend relee y valida
+el origen. No permite repetir genéricamente investigación ni mantenimiento ciego.
+La [medición de worker/API](architecture/worker-api-baseline.md) documenta el
+comportamiento concurrente de estos flujos con fuentes simuladas.
+
 | GET | Resultado |
 | --- | --- |
 | `/api/v1/health` | Salud del proceso; no consulta ni crea datos |
@@ -203,6 +210,11 @@ proceso. La tasa de meses positivos (`risk._monthly_win_rate`, unos 3 s) no se
 toca: el módulo lo usan motores antiguos y el ahorro no compensa el riesgo.
 
 ## Verificación y medición
+
+La [línea base HTTP posterior a F7](architecture/http-api-baseline.md) mide el
+contrato completo con TestClient/ASGI, serialización incluida, y comprueba caché,
+ficha e invalidación por corrección histórica en WAL. Complementa las medidas
+F2 siguientes; las condiciones y tamaños de respuesta son distintos.
 
 Los tests usan bases sintéticas temporales: paridad contra una referencia de
 **16 empresas × 86 columnas**, obtenida del commit pre-F2

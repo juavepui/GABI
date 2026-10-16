@@ -451,6 +451,14 @@ export function createJob(body: CreateJobRequest): Promise<JobResponse> {
     body: JSON.stringify(body),
   });
 }
+export function retryJob(id: string, idempotency_key: string): Promise<JobResponse> {
+  return request('/api/v1/jobs/' + encodeURIComponent(id) + '/retry', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idempotency_key }),
+  });
+}
+
 export function cancelJob(id: string): Promise<JobResponse> {
   return request('/api/v1/jobs/' + encodeURIComponent(id) + '/cancel', {
     method: 'POST',
