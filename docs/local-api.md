@@ -204,6 +204,11 @@ toca: el módulo lo usan motores antiguos y el ahorro no compensa el riesgo.
 
 ## Verificación y medición
 
+La [línea base HTTP posterior a F7](architecture/http-api-baseline.md) mide el
+contrato completo con TestClient/ASGI, serialización incluida, y comprueba caché,
+ficha e invalidación por corrección histórica en WAL. Complementa las medidas
+F2 siguientes; las condiciones y tamaños de respuesta son distintos.
+
 Los tests usan bases sintéticas temporales: paridad contra una referencia de
 **16 empresas × 86 columnas**, obtenida del commit pre-F2
 `cd433a2e466df32d38aaaf3a5d1877857b0ce67e`; datos incompletos, alias ambiguos y dos
