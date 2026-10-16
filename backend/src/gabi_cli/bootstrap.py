@@ -8,7 +8,6 @@ import os
 import socket
 import subprocess
 import sys
-import threading
 import time
 from collections.abc import Callable
 from datetime import UTC, date, datetime
@@ -18,7 +17,6 @@ from pathlib import Path
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
 from gabi.application.research.academic_factors import prepare_factor_snapshot
-from gabi.domain.market.selection import RankingFilter
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.insiders import insider_operation, sec_user_agent
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
@@ -26,22 +24,13 @@ from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.academic_factors import FileFactorCache
 from gabi.infrastructure.storage.jobs import SqliteJobs
-from gabi_api.bootstrap import create_app
+from gabi_api.bootstrap import create_app, start_warm_thread
 from gabi_cli.sources.bootstrap import (
     build_cik_resolver,
     build_fred_operation,
     build_tiingo_operations,
     build_xbrl_operation,
 )
-
-
-def warm_rankings(app) -> None:
-    """Read-only: build the frozen ranking (home, cartera) and the active model's one (Mercado)."""
-    try:
-        app.state.home.summary(compute=True)
-        app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)
-    except QueryError:
-        pass  # No cached data yet: the pages show their own empty state.
 
 
 def port_in_use(port: int) -> bool:
@@ -110,8 +99,9 @@ def main() -> None:
                          f"Detén ese proceso o usa --port, por ejemplo --port {args.port + 10}.")
         worker_process = subprocess.Popen([sys.executable, "-m", "gabi_cli", "worker"])
         app = create_app(settings, frontend_dist=dist)
-        # The first ranking takes about a minute with a full cache: compute it while the server starts.
-        threading.Thread(target=warm_rankings, args=(app,), name="gabi-warm-ranking", daemon=True).start()
+        # The first ranking takes about a minute with a full cache: compute it while the server starts,
+        # and again in the background after a job changes the data.
+        start_warm_thread(app)
         try:
             print(f"GABI en http://127.0.0.1:{args.port}", flush=True)
             uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)

@@ -144,16 +144,18 @@ test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra p
   await expect(page).toHaveURL(/\/mercado$/);
   allowCompletion = true;
   const toast = page.getByRole('status', { name: 'Avisos de trabajos' });
-  await expect(toast.getByText('Actualizar datos (Yahoo y SEC)')).toBeVisible({ timeout: 15_000 });
+  await expect(toast.getByText('Actualizar datos', { exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(toast.getByText(/Completado/)).toBeVisible();
   await page.getByRole('button', { name: /^Trabajos:/ }).click();
   const panel = page.getByRole('region', { name: 'Trabajos locales' });
   await expect(panel.getByText('Recientes')).toBeVisible();
-  await expect(panel.getByText('Actualizar datos (Yahoo y SEC)').first()).toBeVisible();
+  await expect(panel.getByText('Actualizar datos', { exact: true }).first()).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(panel).toHaveCount(0);
   await toast.getByRole('button', { name: 'Cerrar aviso' }).first().click();
-  await expect(toast.getByText('Actualizar datos (Yahoo y SEC)')).toHaveCount(0);
+  await expect(toast.getByText('Actualizar datos', { exact: true })).toHaveCount(0);
 });
 
 test('botones, campos y desplegables comparten tamaño de letra y altura', async ({ page }) => {

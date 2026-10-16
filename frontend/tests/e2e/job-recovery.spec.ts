@@ -104,3 +104,22 @@ test('una respuesta perdida reutiliza la clave y la cancelación solicitada se d
   expect(keys).toHaveLength(2);
   expect(keys[0]).toBe(keys[1]);
 });
+
+test('un fallo imprevisto indica su traza local y los trabajos terminados no repiten el estado', async ({
+  page,
+}) => {
+  const traced = {
+    ...job('d'.repeat(32), 'portfolio_lab', 'failed', 'job_failed'),
+    phase: 'Fallido',
+    diagnostic: true,
+  };
+  const done = { ...job('e'.repeat(32), 'refresh', 'succeeded'), phase: 'Completado' };
+  await page.route('**/api/v1/jobs', (route) => route.fulfill({ json: { jobs: [traced, done] } }));
+  await page.goto('/administracion');
+  const failed = page.locator('#job-' + traced.id);
+  await expect(failed.getByText(`jobs/logs/${traced.id}.log`, { exact: false })).toBeVisible();
+  await expect(failed.getByText('Fallido', { exact: true })).toHaveCount(1);
+  const finished = page.locator('#job-' + done.id);
+  await expect(finished.getByText('Actualización completa', { exact: true })).toBeVisible();
+  await expect(finished.getByText('Completado', { exact: true })).toHaveCount(1);
+});

@@ -45,7 +45,9 @@ export function DataUpdate() {
       <p className="font-medium">Actualizar datos</p>
       <p className="text-xs text-muted-foreground">
         Precios y fundamentales de Yahoo Finance y datos oficiales de SEC EDGAR, descargando solo lo
-        caducado. Empieza con un subconjunto pequeño: la primera descarga de fundamentales tarda.
+        caducado. Empieza con un subconjunto pequeño: la primera descarga de fundamentales tarda. No
+        revisa la composición del S&amp;P 500 ni las series macro: para eso está «Actualización
+        completa».
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="grid gap-1">

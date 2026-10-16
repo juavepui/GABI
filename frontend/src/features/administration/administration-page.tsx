@@ -107,7 +107,9 @@ function JobRow({
           <ProgressBar value={job.progress} phase={job.phase} status={job.status} />
         </div>
       ) : (
-        <p className="mt-3 text-sm text-muted-foreground">{job.phase}</p>
+        job.phase !== JOB_STATES[job.status] && (
+          <p className="mt-3 text-sm text-muted-foreground">{job.phase}</p>
+        )
       )}
       {job.status === 'failed' && (
         <p className="mt-2 text-sm text-destructive">
@@ -115,7 +117,9 @@ function JobRow({
             ? 'El worker se interrumpió. No se publicó un resultado. Puedes solicitar un nuevo intento cuando vuelva a estar en marcha.'
             : job.error_code === 'sources_failed'
               ? 'Fallaron fuentes externas para estos símbolos. El resto de los datos se actualizó; no se publicó un resultado.'
-              : 'El trabajo falló y no publicó un resultado. Revisa las fuentes locales antes de repetirlo.'}
+              : job.diagnostic
+                ? `El trabajo falló por una causa no prevista y no publicó un resultado. La traza está en la carpeta de datos local, en jobs/logs/${job.id}.log.`
+                : 'El trabajo falló y no publicó un resultado. Revisa las fuentes locales antes de repetirlo.'}
         </p>
       )}
       {job.status === 'cancelled' && (
@@ -337,12 +341,17 @@ export function AdministrationPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <DataUpdate />
+            <p className="text-xs text-muted-foreground">
+              «Actualización completa» revisa la composición del S&amp;P 500 y actualiza precios,
+              fundamentales y SEC de todo el universo y de los índices de referencia, además de las
+              series macro de FRED. Es la que el Programador lanza cada día.
+            </p>
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => submit.mutate({ kind: 'refresh' })}
                 disabled={submit.isPending}
               >
-                Actualizar universo
+                Actualización completa
               </Button>
               <Button
                 variant="outline"

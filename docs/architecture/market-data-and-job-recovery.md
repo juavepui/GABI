@@ -27,6 +27,18 @@ La cola y cancelación cooperativa ya existían. Se añaden explicación de
 `worker_interrupted`, distinción entre cancelación solicitada y efectiva y
 repetición desde una fila terminal.
 
+Un fallo no previsto (`job_failed`) deja su traza en `jobs/logs/<id>.log`,
+dentro de la carpeta de datos (#164). La API solo publica `diagnostic: true` y la
+interfaz indica ese fichero; el texto de la excepción no viaja por HTTP. En los
+trabajos ciegos, de mantenimiento y Tiingo la traza conserva tipo y pila, pero
+omite el mensaje, que podría citar resultados pendientes de #43/#44. Si no se
+puede escribir, el trabajo termina igualmente como fallido con `diagnostic: false`.
+
+Nombres en la interfaz: `refresh` es «Actualización completa» (composición del
+S&P 500, precios, fundamentales y SEC del universo y los índices de referencia, y
+macro FRED; la lanza el Programador a diario) y `data_update` es «Actualizar
+datos» (subconjunto elegido de Yahoo y SEC, con descarga forzada opcional).
+
 `POST /api/v1/jobs/{id}/retry` solo acepta `idempotency_key` (8–50 caracteres).
 La aplicación relee el origen, admite `refresh`/`quality` fallidos o cancelados,
 valida sus parámetros mediante `JobCommand` y vuelve a usar `Jobs.submit`.

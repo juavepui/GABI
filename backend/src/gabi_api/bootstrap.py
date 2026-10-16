@@ -1,4 +1,5 @@
 """The only HTTP composition root. Importing it never opens application data."""
+import threading
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime
@@ -46,6 +47,7 @@ from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
+from gabi.domain.market.selection import RankingFilter
 from gabi.domain.market.signals import compare_snapshots
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
 from gabi.infrastructure.legacy.blind import LegacyBlindWriter
@@ -257,11 +259,40 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     return app
 
 
+def warm_rankings(app: FastAPI) -> None:
+    """Read-only: build the frozen ranking (home, cartera) and the active model's one (Mercado)."""
+    try:
+        app.state.home.summary(compute=True)
+        app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)
+    except QueryError:
+        pass  # No cached data yet: the pages show their own empty state.
+
+
+def keep_rankings_warm(app: FastAPI, stop: threading.Event, interval: float = 60.0) -> None:
+    """Warm at start and again once a job changes the data revision, so the next visit is not cold.
+    Between changes each pass is a cache hit (the key is checked, nothing is recomputed)."""
+    while True:
+        try:
+            warm_rankings(app)
+        except Exception:
+            pass  # A read racing a worker write is retried on the next pass; the pages compute on demand.
+        if stop.wait(interval):
+            return
+
+
+def start_warm_thread(app: FastAPI) -> threading.Event:
+    stop = threading.Event()
+    threading.Thread(target=keep_rankings_warm, args=(app, stop), name="gabi-warm-ranking", daemon=True).start()
+    return stop
+
+
 def main() -> None:
     import uvicorn
 
+    app = create_app()
+    start_warm_thread(app)
     # No host option/environment override: the supported launcher only listens locally.
-    uvicorn.run(create_app(), host="127.0.0.1", port=8000, access_log=False)
+    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False)
 
 
 if __name__ == "__main__":

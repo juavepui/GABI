@@ -71,7 +71,7 @@ def test_last_update_reports_the_latest_successful_data_job(home):
 
 
 def test_serve_warm_up_fills_both_rankings_read_only(home):
-    from gabi_cli.bootstrap import warm_rankings
+    from gabi_api.bootstrap import warm_rankings
 
     client, app, root = home
     before = _files(root)
@@ -82,7 +82,7 @@ def test_serve_warm_up_fills_both_rankings_read_only(home):
 
 
 def test_warm_up_without_data_does_not_raise(tmp_path):
-    from gabi_cli.bootstrap import warm_rankings
+    from gabi_api.bootstrap import warm_rankings
 
     with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as client:
         warm_rankings(client.app)
@@ -97,6 +97,54 @@ def test_cache_outlives_idle_minutes_and_still_follows_the_data_revision(home):
     with sqlite3.connect(root / "gabi.db") as db:  # Any write changes the revision and invalidates the entry.
         db.execute("CREATE TABLE IF NOT EXISTS touch (x)")
     assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is False
+
+
+def test_warm_loop_recomputes_after_a_data_change_read_only(home):
+    """#164: after a job writes data, the next visit finds the ranking already computed."""
+    import threading
+
+    from gabi_api.bootstrap import keep_rankings_warm
+
+    client, app, root = home
+    passes = 0
+
+    class Stop(threading.Event):
+        def wait(self, timeout=None):
+            nonlocal passes
+            passes += 1
+            if passes == 1:  # A job changes the revision between two passes.
+                with sqlite3.connect(root / "gabi.db") as db:
+                    db.execute("CREATE TABLE IF NOT EXISTS touch (x)")
+                return False
+            return True
+
+    keep_rankings_warm(app, Stop(), interval=0)
+    before = _files(root)
+    assert passes == 2
+    assert client.get("/api/v1/ranking", params={"limit": 1}).json()["cache_hit"] is True
+    assert client.get("/api/v1/home").json()["ranking_ready"] is True
+    assert _files(root) == before
+
+
+def test_warm_loop_survives_an_unexpected_error(tmp_path):
+    from gabi_api.bootstrap import keep_rankings_warm
+
+    calls = []
+
+    class Broken:
+        class state:  # noqa: N801
+            class home:  # noqa: N801
+                @staticmethod
+                def summary(compute):
+                    calls.append(compute)
+                    raise sqlite3.OperationalError("database is locked")
+
+    class Stop:
+        def wait(self, timeout=None):
+            return len(calls) >= 2
+
+    keep_rankings_warm(Broken(), Stop(), interval=0)
+    assert calls == [True, True]
 
 
 @pytest.mark.parametrize(("behind", "current"), [(0, True), (1, False)])
