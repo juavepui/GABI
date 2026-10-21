@@ -257,6 +257,33 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   );
 });
 
+test('la ficha muestra el checklist fundamental y edita y restablece sus umbrales', async ({
+  page,
+}) => {
+  await page.goto('/mercado/empresas/T001');
+  const checklist = page.getByRole('table', { name: 'Criterios del checklist' });
+  await expect(page.getByText('Checklist fundamental')).toBeVisible();
+  await expect(page.getByText('Criterios cumplidos')).toBeVisible();
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
+  await page.getByText('Señales de alarma').click();
+  await expect(page.getByRole('list', { name: 'Señales de alarma' })).toContainText(
+    'Revisión manual',
+  );
+  await page.getByText('Editar umbrales').click();
+  await page.getByLabel('Umbral: PER', { exact: true }).fill('25');
+  await page.getByRole('button', { name: 'Guardar umbrales' }).click();
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 25x');
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText(
+    'umbral editado',
+  );
+  await page.getByLabel('Umbral: PER', { exact: true }).fill('-1');
+  await page.getByRole('button', { name: 'Guardar umbrales' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'PER' })).toBeVisible();
+  await page.getByRole('button', { name: 'Restablecer valores del Excel' }).click();
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
+  await expect(page.getByLabel('Umbral: PER', { exact: true })).toHaveValue('18');
+});
+
 test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async ({ page }) => {
   await page.goto('/');
   const notices = page.getByRole('region', { name: 'Avisos' });

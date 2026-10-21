@@ -89,6 +89,9 @@ import type {
   SnapshotRenamed,
   CompanyResearchResponse,
   CompanyFilingChanges,
+  CompanyChecklistResponse,
+  ChecklistThresholds,
+  ChecklistThresholdsRequest,
 } from './generated/types.gen';
 
 export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
@@ -413,6 +416,30 @@ export function getNotices(signal?: AbortSignal): Promise<NoticesResponse> {
 }
 export function getCompanyInsiders(symbol: string, signal?: AbortSignal): Promise<CompanyInsiders> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/insiders', signal);
+}
+export function getCompanyChecklist(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyChecklistResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/checklist', signal);
+}
+export function getChecklistThresholds(signal?: AbortSignal): Promise<ChecklistThresholds> {
+  return get('/api/v1/checklist/thresholds', signal);
+}
+export function saveChecklistThresholds(
+  body: ChecklistThresholdsRequest,
+): Promise<ChecklistThresholds> {
+  return request('/api/v1/checklist/thresholds', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function resetChecklistThresholds(): Promise<ChecklistThresholds> {
+  return request('/api/v1/checklist/thresholds/reset', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+  });
 }
 export function getAnalysisPrompt(
   symbol: string,

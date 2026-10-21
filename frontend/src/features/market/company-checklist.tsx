@@ -1,0 +1,445 @@
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ListChecks } from 'lucide-react';
+import {
+  getChecklistThresholds,
+  getCompanyChecklist,
+  resetChecklistThresholds,
+  saveChecklistThresholds,
+} from '@/shared/api/client';
+import type {
+  ChecklistAlarm,
+  ChecklistCriterion,
+  ChecklistThreshold,
+  CompanyChecklistResponse,
+} from '@/shared/api/generated/types.gen';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Folded } from '@/shared/ui/folded';
+import { HowToRead } from '@/shared/ui/how-to-read';
+import { Input } from '@/shared/ui/input';
+import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { dateLabel, formatCompactMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+
+type Unit = ChecklistCriterion['unit'];
+
+/** Presentation of a value in its contract unit; the backend computes every value and verdict. */
+function show(value: number | null | undefined, unit: Unit): string {
+  if (unit === 'fraction') return formatPercent(value);
+  if (unit === 'USD') return formatCompactMoney(value);
+  if (unit === 'count') return formatNumber(value, { digits: 0 });
+  return value == null ? '—' : formatNumber(value, { digits: 2 }) + 'x';
+}
+
+const COMPARISON: Record<string, string> = { '>=': '≥', '>': '>', '<=': '≤', '<': '<' };
+
+function thresholdText(item: ChecklistCriterion): string {
+  if (item.comparison === 'info') return 'Informativo';
+  if (item.comparison === '<pe') return '< PER actual';
+  return `${COMPARISON[item.comparison] ?? item.comparison} ${show(item.threshold, item.unit)}`;
+}
+
+const CONCEPTS: Record<string, string> = {
+  revenue: 'ingresos',
+  net_income: 'beneficio neto',
+  ocf: 'flujo operativo',
+  capex: 'CAPEX',
+  gross_profit: 'beneficio bruto',
+  operating_income: 'resultado operativo',
+  interest: 'gastos por intereses',
+  sbc: 'remuneración en acciones',
+  lt_debt: 'deuda a largo plazo',
+  cash: 'caja',
+  goodwill: 'goodwill',
+  assets: 'activos totales',
+  dividends: 'dividendos pagados',
+  debt_issuance: 'emisión de deuda',
+  lt_debt_current: 'deuda a largo con vencimiento corto',
+  short_borrowings: 'préstamos a corto',
+  short_investments: 'inversiones a corto',
+  debt_current: 'deuda a corto',
+};
+const REASONS: Record<string, string> = {
+  not_captured: 'Dato de Yahoo aún no capturado',
+  no_debt_reported: 'La SEC no tiene deuda declarada; no se asume cero',
+  no_debt: 'Sin deuda: cumple',
+  financial_sector: 'No aplica a bancos y aseguradoras',
+  no_price: 'Sin precio en la caché',
+  no_shares: 'Sin número de acciones SEC',
+  no_forward_eps: 'Sin BPA estimado (consenso)',
+  non_positive_net_income: 'Beneficio neto ≤ 0',
+  non_positive_start_or_end_value: 'Valor inicial o final ≤ 0',
+  non_positive_invested_capital: 'Capital invertido ≤ 0',
+  non_positive_fcf: 'FCF ≤ 0',
+  no_effective_tax_rate: 'Sin tipo impositivo efectivo',
+  no_ebitda: 'Sin EBITDA positivo',
+  no_ebit: 'Sin EBIT positivo',
+  no_fcf: 'Sin FCF positivo',
+  no_gross_profit: 'Sin beneficio bruto ni coste de ventas',
+  no_beta: 'Sin beta de Yahoo',
+  missing_component: 'Falta algún componente del mismo ejercicio',
+  too_few_years: 'Pocos ejercicios consecutivos',
+  no_insider_data: 'Sin operaciones Form 4 en la caché',
+  no_buybacks_reported: 'Sin recompras declaradas',
+  no_historical_growth: 'Sin crecimiento histórico del CFO',
+  below_search_range: 'El precio descuenta un crecimiento inferior al −50 %',
+  above_search_range: 'El precio descuenta un crecimiento superior al 100 %',
+  gaap_ebitda: 'GABI calcula el EBITDA con cifras GAAP; el EV/EBITDA del ranking es el de Yahoo',
+  invalid_saved_thresholds: 'Los umbrales guardados no son válidos; se usan los del Excel',
+};
+
+function reasonText(reason: string | null | undefined): string {
+  if (!reason) return '';
+  if (REASONS[reason]) return REASONS[reason];
+  const stale = /^stale_(.+)$/.exec(reason);
+  if (stale) return `Dato de ${CONCEPTS[stale[1]] ?? stale[1]} de otro ejercicio`;
+  const absent = /^no_(.+)$/.exec(reason);
+  if (absent) return `Sin dato SEC de ${CONCEPTS[absent[1]] ?? absent[1]}`;
+  if (/^(fewer_than|no_shares|no_margin)/.test(reason)) return 'Histórico insuficiente';
+  return reason;
+}
+
+const VERDICTS: Record<
+  ChecklistCriterion['verdict'],
+  { label: string; variant: 'default' | 'destructive' | 'outline' | 'secondary' }
+> = {
+  pass: { label: '✔ Cumple', variant: 'default' },
+  fail: { label: '✘ No cumple', variant: 'destructive' },
+  missing: { label: 'Sin dato', variant: 'outline' },
+  not_applicable: { label: 'No aplica', variant: 'secondary' },
+  info: { label: 'Info', variant: 'secondary' },
+};
+const ALARMS: Record<
+  ChecklistAlarm['status'],
+  { label: string; variant: 'default' | 'destructive' | 'outline' | 'secondary' }
+> = {
+  active: { label: 'Activa', variant: 'destructive' },
+  clear: { label: 'Sin alarma', variant: 'default' },
+  missing: { label: 'Sin dato', variant: 'outline' },
+  not_applicable: { label: 'No aplica', variant: 'secondary' },
+  manual: { label: 'Revisión manual', variant: 'secondary' },
+  info: { label: 'Info', variant: 'secondary' },
+};
+
+function note(item: ChecklistCriterion): string {
+  const detail = item.detail as Record<string, unknown>;
+  const parts: string[] = [];
+  if (typeof detail.years === 'number' && item.key.endsWith('cagr'))
+    parts.push(`${detail.years} años`);
+  if (typeof detail.class === 'string') parts.push(detail.class);
+  if (Array.isArray(detail.components_not_reported) && detail.components_not_reported.length)
+    parts.push(
+      'sin declarar: ' +
+        detail.components_not_reported.map((name) => CONCEPTS[String(name)] ?? name).join(', '),
+    );
+  if (item.edited) parts.push(`umbral editado (Excel: ${show(item.default_threshold, item.unit)})`);
+  if (item.reason && item.verdict !== 'pass') parts.push(reasonText(item.reason));
+  return parts.join(' · ');
+}
+
+function Criteria({ criteria }: { criteria: ChecklistCriterion[] }) {
+  const blocks = [...new Set(criteria.map((item) => item.block))];
+  return (
+    <div className="overflow-x-auto" role="region" aria-label="Tabla del checklist" tabIndex={0}>
+      <table className="w-full text-left text-xs" aria-label="Criterios del checklist">
+        <thead>
+          <tr className="border-b">
+            {['Métrica', 'Valor', 'Umbral', 'Resultado', 'Nota'].map((title) => (
+              <th key={title} className="py-1.5 pr-3 font-medium">
+                {title}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {blocks.map((block) => (
+          <tbody key={block}>
+            <tr>
+              <th colSpan={5} className="pt-3 pb-1 text-left font-semibold text-muted-foreground">
+                {block}
+              </th>
+            </tr>
+            {criteria
+              .filter((item) => item.block === block)
+              .map((item) => (
+                <tr key={item.key} className="border-b last:border-0">
+                  <td className="py-1.5 pr-3" title={`${item.formula} · Fuente: ${item.reference}`}>
+                    {item.label}
+                  </td>
+                  <td className="py-1.5 pr-3 tabular-nums">{show(item.value, item.unit)}</td>
+                  <td className="py-1.5 pr-3 tabular-nums">{thresholdText(item)}</td>
+                  <td className="py-1.5 pr-3">
+                    <Badge variant={VERDICTS[item.verdict].variant}>
+                      {VERDICTS[item.verdict].label}
+                    </Badge>
+                  </td>
+                  <td className="py-1.5 pr-3 text-muted-foreground">{note(item)}</td>
+                </tr>
+              ))}
+          </tbody>
+        ))}
+      </table>
+    </div>
+  );
+}
+
+function Alarms({ alarms }: { alarms: ChecklistAlarm[] }) {
+  return (
+    <ul className="space-y-2" aria-label="Señales de alarma">
+      {alarms.map((alarm) => (
+        <li
+          key={alarm.key}
+          className="flex flex-wrap items-start justify-between gap-2 border-b pb-2"
+        >
+          <span>
+            <span className="font-medium">{alarm.label}</span>
+            <span className="block text-xs text-muted-foreground">
+              {alarm.check}
+              {alarm.reason ? ' · ' + reasonText(alarm.reason) : ''}
+            </span>
+          </span>
+          <Badge variant={ALARMS[alarm.status].variant}>{ALARMS[alarm.status].label}</Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const DCF_VERDICTS: Record<CompanyChecklistResponse['dcf']['verdict'], string> = {
+  reasonable: 'Razonable: el precio descuenta un crecimiento no superior al histórico del CFO.',
+  demanding: 'Exigente: el precio descuenta más crecimiento que el histórico del CFO.',
+  discard: 'Descartable según el vídeo: el crecimiento implícito supera el máximo fijado.',
+  missing: 'Sin dato suficiente para el DCF inverso.',
+  not_applicable: 'No aplica a bancos y aseguradoras.',
+};
+
+function Dcf({ dcf }: { dcf: CompanyChecklistResponse['dcf'] }) {
+  const rows: [string, string][] = [
+    ['Crecimiento implícito del FCF', formatPercent(dcf.implied_growth)],
+    ['CAGR histórico del CFO', formatPercent(dcf.historical_cfo_cagr)],
+    [
+      'Valor por acción si crece como el histórico',
+      dcf.value_per_share_at_history == null
+        ? '—'
+        : formatNumber(dcf.value_per_share_at_history, { digits: 2 }) + ' US$',
+    ],
+    ['FCF del último ejercicio', formatCompactMoney(dcf.fcf)],
+    [
+      'Supuestos',
+      `${formatPercent(dcf.dcf_discount_rate)} descuento · ${formatPercent(dcf.dcf_terminal_growth)} perpetuidad · ${formatNumber(dcf.dcf_years, { digits: 0 })} años`,
+    ],
+  ];
+  return (
+    <div className="space-y-2">
+      <dl className="grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-3 border-b py-1">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-xs">
+        {DCF_VERDICTS[dcf.verdict]}
+        {dcf.reason ? ' ' + reasonText(dcf.reason) + '.' : ''}
+      </p>
+    </div>
+  );
+}
+
+/** Fractions are edited as percentages; the backend validates and stores the fraction. */
+function toInput(value: number | null | undefined, unit: string): string {
+  if (value == null) return '';
+  return String(unit === 'fraction' ? Math.round(value * 10000) / 100 : value);
+}
+
+function ThresholdEditor() {
+  const queryClient = useQueryClient();
+  const thresholds = useQuery({
+    queryKey: ['market', 'checklist-thresholds'],
+    queryFn: ({ signal }) => getChecklistThresholds(signal),
+  });
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const refresh = (data: Awaited<ReturnType<typeof getChecklistThresholds>>) => {
+    queryClient.setQueryData(['market', 'checklist-thresholds'], data);
+    setDraft({});
+    void queryClient.invalidateQueries({ queryKey: ['market', 'checklist'] });
+  };
+  const save = useMutation({ mutationFn: saveChecklistThresholds, onSuccess: refresh });
+  const reset = useMutation({ mutationFn: resetChecklistThresholds, onSuccess: refresh });
+  if (thresholds.isPending) return <LoadingState />;
+  if (thresholds.isError)
+    return <ErrorState error={thresholds.error} retry={() => void thresholds.refetch()} />;
+  const data = thresholds.data;
+  const value = (item: ChecklistThreshold) =>
+    draft[item.key] ?? toInput(data.values[item.key], item.unit);
+  const submit = () => {
+    const values: Record<string, number> = {};
+    for (const item of data.catalog) {
+      const number = Number(value(item).replace(',', '.'));
+      values[item.key] = item.unit === 'fraction' ? number / 100 : number;
+    }
+    save.mutate({ values });
+  };
+  const error = save.error ?? reset.error;
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
+      <p className="text-xs text-muted-foreground">
+        Por defecto, los umbrales del Excel. Los porcentajes se escriben en %. Solo cambian el ✔/✘
+        del checklist: no afectan a los valores, al Composite ni al ranking.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {data.catalog.map((item) => (
+          <label key={item.key} className="space-y-1 text-xs">
+            <span className="flex justify-between gap-2">
+              <span>
+                {item.label} {item.comparison in COMPARISON ? COMPARISON[item.comparison] : ''}
+              </span>
+              {data.edited.includes(item.key) && (
+                <span className="text-muted-foreground">
+                  editado · Excel {toInput(item.default, item.unit)}
+                  {item.unit === 'fraction' ? ' %' : ''}
+                </span>
+              )}
+            </span>
+            <Input
+              inputMode="decimal"
+              aria-label={`Umbral: ${item.label}`}
+              value={value(item)}
+              onChange={(event) => setDraft({ ...draft, [item.key]: event.target.value })}
+            />
+          </label>
+        ))}
+      </div>
+      {error && (
+        <p className="text-xs text-destructive" role="alert">
+          {error.message}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" size="sm" disabled={save.isPending}>
+          Guardar umbrales
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={reset.isPending || !data.edited.length}
+          onClick={() => reset.mutate()}
+        >
+          Restablecer valores del Excel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function CompanyChecklist({ symbol }: { symbol: string }) {
+  const checklist = useQuery({
+    queryKey: ['market', 'checklist', symbol],
+    queryFn: ({ signal }) => getCompanyChecklist(symbol, signal),
+  });
+  return (
+    <Card className="mb-6 gap-4 shadow-none">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ListChecks size={18} aria-hidden="true" />
+          Checklist fundamental
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        {checklist.isPending ? (
+          <LoadingState />
+        ) : checklist.isError ? (
+          <ErrorState error={checklist.error} retry={() => void checklist.refetch()} />
+        ) : (
+          <ChecklistContent data={checklist.data} />
+        )}
+        <Folded title="Editar umbrales" className="rounded-md border p-3 text-sm">
+          <ThresholdEditor />
+        </Folded>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
+  const summary = data.summary;
+  return (
+    <>
+      <HowToRead>
+        Compara la empresa con los criterios y umbrales de tu checklist (vídeos de Javier DV,
+        Memorias de Tiburón, Pedro Gutiérrez y La Pizarra de Andrés), usando un único ejercicio de
+        los 10-K presentados a la SEC, el último precio de la caché y, cuando se indica, datos de
+        Yahoo. Un dato ausente se muestra como «Sin dato», nunca como cero. Los umbrales son reglas
+        generales que dependen del sector. Es informativo: no entra en el Composite Score, no es una
+        señal validada ni una recomendación de inversión.
+      </HowToRead>
+      {data.thresholds_warning && (
+        <p className="text-xs" role="alert">
+          {reasonText(data.thresholds_warning)}.
+        </p>
+      )}
+      <dl className="grid gap-3 sm:grid-cols-4">
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Criterios cumplidos</dt>
+          <dd className="text-lg font-semibold">
+            {summary.passed} / {summary.evaluated}
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {formatPercent(summary.score, { digits: 0 })}
+            </span>
+          </dd>
+        </div>
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Sin dato</dt>
+          <dd className="text-lg font-semibold">{summary.missing}</dd>
+        </div>
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Alarmas activas</dt>
+          <dd className="text-lg font-semibold">
+            {summary.alarms_active} / {summary.alarms_evaluated}
+          </dd>
+        </div>
+        <div className="rounded-md border p-3">
+          <dt className="text-xs text-muted-foreground">Ejercicio fiscal usado</dt>
+          <dd className="text-lg font-semibold">{dateLabel(data.fiscal_year_end)}</dd>
+        </div>
+      </dl>
+      <p className="text-xs text-muted-foreground">
+        Último 10-K/10-Q conocido: {dateLabel(data.sources.sec_last_filed)} · Precio:{' '}
+        {dateLabel(data.sources.price_date)} · Yahoo:{' '}
+        {dateLabel(data.sources.yahoo_fetched_at?.slice(0, 10))}
+        {data.financial_sector ? ' · Sector financiero: algunos criterios no aplican.' : ''}
+      </p>
+      <Criteria criteria={data.criteria} />
+      <Folded title="Señales de alarma" className="rounded-md border p-3 text-sm">
+        <Alarms alarms={data.alarms} />
+      </Folded>
+      <Folded
+        title="DCF inverso: ¿qué crecimiento descuenta el precio?"
+        className="rounded-md border p-3 text-sm"
+      >
+        <Dcf dcf={data.dcf} />
+      </Folded>
+      <Folded
+        title="Criterios cualitativos (los evalúas tú)"
+        className="rounded-md border p-3 text-sm"
+      >
+        <ul className="list-disc space-y-1 pl-5 text-xs">
+          {data.qualitative.map((item) => (
+            <li key={item.key}>
+              <span className="font-medium">{item.label}</span>{' '}
+              <span className="text-muted-foreground">{item.hint}</span>
+            </li>
+          ))}
+        </ul>
+      </Folded>
+    </>
+  );
+}

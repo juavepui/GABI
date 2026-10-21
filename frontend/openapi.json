@@ -2317,6 +2317,677 @@
         "title": "CapitalAllocation",
         "type": "object"
       },
+      "ChecklistAlarm": {
+        "properties": {
+          "check": {
+            "title": "Check",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "clear",
+              "missing",
+              "not_applicable",
+              "manual",
+              "info"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "check",
+          "status",
+          "reason",
+          "detail"
+        ],
+        "title": "ChecklistAlarm",
+        "type": "object"
+      },
+      "ChecklistCriterion": {
+        "properties": {
+          "block": {
+            "title": "Block",
+            "type": "string"
+          },
+          "comparison": {
+            "title": "Comparison",
+            "type": "string"
+          },
+          "default_threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Threshold"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "edited": {
+            "title": "Edited",
+            "type": "boolean"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "unit": {
+            "enum": [
+              "fraction",
+              "ratio",
+              "USD",
+              "count"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verdict": {
+            "enum": [
+              "pass",
+              "fail",
+              "missing",
+              "not_applicable",
+              "info"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "block",
+          "label",
+          "formula",
+          "unit",
+          "comparison",
+          "value",
+          "threshold",
+          "default_threshold",
+          "edited",
+          "verdict",
+          "reason",
+          "source",
+          "reference",
+          "detail"
+        ],
+        "title": "ChecklistCriterion",
+        "type": "object"
+      },
+      "ChecklistDcf": {
+        "properties": {
+          "dcf_discount_rate": {
+            "title": "Dcf Discount Rate",
+            "type": "number"
+          },
+          "dcf_max_implied_growth": {
+            "title": "Dcf Max Implied Growth",
+            "type": "number"
+          },
+          "dcf_terminal_growth": {
+            "title": "Dcf Terminal Growth",
+            "type": "number"
+          },
+          "dcf_years": {
+            "title": "Dcf Years",
+            "type": "number"
+          },
+          "edited": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Edited",
+            "type": "array"
+          },
+          "fcf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fcf"
+          },
+          "historical_cfo_cagr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Historical Cfo Cagr"
+          },
+          "implied_growth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Implied Growth"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "value_per_share_at_history": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Per Share At History"
+          },
+          "verdict": {
+            "enum": [
+              "reasonable",
+              "demanding",
+              "discard",
+              "missing",
+              "not_applicable"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dcf_discount_rate",
+          "dcf_terminal_growth",
+          "dcf_years",
+          "dcf_max_implied_growth",
+          "edited",
+          "fcf",
+          "shares",
+          "price",
+          "implied_growth",
+          "historical_cfo_cagr",
+          "value_per_share_at_history",
+          "verdict",
+          "reason"
+        ],
+        "title": "ChecklistDcf",
+        "type": "object"
+      },
+      "ChecklistQualitative": {
+        "properties": {
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "hint"
+        ],
+        "title": "ChecklistQualitative",
+        "type": "object"
+      },
+      "ChecklistSources": {
+        "properties": {
+          "price_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Date"
+          },
+          "sec_last_filed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sec Last Filed"
+          },
+          "shares_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares Date"
+          },
+          "yahoo_fetched_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yahoo Fetched At"
+          }
+        },
+        "required": [
+          "sec_last_filed",
+          "price_date",
+          "shares_date",
+          "yahoo_fetched_at"
+        ],
+        "title": "ChecklistSources",
+        "type": "object"
+      },
+      "ChecklistSummary": {
+        "properties": {
+          "alarms_active": {
+            "title": "Alarms Active",
+            "type": "integer"
+          },
+          "alarms_evaluated": {
+            "title": "Alarms Evaluated",
+            "type": "integer"
+          },
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "missing": {
+            "title": "Missing",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "passed",
+          "failed",
+          "evaluated",
+          "missing",
+          "score",
+          "alarms_active",
+          "alarms_evaluated"
+        ],
+        "title": "ChecklistSummary",
+        "type": "object"
+      },
+      "ChecklistThreshold": {
+        "properties": {
+          "block": {
+            "title": "Block",
+            "type": "string"
+          },
+          "comparison": {
+            "title": "Comparison",
+            "type": "string"
+          },
+          "default": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "maximum": {
+            "title": "Maximum",
+            "type": "number"
+          },
+          "minimum": {
+            "title": "Minimum",
+            "type": "number"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "fraction",
+              "ratio",
+              "USD",
+              "count"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "block",
+          "unit",
+          "comparison",
+          "default",
+          "minimum",
+          "maximum",
+          "reference"
+        ],
+        "title": "ChecklistThreshold",
+        "type": "object"
+      },
+      "ChecklistThresholds": {
+        "properties": {
+          "catalog": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistThreshold"
+            },
+            "title": "Catalog",
+            "type": "array"
+          },
+          "edited": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Edited",
+            "type": "array"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Values",
+            "type": "object"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          }
+        },
+        "required": [
+          "version",
+          "values",
+          "edited",
+          "warning",
+          "catalog"
+        ],
+        "title": "ChecklistThresholds",
+        "type": "object"
+      },
+      "ChecklistThresholdsRequest": {
+        "properties": {
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "title": "ChecklistThresholdsRequest",
+        "type": "object"
+      },
+      "CompanyChecklistResponse": {
+        "properties": {
+          "alarms": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistAlarm"
+            },
+            "title": "Alarms",
+            "type": "array"
+          },
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistCriterion"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "dcf": {
+            "$ref": "#/components/schemas/ChecklistDcf"
+          },
+          "financial_sector": {
+            "title": "Financial Sector",
+            "type": "boolean"
+          },
+          "fiscal_year_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fiscal Year End"
+          },
+          "qualitative": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistQualitative"
+            },
+            "title": "Qualitative",
+            "type": "array"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "sources": {
+            "$ref": "#/components/schemas/ChecklistSources"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChecklistSummary"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "thresholds_version": {
+            "title": "Thresholds Version",
+            "type": "integer"
+          },
+          "thresholds_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thresholds Warning"
+          }
+        },
+        "required": [
+          "symbol",
+          "as_of",
+          "sector",
+          "fiscal_year_end",
+          "financial_sector",
+          "thresholds_version",
+          "thresholds_warning",
+          "sources",
+          "summary",
+          "criteria",
+          "alarms",
+          "dcf",
+          "qualitative"
+        ],
+        "title": "CompanyChecklistResponse",
+        "type": "object"
+      },
       "CompanyEvent": {
         "properties": {
           "days_until": {
@@ -14102,6 +14773,257 @@
         ]
       }
     },
+    "/api/v1/checklist/thresholds": {
+      "get": {
+        "operationId": "checklist_thresholds_api_v1_checklist_thresholds_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistThresholds"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Checklist Thresholds",
+        "tags": [
+          "market"
+        ]
+      },
+      "post": {
+        "operationId": "save_checklist_thresholds_api_v1_checklist_thresholds_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistThresholdsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistThresholds"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Save Checklist Thresholds",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/checklist/thresholds/reset": {
+      "post": {
+        "operationId": "reset_checklist_thresholds_api_v1_checklist_thresholds_reset_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistThresholds"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Reset Checklist Thresholds",
+        "tags": [
+          "market"
+        ]
+      }
+    },
     "/api/v1/companies/{symbol}": {
       "get": {
         "operationId": "company_api_v1_companies__symbol__get",
@@ -14299,6 +15221,101 @@
           }
         },
         "summary": "Company Analysis Prompt",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/checklist": {
+      "get": {
+        "operationId": "company_checklist_api_v1_companies__symbol__checklist_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyChecklistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Checklist",
         "tags": [
           "market"
         ]

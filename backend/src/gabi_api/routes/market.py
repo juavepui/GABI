@@ -5,11 +5,13 @@ from fastapi.responses import Response
 
 from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
+from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.comparison import positions
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
+from gabi_api.schemas.checklist import ChecklistThresholds, ChecklistThresholdsRequest, CompanyChecklistResponse
 from gabi_api.schemas.evidence import (
     CompanyEvidence,
     CompanyFilingChanges,
@@ -73,6 +75,33 @@ def company_insiders(symbol: SymbolPath, query: Research) -> dict:
 @router.get("/companies/{symbol}/filing-changes", response_model=CompanyFilingChanges)
 def company_filing_changes(symbol: SymbolPath, query: Research) -> dict:
     return query.filing_changes(symbol)
+
+
+def checklist_service(request: Request) -> CompanyChecklist:
+    return request.app.state.company_checklist
+
+
+Checklist = Annotated[CompanyChecklist, Depends(checklist_service)]
+
+
+@router.get("/companies/{symbol}/checklist", response_model=CompanyChecklistResponse)
+def company_checklist(symbol: SymbolPath, query: Checklist) -> dict:
+    return query.company(symbol)
+
+
+@router.get("/checklist/thresholds", response_model=ChecklistThresholds)
+def checklist_thresholds(query: Checklist) -> dict:
+    return query.thresholds()
+
+
+@router.post("/checklist/thresholds", response_model=ChecklistThresholds)
+def save_checklist_thresholds(body: ChecklistThresholdsRequest, query: Checklist) -> dict:
+    return query.save_thresholds(body.values)
+
+
+@router.post("/checklist/thresholds/reset", response_model=ChecklistThresholds)
+def reset_checklist_thresholds(query: Checklist) -> dict:
+    return query.reset_thresholds()
 
 
 @router.get("/evidence", response_model=EvidenceTop)
