@@ -218,7 +218,7 @@ class _Cache:
         return []
 
     def fundamentals(self, symbols):
-        return [("ACME", "2025-06-30T08:00:00+00:00", json.dumps({"forwardEps": 3.4, "beta": 0.9,
+        return [("ACME", "2025-06-30T08:00:00+00:00", json.dumps({"forwardEps": 3.4, "beta": 0.9, "heldPercentInsiders": 0.15,
                                                                      "sector": "Technology"}), "{}", "{}")]
 
 
@@ -242,6 +242,7 @@ def test_use_case_reads_known_filings_and_persists_only_edits(tmp_path):
     criteria = {item["key"]: item for item in body["criteria"]}
     assert criteria["net_income"]["value"] == 1800  # the restatement filed after today is unknown
     assert criteria["pe"]["value"] == pytest.approx(28.3333333)
+    assert criteria["insiders_pct"]["value"] == 0.15 and criteria["insiders_pct"]["verdict"] == "pass"
     assert body["sources"]["sec_last_filed"] == "2025-02-15" and body["sources"]["price_date"] == "2025-06-30"
     assert not (tmp_path / "checklist_thresholds.json").exists()
     saved = service.save_thresholds({"pe": 30, "net_margin": 0.10})

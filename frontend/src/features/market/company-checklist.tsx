@@ -61,7 +61,7 @@ const CONCEPTS: Record<string, string> = {
   debt_current: 'deuda a corto',
 };
 const REASONS: Record<string, string> = {
-  not_captured: 'Dato de Yahoo aún no capturado',
+  not_captured: 'Yahoo no informa este dato o aún no se ha refrescado',
   no_debt_reported: 'La SEC no tiene deuda declarada; no se asume cero',
   no_debt: 'Sin deuda: cumple',
   financial_sector: 'No aplica a bancos y aseguradoras',

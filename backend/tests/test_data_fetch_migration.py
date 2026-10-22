@@ -71,6 +71,8 @@ def market(monkeypatch):
     monkeypatch.setattr(identity, "resolve", lambda symbol, day: {"entity_id": None})
     monkeypatch.setattr(event_store, "datetime", FixedDatetime)
     monkeypatch.setattr(data_fetch, "datetime", FixedDatetime)
+    # Parity with the capture; the extra checklist fields (#167) are tested separately.
+    monkeypatch.setattr(data_fetch, "EXTRA_INFO_KEYS", [])
     monkeypatch.setattr(time, "perf_counter", lambda: 2.)
     monkeypatch.setattr(time, "thread_time", lambda: 1.)
     monkeypatch.setattr(time, "sleep", lambda seconds: None)

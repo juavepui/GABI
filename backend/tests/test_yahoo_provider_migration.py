@@ -68,6 +68,8 @@ def test_data_fetch_calls_match_capture(monkeypatch, call):
     monkeypatch.setattr(data_fetch, "_writes", lambda: SimpleNamespace(prices=lambda *a, **k: None,
                                                                         splits=lambda *a, **k: None))
     monkeypatch.setattr(data_fetch.identity, "resolve", lambda *a: {"entity_id": None})
+    # Parity with the capture; the extra checklist fields are tested separately.
+    monkeypatch.setattr(data_fetch, "EXTRA_INFO_KEYS", [])
     results = []
     for label in ("old", "new"):
         fake = FakeYahoo()
@@ -83,6 +85,14 @@ def test_data_fetch_calls_match_capture(monkeypatch, call):
             outcome = (type(exc).__name__, str(exc))
         results.append((repr(outcome), fake.calls))
     assert results[0] == results[1]
+
+
+def test_fundamentals_capture_checklist_info_fields(monkeypatch):
+    fake = FakeYahoo()
+    monkeypatch.setattr(yfinance, "Ticker", fake.Ticker)
+    info, _, _ = data_fetch._fetch_fundamentals_attempt("BRK.B")
+    assert set(info) == set(config.INFO_KEYS) | {"heldPercentInsiders"}
+    assert info["heldPercentInsiders"] is None and info["marketCap"] == 1e9
 
 
 def test_provider_resolves_yfinance_at_call_time(monkeypatch, tmp_path):

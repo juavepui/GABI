@@ -28,7 +28,7 @@ Usar cualquiera de sus criterios como señal requiere un experimento preregistra
   - precio: último cierre de la caché;
   - acciones: último hecho SEC presentado, ajustado por splits posteriores;
   - PER forward y beta: registro de Yahoo ya descargado;
-  - % de directivos: Yahoo `heldPercentInsiders`, todavía no capturado (F3).
+  - % de directivos: Yahoo `heldPercentInsiders`.
 - **Un solo ejercicio**: todos los componentes de un ratio se leen en el último
   cierre anual de ingresos (o de beneficio), con una tolerancia de 45 días. Si un
   componente es de otro ejercicio, el criterio queda «sin dato» (`stale_*`).
@@ -83,6 +83,7 @@ validadas.
     una vez por emisor, aunque no haya cambiado.
   - Los históricos de research (backfill trimestral, bulk) no incorporan estas
     etiquetas.
-- **F3**: capturar `heldPercentInsiders` en una lista de campos Yahoo propia de
-  infraestructura (`config.py` está congelado).
+- **F3** (hecho): el refresco de fundamentales de Yahoo guarda también
+  `heldPercentInsiders` (`EXTRA_INFO_KEYS` en `infrastructure/legacy/data_fetch.py`,
+  porque `config.INFO_KEYS` está congelado). Aparece tras el siguiente refresco.
 - **F4**: comparación de múltiplos con la mediana histórica propia y la sectorial.
