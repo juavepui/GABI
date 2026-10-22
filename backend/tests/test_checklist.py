@@ -102,6 +102,12 @@ def test_ratios_match_the_excel_checklist_sheet():
     assert result["summary"]["passed"] + result["summary"]["failed"] == result["summary"]["evaluated"]
 
 
+def test_every_criterion_alarm_and_threshold_explains_itself():
+    result = _evaluate(_excel_example())
+    for row in result["criteria"] + result["alarms"] + checklist.threshold_catalog():
+        assert len(row["explanation"]) > 40, row["key"]
+
+
 def test_reverse_dcf_matches_the_excel_sheet():
     options = {"discount_rate": 0.09, "terminal_growth": 0.03, "years": 10}
     assert checklist.dcf_value_per_share(1900, 600, 0.10, **options) == pytest.approx(84.4260955680603)

@@ -1203,6 +1203,10 @@ export type ChecklistAlarm = {
         [key: string]: unknown;
     };
     /**
+     * Explanation
+     */
+    explanation: string;
+    /**
      * Key
      */
     key: string;
@@ -1246,6 +1250,10 @@ export type ChecklistCriterion = {
      * Edited
      */
     edited: boolean;
+    /**
+     * Explanation
+     */
+    explanation: string;
     /**
      * Formula
      */
@@ -1552,6 +1560,10 @@ export type ChecklistThreshold = {
      * Default
      */
     default: number | null;
+    /**
+     * Explanation
+     */
+    explanation: string;
     /**
      * Key
      */

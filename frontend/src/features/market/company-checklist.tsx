@@ -19,6 +19,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Folded } from '@/shared/ui/folded';
+import { Hint } from '@/shared/ui/hint';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
@@ -155,6 +156,17 @@ function note(item: ChecklistCriterion): string {
   return parts.join(' · ');
 }
 
+function CriterionHint({ item }: { item: ChecklistCriterion }) {
+  return (
+    <>
+      <span className="block font-semibold">{item.label}</span>
+      <span className="mt-1 block">{item.explanation}</span>
+      <span className="mt-2 block text-muted-foreground">Fórmula: {item.formula}</span>
+      <span className="block text-muted-foreground">Vídeo: {item.reference}</span>
+    </>
+  );
+}
+
 function Criteria({ criteria }: { criteria: ChecklistCriterion[] }) {
   const blocks = [...new Set(criteria.map((item) => item.block))];
   return (
@@ -180,8 +192,8 @@ function Criteria({ criteria }: { criteria: ChecklistCriterion[] }) {
               .filter((item) => item.block === block)
               .map((item) => (
                 <tr key={item.key} className="border-b last:border-0">
-                  <td className="py-1.5 pr-3" title={`${item.formula} · Fuente: ${item.reference}`}>
-                    {item.label}
+                  <td className="py-1.5 pr-3">
+                    <Hint content={<CriterionHint item={item} />}>{item.label}</Hint>
                   </td>
                   <td className="py-1.5 pr-3 tabular-nums">{show(item.value, item.unit)}</td>
                   <td className="py-1.5 pr-3 tabular-nums">{thresholdText(item)}</td>
@@ -209,7 +221,9 @@ function Alarms({ alarms }: { alarms: ChecklistAlarm[] }) {
           className="flex flex-wrap items-start justify-between gap-2 border-b pb-2"
         >
           <span>
-            <span className="font-medium">{alarm.label}</span>
+            <span className="font-medium">
+              <Hint content={alarm.explanation}>{alarm.label}</Hint>
+            </span>
             <span className="block text-xs text-muted-foreground">
               {alarm.check}
               {alarm.reason ? ' · ' + reasonText(alarm.reason) : ''}
@@ -231,6 +245,19 @@ const MULTIPLES: [Multiple, string][] = [
   ['ev_fcf', 'EV/FCF'],
 ];
 
+const MULTIPLE_COLUMNS: [string, string][] = [
+  ['Múltiplo', 'Pasa el puntero por cada múltiplo para ver qué mide.'],
+  ['Actual', 'Múltiplo con el último precio y el último ejercicio fiscal presentado a la SEC.'],
+  [
+    'Mediana propia',
+    'Mediana del múltiplo de la propia empresa en sus últimos ejercicios, cada uno con el precio al cierre de ese ejercicio. Si el actual está muy por encima, cotiza más cara que de costumbre. Entre paréntesis, cuántos años tienen dato.',
+  ],
+  [
+    'Mediana del sector',
+    'Mediana del múltiplo actual de las demás empresas de su sector en el universo actual, con las mismas fórmulas. Entre paréntesis, cuántas empresas tienen dato: con pocas, la referencia es débil.',
+  ],
+];
+
 function median(item: ChecklistMedian | undefined, what: string): string {
   if (!item) return '—';
   if (item.median == null) return reasonText(item.reason) || '—';
@@ -243,6 +270,7 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
     queryFn: ({ signal }) => getCompanyChecklistSector(data.symbol, signal),
   });
   const current = Object.fromEntries(data.criteria.map((item) => [item.key, item.value]));
+  const explained = Object.fromEntries(data.criteria.map((item) => [item.key, item.explanation]));
   const history = data.multiples_history;
   return (
     <div className="space-y-3">
@@ -260,14 +288,11 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
         >
           <thead>
             <tr className="border-b">
-              {[
-                'Múltiplo',
-                'Actual',
-                `Mediana propia (${history.years} años)`,
-                'Mediana del sector',
-              ].map((title) => (
+              {MULTIPLE_COLUMNS.map(([title, help]) => (
                 <th key={title} className="py-1.5 pr-3 font-medium">
-                  {title}
+                  <Hint content={help}>
+                    {title === 'Mediana propia' ? `${title} (${history.years} años)` : title}
+                  </Hint>
                 </th>
               ))}
             </tr>
@@ -276,7 +301,7 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
             {MULTIPLES.map(([key, label]) => (
               <tr key={key} className="border-b last:border-0">
                 <th scope="row" className="py-1.5 pr-3 font-normal">
-                  {label}
+                  <Hint content={explained[key]}>{label}</Hint>
                 </th>
                 <td className="py-1.5 pr-3 tabular-nums">{show(current[key], 'ratio')}</td>
                 <td className="py-1.5 pr-3 tabular-nums">{median(history.median[key], 'años')}</td>
@@ -327,27 +352,43 @@ const DCF_VERDICTS: Record<CompanyChecklistResponse['dcf']['verdict'], string> =
 };
 
 function Dcf({ dcf }: { dcf: CompanyChecklistResponse['dcf'] }) {
-  const rows: [string, string][] = [
-    ['Crecimiento implícito del FCF', formatPercent(dcf.implied_growth)],
-    ['CAGR histórico del CFO', formatPercent(dcf.historical_cfo_cagr)],
+  const rows: [string, string, string][] = [
+    [
+      'Crecimiento implícito del FCF',
+      formatPercent(dcf.implied_growth),
+      'Crecimiento anual del flujo de caja libre que justifica el precio actual con estos supuestos. Es lo que el mercado da por hecho: cuanto más alto, más exigente es el precio.',
+    ],
+    [
+      'CAGR histórico del CFO',
+      formatPercent(dcf.historical_cfo_cagr),
+      'Lo que ha crecido de verdad cada año el flujo de caja operativo en la última década (o 5 años). Sirve para juzgar si el crecimiento implícito es alcanzable.',
+    ],
     [
       'Valor por acción si crece como el histórico',
       dcf.value_per_share_at_history == null
         ? '—'
         : formatNumber(dcf.value_per_share_at_history, { digits: 2 }) + ' US$',
+      'Valor de cada acción si el FCF creciera al ritmo histórico del CFO durante los años proyectados. Es el escenario «se repite el pasado», no una estimación: con crecimientos altos sale muy elevado.',
     ],
-    ['FCF del último ejercicio', formatCompactMoney(dcf.fcf)],
+    [
+      'FCF del último ejercicio',
+      formatCompactMoney(dcf.fcf),
+      'Flujo de caja libre (CFO − CAPEX) del último 10-K: el punto de partida de la proyección.',
+    ],
     [
       'Supuestos',
       `${formatPercent(dcf.dcf_discount_rate)} descuento · ${formatPercent(dcf.dcf_terminal_growth)} perpetuidad · ${formatNumber(dcf.dcf_years, { digits: 0 })} años`,
+      'Tasa de descuento (rentabilidad que exiges), crecimiento a perpetuidad tras el último año y años proyectados. Se cambian en la sección de umbrales, al final de la tarjeta.',
     ],
   ];
   return (
     <div className="space-y-2">
       <dl className="grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
-        {rows.map(([label, value]) => (
+        {rows.map(([label, value, help]) => (
           <div key={label} className="flex justify-between gap-3 border-b py-1">
-            <dt className="text-muted-foreground">{label}</dt>
+            <dt className="text-muted-foreground">
+              <Hint content={help}>{label}</Hint>
+            </dt>
             <dd className="tabular-nums">{value}</dd>
           </div>
         ))}
@@ -412,7 +453,8 @@ function ThresholdEditor() {
           <label key={item.key} className="space-y-1 text-xs">
             <span className="flex justify-between gap-2">
               <span>
-                {item.label} {item.comparison in COMPARISON ? COMPARISON[item.comparison] : ''}
+                <Hint content={item.explanation}>{item.label}</Hint>{' '}
+                {item.comparison in COMPARISON ? COMPARISON[item.comparison] : ''}
               </span>
               {data.edited.includes(item.key) && (
                 <span className="text-muted-foreground">
@@ -501,7 +543,11 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
       )}
       <dl className="grid gap-3 sm:grid-cols-4">
         <div className="rounded-md border p-3">
-          <dt className="text-xs text-muted-foreground">Criterios cumplidos</dt>
+          <dt className="text-xs text-muted-foreground">
+            <Hint content="Cuántos de los criterios con umbral pasa la empresa, sobre los que se han podido evaluar (sin contar los informativos ni los que no tienen dato). El porcentaje es una guía, no una puntuación validada.">
+              Criterios cumplidos
+            </Hint>
+          </dt>
           <dd className="text-lg font-semibold">
             {summary.passed} / {summary.evaluated}
             <span className="ml-2 text-sm font-normal text-muted-foreground">
@@ -510,17 +556,29 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
           </dd>
         </div>
         <div className="rounded-md border p-3">
-          <dt className="text-xs text-muted-foreground">Sin dato</dt>
+          <dt className="text-xs text-muted-foreground">
+            <Hint content="Criterios que no se pueden calcular porque falta algún dato: la SEC no lo declara, es de otro ejercicio o no hay precio. Nunca se rellenan con cero; la nota de cada fila explica el motivo.">
+              Sin dato
+            </Hint>
+          </dt>
           <dd className="text-lg font-semibold">{summary.missing}</dd>
         </div>
         <div className="rounded-md border p-3">
-          <dt className="text-xs text-muted-foreground">Alarmas activas</dt>
+          <dt className="text-xs text-muted-foreground">
+            <Hint content="Señales de riesgo que saltan, sobre las que se han podido comprobar con datos. Las de revisión manual no cuentan: las valoras tú.">
+              Alarmas activas
+            </Hint>
+          </dt>
           <dd className="text-lg font-semibold">
             {summary.alarms_active} / {summary.alarms_evaluated}
           </dd>
         </div>
         <div className="rounded-md border p-3">
-          <dt className="text-xs text-muted-foreground">Ejercicio fiscal usado</dt>
+          <dt className="text-xs text-muted-foreground">
+            <Hint content="Cierre del último ejercicio anual (10-K) presentado a la SEC. Todos los ratios usan cifras de ese mismo ejercicio para no mezclar años.">
+              Ejercicio fiscal usado
+            </Hint>
+          </dt>
           <dd className="text-lg font-semibold">{dateLabel(data.fiscal_year_end)}</dd>
         </div>
       </dl>

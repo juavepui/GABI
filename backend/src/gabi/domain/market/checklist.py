@@ -142,6 +142,104 @@ RULES = (
          "ratio", "info", None, None, "yahoo", "La Pizarra de Andrés"),
 )
 RULES_BY_KEY = {rule.key: rule for rule in RULES}
+
+# Qué mide cada criterio y por qué importa, en lenguaje llano (ayuda contextual de la ficha).
+EXPLANATIONS = {
+    "revenue_cagr": "Crecimiento medio anual compuesto de las ventas en 10 años (o 5 si no hay más historia). "
+                    "Una empresa que no vende más cada año difícilmente aumentará su valor.",
+    "revenue_growth_stability": "Cuánto varía el crecimiento de las ventas de un año a otro. Cuanto más bajo, "
+                                "más previsible es el negocio; un valor alto indica crecimiento a saltos o cíclico.",
+    "cfo_cagr": "Crecimiento medio anual del flujo de caja operativo (el dinero que genera el negocio). Debe "
+                "acompañar al de las ventas: si las ventas crecen y la caja no, el crecimiento cuesta dinero.",
+    "net_income": "Lo que gana la empresa después de todos los gastos e impuestos. El checklist exige que sea "
+                  "positivo: con pérdidas no hay beneficio que valorar.",
+    "gross_margin": "Qué parte de cada dólar vendido queda tras pagar lo que cuesta producirlo. Un margen bruto "
+                    "alto suele indicar poder de precios o ventaja competitiva.",
+    "net_margin": "Qué parte de cada dólar vendido acaba siendo beneficio neto. Mide la rentabilidad final del "
+                  "negocio tras todos los costes, intereses e impuestos.",
+    "gross_margin_change": "Diferencia entre el margen bruto actual y el de hace 5 años. Si sube, la empresa gana "
+                           "poder de precios o eficiencia; si baja, la competencia la presiona.",
+    "net_margin_change": "Diferencia entre el margen neto actual y el de hace 5 años. Que se expanda indica que el "
+                         "negocio escala: crece más el beneficio que las ventas.",
+    "roic": "Rentabilidad que obtiene la empresa sobre todo el capital invertido (deuda y fondos propios, sin la "
+            "caja). Por encima del 10 % suele indicar ventaja competitiva; por debajo del coste del capital, "
+            "crecer destruye valor.",
+    "net_debt": "Deuda total menos caja e inversiones a corto plazo. Si es negativa, la empresa tiene más caja "
+                "que deuda (caja neta) y no depende de los bancos.",
+    "net_debt_to_ebitda": "Cuántos años de beneficio operativo antes de amortizaciones (EBITDA) harían falta para "
+                          "pagar la deuda neta. Por encima de 2,5–3 la deuda empieza a ser un riesgo.",
+    "interest_coverage": "Cuántas veces cubre el beneficio operativo (EBIT) los intereses de la deuda. Cuanto más "
+                         "alto, más margen tiene la empresa si los beneficios caen o los tipos suben.",
+    "cash_conversion": "Flujo de caja operativo dividido entre beneficio neto. Por encima de 1, el beneficio se "
+                       "convierte en caja real; muy por debajo puede indicar beneficios contables poco sólidos.",
+    "cfo_margin": "Qué parte de las ventas se convierte en caja operativa. Es el equivalente en caja del margen "
+                  "neto y es más difícil de maquillar.",
+    "fcf": "Caja que queda tras pagar las inversiones necesarias (CAPEX). Es el dinero disponible para dividendos, "
+           "recompras, adquisiciones o reducir deuda.",
+    "capex_to_revenue": "Qué parte de las ventas se reinvierte en activos fijos. Un negocio que necesita poco CAPEX "
+                        "para crecer genera más caja libre.",
+    "shares_change": "Cuánto ha cambiado el número de acciones en 5 años, ajustado por splits. Si sube, tu "
+                     "participación se diluye; si baja, la empresa recompra acciones y tu parte crece.",
+    "sbc_to_net_income": "Remuneración pagada en acciones a empleados frente al beneficio neto. Es un coste real "
+                         "que diluye al accionista aunque no salga de la caja; por encima del 20 % es elevado.",
+    "market_cap": "Precio de la acción por el número de acciones: lo que el mercado paga hoy por toda la empresa.",
+    "enterprise_value": "Capitalización más la deuda neta: lo que costaría comprar la empresa entera asumiendo su "
+                        "deuda y quedándose su caja. Se usa en los múltiplos EV.",
+    "pe": "Cuántos años de beneficio actual pagas al precio de hoy. Un PER bajo puede indicar que está barata, "
+          "o que el mercado espera que el beneficio caiga.",
+    "forward_pe": "PER calculado con el beneficio por acción que los analistas esperan para el próximo año. Si es "
+                  "menor que el PER actual, el consenso espera que el beneficio crezca.",
+    "ev_ebitda": "Enterprise Value dividido entre EBITDA. Compara empresas con distinta deuda; útil en negocios "
+                 "con muchas amortizaciones, pero el EBITDA ignora el coste de reponer activos.",
+    "ev_ebit": "Enterprise Value dividido entre beneficio operativo (EBIT). Más exigente que EV/EBITDA porque sí "
+               "descuenta las amortizaciones.",
+    "ev_fcf": "Enterprise Value dividido entre flujo de caja libre: cuántos años de caja libre cuesta la empresa "
+              "entera. Es el múltiplo más cercano a la caja que recibe el propietario.",
+    "fcf_yield": "Flujo de caja libre entre capitalización: la rentabilidad en caja que obtendrías si fueras dueño "
+                 "de toda la empresa. Compárala con lo que paga un bono.",
+    "insiders_pct": "Qué parte de las acciones está en manos de directivos y consejeros (Yahoo). Si tienen mucho "
+                    "en juego, sus intereses están alineados con los tuyos. En empresas con varias clases de "
+                    "acciones puede no contar la clase que controla el fundador.",
+    "beta": "Cuánto se mueve la acción frente al mercado: 1 se mueve igual, menos de 1 es más defensiva y más "
+            "de 1 amplifica las subidas y las caídas. Es informativa, no un criterio de calidad.",
+    "dcf_discount_rate": "Rentabilidad anual que exiges a la inversión. Cuanto más alta, menos vale hoy la caja "
+                         "futura y más crecimiento tiene que descontar el precio.",
+    "dcf_terminal_growth": "Crecimiento anual que se supone para siempre a partir del último año proyectado. Debe "
+                           "ser menor que la tasa de descuento y razonable frente a la economía (2–3 %).",
+    "dcf_years": "Número de años en los que el FCF crece al ritmo implícito antes de pasar al crecimiento a "
+                 "perpetuidad.",
+    "dcf_max_implied_growth": "Crecimiento implícito a partir del cual el vídeo considera que el precio exige "
+                              "demasiado y la empresa se descarta.",
+}
+
+ALARM_EXPLANATIONS = {
+    "earnings_outpace_cfo": "El beneficio contable sube pero la caja operativa no le sigue. Puede deberse a "
+                            "ventas a crédito o inventario acumulándose: beneficios que aún no son dinero.",
+    "debt_up_weak_cfo": "La deuda crece mientras la caja operativa no mejora: la empresa se financia con "
+                        "préstamos en vez de con su negocio.",
+    "buybacks_with_debt": "La empresa emite deuda por un importe parecido al que gasta en recompras. Recomprar "
+                          "con deuda infla el beneficio por acción pero debilita el balance.",
+    "dividends_with_debt": "Los dividendos superan el flujo de caja libre mientras la deuda crece: se reparte "
+                           "dinero que el negocio no genera.",
+    "goodwill": "Mucho goodwill (sobreprecio pagado en adquisiciones) frente a los activos, o deterioros "
+                "repetidos: señal de compras caras que luego hay que reconocer como pérdidas.",
+    "dilution": "El número de acciones crece o la remuneración en acciones es alta: tu parte de la empresa se "
+                "reduce año a año.",
+    "executives_selling": "Directivos vendiendo en mercado una parte grande de sus acciones (sin plan 10b5-1 "
+                          "programado) en los últimos 6 meses. Si quienes mejor la conocen salen, pregúntate por qué.",
+    "no_skin_in_the_game": "Los directivos apenas tienen acciones: cobran sueldo y bonus sin arriesgar su "
+                           "patrimonio con el accionista. En empresas con varias clases de acciones el dato de "
+                           "Yahoo puede no contar la clase del fundador; revísalo.",
+    "blames_external_factors": "Si en las presentaciones de resultados la directiva culpa siempre al entorno "
+                               "(divisas, clima, macro) en vez de explicar sus decisiones. Se revisa leyendo las "
+                               "conference calls.",
+    "adjusted_ebitda": "Las empresas que destacan un EBITDA «ajustado» pueden excluir costes recurrentes para "
+                       "mejorar la imagen. GABI usa cifras GAAP; compara con lo que presenta la empresa.",
+    "market_share_loss": "Un negocio con supuesta ventaja competitiva que pierde cuota frente a rivales: el foso "
+                         "quizá no es tan ancho. Se revisa con datos del sector.",
+    "capex_spike": "La inversión (CAPEX) sobre ventas se dispara sin que la caja operativa mejore después: "
+                   "inversión que no está dando retorno.",
+}
 FINANCIAL_NOT_APPLICABLE = frozenset({
     "cfo_cagr", "gross_margin", "gross_margin_change", "roic", "net_debt", "net_debt_to_ebitda",
     "interest_coverage", "cash_conversion", "cfo_margin", "fcf", "capex_to_revenue", "enterprise_value",
@@ -173,12 +271,13 @@ def threshold_catalog() -> list[dict]:
     """Every editable threshold with its default, bounds and unit."""
     rows = [{"key": rule.key, "label": rule.label, "block": rule.block, "unit": rule.unit,
              "comparison": rule.comparison, "default": rule.default, "minimum": rule.bounds[0],
-             "maximum": rule.bounds[1], "reference": rule.reference}
+             "maximum": rule.bounds[1], "reference": rule.reference, "explanation": EXPLANATIONS[rule.key]}
             for rule in RULES if rule.default is not None and rule.bounds is not None]
     units = {"dcf_years": "count"}
     rows += [{"key": key, "label": DCF_LABELS[key], "block": "DCF inverso", "unit": units.get(key, "fraction"),
               "comparison": "parameter", "default": value, "minimum": DCF_BOUNDS[key][0],
-              "maximum": DCF_BOUNDS[key][1], "reference": "Javier DV"} for key, value in DCF_DEFAULTS.items()]
+              "maximum": DCF_BOUNDS[key][1], "reference": "Javier DV", "explanation": EXPLANATIONS[key]}
+             for key, value in DCF_DEFAULTS.items()]
     return rows
 
 
@@ -607,7 +706,8 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
             "key": rule.key, "block": rule.block, "label": rule.label, "formula": rule.formula, "unit": rule.unit,
             "comparison": rule.comparison, "value": value, "threshold": threshold,
             "default_threshold": rule.default, "edited": rule.key in edited, "verdict": verdict, "reason": reason,
-            "source": rule.source, "reference": rule.reference, "detail": details.get(rule.key, {}),
+            "source": rule.source, "reference": rule.reference, "explanation": EXPLANATIONS[rule.key],
+            "detail": details.get(rule.key, {}),
         })
 
     alarms = _alarms(data, values, market, thresholds, insider_rows, today, financial, fcf)
@@ -630,7 +730,8 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
 
 
 def _alarm(key: str, label: str, check: str, status: str, reason: str | None = None, **detail) -> dict:
-    return {"key": key, "label": label, "check": check, "status": status, "reason": reason, "detail": detail}
+    return {"key": key, "label": label, "check": check, "explanation": ALARM_EXPLANATIONS[key], "status": status,
+            "reason": reason, "detail": detail}
 
 
 def _alarms(data: _Facts, values: dict, market: MarketInputs, thresholds: dict, insider_rows: list[dict],

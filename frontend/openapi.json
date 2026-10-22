@@ -2328,6 +2328,10 @@
             "title": "Detail",
             "type": "object"
           },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
           "key": {
             "title": "Key",
             "type": "string"
@@ -2364,6 +2368,7 @@
           "key",
           "label",
           "check",
+          "explanation",
           "status",
           "reason",
           "detail"
@@ -2400,6 +2405,10 @@
           "edited": {
             "title": "Edited",
             "type": "boolean"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
           },
           "formula": {
             "title": "Formula",
@@ -2491,6 +2500,7 @@
           "reason",
           "source",
           "reference",
+          "explanation",
           "detail"
         ],
         "title": "ChecklistCriterion",
@@ -3019,6 +3029,10 @@
             ],
             "title": "Default"
           },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
           "key": {
             "title": "Key",
             "type": "string"
@@ -3059,7 +3073,8 @@
           "default",
           "minimum",
           "maximum",
-          "reference"
+          "reference",
+          "explanation"
         ],
         "title": "ChecklistThreshold",
         "type": "object"

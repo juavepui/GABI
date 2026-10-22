@@ -265,6 +265,19 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   await expect(page.getByText('Checklist fundamental')).toBeVisible();
   await expect(page.getByText('Criterios cumplidos')).toBeVisible();
   await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
+  // Each metric explains itself on hover and on keyboard focus; Escape closes it.
+  const peLabel = checklist
+    .getByRole('row', { name: /^PER(?! forward)/ })
+    .getByRole('button', { name: 'PER', exact: true });
+  await peLabel.hover();
+  await expect(page.getByRole('tooltip')).toContainText('Cuántos años de beneficio');
+  await expect(page.getByRole('tooltip')).toContainText('Fórmula: Capitalización / beneficio neto');
+  await page.mouse.move(0, 0);
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+  await peLabel.focus();
+  await expect(page.getByRole('tooltip')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
   await page.getByText('Señales de alarma').click();
   await expect(page.getByRole('list', { name: 'Señales de alarma' })).toContainText(
     'Revisión manual',
@@ -277,6 +290,7 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
     'Histórico insuficiente',
   );
   await expect(page.getByText('Sector: Information Technology')).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByText('Editar umbrales').click();
   await page.getByLabel('Umbral: PER', { exact: true }).fill('25');
   await page.getByRole('button', { name: 'Guardar umbrales' }).click();

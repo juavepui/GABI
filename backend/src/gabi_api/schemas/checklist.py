@@ -24,6 +24,7 @@ class ChecklistCriterion(BaseModel):
     reason: str | None
     source: str
     reference: str
+    explanation: str
     detail: dict[str, Any]
 
 
@@ -31,6 +32,7 @@ class ChecklistAlarm(BaseModel):
     key: str
     label: str
     check: str
+    explanation: str
     status: AlarmStatus
     reason: str | None
     detail: dict[str, Any]
@@ -137,6 +139,7 @@ class ChecklistThreshold(BaseModel):
     minimum: float
     maximum: float
     reference: str
+    explanation: str
 
 
 class ChecklistThresholds(BaseModel):
