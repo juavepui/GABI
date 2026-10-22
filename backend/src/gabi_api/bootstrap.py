@@ -20,6 +20,7 @@ from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
+from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.glossary import metric_glossary, technical_terms
@@ -66,6 +67,8 @@ from gabi.infrastructure.serialization.decisions import build_decisions
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.blind_plans import FileBlindPlans
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
@@ -81,6 +84,7 @@ from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedArtifacts, FilePublishedLedger
 from gabi.infrastructure.storage.saved_audits import FileSavedAudits
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
 from gabi.infrastructure.storage.smallmid import SmallmidFiles
@@ -181,6 +185,11 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         SqliteCompanyResearch(settings.data_dir), repository.company_events,
         lambda symbol: signals.compare_filings(symbol, *signals.repository.filing_facts(symbol)),
         LegacyCompanyMath(), today)
+    app.state.company_checklist = CompanyChecklist(
+        SqliteSecReads(settings.data_dir / "gabi.db"), SqliteCacheReads(settings.data_dir / "gabi.db"),
+        SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,
+        lambda: [(row.symbol, row.sector) for row in repository.universe(
+            repository.small_file("sp500_constituents.csv")).itertuples(index=False)])
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)

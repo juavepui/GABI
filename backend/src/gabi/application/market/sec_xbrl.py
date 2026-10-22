@@ -6,6 +6,7 @@ from typing import Protocol
 
 import pandas as pd
 
+from gabi.domain.market.checklist import CHECKLIST_TAGS, DILUTED_SHARES_TAGS
 from gabi.domain.market.observations import change_status, delta_rows
 from gabi.domain.market.sec_facts import (
     SHARES_TAGS,
@@ -15,6 +16,13 @@ from gabi.domain.market.sec_facts import (
     extract_latest_filings,
 )
 from gabi.domain.market.sec_xbrl import FIELDS, KEYS, facts_due, normalize_cik
+
+# Stored USD tags: the metric tags plus the checklist-only ones (#167). Metrics
+# keep reading TRACKED_TAGS; the extra rows only feed the checklist.
+FACT_TAGS = list(dict.fromkeys(TRACKED_TAGS + list(CHECKLIST_TAGS)))
+# Share-unit tags: outstanding shares plus the 10-K diluted average, the checklist's
+# fallback for issuers that only report shares per class.
+SHARE_FACT_TAGS = list(dict.fromkeys(SHARES_TAGS + DILUTED_SHARES_TAGS))
 
 
 class XbrlStore(Protocol):
@@ -40,8 +48,12 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
         recent = filings.get("filings", {}).get("recent", {})
         filing_hash = fingerprint(recent)
         has_facts, cached = store.has_facts(entity), store.metrics(symbol)
+        # A stored history extracted with another tag set is reprocessed once,
+        # even if companyfacts is unchanged, so new tags reach existing issuers.
+        tags_version = fingerprint(FACT_TAGS + SHARE_FACT_TAGS)
+        tags_stale = cp.get("fact_tags") != tags_version
         need_facts = (facts_due(cp, recent, has_facts, cached, now(), full_refresh)
-                      or cp.get("filings_hash") != filing_hash)
+                      or cp.get("filings_hash") != filing_hash or tags_stale)
         state = {"filings_hash": filing_hash}
         links = extract_latest_filings(filings)
         if not need_facts:
@@ -53,12 +65,12 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
         attempt.payload(facts)
         facts_hash = fingerprint(facts)
         state.update(facts_hash=facts_hash, facts_audited_at=now().isoformat())
-        if facts_hash == cp.get("facts_hash") and has_facts and cached and not full_refresh:
+        if facts_hash == cp.get("facts_hash") and has_facts and cached and not full_refresh and not tags_stale:
             store.save(symbol, cik, [], {**cached, **links})
             return attempt.finish("unchanged", state=state,
                                   reason="companyfacts idéntico; no se reprocesa el histórico")
-        raw = _extract_raw_facts(facts, TRACKED_TAGS, unit="USD")
-        raw += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
+        raw = _extract_raw_facts(facts, FACT_TAGS, unit="USD")
+        raw += _extract_raw_facts(facts, SHARE_FACT_TAGS, unit="shares")
         if not raw and not has_facts:
             # New issuer before its first XBRL filing: absent coverage, not a source failure.
             return attempt.finish("unchanged", state=state,
@@ -73,6 +85,7 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
                 for r in changed.reset_index().to_dict("records")]
         metrics = {**compute_edgar_metrics(facts, fiscal_alignment=fiscal_alignment), **links}
         store.save(symbol, cik, rows, metrics)
+        state["fact_tags"] = tags_version
         filed = incoming.filed_date.dropna()
         state["watermark"] = max(cp.get("watermark", ""), str(filed.max()) if len(filed) else "")
         return attempt.finish(change_status(new, revised), state=state, new=new, revised=revised,
@@ -92,8 +105,8 @@ def fetch_complete(cik: str, *, companyfacts: Callable[[str], dict], submissions
                    compute: Callable[[dict], dict]) -> tuple[dict, list[dict]]:
     facts = companyfacts(cik)
     validate_issuer(facts, cik)
-    rows = _extract_raw_facts(facts, TRACKED_TAGS, unit="USD")
-    rows += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
+    rows = _extract_raw_facts(facts, FACT_TAGS, unit="USD")
+    rows += _extract_raw_facts(facts, SHARE_FACT_TAGS, unit="shares")
     metrics = compute(facts)
     try:
         filings = submissions(cik)

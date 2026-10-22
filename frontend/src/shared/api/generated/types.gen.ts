@@ -1189,6 +1189,506 @@ export type CapitalAllocation = {
 };
 
 /**
+ * ChecklistAlarm
+ */
+export type ChecklistAlarm = {
+    /**
+     * Caveat
+     */
+    caveat: 'share_classes' | null;
+    /**
+     * Check
+     */
+    check: string;
+    /**
+     * Detail
+     */
+    detail: {
+        [key: string]: unknown;
+    };
+    /**
+     * Explanation
+     */
+    explanation: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Status
+     */
+    status: 'active' | 'clear' | 'missing' | 'not_applicable' | 'manual' | 'info';
+};
+
+/**
+ * ChecklistCriterion
+ */
+export type ChecklistCriterion = {
+    /**
+     * Block
+     */
+    block: string;
+    /**
+     * Caveat
+     */
+    caveat: 'share_classes' | null;
+    /**
+     * Comparison
+     */
+    comparison: string;
+    /**
+     * Default Threshold
+     */
+    default_threshold: number | null;
+    /**
+     * Detail
+     */
+    detail: {
+        [key: string]: unknown;
+    };
+    /**
+     * Edited
+     */
+    edited: boolean;
+    /**
+     * Explanation
+     */
+    explanation: string;
+    /**
+     * Formula
+     */
+    formula: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Reference
+     */
+    reference: string;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Threshold
+     */
+    threshold: number | null;
+    /**
+     * Unit
+     */
+    unit: 'fraction' | 'ratio' | 'USD' | 'count';
+    /**
+     * Value
+     */
+    value: number | null;
+    /**
+     * Verdict
+     */
+    verdict: 'pass' | 'fail' | 'missing' | 'not_applicable' | 'info';
+};
+
+/**
+ * ChecklistDcf
+ */
+export type ChecklistDcf = {
+    /**
+     * Dcf Discount Rate
+     */
+    dcf_discount_rate: number;
+    /**
+     * Dcf Max Implied Growth
+     */
+    dcf_max_implied_growth: number;
+    /**
+     * Dcf Terminal Growth
+     */
+    dcf_terminal_growth: number;
+    /**
+     * Dcf Years
+     */
+    dcf_years: number;
+    /**
+     * Edited
+     */
+    edited: Array<string>;
+    /**
+     * Fcf
+     */
+    fcf: number | null;
+    /**
+     * Historical Cfo Cagr
+     */
+    historical_cfo_cagr: number | null;
+    /**
+     * Implied Growth
+     */
+    implied_growth: number | null;
+    /**
+     * Price
+     */
+    price: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Shares
+     */
+    shares: number | null;
+    /**
+     * Value Per Share At History
+     */
+    value_per_share_at_history: number | null;
+    /**
+     * Verdict
+     */
+    verdict: 'reasonable' | 'demanding' | 'discard' | 'missing' | 'not_applicable';
+};
+
+/**
+ * ChecklistMedian
+ */
+export type ChecklistMedian = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+};
+
+/**
+ * ChecklistMultiplesHistory
+ */
+export type ChecklistMultiplesHistory = {
+    /**
+     * By Year
+     */
+    by_year: Array<ChecklistMultiplesYear>;
+    /**
+     * Median
+     */
+    median: {
+        [key: string]: ChecklistMedian;
+    };
+    /**
+     * Years
+     */
+    years: number;
+};
+
+/**
+ * ChecklistMultiplesYear
+ */
+export type ChecklistMultiplesYear = {
+    /**
+     * Ev Ebit
+     */
+    ev_ebit: number | null;
+    /**
+     * Ev Ebitda
+     */
+    ev_ebitda: number | null;
+    /**
+     * Ev Fcf
+     */
+    ev_fcf: number | null;
+    /**
+     * Fiscal Year End
+     */
+    fiscal_year_end: string;
+    /**
+     * Market Cap
+     */
+    market_cap: number | null;
+    /**
+     * Pe
+     */
+    pe: number | null;
+    /**
+     * Price
+     */
+    price: number | null;
+    /**
+     * Shares Date
+     */
+    shares_date: string | null;
+};
+
+/**
+ * ChecklistQualitative
+ */
+export type ChecklistQualitative = {
+    /**
+     * Hint
+     */
+    hint: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+};
+
+/**
+ * ChecklistSectorMultiples
+ */
+export type ChecklistSectorMultiples = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Cached
+     */
+    cached: boolean;
+    /**
+     * Medians
+     */
+    medians: {
+        [key: string]: ChecklistMedian;
+    };
+    /**
+     * Peers
+     */
+    peers: number;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * ChecklistSources
+ */
+export type ChecklistSources = {
+    /**
+     * Price Date
+     */
+    price_date: string | null;
+    /**
+     * Sec Last Filed
+     */
+    sec_last_filed: string | null;
+    /**
+     * Shares Date
+     */
+    shares_date: string | null;
+    /**
+     * Shares Source
+     */
+    shares_source: 'sec_outstanding' | 'sec_diluted_average' | 'yahoo_market_cap' | 'yahoo_no_sec_shares' | null;
+    /**
+     * Yahoo Fetched At
+     */
+    yahoo_fetched_at: string | null;
+};
+
+/**
+ * ChecklistSummary
+ */
+export type ChecklistSummary = {
+    /**
+     * Alarms Active
+     */
+    alarms_active: number;
+    /**
+     * Alarms Evaluated
+     */
+    alarms_evaluated: number;
+    /**
+     * Evaluated
+     */
+    evaluated: number;
+    /**
+     * Failed
+     */
+    failed: number;
+    /**
+     * Missing
+     */
+    missing: number;
+    /**
+     * Passed
+     */
+    passed: number;
+    /**
+     * Score
+     */
+    score: number | null;
+};
+
+/**
+ * ChecklistThreshold
+ */
+export type ChecklistThreshold = {
+    /**
+     * Block
+     */
+    block: string;
+    /**
+     * Comparison
+     */
+    comparison: string;
+    /**
+     * Default
+     */
+    default: number | null;
+    /**
+     * Explanation
+     */
+    explanation: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Maximum
+     */
+    maximum: number;
+    /**
+     * Minimum
+     */
+    minimum: number;
+    /**
+     * Reference
+     */
+    reference: string;
+    /**
+     * Unit
+     */
+    unit: 'fraction' | 'ratio' | 'USD' | 'count';
+};
+
+/**
+ * ChecklistThresholds
+ */
+export type ChecklistThresholds = {
+    /**
+     * Catalog
+     */
+    catalog: Array<ChecklistThreshold>;
+    /**
+     * Edited
+     */
+    edited: Array<string>;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number;
+    };
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Warning
+     */
+    warning: string | null;
+};
+
+/**
+ * ChecklistThresholdsRequest
+ */
+export type ChecklistThresholdsRequest = {
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number;
+    };
+};
+
+/**
+ * CompanyChecklistResponse
+ */
+export type CompanyChecklistResponse = {
+    /**
+     * Alarms
+     */
+    alarms: Array<ChecklistAlarm>;
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Criteria
+     */
+    criteria: Array<ChecklistCriterion>;
+    dcf: ChecklistDcf;
+    /**
+     * Financial Sector
+     */
+    financial_sector: boolean;
+    /**
+     * Fiscal Year End
+     */
+    fiscal_year_end: string | null;
+    multiples_history: ChecklistMultiplesHistory;
+    /**
+     * Qualitative
+     */
+    qualitative: Array<ChecklistQualitative>;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    sources: ChecklistSources;
+    summary: ChecklistSummary;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Thresholds Version
+     */
+    thresholds_version: number;
+    /**
+     * Thresholds Warning
+     */
+    thresholds_warning: string | null;
+};
+
+/**
  * CompanyEvent
  */
 export type CompanyEvent = {
@@ -7407,6 +7907,141 @@ export type SaveWeightsApiV1AdministrationWeightsPostResponses = {
 
 export type SaveWeightsApiV1AdministrationWeightsPostResponse = SaveWeightsApiV1AdministrationWeightsPostResponses[keyof SaveWeightsApiV1AdministrationWeightsPostResponses];
 
+export type ChecklistThresholdsApiV1ChecklistThresholdsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/checklist/thresholds';
+};
+
+export type ChecklistThresholdsApiV1ChecklistThresholdsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ChecklistThresholdsApiV1ChecklistThresholdsGetError = ChecklistThresholdsApiV1ChecklistThresholdsGetErrors[keyof ChecklistThresholdsApiV1ChecklistThresholdsGetErrors];
+
+export type ChecklistThresholdsApiV1ChecklistThresholdsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChecklistThresholds;
+};
+
+export type ChecklistThresholdsApiV1ChecklistThresholdsGetResponse = ChecklistThresholdsApiV1ChecklistThresholdsGetResponses[keyof ChecklistThresholdsApiV1ChecklistThresholdsGetResponses];
+
+export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostData = {
+    body: ChecklistThresholdsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/checklist/thresholds';
+};
+
+export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostError = SaveChecklistThresholdsApiV1ChecklistThresholdsPostErrors[keyof SaveChecklistThresholdsApiV1ChecklistThresholdsPostErrors];
+
+export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChecklistThresholds;
+};
+
+export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponse = SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponses[keyof SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponses];
+
+export type ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/checklist/thresholds/reset';
+};
+
+export type ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostError = ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostErrors[keyof ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostErrors];
+
+export type ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChecklistThresholds;
+};
+
+export type ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostResponse = ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostResponses[keyof ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostResponses];
+
 export type CompanyApiV1CompaniesSymbolGetData = {
     body?: never;
     path: {
@@ -7511,6 +8146,106 @@ export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses 
 };
 
 export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponse = CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses[keyof CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses];
+
+export type CompanyChecklistApiV1CompaniesSymbolChecklistGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/checklist';
+};
+
+export type CompanyChecklistApiV1CompaniesSymbolChecklistGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyChecklistApiV1CompaniesSymbolChecklistGetError = CompanyChecklistApiV1CompaniesSymbolChecklistGetErrors[keyof CompanyChecklistApiV1CompaniesSymbolChecklistGetErrors];
+
+export type CompanyChecklistApiV1CompaniesSymbolChecklistGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyChecklistResponse;
+};
+
+export type CompanyChecklistApiV1CompaniesSymbolChecklistGetResponse = CompanyChecklistApiV1CompaniesSymbolChecklistGetResponses[keyof CompanyChecklistApiV1CompaniesSymbolChecklistGetResponses];
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/checklist/sector';
+};
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetError = CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetErrors[keyof CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetErrors];
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChecklistSectorMultiples;
+};
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponse = CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses[keyof CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses];
 
 export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetData = {
     body?: never;

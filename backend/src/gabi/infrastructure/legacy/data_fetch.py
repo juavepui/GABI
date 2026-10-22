@@ -28,6 +28,8 @@ from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measure
 
 RETRYABLE_CATEGORIES = set(RETRYABLE)
 RETRY_BACKOFF_SECONDS = 1.5
+# Yahoo info fields beyond the frozen config.INFO_KEYS; the checklist (#167) reads them.
+EXTRA_INFO_KEYS = ["heldPercentInsiders"]
 
 
 def _reads() -> SqliteCacheReads:
@@ -156,7 +158,7 @@ def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
 
 def _fetch_fundamentals_attempt(symbol: str):
     t = yahoo.ticker(normalize_symbol(symbol))
-    filtered_info = rules.fundamentals_info(t.info, config.INFO_KEYS)
+    filtered_info = rules.fundamentals_info(t.info, config.INFO_KEYS + EXTRA_INFO_KEYS)
     qi = getattr(t, "quarterly_income_stmt", None)
     if qi is None or qi.empty:
         qi = getattr(t, "quarterly_financials", pd.DataFrame())
