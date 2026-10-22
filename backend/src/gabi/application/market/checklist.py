@@ -17,8 +17,9 @@ from gabi.domain.market.sec_reads import companyfacts
 
 
 class FactsReader(Protocol):
-    def facts(self, symbol: str, *, entity_id: str | None = None, tags: list[str] | None = None,
-              as_of: str | None = None, unit: str | None = None) -> pd.DataFrame: ...
+    # Facts of the symbol's SEC entity, also those stored under an old ticker or a historical key.
+    def issuer_facts(self, symbol: str, *, tags: list[str] | None = None, as_of: str | None = None,
+                     unit: str | None = None) -> pd.DataFrame: ...
     def last_filed(self, symbols: list[str], as_of: str | None = None) -> dict[str, str]: ...
 
 
@@ -125,7 +126,7 @@ class CompanyChecklist:
         symbol = normalize_symbol(symbol)
         today = self.today()
         references = self._references(symbol)
-        frame = self.facts.facts(symbol, as_of=today.isoformat())
+        frame = self.facts.issuer_facts(symbol, as_of=today.isoformat())
         facts = companyfacts(frame, today.isoformat())
         latest = self.cache.latest_adjusted([symbol]).get(symbol)
         record = cached_data.fundamentals(self.cache, [symbol]).get(symbol) or {}
@@ -187,7 +188,7 @@ class CompanyChecklist:
             values = {}
             infos = cached_data.fundamentals_info(self.cache, members)
             for peer in members:
-                frame = self.facts.facts(peer, tags=checklist.MULTIPLE_TAGS, as_of=today.isoformat())
+                frame = self.facts.issuer_facts(peer, tags=checklist.MULTIPLE_TAGS, as_of=today.isoformat())
                 if not frame.empty:  # quarterly USD rows never reach annual multiples: skip rebuilding them
                     frame = frame[(frame["unit"] == "shares") | frame["form"].isin(checklist.ANNUAL_FORMS)]
                 facts = companyfacts(frame, today.isoformat())

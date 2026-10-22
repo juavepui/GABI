@@ -1,0 +1,2616 @@
+{
+  "as_of": "2026-10-22",
+  "issuers": 503,
+  "sectors": {
+    "Communication Services": 22,
+    "Consumer Discretionary": 47,
+    "Consumer Staples": 34,
+    "Energy": 21,
+    "Financials": 76,
+    "Health Care": 60,
+    "Industrials": 83,
+    "Information Technology": 75,
+    "Materials": 24,
+    "Real Estate": 30,
+    "Utilities": 31
+  },
+  "criteria": {
+    "revenue_cagr": {
+      "applicable": 503,
+      "evaluated": 473,
+      "share": 0.9403578528827038,
+      "reasons": {
+        "fewer_than_6_annual_revenue_values": 23,
+        "no_revenue": 7
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 19,
+          "share": 0.8636363636363636
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 47,
+          "share": 1.0
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 30,
+          "share": 0.8823529411764706
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 70,
+          "share": 0.9210526315789473
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 58,
+          "share": 0.9666666666666667
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 78,
+          "share": 0.9397590361445783
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 73,
+          "share": 0.9733333333333334
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 22,
+          "share": 0.9166666666666666
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 28,
+          "share": 0.9333333333333333
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 29,
+          "share": 0.9354838709677419
+        }
+      }
+    },
+    "revenue_growth_stability": {
+      "applicable": 503,
+      "evaluated": 473,
+      "share": 0.9403578528827038,
+      "reasons": {
+        "fewer_than_6_annual_revenue_values": 23,
+        "no_revenue": 7
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 19,
+          "share": 0.8636363636363636
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 47,
+          "share": 1.0
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 30,
+          "share": 0.8823529411764706
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 70,
+          "share": 0.9210526315789473
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 58,
+          "share": 0.9666666666666667
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 78,
+          "share": 0.9397590361445783
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 73,
+          "share": 0.9733333333333334
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 22,
+          "share": 0.9166666666666666
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 28,
+          "share": 0.9333333333333333
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 29,
+          "share": 0.9354838709677419
+        }
+      }
+    },
+    "cfo_cagr": {
+      "applicable": 432,
+      "evaluated": 389,
+      "share": 0.9004629629629629,
+      "reasons": {
+        "fewer_than_6_annual_ocf_values": 21,
+        "non_positive_start_or_end_value": 20,
+        "no_ocf": 2
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 17,
+          "share": 0.7727272727272727
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 40,
+          "share": 0.851063829787234
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 30,
+          "share": 0.9090909090909091
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 20,
+          "share": 0.9523809523809523
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 5,
+          "share": 0.8333333333333334
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 55,
+          "share": 0.9166666666666666
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 72,
+          "share": 0.8674698795180723
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 67,
+          "share": 0.8933333333333333
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 22,
+          "share": 0.9166666666666666
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 30,
+          "share": 1.0
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 31,
+          "share": 1.0
+        }
+      }
+    },
+    "net_income": {
+      "applicable": 503,
+      "evaluated": 457,
+      "share": 0.9085487077534792,
+      "reasons": {
+        "stale_net_income": 31,
+        "no_net_income": 15
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 20,
+          "share": 0.9090909090909091
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 45,
+          "share": 0.9574468085106383
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 31,
+          "share": 0.9117647058823529
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 71,
+          "share": 0.9342105263157895
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 57,
+          "share": 0.95
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 77,
+          "share": 0.927710843373494
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 72,
+          "share": 0.96
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 18,
+          "share": 0.75
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 24,
+          "share": 0.8
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 23,
+          "share": 0.7419354838709677
+        }
+      }
+    },
+    "gross_margin": {
+      "applicable": 432,
+      "evaluated": 292,
+      "share": 0.6759259259259259,
+      "reasons": {
+        "no_gross_profit": 137,
+        "no_revenue": 3
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 8,
+          "share": 0.36363636363636365
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 31,
+          "share": 0.6595744680851063
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 31,
+          "share": 0.9393939393939394
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 8,
+          "share": 0.38095238095238093
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 4,
+          "share": 0.6666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 51,
+          "share": 0.85
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 53,
+          "share": 0.6385542168674698
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 68,
+          "share": 0.9066666666666666
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 21,
+          "share": 0.875
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 12,
+          "share": 0.4
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 5,
+          "share": 0.16129032258064516
+        }
+      }
+    },
+    "net_margin": {
+      "applicable": 503,
+      "evaluated": 454,
+      "share": 0.9025844930417495,
+      "reasons": {
+        "stale_net_income": 31,
+        "no_net_income": 11,
+        "no_revenue": 7
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 20,
+          "share": 0.9090909090909091
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 45,
+          "share": 0.9574468085106383
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 31,
+          "share": 0.9117647058823529
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 18,
+          "share": 0.8571428571428571
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 69,
+          "share": 0.9078947368421053
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 57,
+          "share": 0.95
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 77,
+          "share": 0.927710843373494
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 72,
+          "share": 0.96
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 18,
+          "share": 0.75
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 24,
+          "share": 0.8
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 23,
+          "share": 0.7419354838709677
+        }
+      }
+    },
+    "gross_margin_change": {
+      "applicable": 432,
+      "evaluated": 274,
+      "share": 0.6342592592592593,
+      "reasons": {
+        "missing_component": 140,
+        "no_margin_5_years_before": 18
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 7,
+          "share": 0.3181818181818182
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 31,
+          "share": 0.6595744680851063
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 28,
+          "share": 0.8484848484848485
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 8,
+          "share": 0.38095238095238093
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 4,
+          "share": 0.6666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 49,
+          "share": 0.8166666666666667
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 48,
+          "share": 0.5783132530120482
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 66,
+          "share": 0.88
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 19,
+          "share": 0.7916666666666666
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 10,
+          "share": 0.3333333333333333
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 4,
+          "share": 0.12903225806451613
+        }
+      }
+    },
+    "net_margin_change": {
+      "applicable": 503,
+      "evaluated": 418,
+      "share": 0.831013916500994,
+      "reasons": {
+        "missing_component": 49,
+        "no_margin_5_years_before": 36
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 16,
+          "share": 0.7272727272727273
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 45,
+          "share": 0.9574468085106383
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 28,
+          "share": 0.8235294117647058
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 18,
+          "share": 0.8571428571428571
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 64,
+          "share": 0.8421052631578947
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 51,
+          "share": 0.85
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 70,
+          "share": 0.8433734939759037
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 70,
+          "share": 0.9333333333333333
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 14,
+          "share": 0.5833333333333334
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 22,
+          "share": 0.7333333333333333
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 20,
+          "share": 0.6451612903225806
+        }
+      }
+    },
+    "roic": {
+      "applicable": 432,
+      "evaluated": 183,
+      "share": 0.4236111111111111,
+      "reasons": {
+        "missing_component": 131,
+        "no_operating_income": 68,
+        "no_effective_tax_rate": 47,
+        "non_positive_invested_capital": 3
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 9,
+          "share": 0.4090909090909091
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 13,
+          "share": 0.2765957446808511
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 14,
+          "share": 0.42424242424242425
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 7,
+          "share": 0.3333333333333333
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 23,
+          "share": 0.38333333333333336
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 45,
+          "share": 0.5421686746987951
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 41,
+          "share": 0.5466666666666666
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 9,
+          "share": 0.375
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 8,
+          "share": 0.26666666666666666
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 13,
+          "share": 0.41935483870967744
+        }
+      }
+    },
+    "net_debt": {
+      "applicable": 432,
+      "evaluated": 264,
+      "share": 0.6111111111111112,
+      "reasons": {
+        "stale_lt_debt": 110,
+        "no_debt_reported": 44,
+        "stale_cash": 13,
+        "no_cash": 1
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 13,
+          "share": 0.5909090909090909
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 24,
+          "share": 0.5106382978723404
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 20,
+          "share": 0.6060606060606061
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 8,
+          "share": 0.38095238095238093
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 38,
+          "share": 0.6333333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 56,
+          "share": 0.6746987951807228
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 50,
+          "share": 0.6666666666666666
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 14,
+          "share": 0.5833333333333334
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 20,
+          "share": 0.6666666666666666
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 20,
+          "share": 0.6451612903225806
+        }
+      }
+    },
+    "net_debt_to_ebitda": {
+      "applicable": 432,
+      "evaluated": 191,
+      "share": 0.44212962962962965,
+      "reasons": {
+        "missing_component": 168,
+        "no_ebitda": 73
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 9,
+          "share": 0.4090909090909091
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 17,
+          "share": 0.3617021276595745
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 14,
+          "share": 0.42424242424242425
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 7,
+          "share": 0.3333333333333333
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 21,
+          "share": 0.35
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 47,
+          "share": 0.5662650602409639
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 34,
+          "share": 0.4533333333333333
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 11,
+          "share": 0.4583333333333333
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 13,
+          "share": 0.43333333333333335
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 17,
+          "share": 0.5483870967741935
+        }
+      }
+    },
+    "interest_coverage": {
+      "applicable": 432,
+      "evaluated": 280,
+      "share": 0.6481481481481481,
+      "reasons": {
+        "no_operating_income": 68,
+        "stale_interest": 53,
+        "no_interest": 31
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 13,
+          "share": 0.5909090909090909
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 30,
+          "share": 0.6382978723404256
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 21,
+          "share": 0.6363636363636364
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 10,
+          "share": 0.47619047619047616
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 5,
+          "share": 0.8333333333333334
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 41,
+          "share": 0.6833333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 49,
+          "share": 0.5903614457831325
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 58,
+          "share": 0.7733333333333333
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 13,
+          "share": 0.5416666666666666
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 15,
+          "share": 0.5
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 25,
+          "share": 0.8064516129032258
+        }
+      }
+    },
+    "cash_conversion": {
+      "applicable": 432,
+      "evaluated": 372,
+      "share": 0.8611111111111112,
+      "reasons": {
+        "non_positive_net_income": 58,
+        "no_ocf": 2
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 16,
+          "share": 0.7272727272727273
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 44,
+          "share": 0.9361702127659575
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 28,
+          "share": 0.8484848484848485
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 6,
+          "share": 1.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 53,
+          "share": 0.8833333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 76,
+          "share": 0.9156626506024096
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 69,
+          "share": 0.92
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 15,
+          "share": 0.625
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 23,
+          "share": 0.7666666666666667
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 23,
+          "share": 0.7419354838709677
+        }
+      }
+    },
+    "cfo_margin": {
+      "applicable": 432,
+      "evaluated": 429,
+      "share": 0.9930555555555556,
+      "reasons": {
+        "missing_component": 3
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 22,
+          "share": 1.0
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 47,
+          "share": 1.0
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 33,
+          "share": 1.0
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 6,
+          "share": 1.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 60,
+          "share": 1.0
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 82,
+          "share": 0.9879518072289156
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 75,
+          "share": 1.0
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 24,
+          "share": 1.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 30,
+          "share": 1.0
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 31,
+          "share": 1.0
+        }
+      }
+    },
+    "fcf": {
+      "applicable": 432,
+      "evaluated": 393,
+      "share": 0.9097222222222222,
+      "reasons": {
+        "stale_capex": 26,
+        "no_capex": 11,
+        "no_ocf": 2
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 19,
+          "share": 0.8636363636363636
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 45,
+          "share": 0.9574468085106383
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 32,
+          "share": 0.9696969696969697
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 16,
+          "share": 0.7619047619047619
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 6,
+          "share": 1.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 56,
+          "share": 0.9333333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 78,
+          "share": 0.9397590361445783
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 73,
+          "share": 0.9733333333333334
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 24,
+          "share": 1.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 20,
+          "share": 0.6666666666666666
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 24,
+          "share": 0.7741935483870968
+        }
+      }
+    },
+    "capex_to_revenue": {
+      "applicable": 432,
+      "evaluated": 392,
+      "share": 0.9074074074074074,
+      "reasons": {
+        "missing_component": 40
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 19,
+          "share": 0.8636363636363636
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 45,
+          "share": 0.9574468085106383
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 32,
+          "share": 0.9696969696969697
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 15,
+          "share": 0.7142857142857143
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 6,
+          "share": 1.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 56,
+          "share": 0.9333333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 78,
+          "share": 0.9397590361445783
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 73,
+          "share": 0.9733333333333334
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 24,
+          "share": 1.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 20,
+          "share": 0.6666666666666666
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 24,
+          "share": 0.7741935483870968
+        }
+      }
+    },
+    "shares_change": {
+      "applicable": 503,
+      "evaluated": 463,
+      "share": 0.9204771371769384,
+      "reasons": {
+        "no_shares_5_years_before": 27,
+        "share_basis_mismatch": 8,
+        "no_shares": 5
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 19,
+          "share": 0.8636363636363636
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 46,
+          "share": 0.9787234042553191
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 29,
+          "share": 0.8529411764705882
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 67,
+          "share": 0.881578947368421
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 57,
+          "share": 0.95
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 77,
+          "share": 0.927710843373494
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 68,
+          "share": 0.9066666666666666
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 22,
+          "share": 0.9166666666666666
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 29,
+          "share": 0.9666666666666667
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 30,
+          "share": 0.967741935483871
+        }
+      }
+    },
+    "sbc_to_net_income": {
+      "applicable": 503,
+      "evaluated": 411,
+      "share": 0.8170974155069582,
+      "reasons": {
+        "non_positive_net_income": 56,
+        "stale_sbc": 22,
+        "no_sbc": 14
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 15,
+          "share": 0.6818181818181818
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 44,
+          "share": 0.9361702127659575
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 26,
+          "share": 0.7647058823529411
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 15,
+          "share": 0.7142857142857143
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 62,
+          "share": 0.8157894736842105
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 53,
+          "share": 0.8833333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 73,
+          "share": 0.8795180722891566
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 68,
+          "share": 0.9066666666666666
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 15,
+          "share": 0.625
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 22,
+          "share": 0.7333333333333333
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 18,
+          "share": 0.5806451612903226
+        }
+      }
+    },
+    "market_cap": {
+      "applicable": 503,
+      "evaluated": 503,
+      "share": 1.0,
+      "reasons": {},
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 22,
+          "share": 1.0
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 47,
+          "share": 1.0
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 34,
+          "share": 1.0
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 21,
+          "share": 1.0
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 76,
+          "share": 1.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 60,
+          "share": 1.0
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 83,
+          "share": 1.0
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 75,
+          "share": 1.0
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 24,
+          "share": 1.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 30,
+          "share": 1.0
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 31,
+          "share": 1.0
+        }
+      }
+    },
+    "enterprise_value": {
+      "applicable": 432,
+      "evaluated": 264,
+      "share": 0.6111111111111112,
+      "reasons": {
+        "missing_component": 168
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 13,
+          "share": 0.5909090909090909
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 24,
+          "share": 0.5106382978723404
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 20,
+          "share": 0.6060606060606061
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 8,
+          "share": 0.38095238095238093
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 38,
+          "share": 0.6333333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 56,
+          "share": 0.6746987951807228
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 50,
+          "share": 0.6666666666666666
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 14,
+          "share": 0.5833333333333334
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 20,
+          "share": 0.6666666666666666
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 20,
+          "share": 0.6451612903225806
+        }
+      }
+    },
+    "pe": {
+      "applicable": 503,
+      "evaluated": 437,
+      "share": 0.8687872763419483,
+      "reasons": {
+        "non_positive_net_income": 66
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 16,
+          "share": 0.7272727272727273
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 44,
+          "share": 0.9361702127659575
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 28,
+          "share": 0.8235294117647058
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 71,
+          "share": 0.9342105263157895
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 53,
+          "share": 0.8833333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 76,
+          "share": 0.9156626506024096
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 69,
+          "share": 0.92
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 15,
+          "share": 0.625
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 23,
+          "share": 0.7666666666666667
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 23,
+          "share": 0.7419354838709677
+        }
+      }
+    },
+    "forward_pe": {
+      "applicable": 503,
+      "evaluated": 436,
+      "share": 0.8667992047713717,
+      "reasons": {
+        "non_positive_net_income": 64,
+        "no_forward_eps": 3
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 16,
+          "share": 0.7272727272727273
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 44,
+          "share": 0.9361702127659575
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 28,
+          "share": 0.8235294117647058
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 19,
+          "share": 0.9047619047619048
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 70,
+          "share": 0.9210526315789473
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 53,
+          "share": 0.8833333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 76,
+          "share": 0.9156626506024096
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 69,
+          "share": 0.92
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 15,
+          "share": 0.625
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 23,
+          "share": 0.7666666666666667
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 23,
+          "share": 0.7419354838709677
+        }
+      }
+    },
+    "ev_ebitda": {
+      "applicable": 432,
+      "evaluated": 191,
+      "share": 0.44212962962962965,
+      "reasons": {
+        "missing_component": 168,
+        "no_ebitda": 73
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 9,
+          "share": 0.4090909090909091
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 17,
+          "share": 0.3617021276595745
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 14,
+          "share": 0.42424242424242425
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 7,
+          "share": 0.3333333333333333
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 21,
+          "share": 0.35
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 47,
+          "share": 0.5662650602409639
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 34,
+          "share": 0.4533333333333333
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 11,
+          "share": 0.4583333333333333
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 13,
+          "share": 0.43333333333333335
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 17,
+          "share": 0.5483870967741935
+        }
+      }
+    },
+    "ev_ebit": {
+      "applicable": 432,
+      "evaluated": 214,
+      "share": 0.49537037037037035,
+      "reasons": {
+        "missing_component": 168,
+        "no_ebit": 50
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 10,
+          "share": 0.45454545454545453
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 19,
+          "share": 0.40425531914893614
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 16,
+          "share": 0.48484848484848486
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 7,
+          "share": 0.3333333333333333
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 25,
+          "share": 0.4166666666666667
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 51,
+          "share": 0.6144578313253012
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 44,
+          "share": 0.5866666666666667
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 9,
+          "share": 0.375
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 12,
+          "share": 0.4
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 20,
+          "share": 0.6451612903225806
+        }
+      }
+    },
+    "ev_fcf": {
+      "applicable": 432,
+      "evaluated": 221,
+      "share": 0.5115740740740741,
+      "reasons": {
+        "missing_component": 168,
+        "no_fcf": 43
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 11,
+          "share": 0.5
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 22,
+          "share": 0.46808510638297873
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 18,
+          "share": 0.5454545454545454
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 7,
+          "share": 0.3333333333333333
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 1,
+          "share": 0.16666666666666666
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 35,
+          "share": 0.5833333333333334
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 52,
+          "share": 0.6265060240963856
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 46,
+          "share": 0.6133333333333333
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 14,
+          "share": 0.5833333333333334
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 11,
+          "share": 0.36666666666666664
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 4,
+          "share": 0.12903225806451613
+        }
+      }
+    },
+    "fcf_yield": {
+      "applicable": 432,
+      "evaluated": 393,
+      "share": 0.9097222222222222,
+      "reasons": {
+        "no_fcf": 39
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 19,
+          "share": 0.8636363636363636
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 45,
+          "share": 0.9574468085106383
+        },
+        "Consumer Staples": {
+          "applicable": 33,
+          "evaluated": 32,
+          "share": 0.9696969696969697
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 16,
+          "share": 0.7619047619047619
+        },
+        "Financials": {
+          "applicable": 6,
+          "evaluated": 6,
+          "share": 1.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 56,
+          "share": 0.9333333333333333
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 78,
+          "share": 0.9397590361445783
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 73,
+          "share": 0.9733333333333334
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 24,
+          "share": 1.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 20,
+          "share": 0.6666666666666666
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 24,
+          "share": 0.7741935483870968
+        }
+      }
+    },
+    "insiders_pct": {
+      "applicable": 503,
+      "evaluated": 502,
+      "share": 0.9980119284294234,
+      "reasons": {
+        "not_captured": 1
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 22,
+          "share": 1.0
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 47,
+          "share": 1.0
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 34,
+          "share": 1.0
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 21,
+          "share": 1.0
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 75,
+          "share": 0.9868421052631579
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 60,
+          "share": 1.0
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 83,
+          "share": 1.0
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 75,
+          "share": 1.0
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 24,
+          "share": 1.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 30,
+          "share": 1.0
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 31,
+          "share": 1.0
+        }
+      }
+    },
+    "beta": {
+      "applicable": 503,
+      "evaluated": 0,
+      "share": 0.0,
+      "reasons": {
+        "no_beta": 503
+      },
+      "by_sector": {
+        "Communication Services": {
+          "applicable": 22,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Consumer Discretionary": {
+          "applicable": 47,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Consumer Staples": {
+          "applicable": 34,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Energy": {
+          "applicable": 21,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Financials": {
+          "applicable": 76,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Health Care": {
+          "applicable": 60,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Industrials": {
+          "applicable": 83,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Information Technology": {
+          "applicable": 75,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Materials": {
+          "applicable": 24,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Real Estate": {
+          "applicable": 30,
+          "evaluated": 0,
+          "share": 0.0
+        },
+        "Utilities": {
+          "applicable": 31,
+          "evaluated": 0,
+          "share": 0.0
+        }
+      }
+    }
+  },
+  "non_financial_issuers": 432,
+  "revenue_share": 0.9930555555555556,
+  "without_revenue": [
+    {
+      "symbol": "APA",
+      "sector": "Energy",
+      "fiscal_year_end": "2025-12-31"
+    },
+    {
+      "symbol": "XOM",
+      "sector": "Energy",
+      "fiscal_year_end": null
+    },
+    {
+      "symbol": "HONA",
+      "sector": "Industrials",
+      "fiscal_year_end": null
+    }
+  ],
+  "without_capex": [
+    {
+      "symbol": "ABNB",
+      "sector": "Consumer Discretionary",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "ARE",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "LNT",
+      "sector": "Utilities",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "APP",
+      "sector": "Communication Services",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "ADP",
+      "sector": "Industrials",
+      "fiscal_year_end": "2026-06-30",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "CPT",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "CI",
+      "sector": "Health Care",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "CMS",
+      "sector": "Utilities",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "COP",
+      "sector": "Energy",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "ED",
+      "sector": "Utilities",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "DLR",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "DLTR",
+      "sector": "Consumer Staples",
+      "fiscal_year_end": "2026-01-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "D",
+      "sector": "Utilities",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "DTE",
+      "sector": "Utilities",
+      "fiscal_year_end": "2017-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "DD",
+      "sector": "Industrials",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "ESS",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "FRT",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "GE",
+      "sector": "Industrials",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "INCY",
+      "sector": "Health Care",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "LLY",
+      "sector": "Health Care",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "NEE",
+      "sector": "Utilities",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "PSX",
+      "sector": "Energy",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "PLD",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "PSA",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "RL",
+      "sector": "Consumer Discretionary",
+      "fiscal_year_end": "2026-03-28",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "REG",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "ROP",
+      "sector": "Information Technology",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "TPL",
+      "sector": "Energy",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "TKO",
+      "sector": "Communication Services",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "no_capex"
+    },
+    {
+      "symbol": "TWLO",
+      "sector": "Information Technology",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "URI",
+      "sector": "Industrials",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "VLO",
+      "sector": "Energy",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "VEEV",
+      "sector": "Health Care",
+      "fiscal_year_end": "2026-01-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "VZ",
+      "sector": "Communication Services",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "VICI",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "VMRK",
+      "sector": "Real Estate",
+      "fiscal_year_end": "2019-12-31",
+      "reason": "stale_capex"
+    },
+    {
+      "symbol": "WEC",
+      "sector": "Utilities",
+      "fiscal_year_end": "2025-12-31",
+      "reason": "stale_capex"
+    }
+  ],
+  "evaluated_per_issuer": {
+    "MMM": 27,
+    "AOS": 27,
+    "ABT": 25,
+    "ABBV": 25,
+    "ACN": 20,
+    "ADBE": 20,
+    "AMD": 23,
+    "AES": 19,
+    "AFL": 10,
+    "A": 20,
+    "APD": 16,
+    "ABNB": 18,
+    "AKAM": 20,
+    "ALB": 20,
+    "ARE": 12,
+    "ALGN": 19,
+    "ALLE": 26,
+    "LNT": 22,
+    "ALL": 11,
+    "GOOGL": 25,
+    "GOOG": 25,
+    "MO": 26,
+    "AMZN": 27,
+    "AMCR": 20,
+    "AEE": 17,
+    "AEP": 16,
+    "AXP": 11,
+    "AIG": 11,
+    "AMT": 11,
+    "AWK": 18,
+    "AMP": 11,
+    "AME": 27,
+    "AMGN": 27,
+    "APH": 19,
+    "ADI": 25,
+    "AON": 11,
+    "APA": 12,
+    "APO": 10,
+    "AAPL": 26,
+    "AMAT": 27,
+    "APP": 23,
+    "APTV": 20,
+    "ACGL": 11,
+    "ADM": 18,
+    "ARES": 11,
+    "ANET": 19,
+    "AJG": 11,
+    "AIZ": 11,
+    "T": 18,
+    "ATO": 18,
+    "ADSK": 27,
+    "ADP": 18,
+    "AZO": 27,
+    "AVY": 19,
+    "AXON": 25,
+    "BKR": 16,
+    "BALL": 10,
+    "BAC": 11,
+    "BAX": 21,
+    "BDX": 27,
+    "BRK-B": 9,
+    "BBY": 20,
+    "TECH": 13,
+    "BIIB": 22,
+    "BLK": 7,
+    "BX": 10,
+    "XYZ": 20,
+    "BE": 15,
+    "BNY": 11,
+    "BA": 25,
+    "BKNG": 17,
+    "BSX": 13,
+    "BMY": 22,
+    "AVGO": 13,
+    "BR": 26,
+    "BRO": 11,
+    "BF-B": 27,
+    "BG": 15,
+    "BXP": 19,
+    "CHRW": 24,
+    "CDNS": 18,
+    "CPT": 18,
+    "COF": 11,
+    "CAH": 20,
+    "CCL": 25,
+    "CARR": 24,
+    "CVNA": 22,
+    "CASY": 20,
+    "CAT": 19,
+    "CBOE": 11,
+    "CBRE": 26,
+    "CDW": 26,
+    "COR": 26,
+    "CNC": 19,
+    "CNP": 25,
+    "CF": 20,
+    "CRL": 14,
+    "SCHW": 10,
+    "CHTR": 24,
+    "CVX": 18,
+    "CMG": 25,
+    "CB": 10,
+    "CHD": 27,
+    "CIEN": 25,
+    "CI": 16,
+    "CINF": 10,
+    "CTAS": 27,
+    "CSCO": 27,
+    "C": 10,
+    "CFG": 11,
+    "CLX": 22,
+    "CME": 11,
+    "CMS": 20,
+    "KO": 20,
+    "CTSH": 25,
+    "COHR": 21,
+    "COIN": 10,
+    "CL": 27,
+    "CMCSA": 18,
+    "FIX": 27,
+    "COP": 16,
+    "ED": 21,
+    "STZ": 26,
+    "CEG": 21,
+    "COO": 27,
+    "CPRT": 17,
+    "GLW": 20,
+    "CPAY": 18,
+    "CSGP": 26,
+    "COST": 27,
+    "CRH": 21,
+    "CRWD": 18,
+    "CCI": 25,
+    "CSX": 18,
+    "CMI": 13,
+    "CVS": 20,
+    "DHR": 25,
+    "DRI": 20,
+    "DDOG": 20,
+    "DVA": 18,
+    "DECK": 20,
+    "DE": 17,
+    "DELL": 20,
+    "DAL": 24,
+    "DVN": 20,
+    "DXCM": 20,
+    "FANG": 24,
+    "DLR": 14,
+    "DG": 19,
+    "DLTR": 21,
+    "D": 14,
+    "DPZ": 20,
+    "DASH": 17,
+    "DOV": 27,
+    "DOW": 12,
+    "DHI": 19,
+    "DTE": 20,
+    "DUK": 24,
+    "DD": 11,
+    "ETN": 18,
+    "EBAY": 20,
+    "ECHO": 11,
+    "ECL": 19,
+    "EIX": 24,
+    "EW": 26,
+    "ELV": 27,
+    "EME": 19,
+    "EMR": 22,
+    "ETR": 17,
+    "EOG": 25,
+    "EQT": 27,
+    "EFX": 25,
+    "EQIX": 20,
+    "ERIE": 9,
+    "ESS": 9,
+    "EL": 13,
+    "EG": 10,
+    "EVRG": 24,
+    "P": 19,
+    "ES": 16,
+    "EXC": 10,
+    "EXE": 25,
+    "EXPE": 25,
+    "EXPD": 17,
+    "EXR": 19,
+    "XOM": 2,
+    "FFIV": 19,
+    "FDS": 11,
+    "FICO": 27,
+    "FAST": 27,
+    "FRT": 20,
+    "FDX": 25,
+    "FDXF": 13,
+    "FERG": 20,
+    "FIS": 26,
+    "FITB": 11,
+    "FSLR": 26,
+    "FE": 17,
+    "FISV": 16,
+    "FLEX": 25,
+    "F": 13,
+    "FTNT": 26,
+    "FTV": 25,
+    "FOXA": 13,
+    "FOX": 13,
+    "BEN": 11,
+    "FCX": 19,
+    "GRMN": 19,
+    "IT": 27,
+    "GE": 16,
+    "GEHC": 18,
+    "GEV": 13,
+    "GEN": 26,
+    "GNRC": 27,
+    "GD": 24,
+    "GIS": 21,
+    "GM": 17,
+    "GPC": 21,
+    "GILD": 25,
+    "GPN": 20,
+    "GL": 11,
+    "GDDY": 24,
+    "GS": 7,
+    "HAL": 16,
+    "HIG": 11,
+    "HAS": 22,
+    "HCA": 20,
+    "DOC": 17,
+    "HSIC": 20,
+    "HSY": 20,
+    "HPE": 23,
+    "HLT": 18,
+    "HD": 20,
+    "HONA": 2,
+    "HON": 26,
+    "HRL": 27,
+    "HST": 25,
+    "HWM": 24,
+    "HPQ": 27,
+    "HUBB": 26,
+    "HUM": 25,
+    "HBAN": 11,
+    "HII": 18,
+    "IBM": 22,
+    "IEX": 24,
+    "IDXX": 27,
+    "ITW": 16,
+    "ILMN": 20,
+    "INCY": 17,
+    "IR": 20,
+    "PODD": 19,
+    "INTC": 19,
+    "IBKR": 4,
+    "ICE": 11,
+    "IFF": 18,
+    "IP": 15,
+    "INTU": 23,
+    "ISRG": 19,
+    "IVZ": 5,
+    "INVH": 20,
+    "IQV": 25,
+    "IRM": 17,
+    "JBHT": 25,
+    "JBL": 26,
+    "JKHY": 19,
+    "J": 27,
+    "JNJ": 22,
+    "JCI": 19,
+    "JPM": 11,
+    "KVUE": 14,
+    "KDP": 24,
+    "KEY": 11,
+    "KEYS": 24,
+    "KMB": 20,
+    "KIM": 25,
+    "KMI": 23,
+    "KKR": 11,
+    "KLAC": 19,
+    "KHC": 16,
+    "KR": 24,
+    "LHX": 25,
+    "LH": 20,
+    "LRCX": 27,
+    "LVS": 17,
+    "LDOS": 19,
+    "LEN": 19,
+    "LII": 20,
+    "LLY": 18,
+    "LIN": 25,
+    "LYV": 18,
+    "LMT": 27,
+    "L": 11,
+    "LOW": 26,
+    "LULU": 19,
+    "LITE": 20,
+    "LYB": 13,
+    "MTB": 8,
+    "MPC": 20,
+    "MAR": 18,
+    "MRSH": 11,
+    "MLM": 27,
+    "MRVL": 25,
+    "MAS": 27,
+    "MA": 5,
+    "MKC": 27,
+    "MCD": 24,
+    "MCK": 20,
+    "MDT": 20,
+    "MRK": 22,
+    "META": 27,
+    "MET": 11,
+    "MTD": 22,
+    "MGM": 24,
+    "MCHP": 27,
+    "MU": 20,
+    "MSFT": 25,
+    "MAA": 17,
+    "MRNA": 16,
+    "MDLZ": 20,
+    "MPWR": 19,
+    "MNST": 11,
+    "MCO": 11,
+    "MS": 11,
+    "MOS": 20,
+    "MSI": 27,
+    "MSCI": 11,
+    "NDAQ": 11,
+    "NTAP": 27,
+    "NFLX": 26,
+    "NEM": 20,
+    "NWSA": 17,
+    "NWS": 17,
+    "NEE": 19,
+    "NKE": 22,
+    "NI": 18,
+    "NDSN": 27,
+    "NSC": 18,
+    "NTRS": 11,
+    "NOC": 24,
+    "NCLH": 18,
+    "NRG": 18,
+    "NUE": 19,
+    "NVDA": 27,
+    "NVR": 17,
+    "NXPI": 27,
+    "ORLY": 27,
+    "OXY": 10,
+    "ODFL": 17,
+    "OMC": 23,
+    "ON": 27,
+    "OKE": 27,
+    "ORCL": 18,
+    "OTIS": 25,
+    "PCAR": 18,
+    "PKG": 26,
+    "PLTR": 18,
+    "PANW": 19,
+    "PH": 13,
+    "PAYX": 26,
+    "PYPL": 11,
+    "PNR": 23,
+    "PEP": 27,
+    "PFE": 22,
+    "PCG": 14,
+    "PM": 19,
+    "PSX": 16,
+    "PNW": 17,
+    "PNC": 5,
+    "PPG": 22,
+    "PPL": 21,
+    "PFG": 11,
+    "PG": 27,
+    "PGR": 11,
+    "PLD": 21,
+    "PRU": 11,
+    "PEG": 22,
+    "PTC": 27,
+    "PSA": 16,
+    "PHM": 19,
+    "PWR": 20,
+    "QCOM": 20,
+    "DGX": 26,
+    "Q": 10,
+    "RL": 23,
+    "RJF": 11,
+    "RDDT": 13,
+    "RTX": 16,
+    "O": 17,
+    "REG": 19,
+    "REGN": 25,
+    "RF": 10,
+    "RSG": 26,
+    "RMD": 19,
+    "RVTY": 25,
+    "HOOD": 11,
+    "ROK": 27,
+    "ROL": 25,
+    "ROP": 23,
+    "ROST": 26,
+    "RCL": 20,
+    "SPGI": 11,
+    "CRM": 27,
+    "SNDK": 21,
+    "SBAC": 26,
+    "SLB": 17,
+    "STX": 27,
+    "SRE": 16,
+    "NOW": 19,
+    "SHW": 22,
+    "SPG": 17,
+    "SKYD": 9,
+    "SWKS": 24,
+    "SJM": 19,
+    "SW": 21,
+    "SNA": 25,
+    "SOLV": 19,
+    "SO": 15,
+    "LUV": 18,
+    "SWK": 22,
+    "SBUX": 25,
+    "STT": 10,
+    "STLD": 26,
+    "STE": 27,
+    "SYK": 26,
+    "SMCI": 19,
+    "SYF": 6,
+    "SNPS": 27,
+    "SYY": 19,
+    "TMUS": 24,
+    "TROW": 11,
+    "TTWO": 21,
+    "TPR": 27,
+    "TRGP": 19,
+    "TGT": 20,
+    "TEL": 26,
+    "TDY": 26,
+    "TER": 20,
+    "TSLA": 20,
+    "TXN": 19,
+    "TPL": 15,
+    "TXT": 17,
+    "TMO": 17,
+    "TJX": 22,
+    "TKO": 16,
+    "TSCO": 27,
+    "TT": 25,
+    "TDG": 19,
+    "TRV": 11,
+    "TRMB": 27,
+    "TFC": 3,
+    "TWLO": 20,
+    "TYL": 20,
+    "TSN": 20,
+    "USB": 10,
+    "UBER": 23,
+    "UDR": 25,
+    "ULTA": 19,
+    "UNP": 23,
+    "UAL": 24,
+    "UPS": 18,
+    "URI": 22,
+    "UNH": 26,
+    "UHS": 25,
+    "VLO": 23,
+    "VEEV": 15,
+    "VTR": 12,
+    "VLTO": 21,
+    "VRSN": 13,
+    "VRSK": 27,
+    "VZ": 14,
+    "VRTX": 19,
+    "VRT": 27,
+    "VTRS": 18,
+    "VICI": 18,
+    "V": 10,
+    "VST": 25,
+    "VMRK": 11,
+    "VMC": 27,
+    "VYLR": 2,
+    "WRB": 11,
+    "GWW": 27,
+    "WAB": 27,
+    "WMT": 27,
+    "DIS": 23,
+    "WM": 19,
+    "WAT": 24,
+    "WEC": 15,
+    "WFC": 8,
+    "WELL": 12,
+    "WST": 27,
+    "WDC": 27,
+    "WY": 26,
+    "WSM": 19,
+    "WMB": 18,
+    "WTW": 11,
+    "WDAY": 23,
+    "WYNN": 25,
+    "XEL": 19,
+    "XYL": 27,
+    "YUM": 20,
+    "ZBRA": 26,
+    "ZBH": 26,
+    "ZTS": 22
+  },
+  "simulation": "Hechos SEC guardados, salvo los emisores sin ingresos o CAPEX de before.json: para ellos, companyfacts descargado el 22-10-2026 y extraído con FACT_TAGS como hará la sincronización."
+}

@@ -44,6 +44,26 @@ Usar cualquiera de sus criterios como señal requiere un experimento preregistra
 - **Consultar no descarga ni escribe**: el GET solo lee. Editar umbrales es un
   POST explícito.
 
+## Cobertura (#170)
+
+- **Hechos por emisor**: el checklist lee los hechos de la entidad SEC del símbolo
+  (`SqliteSecReads.issuer_facts`), incluidos los guardados con un ticker anterior o con
+  la clave histórica `CIK…`. Leyendo solo por símbolo, algunos emisores (TWLO, SKYD…)
+  tenían medio historial.
+- **Series anuales**: `annual_series` toma como base la etiqueta candidata publicada más
+  recientemente. Así, un cambio de etiqueta no deja vacío el último ejercicio ni ancla el
+  checklist en un año antiguo. Las demás etiquetas solo completan años si los años comunes
+  coinciden en un 1 %.
+- **CAPEX**: `CHECKLIST_CAPEX_TAGS` añade el CAPEX total (`PaymentsToAcquireProductiveAssets`)
+  y las inversiones de petróleo y gas. No incluye partidas parciales ni compras de inmuebles
+  de las inmobiliarias.
+- **Composite sin cambios**: `sec.CAPEX_TAGS`, `sec.REVENUE_TAGS` y `_extract_annual_values`
+  no se tocan.
+- **Medición**: `python -m gabi_cli market checklist-coverage`, de solo lectura. Los
+  resultados antes y después están en [`checklist-coverage/`](checklist-coverage/README.md).
+- **Ficha**: el resumen muestra «Evaluables X / N», es decir, criterios con valor sobre los
+  que aplican a la empresa.
+
 ## Número de acciones
 
 La capitalización, el EV, los múltiplos, el DCF, la variación de acciones y la historia
