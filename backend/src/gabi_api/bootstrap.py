@@ -31,6 +31,7 @@ from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
 from gabi.application.market.snapshots import SnapshotTracking
 from gabi.application.portfolio.decisions import Decisions
+from gabi.application.portfolio.holdings import Holdings
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
 from gabi.application.portfolio.simulations import Simulations
@@ -74,6 +75,7 @@ from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
 from gabi.infrastructure.storage.experiments import SqliteExperiments
+from gabi.infrastructure.storage.holdings import SqliteHoldings
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.keys import configured_keys
@@ -91,6 +93,7 @@ from gabi.infrastructure.storage.smallmid import SmallmidFiles
 from gabi.infrastructure.storage.snapshot_prices import SqliteSnapshotPrices
 from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
+from gabi_api.routes.holdings import router as holdings_router
 from gabi_api.routes.jobs import router as jobs_router
 from gabi_api.routes.journal import router as journal_router
 from gabi_api.routes.macro import router as macro_router
@@ -138,7 +141,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         return {str(symbol): str(industry) for symbol, industry in zip(universe["symbol"], universe["industry"],
                                                                        strict=True) if isinstance(industry, str)}
 
-    portfolio = PortfolioQueries(repository, policy, today, industries)
+    holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteSimulations(settings.data_dir).prices,
+                        lambda: repository.ranking(dict(policy.frozen_weights), today()).table, today)
+    portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
     journal = Journal(SqliteJournal(settings.data_dir))
     macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata(),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
@@ -202,6 +207,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)
     app.state.simulations = simulations
+    app.state.holdings = holdings
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors
@@ -269,6 +275,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(macro_router)
     app.include_router(signals_router)
     app.include_router(simulations_router)
+    app.include_router(holdings_router)
     app.include_router(decisions_router)
     app.include_router(research_router)
     if frontend_dist is not None:

@@ -4,7 +4,9 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.goto('/cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
   await expect(page.getByText('Top-20 congelado')).toBeVisible();
-  await page.getByLabel('Posiciones actuales (SÍMBOLO,euros; una por línea)').fill('T000,100');
+  await page
+    .getByLabel('¿Y si…? Posiciones hipotéticas (SÍMBOLO,euros; una por línea)')
+    .fill('T000,100');
   await page.getByRole('button', { name: 'Calcular plan' }).click();
   await expect(page.getByRole('heading', { name: 'Dónde aportar capital nuevo' })).toBeVisible();
   // The test universe is almost all Information Technology: the descriptive warning must show.
@@ -177,4 +179,55 @@ test('el icono ⓘ explica un término y lleva al glosario de Aprender', async (
   );
   await expect(page.locator('#termino-percentile')).toContainText('Percentil sectorial');
   await expect(page.locator('#termino-psr')).toContainText('Probabilistic Sharpe Ratio');
+});
+
+test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', async ({
+  page,
+}) => {
+  await page.goto('/cartera/mi-cartera');
+  await expect(page.getByRole('heading', { name: 'Mi cartera', level: 1 })).toBeVisible();
+  const form = page.getByRole('region', { name: 'Registrar una compra' });
+  await form.getByLabel('Símbolo').fill('T000');
+  await form.getByLabel('Acciones').fill('10');
+  await form.getByLabel('Precio por acción').fill('100');
+  await form.getByLabel('Fecha de compra').fill('2026-06-01');
+  await form.getByLabel('Euros por unidad (opcional)').fill('0.9');
+  await form.getByRole('button', { name: 'Guardar compra' }).click();
+  const lots = page.getByRole('region', { name: 'Compras registradas' });
+  await expect(lots).toContainText('T000');
+  await page.reload(); // The lot survives a reload: it lives in the local database.
+  await expect(lots).toContainText('10 acciones');
+  // The test cache has no EUR rate: the position is shown in dollars and flagged, never filled in.
+  const prices = page.getByRole('region', { name: 'Precios de mi cartera' });
+  await expect(prices.getByRole('status')).toContainText('T000');
+  await expect(
+    prices.getByRole('button', { name: 'Actualizar precios de mi cartera' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Posiciones' }).getByText('Sin tipo de cambio en caché'),
+  ).toBeVisible();
+  await lots.getByRole('button', { name: 'Editar compra de T000' }).click();
+  await lots.getByLabel('Acciones').fill('12');
+  await lots.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(lots).toContainText('12 acciones');
+
+  await page.getByText('Importar CSV de un bróker').click();
+  await page
+    .getByLabel('Contenido del CSV')
+    .fill('symbol,shares,price,date\nT001,1,50,2026-07-01\nT002,-1,50,2026-07-01');
+  await page.getByRole('button', { name: 'Importar compras' }).click();
+  await expect(page.getByText(/línea 3/)).toBeVisible(); // One wrong row rejects the whole file.
+  await page.getByLabel('Contenido del CSV').fill('symbol,shares,price,date\nT001,1,50,2026-07-01');
+  await page.getByRole('button', { name: 'Importar compras' }).click();
+  await expect(page.getByText('Importadas 1 compras.')).toBeVisible();
+  await expect(lots).toContainText('T001');
+
+  await page.goto('/cartera');
+  await page.getByRole('button', { name: 'Calcular plan' }).click();
+  await expect(page.getByText('Calculado sobre Mi cartera')).toBeVisible();
+
+  await page.goto('/cartera/mi-cartera');
+  for (const symbol of ['T000', 'T001'])
+    await lots.getByRole('button', { name: 'Borrar compra de ' + symbol }).click();
+  await expect(page.getByRole('region', { name: 'Compras registradas' })).toHaveCount(0);
 });

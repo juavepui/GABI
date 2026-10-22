@@ -29,6 +29,11 @@ import type {
   SignalEventList,
   EarningsList,
   FilingCheckSaved,
+  Holding,
+  HoldingCreate,
+  HoldingDeleted,
+  HoldingImportResult,
+  HoldingsSummary,
   SimulationCreate,
   SimulationPortfolio,
   SimulationList,
@@ -634,6 +639,34 @@ export function undoSimulationTrade(id: number): Promise<UndoResult> {
 }
 export function getSimulationResult(id: number, signal?: AbortSignal): Promise<SimulationResult> {
   return get('/api/v1/portfolio/simulations/' + id + '/result', signal);
+}
+
+export function getHoldings(signal?: AbortSignal): Promise<HoldingsSummary> {
+  return get('/api/v1/portfolio/holdings', signal);
+}
+export function createHolding(body: HoldingCreate): Promise<Holding> {
+  return request('/api/v1/portfolio/holdings', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function updateHolding(id: number, body: HoldingCreate): Promise<Holding> {
+  return request('/api/v1/portfolio/holdings/' + id, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function deleteHolding(id: number): Promise<HoldingDeleted> {
+  return request('/api/v1/portfolio/holdings/' + id + '/delete', { method: 'POST' });
+}
+export function importHoldings(csv: string): Promise<HoldingImportResult> {
+  return request('/api/v1/portfolio/holdings/import', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csv }),
+  });
 }
 
 export function getDecisions(signal?: AbortSignal): Promise<DecisionList> {

@@ -16,4 +16,5 @@ def service(request: Request) -> PortfolioQueries:
 def plan(body: PlanRequest, queries: Annotated[PortfolioQueries, Depends(service)]) -> PlanResponse:
     return plan_response(queries.plan(body.n_positions, body.capital_eur, body.holdings_text, body.new_capital_eur,
                                       sector_limit_pct=body.sector_limit_percent,
-                                      industry_limit_pct=body.industry_limit_percent))
+                                      industry_limit_pct=body.industry_limit_percent,
+                                      use_saved_holdings=body.use_saved_holdings))

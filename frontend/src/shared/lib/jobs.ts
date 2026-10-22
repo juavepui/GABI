@@ -9,6 +9,7 @@ export const JOB_NAMES: Record<string, string> = {
   sim_result: 'Resultado de cartera simulada',
   sim_compare: 'Comparar carteras simuladas',
   sim_prices: 'Precios de cartera simulada',
+  holdings_prices: 'Precios de mi cartera',
   decision_plan: 'Generar decisiones de cartera',
   filing_check: 'Comprobar filings SEC',
   historical_ranking: 'Ranking histórico',

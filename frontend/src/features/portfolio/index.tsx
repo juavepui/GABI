@@ -10,7 +10,7 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { EvidenceTable } from '@/shared/ui/evidence-table';
 import { Folded } from '@/shared/ui/folded';
 import { SectionLinks } from '@/shared/ui/section-links';
-import { Compass, FlaskRound, GraduationCap, NotebookPen } from 'lucide-react';
+import { Compass, FlaskRound, GraduationCap, NotebookPen, Wallet } from 'lucide-react';
 import { formatMoney, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
@@ -20,6 +20,7 @@ export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
 export { DecisionsPage } from './decisions-page';
+export { HoldingsPage } from './holdings-page';
 
 const euro = (value: number) => formatMoney(value, { currency: 'EUR', digits: 2 });
 const decimal = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });
@@ -30,6 +31,7 @@ const initial: PlanRequest = {
   new_capital_eur: 1000,
   sector_limit_percent: 25,
   industry_limit_percent: 15,
+  use_saved_holdings: true,
 };
 
 function PlanEvidenceContent() {
@@ -76,6 +78,7 @@ export function PortfolioPage() {
       new_capital_eur: Number(form.get('new_capital_eur')),
       sector_limit_percent: Number(form.get('sector_limit_percent')),
       industry_limit_percent: Number(form.get('industry_limit_percent')),
+      use_saved_holdings: true,
     });
   }
   const data = plan.data;
@@ -103,6 +106,12 @@ export function PortfolioPage() {
         <SectionLinks
           label="Apartados de Cartera"
           links={[
+            {
+              to: '/cartera/mi-cartera',
+              label: 'Mi cartera',
+              description: 'Tus compras reales frente al objetivo y SPY',
+              icon: Wallet,
+            },
             {
               to: '/cartera/diario',
               label: 'Diario de inversión',
@@ -156,6 +165,9 @@ export function PortfolioPage() {
               defaultValue={1000}
               required
             />
+            <span className="mt-1 block text-xs font-normal text-muted-foreground">
+              Solo traduce los pesos objetivo a importes en la tabla.
+            </span>
           </label>
           <label className="text-sm font-medium">
             Capital nuevo (€)
@@ -169,6 +181,9 @@ export function PortfolioPage() {
               defaultValue={1000}
               required
             />
+            <span className="mt-1 block text-xs font-normal text-muted-foreground">
+              Dinero que vas a aportar ahora; se reparte en «Dónde aportar capital nuevo».
+            </span>
           </label>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -200,8 +215,15 @@ export function PortfolioPage() {
           </label>
         </div>
         <label className="mt-4 block text-sm font-medium" htmlFor="holdings">
-          Posiciones actuales (SÍMBOLO,euros; una por línea)
+          ¿Y si…? Posiciones hipotéticas (SÍMBOLO,euros; una por línea)
         </label>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Vacío: el plan de aportación parte de las compras guardadas en{' '}
+          <Link className="text-primary underline" to="/cartera/mi-cartera">
+            Mi cartera
+          </Link>
+          .
+        </p>
         <Textarea
           id="holdings"
           name="holdings_text"
@@ -310,6 +332,25 @@ export function PortfolioPage() {
           {data.target.length > 0 && <SectorBreakdown data={data} />}
           <section className="rounded-xl border bg-card p-5">
             <h2 className="text-xl font-semibold">Dónde aportar capital nuevo</h2>
+            <p className="mt-2 text-sm">
+              {data.holdings_source === 'saved' &&
+                'Calculado sobre Mi cartera, con su valor en euros en caché.'}
+              {data.holdings_source === 'text' &&
+                'Calculado sobre las posiciones hipotéticas escritas, no sobre Mi cartera.'}
+              {data.holdings_source === 'none' && (
+                <>
+                  Sin posiciones: se reparte como si empezaras de cero.{' '}
+                  <Link className="text-primary underline" to="/cartera/mi-cartera">
+                    Registra tus compras en Mi cartera
+                  </Link>
+                  .
+                </>
+              )}
+              {data.holdings_unvalued.length > 0 &&
+                ' Sin valorar (falta precio o tipo de cambio): ' +
+                  data.holdings_unvalued.join(', ') +
+                  '.'}
+            </p>
             <p className="mt-2 text-sm text-muted-foreground">
               Solo aproxima los pesos objetivo con aportaciones. No propone ventas ni considera
               impuestos o costes de ejecución.

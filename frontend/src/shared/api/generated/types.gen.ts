@@ -2172,7 +2172,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -4212,6 +4212,347 @@ export type HistoricalTableRow = {
 };
 
 /**
+ * Holding
+ */
+export type Holding = {
+    /**
+     * Commission
+     *
+     * En `currency`
+     */
+    commission?: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Currency
+     */
+    currency?: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Fx Rate
+     *
+     * Euros por unidad de `currency` que aplicó el bróker; vacío = caché
+     */
+    fx_rate?: number | null;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Price
+     *
+     * Precio por acción en `currency`
+     */
+    price: number;
+    /**
+     * Purchase Date
+     */
+    purchase_date: string;
+    /**
+     * Shares
+     */
+    shares: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * HoldingCreate
+ */
+export type HoldingCreate = {
+    /**
+     * Commission
+     *
+     * En `currency`
+     */
+    commission?: number;
+    /**
+     * Currency
+     */
+    currency?: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Fx Rate
+     *
+     * Euros por unidad de `currency` que aplicó el bróker; vacío = caché
+     */
+    fx_rate?: number | null;
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Price
+     *
+     * Precio por acción en `currency`
+     */
+    price: number;
+    /**
+     * Purchase Date
+     */
+    purchase_date: string;
+    /**
+     * Shares
+     */
+    shares: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * HoldingDeleted
+ */
+export type HoldingDeleted = {
+    /**
+     * Deleted
+     */
+    deleted: boolean;
+};
+
+/**
+ * HoldingDeviation
+ */
+export type HoldingDeviation = {
+    /**
+     * Deviation Pp
+     */
+    deviation_pp: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Target Pct
+     */
+    target_pct: number;
+    /**
+     * Weight Pct
+     */
+    weight_pct: number | null;
+};
+
+/**
+ * HoldingImport
+ */
+export type HoldingImport = {
+    /**
+     * Csv
+     */
+    csv: string;
+};
+
+/**
+ * HoldingImportResult
+ */
+export type HoldingImportResult = {
+    /**
+     * Ids
+     */
+    ids: Array<number>;
+    /**
+     * Imported
+     */
+    imported: number;
+};
+
+/**
+ * HoldingList
+ */
+export type HoldingList = {
+    /**
+     * Items
+     */
+    items: Array<Holding>;
+};
+
+/**
+ * HoldingPosition
+ */
+export type HoldingPosition = {
+    /**
+     * Average Price
+     */
+    average_price: number | null;
+    /**
+     * Cost
+     *
+     * Coste con comisiones, en `currency`
+     */
+    cost: number;
+    /**
+     * Cost Eur
+     */
+    cost_eur: number | null;
+    /**
+     * Currency
+     */
+    currency: 'USD' | 'EUR' | 'GBP';
+    /**
+     * First Purchase
+     */
+    first_purchase: string;
+    /**
+     * In Target
+     */
+    in_target: boolean;
+    /**
+     * Lots
+     */
+    lots: number;
+    /**
+     * Price
+     */
+    price: number | null;
+    /**
+     * Price Date
+     */
+    price_date: string | null;
+    /**
+     * Price Return
+     *
+     * Rentabilidad de precio en `currency`, sin dividendos
+     */
+    price_return: number | null;
+    /**
+     * Return Eur
+     */
+    return_eur: number | null;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Shares
+     */
+    shares: number;
+    /**
+     * Spy Return Eur
+     */
+    spy_return_eur: number | null;
+    /**
+     * Spy Return Usd
+     */
+    spy_return_usd: number | null;
+    /**
+     * Spy Value Eur
+     */
+    spy_value_eur: number | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'missing_price' | 'missing_fx';
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Value
+     */
+    value: number | null;
+    /**
+     * Value Eur
+     */
+    value_eur: number | null;
+    /**
+     * Weight Pct
+     */
+    weight_pct: number | null;
+};
+
+/**
+ * HoldingTotals
+ */
+export type HoldingTotals = {
+    /**
+     * Complete
+     */
+    complete: boolean;
+    /**
+     * Cost Eur
+     */
+    cost_eur: number | null;
+    /**
+     * Positions
+     */
+    positions: number;
+    /**
+     * Return Eur
+     */
+    return_eur: number | null;
+    /**
+     * Spy Return Eur
+     */
+    spy_return_eur: number | null;
+    /**
+     * Value Eur
+     */
+    value_eur: number | null;
+    /**
+     * Valued
+     */
+    valued: number;
+};
+
+/**
+ * HoldingsSummary
+ */
+export type HoldingsSummary = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Base Currency
+     */
+    base_currency: 'EUR';
+    /**
+     * Benchmark As Of
+     */
+    benchmark_as_of: string | null;
+    /**
+     * Deviations
+     */
+    deviations: Array<HoldingDeviation>;
+    /**
+     * Lots
+     */
+    lots: Array<Holding>;
+    /**
+     * Missing
+     */
+    missing: Array<string>;
+    /**
+     * Note
+     */
+    note?: string;
+    /**
+     * Positions
+     */
+    positions: Array<HoldingPosition>;
+    /**
+     * Price Symbols
+     */
+    price_symbols: Array<string>;
+    /**
+     * Sectors
+     */
+    sectors: Array<SectorWeight>;
+    totals: HoldingTotals | null;
+};
+
+/**
  * HomeLastUpdate
  */
 export type HomeLastUpdate = {
@@ -5506,6 +5847,12 @@ export type PlanRequest = {
      * Sector Limit Percent
      */
     sector_limit_percent?: number;
+    /**
+     * Use Saved Holdings
+     *
+     * Sin posiciones escritas, parte de Mi cartera
+     */
+    use_saved_holdings?: boolean;
 };
 
 /**
@@ -5529,6 +5876,14 @@ export type PlanResponse = {
      * Generated At
      */
     generated_at: string;
+    /**
+     * Holdings Source
+     */
+    holdings_source: 'saved' | 'text' | 'none';
+    /**
+     * Holdings Unvalued
+     */
+    holdings_unvalued: Array<string>;
     /**
      * Independent Advantage Demonstrated
      */
@@ -10161,6 +10516,286 @@ export type RenameApiV1PortfolioDecisionsPlanIdRenamePostResponses = {
 };
 
 export type RenameApiV1PortfolioDecisionsPlanIdRenamePostResponse = RenameApiV1PortfolioDecisionsPlanIdRenamePostResponses[keyof RenameApiV1PortfolioDecisionsPlanIdRenamePostResponses];
+
+export type SummaryApiV1PortfolioHoldingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/holdings';
+};
+
+export type SummaryApiV1PortfolioHoldingsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SummaryApiV1PortfolioHoldingsGetError = SummaryApiV1PortfolioHoldingsGetErrors[keyof SummaryApiV1PortfolioHoldingsGetErrors];
+
+export type SummaryApiV1PortfolioHoldingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HoldingsSummary;
+};
+
+export type SummaryApiV1PortfolioHoldingsGetResponse = SummaryApiV1PortfolioHoldingsGetResponses[keyof SummaryApiV1PortfolioHoldingsGetResponses];
+
+export type AddApiV1PortfolioHoldingsPostData = {
+    body: HoldingCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/holdings';
+};
+
+export type AddApiV1PortfolioHoldingsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type AddApiV1PortfolioHoldingsPostError = AddApiV1PortfolioHoldingsPostErrors[keyof AddApiV1PortfolioHoldingsPostErrors];
+
+export type AddApiV1PortfolioHoldingsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: Holding;
+};
+
+export type AddApiV1PortfolioHoldingsPostResponse = AddApiV1PortfolioHoldingsPostResponses[keyof AddApiV1PortfolioHoldingsPostResponses];
+
+export type ImportCsvApiV1PortfolioHoldingsImportPostData = {
+    body: HoldingImport;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/holdings/import';
+};
+
+export type ImportCsvApiV1PortfolioHoldingsImportPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ImportCsvApiV1PortfolioHoldingsImportPostError = ImportCsvApiV1PortfolioHoldingsImportPostErrors[keyof ImportCsvApiV1PortfolioHoldingsImportPostErrors];
+
+export type ImportCsvApiV1PortfolioHoldingsImportPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: HoldingImportResult;
+};
+
+export type ImportCsvApiV1PortfolioHoldingsImportPostResponse = ImportCsvApiV1PortfolioHoldingsImportPostResponses[keyof ImportCsvApiV1PortfolioHoldingsImportPostResponses];
+
+export type LotsApiV1PortfolioHoldingsLotsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/holdings/lots';
+};
+
+export type LotsApiV1PortfolioHoldingsLotsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type LotsApiV1PortfolioHoldingsLotsGetError = LotsApiV1PortfolioHoldingsLotsGetErrors[keyof LotsApiV1PortfolioHoldingsLotsGetErrors];
+
+export type LotsApiV1PortfolioHoldingsLotsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HoldingList;
+};
+
+export type LotsApiV1PortfolioHoldingsLotsGetResponse = LotsApiV1PortfolioHoldingsLotsGetResponses[keyof LotsApiV1PortfolioHoldingsLotsGetResponses];
+
+export type UpdateApiV1PortfolioHoldingsLotIdPostData = {
+    body: HoldingCreate;
+    path: {
+        /**
+         * Lot Id
+         */
+        lot_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/holdings/{lot_id}';
+};
+
+export type UpdateApiV1PortfolioHoldingsLotIdPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type UpdateApiV1PortfolioHoldingsLotIdPostError = UpdateApiV1PortfolioHoldingsLotIdPostErrors[keyof UpdateApiV1PortfolioHoldingsLotIdPostErrors];
+
+export type UpdateApiV1PortfolioHoldingsLotIdPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Holding;
+};
+
+export type UpdateApiV1PortfolioHoldingsLotIdPostResponse = UpdateApiV1PortfolioHoldingsLotIdPostResponses[keyof UpdateApiV1PortfolioHoldingsLotIdPostResponses];
+
+export type DeleteApiV1PortfolioHoldingsLotIdDeletePostData = {
+    body?: never;
+    path: {
+        /**
+         * Lot Id
+         */
+        lot_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/holdings/{lot_id}/delete';
+};
+
+export type DeleteApiV1PortfolioHoldingsLotIdDeletePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeleteApiV1PortfolioHoldingsLotIdDeletePostError = DeleteApiV1PortfolioHoldingsLotIdDeletePostErrors[keyof DeleteApiV1PortfolioHoldingsLotIdDeletePostErrors];
+
+export type DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: HoldingDeleted;
+};
+
+export type DeleteApiV1PortfolioHoldingsLotIdDeletePostResponse = DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses[keyof DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses];
 
 export type ListEntriesApiV1PortfolioJournalGetData = {
     body?: never;
