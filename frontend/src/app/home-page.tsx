@@ -221,6 +221,9 @@ function TargetCard({ home }: { home: HomeResponse }) {
                 {row.symbol}
               </Link>
               <span className="min-w-0 flex-1 truncate text-muted-foreground">{row.name}</span>
+              <span className="hidden w-40 shrink-0 truncate text-xs text-muted-foreground sm:inline">
+                {row.sector ?? 'Sin sector'}
+              </span>
               <span className="h-1.5 w-20 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                 <span
                   className="block h-full rounded-full bg-emerald-500"

@@ -15,6 +15,7 @@ import { formatMoney, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
 import { Term } from '@/shared/ui/term';
+import { SectorBreakdown } from './sector-breakdown';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
@@ -27,6 +28,8 @@ const initial: PlanRequest = {
   capital_eur: 1000,
   holdings_text: '',
   new_capital_eur: 1000,
+  sector_limit_percent: 25,
+  industry_limit_percent: 15,
 };
 
 function PlanEvidenceContent() {
@@ -71,6 +74,8 @@ export function PortfolioPage() {
       capital_eur: Number(form.get('capital_eur')),
       holdings_text: String(form.get('holdings_text') ?? ''),
       new_capital_eur: Number(form.get('new_capital_eur')),
+      sector_limit_percent: Number(form.get('sector_limit_percent')),
+      industry_limit_percent: Number(form.get('industry_limit_percent')),
     });
   }
   const data = plan.data;
@@ -166,6 +171,34 @@ export function PortfolioPage() {
             />
           </label>
         </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <label className="text-sm font-medium">
+            Aviso si un sector supera (%)
+            <Input
+              className="mt-1.5"
+              name="sector_limit_percent"
+              type="number"
+              min={1}
+              max={100}
+              step="1"
+              defaultValue={25}
+              required
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Aviso si una industria supera (%)
+            <Input
+              className="mt-1.5"
+              name="industry_limit_percent"
+              type="number"
+              min={1}
+              max={100}
+              step="1"
+              defaultValue={15}
+              required
+            />
+          </label>
+        </div>
         <label className="mt-4 block text-sm font-medium" htmlFor="holdings">
           Posiciones actuales (SÍMBOLO,euros; una por línea)
         </label>
@@ -209,6 +242,7 @@ export function PortfolioPage() {
                   <thead className="border-b text-xs text-muted-foreground">
                     <tr>
                       <th className="pb-3">Empresa</th>
+                      <th className="hidden pb-3 sm:table-cell">Sector</th>
                       <th className="hidden pb-3 sm:table-cell">Score</th>
                       <th className="hidden pb-3 sm:table-cell">
                         <Term k="score_coverage">Métricas disponibles</Term>
@@ -234,6 +268,8 @@ export function PortfolioPage() {
                               Más datos de {row.symbol}
                             </summary>
                             <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
+                              <dt>Sector</dt>
+                              <dd className="text-right">{row.sector ?? '—'}</dd>
                               <dt>Score</dt>
                               <dd className="text-right">{decimal(row.score_points)}</dd>
                               <dt>Métricas disponibles</dt>
@@ -246,6 +282,14 @@ export function PortfolioPage() {
                               <dd className="text-right">{decimal(row.price_usd, 2)}</dd>
                             </dl>
                           </details>
+                        </td>
+                        <td className="hidden sm:table-cell">
+                          {row.sector ?? '—'}
+                          {row.industry && (
+                            <span className="block text-xs text-muted-foreground">
+                              {row.industry}
+                            </span>
+                          )}
                         </td>
                         <td className="hidden sm:table-cell">{decimal(row.score_points)}</td>
                         <td className="hidden sm:table-cell">
@@ -263,6 +307,7 @@ export function PortfolioPage() {
               </div>
             )}
           </section>
+          {data.target.length > 0 && <SectorBreakdown data={data} />}
           <section className="rounded-xl border bg-card p-5">
             <h2 className="text-xl font-semibold">Dónde aportar capital nuevo</h2>
             <p className="mt-2 text-sm text-muted-foreground">

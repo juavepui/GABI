@@ -2067,6 +2067,32 @@ export type ComparisonResponse = {
 };
 
 /**
+ * ConcentrationWarning
+ */
+export type ConcentrationWarning = {
+    /**
+     * Kind
+     */
+    kind: 'sector' | 'industry';
+    /**
+     * Limit Percent
+     */
+    limit_percent: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Positions
+     */
+    positions: number;
+    /**
+     * Weight Percent
+     */
+    weight_percent: number;
+};
+
+/**
  * ConsensusEstimate
  */
 export type ConsensusEstimate = {
@@ -4313,6 +4339,28 @@ export type Identity = {
 };
 
 /**
+ * IndustryWeight
+ */
+export type IndustryWeight = {
+    /**
+     * Industry
+     */
+    industry: string;
+    /**
+     * Positions
+     */
+    positions: number;
+    /**
+     * Sector
+     */
+    sector: string;
+    /**
+     * Weight Percent
+     */
+    weight_percent: number;
+};
+
+/**
  * InsiderTransaction
  */
 export type InsiderTransaction = {
@@ -5443,6 +5491,10 @@ export type PlanRequest = {
      */
     holdings_text?: string;
     /**
+     * Industry Limit Percent
+     */
+    industry_limit_percent?: number;
+    /**
      * N Positions
      */
     n_positions?: number;
@@ -5450,6 +5502,10 @@ export type PlanRequest = {
      * New Capital Eur
      */
     new_capital_eur?: number;
+    /**
+     * Sector Limit Percent
+     */
+    sector_limit_percent?: number;
 };
 
 /**
@@ -5460,6 +5516,10 @@ export type PlanResponse = {
      * Allocations
      */
     allocations: Array<CapitalAllocation>;
+    /**
+     * Concentration
+     */
+    concentration: Array<ConcentrationWarning>;
     data: DataResponse;
     /**
      * Evidence Note
@@ -5473,6 +5533,18 @@ export type PlanResponse = {
      * Independent Advantage Demonstrated
      */
     independent_advantage_demonstrated?: false;
+    /**
+     * Index Weight Basis
+     */
+    index_weight_basis?: string;
+    /**
+     * Industries
+     */
+    industries: Array<IndustryWeight>;
+    /**
+     * Industry Limit Percent
+     */
+    industry_limit_percent: number;
     /**
      * Model Id
      */
@@ -5493,6 +5565,14 @@ export type PlanResponse = {
      * Revision
      */
     revision: string;
+    /**
+     * Sector Limit Percent
+     */
+    sector_limit_percent: number;
+    /**
+     * Sectors
+     */
+    sectors: Array<SectorWeight>;
     /**
      * Status
      */
@@ -6694,6 +6774,34 @@ export type SearchTrials = {
 };
 
 /**
+ * SectorWeight
+ */
+export type SectorWeight = {
+    /**
+     * Difference Points
+     */
+    difference_points: number | null;
+    /**
+     * Index Weight Percent
+     *
+     * Peso del sector en el universo por capitalización total; None sin capitalizaciones
+     */
+    index_weight_percent: number | null;
+    /**
+     * Positions
+     */
+    positions: number;
+    /**
+     * Sector
+     */
+    sector: string;
+    /**
+     * Weight Percent
+     */
+    weight_percent: number;
+};
+
+/**
  * SicStability
  */
 export type SicStability = {
@@ -7520,6 +7628,10 @@ export type TargetPosition = {
      * Amount Eur
      */
     amount_eur: number;
+    /**
+     * Industry
+     */
+    industry: string | null;
     /**
      * Name
      */
