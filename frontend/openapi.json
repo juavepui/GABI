@@ -8774,6 +8774,69 @@
         "title": "HoldingsSummary",
         "type": "object"
       },
+      "HomeAlert": {
+        "description": "One thing that needs attention; `detail` carries the kind's own fields (dates, entries, error code).",
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "earnings",
+              "ex_dividend",
+              "dividend_payment",
+              "top_changes",
+              "filings",
+              "job_failed",
+              "thesis_review"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "link": {
+            "title": "Link",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "high",
+              "medium",
+              "info"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "severity",
+          "date",
+          "symbols",
+          "link"
+        ],
+        "title": "HomeAlert",
+        "type": "object"
+      },
       "HomeLastUpdate": {
         "properties": {
           "finished_at": {
@@ -8802,6 +8865,13 @@
       "HomeResponse": {
         "description": "The home page. `ranking_ready=False`: the frozen ranking is not cached yet (ask again with compute).",
         "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/HomeAlert"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
           "as_of": {
             "title": "As Of",
             "type": "string"

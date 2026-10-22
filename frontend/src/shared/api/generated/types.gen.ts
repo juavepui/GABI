@@ -4553,6 +4553,40 @@ export type HoldingsSummary = {
 };
 
 /**
+ * HomeAlert
+ *
+ * One thing that needs attention; `detail` carries the kind's own fields (dates, entries, error code).
+ */
+export type HomeAlert = {
+    /**
+     * Date
+     */
+    date: string | null;
+    /**
+     * Detail
+     */
+    detail?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Kind
+     */
+    kind: 'earnings' | 'ex_dividend' | 'dividend_payment' | 'top_changes' | 'filings' | 'job_failed' | 'thesis_review';
+    /**
+     * Link
+     */
+    link: string;
+    /**
+     * Severity
+     */
+    severity: 'high' | 'medium' | 'info';
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+};
+
+/**
  * HomeLastUpdate
  */
 export type HomeLastUpdate = {
@@ -4572,6 +4606,10 @@ export type HomeLastUpdate = {
  * The home page. `ranking_ready=False`: the frozen ranking is not cached yet (ask again with compute).
  */
 export type HomeResponse = {
+    /**
+     * Alerts
+     */
+    alerts?: Array<HomeAlert>;
     /**
      * As Of
      */

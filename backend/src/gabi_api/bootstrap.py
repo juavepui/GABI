@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from gabi.application.administration.data_update import KeyCommands
-from gabi.application.administration.home import HomeQueries
+from gabi.application.administration.home import AlertSources, HomeQueries
 from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
@@ -236,8 +236,22 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.portfolio_lab = PortfolioLabQueries(jobs, LegacyBacktestMath())
     app.state.settings = settings
     app.state.model_commands = model_commands
+    signal_store, journal_store, holdings_store = (SqliteSignals(settings.data_dir), SqliteJournal(settings.data_dir),
+                                                   SqliteHoldings(settings.data_dir))
+
+    def latest_snapshot() -> tuple[dict, list[str]] | None:
+        saved = signal_store.snapshots()
+        if not saved:
+            return None
+        return saved[0], [str(symbol) for symbol in signal_store.snapshot(saved[0]["id"]).index]
+
+    alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
+                          lambda: journal_store.list_entries(100, 0, only_open=True)[0],
+                          lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
+                          repository.cached_events)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
-                                 lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session)
+                                 lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
+                                 alerts)
     app.state.notices = Notices(blind_validations, SmallmidFiles(settings.data_dir, settings.data_dir.parent,
                                                                smallmid_freeze_deadline), today)
     app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),
