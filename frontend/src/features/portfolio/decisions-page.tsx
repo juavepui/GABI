@@ -111,7 +111,7 @@ const defaults: DecisionPolicy = {
 };
 const fields: Array<{ key: keyof DecisionPolicy; label: string; step: string }> = [
   { key: 'min_score', label: 'Score mínimo', step: '1' },
-  { key: 'min_coverage', label: 'Cobertura mínima (0–1)', step: '0.01' },
+  { key: 'min_coverage', label: 'Métricas disponibles mínimas (0–1)', step: '0.01' },
   { key: 'max_positions', label: 'Máximo de posiciones', step: '1' },
   { key: 'max_position_pct', label: 'Máximo por posición (%)', step: '0.1' },
   { key: 'max_sector_pct', label: 'Máximo por sector (%)', step: '0.1' },
@@ -374,9 +374,9 @@ export function DecisionsPage() {
                   {progress.data && (
                     <>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Precios en caché hasta {progress.data.data_as_of ?? 'sin datos'} · cobertura{' '}
-                        {progress.data.available}/{progress.data.requested}. Retornos de posiciones
-                        con datos, ponderados por su objetivo; costes 0 pb.
+                        Precios en caché hasta {progress.data.data_as_of ?? 'sin datos'} ·
+                        posiciones con precio {progress.data.available}/{progress.data.requested}.
+                        Retornos de posiciones con datos, ponderados por su objetivo; costes 0 pb.
                       </p>
                       {progress.data.stale && (
                         <p className="mt-2 text-sm">

@@ -14,6 +14,7 @@ import { Compass, FlaskRound, GraduationCap, NotebookPen } from 'lucide-react';
 import { formatMoney, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
+import { Term } from '@/shared/ui/term';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
@@ -87,8 +88,9 @@ export function PortfolioPage() {
         guide={
           <>
             <p>
-              Selección Top-N con los pesos congelados y cobertura mínima del 70 %. El cálculo y
-              reparto de capital se hacen en Python sobre la caché local. No se envían órdenes.
+              Selección Top-N con los pesos congelados y al menos un 70 % de métricas disponibles.
+              El cálculo y reparto de capital se hacen en Python sobre la caché local. No se envían
+              órdenes.
             </p>
           </>
         }
@@ -193,12 +195,14 @@ export function PortfolioPage() {
             </div>
             <p className="mt-2 text-sm text-muted-foreground">{data.evidence_note}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cobertura local: {data.data.scored_count} de {data.data.universe_count} empresas con
-              score. Precio de referencia en USD; importes del plan en EUR. No se calculan acciones
-              sin un tipo de cambio explícito.
+              Empresas con score en la caché local: {data.data.scored_count} de{' '}
+              {data.data.universe_count}. Precio de referencia en USD; importes del plan en EUR. No
+              se calculan acciones sin un tipo de cambio explícito.
             </p>
             {data.target.length === 0 ? (
-              <p className="mt-5 text-sm">Ninguna empresa supera hoy el umbral de cobertura.</p>
+              <p className="mt-5 text-sm">
+                Ninguna empresa llega hoy al mínimo de métricas disponibles.
+              </p>
             ) : (
               <div className="mt-5 overflow-x-auto">
                 <table className="w-full text-left text-xs sm:min-w-[680px] sm:text-sm">
@@ -206,7 +210,9 @@ export function PortfolioPage() {
                     <tr>
                       <th className="pb-3">Empresa</th>
                       <th className="hidden pb-3 sm:table-cell">Score</th>
-                      <th className="hidden pb-3 sm:table-cell">Cobertura</th>
+                      <th className="hidden pb-3 sm:table-cell">
+                        <Term k="score_coverage">Métricas disponibles</Term>
+                      </th>
                       <th className="hidden pb-3 sm:table-cell">Precio USD</th>
                       <th className="pb-3">Peso</th>
                       <th className="pb-3">Importe</th>
@@ -230,7 +236,7 @@ export function PortfolioPage() {
                             <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
                               <dt>Score</dt>
                               <dd className="text-right">{decimal(row.score_points)}</dd>
-                              <dt>Cobertura</dt>
+                              <dt>Métricas disponibles</dt>
                               <dd className="text-right">
                                 {row.score_coverage_fraction == null
                                   ? '—'

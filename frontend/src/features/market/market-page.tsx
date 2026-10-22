@@ -265,7 +265,7 @@ export function MarketPage() {
                   </span>
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Score en puntos de 0 a 100 · cobertura de métricas, no probabilidad de acierto. —
+                  Score y cobertura ponderada en puntos de 0 a 100, no probabilidad de acierto. —
                   significa dato ausente.
                 </p>
               </div>
@@ -398,7 +398,7 @@ export function MarketPage() {
                               <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-foreground">
                                 <dt>Precio USD</dt>
                                 <dd className="text-right">{metric(row.metrics.price)}</dd>
-                                <dt>Cobertura</dt>
+                                <dt>Cobertura ponderada</dt>
                                 <dd className="text-right">{metric(row.metrics.confidence)}</dd>
                                 <dt>Capitalización</dt>
                                 <dd className="text-right">

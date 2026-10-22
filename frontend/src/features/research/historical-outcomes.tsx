@@ -30,7 +30,7 @@ function OutcomeLine({ label, outcome }: { label: string; outcome: OutcomeResult
   return (
     <li>
       {label}: candidatas {signedPct(outcome.portfolio_return)} · SPY{' '}
-      {signedPct(outcome.benchmark_return)} · cobertura {outcome.available}/{outcome.requested}
+      {signedPct(outcome.benchmark_return)} · con precio {outcome.available}/{outcome.requested}
       {outcome.status === 'incomplete' && (outcome.missing ?? []).length > 0 && (
         <span className="block text-xs text-muted-foreground">
           Resultado parcial; faltan: {(outcome.missing ?? []).join(', ')}
@@ -173,7 +173,7 @@ export function HistoricalOutcomes({
                     <th className="py-2">Bloque</th>
                     <th>Retorno 12 meses</th>
                     <th>SPY</th>
-                    <th>Cobertura</th>
+                    <th>Con precio</th>
                   </tr>
                 </thead>
                 <tbody>

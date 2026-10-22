@@ -230,7 +230,7 @@ export function SignalPage() {
               />
             </label>
             <label className="text-sm">
-              Caída mínima de cobertura
+              Caída mínima de cobertura ponderada
               <Input
                 className="mt-1"
                 name="confidence_drop"

@@ -12,7 +12,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 
 const fields = [
   ['composite_score', 'Composite Score'],
-  ['score_coverage', 'Cobertura'],
+  ['score_coverage', 'Métricas disponibles'],
   ['confidence', 'Cobertura ponderada'],
   ['price', 'Precio'],
   ['market_cap', 'Capitalización'],

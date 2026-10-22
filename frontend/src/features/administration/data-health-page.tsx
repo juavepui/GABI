@@ -107,7 +107,7 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
             label="Cobertura y frescura por fuente"
             columns={[
               ['source', 'Fuente'],
-              ['coverage', 'Cobertura'],
+              ['coverage', 'Cobertura en caché'],
               ['fresh', 'Frescura'],
               ['threshold', 'Umbral de frescura'],
               ['oldest', 'Dato más antiguo'],
@@ -122,7 +122,7 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
           />
           <p className="text-xs text-muted-foreground">
             Frescura alta: al menos el 90 % dentro del umbral de esa fuente; media: al menos el 50
-            %. «Cobertura» es si existe algún dato en caché; «frescura», si es reciente según el
+            %. «Cobertura en caché» es si existe algún dato; «frescura», si es reciente según el
             umbral (24 h fundamentales e insider, 7 días SEC EDGAR, 5 días naturales precios).
           </p>
           {data.summary.sources.edgar?.with_facts_pct != null && (
@@ -203,7 +203,7 @@ function BlockCoverage() {
     enabled: requested,
   });
   return (
-    <Section title="Cobertura por bloque del score">
+    <Section title="Cobertura del universo por bloque">
       <p className="text-xs text-muted-foreground">
         Qué parte del universo tiene datos completos en cada bloque, no solo si la fuente está
         fresca. Calcula el ranking completo con la caché local y puede tardar.
@@ -220,7 +220,7 @@ function BlockCoverage() {
       {coverage.data && (
         <>
           <Table
-            label="Cobertura por bloque"
+            label="Cobertura del universo por bloque"
             columns={[
               ['block', 'Bloque'],
               ['n_metrics', 'Nº métricas'],

@@ -20,7 +20,7 @@ export function CoverageThreshold({
 }) {
   return (
     <label className="text-xs font-medium">
-      Cobertura completa mínima (%)
+      Universo con el bloque completo, mínimo (%)
       <input
         className="mt-1.5 block h-10 w-28 rounded-md border bg-background px-2 text-sm"
         type="number"

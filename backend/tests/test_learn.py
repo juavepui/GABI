@@ -28,3 +28,14 @@ def test_glossary_serves_research_terms_and_reuses_the_metric_help():
     assert {"psr", "dsr", "pbo", "rank_ic", "hhi", "cik", "point_in_time"} <= set(glossary)
     assert glossary["sharpe_ratio"]["definition"] == METRIC_INFO["sharpe_ratio"]["help"]  # One source of meaning.
     assert all(entry["definition"] for entry in glossary.values())
+
+
+def test_each_coverage_concept_has_one_distinct_name_and_definition():
+    """Métricas disponibles, cobertura ponderada and block coverage are three concepts with three names (#174)."""
+    with TestClient(create_app(Settings(config.DATA_DIR))) as client:
+        glossary = {entry["key"]: entry for entry in client.get("/api/v1/learn/metrics").json()["glossary"]}
+    names = {key: glossary[key]["term"] for key in ("score_coverage", "confidence", "block_coverage")}
+    assert names == {"score_coverage": "Métricas disponibles", "confidence": "Cobertura ponderada",
+                     "block_coverage": "Cobertura del universo por bloque"}
+    assert glossary["score_coverage"]["definition"] == METRIC_INFO["score_coverage"]["help"]
+    assert all(name.lower() != "cobertura" for name in names.values())

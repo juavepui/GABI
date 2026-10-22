@@ -35,7 +35,9 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
   await expect(
     coverage.getByText(/1\/2 empresas sin identidad histórica acreditada/),
   ).toBeVisible();
-  await expect(coverage.getByText('Cobertura de datos degradada', { exact: false })).toBeVisible();
+  await expect(
+    coverage.getByText('Cobertura del universo por bloque degradada', { exact: false }),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Descargar resultado completo' })).toBeVisible();
 });
 

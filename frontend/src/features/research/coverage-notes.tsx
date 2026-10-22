@@ -48,7 +48,9 @@ export function HistoricalCoverageNotes({
       </p>
       {coverage.warnings.length > 0 && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950">
-          <p className="font-medium">⚠️ Cobertura de datos degradada en esta reconstrucción</p>
+          <p className="font-medium">
+            ⚠️ Cobertura del universo por bloque degradada en esta reconstrucción
+          </p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {coverage.warnings.map((warning) => (
               <li key={warning}>

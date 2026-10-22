@@ -3,7 +3,7 @@ import type { RankingQuery } from '@/shared/api/client';
 export type SortKey = NonNullable<RankingQuery['order_by']>;
 export const sortOptions: ReadonlyArray<{ key: SortKey; label: string }> = [
   { key: 'composite_score', label: 'Score' },
-  { key: 'confidence', label: 'Cobertura' },
+  { key: 'confidence', label: 'Cobertura ponderada' },
   { key: 'market_cap', label: 'Capitalización' },
   { key: 'pe', label: 'PER' },
   { key: 'price', label: 'Precio' },

@@ -263,7 +263,12 @@ METRIC_INFO = {
     },
     "metrics_available": {"label": "Datos", "help": "Número de métricas disponibles de las 13 que puntúan."},
     "metrics_possible": {"label": "Datos posibles", "help": "Número total de métricas que puntúan."},
-    "score_coverage": {"label": "Cobertura %", "help": "Porcentaje de las 13 métricas puntuables disponibles."},
+    "score_coverage": {
+        "label": "Métricas disponibles",
+        "help": "Porcentaje de las 13 métricas puntuables con dato en esta empresa, sin ponderar (10 de 13 = 76,9 %). "
+                "La cartera objetivo exige al menos un 70 %. No confundir con la cobertura ponderada, que pesa "
+                "cada métrica según su bloque.",
+    },
     "next_earnings_days": {
         "label": "Próx. earnings (días)",
         "help": "Días hasta la próxima publicación de resultados conocida (fuente: Yahoo Finance). La "
@@ -274,7 +279,9 @@ METRIC_INFO = {
     "confidence": {
         "label": "Cobertura ponderada",
         "help": "Disponibilidad de las 13 métricas puntuables, ponderada por los pesos de sus bloques, "
-                "en escala 0–100. 100 = todas presentes. No mide apoyo estadístico ni probabilidad futura; "
+                "en escala 0–100. 100 = todas presentes. Por eso difiere del porcentaje de métricas "
+                "disponibles cuando falta una métrica de un bloque con más peso. "
+                "No mide apoyo estadístico ni probabilidad futura; "
                 "esa dimensión se muestra aparte como Confianza de evidencia (BAJA/MEDIA/ALTA).",
     },
 }

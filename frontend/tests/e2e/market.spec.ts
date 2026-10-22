@@ -210,9 +210,11 @@ test('evidencia del ranking, estabilidad y evidencia de una empresa se calculan 
   const top = await (await request.get('http://127.0.0.1:8001/api/v1/evidence')).json();
   await page.goto('/mercado');
   await expect(page.getByRole('heading', { name: 'Ranking de empresas' })).toBeVisible();
-  const coverage = page.getByRole('region', { name: 'Cobertura de datos del ranking' });
-  await coverage.getByLabel('Cobertura completa mínima (%)').fill('100');
-  await expect(coverage.getByRole('status')).toContainText('Cobertura de datos degradada');
+  const coverage = page.getByRole('region', { name: 'Cobertura del universo por bloque' });
+  await coverage.getByLabel('Universo con el bloque completo, mínimo (%)').fill('100');
+  await expect(coverage.getByRole('status')).toContainText(
+    'Cobertura del universo por bloque degradada',
+  );
   await expect(coverage.getByRole('status')).toContainText('umbral configurado: 100%');
   await page.getByText('Evidencia del ranking · confianza de las candidatas del Top-20').click();
   const table = page.getByRole('table', { name: 'Evidencia del ranking' });
