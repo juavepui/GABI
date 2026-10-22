@@ -285,6 +285,41 @@ def test_use_case_reads_known_filings_and_persists_only_edits(tmp_path):
     assert recovered["warning"] == "invalid_saved_thresholds" and recovered["values"]["pe"] == 18
 
 
+def test_yahoo_and_sec_disagree_and_both_provenances_are_returned(tmp_path):
+    # Like APA: the page's Yahoo multiples (12 months) differ from the 10-K ones and Yahoo's beta
+    # from GABI's against SPY. Each value keeps its own source; the two are never mixed.
+    ranking = {"pe": 10.5, "ev_ebitda": 3.8, "free_cashflow": 2.15e9, "roic": 0.04, "market_cap": 5e4,
+               "beta": 0.4, "beta_calc": 1.0, "momentum_6m": 0.1}
+    without_capex = [row for row in _excel_example() if row[0] != "PaymentsToAcquirePropertyPlantAndEquipment"]
+    service = CompanyChecklist(_Facts(_frame(without_capex)), _Cache(), _Insiders(), FileChecklistThresholds(tmp_path),
+                               lambda: date(2025, 7, 1), ranking_row=lambda symbol: ranking)
+    criteria = {item["key"]: item for item in service.company("ACME")["criteria"]}
+    pe = criteria["pe"]
+    assert pe["value"] == pytest.approx(28.3333333) and (pe["source"], pe["period"]) == ("price+sec", "fiscal_year")
+    assert pe["alternative"] | {"explanation": None} == {
+        "metric": "pe", "value": 10.5, "source": "yahoo", "period": "ttm", "difference": "period", "explanation": None}
+    fcf = criteria["fcf"]  # no SEC CAPEX: missing, and Yahoo's figure is shown beside it, not used
+    assert fcf["value"] is None and fcf["verdict"] == "missing" and fcf["reason"] == "no_capex"
+    assert fcf["alternative"]["value"] == 2.15e9 and fcf["alternative"]["metric"] == "free_cashflow"
+    assert criteria["ev_fcf"]["value"] is None and criteria["ev_fcf"]["alternative"] is None
+    beta = criteria["beta"]  # the class uses GABI's beta against SPY; Yahoo's is informative
+    assert beta["value"] == 1.0 and beta["detail"] == {"class": "neutral"}
+    assert (beta["source"], beta["period"]) == ("prices", "cached_history")
+    assert beta["alternative"]["value"] == 0.4 and beta["alternative"]["period"] == "5y_monthly"
+    assert criteria["roic"]["alternative"]["difference"] == "formula"
+    assert criteria["insiders_pct"]["period"] == "snapshot" and criteria["insiders_pct"]["alternative"] is None
+
+    def outside(symbol):
+        raise QueryError("company_not_found", "fuera del universo", 404)
+
+    alone = CompanyChecklist(_Facts(_frame(_excel_example())), _Cache(), _Insiders(), FileChecklistThresholds(tmp_path),
+                             lambda: date(2025, 7, 1), ranking_row=outside)
+    criteria = {item["key"]: item for item in alone.company("ACME")["criteria"]}
+    # Yahoo's beta is never promoted to the class: without GABI's, the beta is missing.
+    assert criteria["beta"]["value"] is None and criteria["beta"]["reason"] == "no_beta"
+    assert all(item["alternative"] is None for item in criteria.values())
+
+
 def _yearly(years=range(ANCHOR - 4, ANCHOR + 1)):
     """Five fiscal years with net income 100·k, EBIT 150·k, D&A 50, CFO 120·k, CAPEX 20, debt 300, cash 100."""
     rows = []
@@ -471,6 +506,16 @@ def test_api_get_has_no_side_effects_and_thresholds_are_explicit_commands(api):
     assert client.get("/api/v1/companies/T001/checklist/sector").json()["cached"]
     assert (root / "gabi.db").read_bytes() == before
     assert not (root / "checklist_thresholds.json").exists()
+    # The checklist's secondary references are the company page's own values (#169).
+    page = client.get("/api/v1/companies/T001").json()
+    assert page["metric_sources"]["pe"] == {"source": "yahoo", "period": "ttm"}
+    assert page["metric_sources"]["beta_calc"] == {"source": "prices", "period": "cached_history"}
+    assert page["metric_sources"]["roic"] == {"source": "sec_10k", "period": "fiscal_year"}
+    for key, metric in (("pe", "pe"), ("beta", "beta")):
+        alternative = criteria[key]["alternative"]
+        assert alternative is None or alternative["value"] == pytest.approx(page["company"]["metrics"][metric]["value"])
+    assert criteria["beta"]["value"] == pytest.approx(page["company"]["metrics"]["beta_calc"]["value"])
+    assert (root / "gabi.db").read_bytes() == before
     empty = client.get("/api/v1/companies/T002/checklist").json()
     assert empty["fiscal_year_end"] is None and empty["summary"]["evaluated"] == 0
     catalog = client.get("/api/v1/checklist/thresholds").json()

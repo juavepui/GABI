@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, HttpUrl
 
 from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
+from gabi.domain.market.metric_sources import METRIC_SOURCES
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
 
@@ -27,6 +28,17 @@ class Unit(StrEnum):
 class Metric(WireModel):
     value: float | None
     unit: Unit
+
+
+class MetricSource(WireModel):
+    """Where a value of the company page comes from and which period it covers (#169)."""
+    source: Literal["yahoo", "sec_10k", "prices"]
+    period: Literal["ttm", "mrq", "snapshot", "5y_monthly", "3m", "fiscal_year", "fiscal_years_3", "6m", "12m",
+                    "cached_history"]
+
+
+METRIC_SOURCE_WIRE = {key: MetricSource(source=source, period=period)  # type: ignore[arg-type]
+                      for key, (source, period) in METRIC_SOURCES.items()}
 
 
 class Identity(WireModel):
@@ -130,6 +142,7 @@ class CompanyResponse(WireModel):
     data: DataResponse
     prices: list[PricePoint]
     price_unit: Literal["USD"] = "USD"
+    metric_sources: dict[str, MetricSource]
     generated_at: datetime
     revision: str
 

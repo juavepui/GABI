@@ -27,8 +27,10 @@ Usar cualquiera de sus criterios como señal requiere un experimento preregistra
   Las excepciones se declaran por criterio:
   - precio: último cierre de la caché;
   - acciones: ver «Número de acciones» más abajo;
-  - PER forward y beta: registro de Yahoo ya descargado;
-  - % de directivos: Yahoo `heldPercentInsiders`.
+  - PER forward: registro de Yahoo ya descargado;
+  - % de directivos: Yahoo `heldPercentInsiders`;
+  - beta: la que calcula GABI frente al SPY (`beta_calc` del ranking), ver «Fuente y
+    periodo» más abajo.
 - **Un solo ejercicio**: todos los componentes de un ratio se leen en el último
   cierre anual de ingresos (o de beneficio), con una tolerancia de 45 días. Si un
   componente es de otro ejercicio, el criterio queda «sin dato» (`stale_*`).
@@ -65,6 +67,30 @@ de múltiplos dependen de la base de acciones. Por eso se elige y se comprueba a
    - BX: la SEC solo cuenta la clase A, sin las participaciones de Holdings;
    - SWKS y VMRK: emisión posterior al último 10-Q.
    Sin capitalización de Yahoo, se usan las acciones SEC sin comprobar.
+
+## Fuente y periodo de cada cifra (#169)
+
+La ficha muestra algunos conceptos dos veces: en los bloques de métricas del ranking y en
+el checklist. Cada valor declara su fuente y su periodo, y nunca se mezclan dentro de un
+mismo ratio.
+
+- **Bloques de la ficha**: `GET /api/v1/companies/{symbol}` devuelve `metric_sources`
+  (`gabi/domain/market/metric_sources.py`), con la fuente (`yahoo`, `sec_10k`, `prices`) y
+  el periodo (`ttm`, `mrq`, `fiscal_year`, `cached_history`…) de cada métrica. El PER, el
+  EV/EBITDA y el FCF de esos bloques son los de Yahoo a 12 meses.
+- **Checklist**: cada criterio devuelve `source` y `period`. La ficha los muestra como
+  «SEC 10-K · FY2025», «Precio + SEC 10-K · FY2025» o «Yahoo · fecha de captura».
+- **Referencia secundaria** (`alternative`): para la capitalización, el PER, el
+  EV/EBITDA, el FCF, el ROIC y la beta, el checklist incluye el valor que muestra el resto
+  de la ficha, con su fuente, su periodo y el motivo de la diferencia (periodo, fórmula,
+  número de acciones o método). Sale de la fila del ranking de la empresa, no de un
+  segundo cálculo. Solo se muestra y no cambia el veredicto. Si el checklist no tiene dato,
+  la ficha lo indica: «Sin dato SEC; Yahoo · 12 meses informa 3,80x (no se mezcla)».
+- **Beta**: la clasificación defensiva (<0,9), neutral (≤1,1) o agresiva usa la beta que
+  calcula GABI frente al SPY con rendimientos diarios de todo el histórico en caché, la
+  misma que la ficha muestra como «Beta calculada frente al SPY». La de Yahoo (5 años,
+  mensual, metodología propia) es solo informativa. Si GABI no tiene beta, el criterio
+  queda sin dato y nunca usa la de Yahoo.
 
 ## Diferencias con las métricas del Composite
 

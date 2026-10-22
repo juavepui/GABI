@@ -265,6 +265,22 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   await expect(page.getByText('Checklist fundamental')).toBeVisible();
   await expect(page.getByText('Criterios cumplidos')).toBeVisible();
   await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
+  // #169: every value declares its source and period; Yahoo's figure is a reference, never mixed in.
+  const pe = checklist.getByRole('row', { name: /^PER(?! forward)/ });
+  await expect(pe).toContainText('Precio + SEC 10-K');
+  await expect(pe).toContainText(/Sin dato SEC; Yahoo · 12 meses informa \d/);
+  await pe.getByRole('button', { name: /Yahoo · 12 meses informa/ }).hover();
+  await expect(page.getByRole('tooltip')).toContainText('Los dos valores no se mezclan');
+  await page.mouse.move(0, 0);
+  await expect(checklist.getByRole('row', { name: /^Beta/ })).toContainText(
+    'GABI con precios en caché · todo el histórico',
+  );
+  const card = (title: string) =>
+    page
+      .locator('[data-slot="card"]')
+      .filter({ has: page.locator('[data-slot="card-title"]').getByText(title, { exact: true }) });
+  await expect(card('Valoración')).toContainText('Yahoo · 12 meses');
+  await expect(card('Calidad')).toContainText('SEC 10-K · último ejercicio');
   // Each metric explains itself on hover and on keyboard focus; Escape closes it.
   const peLabel = checklist
     .getByRole('row', { name: /^PER(?! forward)/ })

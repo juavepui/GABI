@@ -9,10 +9,11 @@ deja el criterio sin dato: nunca se mezclan años ni se rellena con cero.
 """
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 
 import gabi.domain.market.sec_facts as sec
+from gabi.domain.market.metric_sources import METRIC_SOURCES
 
 THRESHOLDS_VERSION = 1
 TOLERANCE_DAYS = sec.ALIGNMENT_TOLERANCE_DAYS
@@ -141,8 +142,9 @@ RULES = (
          (-1.0, 1.0), "price+sec", "Javier DV"),
     Rule("insiders_pct", "Directiva", "% en manos de directivos", "Acciones de insiders / total (Yahoo)", "fraction",
          ">=", 0.10, (0.0, 1.0), "yahoo", "Memorias de Tiburón, La Pizarra de Andrés"),
-    Rule("beta", "Riesgo", "Beta", "Volatilidad frente al mercado (Yahoo): <0,9 defensiva, ≤1,1 neutral",
-         "ratio", "info", None, None, "yahoo", "La Pizarra de Andrés"),
+    Rule("beta", "Riesgo", "Beta",
+         "Covarianza de los rendimientos diarios con el SPY / varianza del SPY (GABI, histórico en caché): "
+         "<0,9 defensiva, ≤1,1 neutral", "ratio", "info", None, None, "prices", "La Pizarra de Andrés"),
 )
 RULES_BY_KEY = {rule.key: rule for rule in RULES}
 
@@ -204,7 +206,8 @@ EXPLANATIONS = {
                     "en juego, sus intereses están alineados con los tuyos. En empresas con varias clases de "
                     "acciones puede no contar la clase que controla el fundador.",
     "beta": "Cuánto se mueve la acción frente al mercado: 1 se mueve igual, menos de 1 es más defensiva y más "
-            "de 1 amplifica las subidas y las caídas. Es informativa, no un criterio de calidad.",
+            "de 1 amplifica las subidas y las caídas. La calcula GABI frente al SPY, la misma que la ficha muestra "
+            "como «Beta calculada frente al SPY». Es informativa, no un criterio de calidad.",
     "dcf_discount_rate": "Rentabilidad anual que exiges a la inversión. Cuanto más alta, menos vale hoy la caja "
                          "futura y más crecimiento tiene que descontar el precio.",
     "dcf_terminal_growth": "Crecimiento anual que se supone para siempre a partir del último año proyectado. Debe "
@@ -243,6 +246,35 @@ ALARM_EXPLANATIONS = {
     "capex_spike": "La inversión (CAPEX) sobre ventas se dispara sin que la caja operativa mejore después: "
                    "inversión que no está dando retorno.",
 }
+# Period of each criterion source: SEC values use the fiscal anchor; Yahoo values, its capture.
+SOURCE_PERIODS = {"sec_10k": "fiscal_year", "price+sec": "fiscal_year", "yahoo": "snapshot",
+                  "price+yahoo": "snapshot", "prices": "cached_history"}
+
+# The same concept the company page shows elsewhere with another source, period or formula (#169).
+# It is returned as a secondary reference next to the criterion, never mixed into its value.
+ALTERNATIVES = {
+    "market_cap": ("market_cap", "share_count"),
+    "pe": ("pe", "period"),
+    "ev_ebitda": ("ev_ebitda", "period"),
+    "fcf": ("free_cashflow", "period"),
+    "roic": ("roic", "formula"),
+    "beta": ("beta", "method"),
+}
+REFERENCE_KEYS = tuple(metric for metric, _ in ALTERNATIVES.values()) + ("beta_calc",)
+DIFFERENCES = {
+    "period": "Yahoo usa los últimos 12 meses y el checklist el último 10-K anual. Pueden diferir por el "
+              "periodo, por los ajustes de Yahoo (beneficio ajustado, partidas extraordinarias, FCF después de "
+              "intereses) y por el número de acciones. Los dos valores no se mezclan.",
+    "formula": "Mismo 10-K, distinta fórmula. El ROIC del Composite es beneficio neto / (patrimonio + deuda a "
+               "largo plazo); el del checklist, el de los vídeos: EBIT × (1 − tipo efectivo) / (deuda total + "
+               "patrimonio − caja e inversiones a corto).",
+    "share_count": "Yahoo multiplica el precio por su número de acciones; el checklist usa las acciones de la SEC "
+                   "(o la capitalización de Yahoo si no cuadran con el precio).",
+    "method": "La beta del checklist la calcula GABI frente al SPY con rendimientos diarios de todo el histórico "
+              "en caché. La de Yahoo usa 5 años de rendimientos mensuales con su propia metodología. La "
+              "clasificación defensiva/neutral/agresiva usa la de GABI.",
+}
+
 FINANCIAL_NOT_APPLICABLE = frozenset({
     "cfo_cagr", "gross_margin", "gross_margin_change", "roic", "net_debt", "net_debt_to_ebitda",
     "interest_coverage", "cash_conversion", "cfo_margin", "fcf", "capex_to_revenue", "enterprise_value",
@@ -527,9 +559,12 @@ class MarketInputs:
     # False when the SEC share basis disagrees with the price: share history is then unusable.
     share_history_ok: bool = True
     forward_eps: float | None = None
+    # GABI's beta against SPY (ranking `beta_calc`), not Yahoo's.
     beta: float | None = None
     insiders_pct: float | None = None
     yahoo_fetched_at: str | None = None
+    # Values of the ranking row (REFERENCE_KEYS) shown as secondary references, never mixed in.
+    references: dict[str, float | None] = field(default_factory=dict)
 
 
 # ----------------------------------------------------------------- evaluación
@@ -537,6 +572,18 @@ def _caveat(market: "MarketInputs", key: str) -> str | None:
     """Why a computed value may be unreliable; it is still shown, never hidden."""
     uncertain_classes = market.shares_source not in (None, "sec_outstanding")
     return "share_classes" if uncertain_classes and key in INSIDER_CAVEAT_KEYS else None
+
+
+def _alternative(market: "MarketInputs", key: str) -> dict | None:
+    if key not in ALTERNATIVES:
+        return None
+    metric, difference = ALTERNATIVES[key]
+    value = market.references.get(metric)
+    if value is None:
+        return None
+    source, period = METRIC_SOURCES[metric]
+    return {"metric": metric, "value": float(value), "source": source, "period": period,
+            "difference": difference, "explanation": DIFFERENCES[difference]}
 
 
 def _verdict(rule: Rule, value, threshold: float | None, *, pe: float | None) -> str:
@@ -715,7 +762,8 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
             "key": rule.key, "block": rule.block, "label": rule.label, "formula": rule.formula, "unit": rule.unit,
             "comparison": rule.comparison, "value": value, "threshold": threshold,
             "default_threshold": rule.default, "edited": rule.key in edited, "verdict": verdict, "reason": reason,
-            "source": rule.source, "reference": rule.reference, "explanation": EXPLANATIONS[rule.key],
+            "source": rule.source, "period": SOURCE_PERIODS[rule.source], "alternative": _alternative(market, rule.key),
+            "reference": rule.reference, "explanation": EXPLANATIONS[rule.key],
             "caveat": _caveat(market, rule.key) if value is not None else None, "detail": details.get(rule.key, {}),
         })
 

@@ -1229,9 +1229,42 @@ export type ChecklistAlarm = {
 };
 
 /**
+ * ChecklistAlternative
+ *
+ * The same concept as shown elsewhere on the company page, with its own source and period (#169).
+ */
+export type ChecklistAlternative = {
+    /**
+     * Difference
+     */
+    difference: 'period' | 'formula' | 'share_count' | 'method';
+    /**
+     * Explanation
+     */
+    explanation: string;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * Period
+     */
+    period: 'ttm' | 'mrq' | 'snapshot' | '5y_monthly' | 'fiscal_year' | 'cached_history';
+    /**
+     * Source
+     */
+    source: 'yahoo' | 'sec_10k' | 'prices';
+    /**
+     * Value
+     */
+    value: number;
+};
+
+/**
  * ChecklistCriterion
  */
 export type ChecklistCriterion = {
+    alternative: ChecklistAlternative | null;
     /**
      * Block
      */
@@ -1275,6 +1308,10 @@ export type ChecklistCriterion = {
      */
     label: string;
     /**
+     * Period
+     */
+    period: 'fiscal_year' | 'snapshot' | 'cached_history';
+    /**
      * Reason
      */
     reason: string | null;
@@ -1285,7 +1322,7 @@ export type ChecklistCriterion = {
     /**
      * Source
      */
-    source: string;
+    source: 'sec_10k' | 'price+sec' | 'yahoo' | 'price+yahoo' | 'prices';
     /**
      * Threshold
      */
@@ -1895,6 +1932,12 @@ export type CompanyResponse = {
      * Generated At
      */
     generated_at: string;
+    /**
+     * Metric Sources
+     */
+    metric_sources: {
+        [key: string]: MetricSource;
+    };
     model: ModelResponse;
     /**
      * Price Unit
@@ -5132,6 +5175,22 @@ export type MetricGlossary = {
     terms: {
         [key: string]: string;
     };
+};
+
+/**
+ * MetricSource
+ *
+ * Where a value of the company page comes from and which period it covers (#169).
+ */
+export type MetricSource = {
+    /**
+     * Period
+     */
+    period: 'ttm' | 'mrq' | 'snapshot' | '5y_monthly' | '3m' | 'fiscal_year' | 'fiscal_years_3' | '6m' | '12m' | 'cached_history';
+    /**
+     * Source
+     */
+    source: 'yahoo' | 'sec_10k' | 'prices';
 };
 
 /**
