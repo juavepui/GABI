@@ -22,6 +22,7 @@ de la fila del ranking (#169).
 | `before.json` | Antes de #170: hechos leídos por símbolo y etiquetas de CAPEX del Composite |
 | `after-stored-facts.json` | Con #170 sobre los hechos ya guardados, antes de la nueva sincronización SEC |
 | `after-sync-simulation.json` | Simulación tras la sincronización (ver abajo) |
+| `after-sync.json` | Medición real tras la sincronización SEC del 22-10-2026 (503/503 emisores, sin fallos) |
 
 Cada informe incluye:
 - el porcentaje evaluable de cada criterio, global y por sector;
@@ -62,20 +63,24 @@ el ranking y los 18 motores congelados tampoco.
 
 ## Resultado
 
-| Criterio | Antes | Lectura por entidad | Tras sincronizar (simulado) |
-|---|---|---|---|
-| CAGR de ingresos | 92,0 % | 94,0 % | 94,0 % |
-| Margen neto | 89,9 % | 90,3 % | 90,3 % |
-| Cobertura de intereses | 60,2 % | 64,8 % | 64,8 % |
-| Conversión de caja | 83,8 % | 86,1 % | 86,1 % |
-| Margen de CFO | 96,8 % | 99,3 % | 99,3 % |
-| Flujo de caja libre | 69,0 % | 71,3 % | 91,0 % |
-| Intensidad de capital | 70,1 % | 71,3 % | 90,7 % |
-| EV / FCF | 40,0 % | 41,2 % | 51,2 % |
-| FCF yield | 69,0 % | 71,3 % | 91,0 % |
+| Criterio | Antes | Lectura por entidad | Tras sincronizar (simulado) | Tras sincronizar (real) |
+|---|---|---|---|---|
+| CAGR de ingresos | 92,0 % | 94,0 % | 94,0 % | 94,0 % |
+| Margen neto | 89,9 % | 90,3 % | 90,3 % | 90,3 % |
+| Cobertura de intereses | 60,2 % | 64,8 % | 64,8 % | 64,8 % |
+| Conversión de caja | 83,8 % | 86,1 % | 86,1 % | 86,1 % |
+| Margen de CFO | 96,8 % | 99,3 % | 99,3 % | 99,3 % |
+| Flujo de caja libre | 69,0 % | 71,3 % | 91,0 % | 91,7 % |
+| Intensidad de capital | 70,1 % | 71,3 % | 90,7 % | 91,4 % |
+| EV / FCF | 40,0 % | 41,2 % | 51,2 % | 51,6 % |
+| FCF yield | 69,0 % | 71,3 % | 91,0 % | 91,7 % |
 
 Porcentaje sobre los emisores a los que aplica cada criterio (432 no financieros en los
 criterios de caja y EV). El resto de criterios está en los JSON.
+
+La medición real mejora algo la simulación: DD, DLTR y GE no estaban entre los 126 emisores
+simulados y usaban flujos de caja operativos guardados antiguos. Con la sincronización completa
+también tienen CAPEX del ejercicio usado.
 
 **Ingresos SEC evaluables**: 427 de 432 emisores no financieros (98,8 %) antes y 429 de 432
 (99,3 %) después. Los tres restantes tienen motivo verificado:
@@ -91,7 +96,7 @@ su companyfacts el 22-10-2026 a un directorio temporal y se extrajo con `FACT_TA
 hará la sincronización. El resto del universo usa los hechos guardados. No se escribió en
 `gabi.db`.
 
-## CAPEX que sigue sin dato (37 emisores, simulado)
+## CAPEX que sigue sin dato (34 emisores, real)
 
 Quedan sin dato a propósito, porque ninguna etiqueta equivale al CAPEX total:
 
