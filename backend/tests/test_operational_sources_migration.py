@@ -158,6 +158,8 @@ def test_data_fetch_batches_match_capture(tmp_path, monkeypatch, clock):
     monkeypatch.setattr(yfinance, "download", lambda tickers, **k: yahoo_panel(tickers))
     monkeypatch.setattr(yfinance, "Ticker", FakeTicker)
     monkeypatch.setattr(identity, "resolve", lambda symbol, day: {"entity_id": None})
+    # Parity with the capture; the extra checklist fields (#167) are tested separately.
+    monkeypatch.setattr(data_fetch, "EXTRA_INFO_KEYS", [])
     results = []
     for label in ("old", "new"):
         path = tmp_path / label / "gabi.db"
