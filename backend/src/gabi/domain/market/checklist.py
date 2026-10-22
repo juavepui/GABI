@@ -62,10 +62,19 @@ DIVIDEND_TAGS = ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"]
 # 10-K diluted average shares: reported in total even when outstanding shares are only per class.
 DILUTED_SHARES_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding"]
 BUYBACK_TAGS = ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfCommonAndPreferredStock"]
+# CAPEX of the Checklist (#170): the Composite's tags, then the total capital expenditure some
+# issuers report instead (AMZN, NVDA, LMT…) and the oil and gas investment lines (APA, EOG…).
+# Partial lines (Other…, construction in progress) and REIT property purchases are not CAPEX
+# and stay out: a component would understate it. sec.CAPEX_TAGS itself is unchanged.
+CHECKLIST_CAPEX_TAGS = sec.CAPEX_TAGS + [
+    "PaymentsToAcquireProductiveAssets",
+    "PaymentsToAcquireOilAndGasPropertyAndEquipment",
+    "PaymentsToExploreAndDevelopOilAndGasProperties",
+]
 CHECKLIST_TAGS = tuple(dict.fromkeys(
     INTEREST_TAGS + SBC_TAGS + TAX_TAGS + PRETAX_TAGS + DEBT_CURRENT_TAGS + LT_DEBT_CURRENT_TAGS
     + SHORT_BORROWING_TAGS + SHORT_INVESTMENT_TAGS + COST_OF_REVENUE_TAGS + GOODWILL_TAGS + IMPAIRMENT_TAGS
-    + ASSETS_TAGS + DEBT_ISSUANCE_TAGS + DIVIDEND_TAGS))
+    + ASSETS_TAGS + DEBT_ISSUANCE_TAGS + DIVIDEND_TAGS + CHECKLIST_CAPEX_TAGS))
 
 
 @dataclass(frozen=True)
@@ -399,19 +408,42 @@ def _instant(facts: dict, tags: list[str]) -> tuple[str | None, dict[str, float]
     return None, {}
 
 
+def annual_series(facts: dict, tags: list[str]) -> dict[str, float]:
+    """Annual 10-K values of a concept, based on the candidate tag reported most recently (#170).
+
+    sec._extract_annual_values bases the series on the first candidate even when the issuer
+    stopped using it years ago, so a tag change without reconciling years leaves the latest
+    fiscal year empty (AMZN reports CAPEX as PaymentsToAcquireProductiveAssets since 2017).
+    Here the most recently reported candidate (ties: list order) is the base; the others only
+    fill other years when every overlapping year agrees within 1 %, the same bridge rule."""
+    candidates = [(index, dict(sec._extract_annual_values(facts, [tag]))) for index, tag in enumerate(tags)]
+    candidates = sorted(((index, values) for index, values in candidates if values),
+                        key=lambda item: (-_day(max(item[1])).toordinal(), item[0]))
+    if not candidates:
+        return {}
+    merged = dict(candidates[0][1])
+    for _, values in candidates[1:]:
+        overlap = set(merged) & set(values)
+        if overlap and all(abs(merged[day] - values[day]) <= 0.01 * max(abs(merged[day]), abs(values[day]), 1.0)
+                           for day in overlap):
+            for day, value in values.items():
+                merged.setdefault(day, value)
+    return dict(sorted(merged.items()))
+
+
 class _Facts:
     """Annual 10-K series by concept, read at one fiscal anchor."""
 
     def __init__(self, facts: dict):
         annual = {
             "revenue": sec.REVENUE_TAGS, "net_income": sec.NET_INCOME_TAGS, "ocf": sec.OCF_TAGS,
-            "capex": sec.CAPEX_TAGS, "gross_profit": sec.GROSS_PROFIT_TAGS,
+            "capex": CHECKLIST_CAPEX_TAGS, "gross_profit": sec.GROSS_PROFIT_TAGS,
             "operating_income": sec.OPERATING_INCOME_TAGS, "depreciation": sec.DEPRECIATION_TAGS,
             "cost_of_revenue": COST_OF_REVENUE_TAGS, "interest": INTEREST_TAGS, "sbc": SBC_TAGS, "tax": TAX_TAGS,
             "pretax": PRETAX_TAGS, "impairment": IMPAIRMENT_TAGS, "debt_issuance": DEBT_ISSUANCE_TAGS,
             "dividends": DIVIDEND_TAGS, "buybacks": BUYBACK_TAGS,
         }
-        self.series = {name: dict(sec._extract_annual_values(facts, tags)) for name, tags in annual.items()}
+        self.series = {name: annual_series(facts, tags) for name, tags in annual.items()}
         instant = {
             "equity": sec.EQUITY_TAGS, "lt_debt": sec.LT_DEBT_TAGS, "cash": sec.CASH_TAGS,
             "debt_current": DEBT_CURRENT_TAGS, "lt_debt_current": LT_DEBT_CURRENT_TAGS,
@@ -520,7 +552,7 @@ def share_basis(facts: dict) -> tuple[dict[str, float], str | None]:
     Issuers with several share classes often report outstanding shares only per class, which
     companyfacts omits; the diluted average used for EPS is reported in total."""
     outstanding = shares_series(facts)
-    annual = [dict(sec._extract_annual_values(facts, tags)) for tags in (sec.REVENUE_TAGS, sec.NET_INCOME_TAGS)]
+    annual = [annual_series(facts, tags) for tags in (sec.REVENUE_TAGS, sec.NET_INCOME_TAGS)]
     anchor = max(annual[0]) if annual[0] else max(annual[1]) if annual[1] else None
     if outstanding and (anchor is None or (_day(anchor) - _day(max(outstanding))).days <= SHARES_STALE_DAYS):
         return outstanding, "sec_outstanding"
@@ -776,6 +808,10 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
         "financial_sector": financial,
         "summary": {"passed": passed, "failed": failed, "evaluated": passed + failed,
                     "missing": sum(item["verdict"] == "missing" for item in criteria),
+                    # How much of the Checklist this company can use (#170): criteria with a value
+                    # (verdict or informative) over those that apply to its sector.
+                    "with_value": sum(item["verdict"] in {"pass", "fail", "info"} for item in criteria),
+                    "applicable": sum(item["verdict"] != "not_applicable" for item in criteria),
                     "score": passed / (passed + failed) if passed + failed else None,
                     "alarms_active": sum(item["status"] == "active" for item in alarms),
                     "alarms_evaluated": sum(item["status"] in {"active", "clear"} for item in alarms)},
@@ -955,7 +991,7 @@ EV_MULTIPLES = frozenset({"ev_ebitda", "ev_ebit", "ev_fcf"})
 ANNUAL_FORMS = ("10-K", "10-K/A")
 # Tags a peer needs for its current multiples; a bounded read instead of its whole history.
 MULTIPLE_TAGS = list(dict.fromkeys(
-    sec.REVENUE_TAGS + sec.NET_INCOME_TAGS + sec.OCF_TAGS + sec.CAPEX_TAGS + sec.OPERATING_INCOME_TAGS
+    sec.REVENUE_TAGS + sec.NET_INCOME_TAGS + sec.OCF_TAGS + CHECKLIST_CAPEX_TAGS + sec.OPERATING_INCOME_TAGS
     + sec.DEPRECIATION_TAGS + sec.LT_DEBT_TAGS + sec.CASH_TAGS + DEBT_CURRENT_TAGS + LT_DEBT_CURRENT_TAGS
     + SHORT_BORROWING_TAGS + SHORT_INVESTMENT_TAGS + sec.SHARES_TAGS + DILUTED_SHARES_TAGS))
 

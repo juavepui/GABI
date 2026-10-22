@@ -73,6 +73,8 @@ class ChecklistSummary(BaseModel):
     failed: int
     evaluated: int
     missing: int
+    with_value: int
+    applicable: int
     score: float | None
     alarms_active: int
     alarms_evaluated: int

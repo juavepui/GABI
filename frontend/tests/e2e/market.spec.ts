@@ -264,6 +264,7 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   const checklist = page.getByRole('table', { name: 'Criterios del checklist' });
   await expect(page.getByText('Checklist fundamental')).toBeVisible();
   await expect(page.getByText('Criterios cumplidos')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Evaluables' })).toBeVisible();
   await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
   // #169: every value declares its source and period; Yahoo's figure is a reference, never mixed in.
   const pe = checklist.getByRole('row', { name: /^PER(?! forward)/ });

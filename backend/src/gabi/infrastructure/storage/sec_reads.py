@@ -104,6 +104,24 @@ class SqliteSecReads:
             frame = frame[frame.unit == unit]
         return frame
 
+    def issuer_facts(self, symbol: str, *, tags: list[str] | None = None, as_of: str | None = None,
+                     unit: str | None = None) -> pd.DataFrame:
+        """Facts of the symbol's SEC entity, whichever alias stored them (#170).
+
+        The sync writes to edgar_facts, under the current symbol, only the rows its entity did
+        not know yet: an issuer whose history was stored under an old ticker or a historical
+        CIK key keeps the rest there. The entity's observations hold the whole history. Without
+        a stored CIK, the symbol's own rows are read."""
+        with self._read() as (db, tables):
+            found = (self._rows(db, "SELECT cik FROM edgar_metrics WHERE symbol=?", (symbol,))
+                     if db is not None and "edgar_metrics" in tables else [])
+        cik = str(found[0][0]).strip() if found and found[0][0] else None
+        if cik and cik.isdigit():
+            frame = self.facts(symbol, entity_id=f"cik:{int(cik):010d}", tags=tags, as_of=as_of, unit=unit)
+            if not frame.empty:
+                return frame.drop(columns=["source_symbol"]).assign(symbol=symbol)
+        return self.facts(symbol, tags=tags, as_of=as_of, unit=unit)
+
     def issuer(self, cik: str, as_of: str) -> pd.DataFrame:
         with self._read() as (db, tables):
             if db is None or "entity_observations" not in tables:

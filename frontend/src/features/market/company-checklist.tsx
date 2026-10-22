@@ -621,11 +621,16 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
         </div>
         <div className="rounded-md border p-3">
           <dt className="text-xs text-muted-foreground">
-            <Hint content="Criterios que no se pueden calcular porque falta algún dato: la SEC no lo declara, es de otro ejercicio o no hay precio. Nunca se rellenan con cero; la nota de cada fila explica el motivo.">
-              Sin dato
+            <Hint content="Criterios con valor sobre los que aplican a esta empresa: indica cuánto del checklist es utilizable aquí. Los demás no tienen dato porque la SEC no lo declara, es de otro ejercicio o no hay precio; nunca se rellenan con cero y la nota de cada fila explica el motivo.">
+              Evaluables
             </Hint>
           </dt>
-          <dd className="text-lg font-semibold">{summary.missing}</dd>
+          <dd className="text-lg font-semibold">
+            {summary.with_value} / {summary.applicable}
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {summary.missing} sin dato
+            </span>
+          </dd>
         </div>
         <div className="rounded-md border p-3">
           <dt className="text-xs text-muted-foreground">

@@ -100,6 +100,9 @@ def test_ratios_match_the_excel_checklist_sheet():
     assert criteria["insiders_pct"]["verdict"] == "missing" and criteria["insiders_pct"]["reason"] == "not_captured"
     assert result["fiscal_year_end"] == "2024-12-31"
     assert result["summary"]["passed"] + result["summary"]["failed"] == result["summary"]["evaluated"]
+    summary = result["summary"]
+    assert summary["applicable"] == len(checklist.RULES)
+    assert summary["with_value"] + summary["missing"] == summary["applicable"]
 
 
 def test_every_criterion_alarm_and_threshold_explains_itself():
@@ -225,7 +228,7 @@ class _Facts:
     def __init__(self, frame):
         self.frame = frame
 
-    def facts(self, symbol, *, entity_id=None, tags=None, as_of=None, unit=None):
+    def issuer_facts(self, symbol, *, tags=None, as_of=None, unit=None):
         return self.frame[self.frame.filed_date <= as_of] if as_of else self.frame
 
     def last_filed(self, symbols, as_of=None):
@@ -440,7 +443,7 @@ class _SectorFacts:
     def __init__(self):
         self.reads, self.filed = [], {"ACME": "2025-02-15"}
 
-    def facts(self, symbol, *, entity_id=None, tags=None, as_of=None, unit=None):
+    def issuer_facts(self, symbol, *, tags=None, as_of=None, unit=None):
         self.reads.append((symbol, tuple(tags or ())))
         frame = _frame(_yearly())
         return frame.assign(symbol=symbol)
@@ -527,3 +530,96 @@ def test_api_get_has_no_side_effects_and_thresholds_are_explicit_commands(api):
     rejected = client.post("/api/v1/checklist/thresholds", json={"values": {"dcf_terminal_growth": 0.5}})
     assert rejected.status_code == 422
     assert client.post("/api/v1/checklist/thresholds/reset").json()["edited"] == []
+
+
+# ------------------------------------------------------------ #170: cobertura de CAPEX e ingresos
+def _capex_company(capex_rows):
+    """The Excel example with its CAPEX replaced by ``capex_rows``."""
+    return [row for row in _excel_example() if row[0] != "PaymentsToAcquirePropertyPlantAndEquipment"] + capex_rows
+
+
+@pytest.mark.parametrize("tag", ["PaymentsToAcquireProductiveAssets", "PaymentsToAcquireOilAndGasPropertyAndEquipment",
+                                 "PaymentsToExploreAndDevelopOilAndGasProperties"])
+def test_each_new_capex_tag_feeds_free_cash_flow(tag):
+    criteria = _by_key(_evaluate(_capex_company([_duration(tag, ANCHOR, 700)])))
+    assert criteria["fcf"]["value"] == pytest.approx(2600 - 700)
+    assert criteria["capex_to_revenue"]["value"] == pytest.approx(0.07)
+    assert tag in checklist.CHECKLIST_TAGS and tag in checklist.MULTIPLE_TAGS
+
+
+def test_partial_capex_lines_are_never_taken_for_capex():
+    partial = [_duration("PaymentsToAcquireOtherPropertyPlantAndEquipment", ANCHOR, 50),
+               _duration("PaymentsForConstructionInProcess", ANCHOR, 400),
+               _duration("PaymentsToAcquireRealEstate", ANCHOR, 900)]
+    criteria = _by_key(_evaluate(_capex_company(partial)))
+    assert criteria["fcf"]["value"] is None and criteria["fcf"]["reason"] == "no_capex"
+
+
+def test_a_tag_change_without_reconciling_years_uses_the_current_tag():
+    # Like AMZN: PP&E purchases until 2016, then total capital expenditure under another tag.
+    old = [_duration("PaymentsToAcquirePropertyPlantAndEquipment", year, 100) for year in range(ANCHOR - 9, ANCHOR - 6)]
+    new = [_duration("PaymentsToAcquireProductiveAssets", year, 600 + year - ANCHOR) for year in range(ANCHOR - 5, ANCHOR + 1)]
+    facts = _facts(old + new)
+    series = checklist.annual_series(facts, checklist.CHECKLIST_CAPEX_TAGS)
+    # Without a reconciling year, the old tag is not bridged either: no mixed series.
+    assert series[f"{ANCHOR - 1}-12-31"] == 600 and min(series) == f"{ANCHOR - 6}-12-31"
+    # The Composite's extractor keeps basing the series on its first tag: its values are unchanged.
+    assert max(dict(checklist.sec._extract_annual_values(facts, checklist.sec.CAPEX_TAGS))) == f"{ANCHOR - 8}-12-31"
+    assert _by_key(_evaluate(_capex_company(old + new)))["fcf"]["value"] == pytest.approx(2600 - 600)
+    # Revenue too: a stale preferred tag no longer anchors the whole Checklist on an old year.
+    revenue = [row for row in _excel_example() if row[0] != "Revenues"]
+    revenue += [_duration("SalesRevenueNet", year, 4000) for year in range(ANCHOR - 12, ANCHOR - 8)]
+    revenue += [_duration("Revenues", ANCHOR - 10, 4500), _duration("Revenues", ANCHOR, 10000)]
+    assert _evaluate(revenue)["fiscal_year_end"] == f"{ANCHOR - 1}-12-31"
+
+
+def test_disagreeing_candidates_are_not_bridged():
+    facts = _facts([_duration("PaymentsToAcquirePropertyPlantAndEquipment", year, 100) for year in (2018, 2019, 2020)]
+                   + [_duration("PaymentsToAcquireProductiveAssets", year, 300) for year in (2020, 2021)])
+    # 2019 overlaps with a different value: only the current tag's years remain.
+    assert checklist.annual_series(facts, checklist.CHECKLIST_CAPEX_TAGS) == {"2019-12-31": 300.0, "2020-12-31": 300.0}
+
+
+def test_issuer_facts_include_rows_stored_under_an_old_ticker(tmp_path):
+    from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+    from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
+
+    def row(tag, year, value, accn):
+        return {"tag": tag, "unit": "USD", "start_date": f"{year}-01-01", "end_date": f"{year}-12-31", "val": value,
+                "form": "10-K", "fp": "FY", "fy": year, "filed_date": f"{year + 1}-02-15", "accn": accn}
+
+    path = tmp_path / "gabi.db"
+    store = SqliteXbrl(path, lambda: pd.Timestamp("2026-01-01").to_pydatetime())
+    store.ensure_entity("0000000042")
+    # The sync writes under the new ticker only the rows its entity did not know (like PSKY → SKYD).
+    store.save("OLD", "0000000042", [row("Revenues", 2023, 10.0, "a1"), row("NetIncomeLoss", 2023, 2.0, "a1")], {})
+    store.save("NEW", "0000000042", [row("Revenues", 2024, 12.0, "a2")], {})
+    reads = SqliteSecReads(path)
+    assert set(reads.facts("NEW").tag) == {"Revenues"}
+    issuer = reads.issuer_facts("NEW", as_of="2025-12-31")
+    assert sorted(zip(issuer.tag, issuer.end_date)) == [("NetIncomeLoss", "2023-12-31"), ("Revenues", "2023-12-31"),
+                                                       ("Revenues", "2024-12-31")]
+    assert set(issuer.symbol) == {"NEW"}
+    assert len(reads.issuer_facts("NEW", as_of="2024-06-30")) == 2  # filed_date <= as_of still applies
+    assert set(reads.issuer_facts("NEW", tags=["NetIncomeLoss"]).tag) == {"NetIncomeLoss"}
+    assert reads.issuer_facts("NONE").empty
+
+
+def test_coverage_audit_counts_evaluable_criteria_and_missing_inputs(tmp_path):
+    from gabi.application.market.checklist_coverage import checklist_coverage
+
+    class _Two(_Facts):
+        def issuer_facts(self, symbol, *, tags=None, as_of=None, unit=None):
+            rows = _excel_example() if symbol == "ACME" else _capex_company([])
+            return _frame(rows).assign(symbol=symbol)
+
+    service = CompanyChecklist(_Two(pd.DataFrame()), _Cache(), _Insiders(), FileChecklistThresholds(tmp_path),
+                               lambda: date(2025, 7, 1))
+    report = checklist_coverage(service, [("ACME", "Information Technology"), ("BETA", "Energy")])
+    assert report["issuers"] == 2 and report["revenue_share"] == 1.0
+    assert [item["symbol"] for item in report["without_capex"]] == ["BETA"]
+    fcf = report["criteria"]["fcf"]
+    assert fcf["applicable"] == 2 and fcf["evaluated"] == 1 and fcf["reasons"] == {"no_capex": 1}
+    assert fcf["by_sector"]["Energy"] == {"applicable": 1, "evaluated": 0, "share": 0.0}
+    assert report["evaluated_per_issuer"]["ACME"] > report["evaluated_per_issuer"]["BETA"]
+    assert not (tmp_path / "checklist_thresholds.json").exists()

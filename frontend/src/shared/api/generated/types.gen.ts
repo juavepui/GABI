@@ -1568,6 +1568,10 @@ export type ChecklistSummary = {
      */
     alarms_evaluated: number;
     /**
+     * Applicable
+     */
+    applicable: number;
+    /**
      * Evaluated
      */
     evaluated: number;
@@ -1587,6 +1591,10 @@ export type ChecklistSummary = {
      * Score
      */
     score: number | null;
+    /**
+     * With Value
+     */
+    with_value: number;
 };
 
 /**

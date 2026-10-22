@@ -3080,6 +3080,10 @@
             "title": "Alarms Evaluated",
             "type": "integer"
           },
+          "applicable": {
+            "title": "Applicable",
+            "type": "integer"
+          },
           "evaluated": {
             "title": "Evaluated",
             "type": "integer"
@@ -3106,6 +3110,10 @@
               }
             ],
             "title": "Score"
+          },
+          "with_value": {
+            "title": "With Value",
+            "type": "integer"
           }
         },
         "required": [
@@ -3113,6 +3121,8 @@
           "failed",
           "evaluated",
           "missing",
+          "with_value",
+          "applicable",
           "score",
           "alarms_active",
           "alarms_evaluated"

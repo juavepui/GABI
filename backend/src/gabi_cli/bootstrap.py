@@ -1,6 +1,7 @@
 """Queue scheduled tasks and run the separate local worker.
 
-Usage: python -m gabi_cli serve [--port N] | worker | schedule daily | schedule tiingo | periodic <options> | research <command>
+Usage: python -m gabi_cli serve [--port N] | worker | schedule daily | schedule tiingo | periodic <options> |
+research <command> | market checklist-coverage [--output FILE]
 """
 
 import argparse
@@ -14,8 +15,11 @@ from datetime import UTC, date, datetime
 from functools import partial
 from pathlib import Path
 
+import pandas as pd
+
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
+from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.research.academic_factors import prepare_factor_snapshot
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.insiders import insider_operation, sec_user_agent
@@ -23,7 +27,11 @@ from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.academic_factors import FileFactorCache
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
+from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
 from gabi.infrastructure.storage.jobs import SqliteJobs
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi_api.bootstrap import create_app, start_warm_thread
 from gabi_cli.sources.bootstrap import (
     build_cik_resolver,
@@ -60,6 +68,20 @@ def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = N
                           sec_sync=build_xbrl_operation(settings, user_agent, now=clock))
 
 
+def build_checklist(settings: Settings) -> CompanyChecklist:
+    """The company page's Checklist over the stored facts; read-only, without the ranking references."""
+    database = settings.data_dir / "gabi.db"
+    return CompanyChecklist(SqliteSecReads(database), SqliteCacheReads(database), SqliteCompanyResearch(settings.data_dir),
+                            FileChecklistThresholds(settings.data_dir), date.today)
+
+
+def checklist_universe(settings: Settings) -> list[tuple[str, str]]:
+    """(symbol, sector) of the current universe, as the ranking reads it."""
+    frame = pd.read_csv(settings.data_dir / "sp500_constituents.csv", usecols=["symbol", "sector"])
+    symbols = frame["symbol"].astype(str).str.strip().str.upper().str.replace(".", "-", regex=False)
+    return list(zip(symbols, frame["sector"].fillna("").astype(str), strict=True))
+
+
 def main() -> None:
     if sys.argv[1:2] == ["periodic"]:
         from gabi.infrastructure.legacy.periodic import build_periodic_tasks
@@ -70,6 +92,12 @@ def main() -> None:
         periodic(build_periodic_tasks(settings.data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
                                       macro_sync=build_fred_operation(settings),
                                       sec_sync=build_xbrl_operation(settings, sec_user_agent())), sys.argv[2:])
+        return
+    if sys.argv[1:2] == ["market"]:
+        from gabi_cli.commands.market import main as market
+
+        settings = Settings.from_environment()
+        market(build_checklist(settings), lambda: checklist_universe(settings), sys.argv[2:])
         return
     if sys.argv[1:2] == ["research"]:
         from gabi_cli.research.bootstrap import main as research
