@@ -209,6 +209,9 @@ class _Facts:
     def facts(self, symbol, *, entity_id=None, tags=None, as_of=None, unit=None):
         return self.frame[self.frame.filed_date <= as_of] if as_of else self.frame
 
+    def last_filed(self, symbols, as_of=None):
+        return {}
+
 
 class _Cache:
     def latest_adjusted(self, symbols):
@@ -216,6 +219,9 @@ class _Cache:
 
     def split_ratios_after(self, symbol, as_of):
         return []
+
+    def last_price(self, symbol, as_of):
+        return (80.0, 79.0)
 
     def fundamentals(self, symbols):
         return [("ACME", "2025-06-30T08:00:00+00:00", json.dumps({"forwardEps": 3.4, "beta": 0.9, "heldPercentInsiders": 0.15,
@@ -257,6 +263,99 @@ def test_use_case_reads_known_filings_and_persists_only_edits(tmp_path):
     assert recovered["warning"] == "invalid_saved_thresholds" and recovered["values"]["pe"] == 18
 
 
+def _yearly(years=range(ANCHOR - 4, ANCHOR + 1)):
+    """Five fiscal years with net income 100·k, EBIT 150·k, D&A 50, CFO 120·k, CAPEX 20, debt 300, cash 100."""
+    rows = []
+    for k, year in enumerate(years, start=1):
+        rows += [_duration("Revenues", year, 1000 * k), _duration("NetIncomeLoss", year, 100 * k),
+                 _duration("OperatingIncomeLoss", year, 150 * k),
+                 _duration("DepreciationDepletionAndAmortization", year, 50),
+                 _duration("NetCashProvidedByUsedInOperatingActivities", year, 120 * k),
+                 _duration("PaymentsToAcquirePropertyPlantAndEquipment", year, 20),
+                 _instant("LongTermDebt", year, 300), _instant("ShortTermBorrowings", year, 0),
+                 _instant("CashAndCashEquivalentsAtCarryingValue", year, 100),
+                 _instant("ShortTermInvestments", year, 0),
+                 _instant("CommonStockSharesOutstanding", year, 10, "shares")]
+    return rows
+
+
+def test_own_multiples_use_each_year_end_close_and_split_adjusted_shares():
+    closes = {f"{year}-12-31": 10.0 * (year - 2019) for year in range(2020, 2025)}
+    splits = {"2020-12-31": 2.0}  # a 2:1 split after 2020: those 10 shares are 20 in today's basis
+    history = checklist.multiples_history(_facts(_yearly()), close_on=closes.get,
+                                          split_factor_after=lambda day: splits.get(day, 1.0), financial=False)
+    years = {row["fiscal_year_end"]: row for row in history["by_year"]}
+    assert list(years) == [f"{year}-12-31" for year in range(2024, 2019, -1)]
+    first = years["2020-12-31"]
+    assert first["market_cap"] == pytest.approx(10 * 10 * 2.0) and first["pe"] == pytest.approx(200 / 100)
+    assert first["ev_ebitda"] == pytest.approx((200 + 200) / 200)
+    assert first["ev_ebit"] == pytest.approx(400 / 150) and first["ev_fcf"] == pytest.approx(400 / 100)
+    last = years["2024-12-31"]
+    assert last["pe"] == pytest.approx(50 * 10 / 500)
+    pes = sorted(row["pe"] for row in years.values())
+    assert history["median"]["pe"] == {"median": pytest.approx(pes[2]), "count": 5, "reason": None}
+    # The latest year agrees with the criterion computed at that close.
+    market = checklist.MarketInputs(price=50.0, shares=10)
+    criteria = _by_key(_evaluate(_yearly(), market))
+    for key in checklist.MULTIPLE_KEYS:
+        assert criteria[key]["value"] == pytest.approx(last[key]), key
+
+
+def test_own_multiples_need_three_years_and_skip_ev_for_financials():
+    closes = {"2024-12-31": 50.0, "2023-12-31": 40.0}  # no price before 2023: unknown, not zero
+    history = checklist.multiples_history(_facts(_yearly()), close_on=closes.get,
+                                          split_factor_after=lambda day: 1.0, financial=False)
+    assert [row["market_cap"] is None for row in history["by_year"]] == [False, False, True, True, True]
+    assert history["median"]["pe"] == {"median": None, "count": 2, "reason": "fewer_than_3_years"}
+    financial = checklist.multiples_history(_facts(_yearly()), close_on=lambda day: 30.0,
+                                            split_factor_after=lambda day: 1.0, financial=True)
+    assert financial["median"]["pe"]["count"] == 5
+    assert financial["median"]["ev_ebitda"] == {"median": None, "count": 0, "reason": "financial_sector"}
+    loss = [row for row in _yearly() if row[0] != "NetIncomeLoss"] + [_duration("NetIncomeLoss", ANCHOR, -5)]
+    years = checklist.multiples_history(_facts(loss), close_on=lambda day: 30.0,
+                                        split_factor_after=lambda day: 1.0, financial=False)["by_year"]
+    assert years[0]["pe"] is None and years[0]["ev_ebit"] is not None
+
+
+class _SectorFacts:
+    def __init__(self):
+        self.reads, self.filed = [], {"ACME": "2025-02-15"}
+
+    def facts(self, symbol, *, entity_id=None, tags=None, as_of=None, unit=None):
+        self.reads.append((symbol, tuple(tags or ())))
+        frame = _frame(_yearly())
+        return frame.assign(symbol=symbol)
+
+    def last_filed(self, symbols, as_of=None):
+        return {symbol: self.filed.get(symbol, "2025-02-15") for symbol in symbols}
+
+
+class _SectorCache(_Cache):
+    def latest_adjusted(self, symbols):
+        return {symbol: ("2025-06-30", 10.0 + index, 10.0) for index, symbol in enumerate(sorted(symbols))}
+
+
+def test_sector_medians_exclude_the_company_and_reuse_the_sector_until_data_changes(tmp_path):
+    universe = [("ACME", "Technology")] + [(f"P{index}", "Technology") for index in range(6)] + [("BANK", "Financials")]
+    reads = _SectorFacts()
+    service = CompanyChecklist(reads, _SectorCache(), _Insiders(), FileChecklistThresholds(tmp_path),
+                               lambda: date(2025, 7, 1), lambda: universe)
+    body = service.sector_multiples("acme")
+    # Peers P0…P5 cost 11…16 per share with 10 shares and 500 of net income: PER 0.22…0.32.
+    assert body["sector"] == "Technology" and body["peers"] == 6 and not body["cached"]
+    assert body["medians"]["pe"] == {"median": pytest.approx((13.5 * 10) / 500), "count": 6, "reason": None}
+    assert all(tags == tuple(checklist.MULTIPLE_TAGS) for _, tags in reads.reads)
+    assert len(reads.reads) == 7 and not (tmp_path / "checklist_thresholds.json").exists()
+    other = service.sector_multiples("P0")
+    assert other["cached"] and len(reads.reads) == 7 and other["peers"] == 6
+    reads.filed["P3"] = "2025-06-01"  # a new filing changes the key: recomputed, never stale
+    assert not service.sector_multiples("ACME")["cached"] and len(reads.reads) == 14
+    few = service.sector_multiples("BANK")
+    assert few["peers"] == 0 and few["medians"]["pe"]["reason"] == "fewer_than_5_peers"
+    assert few["medians"]["ev_fcf"]["reason"] == "financial_sector"
+    assert service.sector_multiples("NOPE")["reason"] == "not_in_universe"
+
+
 @pytest.fixture
 def api():
     root = config.DATA_DIR
@@ -279,6 +378,11 @@ def test_api_get_has_no_side_effects_and_thresholds_are_explicit_commands(api):
     assert body["symbol"] == "T001" and body["fiscal_year_end"] == "2024-12-31"
     criteria = {item["key"]: item for item in body["criteria"]}
     assert criteria["gross_margin"]["value"] == pytest.approx(0.55) and criteria["pe"]["value"] is not None
+    assert body["multiples_history"]["by_year"][0]["fiscal_year_end"] == "2024-12-31"
+    sector = client.get("/api/v1/companies/T001/checklist/sector").json()
+    assert sector["sector"] == "Information Technology" and sector["peers"] > 0
+    assert set(sector["medians"]) == set(checklist.MULTIPLE_KEYS)
+    assert client.get("/api/v1/companies/T001/checklist/sector").json()["cached"]
     assert (root / "gabi.db").read_bytes() == before
     assert not (root / "checklist_thresholds.json").exists()
     empty = client.get("/api/v1/companies/T002/checklist").json()

@@ -90,6 +90,7 @@ import type {
   CompanyResearchResponse,
   CompanyFilingChanges,
   CompanyChecklistResponse,
+  ChecklistSectorMultiples,
   ChecklistThresholds,
   ChecklistThresholdsRequest,
 } from './generated/types.gen';
@@ -422,6 +423,12 @@ export function getCompanyChecklist(
   signal?: AbortSignal,
 ): Promise<CompanyChecklistResponse> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/checklist', signal);
+}
+export function getCompanyChecklistSector(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<ChecklistSectorMultiples> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/checklist/sector', signal);
 }
 export function getChecklistThresholds(signal?: AbortSignal): Promise<ChecklistThresholds> {
   return get('/api/v1/checklist/thresholds', signal);

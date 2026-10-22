@@ -269,6 +269,14 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   await expect(page.getByRole('list', { name: 'Señales de alarma' })).toContainText(
     'Revisión manual',
   );
+  await page.getByText('Múltiplos frente a su historia y su sector').click();
+  const multiples = page.getByRole('table', { name: 'Múltiplos frente a su historia y su sector' });
+  // The e2e fixture has no SEC facts: medians are explained, never shown as zero.
+  await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText('Pocos pares con dato');
+  await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
+    'Histórico insuficiente',
+  );
+  await expect(page.getByText('Sector: Information Technology')).toBeVisible();
   await page.getByText('Editar umbrales').click();
   await page.getByLabel('Umbral: PER', { exact: true }).fill('25');
   await page.getByRole('button', { name: 'Guardar umbrales' }).click();

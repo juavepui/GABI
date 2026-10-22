@@ -86,4 +86,25 @@ validadas.
 - **F3** (hecho): el refresco de fundamentales de Yahoo guarda también
   `heldPercentInsiders` (`EXTRA_INFO_KEYS` en `infrastructure/legacy/data_fetch.py`,
   porque `config.INFO_KEYS` está congelado). Aparece tras el siguiente refresco.
-- **F4**: comparación de múltiplos con la mediana histórica propia y la sectorial.
+- **F4** (hecho): sección «Múltiplos frente a su historia y su sector» de la ficha,
+  para PER, EV/EBITDA, EV/EBIT y EV/FCF, con las mismas fórmulas SEC de los criterios.
+  - **Mediana propia**: últimos 5 ejercicios. Cada uno usa el cierre de la caché en
+    su fecha de cierre fiscal (o el anterior), las acciones SEC más cercanas
+    (±120 días) llevadas a la base de splits actual y las cifras de ese ejercicio
+    conocidas hoy (reexpresiones incluidas). Hacen falta 3 ejercicios con valor; si
+    falta el precio de un año, ese año queda sin dato.
+  - **Mediana del sector**: las demás empresas del mismo sector del universo actual
+    (`sp500_constituents.csv`, como el ranking). Hacen falta 5 pares con valor. Se
+    sirve en `GET /api/v1/companies/{symbol}/checklist/sector`, que la ficha solo
+    pide al abrir la sección. Lee solo `MULTIPLE_TAGS` de cada par.
+  - **Caché**: el resultado del sector se guarda en memoria del proceso (16
+    sectores como máximo), con una clave formada por la fecha y por el último
+    filing y el último precio de cada miembro. Una sincronización cambia la clave,
+    así que nunca se sirve una mediana desactualizada. No se escribe nada.
+  - **Medición** (lectura sobre la base real, 22-10-2026):
+    - ficha con historia propia: 115–146 ms;
+    - sector (unas 75 empresas): 3,1–3,7 s la primera vez y unos 60 ms desde la
+      caché, compartida por todas las empresas del sector.
+  - **Sector financiero**: los múltiplos sobre EV no aplican.
+  - **Lectura**: que un múltiplo quede por debajo de su referencia no significa que
+    la empresa esté barata. También puede reflejar peores perspectivas.

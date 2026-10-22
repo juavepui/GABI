@@ -1347,6 +1347,82 @@ export type ChecklistDcf = {
 };
 
 /**
+ * ChecklistMedian
+ */
+export type ChecklistMedian = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+};
+
+/**
+ * ChecklistMultiplesHistory
+ */
+export type ChecklistMultiplesHistory = {
+    /**
+     * By Year
+     */
+    by_year: Array<ChecklistMultiplesYear>;
+    /**
+     * Median
+     */
+    median: {
+        [key: string]: ChecklistMedian;
+    };
+    /**
+     * Years
+     */
+    years: number;
+};
+
+/**
+ * ChecklistMultiplesYear
+ */
+export type ChecklistMultiplesYear = {
+    /**
+     * Ev Ebit
+     */
+    ev_ebit: number | null;
+    /**
+     * Ev Ebitda
+     */
+    ev_ebitda: number | null;
+    /**
+     * Ev Fcf
+     */
+    ev_fcf: number | null;
+    /**
+     * Fiscal Year End
+     */
+    fiscal_year_end: string;
+    /**
+     * Market Cap
+     */
+    market_cap: number | null;
+    /**
+     * Pe
+     */
+    pe: number | null;
+    /**
+     * Price
+     */
+    price: number | null;
+    /**
+     * Shares Date
+     */
+    shares_date: string | null;
+};
+
+/**
  * ChecklistQualitative
  */
 export type ChecklistQualitative = {
@@ -1362,6 +1438,42 @@ export type ChecklistQualitative = {
      * Label
      */
     label: string;
+};
+
+/**
+ * ChecklistSectorMultiples
+ */
+export type ChecklistSectorMultiples = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Cached
+     */
+    cached: boolean;
+    /**
+     * Medians
+     */
+    medians: {
+        [key: string]: ChecklistMedian;
+    };
+    /**
+     * Peers
+     */
+    peers: number;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
 };
 
 /**
@@ -1527,6 +1639,7 @@ export type CompanyChecklistResponse = {
      * Fiscal Year End
      */
     fiscal_year_end: string | null;
+    multiples_history: ChecklistMultiplesHistory;
     /**
      * Qualitative
      */
@@ -8059,6 +8172,56 @@ export type CompanyChecklistApiV1CompaniesSymbolChecklistGetResponses = {
 };
 
 export type CompanyChecklistApiV1CompaniesSymbolChecklistGetResponse = CompanyChecklistApiV1CompaniesSymbolChecklistGetResponses[keyof CompanyChecklistApiV1CompaniesSymbolChecklistGetResponses];
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/checklist/sector';
+};
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetError = CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetErrors[keyof CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetErrors];
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChecklistSectorMultiples;
+};
+
+export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponse = CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses[keyof CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses];
 
 export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetData = {
     body?: never;

@@ -75,6 +75,39 @@ class ChecklistQualitative(BaseModel):
     hint: str
 
 
+class ChecklistMedian(BaseModel):
+    median: float | None
+    count: int
+    reason: str | None
+
+
+class ChecklistMultiplesYear(BaseModel):
+    fiscal_year_end: str
+    price: float | None
+    shares_date: str | None
+    market_cap: float | None
+    pe: float | None
+    ev_ebitda: float | None
+    ev_ebit: float | None
+    ev_fcf: float | None
+
+
+class ChecklistMultiplesHistory(BaseModel):
+    years: int
+    by_year: list[ChecklistMultiplesYear]
+    median: dict[str, ChecklistMedian]
+
+
+class ChecklistSectorMultiples(BaseModel):
+    symbol: str
+    as_of: str
+    sector: str | None
+    peers: int
+    reason: str | None
+    cached: bool
+    medians: dict[str, ChecklistMedian]
+
+
 class CompanyChecklistResponse(BaseModel):
     symbol: str
     as_of: str
@@ -89,6 +122,7 @@ class CompanyChecklistResponse(BaseModel):
     alarms: list[ChecklistAlarm]
     dcf: ChecklistDcf
     qualitative: list[ChecklistQualitative]
+    multiples_history: ChecklistMultiplesHistory
 
 
 class ChecklistThreshold(BaseModel):

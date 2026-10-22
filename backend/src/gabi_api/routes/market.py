@@ -11,7 +11,12 @@ from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.comparison import positions
 from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
-from gabi_api.schemas.checklist import ChecklistThresholds, ChecklistThresholdsRequest, CompanyChecklistResponse
+from gabi_api.schemas.checklist import (
+    ChecklistSectorMultiples,
+    ChecklistThresholds,
+    ChecklistThresholdsRequest,
+    CompanyChecklistResponse,
+)
 from gabi_api.schemas.evidence import (
     CompanyEvidence,
     CompanyFilingChanges,
@@ -87,6 +92,11 @@ Checklist = Annotated[CompanyChecklist, Depends(checklist_service)]
 @router.get("/companies/{symbol}/checklist", response_model=CompanyChecklistResponse)
 def company_checklist(symbol: SymbolPath, query: Checklist) -> dict:
     return query.company(symbol)
+
+
+@router.get("/companies/{symbol}/checklist/sector", response_model=ChecklistSectorMultiples)
+def company_checklist_sector(symbol: SymbolPath, query: Checklist) -> dict:
+    return query.sector_multiples(symbol)
 
 
 @router.get("/checklist/thresholds", response_model=ChecklistThresholds)

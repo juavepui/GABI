@@ -300,9 +300,9 @@ class _Facts:
         revenue, cost = self.at("revenue", years_back), self.at("cost_of_revenue", years_back)
         return revenue - cost if revenue is not None and cost is not None else None
 
-    def total_debt(self) -> tuple[float | None, list[str], str | None]:
+    def total_debt(self, years_back: int = 0) -> tuple[float | None, list[str], str | None]:
         """Long-term + current debt at the anchor; components never reported are listed, not zero-filled."""
-        lt = self.at("lt_debt")
+        lt = self.at("lt_debt", years_back)
         if lt is None:
             return None, [], self.reason("lt_debt") if self.series["lt_debt"] else "no_debt_reported"
         missing: list[str] = []
@@ -311,18 +311,18 @@ class _Facts:
         parts = ["short_borrowings"] if self.tags["lt_debt"] == "LongTermDebt" else (
             ["debt_current"] if self.series["debt_current"] else ["lt_debt_current", "short_borrowings"])
         for part in parts:
-            value = self.at(part)
+            value = self.at(part, years_back)
             if value is None:
                 missing.append(part)
             else:
                 current += value
         return lt + current, missing, None
 
-    def liquidity(self) -> tuple[float | None, list[str], str | None]:
-        cash = self.at("cash")
+    def liquidity(self, years_back: int = 0) -> tuple[float | None, list[str], str | None]:
+        cash = self.at("cash", years_back)
         if cash is None:
             return None, [], self.reason("cash")
-        investments = self.at("short_investments")
+        investments = self.at("short_investments", years_back)
         return cash + (investments or 0.0), [] if investments is not None else ["short_investments"], None
 
 
@@ -736,3 +736,107 @@ def _dcf(market: MarketInputs, fcf: float | None, values: dict, thresholds: dict
     else:
         verdict = "reasonable" if growth <= reference else "demanding"
     return result | {"implied_growth": growth, "verdict": verdict, "reason": reason}
+
+
+# ------------------------------------------- múltiplos frente a historia y sector
+MULTIPLE_KEYS = ("pe", "ev_ebitda", "ev_ebit", "ev_fcf")
+MULTIPLE_YEARS = 5
+MIN_HISTORY_VALUES = 3
+MIN_SECTOR_PEERS = 5
+EV_MULTIPLES = frozenset({"ev_ebitda", "ev_ebit", "ev_fcf"})
+# Tags a peer needs for its current multiples; a bounded read instead of its whole history.
+MULTIPLE_TAGS = list(dict.fromkeys(
+    sec.REVENUE_TAGS + sec.NET_INCOME_TAGS + sec.OCF_TAGS + sec.CAPEX_TAGS + sec.OPERATING_INCOME_TAGS
+    + sec.DEPRECIATION_TAGS + sec.LT_DEBT_TAGS + sec.CASH_TAGS + DEBT_CURRENT_TAGS + LT_DEBT_CURRENT_TAGS
+    + SHORT_BORROWING_TAGS + SHORT_INVESTMENT_TAGS + sec.SHARES_TAGS))
+
+
+def _multiples(data: _Facts, market_cap: float | None, years_back: int = 0) -> dict[str, float | None]:
+    """PER and EV multiples of one fiscal year, with the same formulas as the checklist criteria."""
+    empty: dict[str, float | None] = dict.fromkeys(MULTIPLE_KEYS)
+    if market_cap is None or market_cap <= 0:
+        return empty
+    net_income = data.at("net_income", years_back)
+    operating_income, depreciation = data.at("operating_income", years_back), data.at("depreciation", years_back)
+    ocf, capex = data.at("ocf", years_back), data.at("capex", years_back)
+    debt, liquid = data.total_debt(years_back)[0], data.liquidity(years_back)[0]
+    enterprise = market_cap + debt - liquid if debt is not None and liquid is not None else None
+    ebitda = operating_income + depreciation if operating_income is not None and depreciation is not None else None
+    fcf = ocf - abs(capex) if ocf is not None and capex is not None else None
+    result = dict(empty)
+    result["pe"] = _ratio(market_cap, net_income) if net_income is not None and net_income > 0 else None
+    for key, denominator in (("ev_ebitda", ebitda), ("ev_ebit", operating_income), ("ev_fcf", fcf)):
+        if enterprise is not None and denominator is not None and denominator > 0:
+            result[key] = enterprise / denominator
+    return result
+
+
+def _median(values: list[float]) -> float | None:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if not ordered:
+        return None
+    return ordered[middle] if len(ordered) % 2 else (ordered[middle - 1] + ordered[middle]) / 2
+
+
+def _year_end(data: _Facts, years_back: int) -> str | None:
+    """Actual fiscal year end reported near the anchor minus ``years_back`` years."""
+    if data.anchor is None:
+        return None
+    series = data.series["revenue"] or data.series["net_income"]
+    target = _years_before(data.anchor, years_back) if years_back else _day(data.anchor)
+    close = [(abs((_day(end) - target).days), end) for end in series
+             if abs((_day(end) - target).days) <= TOLERANCE_DAYS]
+    return min(close)[1] if close else None
+
+
+def current_multiples(facts: dict, price: float | None, shares: float | None) -> dict[str, float | None]:
+    """Latest fiscal year multiples at today's price, for sector peers."""
+    return _multiples(_Facts(facts), price * shares if price and shares else None)
+
+
+def multiples_history(facts: dict, *, close_on: Callable[[str], float | None],
+                      split_factor_after: Callable[[str], float], financial: bool) -> dict:
+    """Own multiples over the last fiscal years, each at its year-end close and shares.
+
+    Prices are in today's split basis, so shares are moved to it with the splits after their date.
+    Figures of each year are those known today (later restatements included)."""
+    data, shares = _Facts(facts), shares_series(facts)
+    years, multiples = [], []
+    for back in range(MULTIPLE_YEARS):
+        end = _year_end(data, back)
+        if end is None:
+            continue
+        near = [(abs((_day(day) - _day(end)).days), day) for day in shares
+                if abs((_day(day) - _day(end)).days) <= SHARES_TOLERANCE_DAYS]
+        price = close_on(end)
+        share_day = min(near)[1] if near else None
+        market_cap = (price * shares[share_day] * split_factor_after(share_day)
+                      if price and price > 0 and share_day else None)
+        multiples.append(_multiples(data, market_cap, back))
+        years.append({"fiscal_year_end": end, "price": price, "shares_date": share_day, "market_cap": market_cap,
+                      **multiples[-1]})
+    summary: dict[str, dict] = {}
+    for key in MULTIPLE_KEYS:
+        values = [value for row in multiples if (value := row[key]) is not None]
+        if financial and key in EV_MULTIPLES:
+            summary[key] = {"median": None, "count": 0, "reason": "financial_sector"}
+        elif len(values) < MIN_HISTORY_VALUES:
+            summary[key] = {"median": None, "count": len(values), "reason": f"fewer_than_{MIN_HISTORY_VALUES}_years"}
+        else:
+            summary[key] = {"median": _median(values), "count": len(values), "reason": None}
+    return {"years": MULTIPLE_YEARS, "by_year": years, "median": summary}
+
+
+def sector_medians(peers: dict[str, dict[str, float | None]], *, financial: bool) -> dict:
+    """Median of each multiple across sector peers with a value; too few peers leave it absent."""
+    result: dict[str, dict] = {}
+    for key in MULTIPLE_KEYS:
+        values = [float(value) for row in peers.values() if (value := row.get(key)) is not None]
+        if financial and key in EV_MULTIPLES:
+            result[key] = {"median": None, "count": 0, "reason": "financial_sector"}
+        elif len(values) < MIN_SECTOR_PEERS:
+            result[key] = {"median": None, "count": len(values), "reason": f"fewer_than_{MIN_SECTOR_PEERS}_peers"}
+        else:
+            result[key] = {"median": _median(values), "count": len(values), "reason": None}
+    return result

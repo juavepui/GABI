@@ -2628,6 +2628,169 @@
         "title": "ChecklistDcf",
         "type": "object"
       },
+      "ChecklistMedian": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "median",
+          "count",
+          "reason"
+        ],
+        "title": "ChecklistMedian",
+        "type": "object"
+      },
+      "ChecklistMultiplesHistory": {
+        "properties": {
+          "by_year": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistMultiplesYear"
+            },
+            "title": "By Year",
+            "type": "array"
+          },
+          "median": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ChecklistMedian"
+            },
+            "title": "Median",
+            "type": "object"
+          },
+          "years": {
+            "title": "Years",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "years",
+          "by_year",
+          "median"
+        ],
+        "title": "ChecklistMultiplesHistory",
+        "type": "object"
+      },
+      "ChecklistMultiplesYear": {
+        "properties": {
+          "ev_ebit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ev Ebit"
+          },
+          "ev_ebitda": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ev Ebitda"
+          },
+          "ev_fcf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ev Fcf"
+          },
+          "fiscal_year_end": {
+            "title": "Fiscal Year End",
+            "type": "string"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "pe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pe"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "shares_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares Date"
+          }
+        },
+        "required": [
+          "fiscal_year_end",
+          "price",
+          "shares_date",
+          "market_cap",
+          "pe",
+          "ev_ebitda",
+          "ev_ebit",
+          "ev_fcf"
+        ],
+        "title": "ChecklistMultiplesYear",
+        "type": "object"
+      },
       "ChecklistQualitative": {
         "properties": {
           "hint": {
@@ -2649,6 +2812,66 @@
           "hint"
         ],
         "title": "ChecklistQualitative",
+        "type": "object"
+      },
+      "ChecklistSectorMultiples": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "medians": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ChecklistMedian"
+            },
+            "title": "Medians",
+            "type": "object"
+          },
+          "peers": {
+            "title": "Peers",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "as_of",
+          "sector",
+          "peers",
+          "reason",
+          "cached",
+          "medians"
+        ],
+        "title": "ChecklistSectorMultiples",
         "type": "object"
       },
       "ChecklistSources": {
@@ -2926,6 +3149,9 @@
             ],
             "title": "Fiscal Year End"
           },
+          "multiples_history": {
+            "$ref": "#/components/schemas/ChecklistMultiplesHistory"
+          },
           "qualitative": {
             "items": {
               "$ref": "#/components/schemas/ChecklistQualitative"
@@ -2983,7 +3209,8 @@
           "criteria",
           "alarms",
           "dcf",
-          "qualitative"
+          "qualitative",
+          "multiples_history"
         ],
         "title": "CompanyChecklistResponse",
         "type": "object"
@@ -15316,6 +15543,101 @@
           }
         },
         "summary": "Company Checklist",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/checklist/sector": {
+      "get": {
+        "operationId": "company_checklist_sector_api_v1_companies__symbol__checklist_sector_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistSectorMultiples"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Checklist Sector",
         "tags": [
           "market"
         ]

@@ -187,7 +187,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         LegacyCompanyMath(), today)
     app.state.company_checklist = CompanyChecklist(
         SqliteSecReads(settings.data_dir / "gabi.db"), SqliteCacheReads(settings.data_dir / "gabi.db"),
-        SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today)
+        SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,
+        lambda: [(row.symbol, row.sector) for row in repository.universe(
+            repository.small_file("sp500_constituents.csv")).itertuples(index=False)])
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)

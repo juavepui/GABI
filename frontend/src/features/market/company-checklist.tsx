@@ -4,12 +4,14 @@ import { ListChecks } from 'lucide-react';
 import {
   getChecklistThresholds,
   getCompanyChecklist,
+  getCompanyChecklistSector,
   resetChecklistThresholds,
   saveChecklistThresholds,
 } from '@/shared/api/client';
 import type {
   ChecklistAlarm,
   ChecklistCriterion,
+  ChecklistMedian,
   ChecklistThreshold,
   CompanyChecklistResponse,
 } from '@/shared/api/generated/types.gen';
@@ -87,6 +89,7 @@ const REASONS: Record<string, string> = {
   above_search_range: 'El precio descuenta un crecimiento superior al 100 %',
   gaap_ebitda: 'GABI calcula el EBITDA con cifras GAAP; el EV/EBITDA del ranking es el de Yahoo',
   invalid_saved_thresholds: 'Los umbrales guardados no son válidos; se usan los del Excel',
+  not_in_universe: 'La empresa no está en el universo actual',
 };
 
 function reasonText(reason: string | null | undefined): string {
@@ -96,6 +99,7 @@ function reasonText(reason: string | null | undefined): string {
   if (stale) return `Dato de ${CONCEPTS[stale[1]] ?? stale[1]} de otro ejercicio`;
   const absent = /^no_(.+)$/.exec(reason);
   if (absent) return `Sin dato SEC de ${CONCEPTS[absent[1]] ?? absent[1]}`;
+  if (/^fewer_than_\d+_peers$/.test(reason)) return 'Pocos pares con dato';
   if (/^(fewer_than|no_shares|no_margin)/.test(reason)) return 'Histórico insuficiente';
   return reason;
 }
@@ -202,6 +206,102 @@ function Alarms({ alarms }: { alarms: ChecklistAlarm[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+type Multiple = 'pe' | 'ev_ebitda' | 'ev_ebit' | 'ev_fcf';
+
+const MULTIPLES: [Multiple, string][] = [
+  ['pe', 'PER'],
+  ['ev_ebitda', 'EV/EBITDA'],
+  ['ev_ebit', 'EV/EBIT'],
+  ['ev_fcf', 'EV/FCF'],
+];
+
+function median(item: ChecklistMedian | undefined, what: string): string {
+  if (!item) return '—';
+  if (item.median == null) return reasonText(item.reason) || '—';
+  return `${show(item.median, 'ratio')} (${item.count} ${what})`;
+}
+
+function Multiples({ data }: { data: CompanyChecklistResponse }) {
+  const sector = useQuery({
+    queryKey: ['market', 'checklist', data.symbol, 'sector'],
+    queryFn: ({ signal }) => getCompanyChecklistSector(data.symbol, signal),
+  });
+  const current = Object.fromEntries(data.criteria.map((item) => [item.key, item.value]));
+  const history = data.multiples_history;
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Compara los múltiplos actuales con la mediana de la propia empresa en sus últimos{' '}
+        {history.years} ejercicios (precio al cierre de cada ejercicio y cifras de ese 10-K) y con
+        la mediana de las demás empresas de su sector en el universo actual, con las mismas fórmulas
+        SEC. Que un múltiplo esté por debajo de su referencia no implica que la empresa esté barata:
+        también puede reflejar peores perspectivas.
+      </p>
+      <div className="overflow-x-auto" role="region" aria-label="Tabla de múltiplos" tabIndex={0}>
+        <table
+          className="w-full text-left text-xs"
+          aria-label="Múltiplos frente a su historia y su sector"
+        >
+          <thead>
+            <tr className="border-b">
+              {[
+                'Múltiplo',
+                'Actual',
+                `Mediana propia (${history.years} años)`,
+                'Mediana del sector',
+              ].map((title) => (
+                <th key={title} className="py-1.5 pr-3 font-medium">
+                  {title}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {MULTIPLES.map(([key, label]) => (
+              <tr key={key} className="border-b last:border-0">
+                <th scope="row" className="py-1.5 pr-3 font-normal">
+                  {label}
+                </th>
+                <td className="py-1.5 pr-3 tabular-nums">{show(current[key], 'ratio')}</td>
+                <td className="py-1.5 pr-3 tabular-nums">{median(history.median[key], 'años')}</td>
+                <td className="py-1.5 pr-3 tabular-nums">
+                  {sector.isPending
+                    ? 'Calculando…'
+                    : sector.isError
+                      ? 'No disponible'
+                      : median(sector.data.medians[key], 'pares')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {sector.isError && <ErrorState error={sector.error} retry={() => void sector.refetch()} />}
+      {sector.data && (
+        <p className="text-xs text-muted-foreground">
+          Sector: {sector.data.sector ?? '—'}
+          {sector.data.reason
+            ? ` · ${reasonText(sector.data.reason)}`
+            : ` · ${sector.data.peers} pares`}
+        </p>
+      )}
+      <ul className="space-y-1 text-xs" aria-label="Múltiplos por ejercicio">
+        {history.by_year.map((year) => (
+          <li
+            key={year.fiscal_year_end}
+            className="flex flex-wrap justify-between gap-2 border-b py-1"
+          >
+            <span className="text-muted-foreground">{dateLabel(year.fiscal_year_end)}</span>
+            <span className="tabular-nums">
+              {MULTIPLES.map(([key, label]) => `${label} ${show(year[key], 'ratio')}`).join(' · ')}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -420,6 +520,12 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
       <Criteria criteria={data.criteria} />
       <Folded title="Señales de alarma" className="rounded-md border p-3 text-sm">
         <Alarms alarms={data.alarms} />
+      </Folded>
+      <Folded
+        title="Múltiplos frente a su historia y su sector"
+        className="rounded-md border p-3 text-sm"
+      >
+        <Multiples data={data} />
       </Folded>
       <Folded
         title="DCF inverso: ¿qué crecimiento descuenta el precio?"
