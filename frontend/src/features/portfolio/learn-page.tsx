@@ -284,11 +284,16 @@ function HowGabiThinks() {
       <Heading>4. Score, cobertura y confianza de evidencia</Heading>
       <p>
         <strong>Score</strong> resume la posición relativa según las métricas.{' '}
-        <strong>Cobertura ponderada</strong> (antes Confidence) mide cuántos datos hay disponibles y
-        cuánto pesan. <strong>Confianza de evidencia</strong> (BAJA/MEDIA/ALTA) evalúa el respaldo
-        estadístico, la estabilidad y la calidad con reglas conservadoras. Una empresa puede tener
-        score alto, datos completos y confianza BAJA si sus factores no están confirmados. Ninguno
-        de estos valores es una probabilidad de subir en el futuro.
+        <strong>Métricas disponibles</strong> cuenta cuántas de las 13 métricas puntuables tienen
+        dato (10 de 13 = 76,9 %); la cartera objetivo exige al menos un 70 %.{' '}
+        <strong>Cobertura ponderada</strong> (antes Confidence) mide lo mismo pesando cada métrica
+        según su bloque, en puntos de 0 a 100, por eso las dos cifras no coinciden.{' '}
+        <strong>Cobertura del universo por bloque</strong> no habla de una empresa: dice qué parte
+        del ranking tiene todas las métricas de cada bloque. <strong>Confianza de evidencia</strong>{' '}
+        (BAJA/MEDIA/ALTA) evalúa el respaldo estadístico, la estabilidad y la calidad con reglas
+        conservadoras. Una empresa puede tener score alto, datos completos y confianza BAJA si sus
+        factores no están confirmados. Ninguno de estos valores es una probabilidad de subir en el
+        futuro.
       </p>
       <Note>
         En Mercado, Cartera y la ficha de cada empresa puedes consultar la confianza, la

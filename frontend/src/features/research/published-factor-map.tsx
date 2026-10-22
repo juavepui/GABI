@@ -161,7 +161,7 @@ export function PublishedFactorMap() {
                   <th>Estrato</th>
                   <th>Elegibles</th>
                   <th>Clasificadas</th>
-                  <th>Cobertura</th>
+                  <th>Clasificadas (%)</th>
                 </tr>
               </thead>
               <tbody>

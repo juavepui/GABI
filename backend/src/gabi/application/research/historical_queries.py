@@ -109,7 +109,7 @@ TABLE_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("capex_to_ocf", "CAPEX / flujo operativo (%)", "fraction"),
     ("acquisitions_latest", "Adquisiciones último año", "USD"),
     ("capital_allocation_coverage", "Cobertura asignación", "text"), ("metrics_available", "Datos", "count"),
-    ("metrics_possible", "Datos posibles", "count"), ("score_coverage", "Cobertura %", "fraction"),
+    ("metrics_possible", "Datos posibles", "count"), ("score_coverage", "Métricas disponibles", "fraction"),
     ("value_score", "Value", "points_0_100"), ("quality_score", "Quality", "points_0_100"),
     ("momentum_score", "Momentum", "points_0_100"), ("risk_score", "Risk", "points_0_100"),
     ("composite_score", "Composite", "points_0_100"),

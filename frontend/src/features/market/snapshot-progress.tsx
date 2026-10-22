@@ -89,7 +89,7 @@ export function SnapshotProgress({ id }: { id: number }) {
           </dl>
           {data.available < data.requested && (
             <p className="text-xs text-muted-foreground">
-              Cobertura {data.available}/{data.requested}; sin precio hasta hoy para{' '}
+              Candidatas con precio {data.available}/{data.requested}; sin precio hasta hoy para{' '}
               {data.missing.join(', ')}. No cuentan como 0 %: se excluyen de la media.
             </p>
           )}
@@ -129,7 +129,7 @@ export function SnapshotProgress({ id }: { id: number }) {
             <li key={horizon.months}>
               {horizon.status === 'pending'
                 ? `${horizon.months} meses: pendiente hasta ${dateText(horizon.end_date)}`
-                : `${horizon.months} meses: candidatas ${pct(horizon.portfolio_return)} · SPY ${pct(horizon.benchmark_return)} · cobertura ${horizon.available}/${horizon.requested}`}
+                : `${horizon.months} meses: candidatas ${pct(horizon.portfolio_return)} · SPY ${pct(horizon.benchmark_return)} · con precio ${horizon.available}/${horizon.requested}`}
               {horizon.status === 'incomplete' && (
                 <span className="block text-xs text-muted-foreground">
                   Resultado parcial: faltan precios para {(horizon.missing ?? []).join(', ')}.

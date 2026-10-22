@@ -120,7 +120,7 @@ export function CompanyPage() {
                   metric(company.metrics.metrics_available) +
                     ' / ' +
                     metric(company.metrics.metrics_possible),
-                  metric(company.metrics.score_coverage) + ' de cobertura',
+                  metric(company.metrics.score_coverage) + ' de las métricas puntuables',
                 ],
                 [
                   'Capitalización',

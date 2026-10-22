@@ -204,7 +204,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
       </p>
       {home.data && home.target.length === 0 && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Ninguna empresa cumple todavía la cobertura mínima para entrar en la cartera.
+          Ninguna empresa llega todavía al mínimo de métricas disponibles para entrar en la cartera.
         </p>
       )}
       {shown.length > 0 && (
