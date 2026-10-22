@@ -54,6 +54,12 @@ class LegacyExecutor:
             assert command.portfolio_id is not None
             return refresh_prices(SqliteSimulations(self.settings.data_dir), command.portfolio_id,
                                   command.symbols[0] if command.symbols else None, fx_symbol, fetch_max_history)
+        if command.kind == "holdings_prices":
+            from gabi.application.portfolio.holdings import refresh_prices as refresh_holdings
+            from gabi.infrastructure.legacy.sim_prices import fetch_max_history
+            from gabi.infrastructure.storage.holdings import SqliteHoldings
+
+            return refresh_holdings(SqliteHoldings(self.settings.data_dir), fetch_max_history)
         if command.kind == "sim_compare":
             from datetime import date
 

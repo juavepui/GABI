@@ -44,15 +44,22 @@ class PortfolioPlan:
     concentration: list[dict] = field(default_factory=list)
     sector_limit_pct: float = SECTOR_LIMIT_PCT
     industry_limit_pct: float = INDUSTRY_LIMIT_PCT
+    holdings_source: Literal["saved", "text", "none"] = "none"
+    holdings_unvalued: list[str] = field(default_factory=list)
 
 
 class PortfolioQueries:
     def __init__(self, market: PortfolioMarket, policy: ModelPolicy, today: Callable[[], date],
-                 industries: Callable[[], dict[str, str]] = dict):
+                 industries: Callable[[], dict[str, str]] = dict,
+                 saved_holdings: Callable[[], tuple[dict[str, float], list[str]]] = lambda: ({}, [])):
+        """`saved_holdings()` values Mi cartera in euros from the cache, with the symbols it cannot value."""
         self.market, self.policy, self.today, self.industries = market, policy, today, industries
+        self.saved_holdings = saved_holdings
 
     def plan(self, n_positions: int, capital_eur: float, holdings_text: str, new_capital_eur: float, *,
-             sector_limit_pct: float = SECTOR_LIMIT_PCT, industry_limit_pct: float = INDUSTRY_LIMIT_PCT) -> PortfolioPlan:
+             sector_limit_pct: float = SECTOR_LIMIT_PCT, industry_limit_pct: float = INDUSTRY_LIMIT_PCT,
+             use_saved_holdings: bool = False) -> PortfolioPlan:
+        """Typed holdings are a «¿y si…?»; without them the plan starts from Mi cartera when asked (#181)."""
         if not 5 <= n_positions <= 30 or any(
             not isfinite(value) or value < 0 or value > 1e9 for value in (capital_eur, new_capital_eur)
         ):
@@ -68,6 +75,11 @@ class PortfolioQueries:
             or not isfinite(amount) or amount < 0 or amount > 1e9 for symbol, amount in holdings.items()
         ):
             raise QueryError("invalid_holdings", "Las posiciones deben tener símbolos e importes válidos.", 422)
+        source: Literal["saved", "text", "none"] = "text" if holdings else "none"
+        unvalued: list[str] = []
+        if not holdings and use_saved_holdings:
+            holdings, unvalued = self.saved_holdings()
+            source = "saved" if holdings or unvalued else "none"
         today = self.today()
         snapshot = self.market.ranking(dict(self.policy.frozen_weights), today)
         target = target_portfolio(snapshot.table, n_positions)
@@ -85,4 +97,4 @@ class PortfolioQueries:
                              industries, sectors, held,
                              concentration_warnings(sectors, held, sector_limit_pct=sector_limit_pct,
                                                     industry_limit_pct=industry_limit_pct),
-                             sector_limit_pct, industry_limit_pct)
+                             sector_limit_pct, industry_limit_pct, source, unvalued)

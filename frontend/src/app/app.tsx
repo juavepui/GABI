@@ -19,6 +19,7 @@ import {
 } from '@/features/market/index';
 import {
   DecisionsPage,
+  HoldingsPage,
   JournalPage,
   LearnPage,
   PortfolioPage,
@@ -73,6 +74,7 @@ const subsections: Record<string, { path: string; label: string }[]> = {
   ],
   '/cartera': [
     { path: '/cartera', label: 'Cartera objetivo' },
+    { path: '/cartera/mi-cartera', label: 'Mi cartera' },
     { path: '/cartera/diario', label: 'Diario de inversión' },
     { path: '/cartera/aprender', label: 'Aprender' },
     { path: '/cartera/simuladas', label: 'Carteras simuladas' },
@@ -286,6 +288,7 @@ function Shell() {
           <Route path="/mercado/macro" element={<MacroPage />} />
           <Route path="/mercado/senales" element={<SignalPage />} />
           <Route path="/cartera" element={<PortfolioPage />} />
+          <Route path="/cartera/mi-cartera" element={<HoldingsPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
           <Route path="/cartera/aprender" element={<LearnPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />

@@ -16,6 +16,7 @@ class PlanRequest(WireModel):
     new_capital_eur: float = Field(default=1000, ge=0, le=1e9, allow_inf_nan=False)
     sector_limit_percent: float = Field(default=25, gt=0, le=100, allow_inf_nan=False)
     industry_limit_percent: float = Field(default=15, gt=0, le=100, allow_inf_nan=False)
+    use_saved_holdings: bool = Field(default=False, description="Sin posiciones escritas, parte de Mi cartera")
 
 
 class TargetPosition(WireModel):
@@ -76,6 +77,8 @@ class PlanResponse(WireModel):
     concentration: list[ConcentrationWarning]
     sector_limit_percent: float
     industry_limit_percent: float
+    holdings_source: Literal["saved", "text", "none"]
+    holdings_unvalued: list[str]
     index_weight_basis: str = ("Peso de cada sector en el S&P 500 aproximado por la capitalización total de las "
                                "empresas del universo local, no por la capitalización flotante oficial.")
     evidence_note: str = "El Top-20 tiene evidencia retrospectiva; no hay ventaja independiente demostrada sobre SPY."
@@ -105,4 +108,5 @@ def plan_response(plan: PortfolioPlan) -> PlanResponse:
                                             weight_percent=row["weight_pct"], limit_percent=row["limit_pct"])
                        for row in plan.concentration],
         sector_limit_percent=plan.sector_limit_pct, industry_limit_percent=plan.industry_limit_pct,
+        holdings_source=plan.holdings_source, holdings_unvalued=plan.holdings_unvalued,
     )
