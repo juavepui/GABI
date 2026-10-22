@@ -13,7 +13,6 @@ from gabi.application.market import cached_data
 from gabi.application.market.company_research import normalize_symbol
 from gabi.application.research.historical import _json_value
 from gabi.domain.market import checklist
-from gabi.domain.market.sec_facts import SHARES_TAGS
 from gabi.domain.market.sec_reads import companyfacts
 
 
@@ -97,16 +96,15 @@ class CompanyChecklist:
                 factor *= float(ratio)
         return factor
 
-    def _shares(self, symbol: str, frame: pd.DataFrame) -> tuple[float | None, str | None]:
-        """Latest filed shares outstanding, moved to today's split basis."""
-        if frame.empty:
-            return None, None
-        rows = frame[frame["tag"].isin(SHARES_TAGS) & (frame["unit"] == "shares") & (frame["val"] > 0)]
-        if rows.empty:
-            return None, None
-        last = rows.sort_values(["filed_date", "end_date"]).iloc[-1]
-        shares_date = str(last["end_date"])
-        return float(last["val"]) * self._split_factor_after(symbol, shares_date), shares_date
+    def _shares(self, symbol: str, facts: dict, price: float | None, info: dict,
+                today: date) -> tuple[float | None, str | None, str | None, bool]:
+        """Latest SEC shares in today's split basis, checked against Yahoo's market cap."""
+        series, source = checklist.share_basis(facts)
+        known = [day for day in series if day <= today.isoformat()]
+        shares_date = max(known) if known else None
+        shares = series[shares_date] * self._split_factor_after(symbol, shares_date) if shares_date else None
+        shares, source, history_ok = checklist.verified_shares(shares, source, price, _finite(info.get("marketCap")))
+        return shares, shares_date if source and source.startswith("sec_") else None, source, history_ok
 
     def _close_on(self, symbol: str, day: str) -> float | None:
         row = self.cache.last_price(symbol, day)
@@ -117,13 +115,14 @@ class CompanyChecklist:
         today = self.today()
         frame = self.facts.facts(symbol, as_of=today.isoformat())
         facts = companyfacts(frame, today.isoformat())
-        shares, shares_date = self._shares(symbol, frame)
         latest = self.cache.latest_adjusted([symbol]).get(symbol)
         record = cached_data.fundamentals(self.cache, [symbol]).get(symbol) or {}
         info = record.get("info") or {}
+        price = _finite(latest[1]) if latest else None
+        shares, shares_date, source, history_ok = self._shares(symbol, facts, price, info, today)
         market = checklist.MarketInputs(
-            price=_finite(latest[1]) if latest else None, price_date=str(latest[0]) if latest else None,
-            shares=shares, shares_date=shares_date, forward_eps=_finite(info.get("forwardEps")),
+            price=price, price_date=str(latest[0]) if latest else None, shares=shares, shares_date=shares_date,
+            shares_source=source, share_history_ok=history_ok, forward_eps=_finite(info.get("forwardEps")),
             beta=_finite(info.get("beta")), insiders_pct=_finite(info.get("heldPercentInsiders")),
             yahoo_fetched_at=record.get("fetched_at"))
         insiders = self.insiders.insider_transactions(symbol)
@@ -136,13 +135,14 @@ class CompanyChecklist:
         history = checklist.multiples_history(
             facts, close_on=lambda day: self._close_on(symbol, day),
             split_factor_after=lambda day: self._split_factor_after(symbol, day),
-            financial=result["financial_sector"])
+            financial=result["financial_sector"], share_history_ok=history_ok)
         filed = frame["filed_date"].dropna() if not frame.empty else pd.Series(dtype=str)
         return _json({
             "symbol": symbol, "as_of": today.isoformat(), "sector": info.get("sector"),
             "thresholds_version": checklist.THRESHOLDS_VERSION, "thresholds_warning": warning,
             "sources": {"sec_last_filed": str(filed.max()) if len(filed) else None, "price_date": market.price_date,
-                        "shares_date": shares_date, "yahoo_fetched_at": market.yahoo_fetched_at},
+                        "shares_date": shares_date, "shares_source": source,
+                        "yahoo_fetched_at": market.yahoo_fetched_at},
             **result,
             "multiples_history": history,
         })
@@ -162,8 +162,10 @@ class CompanyChecklist:
         members = sorted(peer for peer, peer_sector in sectors.items() if peer_sector == sector)
         prices = self.cache.latest_adjusted(members)
         filed = self.facts.last_filed(members, today.isoformat())
-        key = (sector, today.isoformat(), tuple((peer, filed.get(peer), tuple(prices.get(peer) or ()))
-                                                for peer in members))
+        # Yahoo's market cap checks each peer's shares, so its snapshot is part of the key too.
+        yahoo = dict(self.cache.fundamentals_fetched_at(members))
+        key = (sector, today.isoformat(), tuple((peer, filed.get(peer), tuple(prices.get(peer) or ()),
+                                                 yahoo.get(peer)) for peer in members))
         with self._sector_lock:
             values = self._sector_cache.get(key)
             if values is not None:
@@ -171,12 +173,16 @@ class CompanyChecklist:
         cached = values is not None
         if values is None:
             values = {}
+            infos = cached_data.fundamentals_info(self.cache, members)
             for peer in members:
                 frame = self.facts.facts(peer, tags=checklist.MULTIPLE_TAGS, as_of=today.isoformat())
-                shares, _ = self._shares(peer, frame)
-                price = prices.get(peer)
-                values[peer] = checklist.current_multiples(
-                    companyfacts(frame, today.isoformat()), _finite(price[1]) if price else None, shares)
+                if not frame.empty:  # quarterly USD rows never reach annual multiples: skip rebuilding them
+                    frame = frame[(frame["unit"] == "shares") | frame["form"].isin(checklist.ANNUAL_FORMS)]
+                facts = companyfacts(frame, today.isoformat())
+                latest = prices.get(peer)
+                price = _finite(latest[1]) if latest else None
+                shares = self._shares(peer, facts, price, infos.get(peer) or {}, today)[0]
+                values[peer] = checklist.current_multiples(facts, price, shares)
             with self._sector_lock:
                 self._sector_cache[key] = values
                 while len(self._sector_cache) > SECTOR_CACHE_ENTRIES:

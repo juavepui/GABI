@@ -6,7 +6,7 @@ from typing import Protocol
 
 import pandas as pd
 
-from gabi.domain.market.checklist import CHECKLIST_TAGS
+from gabi.domain.market.checklist import CHECKLIST_TAGS, DILUTED_SHARES_TAGS
 from gabi.domain.market.observations import change_status, delta_rows
 from gabi.domain.market.sec_facts import (
     SHARES_TAGS,
@@ -20,6 +20,9 @@ from gabi.domain.market.sec_xbrl import FIELDS, KEYS, facts_due, normalize_cik
 # Stored USD tags: the metric tags plus the checklist-only ones (#167). Metrics
 # keep reading TRACKED_TAGS; the extra rows only feed the checklist.
 FACT_TAGS = list(dict.fromkeys(TRACKED_TAGS + list(CHECKLIST_TAGS)))
+# Share-unit tags: outstanding shares plus the 10-K diluted average, the checklist's
+# fallback for issuers that only report shares per class.
+SHARE_FACT_TAGS = list(dict.fromkeys(SHARES_TAGS + DILUTED_SHARES_TAGS))
 
 
 class XbrlStore(Protocol):
@@ -47,7 +50,7 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
         has_facts, cached = store.has_facts(entity), store.metrics(symbol)
         # A stored history extracted with another tag set is reprocessed once,
         # even if companyfacts is unchanged, so new tags reach existing issuers.
-        tags_version = fingerprint(FACT_TAGS)
+        tags_version = fingerprint(FACT_TAGS + SHARE_FACT_TAGS)
         tags_stale = cp.get("fact_tags") != tags_version
         need_facts = (facts_due(cp, recent, has_facts, cached, now(), full_refresh)
                       or cp.get("filings_hash") != filing_hash or tags_stale)
@@ -67,7 +70,7 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
             return attempt.finish("unchanged", state=state,
                                   reason="companyfacts idéntico; no se reprocesa el histórico")
         raw = _extract_raw_facts(facts, FACT_TAGS, unit="USD")
-        raw += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
+        raw += _extract_raw_facts(facts, SHARE_FACT_TAGS, unit="shares")
         if not raw and not has_facts:
             # New issuer before its first XBRL filing: absent coverage, not a source failure.
             return attempt.finish("unchanged", state=state,
@@ -103,7 +106,7 @@ def fetch_complete(cik: str, *, companyfacts: Callable[[str], dict], submissions
     facts = companyfacts(cik)
     validate_issuer(facts, cik)
     rows = _extract_raw_facts(facts, FACT_TAGS, unit="USD")
-    rows += _extract_raw_facts(facts, SHARES_TAGS, unit="shares")
+    rows += _extract_raw_facts(facts, SHARE_FACT_TAGS, unit="shares")
     metrics = compute(facts)
     try:
         filings = submissions(cik)

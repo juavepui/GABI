@@ -1493,6 +1493,10 @@ export type ChecklistSources = {
      */
     shares_date: string | null;
     /**
+     * Shares Source
+     */
+    shares_source: 'sec_outstanding' | 'sec_diluted_average' | 'yahoo_market_cap' | 'yahoo_no_sec_shares' | null;
+    /**
      * Yahoo Fetched At
      */
     yahoo_fetched_at: string | null;

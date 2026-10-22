@@ -94,6 +94,11 @@ def fundamentals(reader: CacheReader, symbols: list[str]) -> dict[str, dict]:
             for symbol, fetched_at, info, income, cashflow in reader.fundamentals(symbols)}
 
 
+def fundamentals_info(reader: CacheReader, symbols: list[str]) -> dict[str, dict]:
+    """Only the Yahoo info snapshot per symbol; the quarterly statements are left unparsed."""
+    return {symbol: json.loads(info) for symbol, _, info, _, _ in reader.fundamentals(symbols)} if symbols else {}
+
+
 def fundamentals_fetched_at(reader: CacheReader, symbols: list[str]) -> dict[str, datetime | None]:
     return parse_fetched_at(reader.fundamentals_fetched_at(symbols)) if symbols else {}
 

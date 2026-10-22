@@ -223,6 +223,9 @@ class _Cache:
     def last_price(self, symbol, as_of):
         return (80.0, 79.0)
 
+    def fundamentals_fetched_at(self, symbols):
+        return []
+
     def fundamentals(self, symbols):
         return [("ACME", "2025-06-30T08:00:00+00:00", json.dumps({"forwardEps": 3.4, "beta": 0.9, "heldPercentInsiders": 0.15,
                                                                      "sector": "Technology"}), "{}", "{}")]
@@ -317,6 +320,65 @@ def test_own_multiples_need_three_years_and_skip_ev_for_financials():
     assert years[0]["pe"] is None and years[0]["ev_ebit"] is not None
 
 
+def _diluted(year, value):
+    return "WeightedAverageNumberOfDilutedSharesOutstanding", "shares", _duration("x", year, value)[2]
+
+
+def test_share_basis_prefers_recent_outstanding_then_the_diluted_average():
+    rows = _yearly()
+    assert checklist.share_basis(_facts(rows))[1] == "sec_outstanding"
+    # Only per-class outstanding shares (absent from companyfacts) plus a 2011 cover page: stale.
+    multi_class = [row for row in rows if row[0] != "CommonStockSharesOutstanding"]
+    multi_class += [_instant("CommonStockSharesOutstanding", 2012, 3, "shares")]
+    multi_class += [_diluted(year, 12) for year in range(ANCHOR - 4, ANCHOR + 1)]
+    series, source = checklist.share_basis(_facts(multi_class))
+    assert source == "sec_diluted_average" and series["2024-12-31"] == 12
+    without = [row for row in multi_class if row[0] != "WeightedAverageNumberOfDilutedSharesOutstanding"]
+    assert checklist.share_basis(_facts(without)) == ({}, None)
+
+
+def test_sec_shares_are_checked_against_yahoo_market_cap():
+    assert checklist.verified_shares(10, "sec_outstanding", 50.0, 520.0) == (10, "sec_outstanding", True)
+    # A split missing from the cache halves the SEC market cap: Yahoo's is used, history is not.
+    assert checklist.verified_shares(10, "sec_outstanding", 50.0, 1000.0) == (20.0, "yahoo_market_cap", False)
+    # No SEC shares at all: Yahoo values it, and there is no SEC share history to withhold.
+    assert checklist.verified_shares(None, None, 50.0, 1000.0) == (20.0, "yahoo_no_sec_shares", True)
+    assert checklist.verified_shares(10, "sec_outstanding", 50.0, None) == (10, "sec_outstanding", True)
+
+
+class _YahooCache(_Cache):
+    def __init__(self, market_cap):
+        self.market_cap = market_cap
+
+    def fundamentals(self, symbols):
+        return [("ACME", "2025-06-30T08:00:00+00:00", json.dumps({"marketCap": self.market_cap}), "{}", "{}")]
+
+
+def test_multi_class_issuer_is_valued_with_diluted_shares_or_yahoo(tmp_path):
+    rows = [row for row in _yearly() if row[0] != "CommonStockSharesOutstanding"]
+    rows += [_diluted(year, 12) for year in range(ANCHOR - 5, ANCHOR + 1)]
+    store = FileChecklistThresholds(tmp_path)
+    # Like META: diluted average × price matches Yahoo (85 × 12 = 1020).
+    body = CompanyChecklist(_Facts(_frame(rows)), _YahooCache(1000.0), _Insiders(), store,
+                            lambda: date(2025, 7, 1)).company("ACME")
+    criteria = {item["key"]: item for item in body["criteria"]}
+    assert body["sources"]["shares_source"] == "sec_diluted_average"
+    assert criteria["market_cap"]["value"] == pytest.approx(85 * 12)
+    assert criteria["pe"]["value"] == pytest.approx(85 * 12 / 500)
+    assert criteria["market_cap"]["detail"] == {"shares_source": "sec_diluted_average"}
+    assert criteria["shares_change"]["value"] == pytest.approx(0.0)
+    assert body["multiples_history"]["median"]["pe"]["count"] == 5
+    # Like BRK-B: shares in another class basis, 1500 times off. Yahoo values it; no share history.
+    body = CompanyChecklist(_Facts(_frame(rows)), _YahooCache(85 * 12 * 1500.0), _Insiders(), store,
+                            lambda: date(2025, 7, 1)).company("ACME")
+    criteria = {item["key"]: item for item in body["criteria"]}
+    assert body["sources"]["shares_source"] == "yahoo_market_cap" and body["sources"]["shares_date"] is None
+    assert criteria["market_cap"]["value"] == pytest.approx(85 * 12 * 1500)
+    assert criteria["shares_change"]["reason"] == "share_basis_mismatch"
+    assert body["multiples_history"]["by_year"] == []
+    assert body["multiples_history"]["median"]["pe"]["reason"] == "share_basis_mismatch"
+
+
 class _SectorFacts:
     def __init__(self):
         self.reads, self.filed = [], {"ACME": "2025-02-15"}
@@ -378,7 +440,9 @@ def test_api_get_has_no_side_effects_and_thresholds_are_explicit_commands(api):
     assert body["symbol"] == "T001" and body["fiscal_year_end"] == "2024-12-31"
     criteria = {item["key"]: item for item in body["criteria"]}
     assert criteria["gross_margin"]["value"] == pytest.approx(0.55) and criteria["pe"]["value"] is not None
-    assert body["multiples_history"]["by_year"][0]["fiscal_year_end"] == "2024-12-31"
+    # The fixture's Yahoo market cap does not match its SEC shares: Yahoo values it, history is withheld.
+    assert body["sources"]["shares_source"] == "yahoo_market_cap"
+    assert body["multiples_history"]["median"]["pe"]["reason"] == "share_basis_mismatch"
     sector = client.get("/api/v1/companies/T001/checklist/sector").json()
     assert sector["sector"] == "Information Technology" and sector["peers"] > 0
     assert set(sector["medians"]) == set(checklist.MULTIPLE_KEYS)

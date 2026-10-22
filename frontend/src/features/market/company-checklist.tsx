@@ -90,6 +90,8 @@ const REASONS: Record<string, string> = {
   gaap_ebitda: 'GABI calcula el EBITDA con cifras GAAP; el EV/EBITDA del ranking es el de Yahoo',
   invalid_saved_thresholds: 'Los umbrales guardados no son válidos; se usan los del Excel',
   not_in_universe: 'La empresa no está en el universo actual',
+  share_basis_mismatch:
+    'Las acciones SEC no cuadran con el precio (varias clases de acciones, split sin registrar o emisión reciente)',
 };
 
 function reasonText(reason: string | null | undefined): string {
@@ -126,12 +128,23 @@ const ALARMS: Record<
   info: { label: 'Info', variant: 'secondary' },
 };
 
+const SHARE_SOURCES: Record<string, string> = {
+  yahoo_no_sec_shares:
+    'capitalización de Yahoo: la SEC no tiene número de acciones de esta empresa',
+  sec_diluted_average:
+    'acciones medias diluidas del 10-K: la SEC no publica el total en circulación (varias clases)',
+  yahoo_market_cap:
+    'capitalización de Yahoo: las acciones SEC no cuadran con el precio (clases de acciones, split sin registrar o emisión reciente)',
+};
+
 function note(item: ChecklistCriterion): string {
   const detail = item.detail as Record<string, unknown>;
   const parts: string[] = [];
   if (typeof detail.years === 'number' && item.key.endsWith('cagr'))
     parts.push(`${detail.years} años`);
   if (typeof detail.class === 'string') parts.push(detail.class);
+  if (typeof detail.shares_source === 'string' && SHARE_SOURCES[detail.shares_source])
+    parts.push(SHARE_SOURCES[detail.shares_source]);
   if (Array.isArray(detail.components_not_reported) && detail.components_not_reported.length)
     parts.push(
       'sin declarar: ' +

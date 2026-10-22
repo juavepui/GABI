@@ -21,6 +21,11 @@ TREND_YEARS = 5
 ALARM_YEARS = 3
 SHARES_YEARS = 5
 SHARES_TOLERANCE_DAYS = 120
+# Outstanding shares older than the fiscal anchor by more than this are stale.
+SHARES_STALE_DAYS = 400
+# SEC market cap farther than this from Yahoo's means another share basis
+# (share classes, a split missing from the cache, a later issuance).
+SHARE_CHECK_TOLERANCE = 0.25
 INSIDER_DAYS = 182
 INSIDER_SOLD_FRACTION = 0.20
 GOODWILL_ASSETS_ALARM = 0.30
@@ -50,6 +55,8 @@ IMPAIRMENT_TAGS = ["GoodwillImpairmentLoss"]
 ASSETS_TAGS = ["Assets"]
 DEBT_ISSUANCE_TAGS = ["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt"]
 DIVIDEND_TAGS = ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"]
+# 10-K diluted average shares: reported in total even when outstanding shares are only per class.
+DILUTED_SHARES_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding"]
 BUYBACK_TAGS = ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfCommonAndPreferredStock"]
 CHECKLIST_TAGS = tuple(dict.fromkeys(
     INTEREST_TAGS + SBC_TAGS + TAX_TAGS + PRETAX_TAGS + DEBT_CURRENT_TAGS + LT_DEBT_CURRENT_TAGS
@@ -373,12 +380,50 @@ def shares_series(facts: dict) -> dict[str, float]:
     return {end: value for end, (filed, value) in sorted(best.items())}
 
 
+def share_basis(facts: dict) -> tuple[dict[str, float], str | None]:
+    """Share counts by date and their source: recent outstanding shares, else the 10-K diluted average.
+
+    Issuers with several share classes often report outstanding shares only per class, which
+    companyfacts omits; the diluted average used for EPS is reported in total."""
+    outstanding = shares_series(facts)
+    annual = [dict(sec._extract_annual_values(facts, tags)) for tags in (sec.REVENUE_TAGS, sec.NET_INCOME_TAGS)]
+    anchor = max(annual[0]) if annual[0] else max(annual[1]) if annual[1] else None
+    if outstanding and (anchor is None or (_day(anchor) - _day(max(outstanding))).days <= SHARES_STALE_DAYS):
+        return outstanding, "sec_outstanding"
+    diluted = {end: float(value) for end, value in sec._extract_annual_values(facts, DILUTED_SHARES_TAGS,
+                                                                             unit="shares") if value > 0}
+    if diluted:
+        return diluted, "sec_diluted_average"
+    return {}, None
+
+
+def verified_shares(shares: float | None, source: str | None, price: float | None,
+                    yahoo_market_cap: float | None) -> tuple[float | None, str | None, bool]:
+    """SEC shares in today's basis checked against Yahoo's market cap.
+
+    Returns the shares to value the company with, their source and whether the SEC share basis
+    is usable for history. Without SEC shares, Yahoo's market cap values the company. When SEC
+    shares disagree beyond the tolerance, Yahoo's is used and the SEC share history is not."""
+    if not price or not yahoo_market_cap or yahoo_market_cap <= 0:
+        return shares, source, True
+    if not shares:
+        return yahoo_market_cap / price, "yahoo_no_sec_shares", True
+    if abs(price * shares / yahoo_market_cap - 1) <= SHARE_CHECK_TOLERANCE:
+        return shares, source, True
+    return yahoo_market_cap / price, "yahoo_market_cap", False
+
+
 @dataclass(frozen=True)
 class MarketInputs:
     price: float | None = None
     price_date: str | None = None
     shares: float | None = None
     shares_date: str | None = None
+    # sec_outstanding / sec_diluted_average / yahoo_market_cap (SEC shares did not match Yahoo) /
+    # yahoo_no_sec_shares.
+    shares_source: str | None = None
+    # False when the SEC share basis disagrees with the price: share history is then unusable.
+    share_history_ok: bool = True
     forward_eps: float | None = None
     beta: float | None = None
     insiders_pct: float | None = None
@@ -502,9 +547,11 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
     put("fcf", fcf, data.reason("ocf") if ocf is None else data.reason("capex"))
     put("capex_to_revenue", _ratio(abs(capex) if capex is not None else None, revenue), "missing_component")
 
-    shares = shares_series(facts)
+    shares, source = share_basis(facts)
     change, reason, share_detail = None, "no_shares", {}
-    if shares:
+    if shares and not market.share_history_ok:
+        reason = "share_basis_mismatch"
+    elif shares:
         latest = max(day for day in shares if day <= today.isoformat()) if any(
             day <= today.isoformat() for day in shares) else None
         if latest:
@@ -513,7 +560,7 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
             if abs((_day(old) - target).days) <= SHARES_TOLERANCE_DAYS:
                 factor = split_factor_between(old, latest)
                 change = shares[latest] / (shares[old] * factor) - 1
-                share_detail = {"start": old, "end": latest, "split_factor": factor}
+                share_detail = {"start": old, "end": latest, "split_factor": factor, "source": source}
             else:
                 reason = f"no_shares_{SHARES_YEARS}_years_before"
     put("shares_change", change, reason, **share_detail)
@@ -523,7 +570,8 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
 
     market_cap = market.price * market.shares if market.price and market.shares else None
     market_reason = "no_price" if not market.price else "no_shares"
-    put("market_cap", market_cap, market_reason)
+    put("market_cap", market_cap, market_reason, **({"shares_source": market.shares_source}
+                                                     if market.shares_source else {}))
     enterprise = market_cap + net_debt if market_cap is not None and net_debt is not None else None
     put("enterprise_value", enterprise, market_reason if market_cap is None else "missing_component")
     pe = _ratio(market_cap, net_income) if net_income is not None and net_income > 0 else None
@@ -744,11 +792,13 @@ MULTIPLE_YEARS = 5
 MIN_HISTORY_VALUES = 3
 MIN_SECTOR_PEERS = 5
 EV_MULTIPLES = frozenset({"ev_ebitda", "ev_ebit", "ev_fcf"})
+# Annual figures only come from these forms; share counts also come from 10-Q cover pages.
+ANNUAL_FORMS = ("10-K", "10-K/A")
 # Tags a peer needs for its current multiples; a bounded read instead of its whole history.
 MULTIPLE_TAGS = list(dict.fromkeys(
     sec.REVENUE_TAGS + sec.NET_INCOME_TAGS + sec.OCF_TAGS + sec.CAPEX_TAGS + sec.OPERATING_INCOME_TAGS
     + sec.DEPRECIATION_TAGS + sec.LT_DEBT_TAGS + sec.CASH_TAGS + DEBT_CURRENT_TAGS + LT_DEBT_CURRENT_TAGS
-    + SHORT_BORROWING_TAGS + SHORT_INVESTMENT_TAGS + sec.SHARES_TAGS))
+    + SHORT_BORROWING_TAGS + SHORT_INVESTMENT_TAGS + sec.SHARES_TAGS + DILUTED_SHARES_TAGS))
 
 
 def _multiples(data: _Facts, market_cap: float | None, years_back: int = 0) -> dict[str, float | None]:
@@ -796,14 +846,15 @@ def current_multiples(facts: dict, price: float | None, shares: float | None) ->
 
 
 def multiples_history(facts: dict, *, close_on: Callable[[str], float | None],
-                      split_factor_after: Callable[[str], float], financial: bool) -> dict:
+                      split_factor_after: Callable[[str], float], financial: bool,
+                      share_history_ok: bool = True) -> dict:
     """Own multiples over the last fiscal years, each at its year-end close and shares.
 
     Prices are in today's split basis, so shares are moved to it with the splits after their date.
     Figures of each year are those known today (later restatements included)."""
-    data, shares = _Facts(facts), shares_series(facts)
+    data, (shares, _) = _Facts(facts), share_basis(facts)
     years, multiples = [], []
-    for back in range(MULTIPLE_YEARS):
+    for back in range(MULTIPLE_YEARS if share_history_ok else 0):
         end = _year_end(data, back)
         if end is None:
             continue
@@ -821,6 +872,8 @@ def multiples_history(facts: dict, *, close_on: Callable[[str], float | None],
         values = [value for row in multiples if (value := row[key]) is not None]
         if financial and key in EV_MULTIPLES:
             summary[key] = {"median": None, "count": 0, "reason": "financial_sector"}
+        elif not share_history_ok:
+            summary[key] = {"median": None, "count": 0, "reason": "share_basis_mismatch"}
         elif len(values) < MIN_HISTORY_VALUES:
             summary[key] = {"median": None, "count": len(values), "reason": f"fewer_than_{MIN_HISTORY_VALUES}_years"}
         else:

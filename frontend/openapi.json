@@ -2909,6 +2909,23 @@
             ],
             "title": "Shares Date"
           },
+          "shares_source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sec_outstanding",
+                  "sec_diluted_average",
+                  "yahoo_market_cap",
+                  "yahoo_no_sec_shares"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares Source"
+          },
           "yahoo_fetched_at": {
             "anyOf": [
               {
@@ -2925,6 +2942,7 @@
           "sec_last_filed",
           "price_date",
           "shares_date",
+          "shares_source",
           "yahoo_fetched_at"
         ],
         "title": "ChecklistSources",

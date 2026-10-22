@@ -184,6 +184,7 @@ def with_checklist_tags(value=100):
     entry = {"start": "2019-01-01", "end": "2019-12-31", "val": 7, "accn": "a1",
              "filed": "2020-02-01", "form": "10-K", "fp": "FY", "fy": 2019}
     facts["facts"]["us-gaap"]["InterestExpense"] = {"units": {"USD": [entry]}}
+    facts["facts"]["us-gaap"]["WeightedAverageNumberOfDilutedSharesOutstanding"] = {"units": {"shares": [entry]}}
     return facts
 
 
@@ -194,6 +195,8 @@ def test_sync_stores_checklist_tags_without_changing_metrics(tmp_path):
     extended.run()
     facts = extended.store.facts("cik:0000000001")
     assert facts.loc[facts.tag == "InterestExpense", "val"].tolist() == [7]
+    diluted = facts[facts.tag == "WeightedAverageNumberOfDilutedSharesOutstanding"]
+    assert diluted.unit.tolist() == ["shares"]
     assert read_tables(extended.path)["edgar_metrics"] == read_tables(plain.path)["edgar_metrics"]
 
 
@@ -210,7 +213,7 @@ def test_history_from_older_tag_set_is_reprocessed_once(tmp_path):
         db.execute("UPDATE sync_checkpoints SET state_json=?", (json.dumps(cp),))
         db.commit()
     event = service.run()
-    assert event["calls"] == 2 and event["new"] == 1
+    assert event["calls"] == 2 and event["new"] == 1  # only the deleted row is new again
     assert "InterestExpense" in set(service.store.facts("cik:0000000001").tag)
     assert service.events.get("sec", "cik:0000000001", "facts:A")["fact_tags"]
     assert service.run()["calls"] == 1

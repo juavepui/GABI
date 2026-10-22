@@ -26,7 +26,7 @@ Usar cualquiera de sus criterios como señal requiere un experimento preregistra
 - **Fuente**: hechos SEC de 10-K/10-K/A ya guardados, con `filed_date ≤ hoy`.
   Las excepciones se declaran por criterio:
   - precio: último cierre de la caché;
-  - acciones: último hecho SEC presentado, ajustado por splits posteriores;
+  - acciones: ver «Número de acciones» más abajo;
   - PER forward y beta: registro de Yahoo ya descargado;
   - % de directivos: Yahoo `heldPercentInsiders`.
 - **Un solo ejercicio**: todos los componentes de un ratio se leen en el último
@@ -41,6 +41,30 @@ Usar cualquiera de sus criterios como señal requiere un experimento preregistra
   en margen bruto, CFO, CAPEX, EBITDA o EV se marcan «no aplica».
 - **Consultar no descarga ni escribe**: el GET solo lee. Editar umbrales es un
   POST explícito.
+
+## Número de acciones
+
+La capitalización, el EV, los múltiplos, el DCF, la variación de acciones y la historia
+de múltiplos dependen de la base de acciones. Por eso se elige y se comprueba así
+(`share_basis` y `verified_shares` en el dominio):
+
+1. **Acciones en circulación SEC** (`CommonStockSharesOutstanding` o la de portada
+   `EntityCommonStockSharesOutstanding`) si no tienen más de 400 días respecto al
+   último ejercicio. Se llevan a la base de splits actual con los splits posteriores.
+2. **Si no hay o están caducadas**, se usan las **acciones medias diluidas del 10-K**
+   (`WeightedAverageNumberOfDilutedSharesOutstanding`). Las empresas con varias
+   clases de acciones (META, ABNB, DASH…) declaran las acciones en circulación solo
+   por clase, y la API companyfacts no incluye esos hechos desglosados.
+3. **Comprobación con Yahoo**: si precio × acciones SEC se aleja más de un 25 % de
+   la capitalización de Yahoo, se usa la de Yahoo (`shares_source =
+   yahoo_market_cap`) y la ficha lo indica. La variación de acciones y la historia
+   de múltiplos quedan sin dato (`share_basis_mismatch`), porque su base SEC no es
+   comparable con el precio. Casos reales en la base de 22-10-2026:
+   - BRK-B: acciones en equivalentes de clase A;
+   - APH y MNST: un split 2:1 que falta en la caché;
+   - BX: la SEC solo cuenta la clase A, sin las participaciones de Holdings;
+   - SWKS y VMRK: emisión posterior al último 10-Q.
+   Sin capitalización de Yahoo, se usan las acciones SEC sin comprobar.
 
 ## Diferencias con las métricas del Composite
 
@@ -78,6 +102,7 @@ validadas.
   más `CHECKLIST_TAGS` (intereses, SBC, impuestos, deuda e inversiones a corto,
   goodwill, deterioros, emisión de deuda, dividendos, coste de ventas, activos).
   - Las métricas siguen calculándose con `TRACKED_TAGS`.
+  - En acciones guarda también `DILUTED_SHARES_TAGS`. La huella cubre los dos conjuntos.
   - El checkpoint guarda la huella del conjunto de etiquetas (`fact_tags`). Si
     cambia, la siguiente sincronización vuelve a descargar y procesar companyfacts
     una vez por emisor, aunque no haya cambiado.
@@ -102,9 +127,12 @@ validadas.
     filing y el último precio de cada miembro. Una sincronización cambia la clave,
     así que nunca se sirve una mediana desactualizada. No se escribe nada.
   - **Medición** (lectura sobre la base real, 22-10-2026):
-    - ficha con historia propia: 115–146 ms;
-    - sector (unas 75 empresas): 3,1–3,7 s la primera vez y unos 60 ms desde la
-      caché, compartida por todas las empresas del sector.
+    - ficha con historia propia: 130–270 ms;
+    - sector (unas 75 empresas): 5–7 s la primera vez, tras la sincronización de la
+      F2 y la comprobación con Yahoo, y unos 60 ms desde la caché, compartida por
+      todas las empresas del sector.
+    - El tiempo restante está en la lectura SQL acotada y en `companyfacts`. Las
+      filas trimestrales en USD se descartan antes de reconstruir.
   - **Sector financiero**: los múltiplos sobre EV no aplican.
   - **Lectura**: que un múltiplo quede por debajo de su referencia no significa que
     la empresa esté barata. También puede reflejar peores perspectivas.

@@ -66,6 +66,8 @@ class ChecklistSources(BaseModel):
     sec_last_filed: str | None
     price_date: str | None
     shares_date: str | None
+    shares_source: Literal["sec_outstanding", "sec_diluted_average", "yahoo_market_cap",
+                           "yahoo_no_sec_shares"] | None
     yahoo_fetched_at: str | None
 
 
