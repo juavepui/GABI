@@ -1,5 +1,7 @@
 """Saved-ranking follow-up matches the old Screener calls with bounded, read-only price reads."""
 
+import sqlite3
+from contextlib import closing
 from datetime import timedelta
 
 import pandas as pd
@@ -63,3 +65,26 @@ def test_rename_is_explicit_and_validated(saved):
     assert client.post(f"/api/v1/market/snapshots/{snapshot_id}/rename", json={"name": " "}).status_code == 422
     assert client.post("/api/v1/market/snapshots/999/rename", json={"name": "x"}).status_code == 404
     assert client.get("/api/v1/market/snapshots/999/progress").status_code == 404
+
+
+def test_dotted_share_classes_follow_the_current_dash_spelling(saved):
+    """A snapshot saved as BRK.B reads the current BRK-B series, not the old dotted rows (#172)."""
+    client, root, _, as_of = saved
+    evaluation = RankingFixture(root, TODAY)
+    table = pd.DataFrame({"composite_score": [80.0, 70.0], "score_coverage": [.9, .9],
+                          "confidence": [90.0, 80.0], "sector": ["X", "Y"]})
+    dotted = evaluation.save_snapshot(table.set_axis(["T000", "BRK.B"]), as_of, top_n=2, name="Con punto")
+    dashed = evaluation.save_snapshot(table.set_axis(["T000", "BRK-B"]), as_of, top_n=2, name="Con guion")
+    stale_end = (TODAY - timedelta(days=30)).isoformat()
+    with closing(sqlite3.connect(root / "gabi.db")) as db, db:
+        # Old dotted rows stop a month ago and have other prices: they must not be read.
+        db.execute("INSERT INTO prices SELECT 'BRK.B',date,open*2,high*2,low*2,close*2,volume,adj_close*2 "
+                   "FROM prices WHERE symbol='BRK-B' AND date<=?", (stale_end,))
+    before = (root / "gabi.db").read_bytes()
+    body = client.get(f"/api/v1/market/snapshots/{dotted}/progress").json()
+    expected = client.get(f"/api/v1/market/snapshots/{dashed}/progress").json()
+    assert body["available"] == body["requested"] == 2 and body["missing"] == []
+    for key in ("portfolio_return", "excess_return", "detail", "curve", "horizons"):
+        assert body[key] == expected[key], key
+    assert evaluation.snapshot_symbols(dotted) == ["T000", "BRK.B"]  # The saved snapshot is not rewritten.
+    assert (root / "gabi.db").read_bytes() == before

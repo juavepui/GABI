@@ -8,6 +8,7 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.application.research.historical import _json_value
+from gabi.domain.market.identity import normalize_symbol
 
 
 class SnapshotStore(Protocol):
@@ -47,7 +48,9 @@ class SnapshotTracking:
         row = self.store.snapshot_meta(snapshot_id)
         if row is None:
             raise QueryError("snapshot_not_found", "El ranking guardado no existe.", 404)
-        return row, self.store.snapshot(snapshot_id).index.astype(str).tolist()
+        # Older snapshots kept the dotted BRK.B/BF.B; current prices live under the dash spelling (#172).
+        # Normalized only for reading: the saved rows stay as they were.
+        return row, [normalize_symbol(symbol) for symbol in self.store.snapshot(snapshot_id).index.astype(str)]
 
     def progress(self, snapshot_id: int) -> dict:
         """Equal-weight basket of exactly the saved candidates, from the saved date until today."""
