@@ -138,6 +138,21 @@ const SHARE_SOURCES: Record<string, string> = {
     'capitalización de Yahoo: las acciones SEC no cuadran con el precio (clases de acciones, split sin registrar o emisión reciente)',
 };
 
+/** Why a value that is still shown may be unreliable; the backend decides when it applies. */
+const CAVEATS: Record<string, string> = {
+  share_classes:
+    'Puede no ser fiable: la SEC no publica un total de acciones comparable con el precio (habitual con varias clases de acciones) y Yahoo puede no contar la clase que controlan los fundadores.',
+};
+
+function Caveat({ caveat }: { caveat: string | null | undefined }) {
+  if (!caveat || !CAVEATS[caveat]) return null;
+  return (
+    <span role="note" className="mt-1 block text-xs text-amber-700 dark:text-amber-400">
+      ⚠ {CAVEATS[caveat]}
+    </span>
+  );
+}
+
 function note(item: ChecklistCriterion): string {
   const detail = item.detail as Record<string, unknown>;
   const parts: string[] = [];
@@ -202,7 +217,10 @@ function Criteria({ criteria }: { criteria: ChecklistCriterion[] }) {
                       {VERDICTS[item.verdict].label}
                     </Badge>
                   </td>
-                  <td className="py-1.5 pr-3 text-muted-foreground">{note(item)}</td>
+                  <td className="py-1.5 pr-3 text-muted-foreground">
+                    {note(item)}
+                    <Caveat caveat={item.caveat} />
+                  </td>
                 </tr>
               ))}
           </tbody>
@@ -228,6 +246,7 @@ function Alarms({ alarms }: { alarms: ChecklistAlarm[] }) {
               {alarm.check}
               {alarm.reason ? ' · ' + reasonText(alarm.reason) : ''}
             </span>
+            <Caveat caveat={alarm.caveat} />
           </span>
           <Badge variant={ALARMS[alarm.status].variant}>{ALARMS[alarm.status].label}</Badge>
         </li>

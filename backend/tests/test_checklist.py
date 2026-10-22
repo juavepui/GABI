@@ -108,6 +108,19 @@ def test_every_criterion_alarm_and_threshold_explains_itself():
         assert len(row["explanation"]) > 40, row["key"]
 
 
+def test_insider_ownership_is_kept_but_flagged_when_share_classes_are_uncertain():
+    market = checklist.MarketInputs(price=85, shares=600, insiders_pct=0.001, shares_source="sec_diluted_average")
+    result = _evaluate(_excel_example(), market)
+    insiders = _by_key(result)["insiders_pct"]
+    alarm = {item["key"]: item for item in result["alarms"]}["no_skin_in_the_game"]
+    assert insiders["verdict"] == "fail" and insiders["caveat"] == "share_classes"
+    assert alarm["status"] == "active" and alarm["caveat"] == "share_classes"
+    plain = _evaluate(_excel_example(), checklist.MarketInputs(price=85, shares=600, insiders_pct=0.001,
+                                                              shares_source="sec_outstanding"))
+    assert _by_key(plain)["insiders_pct"]["caveat"] is None
+    assert {item["key"]: item for item in plain["alarms"]}["no_skin_in_the_game"]["caveat"] is None
+
+
 def test_reverse_dcf_matches_the_excel_sheet():
     options = {"discount_rate": 0.09, "terminal_growth": 0.03, "years": 10}
     assert checklist.dcf_value_per_share(1900, 600, 0.10, **options) == pytest.approx(84.4260955680603)
@@ -372,6 +385,9 @@ def test_multi_class_issuer_is_valued_with_diluted_shares_or_yahoo(tmp_path):
     assert criteria["market_cap"]["value"] == pytest.approx(85 * 12)
     assert criteria["pe"]["value"] == pytest.approx(85 * 12 / 500)
     assert criteria["market_cap"]["detail"] == {"shares_source": "sec_diluted_average"}
+    # Insider ownership is still evaluated, but flagged: the founder's class may be missing.
+    assert criteria["insiders_pct"]["caveat"] is None  # no Yahoo value in this fake
+    assert criteria["pe"]["caveat"] is None
     assert criteria["shares_change"]["value"] == pytest.approx(0.0)
     assert body["multiples_history"]["median"]["pe"]["count"] == 5
     # Like BRK-B: shares in another class basis, 1500 times off. Yahoo values it; no share history.

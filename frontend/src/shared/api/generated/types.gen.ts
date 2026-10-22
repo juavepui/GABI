@@ -1193,6 +1193,10 @@ export type CapitalAllocation = {
  */
 export type ChecklistAlarm = {
     /**
+     * Caveat
+     */
+    caveat: 'share_classes' | null;
+    /**
      * Check
      */
     check: string;
@@ -1232,6 +1236,10 @@ export type ChecklistCriterion = {
      * Block
      */
     block: string;
+    /**
+     * Caveat
+     */
+    caveat: 'share_classes' | null;
     /**
      * Comparison
      */

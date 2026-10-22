@@ -32,6 +32,9 @@ GOODWILL_ASSETS_ALARM = 0.30
 CAPEX_SPIKE_POINTS = 0.05
 DEBT_GROWTH_ALARM = 0.10
 NO_SKIN_FRACTION = 0.01
+# Insider ownership comes from Yahoo per listed share class. When the SEC has no total share count
+# comparable with the price (usual with several classes), the founder's class may be missing.
+INSIDER_CAVEAT_KEYS = frozenset({"insiders_pct", "no_skin_in_the_game"})
 FINANCIAL_SECTORS = frozenset({"Financials", "Financial Services"})
 
 # Etiquetas adicionales del checklist. La sincronización SEC explícita las guarda
@@ -530,6 +533,12 @@ class MarketInputs:
 
 
 # ----------------------------------------------------------------- evaluación
+def _caveat(market: "MarketInputs", key: str) -> str | None:
+    """Why a computed value may be unreliable; it is still shown, never hidden."""
+    uncertain_classes = market.shares_source not in (None, "sec_outstanding")
+    return "share_classes" if uncertain_classes and key in INSIDER_CAVEAT_KEYS else None
+
+
 def _verdict(rule: Rule, value, threshold: float | None, *, pe: float | None) -> str:
     if rule.comparison == "info":
         return "info"
@@ -707,7 +716,7 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
             "comparison": rule.comparison, "value": value, "threshold": threshold,
             "default_threshold": rule.default, "edited": rule.key in edited, "verdict": verdict, "reason": reason,
             "source": rule.source, "reference": rule.reference, "explanation": EXPLANATIONS[rule.key],
-            "detail": details.get(rule.key, {}),
+            "caveat": _caveat(market, rule.key) if value is not None else None, "detail": details.get(rule.key, {}),
         })
 
     alarms = _alarms(data, values, market, thresholds, insider_rows, today, financial, fcf)
@@ -729,9 +738,10 @@ def evaluate(facts: dict, market: MarketInputs, *, sector: str | None, threshold
     }
 
 
-def _alarm(key: str, label: str, check: str, status: str, reason: str | None = None, **detail) -> dict:
+def _alarm(key: str, label: str, check: str, status: str, reason: str | None = None, *,
+           caveat: str | None = None, **detail) -> dict:
     return {"key": key, "label": label, "check": check, "explanation": ALARM_EXPLANATIONS[key], "status": status,
-            "reason": reason, "detail": detail}
+            "reason": reason, "caveat": caveat, "detail": detail}
 
 
 def _alarms(data: _Facts, values: dict, market: MarketInputs, thresholds: dict, insider_rows: list[dict],
@@ -829,7 +839,7 @@ def _alarms(data: _Facts, values: dict, market: MarketInputs, thresholds: dict, 
     else:
         rows.append(_alarm("no_skin_in_the_game", label, check,
                            "active" if market.insiders_pct < NO_SKIN_FRACTION else "clear",
-                           insiders_pct=market.insiders_pct))
+                           caveat=_caveat(market, "no_skin_in_the_game"), insiders_pct=market.insiders_pct))
 
     rows.append(_alarm("blames_external_factors", "La directiva siempre culpa a factores externos",
                        "Conference calls trimestrales", "manual"))

@@ -25,6 +25,7 @@ class ChecklistCriterion(BaseModel):
     source: str
     reference: str
     explanation: str
+    caveat: Literal["share_classes"] | None
     detail: dict[str, Any]
 
 
@@ -35,6 +36,7 @@ class ChecklistAlarm(BaseModel):
     explanation: str
     status: AlarmStatus
     reason: str | None
+    caveat: Literal["share_classes"] | None
     detail: dict[str, Any]
 
 
