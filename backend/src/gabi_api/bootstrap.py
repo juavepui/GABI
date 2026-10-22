@@ -131,7 +131,14 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     market = MarketQueries(repository, model_queries, today, session)
     model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir), FileMode(settings.data_dir))
     jobs = Jobs(SqliteJobs(settings.data_dir), lambda: model_queries.model().mode == "RESEARCH")
-    portfolio = PortfolioQueries(repository, policy, today)
+    def industries() -> dict[str, str]:
+        universe = repository.universe(repository.small_file("sp500_constituents.csv"))
+        if "industry" not in universe.columns:
+            return {}
+        return {str(symbol): str(industry) for symbol, industry in zip(universe["symbol"], universe["industry"],
+                                                                       strict=True) if isinstance(industry, str)}
+
+    portfolio = PortfolioQueries(repository, policy, today, industries)
     journal = Journal(SqliteJournal(settings.data_dir))
     macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata(),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))

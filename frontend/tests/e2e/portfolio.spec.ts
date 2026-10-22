@@ -7,6 +7,11 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.getByLabel('Posiciones actuales (SÍMBOLO,euros; una por línea)').fill('T000,100');
   await page.getByRole('button', { name: 'Calcular plan' }).click();
   await expect(page.getByRole('heading', { name: 'Dónde aportar capital nuevo' })).toBeVisible();
+  // The test universe is almost all Information Technology: the descriptive warning must show.
+  const breakdown = page.getByRole('region', { name: 'Reparto por sector' });
+  await expect(breakdown.getByRole('status')).toContainText('Sector Information Technology');
+  await expect(breakdown.getByRole('columnheader', { name: 'S&P 500' })).toBeVisible();
+  await expect(breakdown.getByRole('row', { name: /Information Technology/ })).toBeVisible();
   await page
     .getByRole('main')
     .getByRole('link', { name: /^Diario de inversión/ })

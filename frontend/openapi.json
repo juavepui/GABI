@@ -3989,6 +3989,44 @@
         "title": "ComparisonResponse",
         "type": "object"
       },
+      "ConcentrationWarning": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "sector",
+              "industry"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "limit_percent": {
+            "title": "Limit Percent",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "positions": {
+            "title": "Positions",
+            "type": "integer"
+          },
+          "weight_percent": {
+            "title": "Weight Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "positions",
+          "weight_percent",
+          "limit_percent"
+        ],
+        "title": "ConcentrationWarning",
+        "type": "object"
+      },
       "ConsensusEstimate": {
         "properties": {
           "captured_at": {
@@ -8306,6 +8344,35 @@
         "title": "Identity",
         "type": "object"
       },
+      "IndustryWeight": {
+        "additionalProperties": false,
+        "properties": {
+          "industry": {
+            "title": "Industry",
+            "type": "string"
+          },
+          "positions": {
+            "title": "Positions",
+            "type": "integer"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          },
+          "weight_percent": {
+            "title": "Weight Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "industry",
+          "sector",
+          "positions",
+          "weight_percent"
+        ],
+        "title": "IndustryWeight",
+        "type": "object"
+      },
       "InsiderTransaction": {
         "properties": {
           "filed_date": {
@@ -10503,6 +10570,13 @@
             "title": "Holdings Text",
             "type": "string"
           },
+          "industry_limit_percent": {
+            "default": 15,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Industry Limit Percent",
+            "type": "number"
+          },
           "n_positions": {
             "default": 20,
             "maximum": 30.0,
@@ -10515,6 +10589,13 @@
             "maximum": 1000000000.0,
             "minimum": 0.0,
             "title": "New Capital Eur",
+            "type": "number"
+          },
+          "sector_limit_percent": {
+            "default": 25,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Sector Limit Percent",
             "type": "number"
           }
         },
@@ -10529,6 +10610,13 @@
               "$ref": "#/components/schemas/CapitalAllocation"
             },
             "title": "Allocations",
+            "type": "array"
+          },
+          "concentration": {
+            "items": {
+              "$ref": "#/components/schemas/ConcentrationWarning"
+            },
+            "title": "Concentration",
             "type": "array"
           },
           "data": {
@@ -10549,6 +10637,22 @@
             "default": false,
             "title": "Independent Advantage Demonstrated",
             "type": "boolean"
+          },
+          "index_weight_basis": {
+            "default": "Peso de cada sector en el S&P 500 aproximado por la capitalización total de las empresas del universo local, no por la capitalización flotante oficial.",
+            "title": "Index Weight Basis",
+            "type": "string"
+          },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/IndustryWeight"
+            },
+            "title": "Industries",
+            "type": "array"
+          },
+          "industry_limit_percent": {
+            "title": "Industry Limit Percent",
+            "type": "number"
           },
           "model_id": {
             "title": "Model Id",
@@ -10572,6 +10676,17 @@
           "revision": {
             "title": "Revision",
             "type": "string"
+          },
+          "sector_limit_percent": {
+            "title": "Sector Limit Percent",
+            "type": "number"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/SectorWeight"
+            },
+            "title": "Sectors",
+            "type": "array"
           },
           "status": {
             "enum": [
@@ -10599,7 +10714,12 @@
           "revision",
           "n_positions",
           "model_id",
-          "status"
+          "status",
+          "sectors",
+          "industries",
+          "concentration",
+          "sector_limit_percent",
+          "industry_limit_percent"
         ],
         "title": "PlanResponse",
         "type": "object"
@@ -12799,6 +12919,55 @@
         "title": "SearchTrials",
         "type": "object"
       },
+      "SectorWeight": {
+        "additionalProperties": false,
+        "properties": {
+          "difference_points": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difference Points"
+          },
+          "index_weight_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Peso del sector en el universo por capitalización total; None sin capitalizaciones",
+            "title": "Index Weight Percent"
+          },
+          "positions": {
+            "title": "Positions",
+            "type": "integer"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          },
+          "weight_percent": {
+            "title": "Weight Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sector",
+          "positions",
+          "weight_percent",
+          "index_weight_percent",
+          "difference_points"
+        ],
+        "title": "SectorWeight",
+        "type": "object"
+      },
       "SicStability": {
         "properties": {
           "group": {
@@ -14338,6 +14507,17 @@
             "title": "Amount Eur",
             "type": "number"
           },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry"
+          },
           "name": {
             "anyOf": [
               {
@@ -14406,6 +14586,7 @@
           "symbol",
           "name",
           "sector",
+          "industry",
           "score_points",
           "score_coverage_fraction",
           "price_usd",

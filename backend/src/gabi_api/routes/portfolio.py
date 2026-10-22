@@ -14,4 +14,6 @@ def service(request: Request) -> PortfolioQueries:
 
 @router.post("/plan", response_model=PlanResponse)
 def plan(body: PlanRequest, queries: Annotated[PortfolioQueries, Depends(service)]) -> PlanResponse:
-    return plan_response(queries.plan(body.n_positions, body.capital_eur, body.holdings_text, body.new_capital_eur))
+    return plan_response(queries.plan(body.n_positions, body.capital_eur, body.holdings_text, body.new_capital_eur,
+                                      sector_limit_pct=body.sector_limit_percent,
+                                      industry_limit_pct=body.industry_limit_percent))
