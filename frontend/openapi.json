@@ -2389,8 +2389,76 @@
         "title": "ChecklistAlarm",
         "type": "object"
       },
+      "ChecklistAlternative": {
+        "description": "The same concept as shown elsewhere on the company page, with its own source and period (#169).",
+        "properties": {
+          "difference": {
+            "enum": [
+              "period",
+              "formula",
+              "share_count",
+              "method"
+            ],
+            "title": "Difference",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "ttm",
+              "mrq",
+              "snapshot",
+              "5y_monthly",
+              "fiscal_year",
+              "cached_history"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "yahoo",
+              "sec_10k",
+              "prices"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "metric",
+          "value",
+          "source",
+          "period",
+          "difference",
+          "explanation"
+        ],
+        "title": "ChecklistAlternative",
+        "type": "object"
+      },
       "ChecklistCriterion": {
         "properties": {
+          "alternative": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChecklistAlternative"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "block": {
             "title": "Block",
             "type": "string"
@@ -2447,6 +2515,15 @@
             "title": "Label",
             "type": "string"
           },
+          "period": {
+            "enum": [
+              "fiscal_year",
+              "snapshot",
+              "cached_history"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
           "reason": {
             "anyOf": [
               {
@@ -2463,6 +2540,13 @@
             "type": "string"
           },
           "source": {
+            "enum": [
+              "sec_10k",
+              "price+sec",
+              "yahoo",
+              "price+yahoo",
+              "prices"
+            ],
             "title": "Source",
             "type": "string"
           },
@@ -2524,6 +2608,8 @@
           "verdict",
           "reason",
           "source",
+          "period",
+          "alternative",
           "reference",
           "explanation",
           "caveat",
@@ -3647,6 +3733,13 @@
             "title": "Generated At",
             "type": "string"
           },
+          "metric_sources": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricSource"
+            },
+            "title": "Metric Sources",
+            "type": "object"
+          },
           "model": {
             "$ref": "#/components/schemas/ModelResponse"
           },
@@ -3673,6 +3766,7 @@
           "model",
           "data",
           "prices",
+          "metric_sources",
           "generated_at",
           "revision"
         ],
@@ -9933,6 +10027,43 @@
           "glossary"
         ],
         "title": "MetricGlossary",
+        "type": "object"
+      },
+      "MetricSource": {
+        "additionalProperties": false,
+        "description": "Where a value of the company page comes from and which period it covers (#169).",
+        "properties": {
+          "period": {
+            "enum": [
+              "ttm",
+              "mrq",
+              "snapshot",
+              "5y_monthly",
+              "3m",
+              "fiscal_year",
+              "fiscal_years_3",
+              "6m",
+              "12m",
+              "cached_history"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "yahoo",
+              "sec_10k",
+              "prices"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "period"
+        ],
+        "title": "MetricSource",
         "type": "object"
       },
       "ModeRequest": {

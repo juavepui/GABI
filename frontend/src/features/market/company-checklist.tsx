@@ -24,6 +24,7 @@ import { HowToRead } from '@/shared/ui/how-to-read';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateLabel, formatCompactMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { sourceLabel } from './provenance';
 
 type Unit = ChecklistCriterion['unit'];
 
@@ -80,7 +81,7 @@ const REASONS: Record<string, string> = {
   no_ebit: 'Sin EBIT positivo',
   no_fcf: 'Sin FCF positivo',
   no_gross_profit: 'Sin beneficio bruto ni coste de ventas',
-  no_beta: 'Sin beta de Yahoo',
+  no_beta: 'Sin beta calculada frente al SPY',
   missing_component: 'Falta algún componente del mismo ejercicio',
   too_few_years: 'Pocos ejercicios consecutivos',
   no_insider_data: 'Sin operaciones Form 4 en la caché',
@@ -182,7 +183,45 @@ function CriterionHint({ item }: { item: ChecklistCriterion }) {
   );
 }
 
-function Criteria({ criteria }: { criteria: ChecklistCriterion[] }) {
+type Sources = Pick<CompanyChecklistResponse, 'fiscal_year_end' | 'sources'>;
+
+/** Source and period of a criterion value, as the backend declares them. */
+function criterionSource(item: ChecklistCriterion, data: Sources): string {
+  const year = data.fiscal_year_end ? 'FY' + data.fiscal_year_end.slice(0, 4) : 'sin ejercicio';
+  const yahoo = dateLabel(data.sources.yahoo_fetched_at?.slice(0, 10));
+  if (item.source === 'sec_10k') return `SEC 10-K · ${year}`;
+  if (item.source === 'price+sec') return `Precio + SEC 10-K · ${year}`;
+  if (item.source === 'yahoo') return `Yahoo · ${yahoo}`;
+  if (item.source === 'price+yahoo') return `Precio + consenso Yahoo · ${yahoo}`;
+  return sourceLabel({ source: 'prices', period: item.period });
+}
+
+const OWN_SOURCE: Record<ChecklistCriterion['source'], string> = {
+  sec_10k: 'SEC',
+  'price+sec': 'SEC',
+  yahoo: 'Yahoo',
+  'price+yahoo': 'Yahoo',
+  prices: 'GABI',
+};
+
+/** The same concept shown elsewhere on the page with another source or formula; never mixed in. */
+function Alternative({ item }: { item: ChecklistCriterion }) {
+  const other = item.alternative;
+  if (!other) return null;
+  const label = (other.difference === 'formula' ? 'Composite · ' : '') + sourceLabel(other);
+  const value = show(other.value, item.unit);
+  return (
+    <span className="mt-0.5 block text-xs text-muted-foreground">
+      <Hint content={other.explanation}>
+        {item.value == null
+          ? `Sin dato ${OWN_SOURCE[item.source]}; ${label} informa ${value} (no se mezcla)`
+          : `${label}: ${value}`}
+      </Hint>
+    </span>
+  );
+}
+
+function Criteria({ criteria, data }: { criteria: ChecklistCriterion[]; data: Sources }) {
   const blocks = [...new Set(criteria.map((item) => item.block))];
   return (
     <div className="overflow-x-auto" role="region" aria-label="Tabla del checklist" tabIndex={0}>
@@ -210,7 +249,13 @@ function Criteria({ criteria }: { criteria: ChecklistCriterion[] }) {
                   <td className="py-1.5 pr-3">
                     <Hint content={<CriterionHint item={item} />}>{item.label}</Hint>
                   </td>
-                  <td className="py-1.5 pr-3 tabular-nums">{show(item.value, item.unit)}</td>
+                  <td className="py-1.5 pr-3 tabular-nums">
+                    {show(item.value, item.unit)}
+                    <span className="block text-xs text-muted-foreground">
+                      {criterionSource(item, data)}
+                    </span>
+                    <Alternative item={item} />
+                  </td>
                   <td className="py-1.5 pr-3 tabular-nums">{thresholdText(item)}</td>
                   <td className="py-1.5 pr-3">
                     <Badge variant={VERDICTS[item.verdict].variant}>
@@ -607,7 +652,7 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
         {dateLabel(data.sources.yahoo_fetched_at?.slice(0, 10))}
         {data.financial_sector ? ' · Sector financiero: algunos criterios no aplican.' : ''}
       </p>
-      <Criteria criteria={data.criteria} />
+      <Criteria criteria={data.criteria} data={data} />
       <Folded title="Señales de alarma" className="rounded-md border p-3 text-sm">
         <Alarms alarms={data.alarms} />
       </Folded>

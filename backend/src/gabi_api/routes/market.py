@@ -27,6 +27,7 @@ from gabi_api.schemas.evidence import (
     RankingStability,
 )
 from gabi_api.schemas.market import (
+    METRIC_SOURCE_WIRE,
     AnalysisPromptResponse,
     CompanyResponse,
     ComparisonResponse,
@@ -195,6 +196,7 @@ def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^
                            prices=[PricePoint.model_validate({"date": record["date"], "close": finite(record["close"]),
                                                               "adj_close": finite(record["adj_close"])})
                                    for record in prices.to_dict(orient="records")],
+                                   metric_sources=METRIC_SOURCE_WIRE,
                                    generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)
 
 

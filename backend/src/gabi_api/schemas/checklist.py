@@ -9,6 +9,16 @@ AlarmStatus = Literal["active", "clear", "missing", "not_applicable", "manual", 
 Unit = Literal["fraction", "ratio", "USD", "count"]
 
 
+class ChecklistAlternative(BaseModel):
+    """The same concept as shown elsewhere on the company page, with its own source and period (#169)."""
+    metric: str
+    value: float
+    source: Literal["yahoo", "sec_10k", "prices"]
+    period: Literal["ttm", "mrq", "snapshot", "5y_monthly", "fiscal_year", "cached_history"]
+    difference: Literal["period", "formula", "share_count", "method"]
+    explanation: str
+
+
 class ChecklistCriterion(BaseModel):
     key: str
     block: str
@@ -22,7 +32,9 @@ class ChecklistCriterion(BaseModel):
     edited: bool
     verdict: Verdict
     reason: str | None
-    source: str
+    source: Literal["sec_10k", "price+sec", "yahoo", "price+yahoo", "prices"]
+    period: Literal["fiscal_year", "snapshot", "cached_history"]
+    alternative: ChecklistAlternative | None
     reference: str
     explanation: str
     caveat: Literal["share_classes"] | None

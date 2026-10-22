@@ -13,6 +13,7 @@ import { CompanyEvidenceDetail } from './candidate-evidence';
 import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
 import { CompanyChecklist } from './company-checklist';
 import { patchParams } from './params';
+import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
 
 const PriceChart = lazy(() => import('./price-chart'));
@@ -124,7 +125,7 @@ export function CompanyPage() {
                 [
                   'Capitalización',
                   metric(company.metrics.market_cap, true),
-                  'USD · caché de fundamentales',
+                  'USD · ' + sourceLabel(data.metric_sources.market_cap),
                 ],
               ].map(([label, value, detail]) => (
                 <Card key={label} className="gap-3 py-5 shadow-none">
@@ -190,7 +191,14 @@ export function CompanyPage() {
                     <dl className="space-y-4">
                       {group.keys.map(([key, label]) => (
                         <div key={key} className="flex justify-between gap-2 text-sm">
-                          <dt className="text-muted-foreground">{label}</dt>
+                          <dt className="text-muted-foreground">
+                            {label}
+                            {data.metric_sources[key] ? (
+                              <span className="block text-xs">
+                                {sourceLabel(data.metric_sources[key])}
+                              </span>
+                            ) : null}
+                          </dt>
                           <dd className="whitespace-nowrap font-medium tabular-nums">
                             {metric(company.metrics[key], true)}
                           </dd>

@@ -107,14 +107,22 @@ class MarketQueries:
         return RankingResult(snapshot, model, describe_data(snapshot, today, session), filtered.iloc[offset:offset + limit],
                              len(filtered), offset, limit)
 
-    def company(self, symbol: str, bars: int = 252) -> tuple[RankingResult, pd.DataFrame]:
+    def _company_ranking(self, symbol: str) -> tuple[str, RankingResult]:
         normalized = symbol.strip().upper().replace(".", "-")
         result = self.ranking(RankingFilter(hide_no_data=False), limit=1000)
         if normalized not in result.snapshot.table.index:
             raise QueryError("company_not_found", "La empresa no está en el universo local cacheado.", 404)
         result.rows = result.snapshot.table.loc[[normalized]]
         result.total = 1
+        return normalized, result
+
+    def company(self, symbol: str, bars: int = 252) -> tuple[RankingResult, pd.DataFrame]:
+        normalized, result = self._company_ranking(symbol)
         return result, self.repository.price_history(normalized, bars, result.snapshot.revision)
+
+    def company_metrics(self, symbol: str) -> dict:
+        """The ranking row of one company, the values its page shows; QueryError outside the universe."""
+        return self._company_ranking(symbol)[1].rows.iloc[0].to_dict()
 
     def compare(self, symbols: list[str]) -> RankingResult:
         normalized = [symbol.strip().upper().replace(".", "-") for symbol in symbols]
