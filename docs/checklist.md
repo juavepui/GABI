@@ -71,15 +71,18 @@ validadas.
 - **Alcance**: los umbrales editados solo cambian el ✔/✘ del Checklist. Los
   parámetros de las alarmas son constantes documentadas del dominio.
 
-## Pendiente (fases de #167)
+## Fases de #167
 
-- **F2**: las fórmulas que dependen de etiquetas aún no sincronizadas
-  (`CHECKLIST_TAGS`: intereses, SBC, impuestos, deuda e inversiones a corto,
-  goodwill, deterioros, emisión de deuda, dividendos, coste de ventas, activos)
-  ya están implementadas y devuelven «sin dato» hasta que una sincronización
-  explícita guarde esas etiquetas. Deben ir en una lista separada de
-  `TRACKED_TAGS`, y la sincronización debe forzar el reproceso, porque hoy un
-  companyfacts sin cambios no se reprocesa.
+- **F2** (hecho): la sincronización SEC explícita
+  (`gabi/application/market/sec_xbrl.py`) guarda `FACT_TAGS`, que son `TRACKED_TAGS`
+  más `CHECKLIST_TAGS` (intereses, SBC, impuestos, deuda e inversiones a corto,
+  goodwill, deterioros, emisión de deuda, dividendos, coste de ventas, activos).
+  - Las métricas siguen calculándose con `TRACKED_TAGS`.
+  - El checkpoint guarda la huella del conjunto de etiquetas (`fact_tags`). Si
+    cambia, la siguiente sincronización vuelve a descargar y procesar companyfacts
+    una vez por emisor, aunque no haya cambiado.
+  - Los históricos de research (backfill trimestral, bulk) no incorporan estas
+    etiquetas.
 - **F3**: capturar `heldPercentInsiders` en una lista de campos Yahoo propia de
   infraestructura (`config.py` está congelado).
 - **F4**: comparación de múltiplos con la mediana histórica propia y la sectorial.

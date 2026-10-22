@@ -54,6 +54,16 @@ def read_tables(path):
                 for table, order in orders.items()}
 
 
+def without_tag_version(tables):
+    # The only intended checkpoint difference: the stored tag set version (#167).
+    rows = []
+    for row in tables["sync_checkpoints"]:
+        state = json.loads(row[3])
+        assert state.pop("fact_tags", None) is not None or state.get("status") == "failed"
+        rows.append((*row[:3], json.dumps(state), *row[4:]))
+    return {**tables, "sync_checkpoints": rows}
+
+
 def captured_functions(source, namespace, names):
     for node in ast.parse(source).body:
         if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in names:
@@ -153,7 +163,7 @@ def test_complete_sql_events_checkpoints_match_original(tmp_path, count):
                     service.run("A", "1", full_refresh=True)
         else:
             assert old.run("A", "1", full_refresh=step in (2, 3, 6)) == new.run("A", "1", full_refresh=step in (2, 3, 6))
-        assert read_tables(old.path) == read_tables(new.path)
+        assert read_tables(old.path) == without_tag_version(read_tables(new.path))
 
 
 def test_hash_hit_does_not_read_or_parse_history(tmp_path, monkeypatch):
@@ -167,6 +177,43 @@ def test_hash_hit_does_not_read_or_parse_history(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "facts", lambda _: pytest.fail("history read on hash hit"))
     event = service.run()
     assert event["calls"] == 2 and event["status"] == "unchanged"
+
+
+def with_checklist_tags(value=100):
+    facts = payload(value)
+    entry = {"start": "2019-01-01", "end": "2019-12-31", "val": 7, "accn": "a1",
+             "filed": "2020-02-01", "form": "10-K", "fp": "FY", "fy": 2019}
+    facts["facts"]["us-gaap"]["InterestExpense"] = {"units": {"USD": [entry]}}
+    return facts
+
+
+def test_sync_stores_checklist_tags_without_changing_metrics(tmp_path):
+    plain, extended = modern(tmp_path / "plain"), modern(tmp_path / "extended")
+    plain.run()
+    extended.source.companyfacts = lambda cik: with_checklist_tags()
+    extended.run()
+    facts = extended.store.facts("cik:0000000001")
+    assert facts.loc[facts.tag == "InterestExpense", "val"].tolist() == [7]
+    assert read_tables(extended.path)["edgar_metrics"] == read_tables(plain.path)["edgar_metrics"]
+
+
+def test_history_from_older_tag_set_is_reprocessed_once(tmp_path):
+    service = modern(tmp_path)
+    service.source.companyfacts = lambda cik: with_checklist_tags()
+    service.run()
+    # Simulate a checkpoint written before #167: same companyfacts, no tag version.
+    cp = service.events.get("sec", "cik:0000000001", "facts:A")
+    cp.pop("fact_tags")
+    with closing(sqlite3.connect(service.path)) as db:
+        db.execute("DELETE FROM edgar_facts WHERE tag='InterestExpense'")
+        db.execute("DELETE FROM entity_observations WHERE json_extract(payload_json,'$.tag')='InterestExpense'")
+        db.execute("UPDATE sync_checkpoints SET state_json=?", (json.dumps(cp),))
+        db.commit()
+    event = service.run()
+    assert event["calls"] == 2 and event["new"] == 1
+    assert "InterestExpense" in set(service.store.facts("cik:0000000001").tag)
+    assert service.events.get("sec", "cik:0000000001", "facts:A")["fact_tags"]
+    assert service.run()["calls"] == 1
 
 
 def test_issuer_fact_revision_under_new_alias_keeps_accessions(tmp_path):

@@ -29,9 +29,9 @@ DEBT_GROWTH_ALARM = 0.10
 NO_SKIN_FRACTION = 0.01
 FINANCIAL_SECTORS = frozenset({"Financials", "Financial Services"})
 
-# Etiquetas que la sincronización SEC aún no guarda (F2 de #167). Hasta que una
-# sincronización explícita las incorpore, los criterios que dependen de ellas
-# quedan sin dato con su motivo.
+# Etiquetas adicionales del checklist. La sincronización SEC explícita las guarda
+# junto a TRACKED_TAGS (F2 de #167); un emisor aún no resincronizado, o que no
+# declara la partida, deja el criterio sin dato con su motivo.
 INTEREST_TAGS = ["InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt"]
 SBC_TAGS = ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"]
 TAX_TAGS = ["IncomeTaxExpenseBenefit"]
