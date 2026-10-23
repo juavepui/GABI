@@ -4548,6 +4548,11 @@
             ],
             "title": "Latest Price Date"
           },
+          "needs_attention": {
+            "default": false,
+            "title": "Needs Attention",
+            "type": "boolean"
+          },
           "prices_available": {
             "title": "Prices Available",
             "type": "integer"

@@ -2256,6 +2256,10 @@ export type DataResponse = {
      */
     latest_price_date: string | null;
     /**
+     * Needs Attention
+     */
+    needs_attention?: boolean;
+    /**
      * Prices Available
      */
     prices_available: number;
