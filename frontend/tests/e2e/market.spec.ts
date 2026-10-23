@@ -50,7 +50,7 @@ test('real API: filters, full-universe sorting, pagination, company and reload p
   await expect(
     page.getByText(metric(company.company.metrics.price), { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText('Ventaja frente a SPY no demostrada')).toBeVisible();
+  await expect(page.getByText(/Evidencia: no demostrada/)).toBeVisible();
   await expect(page.getByRole('img', { name: /Histórico de cierre ajustado/ })).toBeVisible();
   await expect(page.getByRole('main')).toBeFocused();
   await page.getByRole('button', { name: '63 sesiones', exact: true }).click();
@@ -91,13 +91,18 @@ test('empty filters, missing values, stale data and empty cache have distinct st
     route.fulfill({
       json: {
         ...payload,
-        data: { ...payload.data, status: 'stale', warnings: ['Precios de prueba obsoletos'] },
+        data: {
+          ...payload.data,
+          status: 'stale',
+          needs_attention: true,
+          warnings: ['Precios de prueba obsoletos'],
+        },
       },
     }),
   );
   await page.goto('/mercado');
   await expect(page.getByText(/Datos obsoletos/)).toBeVisible();
-  await expect(page.getByText('Ventaja frente a SPY no demostrada')).toBeVisible();
+  await expect(page.getByText(/Evidencia: no demostrada/)).toBeVisible();
   await page.unroute('**/api/v1/ranking?*');
   await page.route('**/api/v1/ranking?*', (route) =>
     route.fulfill({
@@ -401,4 +406,14 @@ test('la ruta muestra el apartado y el menú resalta solo el apartado activo', a
   const background = (element: Element) => getComputedStyle(element).backgroundColor;
   expect(await section.evaluate(background)).toBe('rgba(0, 0, 0, 0)');
   expect(await sub.evaluate(background)).not.toBe('rgba(0, 0, 0, 0)');
+});
+
+test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Criterio de escritorio');
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto('/mercado/empresas/T000');
+  await expect(page.getByText('Score del modelo', { exact: true })).toBeInViewport();
+  await expect(page.getByText(/Último cierre ·/)).toBeInViewport();
 });
