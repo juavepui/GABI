@@ -14,7 +14,15 @@ const OPTIONS_LIMIT = 200;
 const pct = (value: number) => formatPercent(value, { digits: 1, fixed: true });
 const num = (value: number) => formatNumber(value, { digits: 2, fixed: true });
 
-function DeflatedSharpeResult({ id, family }: { id: number; family: string }) {
+function DeflatedSharpeResult({
+  id,
+  family,
+  label,
+}: {
+  id: number;
+  family: string;
+  label: string;
+}) {
   const result = useQuery({
     queryKey: ['research', 'deflated-sharpe', id, family],
     queryFn: ({ signal }) => getDeflatedSharpe(id, family, signal),
@@ -61,7 +69,7 @@ function DeflatedSharpeResult({ id, family }: { id: number; family: string }) {
       </dl>
       <p className="text-sm">
         Con N={data.n_trials} intentos probados
-        {data.family ? ` en la familia «${data.family}»` : ''}, el Sharpe de {num(data.sharpe)} del
+        {data.family ? ` en la familia «${label}»` : ''}, el Sharpe de {num(data.sharpe)} del
         experimento #{data.experiment_id} tiene un DSR de {pct(data.dsr)}:{' '}
         {data.dsr > 0.95
           ? 'sigue pareciendo genuino incluso corrigiendo por multiple testing.'
@@ -71,7 +79,14 @@ function DeflatedSharpeResult({ id, family }: { id: number; family: string }) {
   );
 }
 
-export function DeflatedSharpePanel({ families }: { families: string[] }) {
+export function DeflatedSharpePanel({
+  families,
+  labels,
+}: {
+  families: string[];
+  /** Family code -> readable name, from the backend. */
+  labels: Record<string, string>;
+}) {
   const [family, setFamily] = useState(families[0] ?? '');
   const [selected, setSelected] = useState(0);
   const rows = useQuery({
@@ -108,7 +123,7 @@ export function DeflatedSharpePanel({ families }: { families: string[] }) {
             >
               {families.map((name) => (
                 <NativeSelectOption key={name} value={name}>
-                  {name}
+                  {labels[name] ?? name}
                 </NativeSelectOption>
               ))}
             </NativeSelect>
@@ -145,7 +160,9 @@ export function DeflatedSharpePanel({ families }: { families: string[] }) {
           falta al menos 2 intentos para estimar cuánto varía el Sharpe entre ellos por azar).
         </p>
       )}
-      {selected > 0 && <DeflatedSharpeResult id={selected} family={family} />}
+      {selected > 0 && (
+        <DeflatedSharpeResult id={selected} family={family} label={labels[family] ?? family} />
+      )}
     </section>
   );
 }

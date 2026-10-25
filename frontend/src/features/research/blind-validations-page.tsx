@@ -10,6 +10,7 @@ import { BlindActions } from './blind-actions';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
 import { dateText } from '@/shared/lib/format';
+import { Hash } from '@/shared/ui/hash';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -239,8 +240,8 @@ function Validation({ item }: { item: BlindStatus }) {
             {item.next_look ? ` Próxima revisión: ${item.next_look}.` : ''}
             {item.revealed_through ? ` Visible hasta ${item.revealed_through}.` : ''}
           </p>
-          <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
-            {plan.source} · {plan.sha256}
+          <p className="mt-1 break-all text-xs text-muted-foreground">
+            <span className="font-mono">{plan.source}</span> · <Hash value={plan.sha256} />
           </p>
         </div>
       )}

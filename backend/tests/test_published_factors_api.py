@@ -57,6 +57,8 @@ def test_published_factors_match_streamlit_artifacts_and_are_cached(tmp_path, mo
                     row["n_periods"], row["q_spread"]) == (
                         expected["media"], expected["icir"], expected["p_holm"],
                         expected["classification"], expected["n_periods"], expected["q_spread"])
+            assert row["classification_label"] and row["classification_label"] != row["classification"]
+            assert row["classification_meaning"]
             assert {part["division"]: part["ic_mean"] for part in row["sic_divisions"]} == {
                 name: part["ic_mean"] for name, part in sector["factors"][row["metric"]].items()}
         assert result["n_eligible"] == sum(row["n_eligible"] for row in sector["coverage"]

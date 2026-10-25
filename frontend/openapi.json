@@ -6260,6 +6260,13 @@
             "title": "Families",
             "type": "array"
           },
+          "family_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Family Labels",
+            "type": "object"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/ExperimentSummary"
@@ -6306,6 +6313,7 @@
           "items",
           "positions",
           "families",
+          "family_labels",
           "stages"
         ],
         "title": "ExperimentList",
@@ -12377,10 +12385,41 @@
         "title": "Provenance",
         "type": "object"
       },
+      "PublishedClassification": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "meaning": {
+            "title": "Meaning",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "meaning"
+        ],
+        "title": "PublishedClassification",
+        "type": "object"
+      },
       "PublishedFactor": {
         "properties": {
           "classification": {
             "title": "Classification",
+            "type": "string"
+          },
+          "classification_label": {
+            "title": "Classification Label",
+            "type": "string"
+          },
+          "classification_meaning": {
+            "title": "Classification Meaning",
             "type": "string"
           },
           "ic_mean": {
@@ -12449,6 +12488,8 @@
           "icir",
           "p_holm",
           "classification",
+          "classification_label",
+          "classification_meaning",
           "n_periods",
           "q_spread",
           "sic_divisions"
@@ -12458,6 +12499,13 @@
       },
       "PublishedFactors": {
         "properties": {
+          "classifications": {
+            "items": {
+              "$ref": "#/components/schemas/PublishedClassification"
+            },
+            "title": "Classifications",
+            "type": "array"
+          },
           "classified_fraction": {
             "anyOf": [
               {
@@ -12538,6 +12586,7 @@
           "n_classified",
           "classified_fraction",
           "factors",
+          "classifications",
           "coverage"
         ],
         "title": "PublishedFactors",
@@ -13190,6 +13239,13 @@
             "title": "Families",
             "type": "array"
           },
+          "family_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Family Labels",
+            "type": "object"
+          },
           "global_error_control_established": {
             "title": "Global Error Control Established",
             "type": "boolean"
@@ -13220,7 +13276,8 @@
           "limitations",
           "diagnostics",
           "unresolved_groups",
-          "families"
+          "families",
+          "family_labels"
         ],
         "title": "ResearchOverview",
         "type": "object"
@@ -13591,6 +13648,20 @@
             "title": "Demonstrated Superiority",
             "type": "boolean"
           },
+          "failure_labels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Labels"
+          },
           "failures": {
             "anyOf": [
               {
@@ -13607,6 +13678,10 @@
           },
           "family": {
             "title": "Family",
+            "type": "string"
+          },
+          "family_label": {
+            "title": "Family Label",
             "type": "string"
           },
           "id": {
@@ -13668,7 +13743,9 @@
           "state",
           "decision",
           "failures",
-          "demonstrated_superiority"
+          "demonstrated_superiority",
+          "family_label",
+          "failure_labels"
         ],
         "title": "SearchTrial",
         "type": "object"

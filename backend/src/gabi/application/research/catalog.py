@@ -3,6 +3,7 @@
 from typing import Protocol
 
 from gabi.application.errors import QueryError
+from gabi.domain.research import labels
 from gabi.domain.research.trial_presentation import rows
 
 OVERFITTING_AUDIT = "docs/overfitting-audit/audit.json"
@@ -33,6 +34,7 @@ class ResearchCatalog:
             "diagnostics": ledger["diagnostics"],
             "unresolved_groups": ledger["unresolved_groups"],
             "families": sorted({row["family"] for row in published}),
+            "family_labels": {row["family"]: labels.family(row["family"]) for row in published},
         }
 
     def trials(self, *, offset: int, limit: int, family: str | None = None) -> dict:
@@ -46,7 +48,11 @@ class ResearchCatalog:
         return {
             "total": len(rows),
             "offset": offset,
-            "items": [{field: row[field] for field in fields} for row in rows[offset:offset + limit]],
+            "items": [{field: row[field] for field in fields}
+                      | {"family_label": labels.family(row["family"]),
+                         "failure_labels": [labels.failure(code) for code in row["failures"]]
+                         if row["failures"] is not None else None}
+                      for row in rows[offset:offset + limit]],
         }
 
     def trial(self, trial_id: str) -> dict:

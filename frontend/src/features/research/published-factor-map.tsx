@@ -4,6 +4,7 @@ import { getPublishedFactors } from '@/shared/api/client';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber } from '@/shared/lib/format';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { Hash } from '@/shared/ui/hash';
 
 const labels: Record<string, string> = {
   pe: 'PER',
@@ -74,7 +75,7 @@ export function PublishedFactorMap() {
                 <td>{number(row.ic_mean)}</td>
                 <td>{number(row.icir)}</td>
                 <td>{number(row.p_holm)}</td>
-                <td>{row.classification}</td>
+                <td title={row.classification_meaning}>{row.classification_label}</td>
                 <td>{row.n_periods}</td>
                 <td>{percentage(row.q_spread)}</td>
               </tr>
@@ -82,6 +83,17 @@ export function PublishedFactorMap() {
           </tbody>
         </table>
       </div>
+      <dl
+        aria-label="Qué significa cada clasificación"
+        className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-[max-content_1fr]"
+      >
+        {data.classifications.map((item) => (
+          <div key={item.code} className="contents">
+            <dt className="font-medium">{item.label}</dt>
+            <dd className="text-muted-foreground">{item.meaning}</dd>
+          </div>
+        ))}
+      </dl>
       <div className="border-t pt-5">
         <h3 className="font-semibold">Estabilidad por industria SIC fechada</h3>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -195,8 +207,9 @@ export function PublishedFactorMap() {
           ))}
         </div>
       </div>
-      <p className="break-all border-t pt-3 text-xs text-muted-foreground">
-        Factor Zoo SHA-256: {data.factor_zoo_sha256} · SIC SHA-256: {data.sic_sha256}
+      <p className="border-t pt-3 text-xs text-muted-foreground">
+        Factor Zoo SHA-256: <Hash value={data.factor_zoo_sha256} /> · SIC SHA-256:{' '}
+        <Hash value={data.sic_sha256} />
       </p>
     </section>
   );
