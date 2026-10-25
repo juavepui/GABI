@@ -12,7 +12,13 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { dateLabel, dateText, formatCompactMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import {
+  dateLabel,
+  dateText,
+  formatCompactMoney,
+  formatNumber,
+  formatPercent,
+} from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Textarea } from '@/shared/ui/textarea';
 
