@@ -137,7 +137,9 @@ def test_unexpected_failure_trace_omits_message_for_blind_and_maintenance(tmp_pa
     job = store.enqueue(JobCommand("maintenance"), "maintenance-trace", "scheduler")
 
     def fails(_):
-        computed = round(1 + 0.23, 2)
+        # Built at run time so only the message (not the source line) could leak it; letters
+        # outside hex so a timestamp or job id in the log never matches by chance.
+        computed = "zq" + "xw"
         raise ValueError(f"pending blind result {computed}")
 
     Worker(store, fails, tmp_path).run_once()
@@ -145,7 +147,7 @@ def test_unexpected_failure_trace_omits_message_for_blind_and_maintenance(tmp_pa
     assert failed["error_code"] == "job_failed" and failed["diagnostic"] is True
     trace = (tmp_path / "jobs" / "logs" / f"{job['id']}.log").read_text(encoding="utf-8")
     assert "builtins.ValueError (mensaje omitido)" in trace and "in fails" in trace
-    assert "1.23" not in trace
+    assert "zqxw" not in trace
 
 
 def test_unwritable_trace_still_finishes_failed_without_diagnostic(tmp_path):
