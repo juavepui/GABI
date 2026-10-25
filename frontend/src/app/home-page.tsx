@@ -18,6 +18,7 @@ import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { HomeNotices } from './home-notices';
+import { HomeAlerts } from './home-alerts';
 import { PageHeader } from '@/shared/ui/page-header';
 
 const WARNINGS: Record<string, string> = {
@@ -289,6 +290,7 @@ export function HomePage() {
       {data && (
         <>
           <FirstSteps home={data} />
+          <HomeAlerts alerts={data.alerts ?? []} />
           <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
             <DataCard home={data} computing={compute.isFetching} />
             <TargetCard home={data} />

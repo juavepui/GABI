@@ -316,6 +316,23 @@ class ReadOnlyMarket:
                 grouped[symbol].append(tuple(claim))
         return {symbol: resolve_claims(claims, today) for symbol, claims in grouped.items()}
 
+    def cached_events(self, symbols: list[str], today: date) -> list[dict] | None:
+        """Corporate events of a few companies from cached fundamentals; None while the ranking is computing."""
+        if not symbols or len(symbols) > 60:
+            return []
+        if not self.lock.acquire(blocking=False):
+            return None
+        try:
+            self.connect()
+            self.discover()
+            records = self.fundamentals(tuple(dict.fromkeys(symbols)))
+            return [event for symbol, record in records.items() for event in self.calculators.events(
+                symbol, record.get("info", {}), record.get("fetched_at", ""), today=today)]
+        except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
+            raise QueryError("data_read_error", "No se pueden consultar los eventos de las empresas.") from exc
+        finally:
+            self.lock.release()
+
     def company_events(self, symbol: str, today: date) -> list[dict]:
         """Dated corporate events parsed from the cached fundamentals record (no download)."""
         with self.lock:
