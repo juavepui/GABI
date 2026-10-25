@@ -27,9 +27,15 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
+/** A real heading, so screen readers can move between sections: h2 under the page h1, or h3 for
+ *  a card nested in a section. */
+function CardTitle({
+  className,
+  as: Heading = 'h2',
+  ...props
+}: React.ComponentProps<'h2'> & { as?: 'h2' | 'h3' }) {
   return (
-    <div
+    <Heading
       data-slot="card-title"
       className={cn('leading-none font-semibold', className)}
       {...props}
