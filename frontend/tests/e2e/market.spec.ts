@@ -244,6 +244,7 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   page,
 }) => {
   await page.goto('/mercado/empresas/T001');
+  await expect(page).toHaveTitle('T001 · Ficha · GABI');
   await expect(page.getByText('Otras métricas (informativas, no puntuadas)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Próximos catalizadores' })).toBeVisible();
   await page.getByText('Qué cambió respecto al filing anterior').click();
