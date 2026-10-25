@@ -7,6 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateText, formatPercent } from '@/shared/lib/format';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
+import { Hash } from '@/shared/ui/hash';
 
 const signedPct = (value: number | null | undefined) =>
   value == null ? '—' : (value > 0 ? '+' : '') + formatPercent(value, { digits: 1, fixed: true });
@@ -200,7 +201,7 @@ export function HistoricalOutcomes({
           </div>
           <p className="break-all text-xs text-muted-foreground">
             Coste {data.cost_bps} pb · corte observado {data.observed_cutoff} · SHA-256{' '}
-            {data.result_sha256}
+            <Hash value={data.result_sha256} />
           </p>
         </div>
       )}

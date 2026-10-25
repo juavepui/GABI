@@ -12,6 +12,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { Hash } from '@/shared/ui/hash';
 
 const format = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
@@ -279,7 +280,7 @@ export function FactorPage() {
             Descargar series, quintiles, rotación y periodos saltados
           </a>
           <p className="mt-2 break-all text-xs text-muted-foreground">
-            SHA-256: {preview.data.result_sha256}
+            SHA-256: <Hash value={preview.data.result_sha256} />
           </p>
         </section>
       )}

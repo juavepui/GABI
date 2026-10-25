@@ -22,6 +22,8 @@ class ResearchOverview(BaseModel):
     diagnostics: list[Diagnostic]
     unresolved_groups: list[Any]
     families: list[str]
+    # family code -> readable name; the code stays the filter value.
+    family_labels: dict[str, str]
 
 
 class SearchTrial(BaseModel):
@@ -36,6 +38,8 @@ class SearchTrial(BaseModel):
     decision: str
     failures: list[str] | None
     demonstrated_superiority: bool
+    family_label: str
+    failure_labels: list[str] | None
 
 
 class TrialRow(BaseModel):
@@ -629,9 +633,17 @@ class PublishedFactor(BaseModel):
     icir: float | None
     p_holm: float | None
     classification: str
+    classification_label: str
+    classification_meaning: str
     n_periods: int
     q_spread: float | None
     sic_divisions: list[PublishedSicDivision]
+
+
+class PublishedClassification(BaseModel):
+    code: str
+    label: str
+    meaning: str
 
 
 class PublishedSicCoverage(BaseModel):
@@ -657,6 +669,7 @@ class PublishedFactors(BaseModel):
     n_classified: int
     classified_fraction: float | None
     factors: list[PublishedFactor]
+    classifications: list[PublishedClassification]
     coverage: list[PublishedSicCoverage]
 
 
@@ -692,6 +705,7 @@ class ExperimentList(BaseModel):
     # metric -> experiment id -> 1 best .. 0 worst among every experiment of the filter.
     positions: dict[str, dict[str, float | None]]
     families: list[str]
+    family_labels: dict[str, str]
     stages: list[ExperimentStage]
 
 

@@ -7,6 +7,7 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.domain.market.comparison import positions
+from gabi.domain.research import labels
 from gabi.domain.research.experiments import RANKED_METRICS, STAGE_INFO, STAGES
 
 
@@ -49,6 +50,7 @@ class ExperimentQueries:
                 "positions": {metric: {str(item["id"]): cells[str(item["id"])] for item in page}
                               for metric, cells in ranked.items()},
                 "families": families,
+                "family_labels": {name: labels.family(name) for name in families},
                 "stages": [{"id": key, **STAGE_INFO[key]} for key in STAGES]}
 
     def detail(self, experiment_id: int) -> dict:

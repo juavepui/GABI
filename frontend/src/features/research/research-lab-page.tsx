@@ -15,6 +15,7 @@ import { formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
 import { Term } from '@/shared/ui/term';
+import { Hash, HashText } from '@/shared/ui/hash';
 
 const PAGE_SIZE = 50;
 
@@ -79,16 +80,20 @@ function Environment({ id }: { id: number }) {
           >
             Huella del entorno (uv.lock)
           </dt>
-          <dd className="font-mono">{item.env_fingerprint ?? '—'}</dd>
+          <dd>{item.env_fingerprint ? <HashText text={item.env_fingerprint} /> : '—'}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Commit</dt>
-          <dd className="font-mono">{item.git_commit ?? '—'}</dd>
+          <dd>{item.git_commit ? <Hash value={item.git_commit} /> : '—'}</dd>
         </div>
       </dl>
       <p className="mt-4 text-sm text-muted-foreground">Huella de datos</p>
       <code className="mt-1 block break-all rounded bg-muted p-2 text-xs">
-        {item.data_fingerprint ?? 'Sin fingerprint de datos'}
+        {item.data_fingerprint ? (
+          <HashText text={item.data_fingerprint} />
+        ) : (
+          'Sin fingerprint de datos'
+        )}
       </code>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
         {fields.map(([label, value]) => (
@@ -143,11 +148,16 @@ const LONG_NOTES = 120;
 /** Long notes (lists of hashes, amendments) fold to two lines so each row keeps a readable height. */
 function ExperimentNotes({ text }: { text: string | null | undefined }) {
   if (!text) return null;
-  if (text.length <= LONG_NOTES) return <span className="[overflow-wrap:anywhere]">{text}</span>;
+  if (text.length <= LONG_NOTES)
+    return (
+      <span className="[overflow-wrap:anywhere]">
+        <HashText text={text} />
+      </span>
+    );
   return (
     <details className="group">
       <summary className="line-clamp-2 cursor-pointer list-none [overflow-wrap:anywhere] group-open:line-clamp-none">
-        {text}
+        <HashText text={text} copy={false} />
       </summary>
     </details>
   );
@@ -230,7 +240,7 @@ export function ResearchLabPage() {
                 <NativeSelectOption value="">(todas)</NativeSelectOption>
                 {data.families.map((name) => (
                   <NativeSelectOption key={name} value={name}>
-                    {name}
+                    {data.family_labels[name] ?? name}
                   </NativeSelectOption>
                 ))}
               </NativeSelect>
@@ -294,7 +304,9 @@ export function ResearchLabPage() {
                       </summary>
                       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                         <dt>Familia</dt>
-                        <dd className="text-right">{item.family ?? '—'}</dd>
+                        <dd className="text-right">
+                          {item.family ? (data.family_labels[item.family] ?? item.family) : '—'}
+                        </dd>
                         <dt>Posiciones</dt>
                         <dd className="text-right">{item.n_positions ?? '—'}</dd>
                         <dt>Rebalanceo</dt>
@@ -322,9 +334,13 @@ export function ResearchLabPage() {
                         <dt>Retornos</dt>
                         <dd className="text-right">{item.has_returns ? 'Sí' : '—'}</dd>
                         <dt>Commit</dt>
-                        <dd className="break-all text-right font-mono">{item.git_commit ?? '—'}</dd>
+                        <dd className="text-right">
+                          {item.git_commit ? <Hash value={item.git_commit} /> : '—'}
+                        </dd>
                         <dt>Notas</dt>
-                        <dd className="break-words text-right">{item.notes ?? '—'}</dd>
+                        <dd className="break-words text-right">
+                          {item.notes ? <HashText text={item.notes} /> : '—'}
+                        </dd>
                       </dl>
                     </details>
                   </article>
@@ -380,7 +396,9 @@ export function ResearchLabPage() {
                         </td>
                         <td className="px-3 py-2">{item.model_id}</td>
                         <td className="px-3 py-2">{stageLabel(data.stages, item.stage)}</td>
-                        <td className="px-3 py-2">{item.family ?? '—'}</td>
+                        <td className="px-3 py-2">
+                          {item.family ? (data.family_labels[item.family] ?? item.family) : '—'}
+                        </td>
                         <td className="px-3 py-2">{item.n_positions ?? '—'}</td>
                         <td className="px-3 py-2">{item.rebalance ?? '—'}</td>
                         {(
@@ -400,7 +418,9 @@ export function ResearchLabPage() {
                           </RankCell>
                         ))}
                         <td className="px-3 py-2">{item.hypothesis_registered ? 'Sí' : 'No'}</td>
-                        <td className="px-3 py-2 font-mono">{item.git_commit ?? '—'}</td>
+                        <td className="px-3 py-2">
+                          {item.git_commit ? <Hash value={item.git_commit} /> : '—'}
+                        </td>
                         <td className="px-3 py-2">{item.has_returns ? 'Sí' : '—'}</td>
                         <td className="w-72 min-w-56 px-3 py-2">
                           <ExperimentNotes text={item.notes} />
@@ -448,7 +468,11 @@ export function ResearchLabPage() {
           {selected > 0 && <Environment id={selected} />}
           <DeleteExperiment />
           <ManualExperimentForm stages={data.stages} />
-          <DeflatedSharpePanel key={JSON.stringify(data.families)} families={data.families} />
+          <DeflatedSharpePanel
+            key={JSON.stringify(data.families)}
+            families={data.families}
+            labels={data.family_labels}
+          />
           <ExperimentTailPanel />
           <PboPanel />
           <BootstrapPanel />

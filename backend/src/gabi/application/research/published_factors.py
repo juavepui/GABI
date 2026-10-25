@@ -3,6 +3,7 @@
 from typing import Protocol
 
 from gabi.application.errors import QueryError
+from gabi.domain.research import labels
 
 
 class PublishedFactorSource(Protocol):
@@ -28,6 +29,7 @@ class PublishedFactorQueries:
                 raise ValueError("Invalid published coverage")
             factors = []
             for metric, data in zoo["factors"].items():
+                label, meaning = labels.factor_classification(data["classification"])
                 divisions = []
                 for division, detail in sector["factors"][metric].items():
                     divisions.append({
@@ -41,6 +43,7 @@ class PublishedFactorQueries:
                 factors.append({
                     "metric": metric, "ic_mean": data["media"], "icir": data["icir"],
                     "p_holm": data["p_holm"], "classification": data["classification"],
+                    "classification_label": label, "classification_meaning": meaning,
                     "n_periods": data["n_periods"], "q_spread": data["q_spread"],
                     "sic_divisions": divisions,
                 })
@@ -54,6 +57,8 @@ class PublishedFactorQueries:
                 "n_eligible": eligible, "n_classified": classified,
                 "classified_fraction": classified / eligible if eligible else None,
                 "factors": factors,
+                "classifications": [{"code": code, "label": label, "meaning": meaning}
+                                    for code, (label, meaning) in labels.FACTOR_CLASSIFICATIONS.items()],
                 "coverage": [{"date": row["fecha"], "stratum": row["stratum"],
                               "n_eligible": row["n_eligible"], "n_identity": row["n_identity"],
                               "n_selected_filing": row["n_selected_filing"],

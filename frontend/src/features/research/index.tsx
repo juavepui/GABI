@@ -115,11 +115,15 @@ export function ResearchPage() {
       {overview.data && (
         <section className="grid gap-4 sm:grid-cols-3" aria-label="Estado del registro">
           <div className="rounded-xl border bg-card p-5">
-            <p className="text-xs text-muted-foreground">Convención histórica</p>
+            <p className="text-xs text-muted-foreground">
+              Estrategias que cuenta la corrección por búsqueda
+            </p>
             <p className="mt-2 text-2xl font-semibold tabular-nums">
               {overview.data.counts.legacy_guard_entries ?? '—'}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">No es un recuento exhaustivo</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Convención heredada: no incluye todas las búsquedas observadas
+            </p>
           </div>
           <div className="rounded-xl border bg-card p-5">
             <p className="text-xs text-muted-foreground">Confirmación independiente</p>
@@ -159,7 +163,7 @@ export function ResearchPage() {
                 <option value="">Todas</option>
                 {overview.data.families.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {overview.data.family_labels[item] ?? item}
                   </option>
                 ))}
               </NativeSelect>
@@ -184,7 +188,9 @@ export function ResearchPage() {
                     <tr className="border-b align-top last:border-0">
                       <td className="py-3 pr-3">
                         <span className="font-medium">{item.id}</span>
-                        <span className="block text-xs text-muted-foreground">{item.family}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {item.family_label}
+                        </span>
                       </td>
                       <td className="py-3 pr-3">
                         {item.state === 'observed'
@@ -193,10 +199,12 @@ export function ResearchPage() {
                       </td>
                       <td className="py-3 pr-3">
                         {decisionLabel[item.decision] ?? item.decision}
-                        {item.failures && item.failures.length > 0 && (
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            {item.failures.join(', ')}
-                          </span>
+                        {item.failure_labels && item.failure_labels.length > 0 && (
+                          <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
+                            {item.failure_labels.map((label) => (
+                              <li key={label}>{label}</li>
+                            ))}
+                          </ul>
                         )}
                       </td>
                       <td className="py-3 pr-3 text-xs">

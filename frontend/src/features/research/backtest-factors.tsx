@@ -13,6 +13,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { Hash } from '@/shared/ui/hash';
 
 const RollingChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.RollingChart })),
@@ -216,7 +217,9 @@ function FactorResult({ result }: { result: BacktestFactorsPreview }) {
       >
         Descargar contraste completo
       </a>
-      <p className="break-all text-xs text-muted-foreground">SHA-256: {result.result_sha256}</p>
+      <p className="break-all text-xs text-muted-foreground">
+        SHA-256: <Hash value={result.result_sha256} />
+      </p>
     </section>
   );
 }

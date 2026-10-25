@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber } from '@/shared/lib/format';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
+import { Hash } from '@/shared/ui/hash';
 
 export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean }) {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -136,7 +137,7 @@ export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean
             Descargar serie y resumen íntegros
           </a>
           <p className="break-all text-xs text-muted-foreground">
-            SHA-256: {preview.data.result_sha256}
+            SHA-256: <Hash value={preview.data.result_sha256} />
           </p>
         </div>
       )}

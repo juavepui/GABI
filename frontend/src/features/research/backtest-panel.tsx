@@ -13,6 +13,7 @@ import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { Hash } from '@/shared/ui/hash';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
@@ -516,7 +517,9 @@ function BacktestResult({ result }: { result: BacktestPreview }) {
       >
         Descargar backtest completo (periodos, curva, calidad de datos)
       </a>
-      <p className="break-all text-xs text-muted-foreground">SHA-256: {result.result_sha256}</p>
+      <p className="break-all text-xs text-muted-foreground">
+        SHA-256: <Hash value={result.result_sha256} />
+      </p>
       <BacktestDiagnostics jobId={result.job_id} v1={!v2} />
       {!v2 && (
         <BacktestFactors

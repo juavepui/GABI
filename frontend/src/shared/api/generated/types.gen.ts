@@ -3187,6 +3187,12 @@ export type ExperimentList = {
      */
     families: Array<string>;
     /**
+     * Family Labels
+     */
+    family_labels: {
+        [key: string]: string;
+    };
+    /**
      * Items
      */
     items: Array<ExperimentSummary>;
@@ -6418,6 +6424,24 @@ export type Provenance = {
 };
 
 /**
+ * PublishedClassification
+ */
+export type PublishedClassification = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Meaning
+     */
+    meaning: string;
+};
+
+/**
  * PublishedFactor
  */
 export type PublishedFactor = {
@@ -6425,6 +6449,14 @@ export type PublishedFactor = {
      * Classification
      */
     classification: string;
+    /**
+     * Classification Label
+     */
+    classification_label: string;
+    /**
+     * Classification Meaning
+     */
+    classification_meaning: string;
     /**
      * Ic Mean
      */
@@ -6459,6 +6491,10 @@ export type PublishedFactor = {
  * PublishedFactors
  */
 export type PublishedFactors = {
+    /**
+     * Classifications
+     */
+    classifications: Array<PublishedClassification>;
     /**
      * Classified Fraction
      */
@@ -6840,6 +6876,12 @@ export type ResearchOverview = {
      */
     families: Array<string>;
     /**
+     * Family Labels
+     */
+    family_labels: {
+        [key: string]: string;
+    };
+    /**
      * Global Error Control Established
      */
     global_error_control_established: boolean;
@@ -7115,6 +7157,10 @@ export type SearchTrial = {
      */
     demonstrated_superiority: boolean;
     /**
+     * Failure Labels
+     */
+    failure_labels: Array<string> | null;
+    /**
      * Failures
      */
     failures: Array<string> | null;
@@ -7122,6 +7168,10 @@ export type SearchTrial = {
      * Family
      */
     family: string;
+    /**
+     * Family Label
+     */
+    family_label: string;
     /**
      * Id
      */
