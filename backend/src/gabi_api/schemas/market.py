@@ -113,6 +113,7 @@ class DataResponse(WireModel):
     warnings: list[str]
     last_session: date | None = None  # last closed NYSE session; null when not checked
     prices_current: bool | None = None  # at most 5 % of the universe lacks that session's close
+    needs_attention: bool = False  # show the full data notice, not the compact chip
 
 
 class RankingResponse(WireModel):

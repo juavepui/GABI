@@ -62,6 +62,7 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
               data: {
                 ...original.data,
                 status: 'empty',
+                needs_attention: true,
                 universe_count: 0,
                 prices_available: 0,
                 fundamentals_available: 0,
@@ -73,7 +74,12 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
             }
           : {
               ...original,
-              data: { ...original.data, status: 'stale', warnings: ['prices_stale', 'sec_stale'] },
+              data: {
+                ...original.data,
+                status: 'stale',
+                needs_attention: true,
+                warnings: ['prices_stale', 'sec_stale'],
+              },
             },
     });
   });
@@ -84,6 +90,9 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
   await expect(
     state.getByRole('link', { name: 'Actualizar datos desde Administración' }),
   ).toHaveAttribute('href', '/administracion');
+  // Stale data keeps its full notice; the usual evidence notice folds into the chip (#187).
+  await expect(page.getByText('Ventaja frente a SPY no demostrada')).toBeHidden();
+  await page.getByText(/Evidencia: no demostrada/).click();
   await expect(page.getByText('Ventaja frente a SPY no demostrada')).toBeVisible();
   scenario = 'empty';
   await page.reload();

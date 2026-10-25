@@ -7,7 +7,7 @@ import pandas as pd
 
 from gabi.application.administration.model import ModelQueries, ModelState
 from gabi.application.errors import QueryError
-from gabi.domain.market.freshness import prices_current
+from gabi.domain.market.freshness import MAX_BEHIND_SHARE, prices_current
 from gabi.domain.market.selection import RankingFilter, RankingSort, filter_ranking, sort_ranking
 
 
@@ -33,6 +33,9 @@ class DataState:
     warnings: list[str]
     last_session: date | None = None  # last closed NYSE session; None: not checked
     prices_current: bool | None = None
+    # Degraded, stale or empty data, a missing last close or a source below 95 % of the universe:
+    # the pages show the full data notice instead of the compact chip (#187).
+    needs_attention: bool = False
 
 
 @dataclass
@@ -82,8 +85,9 @@ def describe_data(snapshot: RankingSnapshot, today: date, last_session: date | N
     if last_session is not None and not table.empty:
         current = prices_current([date.fromisoformat(value) if (value := sources.get(sym, {}).get("price_date")) else None
                                   for sym in table.index], last_session)
+    short = min(prices, fundamentals, sec, scored) < (1 - MAX_BEHIND_SHARE) * len(table)
     return DataState(status, len(table), prices, fundamentals, sec, scored, max(dates) if dates else None, warnings,
-                     last_session, current)
+                     last_session, current, status != "ready" or current is False or short)
 
 
 class MarketQueries:
