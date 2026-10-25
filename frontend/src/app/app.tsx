@@ -1,15 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation, Link } from 'react-router-dom';
+import { HardDrive, Leaf } from 'lucide-react';
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  ChartNoAxesCombined,
-  BriefcaseBusiness,
-  FlaskConical,
-  Settings2,
-  HardDrive,
-  Leaf,
-  House,
-} from 'lucide-react';
 import {
   MarketPage,
   CompanyPage,
@@ -36,6 +28,7 @@ import {
 import { AdministrationPage, DataHealthPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
 import { HomePage } from './home-page';
+import { navigation, pageTitle, subsections } from './navigation';
 import { JobsIndicator } from './jobs-indicator';
 import { rememberLaunch } from './job-launches';
 
@@ -64,47 +57,11 @@ const client: QueryClient = new QueryClient({
     },
   },
 });
-// Sub-sections of each section, shown under it in the sidebar while it is active.
-const subsections: Record<string, { path: string; label: string }[]> = {
-  '/mercado': [
-    { path: '/mercado', label: 'Ranking' },
-    { path: '/mercado/comparar', label: 'Comparar empresas' },
-    { path: '/mercado/macro', label: 'Panel macro' },
-    { path: '/mercado/senales', label: 'Signal Monitor' },
-  ],
-  '/cartera': [
-    { path: '/cartera', label: 'Cartera objetivo' },
-    { path: '/cartera/mi-cartera', label: 'Mi cartera' },
-    { path: '/cartera/diario', label: 'Diario de inversión' },
-    { path: '/cartera/aprender', label: 'Aprender' },
-    { path: '/cartera/simuladas', label: 'Carteras simuladas' },
-    { path: '/cartera/decisiones', label: 'Decisiones' },
-  ],
-  '/investigacion': [
-    { path: '/investigacion', label: 'Ensayos registrados' },
-    { path: '/investigacion/historico', label: 'Ranking histórico' },
-    { path: '/investigacion/validaciones', label: 'Validaciones ciegas' },
-    { path: '/investigacion/factores', label: 'Factor Lab' },
-    { path: '/investigacion/laboratorio', label: 'Research Lab' },
-    { path: '/investigacion/carteras', label: 'Portfolio Lab' },
-  ],
-  '/administracion': [
-    { path: '/administracion', label: 'Datos y modelo' },
-    { path: '/administracion/calidad', label: 'Calidad de los datos' },
-  ],
-};
 const subLink = ({ isActive }: { isActive: boolean }) =>
   'block shrink-0 rounded-md px-3 py-1.5 text-[13px] transition-colors ' +
   (isActive
     ? 'bg-white/15 font-semibold text-white'
     : 'text-[#c5d8cc] hover:bg-white/10 hover:text-white');
-const navigation = [
-  { path: '/', label: 'Inicio', icon: House },
-  { path: '/cartera', label: 'Cartera', icon: BriefcaseBusiness },
-  { path: '/mercado', label: 'Mercado', icon: ChartNoAxesCombined },
-  { path: '/investigacion', label: 'Investigación', icon: FlaskConical },
-  { path: '/administracion', label: 'Administración', icon: Settings2 },
-];
 /** «GABI / Sección / Apartado»: where the page sits, with links back up. */
 function Breadcrumb({ pathname, section }: { pathname: string; section?: string }) {
   const item = navigation.find((entry) =>
@@ -163,6 +120,9 @@ function Shell() {
       nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
     }
   }, [location.pathname]);
+  useEffect(() => {
+    document.title = pageTitle(location.pathname, location.search);
+  }, [location.pathname, location.search]);
   const previous = useRef(location.pathname);
   useEffect(() => {
     if (previous.current !== location.pathname) {

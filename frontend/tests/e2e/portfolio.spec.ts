@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('cartera y diario conservan el plan y las tesis locales', async ({ page }) => {
   await page.goto('/cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
+  await expect(page).toHaveTitle('Cartera objetivo · GABI');
   await expect(page.getByText('Top-20 congelado')).toBeVisible();
   await page
     .getByLabel('¿Y si…? Posiciones hipotéticas (SÍMBOLO,euros; una por línea)')
@@ -40,6 +41,8 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await second.fill('001'); // Search anywhere in the symbol, not only by its first letter.
   await second.press('Enter');
   await expect(page.getByRole('heading', { name: 'Métricas comparables' })).toBeVisible();
+  // The tab follows the choice, so several comparisons open at once can be told apart.
+  await expect(page).toHaveTitle('Comparar T000, T001 · GABI');
   const composite = page.getByRole('row', { name: /Composite Score/ });
   await expect(composite).toBeVisible();
   // The better company on the score is green and marked as the best of the compared ones.
