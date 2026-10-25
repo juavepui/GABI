@@ -12,7 +12,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { dateLabel, dateText, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateLabel, dateText, formatCompactMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Textarea } from '@/shared/ui/textarea';
 
@@ -313,8 +313,6 @@ export function FilingChanges({ symbol }: { symbol: string }) {
   );
 }
 
-const money = (value: number | null | undefined) => formatMoney(value);
-
 const INSIDER_COLUMNS = [
   'Fecha',
   'Insider',
@@ -354,7 +352,7 @@ function InsidersContent({ symbol }: { symbol: string }) {
         </div>
         <div className="rounded-md border p-3">
           <dt className="text-xs text-muted-foreground">Neto comprado − vendido</dt>
-          <dd className="text-lg font-semibold">{money(data.net_value)}</dd>
+          <dd className="text-lg font-semibold">{formatCompactMoney(data.net_value)}</dd>
         </div>
       </dl>
       {data.n_buys > 0 && data.has_10b5_1_only_buys && (
