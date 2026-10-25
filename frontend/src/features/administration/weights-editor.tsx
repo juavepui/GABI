@@ -45,9 +45,9 @@ export function WeightsEditor({ model }: { model: ModelResponse }) {
       }}
       className="mt-5 space-y-3 border-t pt-5"
     >
-      <p className="text-sm font-medium">
+      <h3 className="text-sm font-medium">
         Pesos del modelo · {model.mode === 'INVESTOR' ? 'Investor, bloqueados' : 'Research'}
-      </p>
+      </h3>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {fields.map(([key, label]) => (
           <label key={key} className="text-xs">

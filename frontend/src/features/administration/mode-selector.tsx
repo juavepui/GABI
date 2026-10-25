@@ -32,7 +32,9 @@ export function ModeSelector({ model }: { model: ModelResponse }) {
         (hash === '#modo' ? 'rounded-lg bg-accent/60 p-3' : '')
       }
     >
-      <p className="text-sm font-medium">Modo de trabajo · {research ? 'Research' : 'Investor'}</p>
+      <h3 className="text-sm font-medium">
+        Modo de trabajo · {research ? 'Research' : 'Investor'}
+      </h3>
       <p className="text-xs text-muted-foreground">
         {research
           ? 'Research permite experimentar; sus resultados no se convierten en evidencia validada.'

@@ -42,7 +42,7 @@ export function DataUpdate() {
   const data = result.data;
   return (
     <section className="space-y-3 rounded-lg border p-4 text-sm" aria-label="Actualizar datos">
-      <p className="font-medium">Actualizar datos</p>
+      <h3 className="font-medium">Actualizar datos</h3>
       <p className="text-xs text-muted-foreground">
         Precios y fundamentales de Yahoo Finance y datos oficiales de SEC EDGAR, descargando solo lo
         caducado. Empieza con un subconjunto pequeño: la primera descarga de fundamentales tarda. No
