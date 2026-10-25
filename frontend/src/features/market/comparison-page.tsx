@@ -5,6 +5,7 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Button } from '@/shared/ui/button';
 import { CompanyPicker } from '@/shared/ui/company-picker';
 import { metric } from '@/shared/lib/format';
+import type { Metric } from '@/shared/api/generated/types.gen';
 import { useRanking } from './queries';
 import { Evidence } from './evidence';
 import { RankCell, RankLegend, RankValue } from '@/shared/ui/rank-cell';
@@ -24,6 +25,10 @@ const fields = [
   ['volatility', 'Volatilidad'],
   ['max_drawdown', 'Caída máxima'],
 ] as const;
+
+/** Capitalization in the same compact words as Ranking and the company page. */
+const show = (key: (typeof fields)[number][0], value: Metric | undefined) =>
+  metric(value, key === 'market_cap');
 
 export function ComparisonPage() {
   const [params, setParams] = useSearchParams();
@@ -120,7 +125,7 @@ export function ComparisonPage() {
                               position={comparison.data.positions[key]?.[item.symbol]}
                               scope="de los comparados"
                             >
-                              {metric(item.metrics[key])}
+                              {show(key, item.metrics[key])}
                             </RankValue>
                           </dd>
                         </div>
@@ -161,7 +166,7 @@ export function ComparisonPage() {
                           position={comparison.data?.positions[key]?.[item.symbol]}
                           scope="de los comparados"
                         >
-                          {metric(item.metrics[key])}
+                          {show(key, item.metrics[key])}
                         </RankCell>
                       ))}
                     </tr>
