@@ -170,9 +170,9 @@ test('en móvil la pestaña activa queda a la vista y ninguna sección desborda'
   });
   try {
     await page.goto('/investigacion/laboratorio');
-    await expect(page.getByRole('heading', { name: 'Research Lab' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Laboratorio de experimentos' })).toBeVisible();
     await inView('Investigación', 'Navegación principal');
-    await inView('Research Lab', 'Apartados de la sección');
+    await inView('Laboratorio de experimentos', 'Apartados de la sección');
     const top = await page.locator('main').evaluate((main) => main.getBoundingClientRect().top);
     expect(top).toBeLessThanOrEqual(200);
     for (const path of [

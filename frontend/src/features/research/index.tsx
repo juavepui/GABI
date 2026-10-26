@@ -86,19 +86,19 @@ export function ResearchPage() {
             },
             {
               to: '/investigacion/factores',
-              label: 'Factor Lab',
+              label: 'Laboratorio de factores',
               description: '¿El score ordena el retorno futuro?',
               icon: Ruler,
             },
             {
               to: '/investigacion/laboratorio',
-              label: 'Research Lab',
+              label: 'Laboratorio de experimentos',
               description: 'Experimentos, PSR/DSR y PBO',
               icon: FlaskConical,
             },
             {
               to: '/investigacion/carteras',
-              label: 'Portfolio Lab',
+              label: 'Laboratorio de carteras',
               description: 'Esquemas de ponderación y estrés',
               icon: ChartPie,
             },

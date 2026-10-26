@@ -6992,6 +6992,10 @@ export type SaveSnapshot = {
      */
     name: string;
     /**
+     * Target
+     */
+    target?: boolean;
+    /**
      * Top N
      */
     top_n?: number;

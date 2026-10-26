@@ -40,7 +40,7 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
           : `${count} de tus candidatas presentan`;
       return {
         text: `${who} resultados esta semana: ${list(alert.symbols)} (desde el ${day(alert.date)}).`,
-        action: holdings ? 'Ver Mi cartera' : 'Ver Signal Monitor',
+        action: holdings ? 'Ver Mi cartera' : 'Ver eventos',
       };
     }
     case 'ex_dividend':
@@ -59,13 +59,13 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
       ].filter(Boolean);
       return {
         text: `${parts.join('; ')} respecto a «${String(detail.snapshot ?? 'la última foto')}» (${day(alert.date)}).`,
-        action: 'Ver Signal Monitor',
+        action: 'Ver eventos',
       };
     }
     case 'filings':
       return {
         text: `Cambios materiales en los últimos informes SEC de ${list(alert.symbols)}.`,
-        action: 'Ver Signal Monitor',
+        action: 'Ver eventos',
       };
     case 'job_failed': {
       const failures = Number(detail.failures ?? 0);

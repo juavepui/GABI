@@ -64,7 +64,7 @@ export function FactorPage() {
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="¿El score ordena los retornos futuros?"
-        title="Factor Lab"
+        title="Laboratorio de factores"
         description={
           <>
             ¿Ordena cada score los retornos futuros? Resultados exploratorios, sin ventaja

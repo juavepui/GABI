@@ -17,7 +17,8 @@ import {
   CompanyPage,
   ComparisonPage,
   MacroPage,
-  SignalPage,
+  EventsPage,
+  TrackingPage,
 } from '@/features/market/index';
 import {
   HoldingsPage,
@@ -301,12 +302,13 @@ function Shell() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/macro" element={<MacroPage />} />
+          <Route path="/eventos" element={<EventsPage />} />
           <Route path="/descubrir" element={<MarketPage />} />
           <Route path="/descubrir/comparar" element={<ComparisonPage />} />
           <Route path="/empresas/:symbol" element={<CompanyPage />} />
           <Route path="/cartera" element={<PortfolioPage />} />
           <Route path="/cartera/mi-cartera" element={<HoldingsPage />} />
-          <Route path="/cartera/seguimiento" element={<SignalPage />} />
+          <Route path="/cartera/seguimiento" element={<TrackingPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />
           <Route

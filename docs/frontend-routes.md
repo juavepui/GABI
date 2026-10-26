@@ -12,21 +12,27 @@ navegación ni se importan entre sí.
 |---|---|---|---|
 | **Hoy** | `/` | Resumen: alertas, cartera objetivo de hoy, estado de los datos | `app` |
 | | `/macro` | Panel macro | `market` |
+| | `/eventos` | Eventos: cambios del ranking y de filings SEC desde una cesta guardada, y sus próximos resultados; destino de las alertas de Hoy (#193) | `market` |
 | **Descubrir** | `/descubrir` | Ranking | `market` |
 | | `/descubrir/comparar` | Comparar empresas | `market` |
 | | `/empresas/:symbol` | Ficha de empresa (sin entrada en el menú) | `market` |
 | **Cartera** | `/cartera` | Plan de cartera: regla congelada (Top-N equiponderado) o, con `?plan=experimental`, el plan experimental con límites (#191) | `portfolio` |
 | | `/cartera/mi-cartera` | Mi cartera (compras reales) | `portfolio` |
-| | `/cartera/seguimiento` | Signal Monitor | `market` |
+| | `/cartera/seguimiento` | Seguimiento de cestas guardadas frente a SPY (#193) | `market` |
 | | `/cartera/diario` | Diario de inversión | `portfolio` |
 | | `/cartera/simuladas` | Carteras simuladas | `portfolio` |
-| **Investigación** | `/investigacion/*` | Laboratorios; solo en modo Research (#189) | `research` |
+| **Investigación** | `/investigacion/*` | Ensayos, ranking histórico, validaciones ciegas y laboratorios de factores, experimentos y carteras; solo en modo Research (#189) | `research` |
 | **Administración** | `/administracion`, `/administracion/calidad` | Datos, claves, modo, trabajos y calidad | `administration` |
 | Ayuda (global) | `/ayuda` | Aprender y glosario; enlazada desde la cabecera | `portfolio` |
 
 La cabecera de todas las páginas tiene el buscador de empresas, que lleva a
 `/empresas/:symbol`. Lee la lista de empresas la primera vez que recibe el foco,
 con la misma consulta que Comparar, no en cada carga de página.
+
+Signal Monitor se reparte en dos sitios (#193): el seguimiento de cestas en
+Cartera y los eventos en Hoy. Guardar una cesta es una acción de Cartera objetivo
+(«Guardar esta cartera para seguirla»), que guarda exactamente su Top-N elegible.
+Ningún nombre de la navegación queda en inglés.
 
 La sección se llama «Cartera» y no «Mi cartera», como proponía la issue, porque
 «Mi cartera» ya nombra las compras reales (#181) en la interfaz y en los

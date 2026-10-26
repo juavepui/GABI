@@ -13423,6 +13423,11 @@
             "title": "Name",
             "type": "string"
           },
+          "target": {
+            "default": false,
+            "title": "Target",
+            "type": "boolean"
+          },
           "top_n": {
             "default": 10,
             "maximum": 30.0,

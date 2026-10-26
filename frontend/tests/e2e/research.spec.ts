@@ -130,9 +130,9 @@ test('Factor Lab ejecuta un job y presenta el resultado exploratorio', async ({ 
     await page.goto('/investigacion');
     await page
       .getByRole('main')
-      .getByRole('link', { name: /^Factor Lab/ })
+      .getByRole('link', { name: /^Laboratorio de factores/ })
       .click();
-    await expect(page.getByRole('heading', { name: 'Factor Lab' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Laboratorio de factores' })).toBeVisible();
     await page.getByRole('button', { name: 'Ejecutar Factor Lab' }).click();
     await expect(page.getByRole('heading', { name: 'Resumen de factores' })).toBeVisible();
     await expect(page.getByRole('row', { name: /value_score 3 meses/ })).toContainText('0,12');
@@ -422,7 +422,7 @@ test('Portfolio Lab compara esquemas en un job Research dentro del periodo obser
     await page.goto('/investigacion');
     await page
       .getByRole('main')
-      .getByRole('link', { name: /^Portfolio Lab/ })
+      .getByRole('link', { name: /^Laboratorio de carteras/ })
       .click();
     await page.getByLabel('Risk Parity').uncheck();
     await page.getByRole('button', { name: 'Ejecutar Portfolio Lab' }).click();
@@ -447,7 +447,7 @@ test('el menú muestra los apartados de Investigación en modo Research', async 
   await research(page);
   await page.goto('/investigacion/factores');
   const sub = page.getByRole('list', { name: 'Apartados de Investigación' });
-  await expect(sub.getByRole('link', { name: 'Factor Lab' })).toHaveAttribute(
+  await expect(sub.getByRole('link', { name: 'Laboratorio de factores' })).toHaveAttribute(
     'aria-current',
     'page',
   );

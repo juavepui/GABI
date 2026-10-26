@@ -11,6 +11,7 @@ from gabi.application.administration.jobs import Jobs
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import MarketRepository
+from gabi.domain.portfolio.selection import target_portfolio
 
 
 class SignalRepository(Protocol):
@@ -43,14 +44,18 @@ class SignalMonitor:
         since = None if since_hours is None else (self.now() - timedelta(hours=since_hours)).isoformat()
         return self.repository.events(severity, limit, since)
 
-    def save(self, name: str, top_n: int) -> int:
+    def save(self, name: str, top_n: int, *, target: bool = False) -> int:
+        """The current Top-N with frozen weights; `target` keeps only the Cartera objetivo's eligible ones."""
         name = name.strip()
         if not name or len(name) > 80 or not 1 <= top_n <= 30:
             raise QueryError("invalid_snapshot", "Indica nombre y tamaño de snapshot válidos.", 422)
         snapshot = self.market.ranking(dict(self.policy.frozen_weights), self.today())
         if snapshot.table.empty or snapshot.table["composite_score"].notna().sum() == 0:
             raise QueryError("no_candidates", "No hay candidatas con score para guardar.", 409)
-        return self.repository.save_snapshot(snapshot.table, self.today().isoformat(), name, top_n)
+        table = target_portfolio(snapshot.table, top_n) if target else snapshot.table
+        if table.empty:
+            raise QueryError("no_candidates", "No hay candidatas elegibles para guardar.", 409)
+        return self.repository.save_snapshot(table, self.today().isoformat(), name, top_n)
 
     def run(self, snapshot_id: int, rank_change: int, score_change: float, confidence_drop: float) -> list[dict]:
         if rank_change < 1 or any(not isfinite(value) or value <= 0 or value > 100

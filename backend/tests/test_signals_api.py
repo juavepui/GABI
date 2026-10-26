@@ -1,11 +1,14 @@
 import json
 import sqlite3
 from datetime import UTC, datetime, time, timedelta
+from types import SimpleNamespace
 
+import pandas as pd
 from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 
 from gabi import edgar
+from gabi.application.market.signals import SignalMonitor
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.settings import Settings
@@ -34,6 +37,28 @@ def test_signals_read_is_inert_and_comparison_preserves_events(tmp_path):
         saved = api.get("/api/v1/market/signals").json()["items"]
         assert len(saved) == len(first.json()["items"])
         assert api.post("/api/v1/market/signals/compare", json={"snapshot_id": 999999}).status_code == 404
+
+
+def test_snapshot_of_the_target_keeps_exactly_the_plan_candidates():
+    """«Guardar esta cartera para seguirla» (#193): the eligible Top-N of Cartera objetivo, not the raw Top-N."""
+    table = pd.DataFrame({"composite_score": [90.0, 80.0, 70.0], "score_coverage": [0.5, 0.9, 0.8]},
+                         index=["THIN", "B", "C"])
+    saved = []
+
+    class Repository:
+        def save_snapshot(self, frame, as_of_date, name, top_n):
+            saved.append(list(frame[frame["composite_score"].notna()].head(top_n).index))
+            return len(saved)
+
+    class Market:
+        def ranking(self, weights, today):
+            return SimpleNamespace(table=table)
+
+    monitor = SignalMonitor(Repository(), Market(), SimpleNamespace(frozen_weights={}), lambda: TODAY,
+                            compare=None, compare_filings=None, jobs=None)
+    monitor.save("Top", 2)
+    monitor.save("Objetivo", 2, target=True)
+    assert saved == [["THIN", "B"], ["B", "C"]]  # THIN has a score but under 70 % of its metrics.
 
 
 def test_signals_missing_cache_does_not_initialize_tables(tmp_path):

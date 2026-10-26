@@ -192,7 +192,7 @@ export function ResearchLabPage() {
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="Registro de experimentos"
-        title="Research Lab"
+        title="Laboratorio de experimentos"
         description={<>Experimentos de backtesting con su metodología, commit y resultado.</>}
         guide={
           <>

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { pageTitle, REDIRECTS, sectionOf } from '../src/app/navigation';
+import { pageTitle, REDIRECTS, sectionOf, sections } from '../src/app/navigation';
 
 describe('título de la pestaña por ruta (#177)', () => {
   it('va del apartado más específico al general', () => {
     expect(pageTitle('/')).toBe('Resumen · GABI');
     expect(pageTitle('/macro')).toBe('Panel macro · GABI');
-    expect(pageTitle('/cartera/seguimiento')).toBe('Signal Monitor · GABI');
+    expect(pageTitle('/cartera/seguimiento')).toBe('Seguimiento · GABI');
+    expect(pageTitle('/eventos')).toBe('Eventos · GABI');
     expect(pageTitle('/ayuda')).toBe('Ayuda · GABI');
     expect(pageTitle('/cartera', '?plan=experimental')).toBe('Plan experimental · GABI');
     expect(pageTitle('/descubrir')).toBe('Ranking · GABI');
@@ -34,6 +35,7 @@ describe('secciones por tarea (#188)', () => {
     expect(label('/descubrir/comparar')).toBe('Descubrir');
     expect(label('/empresas/APA')).toBe('Descubrir');
     expect(label('/cartera/seguimiento')).toBe('Cartera');
+    expect(label('/eventos')).toBe('Hoy');
     expect(label('/investigacion/factores')).toBe('Investigación');
     expect(label('/administracion/calidad')).toBe('Administración');
     expect(label('/ayuda')).toBeUndefined();
@@ -46,5 +48,15 @@ describe('secciones por tarea (#188)', () => {
       expect(target, from).not.toMatch(/^\/mercado|aprender/);
       expect(sectionOf(target.split('?')[0]) || target === '/ayuda', from).toBeTruthy();
     }
+  });
+});
+
+describe('navegación en castellano (#193)', () => {
+  it('ninguna sección ni apartado del menú se nombra en inglés', () => {
+    const labels = sections.flatMap((section) => [
+      section.label,
+      ...section.pages.map((page) => page.label),
+    ]);
+    expect(labels.filter((label) => /\b(Lab|Monitor|Signal|Screener)\b/.test(label))).toEqual([]);
   });
 });

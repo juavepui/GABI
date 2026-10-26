@@ -9,6 +9,8 @@ from gabi_api.schemas.market import WireModel
 class SaveSnapshot(WireModel):
     name: str = Field(min_length=1, max_length=80)
     top_n: int = Field(default=10, ge=1, le=30)
+    # True: exactly the Cartera objetivo (eligible Top-N, as the plan selects it), not the raw Top-N.
+    target: bool = False
 
 
 class Snapshot(WireModel):

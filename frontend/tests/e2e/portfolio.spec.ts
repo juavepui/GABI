@@ -60,30 +60,38 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await expect(guide).toBeVisible();
 });
 
-test('Signal Monitor conserva snapshots y compara con el ranking en vivo', async ({ page }) => {
-  await page.goto('/cartera/seguimiento');
-  await expect(page.getByRole('heading', { name: 'Signal Monitor' })).toBeVisible();
-  await page.getByRole('button', { name: 'Guardar foto' }).click();
-  await expect(page.getByText(/Snapshot #\d+ guardado/)).toBeVisible();
-  await page.reload();
+test('la cartera objetivo se guarda para seguirla y sus eventos están en Eventos (#193)', async ({
+  page,
+}) => {
+  await page.goto('/cartera');
+  await page.getByRole('button', { name: 'Guardar esta cartera para seguirla' }).click();
+  await page.getByRole('status').getByRole('link', { name: 'Seguimiento' }).click();
+  await expect(page).toHaveURL(/\/cartera\/seguimiento$/);
+  await expect(
+    page.getByRole('heading', { name: 'Seguimiento de cestas', level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Cesta guardada')).toContainText('Cartera objetivo · Top-20');
   const tracking = page.getByRole('region', { name: 'Seguimiento del ranking guardado' });
   await expect(tracking).toContainText('Progreso desde');
   await expect(tracking.getByText(/6 meses: pendiente hasta/)).toBeAttached();
   await tracking.getByLabel('Cambiar nombre de este ranking').fill('Ranking e2e');
   await tracking.getByRole('button', { name: 'Guardar nombre' }).click();
   await expect(tracking).toContainText('Ranking e2e');
+  await page.getByRole('main').getByRole('link', { name: 'Eventos' }).click();
+  await expect(page.getByRole('heading', { name: 'Eventos', level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'Comparar ahora' }).click();
   await expect(page.getByText('cambios detectados')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Próximos earnings' })).toBeVisible();
   await page.getByRole('button', { name: 'Comprobar filings' }).click();
-  await expect(page.getByText(/pares con datos comparables/)).toBeVisible();
+  // The basket is today's whole target (20 companies): reading the SEC result takes longer.
+  await expect(page.getByText(/pares con datos comparables/)).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Guardar comparación y eventos' }).click();
   await expect(page.getByText('Comparación SEC guardada en la base local.')).toBeVisible();
   const filtered = page.waitForRequest(
     (request) =>
       request.url().includes('severity=MATERIAL') && request.url().includes('since_hours=24'),
   );
-  await page.getByRole('combobox', { name: 'Severidad' }).selectOption('MATERIAL');
+  await page.getByRole('combobox', { name: 'Severidad' }).selectOption({ label: 'Material' });
   await page.getByLabel('Últimas N horas').fill('24');
   await filtered;
 });
