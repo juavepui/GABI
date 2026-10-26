@@ -4654,6 +4654,92 @@
         "title": "DataUpdateRequest",
         "type": "object"
       },
+      "DecisionChange": {
+        "additionalProperties": false,
+        "properties": {
+          "current_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Score"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "saved_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saved Score"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "saved_score",
+          "current_score",
+          "label"
+        ],
+        "title": "DecisionChange",
+        "type": "object"
+      },
+      "DecisionFreshness": {
+        "additionalProperties": false,
+        "description": "A saved plan against today's ranking: its age and the positions that changed materially.",
+        "properties": {
+          "age_days": {
+            "title": "Age Days",
+            "type": "integer"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionChange"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "material": {
+            "title": "Material",
+            "type": "boolean"
+          },
+          "positions": {
+            "title": "Positions",
+            "type": "integer"
+          },
+          "threshold_points": {
+            "title": "Threshold Points",
+            "type": "number"
+          },
+          "today": {
+            "title": "Today",
+            "type": "string"
+          }
+        },
+        "required": [
+          "age_days",
+          "today",
+          "positions",
+          "threshold_points",
+          "material",
+          "changes"
+        ],
+        "title": "DecisionFreshness",
+        "type": "object"
+      },
       "DecisionJobSave": {
         "additionalProperties": false,
         "properties": {
@@ -19985,6 +20071,99 @@
           }
         },
         "summary": "Delete",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/decisions/{plan_id}/freshness": {
+      "get": {
+        "operationId": "freshness_api_v1_portfolio_decisions__plan_id__freshness_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Plan Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionFreshness"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Freshness",
         "tags": [
           "portfolio"
         ]

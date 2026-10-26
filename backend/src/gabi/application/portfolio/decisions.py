@@ -13,6 +13,7 @@ from gabi.application.administration.model import ModelPolicy
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot, describe_data
 from gabi.domain.portfolio.decision_progress import progress
+from gabi.domain.portfolio.plan_freshness import freshness
 
 
 class DecisionMarket(Protocol):
@@ -104,6 +105,17 @@ class Decisions:
         start = (date.fromisoformat(plan["created_at"][:10]) - timedelta(days=7)).isoformat()
         histories = self.repository.progress_histories(symbols, start)
         return progress(plan["created_at"], plan["decisions"], histories, self.today())
+
+    def freshness(self, plan_id: int) -> dict:
+        """A saved plan against today's ranking with the same frozen weights; reads the cache only."""
+        plan = self.get(plan_id)
+        table = self.market.ranking(dict(self.model.frozen_weights), self.today()).table
+        scores = table["composite_score"] if "composite_score" in table else {}
+        current = {str(symbol): (None if pd.isna(value) else float(value)) for symbol, value in scores.items()}
+        policy = plan.get("policy") or {}
+        min_score = policy.get("min_score")
+        return freshness(plan["created_at"], plan["decisions"], current,
+                         float(min_score) if min_score is not None else None, self.today())
 
     def job_plan(self, job_id: str) -> dict:
         job = self.jobs.get(job_id)

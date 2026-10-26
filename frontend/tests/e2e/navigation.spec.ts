@@ -43,6 +43,7 @@ test('las rutas antiguas redirigen conservando consulta y ancla (#188)', async (
     ['/mercado/macro', /\/macro$/],
     ['/mercado/senales', /\/cartera\/seguimiento$/],
     ['/cartera/aprender?tab=glosario#termino-per', /\/ayuda\?tab=glosario#termino-per$/],
+    ['/cartera/decisiones', /\/cartera\?plan=experimental$/],
   ];
   for (const [from, to] of cases) {
     await page.goto(from);

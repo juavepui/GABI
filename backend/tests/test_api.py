@@ -60,7 +60,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/portfolio/simulations/{portfolio_id}/result",
                                          "/api/v1/portfolio/decisions",
                                          "/api/v1/portfolio/decisions/{plan_id}",
-                                         "/api/v1/portfolio/decisions/{plan_id}/progress",
+                                         "/api/v1/portfolio/decisions/{plan_id}/progress", "/api/v1/portfolio/decisions/{plan_id}/freshness",
                                              "/api/v1/portfolio/decisions/{plan_id}/rename",
                                              "/api/v1/portfolio/decisions/{plan_id}/delete",
                                              "/api/v1/research/overview", "/api/v1/research/trials",

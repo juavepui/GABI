@@ -49,7 +49,6 @@ export const sections: Section[] = [
       { path: '/cartera/seguimiento', label: 'Signal Monitor' },
       { path: '/cartera/diario', label: 'Diario de inversión' },
       { path: '/cartera/simuladas', label: 'Carteras simuladas' },
-      { path: '/cartera/decisiones', label: 'Decisiones' },
     ],
   },
   {
@@ -87,6 +86,7 @@ export const REDIRECTS: { from: string; to: (params: Record<string, string>) => 
   { from: '/mercado/macro', to: () => '/macro' },
   { from: '/mercado/senales', to: () => '/cartera/seguimiento' },
   { from: '/cartera/aprender', to: () => '/ayuda' },
+  { from: '/cartera/decisiones', to: () => '/cartera?plan=experimental' },
 ];
 
 /** The section a route belongs to: one of its pages, a sub-route of it, or one of its prefixes. */
@@ -117,12 +117,14 @@ export function pageTitle(pathname: string, search = ''): string {
     ? [symbol, 'Ficha']
     : pathname === '/descubrir/comparar' && symbols.length
       ? ['Comparar ' + symbols.join(', ')]
-      : pathname === HELP.path
-        ? [HELP.label]
-        : page
-          ? [page.label]
-          : section
-            ? [section.label]
-            : [];
+      : pathname === '/cartera' && new URLSearchParams(search).get('plan') === 'experimental'
+        ? ['Plan experimental']
+        : pathname === HELP.path
+          ? [HELP.label]
+          : page
+            ? [page.label]
+            : section
+              ? [section.label]
+              : [];
   return [...parts, 'GABI'].join(' · ');
 }

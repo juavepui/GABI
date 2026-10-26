@@ -54,6 +54,24 @@ class DeleteDecision(WireModel):
     deleted: bool
 
 
+class DecisionChange(WireModel):
+    symbol: str
+    saved_score: float | None
+    current_score: float | None
+    label: str
+
+
+class DecisionFreshness(WireModel):
+    """A saved plan against today's ranking: its age and the positions that changed materially."""
+
+    age_days: int
+    today: str
+    positions: int
+    threshold_points: float
+    material: bool
+    changes: list[DecisionChange]
+
+
 class DecisionProgress(WireModel):
     as_of_date: str
     created_at: datetime
