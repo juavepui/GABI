@@ -77,7 +77,7 @@ function DecisionTable({ decisions }: { decisions: Preview['decisions'] }) {
               <td className="py-3">
                 <Link
                   className="text-primary underline"
-                  to={'/mercado/empresas/' + encodeURIComponent(row.symbol)}
+                  to={'/empresas/' + encodeURIComponent(row.symbol)}
                 >
                   {row.symbol}
                 </Link>

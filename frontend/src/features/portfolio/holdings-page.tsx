@@ -296,7 +296,7 @@ function Positions({ summary }: { summary: HoldingsSummary }) {
                 <td className="py-2">
                   <Link
                     className="font-medium text-primary"
-                    to={'/mercado/empresas/' + encodeURIComponent(row.symbol)}
+                    to={'/empresas/' + encodeURIComponent(row.symbol)}
                   >
                     {row.symbol}
                   </Link>

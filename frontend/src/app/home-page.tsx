@@ -99,13 +99,13 @@ function FirstSteps({ home }: { home: HomeResponse }) {
               ? 'Se comprobará en cuanto termine el cálculo del ranking.'
               : 'Empresas puntuadas con los datos de tu caché.'
           }
-          action={{ to: '/mercado', label: 'Abrir Mercado' }}
+          action={{ to: '/descubrir', label: 'Abrir el Ranking' }}
         />
         <Step
           done={false}
-          title="Leer Aprender (opcional)"
+          title="Leer la Ayuda (opcional)"
           detail="Términos, estrategias y cómo piensa GABI."
-          action={{ to: '/cartera/aprender', label: 'Abrir Aprender' }}
+          action={{ to: '/ayuda', label: 'Abrir la Ayuda' }}
         />
       </ol>
     </section>
@@ -218,7 +218,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
               </span>
               <Link
                 className="w-16 shrink-0 font-semibold text-primary"
-                to={'/mercado/empresas/' + encodeURIComponent(row.symbol)}
+                to={'/empresas/' + encodeURIComponent(row.symbol)}
               >
                 {row.symbol}
               </Link>
@@ -305,15 +305,15 @@ export function HomePage() {
           label="Secciones de GABI"
           links={[
             {
-              to: '/mercado',
-              label: 'Mercado',
-              description: 'Ranking, fichas, comparación y macro',
+              to: '/descubrir',
+              label: 'Descubrir',
+              description: 'Ranking, fichas y comparación de empresas',
               icon: ChartNoAxesCombined,
             },
             {
               to: '/cartera',
               label: 'Cartera',
-              description: 'Cartera objetivo, diario y decisiones',
+              description: 'Cartera objetivo, Mi cartera, seguimiento, diario y decisiones',
               icon: BriefcaseBusiness,
             },
             {
@@ -323,9 +323,9 @@ export function HomePage() {
               icon: FlaskConical,
             },
             {
-              to: '/cartera/aprender',
-              label: 'Aprender',
-              description: 'Términos y cómo piensa GABI',
+              to: '/ayuda',
+              label: 'Ayuda',
+              description: 'Términos, glosario y cómo piensa GABI',
               icon: GraduationCap,
             },
             {

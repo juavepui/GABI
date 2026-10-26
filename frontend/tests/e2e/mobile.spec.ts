@@ -44,7 +44,7 @@ test('home summarizes local data and portfolio without horizontal scrolling on m
 test('responsive navigation, filters, table and company on narrow screens', async ({
   page,
 }, testInfo) => {
-  await page.goto('/mercado?search=BRK');
+  await page.goto('/descubrir?search=BRK');
   await expect(page.locator('tbody tr')).toHaveCount(2);
   const ranking = page.getByRole('region', { name: 'Ranking de empresas' });
   await expect(ranking.getByText('Más métricas de BRK-B')).toBeVisible();
@@ -95,7 +95,7 @@ test('responsive navigation, filters, table and company on narrow screens', asyn
 test('comparison shows one company per mobile card with its full metric detail', async ({
   page,
 }) => {
-  await page.goto('/mercado/comparar?symbols=T000&symbols=T001');
+  await page.goto('/descubrir/comparar?symbols=T000&symbols=T001');
   const cards = page.locator('[aria-label="Comparación por empresa"]');
   await expect(cards.getByRole('article')).toHaveCount(2);
   await expect(cards.getByText('Composite Score')).toHaveCount(2);
@@ -177,7 +177,7 @@ test('en móvil la pestaña activa queda a la vista y ninguna sección desborda'
     expect(top).toBeLessThanOrEqual(200);
     for (const path of [
       '/',
-      '/mercado',
+      '/descubrir',
       '/cartera',
       '/investigacion/historico',
       '/administracion',

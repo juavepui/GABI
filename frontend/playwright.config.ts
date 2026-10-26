@@ -26,6 +26,7 @@ export default defineConfig({
         '**/job-recovery.spec.ts',
         '**/headings.spec.ts',
         '**/mode.spec.ts',
+        '**/navigation.spec.ts',
       ],
     },
     {

@@ -213,7 +213,8 @@ frontend/src/
     assets/
 ```
 
-`app` compone las features mediante su `index.ts` público. Una feature no importa
+`app` compone las features mediante su `index.ts` público y define la navegación
+por tareas del inversor ([mapa de rutas](frontend-routes.md)). Una feature no importa
 otra feature; la coordinación vive en `app`, en un contrato backend o en un
 elemento común que realmente sea reutilizable. `shared` nunca depende de features
 ni conoce una estrategia. No trasladar allí lógica de un único flujo para eludir

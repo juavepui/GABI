@@ -56,7 +56,7 @@ def upcoming_dividends(events: list[dict], symbols: list[str], *, today: date) -
                 and when and 0 <= (when - today).days <= WINDOW_DAYS:
             grouped.setdefault((when.isoformat(), event["event_type"]), []).append(event["symbol"])
     return [_alert(kind, "info", day, symbols=sorted(set(found)),
-                   link="/mercado/empresas/" + sorted(found)[0], count=len(set(found)))
+                   link="/empresas/" + sorted(found)[0], count=len(set(found)))
             for (day, kind), found in sorted(grouped.items())]
 
 
@@ -66,7 +66,7 @@ def top_changes(current: list[str], saved: list[str], saved_as_of: str, saved_na
     exited = [symbol for symbol in saved if symbol not in current]
     if not entered and not exited:
         return []
-    return [_alert("top_changes", "medium", saved_as_of, symbols=entered + exited, link="/mercado/senales",
+    return [_alert("top_changes", "medium", saved_as_of, symbols=entered + exited, link="/cartera/seguimiento",
                    entered=entered, exited=exited, snapshot=saved_name)]
 
 
@@ -80,7 +80,7 @@ def filing_changes(events: list[dict], symbols: list[str], *, today: date) -> li
     latest = max(str(event["detected_at"])[:10] for event in events if event["symbol"] in found
                  and str(event.get("event_type", "")).startswith("filing_"))
     held = [symbol for symbol in found if symbol in set(symbols)]
-    return [_alert("filings", "high", latest, symbols=found, link="/mercado/senales", held=held)]
+    return [_alert("filings", "high", latest, symbols=found, link="/cartera/seguimiento", held=held)]
 
 
 def failed_jobs(jobs: list[dict], *, today: date) -> list[dict]:

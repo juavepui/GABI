@@ -34,7 +34,7 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
 });
 
 test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
-  await page.goto('/mercado/comparar');
+  await page.goto('/descubrir/comparar');
   await page.getByRole('combobox', { name: 'Empresa 1' }).fill('t000');
   await page.getByRole('option', { name: /T000/ }).click();
   const second = page.getByRole('combobox', { name: 'Empresa 2' });
@@ -49,7 +49,7 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   const best = composite.locator('td[title="El mejor de los comparados"]');
   await expect(best).toHaveCount(1);
   await expect(best).toHaveCSS('background-color', 'rgb(199, 245, 199)');
-  await page.goto('/mercado/macro');
+  await page.goto('/macro');
   await expect(page.getByRole('heading', { name: 'Panel macro' })).toBeVisible();
   await expect(page.getByText('Treasury 10 años')).toBeVisible();
   // One line stays visible; the full explanation is folded under «Cómo leer esta página».
@@ -61,7 +61,7 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
 });
 
 test('Signal Monitor conserva snapshots y compara con el ranking en vivo', async ({ page }) => {
-  await page.goto('/mercado/senales');
+  await page.goto('/cartera/seguimiento');
   await expect(page.getByRole('heading', { name: 'Signal Monitor' })).toBeVisible();
   await page.getByRole('button', { name: 'Guardar foto' }).click();
   await expect(page.getByText(/Snapshot #\d+ guardado/)).toBeVisible();
@@ -146,7 +146,7 @@ test('decisiones experimentales se calculan en job y persisten con su política'
 });
 
 test('aprender: tutorial completo con definiciones de métricas del backend', async ({ page }) => {
-  await page.goto('/cartera/aprender');
+  await page.goto('/ayuda');
   await expect(page.getByRole('heading', { name: 'Aprender a usar GABI' })).toBeVisible();
   await page.getByRole('tab', { name: 'Términos útiles' }).click();
   const valuation = page.getByRole('region', { name: 'Valoración (¿está cara o barata?)' });
@@ -163,8 +163,8 @@ test('aprender: tutorial completo con definiciones de métricas del backend', as
   await expect(page.getByText(/Streamlit/)).toHaveCount(0);
 });
 
-test('el icono ⓘ explica un término y lleva al glosario de Aprender', async ({ page }) => {
-  await page.goto('/mercado');
+test('el icono ⓘ explica un término y lleva al glosario de la Ayuda', async ({ page }) => {
+  await page.goto('/descubrir');
   const hint = page.getByRole('button', { name: 'Qué es percentil dentro del sector' });
   await hint.scrollIntoViewIfNeeded();
   await hint.click();
@@ -174,8 +174,8 @@ test('el icono ⓘ explica un término y lleva al glosario de Aprender', async (
   await page.keyboard.press('Escape');
   await expect(tip).toHaveCount(0);
   await hint.click();
-  await tip.getByRole('link', { name: 'Más en Aprender' }).click();
-  await expect(page).toHaveURL(/\/cartera\/aprender\?tab=glosario#termino-percentile$/);
+  await tip.getByRole('link', { name: 'Más en la Ayuda' }).click();
+  await expect(page).toHaveURL(/\/ayuda\?tab=glosario#termino-percentile$/);
   await expect(page.getByRole('tab', { name: 'Glosario' })).toHaveAttribute(
     'aria-selected',
     'true',

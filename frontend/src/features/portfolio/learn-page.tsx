@@ -25,7 +25,7 @@ const topics = [
   {
     title: 'Qué significa el score',
     text: 'El Composite Score combina bloques de valor, calidad, momentum y riesgo. Una puntuación alta no garantiza una rentabilidad futura; comprueba cobertura, fecha y procedencia de cada dato.',
-    path: '/mercado',
+    path: '/descubrir',
     action: 'Examinar el ranking',
   },
   {
@@ -137,7 +137,7 @@ function Terms() {
       <section className="space-y-3" aria-label="Métricas que usa GABI">
         <Heading>Métricas que usa GABI</Heading>
         <Note>
-          Repaso de las métricas que verás en Mercado, la ficha y Comparar. Solo 13 puntúan en el
+          Repaso de las métricas que verás en el Ranking, la ficha y Comparar. Solo 13 puntúan en el
           Composite Score; el resto se muestran como contexto.
         </Note>
         {glossary.data?.blocks.map((block) => (
@@ -432,7 +432,7 @@ export function LearnPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ to: '/cartera', label: 'Cartera' }}
+        back={{ to: '/', label: 'Hoy' }}
         title="Aprender a usar GABI"
         description={<>Vocabulario, estrategias, psicología y cómo piensa GABI por dentro.</>}
         guide={

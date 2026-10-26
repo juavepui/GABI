@@ -43,7 +43,7 @@ describe('Comparar (#173)', () => {
       model: { independent_advantage_demonstrated: false } as ModelResponse,
       data: { status: 'ready', warnings: [] } as unknown as DataResponse,
     } as unknown as ComparisonResponse);
-    screen = renderScreen(<ComparisonPage />, '/mercado/comparar?symbols=ALL&symbols=TRV');
+    screen = renderScreen(<ComparisonPage />, '/descubrir/comparar?symbols=ALL&symbols=TRV');
     await screen.findText('100 mil M US$');
     expect(screen.text()).toContain('63,48 mil M US$');
     expect(screen.text()).not.toContain('100.000.000.000');

@@ -1,65 +1,128 @@
 import {
-  ChartNoAxesCombined,
   BriefcaseBusiness,
   FlaskConical,
+  Search,
   Settings2,
-  House,
+  Sun,
+  type LucideIcon,
 } from 'lucide-react';
-// Sub-sections of each section, shown under it in the sidebar while it is active.
-export const subsections: Record<string, { path: string; label: string }[]> = {
-  '/mercado': [
-    { path: '/mercado', label: 'Ranking' },
-    { path: '/mercado/comparar', label: 'Comparar empresas' },
-    { path: '/mercado/macro', label: 'Panel macro' },
-    { path: '/mercado/senales', label: 'Signal Monitor' },
-  ],
-  '/cartera': [
-    { path: '/cartera', label: 'Cartera objetivo' },
-    { path: '/cartera/mi-cartera', label: 'Mi cartera' },
-    { path: '/cartera/diario', label: 'Diario de inversión' },
-    { path: '/cartera/aprender', label: 'Aprender' },
-    { path: '/cartera/simuladas', label: 'Carteras simuladas' },
-    { path: '/cartera/decisiones', label: 'Decisiones' },
-  ],
-  '/investigacion': [
-    { path: '/investigacion', label: 'Ensayos registrados' },
-    { path: '/investigacion/historico', label: 'Ranking histórico' },
-    { path: '/investigacion/validaciones', label: 'Validaciones ciegas' },
-    { path: '/investigacion/factores', label: 'Factor Lab' },
-    { path: '/investigacion/laboratorio', label: 'Research Lab' },
-    { path: '/investigacion/carteras', label: 'Portfolio Lab' },
-  ],
-  '/administracion': [
-    { path: '/administracion', label: 'Datos y modelo' },
-    { path: '/administracion/calidad', label: 'Calidad de los datos' },
-  ],
+
+export type Page = { path: string; label: string };
+export type Section = {
+  path: string;
+  label: string;
+  icon: LucideIcon;
+  /** Its pages, listed under it in the sidebar while it is active. */
+  pages: Page[];
+  /** Other routes that belong to it without a menu entry (a company page). */
+  prefixes?: string[];
 };
-export const navigation = [
-  { path: '/', label: 'Inicio', icon: House },
-  { path: '/cartera', label: 'Cartera', icon: BriefcaseBusiness },
-  { path: '/mercado', label: 'Mercado', icon: ChartNoAxesCombined },
-  { path: '/investigacion', label: 'Investigación', icon: FlaskConical },
-  { path: '/administracion', label: 'Administración', icon: Settings2 },
+
+/** Sections by investor task (docs/frontend-routes.md); Investigación only in Research mode. */
+export const sections: Section[] = [
+  {
+    path: '/',
+    label: 'Hoy',
+    icon: Sun,
+    pages: [
+      { path: '/', label: 'Resumen' },
+      { path: '/macro', label: 'Panel macro' },
+    ],
+  },
+  {
+    path: '/descubrir',
+    label: 'Descubrir',
+    icon: Search,
+    pages: [
+      { path: '/descubrir', label: 'Ranking' },
+      { path: '/descubrir/comparar', label: 'Comparar empresas' },
+    ],
+    prefixes: ['/empresas/'],
+  },
+  {
+    path: '/cartera',
+    label: 'Cartera',
+    icon: BriefcaseBusiness,
+    pages: [
+      { path: '/cartera', label: 'Cartera objetivo' },
+      { path: '/cartera/mi-cartera', label: 'Mi cartera' },
+      { path: '/cartera/seguimiento', label: 'Signal Monitor' },
+      { path: '/cartera/diario', label: 'Diario de inversión' },
+      { path: '/cartera/simuladas', label: 'Carteras simuladas' },
+      { path: '/cartera/decisiones', label: 'Decisiones' },
+    ],
+  },
+  {
+    path: '/investigacion',
+    label: 'Investigación',
+    icon: FlaskConical,
+    pages: [
+      { path: '/investigacion', label: 'Ensayos registrados' },
+      { path: '/investigacion/historico', label: 'Ranking histórico' },
+      { path: '/investigacion/validaciones', label: 'Validaciones ciegas' },
+      { path: '/investigacion/factores', label: 'Factor Lab' },
+      { path: '/investigacion/laboratorio', label: 'Research Lab' },
+      { path: '/investigacion/carteras', label: 'Portfolio Lab' },
+    ],
+  },
+  {
+    path: '/administracion',
+    label: 'Administración',
+    icon: Settings2,
+    pages: [
+      { path: '/administracion', label: 'Datos y modelo' },
+      { path: '/administracion/calidad', label: 'Calidad de los datos' },
+    ],
+  },
 ];
+
+/** Help is global: reached from the header on every page, not a section. */
+export const HELP: Page = { path: '/ayuda', label: 'Ayuda' };
+
+/** Routes before #188 and where they live now; search and hash are kept on the way. */
+export const REDIRECTS: { from: string; to: (params: Record<string, string>) => string }[] = [
+  { from: '/mercado', to: () => '/descubrir' },
+  { from: '/mercado/comparar', to: () => '/descubrir/comparar' },
+  { from: '/mercado/empresas/:symbol', to: ({ symbol }) => '/empresas/' + symbol },
+  { from: '/mercado/macro', to: () => '/macro' },
+  { from: '/mercado/senales', to: () => '/cartera/seguimiento' },
+  { from: '/cartera/aprender', to: () => '/ayuda' },
+];
+
+/** The section a route belongs to: one of its pages, a sub-route of it, or one of its prefixes. */
+export function sectionOf(pathname: string): Section | undefined {
+  return (
+    sections.find((section) => section.pages.some((page) => page.path === pathname)) ??
+    sections.find(
+      (section) =>
+        (section.path !== '/' && pathname.startsWith(section.path + '/')) ||
+        section.prefixes?.some((prefix) => pathname.startsWith(prefix)),
+    )
+  );
+}
+
+export function companySymbol(pathname: string): string | undefined {
+  const symbol = /^\/empresas\/([^/]+)/.exec(pathname)?.[1];
+  return symbol && decodeURIComponent(symbol);
+}
+
 /** The tab title, most specific first («APA · Ficha · GABI», «Cartera objetivo · GABI»), so
  *  several open tabs and the browser history can be told apart. */
 export function pageTitle(pathname: string, search = ''): string {
-  const symbol = /^\/mercado\/empresas\/([^/]+)/.exec(pathname)?.[1];
+  const symbol = companySymbol(pathname);
   const symbols = new URLSearchParams(search).getAll('symbols');
-  const sub = Object.values(subsections)
-    .flat()
-    .find((entry) => entry.path === pathname);
-  const item = navigation.find((entry) =>
-    entry.path === '/' ? pathname === '/' : pathname.startsWith(entry.path),
-  );
+  const section = sectionOf(pathname);
+  const page = section?.pages.find((entry) => entry.path === pathname);
   const parts = symbol
-    ? [decodeURIComponent(symbol), 'Ficha']
-    : pathname === '/mercado/comparar' && symbols.length
+    ? [symbol, 'Ficha']
+    : pathname === '/descubrir/comparar' && symbols.length
       ? ['Comparar ' + symbols.join(', ')]
-      : sub
-        ? [sub.label]
-        : item
-          ? [item.label]
-          : [];
+      : pathname === HELP.path
+        ? [HELP.label]
+        : page
+          ? [page.label]
+          : section
+            ? [section.label]
+            : [];
   return [...parts, 'GABI'].join(' · ');
 }

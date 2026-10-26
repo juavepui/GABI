@@ -59,14 +59,14 @@ afterEach(() => screen?.unmount());
 describe('estados vacío y de error de las páginas grandes', () => {
   it('Mercado: una caché sin empresas lleva a Administración', async () => {
     api.getRanking.mockResolvedValue(emptyRanking);
-    screen = renderScreen(<MarketPage />, '/mercado');
+    screen = renderScreen(<MarketPage />, '/descubrir');
     await screen.findText('La caché local no contiene empresas');
     expect(screen.text()).toContain('Ir a Administración');
   });
 
   it('Mercado: el error de la API se muestra con su mensaje', async () => {
     api.getRanking.mockRejectedValue(new ApiError(503, 'busy', 'El ranking se está calculando.'));
-    screen = renderScreen(<MarketPage />, '/mercado');
+    screen = renderScreen(<MarketPage />, '/descubrir');
     await screen.findText('No se pueden cargar los datos');
     expect(screen.text()).toContain('El ranking se está calculando.');
   });

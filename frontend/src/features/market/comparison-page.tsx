@@ -52,7 +52,7 @@ export function ComparisonPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ to: '/mercado', label: 'Mercado' }}
+        back={{ to: '/descubrir', label: 'Ranking' }}
         title="Comparar empresas"
         description={
           <>
@@ -99,7 +99,7 @@ export function ComparisonPage() {
                 <article key={item.symbol} className="rounded-lg border p-3 text-sm">
                   <Link
                     className="font-semibold text-primary"
-                    to={'/mercado/empresas/' + encodeURIComponent(item.symbol)}
+                    to={'/empresas/' + encodeURIComponent(item.symbol)}
                   >
                     {item.symbol} · {item.name}
                   </Link>
@@ -144,7 +144,7 @@ export function ComparisonPage() {
                       <th className="pb-3" key={item.symbol}>
                         <Link
                           className="text-primary"
-                          to={'/mercado/empresas/' + encodeURIComponent(item.symbol)}
+                          to={'/empresas/' + encodeURIComponent(item.symbol)}
                         >
                           {item.symbol}
                         </Link>
@@ -181,7 +181,7 @@ export function ComparisonPage() {
             </RankLegend>
           </section>
           <Button asChild variant="outline">
-            <Link to="/mercado">Volver al Screener</Link>
+            <Link to="/descubrir">Volver al Screener</Link>
           </Button>
         </>
       )}

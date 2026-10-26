@@ -77,19 +77,19 @@ export function MarketPage() {
             label="Apartados de Mercado"
             links={[
               {
-                to: '/mercado/comparar',
+                to: '/descubrir/comparar',
                 label: 'Comparar empresas',
                 description: 'De dos a cinco, lado a lado',
                 icon: GitCompareArrows,
               },
               {
-                to: '/mercado/macro',
+                to: '/macro',
                 label: 'Panel macro',
                 description: 'Tipos, inflación, curva y crédito',
                 icon: Globe,
               },
               {
-                to: '/mercado/senales',
+                to: '/cartera/seguimiento',
                 label: 'Signal Monitor',
                 description: 'Rankings guardados y cambios',
                 icon: Radar,
@@ -374,7 +374,7 @@ export function MarketPage() {
                           <th scope="row" className="max-w-72 p-2 font-normal sm:p-4">
                             <Link
                               to={
-                                '/mercado/empresas/' +
+                                '/empresas/' +
                                 encodeURIComponent(row.symbol) +
                                 '?' +
                                 params.toString()
