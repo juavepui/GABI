@@ -12,6 +12,7 @@ import {
   Settings2,
 } from 'lucide-react';
 import { getHome } from '@/shared/api/client';
+import { useResearchMode } from '@/shared/api/use-model';
 import type { HomeResponse } from '@/shared/api/generated/types.gen';
 import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { Button } from '@/shared/ui/button';
@@ -254,6 +255,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
 /** The home page: what state GABI is in and what to do next. It never downloads anything. */
 export function HomePage() {
   const queryClient = useQueryClient();
+  const research = useResearchMode();
   const home = useQuery({
     queryKey: ['home'],
     queryFn: ({ signal }) => getHome(false, signal),
@@ -332,7 +334,7 @@ export function HomePage() {
               description: 'Datos, claves, modo y calidad',
               icon: Settings2,
             },
-          ]}
+          ].filter((link) => research || link.to !== '/investigacion')}
         />
       </section>
     </div>

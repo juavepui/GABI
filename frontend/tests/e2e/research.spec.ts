@@ -1,6 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+const MODE = 'http://127.0.0.1:8001/api/v1/administration/mode';
+/** Investigación is shown only in Research mode (#189); every test goes back to Investor. */
+const research = (page: Page) => page.request.post(MODE, { data: { mode: 'RESEARCH' } });
+test.afterEach(async ({ page }) => {
+  await page.request.post(MODE, { data: { mode: 'INVESTOR' } });
+});
 
 test('Investigación distingue ensayos fallidos de reservas pendientes', async ({ page }) => {
+  await research(page);
   await page.goto('/investigacion');
   await expect(page.getByRole('heading', { name: 'Investigación' })).toBeVisible();
   await expect(page.getByText('trial/failed')).toBeVisible();
@@ -17,6 +25,7 @@ test('Investigación distingue ensayos fallidos de reservas pendientes', async (
 });
 
 test('ranking histórico se calcula en un job y muestra identidad y cobertura', async ({ page }) => {
+  await research(page);
   await page.goto('/investigacion');
   await page
     .getByRole('main')
@@ -42,6 +51,7 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
 });
 
 test('validación ciega muestra integridad sin desvelar posiciones', async ({ page }) => {
+  await research(page);
   await page.goto('/investigacion');
   await page
     .getByRole('main')
@@ -101,6 +111,7 @@ test('validaciones ciegas aplican el preregistro y el alta y el sello son explí
 test('Factor Lab muestra el mapa publicado y la cobertura SIC sin recalcularlo', async ({
   page,
 }) => {
+  await research(page);
   await page.goto('/investigacion/factores');
   const map = page.getByRole('region', { name: 'Mapa de evidencia por factor' });
   await expect(map.getByText('13 señales y 57 trimestres publicados.')).toBeVisible();
@@ -181,6 +192,7 @@ test('backtest V1 se ejecuta como job Research y conserva el resultado completo'
 });
 
 test('preparar datos de una fecha es un job explícito que lista los fallos', async ({ page }) => {
+  await research(page);
   await page.goto('/investigacion/historico');
   const section = page.getByRole('region', { name: 'Preparar datos de la fecha' });
   await section.getByLabel(/Empresas a preparar/).selectOption('50');
@@ -213,7 +225,9 @@ test('resultado posterior del ranking es un job Research con corte observado', a
 
 test('Research Lab lista experimentos y su entorno solo en modo Research', async ({ page }) => {
   await page.goto('/investigacion/laboratorio');
-  await expect(page.getByText('Research Lab requiere el modo Research local.')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Investigación está en el modo Research' }),
+  ).toBeVisible();
   await page.goto('/administracion');
   await page.getByRole('button', { name: 'Activar Research' }).click();
   await expect(page.getByText('Modo de trabajo · Research')).toBeVisible();
@@ -429,7 +443,8 @@ test('Portfolio Lab compara esquemas en un job Research dentro del periodo obser
   }
 });
 
-test('el menú muestra los apartados de la sección y lleva al modo Research', async ({ page }) => {
+test('el menú muestra los apartados de Investigación en modo Research', async ({ page }) => {
+  await research(page);
   await page.goto('/investigacion/factores');
   const sub = page.getByRole('list', { name: 'Apartados de Investigación' });
   await expect(sub.getByRole('link', { name: 'Factor Lab' })).toHaveAttribute(
@@ -438,13 +453,4 @@ test('el menú muestra los apartados de la sección y lleva al modo Research', a
   );
   await sub.getByRole('link', { name: 'Ranking histórico' }).click();
   await expect(page.getByRole('heading', { name: 'Ranking histórico', level: 1 })).toBeVisible();
-  await page.goto('/investigacion/carteras');
-  await page
-    .getByRole('main')
-    .getByRole('link', { name: 'Activar el modo Research' })
-    .first()
-    .click();
-  await expect(page).toHaveURL(/\/administracion#modo$/);
-  await expect(page.locator('#modo')).toContainText('Modo de trabajo · Investor');
-  await expect(page.getByRole('button', { name: 'Activar Research' })).toBeInViewport();
 });

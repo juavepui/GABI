@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMetricGlossary } from '@/shared/api/client';
+import { useResearchMode } from '@/shared/api/use-model';
 import { ErrorState } from '@/shared/ui/resource-state';
 import {
   BIASES,
@@ -86,18 +87,21 @@ function Note({ children }: { children: ReactNode }) {
 }
 
 function Start() {
+  const research = useResearchMode();
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {topics.map((topic) => (
         <section key={topic.title} className="rounded-xl border bg-card p-6">
           <h2 className="text-lg font-semibold">{topic.title}</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{topic.text}</p>
-          <Link
-            className="mt-5 inline-block text-sm font-medium text-primary underline"
-            to={topic.path}
-          >
-            {topic.action} →
-          </Link>
+          {(research || topic.path !== '/investigacion') && (
+            <Link
+              className="mt-5 inline-block text-sm font-medium text-primary underline"
+              to={topic.path}
+            >
+              {topic.action} →
+            </Link>
+          )}
         </section>
       ))}
     </div>

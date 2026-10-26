@@ -26,15 +26,7 @@ function skips(list: { level: number; name: string }[]) {
 const pages: { path: string; sections: string[] }[] = [
   {
     path: '/administracion',
-    sections: [
-      'Datos',
-      'Actualizar datos',
-      'Configuración local',
-      'Modo de trabajo',
-      'Pesos del modelo',
-      'Investigación exploratoria',
-      'Trabajos',
-    ],
+    sections: ['Datos', 'Actualizar datos', 'Configuración local', 'Modo de trabajo', 'Trabajos'],
   },
   {
     path: '/mercado/empresas/T001',

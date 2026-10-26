@@ -25,6 +25,7 @@ export default defineConfig({
         '**/data-states.spec.ts',
         '**/job-recovery.spec.ts',
         '**/headings.spec.ts',
+        '**/mode.spec.ts',
       ],
     },
     {

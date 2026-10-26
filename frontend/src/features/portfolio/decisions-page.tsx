@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { DecisionPolicy, SavedDecision } from '@/shared/api/generated/types.gen';
+import { useResearchMode } from '@/shared/api/use-model';
 import {
   createJob,
   decisionsCsvUrl,
@@ -125,6 +126,8 @@ const fields: Array<{ key: keyof DecisionPolicy; label: string; step: string }> 
 
 export function DecisionsPage() {
   const client = useQueryClient();
+  // Investor mode plans with the default policy; its parameters are a Research experiment.
+  const research = useResearchMode();
   const [jobId, setJobId] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [name, setName] = useState('');
@@ -187,11 +190,13 @@ export function DecisionsPage() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const policy = { ...defaults };
-    for (const field of fields) {
-      const value = Number(form.get(field.key));
-      (policy as Record<string, number | boolean>)[field.key] = value;
+    if (research) {
+      for (const field of fields) {
+        const value = Number(form.get(field.key));
+        (policy as Record<string, number | boolean>)[field.key] = value;
+      }
+      policy.constrained_optimizer = form.get('constrained_optimizer') === 'on';
     }
-    policy.constrained_optimizer = form.get('constrained_optimizer') === 'on';
     setName(String(form.get('name') ?? '').trim());
     setJobId(null);
     generate.mutate({ policy, holdings: String(form.get('holdings_text') ?? '') });
@@ -224,25 +229,36 @@ export function DecisionsPage() {
           Se calcula en el worker local con precios ya cacheados. Los porcentajes se refieren al
           patrimonio total.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {fields.map((field) => (
-            <label key={field.key} className="text-sm">
-              {field.label}
-              <Input
-                name={field.key}
-                type="number"
-                step={field.step}
-                required
-                defaultValue={String(defaults[field.key])}
-                className="mt-1"
-              />
-            </label>
-          ))}
-        </div>
-        <label className="mt-4 flex items-center gap-2 text-sm">
-          <input type="checkbox" name="constrained_optimizer" />
-          Optimizar con límites de posición y sector
-        </label>
+        {!research && (
+          <p className="mt-4 rounded-lg border bg-secondary/40 p-3 text-sm">
+            Se usa la política por defecto: hasta {defaults.max_positions} posiciones, score mínimo{' '}
+            {defaults.min_score}, máximo {defaults.max_position_pct} % por posición y{' '}
+            {defaults.max_sector_pct} % por sector. Sus parámetros se ajustan en el modo Research.
+          </p>
+        )}
+        {research && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {fields.map((field) => (
+              <label key={field.key} className="text-sm">
+                {field.label}
+                <Input
+                  name={field.key}
+                  type="number"
+                  step={field.step}
+                  required
+                  defaultValue={String(defaults[field.key])}
+                  className="mt-1"
+                />
+              </label>
+            ))}
+          </div>
+        )}
+        {research && (
+          <label className="mt-4 flex items-center gap-2 text-sm">
+            <input type="checkbox" name="constrained_optimizer" />
+            Optimizar con límites de posición y sector
+          </label>
+        )}
         <label className="mt-4 block text-sm">
           Posiciones actuales (SÍMBOLO,porcentaje; una por línea)
           <Textarea
