@@ -5,6 +5,7 @@ from fastapi.responses import Response
 
 from gabi.application.portfolio.decisions import Decisions, decisions_frame
 from gabi_api.schemas.decisions import (
+    DecisionFreshness,
     DecisionJobSave,
     DecisionList,
     DecisionProgress,
@@ -58,6 +59,11 @@ def plan(plan_id: PlanId, decisions: Service) -> SavedDecision:
 @router.get("/{plan_id}/progress", response_model=DecisionProgress)
 def progress(plan_id: PlanId, decisions: Service) -> DecisionProgress:
     return DecisionProgress.model_validate(decisions.progress(plan_id))
+
+
+@router.get("/{plan_id}/freshness", response_model=DecisionFreshness)
+def freshness(plan_id: PlanId, decisions: Service) -> DecisionFreshness:
+    return DecisionFreshness.model_validate(decisions.freshness(plan_id))
 
 
 @router.post("", response_model=SavedDecision, status_code=201)

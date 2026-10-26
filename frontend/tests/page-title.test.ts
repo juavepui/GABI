@@ -7,6 +7,7 @@ describe('título de la pestaña por ruta (#177)', () => {
     expect(pageTitle('/macro')).toBe('Panel macro · GABI');
     expect(pageTitle('/cartera/seguimiento')).toBe('Signal Monitor · GABI');
     expect(pageTitle('/ayuda')).toBe('Ayuda · GABI');
+    expect(pageTitle('/cartera', '?plan=experimental')).toBe('Plan experimental · GABI');
     expect(pageTitle('/descubrir')).toBe('Ranking · GABI');
     expect(pageTitle('/cartera')).toBe('Cartera objetivo · GABI');
     expect(pageTitle('/administracion/calidad')).toBe('Calidad de los datos · GABI');
@@ -43,7 +44,7 @@ describe('secciones por tarea (#188)', () => {
     for (const { from, to } of REDIRECTS) {
       const target = to({ symbol: 'APA' });
       expect(target, from).not.toMatch(/^\/mercado|aprender/);
-      expect(sectionOf(target) || target === '/ayuda', from).toBeTruthy();
+      expect(sectionOf(target.split('?')[0]) || target === '/ayuda', from).toBeTruthy();
     }
   });
 });

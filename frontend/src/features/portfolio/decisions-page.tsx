@@ -1,13 +1,18 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import type { DecisionPolicy, SavedDecision } from '@/shared/api/generated/types.gen';
+import type {
+  DecisionFreshness,
+  DecisionPolicy,
+  SavedDecision,
+} from '@/shared/api/generated/types.gen';
 import { useResearchMode } from '@/shared/api/use-model';
 import {
   createJob,
   decisionsCsvUrl,
   deleteDecision,
   getDecision,
+  getDecisionFreshness,
   getDecisionProgress,
   getDecisions,
   getJob,
@@ -20,7 +25,6 @@ import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
 import { dateText, formatNumber } from '@/shared/lib/format';
-import { PageHeader } from '@/shared/ui/page-header';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Textarea } from '@/shared/ui/textarea';
 
@@ -124,7 +128,42 @@ const fields: Array<{ key: keyof DecisionPolicy; label: string; step: string }> 
   { key: 'turnover_penalty', label: 'Penalización por rotación', step: '0.01' },
 ];
 
-export function DecisionsPage() {
+/** Age of a saved plan and, when today's ranking no longer supports it, a warning (#191). */
+export function PlanFreshness({ data }: { data: DecisionFreshness }) {
+  const age =
+    data.age_days === 0 ? 'hoy' : data.age_days === 1 ? 'hace 1 día' : `hace ${data.age_days} días`;
+  if (!data.material)
+    return (
+      <p className="mt-2 text-xs text-muted-foreground">
+        Guardado {age}. Sus {data.positions} posiciones siguen respaldadas por el ranking actual
+        (ningún score ha cambiado {formatNumber(data.threshold_points)} puntos o más).
+      </p>
+    );
+  return (
+    <div
+      role="alert"
+      className="mt-3 rounded-lg border border-amber-500/50 bg-amber-50 p-3 text-sm"
+    >
+      <p className="font-medium">
+        Plan desfasado: guardado {age}, el ranking ha cambiado en {data.changes.length} de sus{' '}
+        {data.positions} posiciones.
+      </p>
+      <ul className="mt-2 space-y-1 text-xs">
+        {data.changes.map((change) => (
+          <li key={change.symbol}>
+            <strong>{change.symbol}</strong>: {change.label} (score {decimal(change.saved_score)} →{' '}
+            {change.current_score == null ? 'sin score' : decimal(change.current_score)})
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs">Genera un plan nuevo antes de actuar sobre este.</p>
+    </div>
+  );
+}
+
+/** The experimental plan of the single plan page (#191): risk limits of its own over frozen
+ *  scores; never presented as the validated rule. */
+export function ExperimentalPlan() {
   const client = useQueryClient();
   // Investor mode plans with the default policy; its parameters are a Research experiment.
   const research = useResearchMode();
@@ -144,6 +183,11 @@ export function DecisionsPage() {
   const progress = useQuery({
     queryKey: ['portfolio', 'decisions', active, 'progress'],
     queryFn: ({ signal }) => getDecisionProgress(active!, signal),
+    enabled: active != null,
+  });
+  const freshness = useQuery({
+    queryKey: ['portfolio', 'decisions', active, 'freshness'],
+    queryFn: ({ signal }) => getDecisionFreshness(active!, signal),
     enabled: active != null,
   });
   const job = useQuery({
@@ -205,24 +249,11 @@ export function DecisionsPage() {
   const selectedPlan: SavedDecision | undefined = saved.data;
   return (
     <div className="space-y-6">
-      <PageHeader
-        back={{ to: '/cartera', label: 'Cartera' }}
-        title="Decisiones de cartera"
-        description={
-          <>
-            Plan experimental de compra y venta con reglas de riesgo propias. No demuestra ventaja
-            frente al S&amp;P 500.
-          </>
-        }
-        guide={
-          <>
-            <p>
-              Política experimental de gestión de riesgo; usa scores congelados, pero no equivale al
-              Top‑20 validado ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
-            </p>
-          </>
-        }
-      />
+      <p className="flex flex-wrap items-center gap-2 rounded-xl border bg-secondary/40 p-4 text-sm">
+        <Badge variant="outline">Experimental</Badge>
+        Plan de compra y venta con límites de riesgo propios sobre los scores congelados. No es la
+        regla validada ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
+      </p>
       <form onSubmit={submit} className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Nuevo plan</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -373,6 +404,10 @@ export function DecisionsPage() {
                   {selectedPlan.created_at.slice(0, 10)} · {selectedPlan.method}{' '}
                   <Badge variant="outline">Experimental</Badge>
                 </p>
+                {freshness.isError && (
+                  <ErrorState error={freshness.error} retry={() => void freshness.refetch()} />
+                )}
+                {freshness.data && <PlanFreshness data={freshness.data} />}
                 <DecisionTable decisions={selectedPlan.decisions as Preview['decisions']} />
                 <a
                   className="mt-2 inline-block text-sm font-medium text-primary underline"

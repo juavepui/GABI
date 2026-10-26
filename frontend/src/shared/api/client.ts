@@ -46,6 +46,7 @@ import type {
   DecisionJobSave,
   DecisionRename,
   SavedDecision,
+  DecisionFreshness,
   DecisionProgress,
   ResearchOverview,
   SearchTrials,
@@ -677,6 +678,9 @@ export function getDecision(id: number, signal?: AbortSignal): Promise<SavedDeci
 }
 export function getDecisionProgress(id: number, signal?: AbortSignal): Promise<DecisionProgress> {
   return get('/api/v1/portfolio/decisions/' + id + '/progress', signal);
+}
+export function getDecisionFreshness(id: number, signal?: AbortSignal): Promise<DecisionFreshness> {
+  return get('/api/v1/portfolio/decisions/' + id + '/freshness', signal);
 }
 export function saveDecision(body: DecisionJobSave): Promise<SavedDecision> {
   return request('/api/v1/portfolio/decisions', {

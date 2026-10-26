@@ -125,8 +125,11 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
 test('decisiones experimentales se calculan en job y persisten con su política', async ({
   page,
 }) => {
-  await page.goto('/cartera/decisiones');
-  await expect(page.getByRole('heading', { name: 'Decisiones de cartera' })).toBeVisible();
+  // One plan page for both plans (#191): the experimental one is chosen on it.
+  await page.goto('/cartera');
+  await page.getByRole('radio', { name: 'Plan experimental con límites' }).click();
+  await expect(page).toHaveURL(/\/cartera\?plan=experimental$/);
+  await expect(page.getByRole('heading', { name: 'Nuevo plan' })).toBeVisible();
   await page.getByRole('button', { name: 'Generar decisiones' }).click();
   await expect(page.getByText(/Método:/)).toBeVisible();
   const previewCsv = page.getByRole('link', { name: 'Descargar decisiones CSV' });
@@ -139,6 +142,7 @@ test('decisiones experimentales se calculan en job y persisten con su política'
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Planes anteriores' })).toBeVisible();
   await expect(page.getByText('Progreso desde el plan')).toBeVisible();
+  await expect(page.getByText(/^Guardado hoy\./)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Descargar decisiones CSV' })).toHaveAttribute(
     'href',
     /\/api\/v1\/portfolio\/decisions\/\d+\/decisions\.csv$/,

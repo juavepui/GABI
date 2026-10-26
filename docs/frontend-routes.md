@@ -15,12 +15,11 @@ navegación ni se importan entre sí.
 | **Descubrir** | `/descubrir` | Ranking | `market` |
 | | `/descubrir/comparar` | Comparar empresas | `market` |
 | | `/empresas/:symbol` | Ficha de empresa (sin entrada en el menú) | `market` |
-| **Cartera** | `/cartera` | Cartera objetivo | `portfolio` |
+| **Cartera** | `/cartera` | Plan de cartera: regla congelada (Top-N equiponderado) o, con `?plan=experimental`, el plan experimental con límites (#191) | `portfolio` |
 | | `/cartera/mi-cartera` | Mi cartera (compras reales) | `portfolio` |
 | | `/cartera/seguimiento` | Signal Monitor | `market` |
 | | `/cartera/diario` | Diario de inversión | `portfolio` |
 | | `/cartera/simuladas` | Carteras simuladas | `portfolio` |
-| | `/cartera/decisiones` | Decisiones | `portfolio` |
 | **Investigación** | `/investigacion/*` | Laboratorios; solo en modo Research (#189) | `research` |
 | **Administración** | `/administracion`, `/administracion/calidad` | Datos, claves, modo, trabajos y calidad | `administration` |
 | Ayuda (global) | `/ayuda` | Aprender y glosario; enlazada desde la cabecera | `portfolio` |
@@ -36,7 +35,7 @@ mensajes del backend.
 ## Redirecciones
 
 Las rutas anteriores siguen funcionando: redirigen con `replace` y conservan la
-consulta y el ancla (filtros del Ranking, `?symbols=` de Comparar,
+consulta (añadida a la de la ruta nueva, si la tiene) y el ancla (filtros del Ranking, `?symbols=` de Comparar,
 `?tab=glosario#termino-…` del glosario).
 
 | Antes | Ahora |
@@ -47,6 +46,7 @@ consulta y el ancla (filtros del Ranking, `?symbols=` de Comparar,
 | `/mercado/macro` | `/macro` |
 | `/mercado/senales` | `/cartera/seguimiento` |
 | `/cartera/aprender` | `/ayuda` |
+| `/cartera/decisiones` | `/cartera?plan=experimental` |
 
 Los enlaces que genera el backend (alertas de Hoy) usan ya las rutas nuevas.
 

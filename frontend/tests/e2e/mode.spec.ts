@@ -28,7 +28,7 @@ test('modo Investor: sin Investigación ni parámetros de experimento (#189)', a
   await expect(page.getByRole('heading', { name: /^Pesos del modelo/ })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Investigación exploratoria' })).toHaveCount(0);
 
-  await page.goto('/cartera/decisiones');
+  await page.goto('/cartera?plan=experimental');
   await expect(page.getByText('Se usa la política por defecto')).toBeVisible();
   await expect(page.getByLabel('Score mínimo')).toHaveCount(0);
 });
@@ -41,7 +41,7 @@ test('modo Research: todo visible y el indicador lleva a cambiar de modo (#189)'
   await menu(page).getByRole('link', { name: 'Investigación' }).click();
   await expect(page.getByRole('heading', { name: 'Investigación', level: 1 })).toBeVisible();
 
-  await page.goto('/cartera/decisiones');
+  await page.goto('/cartera?plan=experimental');
   await expect(page.getByLabel('Score mínimo')).toBeVisible();
   await expect(page.getByText('Se usa la política por defecto')).toHaveCount(0);
 

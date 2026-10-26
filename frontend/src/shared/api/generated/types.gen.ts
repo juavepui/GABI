@@ -2310,6 +2310,60 @@ export type DataUpdateRequest = {
 };
 
 /**
+ * DecisionChange
+ */
+export type DecisionChange = {
+    /**
+     * Current Score
+     */
+    current_score: number | null;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Saved Score
+     */
+    saved_score: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * DecisionFreshness
+ *
+ * A saved plan against today's ranking: its age and the positions that changed materially.
+ */
+export type DecisionFreshness = {
+    /**
+     * Age Days
+     */
+    age_days: number;
+    /**
+     * Changes
+     */
+    changes: Array<DecisionChange>;
+    /**
+     * Material
+     */
+    material: boolean;
+    /**
+     * Positions
+     */
+    positions: number;
+    /**
+     * Threshold Points
+     */
+    threshold_points: number;
+    /**
+     * Today
+     */
+    today: string;
+};
+
+/**
  * DecisionJobSave
  */
 export type DecisionJobSave = {
@@ -10508,6 +10562,56 @@ export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponses = {
 };
 
 export type DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponse = DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponses[keyof DeleteApiV1PortfolioDecisionsPlanIdDeletePostResponses];
+
+export type FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetData = {
+    body?: never;
+    path: {
+        /**
+         * Plan Id
+         */
+        plan_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/decisions/{plan_id}/freshness';
+};
+
+export type FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetError = FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetErrors[keyof FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetErrors];
+
+export type FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: DecisionFreshness;
+};
+
+export type FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetResponse = FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetResponses[keyof FreshnessApiV1PortfolioDecisionsPlanIdFreshnessGetResponses];
 
 export type ProgressApiV1PortfolioDecisionsPlanIdProgressGetData = {
     body?: never;

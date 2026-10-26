@@ -20,7 +20,6 @@ import {
   SignalPage,
 } from '@/features/market/index';
 import {
-  DecisionsPage,
   HoldingsPage,
   JournalPage,
   LearnPage,
@@ -132,7 +131,12 @@ function Breadcrumb({ pathname }: { pathname: string }) {
 function Redirect({ to }: { to: (params: Record<string, string>) => string }) {
   const params = useParams() as Record<string, string>;
   const { search, hash } = useLocation();
-  return <Navigate replace to={to(params) + search + hash} />;
+  // The new route may carry its own query (?plan=experimental): the old one is added to it.
+  const [path, query = ''] = to(params).split('?');
+  const merged = new URLSearchParams(query);
+  new URLSearchParams(search).forEach((value, key) => merged.append(key, value));
+  const tail = merged.size ? '?' + merged.toString() : '';
+  return <Navigate replace to={path + tail + hash} />;
 }
 function Shell() {
   const location = useLocation();
@@ -305,7 +309,6 @@ function Shell() {
           <Route path="/cartera/seguimiento" element={<SignalPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />
-          <Route path="/cartera/decisiones" element={<DecisionsPage />} />
           <Route
             path="/investigacion"
             element={
