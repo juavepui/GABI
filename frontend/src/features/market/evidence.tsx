@@ -20,7 +20,6 @@ function EvidenceNotice({ model }: { model: ModelResponse }) {
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-semibold">Ventaja frente a SPY no demostrada</p>
           <Badge variant="outline">{status}</Badge>
-          <Badge variant="outline">{model.mode === 'INVESTOR' ? 'Investor' : 'Research'}</Badge>
         </div>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           {model.evidence_note} El score ordena empresas según el modelo; no es una rentabilidad

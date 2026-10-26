@@ -164,20 +164,36 @@ test('en móvil la pestaña activa queda a la vista y ninguna sección desborda'
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(390);
   };
-  await page.goto('/investigacion/laboratorio');
-  await expect(page.getByRole('heading', { name: 'Research Lab' })).toBeVisible();
-  await inView('Investigación', 'Navegación principal');
-  await inView('Research Lab', 'Apartados de la sección');
-  const top = await page.locator('main').evaluate((main) => main.getBoundingClientRect().top);
-  expect(top).toBeLessThanOrEqual(200);
-  for (const path of ['/', '/mercado', '/cartera', '/investigacion/historico', '/administracion']) {
-    await page.goto(path);
-    await expect(page.locator('main h1')).toBeVisible();
-    // A wide font makes the check the same on every system (Linux CI lacks Inter and Segoe UI).
-    await page.addStyleTag({
-      content: "* { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }",
+  // Investigación, the last tab, is only in the menu in Research mode (#189).
+  await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+    data: { mode: 'RESEARCH' },
+  });
+  try {
+    await page.goto('/investigacion/laboratorio');
+    await expect(page.getByRole('heading', { name: 'Research Lab' })).toBeVisible();
+    await inView('Investigación', 'Navegación principal');
+    await inView('Research Lab', 'Apartados de la sección');
+    const top = await page.locator('main').evaluate((main) => main.getBoundingClientRect().top);
+    expect(top).toBeLessThanOrEqual(200);
+    for (const path of [
+      '/',
+      '/mercado',
+      '/cartera',
+      '/investigacion/historico',
+      '/administracion',
+    ]) {
+      await page.goto(path);
+      await expect(page.locator('main h1')).toBeVisible();
+      // A wide font makes the check the same on every system (Linux CI lacks Inter and Segoe UI).
+      await page.addStyleTag({
+        content: "* { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }",
+      });
+      const width = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(width, path).toBeLessThanOrEqual(390);
+    }
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
     });
-    const width = await page.evaluate(() => document.documentElement.scrollWidth);
-    expect(width, path).toBeLessThanOrEqual(390);
   }
 });

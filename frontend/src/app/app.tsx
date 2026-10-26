@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { BrowserRouter, NavLink, Route, Routes, useLocation, Link } from 'react-router-dom';
-import { HardDrive, Leaf } from 'lucide-react';
+import { BrowserRouter, NavLink, Outlet, Route, Routes, useLocation, Link } from 'react-router-dom';
+import { FlaskConical, HardDrive, Leaf, UserRound } from 'lucide-react';
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   MarketPage,
@@ -27,7 +27,10 @@ import {
 } from '@/features/research/index';
 import { AdministrationPage, DataHealthPage } from '@/features/administration/index';
 import { ApiError } from '@/shared/api/client';
+import { useModel } from '@/shared/api/use-model';
+import { MODE_SETTING } from '@/shared/ui/research-mode';
 import { HomePage } from './home-page';
+import { ResearchGate } from './research-gate';
 import { navigation, pageTitle, subsections } from './navigation';
 import { JobsIndicator } from './jobs-indicator';
 import { rememberLaunch } from './job-launches';
@@ -108,6 +111,10 @@ function Breadcrumb({ pathname, section }: { pathname: string; section?: string 
 }
 function Shell() {
   const location = useLocation();
+  const model = useModel();
+  const research = model.data?.mode === 'RESEARCH';
+  // Investor mode leaves Investigación out of the menus; the backend still blocks its jobs.
+  const sections = navigation.filter((item) => research || item.path !== '/investigacion');
   const section = Object.keys(subsections).find((path) => location.pathname.startsWith(path));
   const main = useRef<HTMLElement>(null);
   const mainNav = useRef<HTMLElement>(null);
@@ -119,7 +126,8 @@ function Shell() {
       if (!nav || !active || nav.scrollWidth <= nav.clientWidth) continue;
       nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
     }
-  }, [location.pathname]);
+    // Again once the mode arrives: in Research mode Investigación joins the menu after the first render.
+  }, [location.pathname, research]);
   useEffect(() => {
     document.title = pageTitle(location.pathname, location.search);
   }, [location.pathname, location.search]);
@@ -165,7 +173,7 @@ function Shell() {
           ref={mainNav}
           className="relative flex gap-1 overflow-x-auto px-3 pb-2 lg:flex-col lg:px-4 lg:pb-3"
         >
-          {navigation.map((item) => (
+          {sections.map((item) => (
             <div key={item.path} className="contents lg:block">
               <NavLink
                 to={item.path}
@@ -199,7 +207,7 @@ function Shell() {
             </div>
           ))}
         </nav>
-        {section && subsections[section] && (
+        {section && subsections[section] && sections.some((item) => item.path === section) && (
           <nav
             ref={subNav}
             aria-label="Apartados de la sección"
@@ -228,6 +236,20 @@ function Shell() {
         <Breadcrumb pathname={location.pathname} section={section} />
         <div className="flex items-center gap-2">
           <JobsIndicator />
+          {model.data && (
+            <Link
+              to={MODE_SETTING}
+              title="Cambiar de modo en Administración"
+              className="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-[11px] font-medium hover:bg-accent"
+            >
+              {research ? (
+                <FlaskConical size={13} aria-hidden="true" />
+              ) : (
+                <UserRound size={13} aria-hidden="true" />
+              )}
+              Modo {research ? 'Research' : 'Investor'}
+            </Link>
+          )}
           <span className="hidden items-center gap-2 rounded-full border bg-background px-3 py-1 text-[11px] font-medium sm:inline-flex">
             <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
             Entorno local
@@ -253,12 +275,21 @@ function Shell() {
           <Route path="/cartera/aprender" element={<LearnPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />
           <Route path="/cartera/decisiones" element={<DecisionsPage />} />
-          <Route path="/investigacion" element={<ResearchPage />} />
-          <Route path="/investigacion/historico" element={<HistoricalPage />} />
-          <Route path="/investigacion/validaciones" element={<BlindValidationsPage />} />
-          <Route path="/investigacion/factores" element={<FactorPage />} />
-          <Route path="/investigacion/laboratorio" element={<ResearchLabPage />} />
-          <Route path="/investigacion/carteras" element={<PortfolioLabPage />} />
+          <Route
+            path="/investigacion"
+            element={
+              <ResearchGate>
+                <Outlet />
+              </ResearchGate>
+            }
+          >
+            <Route index element={<ResearchPage />} />
+            <Route path="historico" element={<HistoricalPage />} />
+            <Route path="validaciones" element={<BlindValidationsPage />} />
+            <Route path="factores" element={<FactorPage />} />
+            <Route path="laboratorio" element={<ResearchLabPage />} />
+            <Route path="carteras" element={<PortfolioLabPage />} />
+          </Route>
           <Route path="/administracion" element={<AdministrationPage />} />
           <Route path="/administracion/calidad" element={<DataHealthPage />} />
           <Route

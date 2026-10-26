@@ -5,8 +5,8 @@ test('un job local sigue después de recargar y publica un resultado verificable
 }, testInfo) => {
   await page.goto('/administracion');
   await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
-  await expect(page.getByText('Investor, bloqueados')).toBeVisible();
-  await expect(page.getByLabel('Valor (%)')).toBeDisabled();
+  // Investor uses the frozen weights: no editor to show (#189).
+  await expect(page.getByLabel('Valor (%)')).toHaveCount(0);
   const mobile = testInfo.project.name === 'mobile';
   const name = mobile ? 'Descargar símbolos indicados' : 'Auditar cobertura local';
   if (mobile) {

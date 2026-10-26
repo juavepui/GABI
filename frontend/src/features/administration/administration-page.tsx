@@ -423,61 +423,66 @@ export function AdministrationPage() {
             ) : model.data ? (
               <>
                 <ModeSelector model={model.data} />
-                <WeightsEditor
-                  key={`${model.data.mode}:${Object.values(model.data.weights).join(':')}`}
-                  model={model.data}
-                />
+                {/* Investor uses the frozen weights: nothing to edit or compare. */}
+                {model.data.mode === 'RESEARCH' && (
+                  <WeightsEditor
+                    key={`${model.data.mode}:${Object.values(model.data.weights).join(':')}`}
+                    model={model.data}
+                  />
+                )}
               </>
             ) : null}
           </CardContent>
         </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Investigación exploratoria</CardTitle>
-          <CardDescription>
-            Backtest histórico de hasta un año entre 2010 y julio de 2025. El resultado se guarda
-            como artefacto verificable; no constituye validación prospectiva.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              submit.mutate({ kind: 'backtest', start, end });
-            }}
-            className="flex flex-wrap items-end gap-3"
-          >
-            <label className="text-sm">
-              Desde
-              <Input
-                type="date"
-                min="2010-01-01"
-                max="2025-07-02"
-                value={start}
-                onChange={(event) => setStart(event.target.value)}
-                className="mt-1 w-auto"
-                required
-              />
-            </label>
-            <label className="text-sm">
-              Hasta
-              <Input
-                type="date"
-                min="2010-01-01"
-                max="2025-07-02"
-                value={end}
-                onChange={(event) => setEnd(event.target.value)}
-                className="mt-1 w-auto"
-                required
-              />
-            </label>
-            <Button type="submit" disabled={submit.isPending}>
-              Iniciar backtest
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {model.data?.mode === 'RESEARCH' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Investigación exploratoria</CardTitle>
+            <CardDescription>
+              Backtest histórico de hasta un año entre 2010 y julio de 2025. El resultado se guarda
+              como artefacto verificable; no constituye validación prospectiva.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                submit.mutate({ kind: 'backtest', start, end });
+              }}
+              className="flex flex-wrap items-end gap-3"
+            >
+              <label className="text-sm">
+                Desde
+                <Input
+                  type="date"
+                  min="2010-01-01"
+                  max="2025-07-02"
+                  value={start}
+                  onChange={(event) => setStart(event.target.value)}
+                  className="mt-1 w-auto"
+                  required
+                />
+              </label>
+              <label className="text-sm">
+                Hasta
+                <Input
+                  type="date"
+                  min="2010-01-01"
+                  max="2025-07-02"
+                  value={end}
+                  onChange={(event) => setEnd(event.target.value)}
+                  className="mt-1 w-auto"
+                  required
+                />
+              </label>
+              <Button type="submit" disabled={submit.isPending}>
+                Iniciar backtest
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
