@@ -397,10 +397,7 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
               />
             </>
           )}
-          <Link
-            className="text-xs underline"
-            to={`/mercado/empresas/${encodeURIComponent(data.symbol)}`}
-          >
+          <Link className="text-xs underline" to={`/empresas/${encodeURIComponent(data.symbol)}`}>
             Ver su score y cobertura ponderada en la ficha
           </Link>
         </div>

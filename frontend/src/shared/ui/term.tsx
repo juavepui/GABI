@@ -8,7 +8,7 @@ const WIDTH = 288;
 
 /**
  * A technical term with an ⓘ button that shows its definition (from the backend glossary) and a link
- * to the full glossary in Aprender. The live region only exists while the hint is open, so pages with
+ * to the full glossary in the Ayuda. The live region only exists while the hint is open, so pages with
  * many terms do not carry empty status regions.
  */
 export function Term({ k, children }: { k: string; children: ReactNode }) {
@@ -85,11 +85,11 @@ export function Term({ k, children }: { k: string; children: ReactNode }) {
               {glossary.isPending ? 'Cargando…' : (entry?.definition ?? 'Sin definición.')}
             </span>
             <Link
-              to={'/cartera/aprender?tab=glosario#termino-' + k}
+              to={'/ayuda?tab=glosario#termino-' + k}
               className="mt-2 inline-block font-medium text-primary underline"
               onClick={() => setPosition(null)}
             >
-              Más en Aprender
+              Más en la Ayuda
             </Link>
           </span>
         </span>

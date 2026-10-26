@@ -126,7 +126,7 @@ export function SignalPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ to: '/mercado', label: 'Mercado' }}
+        back={{ to: '/cartera', label: 'Cartera' }}
         eyebrow="Seguimiento de cambios del ranking"
         title="Signal Monitor"
         description={
@@ -355,7 +355,7 @@ export function SignalPage() {
                 >
                   <Link
                     className="text-primary underline"
-                    to={'/mercado/empresas/' + encodeURIComponent(event.symbol)}
+                    to={'/empresas/' + encodeURIComponent(event.symbol)}
                   >
                     {event.symbol}
                   </Link>
@@ -413,7 +413,7 @@ export function SignalPage() {
                 </Badge>
                 <Link
                   className="font-medium text-primary"
-                  to={'/mercado/empresas/' + encodeURIComponent(event.symbol)}
+                  to={'/empresas/' + encodeURIComponent(event.symbol)}
                 >
                   {event.symbol}
                 </Link>

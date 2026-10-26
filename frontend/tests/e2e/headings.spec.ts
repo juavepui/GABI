@@ -29,7 +29,7 @@ const pages: { path: string; sections: string[] }[] = [
     sections: ['Datos', 'Actualizar datos', 'Configuración local', 'Modo de trabajo', 'Trabajos'],
   },
   {
-    path: '/mercado/empresas/T001',
+    path: '/empresas/T001',
     sections: [
       'Histórico de precios',
       'Checklist fundamental',
@@ -38,7 +38,7 @@ const pages: { path: string; sections: string[] }[] = [
       'Próximos catalizadores',
     ],
   },
-  { path: '/mercado/senales', sections: [] },
+  { path: '/cartera/seguimiento', sections: [] },
 ];
 
 for (const { path, sections } of pages) {

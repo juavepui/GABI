@@ -36,7 +36,7 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
         <div>
           <Link
             className="font-semibold text-primary"
-            to={'/mercado/empresas/' + encodeURIComponent(entry.symbol)}
+            to={'/empresas/' + encodeURIComponent(entry.symbol)}
           >
             {entry.symbol}
           </Link>

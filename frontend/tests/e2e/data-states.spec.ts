@@ -12,7 +12,7 @@ test('cobertura parcial y filtros vacíos conservan el estado del universo y la 
   page.on('request', (req) => {
     if (req.method() === 'POST') posts++;
   });
-  await page.goto('/mercado?search=UNKNOWN');
+  await page.goto('/descubrir?search=UNKNOWN');
   await expect(page.getByText('No hay empresas con estos filtros')).toBeVisible();
   const state = page.getByRole('region', { name: 'Estado de los datos' });
   await expect(state.getByText('Datos cacheados disponibles')).toBeVisible();
@@ -83,7 +83,7 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
             },
     });
   });
-  await page.goto('/mercado?search=T000');
+  await page.goto('/descubrir?search=T000');
   const state = page.getByRole('region', { name: 'Estado de los datos' });
   await expect(state.getByText('Datos obsoletos', { exact: true })).toBeVisible();
   await expect(state.getByText('Hay precios fuera del plazo de frescura.')).toBeVisible();
@@ -114,7 +114,7 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
 test('la ficha conserva fuentes y fechas por empresa junto al estado del universo', async ({
   page,
 }) => {
-  await page.goto('/mercado/empresas/T000');
+  await page.goto('/empresas/T000');
   await expect(page.getByRole('region', { name: 'Estado de los datos' })).toContainText(
     'Fuentes: caché local de Yahoo y SEC',
   );

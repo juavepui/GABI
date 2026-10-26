@@ -1,6 +1,16 @@
 import { useEffect, useRef } from 'react';
-import { BrowserRouter, NavLink, Outlet, Route, Routes, useLocation, Link } from 'react-router-dom';
-import { FlaskConical, HardDrive, Leaf, UserRound } from 'lucide-react';
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  NavLink,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from 'react-router-dom';
+import { CircleHelp, FlaskConical, HardDrive, Leaf, UserRound } from 'lucide-react';
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   MarketPage,
@@ -31,7 +41,15 @@ import { useModel } from '@/shared/api/use-model';
 import { MODE_SETTING } from '@/shared/ui/research-mode';
 import { HomePage } from './home-page';
 import { ResearchGate } from './research-gate';
-import { navigation, pageTitle, subsections } from './navigation';
+import { CompanySearch } from './company-search';
+import {
+  companySymbol,
+  HELP,
+  pageTitle,
+  REDIRECTS,
+  sectionOf,
+  sections as allSections,
+} from './navigation';
 import { JobsIndicator } from './jobs-indicator';
 import { rememberLaunch } from './job-launches';
 
@@ -66,20 +84,21 @@ const subLink = ({ isActive }: { isActive: boolean }) =>
     ? 'bg-white/15 font-semibold text-white'
     : 'text-[#c5d8cc] hover:bg-white/10 hover:text-white');
 /** «GABI / Sección / Apartado»: where the page sits, with links back up. */
-function Breadcrumb({ pathname, section }: { pathname: string; section?: string }) {
-  const item = navigation.find((entry) =>
-    entry.path === '/' ? pathname === '/' : pathname.startsWith(entry.path),
-  );
-  const sub = section ? subsections[section].find((entry) => entry.path === pathname) : undefined;
-  const symbol = /^\/mercado\/empresas\/([^/]+)/.exec(pathname)?.[1];
+function Breadcrumb({ pathname }: { pathname: string }) {
+  const section = sectionOf(pathname);
+  const page = section?.pages.find((entry) => entry.path === pathname);
+  const symbol = companySymbol(pathname);
   const trail: { label: string; to?: string }[] = [{ label: 'GABI', to: '/' }];
-  if (item) trail.push({ label: item.label, to: item.path });
-  if (sub) trail.push({ label: sub.label });
-  if (symbol)
-    trail.push({ label: 'Ranking', to: '/mercado' }, { label: decodeURIComponent(symbol) });
-  if (!item) trail.push({ label: 'Navegación' });
+  if (section) trail.push({ label: section.label, to: section.path });
+  if (page && page.path !== section?.path) trail.push({ label: page.label });
+  if (symbol) trail.push({ label: symbol });
+  if (pathname === HELP.path) trail.push({ label: HELP.label });
+  else if (!section) trail.push({ label: 'Navegación' });
   return (
-    <nav aria-label="Ruta" className="min-w-0 truncate text-xs text-muted-foreground">
+    <nav
+      aria-label="Ruta"
+      className="hidden min-w-0 flex-1 truncate text-xs text-muted-foreground md:block"
+    >
       <ol className="flex items-center">
         {trail.map((step, index) => {
           const last = index === trail.length - 1;
@@ -109,13 +128,19 @@ function Breadcrumb({ pathname, section }: { pathname: string; section?: string 
     </nav>
   );
 }
+/** An old route (before #188) sent to its new place, keeping its query and anchor. */
+function Redirect({ to }: { to: (params: Record<string, string>) => string }) {
+  const params = useParams() as Record<string, string>;
+  const { search, hash } = useLocation();
+  return <Navigate replace to={to(params) + search + hash} />;
+}
 function Shell() {
   const location = useLocation();
   const model = useModel();
   const research = model.data?.mode === 'RESEARCH';
   // Investor mode leaves Investigación out of the menus; the backend still blocks its jobs.
-  const sections = navigation.filter((item) => research || item.path !== '/investigacion');
-  const section = Object.keys(subsections).find((path) => location.pathname.startsWith(path));
+  const sections = allSections.filter((item) => research || item.path !== '/investigacion');
+  const section = sections.find((item) => item === sectionOf(location.pathname));
   const main = useRef<HTMLElement>(null);
   const mainNav = useRef<HTMLElement>(null);
   const subNav = useRef<HTMLElement>(null);
@@ -175,27 +200,26 @@ function Shell() {
         >
           {sections.map((item) => (
             <div key={item.path} className="contents lg:block">
-              <NavLink
+              <Link
                 to={item.path}
-                end={item.path === '/'}
-                className={({ isActive }) =>
+                aria-current={item === section ? 'page' : undefined}
+                className={
                   'flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors lg:py-3 ' +
-                  (isActive
-                    ? 'bg-[#dceaca] font-semibold text-[#183e32]' +
-                      // With its sub-sections listed below, the sub-section carries the highlight.
-                      (subsections[item.path] ? ' lg:bg-transparent lg:text-white' : '')
+                  (item === section
+                    ? // On wide screens its pages are listed below and carry the highlight.
+                      'bg-[#dceaca] font-semibold text-[#183e32] lg:bg-transparent lg:text-white'
                     : 'text-[#d5e3da] hover:bg-white/10')
                 }
               >
                 <item.icon size={18} aria-hidden="true" />
                 {item.label}
-              </NavLink>
-              {item.path === section && subsections[item.path] && (
+              </Link>
+              {item === section && (
                 <ul
                   aria-label={'Apartados de ' + item.label}
                   className="ml-6 mt-1 mb-2 hidden space-y-0.5 border-l border-white/15 pl-2 lg:block"
                 >
-                  {subsections[item.path].map((sub) => (
+                  {item.pages.map((sub) => (
                     <li key={sub.path}>
                       <NavLink to={sub.path} end className={subLink}>
                         {sub.label}
@@ -207,13 +231,13 @@ function Shell() {
             </div>
           ))}
         </nav>
-        {section && subsections[section] && sections.some((item) => item.path === section) && (
+        {section && (
           <nav
             ref={subNav}
             aria-label="Apartados de la sección"
             className="relative flex gap-1 overflow-x-auto px-3 pb-2 lg:hidden"
           >
-            {subsections[section].map((sub) => (
+            {section.pages.map((sub) => (
               <NavLink key={sub.path} to={sub.path} end className={subLink}>
                 {sub.label}
               </NavLink>
@@ -232,10 +256,19 @@ function Shell() {
           </div>
         </div>
       </aside>
-      <header className="flex h-12 items-center justify-between gap-3 border-b bg-card px-5 lg:h-16 lg:px-9">
-        <Breadcrumb pathname={location.pathname} section={section} />
-        <div className="flex items-center gap-2">
+      <header className="flex h-12 items-center gap-3 border-b bg-card px-4 sm:px-5 lg:h-16 lg:px-9">
+        <Breadcrumb pathname={location.pathname} />
+        <CompanySearch />
+        <div className="flex shrink-0 items-center gap-2">
           <JobsIndicator />
+          <Link
+            to={HELP.path}
+            aria-label="Ayuda y glosario"
+            className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-[11px] font-medium hover:bg-accent"
+          >
+            <CircleHelp size={13} aria-hidden="true" />
+            <span className="hidden sm:inline">Ayuda</span>
+          </Link>
           {model.data && (
             <Link
               to={MODE_SETTING}
@@ -247,13 +280,12 @@ function Shell() {
               ) : (
                 <UserRound size={13} aria-hidden="true" />
               )}
-              Modo {research ? 'Research' : 'Investor'}
+              {/* Icon only on phones; the name stays for screen readers. */}
+              <span className="sr-only sm:not-sr-only">
+                Modo {research ? 'Research' : 'Investor'}
+              </span>
             </Link>
           )}
-          <span className="hidden items-center gap-2 rounded-full border bg-background px-3 py-1 text-[11px] font-medium sm:inline-flex">
-            <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
-            Entorno local
-          </span>
         </div>
       </header>
       <main
@@ -264,15 +296,14 @@ function Shell() {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/mercado" element={<MarketPage />} />
-          <Route path="/mercado/empresas/:symbol" element={<CompanyPage />} />
-          <Route path="/mercado/comparar" element={<ComparisonPage />} />
-          <Route path="/mercado/macro" element={<MacroPage />} />
-          <Route path="/mercado/senales" element={<SignalPage />} />
+          <Route path="/macro" element={<MacroPage />} />
+          <Route path="/descubrir" element={<MarketPage />} />
+          <Route path="/descubrir/comparar" element={<ComparisonPage />} />
+          <Route path="/empresas/:symbol" element={<CompanyPage />} />
           <Route path="/cartera" element={<PortfolioPage />} />
           <Route path="/cartera/mi-cartera" element={<HoldingsPage />} />
+          <Route path="/cartera/seguimiento" element={<SignalPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
-          <Route path="/cartera/aprender" element={<LearnPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />
           <Route path="/cartera/decisiones" element={<DecisionsPage />} />
           <Route
@@ -292,13 +323,21 @@ function Shell() {
           </Route>
           <Route path="/administracion" element={<AdministrationPage />} />
           <Route path="/administracion/calidad" element={<DataHealthPage />} />
+          <Route path={HELP.path} element={<LearnPage />} />
+          {REDIRECTS.map((redirect) => (
+            <Route
+              key={redirect.from}
+              path={redirect.from}
+              element={<Redirect to={redirect.to} />}
+            />
+          ))}
           <Route
             path="*"
             element={
               <div>
                 <h1 className="text-2xl font-semibold">Página no encontrada</h1>
-                <Link className="mt-4 inline-block text-primary underline" to="/mercado">
-                  Volver al Mercado
+                <Link className="mt-4 inline-block text-primary underline" to="/">
+                  Volver a Hoy
                 </Link>
               </div>
             }

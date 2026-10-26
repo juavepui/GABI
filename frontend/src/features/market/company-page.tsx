@@ -69,7 +69,7 @@ export function CompanyPage() {
   return (
     <>
       <div className="mb-3">
-        <BackLink to={'/mercado?' + back.toString()}>Ranking</BackLink>
+        <BackLink to={'/descubrir?' + back.toString()}>Ranking</BackLink>
       </div>
       {result.isPending ? (
         <LoadingState />

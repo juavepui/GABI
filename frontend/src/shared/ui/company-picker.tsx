@@ -15,11 +15,14 @@ export function CompanyPicker({
   options,
   value,
   onChange,
+  hideLabel = false,
 }: {
   label: string;
   options: CompanyOption[];
   value: string;
   onChange: (symbol: string) => void;
+  /** Keep the label for screen readers only (a search box in the header). */
+  hideLabel?: boolean;
 }) {
   const id = useId();
   const [query, setQuery] = useState('');
@@ -66,7 +69,9 @@ export function CompanyPicker({
 
   return (
     <div className="relative text-xs font-medium">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id} className={hideLabel ? 'sr-only' : undefined}>
+        {label}
+      </label>
       {selected && !open ? (
         <div className="mt-1.5 flex h-10 items-center justify-between gap-2 rounded-md border border-primary/30 bg-accent px-3 text-sm">
           <button
@@ -88,7 +93,7 @@ export function CompanyPicker({
           </button>
         </div>
       ) : (
-        <div className="relative mt-1.5">
+        <div className={'relative' + (hideLabel ? '' : ' mt-1.5')}>
           <Search
             size={15}
             aria-hidden="true"

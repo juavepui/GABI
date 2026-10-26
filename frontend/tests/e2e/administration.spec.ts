@@ -140,8 +140,8 @@ test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra p
   await update.getByRole('button', { name: 'Actualizar datos' }).click();
   await expect(page.getByRole('button', { name: /^Trabajos: \d+ en curso$/ })).toBeVisible();
   // Leave the page that launched it: the header keeps track of the job.
-  await page.getByRole('link', { name: 'Mercado', exact: true }).first().click();
-  await expect(page).toHaveURL(/\/mercado$/);
+  await page.getByRole('link', { name: 'Descubrir', exact: true }).first().click();
+  await expect(page).toHaveURL(/\/descubrir$/);
   allowCompletion = true;
   const toast = page.getByRole('status', { name: 'Avisos de trabajos' });
   await expect(toast.getByText('Actualizar datos', { exact: true })).toBeVisible({

@@ -97,7 +97,7 @@ class HomeQueries:
         rows = table.loc[table.index.isin([*candidates, *held]), columns].to_dict("index")
         earnings = {str(symbol): (row.get("next_earnings_date"), bool(row.get("next_earnings_is_estimate")))
                     for symbol, row in rows.items()}
-        alerts = rules.upcoming_earnings(earnings, candidates, scope="target", today=today, link="/mercado/senales")
+        alerts = rules.upcoming_earnings(earnings, candidates, scope="target", today=today, link="/cartera/seguimiento")
         alerts += rules.upcoming_earnings(earnings, held, scope="holdings", today=today, link="/cartera/mi-cartera")
         try:
             events = self.sources.events(list(dict.fromkeys([*candidates, *held])), today)

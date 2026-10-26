@@ -10,7 +10,7 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { EvidenceTable } from '@/shared/ui/evidence-table';
 import { Folded } from '@/shared/ui/folded';
 import { SectionLinks } from '@/shared/ui/section-links';
-import { Compass, FlaskRound, GraduationCap, NotebookPen, Wallet } from 'lucide-react';
+import { Compass, FlaskRound, NotebookPen, Radar, Wallet } from 'lucide-react';
 import { formatMoney, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
@@ -119,10 +119,10 @@ export function PortfolioPage() {
               icon: NotebookPen,
             },
             {
-              to: '/cartera/aprender',
-              label: 'Aprender',
-              description: 'Términos, estrategias y cómo piensa GABI',
-              icon: GraduationCap,
+              to: '/cartera/seguimiento',
+              label: 'Signal Monitor',
+              description: 'Seguimiento de cestas guardadas y eventos',
+              icon: Radar,
             },
             {
               to: '/cartera/simuladas',
@@ -280,7 +280,7 @@ export function PortfolioPage() {
                         <td className="py-3">
                           <Link
                             className="font-medium text-primary underline-offset-2 hover:underline"
-                            to={'/mercado/empresas/' + encodeURIComponent(row.symbol)}
+                            to={'/empresas/' + encodeURIComponent(row.symbol)}
                           >
                             {row.symbol}
                           </Link>
@@ -360,7 +360,7 @@ export function PortfolioPage() {
                 {data.allocations.map((item) => (
                   <li key={item.symbol} className="flex justify-between gap-4 py-3 text-sm">
                     <Link
-                      to={'/mercado/empresas/' + encodeURIComponent(item.symbol)}
+                      to={'/empresas/' + encodeURIComponent(item.symbol)}
                       className="font-medium text-primary"
                     >
                       {item.symbol} · {item.name}

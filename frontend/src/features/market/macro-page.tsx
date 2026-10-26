@@ -22,7 +22,7 @@ export function MacroPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ to: '/mercado', label: 'Mercado' }}
+        back={{ to: '/', label: 'Hoy' }}
         title="Panel macro"
         description={<>Contexto macroeconómico para tus tesis; no interviene en el score.</>}
         guide={

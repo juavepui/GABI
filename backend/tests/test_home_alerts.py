@@ -25,7 +25,7 @@ def test_results_within_the_week_are_grouped_by_scope():
     earnings = {"A": ("2026-09-30", True), "B": ("2026-10-06", False), "C": ("2026-10-07", False),
                 "D": ("2026-09-28", False)}
     [alert] = rules.upcoming_earnings(earnings, ["A", "B", "C", "D", "Z"], scope="target", today=TODAY,
-                                      link="/mercado/senales")
+                                      link="/cartera/seguimiento")
     assert alert["symbols"] == ["A", "B"] and alert["date"] == "2026-09-30"  # C is 8 days away, D has passed.
     assert alert["detail"] == {"scope": "target", "dates": {"A": "2026-09-30", "B": "2026-10-06"},
                                "estimated": ["A"]}

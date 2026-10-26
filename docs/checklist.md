@@ -1,6 +1,6 @@
 # Checklist fundamental descriptivo (#167)
 
-La ficha de empresa (`/mercado/empresas/{símbolo}`) muestra la sección
+La ficha de empresa (`/empresas/{símbolo}`) muestra la sección
 **Checklist fundamental**. Evalúa la empresa frente a los criterios del checklist
 del usuario, extraídos de vídeos de análisis fundamental (Javier DV, Memorias de
 Tiburón, Pedro Gutiérrez y La Pizarra de Andrés), con veredicto ✔/✘/sin dato,
