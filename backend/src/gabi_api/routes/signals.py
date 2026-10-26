@@ -52,7 +52,7 @@ def snapshots(monitor: Annotated[SignalMonitor, Depends(service)]) -> SnapshotLi
 
 @router.post("/snapshots", response_model=Snapshot, status_code=201)
 def save_snapshot(body: SaveSnapshot, monitor: Annotated[SignalMonitor, Depends(service)]) -> Snapshot:
-    snapshot_id = monitor.save(body.name, body.top_n)
+    snapshot_id = monitor.save(body.name, body.top_n, target=body.target)
     return next(Snapshot.model_validate(item) for item in monitor.snapshots() if item["id"] == snapshot_id)
 
 

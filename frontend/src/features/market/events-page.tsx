@@ -8,16 +8,15 @@ import {
   getJobResult,
   getSignals,
   getSnapshotEarnings,
-  getSnapshots,
   recordFilingCheck,
-  saveSnapshot,
 } from '@/shared/api/client';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
-import { SnapshotProgress } from './snapshot-progress';
+import { SnapshotPicker } from './snapshot-picker';
+import { useSnapshots } from './queries';
 import { dateLabel, dateText } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 
@@ -29,6 +28,11 @@ const labels: Record<string, string> = {
   confidence_drop: 'Caída de cobertura ponderada',
   sector_change: 'Cambio de sector',
   eligibility_change: 'Sin score calculable',
+};
+const severities: Record<string, string> = {
+  MATERIAL: 'Material',
+  WATCH: 'Vigilar',
+  INFO: 'Informativo',
 };
 
 type FilingPreview = {
@@ -51,12 +55,11 @@ function isFilingPreview(value: unknown): value is FilingPreview {
   );
 }
 
-export function SignalPage() {
+/** Eventos (#193): what changed since a saved basket (ranking, SEC filings) and the upcoming
+ *  earnings of its companies. Data changes, never orders; the Hoy alerts link here. */
+export function EventsPage() {
   const queryClient = useQueryClient();
-  const snapshots = useQuery({
-    queryKey: ['market', 'snapshots'],
-    queryFn: ({ signal }) => getSnapshots(signal),
-  });
+  const snapshots = useSnapshots();
   const [severity, setSeverity] = useState('');
   const [sinceHours, setSinceHours] = useState(24 * 7);
   const signals = useQuery({
@@ -65,13 +68,6 @@ export function SignalPage() {
   });
   const [selected, setSelected] = useState<number | null>(null);
   const [filingJobId, setFilingJobId] = useState<string | null>(null);
-  const save = useMutation({
-    mutationFn: saveSnapshot,
-    onSuccess: (snapshot) => {
-      setSelected(snapshot.id);
-      void queryClient.invalidateQueries({ queryKey: ['market', 'snapshots'] });
-    },
-  });
   const compare = useMutation({
     mutationFn: compareSignals,
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['market', 'signals'] }),
@@ -107,11 +103,6 @@ export function SignalPage() {
     mutationFn: () => recordFilingCheck(filingJobId!),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['market', 'signals'] }),
   });
-  function saveCurrent(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    save.mutate({ name: String(form.get('name') ?? ''), top_n: Number(form.get('top_n')) });
-  }
   function run(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -126,59 +117,15 @@ export function SignalPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ to: '/cartera', label: 'Cartera' }}
-        eyebrow="Seguimiento de cambios del ranking"
-        title="Signal Monitor"
+        back={{ to: '/', label: 'Hoy' }}
+        title="Eventos"
         description={
           <>
-            Compara el ranking cacheado con una foto anterior. Los eventos son cambios de datos y
-            nunca órdenes de compra o venta.
+            Qué ha cambiado desde una cesta guardada: su ranking, sus filings SEC y sus próximos
+            resultados. Son cambios de datos, nunca órdenes de compra o venta.
           </>
         }
       />
-      <form onSubmit={saveCurrent} className="rounded-xl border bg-card p-5">
-        <h2 className="text-lg font-semibold">Guardar snapshot del ranking</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Escritura explícita de las candidatas actuales con pesos congelados.
-        </p>
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <label className="text-sm">
-            Nombre
-            <Input
-              className="mt-1"
-              name="name"
-              defaultValue="Ranking actual"
-              maxLength={80}
-              required
-            />
-          </label>
-          <label className="text-sm">
-            Candidatas
-            <Input
-              className="mt-1 w-28"
-              name="top_n"
-              type="number"
-              min={1}
-              max={30}
-              defaultValue={10}
-              required
-            />
-          </label>
-          <Button type="submit" disabled={save.isPending}>
-            Guardar foto
-          </Button>
-        </div>
-        {save.isError && (
-          <p role="alert" className="mt-3 text-sm text-destructive">
-            {save.error.message}
-          </p>
-        )}
-        {save.isSuccess && (
-          <p role="status" className="mt-3 text-sm">
-            Snapshot #{save.data.id} guardado.
-          </p>
-        )}
-      </form>
       {snapshots.isPending && <LoadingState />}
       {snapshots.isError && (
         <ErrorState error={snapshots.error} retry={() => void snapshots.refetch()} />
@@ -187,24 +134,15 @@ export function SignalPage() {
         <form onSubmit={run} className="rounded-xl border bg-card p-5">
           <h2 className="text-lg font-semibold">Comparar con el ranking actual</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <label className="text-sm">
-              Snapshot de referencia
-              <NativeSelect
-                name="snapshot_id"
-                value={selected ?? options[0].id}
-                onChange={(event) => {
-                  setSelected(Number(event.target.value));
-                  setFilingJobId(null);
-                }}
-                className="mt-1 h-9 w-full rounded-md border bg-background px-2"
-              >
-                {options.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} · {dateLabel(item.as_of_date)}
-                  </option>
-                ))}
-              </NativeSelect>
-            </label>
+            <SnapshotPicker
+              label="Cesta de referencia"
+              items={options}
+              value={selected ?? options[0].id}
+              onChange={(id) => {
+                setSelected(id);
+                setFilingJobId(null);
+              }}
+            />
             <label className="text-sm">
               Cambio mínimo de rank
               <Input
@@ -261,16 +199,16 @@ export function SignalPage() {
       )}
       {options.length === 0 && snapshots.isSuccess && (
         <p className="text-sm text-muted-foreground">
-          Todavía no hay snapshots. Guarda el ranking actual para compararlo después.
+          Todavía no hay cestas guardadas. Guarda la de hoy desde Cartera objetivo («Guardar esta
+          cartera para seguirla») para compararla después.
         </p>
       )}
       {activeSnapshot != null && (
         <>
-          <SnapshotProgress id={activeSnapshot} />
           <section className="rounded-xl border bg-card p-5">
             <h2 className="text-lg font-semibold">Cambios en filings SEC</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Compara 10-K y 10-Q de las candidatas de la foto elegida, con hechos SEC ya cacheados.
+              Compara 10-K y 10-Q de las empresas de la cesta elegida, con hechos SEC ya cacheados.
               Los umbrales de materialidad siguen en el motor Python.
             </p>
             <Button
@@ -338,7 +276,7 @@ export function SignalPage() {
           <section className="rounded-xl border bg-card p-5">
             <h2 className="text-lg font-semibold">Próximos earnings</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Fechas conocidas de las candidatas del snapshot; contexto, no señal de compra.
+              Fechas conocidas de las empresas de la cesta; contexto, no señal de compra.
             </p>
             {earnings.isPending && <LoadingState />}
             {earnings.isError && (
@@ -376,9 +314,11 @@ export function SignalPage() {
             Severidad
             <NativeSelect value={severity} onChange={(event) => setSeverity(event.target.value)}>
               <NativeSelectOption value="">Todas</NativeSelectOption>
-              <NativeSelectOption value="MATERIAL">MATERIAL</NativeSelectOption>
-              <NativeSelectOption value="WATCH">WATCH</NativeSelectOption>
-              <NativeSelectOption value="INFO">INFO</NativeSelectOption>
+              {Object.entries(severities).map(([value, label]) => (
+                <NativeSelectOption key={value} value={value}>
+                  {label}
+                </NativeSelectOption>
+              ))}
             </NativeSelect>
           </label>
           <label className="grid gap-1">
@@ -409,7 +349,7 @@ export function SignalPage() {
             <li key={event.id ?? index} className="py-3 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={event.severity === 'MATERIAL' ? 'destructive' : 'secondary'}>
-                  {event.severity}
+                  {severities[event.severity] ?? event.severity}
                 </Badge>
                 <Link
                   className="font-medium text-primary"

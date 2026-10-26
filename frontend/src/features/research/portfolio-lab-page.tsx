@@ -287,7 +287,7 @@ export function PortfolioLabPage() {
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="Comparar formas de repartir el capital"
-        title="Portfolio Lab"
+        title="Laboratorio de carteras"
         description={<>Compara seis formas de repartir el capital entre las mismas candidatas.</>}
         guide={
           <>

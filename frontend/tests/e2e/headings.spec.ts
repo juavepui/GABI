@@ -39,6 +39,7 @@ const pages: { path: string; sections: string[] }[] = [
     ],
   },
   { path: '/cartera/seguimiento', sections: [] },
+  { path: '/eventos', sections: ['Eventos recientes'] },
 ];
 
 for (const { path, sections } of pages) {

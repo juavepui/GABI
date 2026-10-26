@@ -89,9 +89,9 @@ export function MarketPage() {
                 icon: Globe,
               },
               {
-                to: '/cartera/seguimiento',
-                label: 'Signal Monitor',
-                description: 'Rankings guardados y cambios',
+                to: '/eventos',
+                label: 'Eventos',
+                description: 'Cambios del ranking, filings y resultados',
                 icon: Radar,
               },
             ]}

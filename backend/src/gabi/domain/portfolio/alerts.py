@@ -66,7 +66,7 @@ def top_changes(current: list[str], saved: list[str], saved_as_of: str, saved_na
     exited = [symbol for symbol in saved if symbol not in current]
     if not entered and not exited:
         return []
-    return [_alert("top_changes", "medium", saved_as_of, symbols=entered + exited, link="/cartera/seguimiento",
+    return [_alert("top_changes", "medium", saved_as_of, symbols=entered + exited, link="/eventos",
                    entered=entered, exited=exited, snapshot=saved_name)]
 
 
@@ -80,7 +80,7 @@ def filing_changes(events: list[dict], symbols: list[str], *, today: date) -> li
     latest = max(str(event["detected_at"])[:10] for event in events if event["symbol"] in found
                  and str(event.get("event_type", "")).startswith("filing_"))
     held = [symbol for symbol in found if symbol in set(symbols)]
-    return [_alert("filings", "high", latest, symbols=found, link="/cartera/seguimiento", held=held)]
+    return [_alert("filings", "high", latest, symbols=found, link="/eventos", held=held)]
 
 
 def failed_jobs(jobs: list[dict], *, today: date) -> list[dict]:

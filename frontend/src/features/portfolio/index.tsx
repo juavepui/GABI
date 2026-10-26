@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { PlanRequest } from '@/shared/api/generated/types.gen';
-import { getEvidenceTop, getPortfolioPlan } from '@/shared/api/client';
+import { getEvidenceTop, getPortfolioPlan, saveSnapshot } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
@@ -59,6 +59,48 @@ function PlanEvidence() {
     <Folded title="Evidencia de las candidatas (pesos congelados)">
       <PlanEvidenceContent />
     </Folded>
+  );
+}
+
+/** «Guardar esta cartera para seguirla» (#193): the backend saves exactly today's target, the same
+ *  eligible Top-N, and Seguimiento compares it with SPY from today on. */
+function TrackTarget({ positions }: { positions: number }) {
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: () =>
+      saveSnapshot({
+        name: 'Cartera objetivo · Top-' + positions,
+        top_n: positions,
+        target: true,
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['market', 'snapshots'] }),
+  });
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={save.isPending || save.isSuccess}
+        onClick={() => save.mutate()}
+      >
+        Guardar esta cartera para seguirla
+      </Button>
+      {save.isSuccess && (
+        <p role="status">
+          Guardada. Su evolución frente a SPY está en{' '}
+          <Link className="text-primary underline" to="/cartera/seguimiento">
+            Seguimiento
+          </Link>
+          .
+        </p>
+      )}
+      {save.isError && (
+        <p role="alert" className="text-destructive">
+          {save.error.message}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -129,8 +171,8 @@ export function PortfolioPage() {
             },
             {
               to: '/cartera/seguimiento',
-              label: 'Signal Monitor',
-              description: 'Seguimiento de cestas guardadas y eventos',
+              label: 'Seguimiento',
+              description: 'Cestas guardadas frente a SPY',
               icon: Radar,
             },
             {
@@ -278,6 +320,7 @@ export function PortfolioPage() {
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{data.evidence_note}</p>
+                {data.target.length > 0 && <TrackTarget positions={data.n_positions} />}
                 <p className="mt-1 text-xs text-muted-foreground">
                   Empresas con score en la caché local: {data.data.scored_count} de{' '}
                   {data.data.universe_count}. Precio de referencia en USD; importes del plan en EUR.
