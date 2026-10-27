@@ -978,6 +978,36 @@ export type BlockCoverage = {
 };
 
 /**
+ * BlockMetricEvidence
+ */
+export type BlockMetricEvidence = {
+    /**
+     * Classification
+     */
+    classification: 'sin_evidencia' | 'indicio' | 'requiere_OOS' | 'robusta_retrospectivamente' | null;
+    /**
+     * Classification Label
+     */
+    classification_label: string | null;
+    /**
+     * Ic Mean
+     */
+    ic_mean: number | null;
+    /**
+     * Metric
+     */
+    metric: string;
+    /**
+     * P Holm
+     */
+    p_holm: number | null;
+    /**
+     * Published
+     */
+    published: boolean;
+};
+
+/**
  * BlockOutcome
  */
 export type BlockOutcome = {
@@ -7196,6 +7226,88 @@ export type SavedRankStability = {
      * Stability Score
      */
     stability_score: number;
+};
+
+/**
+ * ScoreBlockEvidence
+ */
+export type ScoreBlockEvidence = {
+    /**
+     * Block
+     */
+    block: 'value' | 'quality' | 'momentum' | 'risk';
+    /**
+     * Classification
+     */
+    classification: 'sin_evidencia' | 'indicio' | 'requiere_OOS' | 'robusta_retrospectivamente' | null;
+    /**
+     * Classification Label
+     */
+    classification_label: string | null;
+    /**
+     * Frozen Weight
+     */
+    frozen_weight: number;
+    /**
+     * Holm Significant
+     */
+    holm_significant: number;
+    /**
+     * Ic Mean
+     */
+    ic_mean: number | null;
+    /**
+     * Metrics
+     */
+    metrics: Array<BlockMetricEvidence>;
+    /**
+     * Metrics At Classification
+     */
+    metrics_at_classification: number;
+    /**
+     * Metrics Published
+     */
+    metrics_published: number;
+    /**
+     * Metrics With Evidence
+     */
+    metrics_with_evidence: number;
+};
+
+/**
+ * ScoreBlocksEvidence
+ *
+ * «¿Qué bloques tienen respaldo?» (#185): the published Factor Zoo grouped by score block.
+ */
+export type ScoreBlocksEvidence = {
+    /**
+     * Blocks
+     */
+    blocks: Array<ScoreBlockEvidence>;
+    /**
+     * Catalog
+     */
+    catalog: 'factor-zoo';
+    /**
+     * Catalog Sha256
+     */
+    catalog_sha256: string;
+    /**
+     * Holm Significant Count
+     */
+    holm_significant_count: number;
+    /**
+     * Independent Advantage Demonstrated
+     */
+    independent_advantage_demonstrated: false;
+    /**
+     * N Dates
+     */
+    n_dates: number;
+    /**
+     * Status
+     */
+    status: 'RETROSPECTIVE_DESCRIPTIVE';
 };
 
 /**
@@ -13926,3 +14038,48 @@ export type TrialsApiV1ResearchTrialsGetResponses = {
 };
 
 export type TrialsApiV1ResearchTrialsGetResponse = TrialsApiV1ResearchTrialsGetResponses[keyof TrialsApiV1ResearchTrialsGetResponses];
+
+export type ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/score-blocks/evidence';
+};
+
+export type ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetError = ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetErrors[keyof ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetErrors];
+
+export type ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScoreBlocksEvidence;
+};
+
+export type ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetResponse = ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetResponses[keyof ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetResponses];

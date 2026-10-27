@@ -195,3 +195,40 @@ class CompanyInsiders(BaseModel):
     has_10b5_1_only_buys: bool
     recent: list[InsiderTransaction]
     recent_total: int
+
+
+Classification = Literal["sin_evidencia", "indicio", "requiere_OOS", "robusta_retrospectivamente"]
+
+
+class BlockMetricEvidence(BaseModel):
+    metric: str
+    published: bool
+    ic_mean: float | None
+    p_holm: float | None
+    classification: Classification | None
+    classification_label: str | None
+
+
+class ScoreBlockEvidence(BaseModel):
+    block: Literal["value", "quality", "momentum", "risk"]
+    frozen_weight: float  # Fraction of the frozen composite.
+    classification: Classification | None  # The strongest any metric reached; read with the counts.
+    classification_label: str | None
+    metrics_at_classification: int
+    metrics_with_evidence: int
+    metrics_published: int
+    ic_mean: float | None  # Plain mean of its metrics' mean ICs: descriptive, not a new test.
+    holm_significant: int
+    metrics: list[BlockMetricEvidence]
+
+
+class ScoreBlocksEvidence(BaseModel):
+    """«¿Qué bloques tienen respaldo?» (#185): the published Factor Zoo grouped by score block."""
+
+    status: Literal["RETROSPECTIVE_DESCRIPTIVE"]
+    independent_advantage_demonstrated: Literal[False]
+    catalog: Literal["factor-zoo"]
+    catalog_sha256: str
+    n_dates: int
+    holm_significant_count: int
+    blocks: list[ScoreBlockEvidence]

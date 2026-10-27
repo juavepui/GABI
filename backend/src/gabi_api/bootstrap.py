@@ -20,6 +20,7 @@ from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
+from gabi.application.market.block_evidence import BlockEvidence
 from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
@@ -155,7 +156,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     ledger = FilePublishedLedger(ledger_path)
     # The ledger lives in <checkout>/docs/search-ledger: its references are relative to the checkout.
     research_catalog = ResearchCatalog(ledger, FilePublishedArtifacts(ledger_path.parents[2], ledger))
-    published_factors = PublishedFactorQueries(FilePublishedFactors(published_factors_root or settings.data_dir.parent))
+    published_factor_files = FilePublishedFactors(published_factors_root or settings.data_dir.parent)
+    published_factors = PublishedFactorQueries(published_factor_files)
     blind_validations = BlindValidationQueries(SqliteBlindStore(settings.data_dir), today,
                                                FileBlindPlans(blind_plans_root or settings.data_dir.parent))
     estimate_queries = EstimateQueries(SqliteEstimateCaptures(settings.data_dir))
@@ -211,6 +213,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors
+    app.state.block_evidence = BlockEvidence(published_factor_files.read, lambda: dict(policy.frozen_weights))
     app.state.blind_validations = blind_validations
     app.state.blind_commands = BlindCommands(blind_validations, LegacyBlindWriter(settings.data_dir),
                                              lambda: model_queries.model().mode == "RESEARCH")

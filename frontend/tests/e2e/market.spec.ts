@@ -420,3 +420,31 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   await expect(page.getByText('Score del modelo', { exact: true })).toBeInViewport();
   await expect(page.getByText(/Último cierre ·/)).toBeInViewport();
 });
+
+test('evidencia publicada de cada bloque en la ficha, el Ranking y la Cartera objetivo (#185)', async ({
+  page,
+  request,
+}) => {
+  const evidence = await (
+    await request.get('http://127.0.0.1:8001/api/v1/score-blocks/evidence')
+  ).json();
+  const momentum = evidence.blocks.find((row: { block: string }) => row.block === 'momentum');
+  await page.goto('/empresas/T000');
+  const provenance = page
+    .getByRole('definition')
+    .filter({ hasText: momentum.classification_label });
+  await expect(provenance.first()).toBeVisible();
+  await expect(page.getByText('· peso 25 %')).toBeVisible();
+  await expect(page.getByText(evidence.catalog_sha256.slice(0, 8) + '…')).toBeVisible();
+  await page.goto('/descubrir');
+  const note = page.getByText('El score combina bloques con evidencia retrospectiva desigual');
+  await expect(note).toContainText('ninguna métrica supera la corrección Holm');
+  await expect(note.getByRole('link', { name: 'Ver Factor Lab' })).toHaveAttribute(
+    'href',
+    '/investigacion/factores',
+  );
+  await page.goto('/cartera');
+  await expect(
+    page.getByText('El score combina bloques con evidencia retrospectiva desigual'),
+  ).toBeVisible();
+});
