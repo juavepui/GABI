@@ -1,6 +1,7 @@
 """Carteras simuladas locales (nunca conectadas a un bróker): ejecución en la primera sesión con
 cierre en caché, contabilidad con costes y divisa, curva diaria y resumen frente al SPY."""
 
+import re
 from datetime import date
 
 import exchange_calendars as xcals
@@ -8,6 +9,26 @@ import pandas as pd
 
 MARKETS = {"XNYS": "NYSE / Nasdaq (EE. UU.)", "XETR": "Xetra (Alemania)",
            "XLON": "Londres", "XMAD": "Madrid", "XPAR": "París"}
+# Yahoo's exchange suffix of each supported market other than the US one, with its quote currency (#192).
+SUFFIXES = {"DE": ("XETR", "EUR"), "L": ("XLON", "GBP"), "MC": ("XMAD", "EUR"), "PA": ("XPAR", "EUR")}
+_LISTED = re.compile(r"([A-Z0-9^][A-Z0-9^\-]{0,15})\.(" + "|".join(SUFFIXES) + r")")
+_US = re.compile(r"[A-Z0-9^][A-Z0-9^\-]{0,19}")
+
+
+def listing(symbol: str) -> tuple[str, str, str]:
+    """(stored symbol, market, quote currency) inferred from the ticker as Yahoo writes it.
+
+    `SAP.DE`, `BP.L`, `SAN.MC` and `MC.PA` keep their suffix and trade in Xetra, London, Madrid and Paris.
+    Any other ticker is a US listing in dollars, where a dot is a share class (`BRK.B` → `BRK-B`).
+    """
+    text = str(symbol or "").strip().upper()
+    if match := _LISTED.fullmatch(text):
+        market, currency = SUFFIXES[match.group(2)]
+        return text, market, currency
+    text = text.replace(".", "-")
+    if not _US.fullmatch(text):
+        raise ValueError("Símbolo no válido.")
+    return text, "XNYS", "USD"
 
 
 def execution_quote(history: pd.DataFrame, requested_date: str, market: str, today: date) -> dict:

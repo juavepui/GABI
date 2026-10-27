@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Protocol
 
 from gabi.application.errors import QueryError
+from gabi.domain.portfolio.simulation import listing
 
 CURRENCIES = ("USD", "EUR", "GBP")
 
@@ -32,6 +33,11 @@ def refresh_prices(store: SimulationStore, portfolio_id: int, symbol: str | None
     portfolio = store.portfolio(portfolio_id)
     if portfolio is None:
         raise QueryError("portfolio_not_found", "La cartera no existe.", 404)
+    if symbol is not None:  # Stored as a trade stores it: BRK.B → BRK-B, SAP.DE kept (#192).
+        try:
+            symbol = listing(symbol)[0]
+        except ValueError as exc:
+            raise QueryError("invalid_job", str(exc), 422) from exc
     symbols = price_symbols(portfolio, store.trades(portfolio_id), symbol, fx_symbol)
     failed = {str(key): str(reason) for key, reason in fetch(symbols).items()}
     return {"kind": "sim_prices", "portfolio_id": portfolio_id, "symbol": symbol, "symbols": symbols,

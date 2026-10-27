@@ -25,14 +25,20 @@ class SimulationList(WireModel):
     items: list[SimulationPortfolio]
 
 
+Market = Literal["XNYS", "XETR", "XLON", "XMAD", "XPAR"]
+Currency = Literal["USD", "EUR", "GBP"]
+
+
 class SimulationTradeCreate(WireModel):
-    symbol: str = Field(min_length=1, max_length=20)
-    asset_type: Literal["STOCK", "ETF"]
-    side: Literal["BUY", "SELL"]
+    """A US buy needs symbol, date and amount (#192); the rest has a default or follows the ticker."""
+
+    symbol: str = Field(min_length=1, max_length=20, description="Como en Yahoo: AAPL, BRK.B, SAP.DE, BP.L")
+    asset_type: Literal["STOCK", "ETF"] = "STOCK"
+    side: Literal["BUY", "SELL"] = "BUY"
     requested_date: date
     notional: float = Field(gt=0, le=1e9, allow_inf_nan=False)
-    market: Literal["XNYS", "XETR", "XLON", "XMAD", "XPAR"] = "XNYS"
-    quote_currency: Literal["USD", "EUR", "GBP"] = "USD"
+    market: Market | None = Field(default=None, description="Vacío: según el sufijo del ticker (EE. UU. sin sufijo)")
+    quote_currency: Currency | None = Field(default=None, description="Vacío: la del mercado del ticker")
     commission: float | None = Field(default=None, ge=0, le=1e9, allow_inf_nan=False)
     spread_bps: float | None = Field(default=None, ge=0, le=1e9, allow_inf_nan=False)
     fx_rate: float | None = Field(default=None, gt=0, le=1e9, allow_inf_nan=False)
@@ -41,6 +47,8 @@ class SimulationTradeCreate(WireModel):
 
 class SimulationTrade(SimulationTradeCreate):
     id: int
+    market: Market
+    quote_currency: Currency
     portfolio_id: int
     execution_date: date
     reference_close: float

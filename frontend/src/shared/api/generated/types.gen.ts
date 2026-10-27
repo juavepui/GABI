@@ -7710,7 +7710,7 @@ export type SimulationTrade = {
     /**
      * Asset Type
      */
-    asset_type: 'STOCK' | 'ETF';
+    asset_type?: 'STOCK' | 'ETF';
     /**
      * Commission
      */
@@ -7738,7 +7738,7 @@ export type SimulationTrade = {
     /**
      * Market
      */
-    market?: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
+    market: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
     /**
      * Notional
      */
@@ -7750,7 +7750,7 @@ export type SimulationTrade = {
     /**
      * Quote Currency
      */
-    quote_currency?: 'USD' | 'EUR' | 'GBP';
+    quote_currency: 'USD' | 'EUR' | 'GBP';
     /**
      * Reference Close
      */
@@ -7762,25 +7762,29 @@ export type SimulationTrade = {
     /**
      * Side
      */
-    side: 'BUY' | 'SELL';
+    side?: 'BUY' | 'SELL';
     /**
      * Spread Bps
      */
     spread_bps: number;
     /**
      * Symbol
+     *
+     * Como en Yahoo: AAPL, BRK.B, SAP.DE, BP.L
      */
     symbol: string;
 };
 
 /**
  * SimulationTradeCreate
+ *
+ * A US buy needs symbol, date and amount (#192); the rest has a default or follows the ticker.
  */
 export type SimulationTradeCreate = {
     /**
      * Asset Type
      */
-    asset_type: 'STOCK' | 'ETF';
+    asset_type?: 'STOCK' | 'ETF';
     /**
      * Commission
      */
@@ -7795,16 +7799,20 @@ export type SimulationTradeCreate = {
     fx_rate?: number | null;
     /**
      * Market
+     *
+     * Vacío: según el sufijo del ticker (EE. UU. sin sufijo)
      */
-    market?: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
+    market?: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR' | null;
     /**
      * Notional
      */
     notional: number;
     /**
      * Quote Currency
+     *
+     * Vacío: la del mercado del ticker
      */
-    quote_currency?: 'USD' | 'EUR' | 'GBP';
+    quote_currency?: 'USD' | 'EUR' | 'GBP' | null;
     /**
      * Requested Date
      */
@@ -7812,13 +7820,15 @@ export type SimulationTradeCreate = {
     /**
      * Side
      */
-    side: 'BUY' | 'SELL';
+    side?: 'BUY' | 'SELL';
     /**
      * Spread Bps
      */
     spread_bps?: number | null;
     /**
      * Symbol
+     *
+     * Como en Yahoo: AAPL, BRK.B, SAP.DE, BP.L
      */
     symbol: string;
 };
@@ -7838,11 +7848,11 @@ export type SimulationTradeDefaults = {
     /**
      * Market
      */
-    market: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
+    market: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR' | null;
     /**
      * Quote Currency
      */
-    quote_currency: 'USD' | 'EUR' | 'GBP';
+    quote_currency: 'USD' | 'EUR' | 'GBP' | null;
     /**
      * Side
      */

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   SimulationPortfolio,
@@ -20,6 +20,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { AdvancedOptions, HelpField } from '@/shared/ui/advanced-options';
 import { useFormDefaults } from '@/shared/api/use-form-defaults';
+import { useJob } from '@/shared/api/use-job';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
@@ -96,10 +97,56 @@ function Results({ value, currency }: { value: SimulationResult; currency: strin
   );
 }
 
+/** «Faltan precios de X»: the explicit download of that ticker (with SPY and FX), then the same trade. */
+function MissingPrices({
+  portfolioId,
+  trade,
+  retry,
+}: {
+  portfolioId: number;
+  trade: SimulationTradeCreate;
+  retry: () => void;
+}) {
+  const { start, job } = useJob('sim-prices');
+  const status = job.data?.status;
+  const running = start.isPending || status === 'queued' || status === 'running';
+  // The trade is retried once per finished download, never on later renders.
+  const retriedFor = useRef<string | null>(null);
+  const finished = status === 'succeeded' ? job.data?.id : undefined;
+  useEffect(() => {
+    if (finished && retriedFor.current !== finished) {
+      retriedFor.current = finished;
+      retry();
+    }
+  }, [finished, retry]);
+  const symbol = trade.symbol.trim().toUpperCase();
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border bg-secondary/40 p-3 text-sm">
+      <Button
+        type="button"
+        variant="outline"
+        disabled={running}
+        onClick={() =>
+          start.mutate({ kind: 'sim_prices', portfolio_id: portfolioId, symbols: [symbol] })
+        }
+      >
+        Descargar precios de {symbol} y registrar
+      </Button>
+      <span className="text-muted-foreground">
+        {running
+          ? 'Descargando de Yahoo Finance…'
+          : status === 'failed'
+            ? 'La descarga ha fallado; revisa su causa en Trabajos.'
+            : 'Descarga explícita del histórico del ticker, SPY y los cambios de divisa.'}
+      </span>
+    </div>
+  );
+}
+
 function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
   const client = useQueryClient();
   const id = portfolio.id;
-  const [showResult, setShowResult] = useState(false);
+  const [pending, setPending] = useState<SimulationTradeCreate | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const trades = useQuery({
     queryKey: ['portfolio', 'simulations', id, 'trades'],
@@ -108,7 +155,8 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
   const result = useQuery({
     queryKey: ['portfolio', 'simulations', id, 'result'],
     queryFn: ({ signal }) => getSimulationResult(id, signal),
-    enabled: showResult,
+    // Shown on opening the portfolio (#192): a read of the cache, as long as it has trades.
+    enabled: (trades.data?.items.length ?? 0) > 0,
   });
   const job = useQuery({
     queryKey: ['job', jobId],
@@ -126,15 +174,16 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
   const add = useMutation({
     mutationFn: (body: SimulationTradeCreate) => createSimulationTrade(id, body),
     onSuccess: () => {
+      setPending(null);
       void client.invalidateQueries({ queryKey: ['portfolio', 'simulations', id] });
-      setShowResult(false);
     },
   });
+  const missing =
+    add.error instanceof ApiError && add.error.code === 'prices_missing' ? pending : null;
   const undo = useMutation({
     mutationFn: () => undoSimulationTrade(id),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['portfolio', 'simulations', id] });
-      setShowResult(false);
     },
   });
   const queue = useMutation({
@@ -149,19 +198,23 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    add.mutate({
+    const body: SimulationTradeCreate = {
       symbol: String(form.get('symbol') ?? ''),
       asset_type: String(form.get('asset_type')) as 'STOCK' | 'ETF',
       side: String(form.get('side')) as 'BUY' | 'SELL',
       requested_date: String(form.get('requested_date')),
       notional: Number(form.get('notional')),
-      market: String(form.get('market')) as SimulationTradeCreate['market'],
-      quote_currency: String(form.get('quote_currency')) as SimulationTradeCreate['quote_currency'],
+      // Empty: the backend infers them from the ticker's suffix (#192).
+      market: (String(form.get('market') ?? '') || null) as SimulationTradeCreate['market'],
+      quote_currency: (String(form.get('quote_currency') ?? '') ||
+        null) as SimulationTradeCreate['quote_currency'],
       commission: optional(form, 'commission'),
       spread_bps: optional(form, 'spread_bps'),
       fx_rate: optional(form, 'fx_rate'),
       fx_fee_bps: Number(form.get('fx_fee_bps')),
-    });
+    };
+    setPending(body);
+    add.mutate(body);
   }
   const displayed = resultShape(jobResult.data) ? jobResult.data : result.data;
   return (
@@ -182,13 +235,14 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
         <form onSubmit={submit} className="rounded-xl border bg-card p-5">
           <h2 className="text-lg font-semibold">Registrar operación simulada</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Se usa el cierre de la primera sesión. Si faltan precios o cambio en caché, se rechaza
-            sin guardar. Actualiza sus precios en «Precios públicos», más arriba.
+            Se usa el cierre de la primera sesión. Mercado y divisa salen del ticker (AAPL o BRK.B
+            en EE. UU.; SAP.DE, BP.L, SAN.MC o MC.PA en Europa) y los costes, de la cartera. Si
+            faltan precios, se ofrece descargarlos sin salir de aquí.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label className="text-sm">
               Símbolo
-              <Input className="mt-1" name="symbol" required maxLength={20} />
+              <Input className="mt-1" name="symbol" required maxLength={20} placeholder="AAPL" />
             </label>
             <label className="text-sm">
               Lado
@@ -239,8 +293,9 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
                   id="trade-market"
                   name="market"
                   className="mt-1 w-full"
-                  defaultValue={trade.market}
+                  defaultValue={trade.market ?? ''}
                 >
+                  <option value="">Automático, según el ticker</option>
                   {['XNYS', 'XETR', 'XLON', 'XMAD', 'XPAR'].map((market) => (
                     <option key={market}>{market}</option>
                   ))}
@@ -255,8 +310,9 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
                   id="trade-currency"
                   name="quote_currency"
                   className="mt-1 w-full"
-                  defaultValue={trade.quote_currency}
+                  defaultValue={trade.quote_currency ?? ''}
                 >
+                  <option value="">Automática, según el mercado</option>
                   <option>USD</option>
                   <option>EUR</option>
                   <option>GBP</option>
@@ -330,6 +386,9 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
               {add.error.message}
             </p>
           )}
+          {missing && (
+            <MissingPrices portfolioId={id} trade={missing} retry={() => add.mutate(missing)} />
+          )}
           {add.isSuccess && (
             <p role="status" className="mt-2 text-sm">
               Operación registrada.
@@ -374,15 +433,12 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
       </section>
       <section className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Evolución y costes</h2>
-        <Button
-          className="mt-3"
-          type="button"
-          variant="outline"
-          onClick={() => setShowResult(true)}
-        >
-          Calcular resultado
-        </Button>
-        {showResult && result.isPending && <LoadingState />}
+        {!trades.data?.items.length && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            El resultado frente a SPY aparece aquí en cuanto registres una operación.
+          </p>
+        )}
+        {result.isFetching && !result.data && <LoadingState />}
         {result.isError &&
           !(result.error instanceof ApiError && result.error.code === 'job_required') && (
             <ErrorState error={result.error} retry={() => void result.refetch()} />

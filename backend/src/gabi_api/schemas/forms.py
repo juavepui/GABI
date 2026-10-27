@@ -38,10 +38,11 @@ class SimulationDefaults(Defaults):
 
 
 class SimulationTradeDefaults(Defaults):
-    asset_type: Literal["STOCK", "ETF"] = "STOCK"
-    side: Literal["BUY", "SELL"] = "BUY"
-    market: Literal["XNYS", "XETR", "XLON", "XMAD", "XPAR"] = _default(SimulationTradeCreate, "market")
-    quote_currency: Literal["USD", "EUR", "GBP"] = _default(SimulationTradeCreate, "quote_currency")
+    asset_type: Literal["STOCK", "ETF"] = _default(SimulationTradeCreate, "asset_type")
+    side: Literal["BUY", "SELL"] = _default(SimulationTradeCreate, "side")
+    # None: inferred from the ticker's suffix (#192).
+    market: Literal["XNYS", "XETR", "XLON", "XMAD", "XPAR"] | None = _default(SimulationTradeCreate, "market")
+    quote_currency: Literal["USD", "EUR", "GBP"] | None = _default(SimulationTradeCreate, "quote_currency")
     fx_fee_bps: float = _default(SimulationTradeCreate, "fx_fee_bps")
 
 
