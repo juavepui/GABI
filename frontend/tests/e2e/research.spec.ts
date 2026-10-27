@@ -424,6 +424,8 @@ test('Portfolio Lab compara esquemas en un job Research dentro del periodo obser
       .getByRole('main')
       .getByRole('link', { name: /^Laboratorio de carteras/ })
       .click();
+    // The schemes are an advanced option (#190): folded until opened.
+    await page.getByText('Opciones avanzadas').click();
     await page.getByLabel('Risk Parity').uncheck();
     await page.getByRole('button', { name: 'Ejecutar Portfolio Lab' }).click();
     const result = page.getByRole('region', { name: 'Resultado de Portfolio Lab' });

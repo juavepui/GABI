@@ -93,6 +93,7 @@ from gabi.infrastructure.storage.smallmid import SmallmidFiles
 from gabi.infrastructure.storage.snapshot_prices import SqliteSnapshotPrices
 from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
+from gabi_api.routes.forms import router as forms_router
 from gabi_api.routes.holdings import router as holdings_router
 from gabi_api.routes.jobs import router as jobs_router
 from gabi_api.routes.journal import router as journal_router
@@ -291,6 +292,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(simulations_router)
     app.include_router(holdings_router)
     app.include_router(decisions_router)
+    app.include_router(forms_router)
     app.include_router(research_router)
     if frontend_dist is not None:
         mount_frontend(app, frontend_dist)

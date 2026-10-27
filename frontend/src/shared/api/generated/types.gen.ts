@@ -47,6 +47,64 @@ export type BacktestCurvePoint = {
 };
 
 /**
+ * BacktestDefaults
+ */
+export type BacktestDefaults = {
+    /**
+     * Commission Usd
+     */
+    commission_usd: number;
+    /**
+     * Cost Bps
+     */
+    cost_bps: number;
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Initial Capital
+     */
+    initial_capital: number;
+    /**
+     * Max Symbols
+     */
+    max_symbols: 50 | 100 | 200;
+    /**
+     * Mode
+     */
+    mode: 'validation' | 'fast_dev';
+    /**
+     * Months
+     */
+    months: 1 | 3 | 6 | 12;
+    /**
+     * Rotation Hurdle Points
+     */
+    rotation_hurdle_points: number;
+    /**
+     * Spread Bps
+     */
+    spread_bps: number;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Top N V1
+     */
+    top_n_v1: number;
+    /**
+     * Top N V2
+     */
+    top_n_v2: number;
+    /**
+     * Universe Size
+     */
+    universe_size: 50 | 100 | 500;
+};
+
+/**
  * BacktestDiagnosticsResponse
  */
 export type BacktestDiagnosticsResponse = {
@@ -2442,6 +2500,60 @@ export type DecisionPolicy = {
 };
 
 /**
+ * DecisionPolicyDefaults
+ */
+export type DecisionPolicyDefaults = {
+    /**
+     * Constrained Optimizer
+     */
+    constrained_optimizer: boolean;
+    /**
+     * Max Invested Pct
+     */
+    max_invested_pct: number;
+    /**
+     * Max Position Pct
+     */
+    max_position_pct: number;
+    /**
+     * Max Positions
+     */
+    max_positions: number;
+    /**
+     * Max Price Age Days
+     */
+    max_price_age_days: number;
+    /**
+     * Max Sector Pct
+     */
+    max_sector_pct: number;
+    /**
+     * Max Volatility
+     */
+    max_volatility: number;
+    /**
+     * Min Coverage
+     */
+    min_coverage: number;
+    /**
+     * Min Drawdown
+     */
+    min_drawdown: number;
+    /**
+     * Min Score
+     */
+    min_score: number;
+    /**
+     * Trade Threshold Pct
+     */
+    trade_threshold_pct: number;
+    /**
+     * Turnover Penalty
+     */
+    turnover_penalty: number;
+};
+
+/**
  * DecisionProgress
  */
 export type DecisionProgress = {
@@ -3886,6 +3998,17 @@ export type FilingRef = {
      * Url
      */
     url: string | null;
+};
+
+/**
+ * FormDefaults
+ */
+export type FormDefaults = {
+    backtest: BacktestDefaults;
+    decision_policy: DecisionPolicyDefaults;
+    portfolio_lab: PortfolioLabDefaults;
+    simulation: SimulationDefaults;
+    simulation_trade: SimulationTradeDefaults;
 };
 
 /**
@@ -6067,6 +6190,44 @@ export type PortfolioDaily = {
 };
 
 /**
+ * PortfolioLabDefaults
+ */
+export type PortfolioLabDefaults = {
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Initial Capital
+     */
+    initial_capital: number;
+    /**
+     * Max Symbols
+     */
+    max_symbols: 50 | 100 | 200;
+    /**
+     * Mode
+     */
+    mode: 'validation' | 'fast_dev';
+    /**
+     * Months
+     */
+    months: 1 | 3 | 6 | 12;
+    /**
+     * Schemes
+     */
+    schemes: Array<'equal_weight' | 'inverse_vol' | 'min_variance' | 'score_weighted' | 'score_constrained' | 'risk_parity'>;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Top N
+     */
+    top_n: number;
+};
+
+/**
  * PortfolioLabOptions
  *
  * Portfolio Lab options: schemes over the same point-in-time candidates.
@@ -7431,6 +7592,32 @@ export type SimulationCreate = {
 };
 
 /**
+ * SimulationDefaults
+ */
+export type SimulationDefaults = {
+    /**
+     * Base Currency
+     */
+    base_currency: 'USD' | 'EUR';
+    /**
+     * Etf Commission
+     */
+    etf_commission: number;
+    /**
+     * Initial Cash
+     */
+    initial_cash: number;
+    /**
+     * Spread Bps
+     */
+    spread_bps: number;
+    /**
+     * Stock Commission
+     */
+    stock_commission: number;
+};
+
+/**
  * SimulationList
  */
 export type SimulationList = {
@@ -7634,6 +7821,32 @@ export type SimulationTradeCreate = {
      * Symbol
      */
     symbol: string;
+};
+
+/**
+ * SimulationTradeDefaults
+ */
+export type SimulationTradeDefaults = {
+    /**
+     * Asset Type
+     */
+    asset_type: 'STOCK' | 'ETF';
+    /**
+     * Fx Fee Bps
+     */
+    fx_fee_bps: number;
+    /**
+     * Market
+     */
+    market: 'XNYS' | 'XETR' | 'XLON' | 'XMAD' | 'XPAR';
+    /**
+     * Quote Currency
+     */
+    quote_currency: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Side
+     */
+    side: 'BUY' | 'SELL';
 };
 
 /**
@@ -9323,6 +9536,51 @@ export type EvidenceTopApiV1EvidenceGetResponses = {
 };
 
 export type EvidenceTopApiV1EvidenceGetResponse = EvidenceTopApiV1EvidenceGetResponses[keyof EvidenceTopApiV1EvidenceGetResponses];
+
+export type DefaultsApiV1FormsDefaultsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/forms/defaults';
+};
+
+export type DefaultsApiV1FormsDefaultsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DefaultsApiV1FormsDefaultsGetError = DefaultsApiV1FormsDefaultsGetErrors[keyof DefaultsApiV1FormsDefaultsGetErrors];
+
+export type DefaultsApiV1FormsDefaultsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: FormDefaults;
+};
+
+export type DefaultsApiV1FormsDefaultsGetResponse = DefaultsApiV1FormsDefaultsGetResponses[keyof DefaultsApiV1FormsDefaultsGetResponses];
 
 export type HealthApiV1HealthGetData = {
     body?: never;

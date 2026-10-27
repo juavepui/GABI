@@ -73,6 +73,112 @@
         "title": "BacktestCurvePoint",
         "type": "object"
       },
+      "BacktestDefaults": {
+        "properties": {
+          "commission_usd": {
+            "default": 1.0,
+            "title": "Commission Usd",
+            "type": "number"
+          },
+          "cost_bps": {
+            "default": 10,
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2020-01-02",
+            "title": "End",
+            "type": "string"
+          },
+          "initial_capital": {
+            "default": 100000,
+            "title": "Initial Capital",
+            "type": "number"
+          },
+          "max_symbols": {
+            "default": 200,
+            "enum": [
+              50,
+              100,
+              200
+            ],
+            "title": "Max Symbols",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "fast_dev",
+            "enum": [
+              "validation",
+              "fast_dev"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "months": {
+            "default": 3,
+            "enum": [
+              1,
+              3,
+              6,
+              12
+            ],
+            "title": "Months",
+            "type": "integer"
+          },
+          "rotation_hurdle_points": {
+            "default": 0,
+            "title": "Rotation Hurdle Points",
+            "type": "number"
+          },
+          "spread_bps": {
+            "default": 10,
+            "title": "Spread Bps",
+            "type": "number"
+          },
+          "start": {
+            "default": "2019-01-02",
+            "title": "Start",
+            "type": "string"
+          },
+          "top_n_v1": {
+            "default": 10,
+            "title": "Top N V1",
+            "type": "integer"
+          },
+          "top_n_v2": {
+            "default": 20,
+            "title": "Top N V2",
+            "type": "integer"
+          },
+          "universe_size": {
+            "default": 50,
+            "enum": [
+              50,
+              100,
+              500
+            ],
+            "title": "Universe Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "months",
+          "top_n_v1",
+          "top_n_v2",
+          "rotation_hurdle_points",
+          "cost_bps",
+          "universe_size",
+          "mode",
+          "max_symbols",
+          "initial_capital",
+          "commission_usd",
+          "spread_bps"
+        ],
+        "title": "BacktestDefaults",
+        "type": "object"
+      },
       "BacktestDiagnosticsResponse": {
         "properties": {
           "job_id": {
@@ -4868,6 +4974,109 @@
         "title": "DecisionPolicy",
         "type": "object"
       },
+      "DecisionPolicyDefaults": {
+        "additionalProperties": false,
+        "properties": {
+          "constrained_optimizer": {
+            "default": false,
+            "title": "Constrained Optimizer",
+            "type": "boolean"
+          },
+          "max_invested_pct": {
+            "default": 50,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Max Invested Pct",
+            "type": "number"
+          },
+          "max_position_pct": {
+            "default": 5,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Max Position Pct",
+            "type": "number"
+          },
+          "max_positions": {
+            "default": 10,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Max Positions",
+            "type": "integer"
+          },
+          "max_price_age_days": {
+            "default": 7,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Max Price Age Days",
+            "type": "integer"
+          },
+          "max_sector_pct": {
+            "default": 20,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Max Sector Pct",
+            "type": "number"
+          },
+          "max_volatility": {
+            "default": 0.6,
+            "exclusiveMinimum": 0.0,
+            "maximum": 10.0,
+            "title": "Max Volatility",
+            "type": "number"
+          },
+          "min_coverage": {
+            "default": 0.7,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min Coverage",
+            "type": "number"
+          },
+          "min_drawdown": {
+            "default": -0.5,
+            "maximum": 0.0,
+            "minimum": -1.0,
+            "title": "Min Drawdown",
+            "type": "number"
+          },
+          "min_score": {
+            "default": 65,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Min Score",
+            "type": "number"
+          },
+          "trade_threshold_pct": {
+            "default": 0.5,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Trade Threshold Pct",
+            "type": "number"
+          },
+          "turnover_penalty": {
+            "default": 0,
+            "maximum": 0.2,
+            "minimum": 0.0,
+            "title": "Turnover Penalty",
+            "type": "number"
+          }
+        },
+        "required": [
+          "min_score",
+          "min_coverage",
+          "max_positions",
+          "max_position_pct",
+          "max_sector_pct",
+          "max_invested_pct",
+          "max_volatility",
+          "min_drawdown",
+          "max_price_age_days",
+          "trade_threshold_pct",
+          "constrained_optimizer",
+          "turnover_penalty"
+        ],
+        "title": "DecisionPolicyDefaults",
+        "type": "object"
+      },
       "DecisionProgress": {
         "additionalProperties": false,
         "properties": {
@@ -7583,6 +7792,34 @@
           "url"
         ],
         "title": "FilingRef",
+        "type": "object"
+      },
+      "FormDefaults": {
+        "properties": {
+          "backtest": {
+            "$ref": "#/components/schemas/BacktestDefaults"
+          },
+          "decision_policy": {
+            "$ref": "#/components/schemas/DecisionPolicyDefaults"
+          },
+          "portfolio_lab": {
+            "$ref": "#/components/schemas/PortfolioLabDefaults"
+          },
+          "simulation": {
+            "$ref": "#/components/schemas/SimulationDefaults"
+          },
+          "simulation_trade": {
+            "$ref": "#/components/schemas/SimulationTradeDefaults"
+          }
+        },
+        "required": [
+          "decision_policy",
+          "simulation",
+          "simulation_trade",
+          "backtest",
+          "portfolio_lab"
+        ],
+        "title": "FormDefaults",
         "type": "object"
       },
       "GlossaryBlock": {
@@ -11659,6 +11896,87 @@
         "title": "PortfolioDaily",
         "type": "object"
       },
+      "PortfolioLabDefaults": {
+        "properties": {
+          "end": {
+            "default": "2024-01-02",
+            "title": "End",
+            "type": "string"
+          },
+          "initial_capital": {
+            "default": 100000,
+            "title": "Initial Capital",
+            "type": "number"
+          },
+          "max_symbols": {
+            "default": 100,
+            "enum": [
+              50,
+              100,
+              200
+            ],
+            "title": "Max Symbols",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "fast_dev",
+            "enum": [
+              "validation",
+              "fast_dev"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "months": {
+            "default": 3,
+            "enum": [
+              1,
+              3,
+              6,
+              12
+            ],
+            "title": "Months",
+            "type": "integer"
+          },
+          "schemes": {
+            "items": {
+              "enum": [
+                "equal_weight",
+                "inverse_vol",
+                "min_variance",
+                "score_weighted",
+                "score_constrained",
+                "risk_parity"
+              ],
+              "type": "string"
+            },
+            "title": "Schemes",
+            "type": "array"
+          },
+          "start": {
+            "default": "2019-01-02",
+            "title": "Start",
+            "type": "string"
+          },
+          "top_n": {
+            "default": 20,
+            "title": "Top N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "months",
+          "top_n",
+          "initial_capital",
+          "schemes",
+          "mode",
+          "max_symbols"
+        ],
+        "title": "PortfolioLabDefaults",
+        "type": "object"
+      },
       "PortfolioLabOptions": {
         "additionalProperties": false,
         "description": "Portfolio Lab options: schemes over the same point-in-time candidates.",
@@ -14143,6 +14461,48 @@
         "title": "SimulationCreate",
         "type": "object"
       },
+      "SimulationDefaults": {
+        "properties": {
+          "base_currency": {
+            "default": "USD",
+            "enum": [
+              "USD",
+              "EUR"
+            ],
+            "title": "Base Currency",
+            "type": "string"
+          },
+          "etf_commission": {
+            "default": 0,
+            "title": "Etf Commission",
+            "type": "number"
+          },
+          "initial_cash": {
+            "default": 10000,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "spread_bps": {
+            "default": 10,
+            "title": "Spread Bps",
+            "type": "number"
+          },
+          "stock_commission": {
+            "default": 1,
+            "title": "Stock Commission",
+            "type": "number"
+          }
+        },
+        "required": [
+          "initial_cash",
+          "base_currency",
+          "stock_commission",
+          "etf_commission",
+          "spread_bps"
+        ],
+        "title": "SimulationDefaults",
+        "type": "object"
+      },
       "SimulationList": {
         "additionalProperties": false,
         "properties": {
@@ -14508,6 +14868,64 @@
           "notional"
         ],
         "title": "SimulationTradeCreate",
+        "type": "object"
+      },
+      "SimulationTradeDefaults": {
+        "properties": {
+          "asset_type": {
+            "default": "STOCK",
+            "enum": [
+              "STOCK",
+              "ETF"
+            ],
+            "title": "Asset Type",
+            "type": "string"
+          },
+          "fx_fee_bps": {
+            "default": 0,
+            "title": "Fx Fee Bps",
+            "type": "number"
+          },
+          "market": {
+            "default": "XNYS",
+            "enum": [
+              "XNYS",
+              "XETR",
+              "XLON",
+              "XMAD",
+              "XPAR"
+            ],
+            "title": "Market",
+            "type": "string"
+          },
+          "quote_currency": {
+            "default": "USD",
+            "enum": [
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Quote Currency",
+            "type": "string"
+          },
+          "side": {
+            "default": "BUY",
+            "enum": [
+              "BUY",
+              "SELL"
+            ],
+            "title": "Side",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_type",
+          "side",
+          "market",
+          "quote_currency",
+          "fx_fee_bps"
+        ],
+        "title": "SimulationTradeDefaults",
         "type": "object"
       },
       "SimulationTrades": {
@@ -17713,6 +18131,88 @@
         "summary": "Evidence Top",
         "tags": [
           "market"
+        ]
+      }
+    },
+    "/api/v1/forms/defaults": {
+      "get": {
+        "description": "Starting values of the decision, simulation, backtest and Portfolio Lab forms; constant, no data read.",
+        "operationId": "defaults_api_v1_forms_defaults_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDefaults"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Defaults",
+        "tags": [
+          "administration"
         ]
       }
     },

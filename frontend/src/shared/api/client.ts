@@ -20,6 +20,7 @@ import type {
   JournalEntry,
   JournalList,
   JournalReview,
+  FormDefaults,
   ComparisonResponse,
   MacroResponse,
   SaveSnapshot,
@@ -534,6 +535,10 @@ export function getPortfolioPlan(body: PlanRequest, signal?: AbortSignal): Promi
   });
 }
 
+/** Starting values of the decision, simulation, backtest and Portfolio Lab forms (#190). */
+export function getFormDefaults(signal?: AbortSignal): Promise<FormDefaults> {
+  return get('/api/v1/forms/defaults', signal);
+}
 export function getJournal(
   offset = 0,
   signal?: AbortSignal,

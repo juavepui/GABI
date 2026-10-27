@@ -7,6 +7,8 @@ import type {
   SavedDecision,
 } from '@/shared/api/generated/types.gen';
 import { useResearchMode } from '@/shared/api/use-model';
+import { useFormDefaults } from '@/shared/api/use-form-defaults';
+import { AdvancedOptions, HelpField } from '@/shared/ui/advanced-options';
 import {
   createJob,
   decisionsCsvUrl,
@@ -100,33 +102,104 @@ function DecisionTable({ decisions }: { decisions: Preview['decisions'] }) {
   );
 }
 
-const defaults: DecisionPolicy = {
-  min_score: 65,
-  min_coverage: 0.7,
-  max_positions: 10,
-  max_position_pct: 5,
-  max_sector_pct: 20,
-  max_invested_pct: 50,
-  max_volatility: 0.6,
-  min_drawdown: -0.5,
-  max_price_age_days: 7,
-  trade_threshold_pct: 0.5,
-  constrained_optimizer: false,
-  turnover_penalty: 0,
+type PolicyField = {
+  key: keyof DecisionPolicy;
+  label: string;
+  step: string;
+  help: string;
+  /** Shown in % while the request takes a fraction (coverage, as in the Ranking). */
+  percent?: boolean;
 };
-const fields: Array<{ key: keyof DecisionPolicy; label: string; step: string }> = [
-  { key: 'min_score', label: 'Score mínimo', step: '1' },
-  { key: 'min_coverage', label: 'Métricas disponibles mínimas (0–1)', step: '0.01' },
-  { key: 'max_positions', label: 'Máximo de posiciones', step: '1' },
-  { key: 'max_position_pct', label: 'Máximo por posición (%)', step: '0.1' },
-  { key: 'max_sector_pct', label: 'Máximo por sector (%)', step: '0.1' },
-  { key: 'max_invested_pct', label: 'Máximo invertido (%)', step: '0.1' },
-  { key: 'max_volatility', label: 'Volatilidad máxima', step: '0.01' },
-  { key: 'min_drawdown', label: 'Drawdown mínimo', step: '0.01' },
-  { key: 'max_price_age_days', label: 'Edad máxima del precio (días)', step: '1' },
-  { key: 'trade_threshold_pct', label: 'Umbral de cambio (%)', step: '0.1' },
-  { key: 'turnover_penalty', label: 'Penalización por rotación', step: '0.01' },
+/** The two the investor usually sets; the rest are «Opciones avanzadas». Values from the backend. */
+const essential: PolicyField[] = [
+  {
+    key: 'max_positions',
+    label: 'Máximo de posiciones',
+    step: '1',
+    help: 'Número de empresas. Más posiciones reparten el riesgo, pero bajan el score medio.',
+  },
+  {
+    key: 'min_score',
+    label: 'Score mínimo',
+    step: '1',
+    help: 'Puntos de 0 a 100. Solo entran empresas con un score igual o superior.',
+  },
 ];
+const advanced: PolicyField[] = [
+  {
+    key: 'min_coverage',
+    label: 'Métricas disponibles mínimas (%)',
+    step: '1',
+    percent: true,
+    help: 'Porcentaje de las métricas del score con dato, como en el Ranking. Más alto descarta empresas con datos incompletos.',
+  },
+  {
+    key: 'max_position_pct',
+    label: 'Máximo por posición (%)',
+    step: '0.1',
+    help: '% del patrimonio total en una sola empresa. Limita el daño de un error.',
+  },
+  {
+    key: 'max_sector_pct',
+    label: 'Máximo por sector (%)',
+    step: '0.1',
+    help: '% del patrimonio total en un sector. Evita concentrar el riesgo en una industria.',
+  },
+  {
+    key: 'max_invested_pct',
+    label: 'Máximo invertido (%)',
+    step: '0.1',
+    help: '% del patrimonio que puede estar invertido; el resto queda en liquidez.',
+  },
+  {
+    key: 'max_volatility',
+    label: 'Volatilidad máxima',
+    step: '0.01',
+    help: 'Volatilidad anualizada en fracción (0,60 = 60 %). Descarta las empresas más volátiles.',
+  },
+  {
+    key: 'min_drawdown',
+    label: 'Drawdown mínimo',
+    step: '0.01',
+    help: 'Caída máxima tolerada en fracción negativa (−0,50 = −50 %). Descarta caídas mayores.',
+  },
+  {
+    key: 'max_price_age_days',
+    label: 'Edad máxima del precio (días)',
+    step: '1',
+    help: 'Días desde el último cierre en caché. Con precios más antiguos no se propone operar.',
+  },
+  {
+    key: 'trade_threshold_pct',
+    label: 'Umbral de cambio (%)',
+    step: '0.1',
+    help: 'Puntos de peso que debe cambiar una posición para proponer comprar o vender. Evita operaciones pequeñas.',
+  },
+  {
+    key: 'turnover_penalty',
+    label: 'Penalización por rotación',
+    step: '0.01',
+    help: 'De 0 a 0,20. Con el optimizador, penaliza cambiar mucho la cartera actual.',
+  },
+];
+const shown = (field: PolicyField, policy: DecisionPolicy) => {
+  const value = Number(policy[field.key]);
+  return String(field.percent ? Math.round(value * 10000) / 100 : value);
+};
+
+function PolicyInput({ field, policy }: { field: PolicyField; policy: DecisionPolicy }) {
+  return (
+    <Input
+      id={'policy-' + field.key}
+      name={field.key}
+      type="number"
+      step={field.step}
+      required
+      defaultValue={shown(field, policy)}
+      className="mt-1"
+    />
+  );
+}
 
 /** Age of a saved plan and, when today's ranking no longer supports it, a warning (#191). */
 export function PlanFreshness({ data }: { data: DecisionFreshness }) {
@@ -167,6 +240,8 @@ export function ExperimentalPlan() {
   const client = useQueryClient();
   // Investor mode plans with the default policy; its parameters are a Research experiment.
   const research = useResearchMode();
+  const formDefaults = useFormDefaults();
+  const defaults = formDefaults.data?.decision_policy;
   const [jobId, setJobId] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [name, setName] = useState('');
@@ -233,11 +308,14 @@ export function ExperimentalPlan() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    if (!defaults) return;
     const policy = { ...defaults };
     if (research) {
-      for (const field of fields) {
+      for (const field of [...essential, ...advanced]) {
         const value = Number(form.get(field.key));
-        (policy as Record<string, number | boolean>)[field.key] = value;
+        (policy as Record<string, number | boolean>)[field.key] = field.percent
+          ? value / 100
+          : value;
       }
       policy.constrained_optimizer = form.get('constrained_optimizer') === 'on';
     }
@@ -260,35 +338,32 @@ export function ExperimentalPlan() {
           Se calcula en el worker local con precios ya cacheados. Los porcentajes se refieren al
           patrimonio total.
         </p>
-        {!research && (
+        {!defaults &&
+          (formDefaults.isError ? (
+            <ErrorState error={formDefaults.error} retry={() => void formDefaults.refetch()} />
+          ) : (
+            <LoadingState />
+          ))}
+        {defaults && !research && (
           <p className="mt-4 rounded-lg border bg-secondary/40 p-3 text-sm">
             Se usa la política por defecto: hasta {defaults.max_positions} posiciones, score mínimo{' '}
             {defaults.min_score}, máximo {defaults.max_position_pct} % por posición y{' '}
             {defaults.max_sector_pct} % por sector. Sus parámetros se ajustan en el modo Research.
           </p>
         )}
-        {research && (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {fields.map((field) => (
-              <label key={field.key} className="text-sm">
-                {field.label}
-                <Input
-                  name={field.key}
-                  type="number"
-                  step={field.step}
-                  required
-                  defaultValue={String(defaults[field.key])}
-                  className="mt-1"
-                />
-              </label>
+        {defaults && research && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {essential.map((field) => (
+              <HelpField
+                key={field.key}
+                id={'policy-' + field.key}
+                label={field.label}
+                help={field.help}
+              >
+                <PolicyInput field={field} policy={defaults} />
+              </HelpField>
             ))}
           </div>
-        )}
-        {research && (
-          <label className="mt-4 flex items-center gap-2 text-sm">
-            <input type="checkbox" name="constrained_optimizer" />
-            Optimizar con límites de posición y sector
-          </label>
         )}
         <label className="mt-4 block text-sm">
           Posiciones actuales (SÍMBOLO,porcentaje; una por línea)
@@ -310,7 +385,31 @@ export function ExperimentalPlan() {
             defaultValue="Plan de decisiones"
           />
         </label>
-        <Button className="mt-4" type="submit" disabled={generate.isPending}>
+        {defaults && research && (
+          <AdvancedOptions id="decisiones" className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {advanced.map((field) => (
+                <HelpField
+                  key={field.key}
+                  id={'policy-' + field.key}
+                  label={field.label}
+                  help={field.help}
+                >
+                  <PolicyInput field={field} policy={defaults} />
+                </HelpField>
+              ))}
+            </div>
+            <label className="mt-3 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="constrained_optimizer"
+                defaultChecked={defaults.constrained_optimizer}
+              />
+              Optimizar con límites de posición y sector
+            </label>
+          </AdvancedOptions>
+        )}
+        <Button className="mt-4" type="submit" disabled={generate.isPending || !defaults}>
           Generar decisiones
         </Button>
         {generate.isError && (

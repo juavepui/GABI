@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getModel, getPortfolioLab } from '@/shared/api/client';
-import type { PortfolioLabPreview } from '@/shared/api/generated/types.gen';
+import type { PortfolioLabDefaults, PortfolioLabPreview } from '@/shared/api/generated/types.gen';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
@@ -9,6 +9,8 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { JobStatus } from './experiment-jobs';
 import { TailRiskTable } from './tail-risk-table';
 import { useJob } from '@/shared/api/use-job';
+import { useFormDefaults } from '@/shared/api/use-form-defaults';
+import { AdvancedOptions, HelpField } from '@/shared/ui/advanced-options';
 import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
@@ -247,22 +249,26 @@ function Result({ data }: { data: PortfolioLabPreview }) {
   );
 }
 
-export function PortfolioLabPage() {
-  const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
-  const [start, setStart] = useState('2019-01-02');
-  const [end, setEnd] = useState('2024-01-02');
-  const [months, setMonths] = useState<1 | 3 | 6 | 12>(3);
-  const [topN, setTopN] = useState(20);
-  const [capital, setCapital] = useState(100000);
-  const [schemes, setSchemes] = useState<Scheme[]>(SCHEMES.map(([id]) => id));
-  const [mode, setMode] = useState<'fast_dev' | 'validation'>('fast_dev');
-  const [sample, setSample] = useState<50 | 100 | 200>(100);
-  const state = useJob('portfolio-lab');
-  const preview = useQuery({
-    queryKey: ['research', 'portfolio-lab', state.jobId],
-    queryFn: ({ signal }) => getPortfolioLab(state.jobId!, signal),
-    enabled: state.jobId != null && state.job.data?.status === 'succeeded',
-  });
+type LabState = ReturnType<typeof useJob>;
+
+/** The form, mounted once the backend's defaults (#190) arrive: they are its initial state. */
+function LabForm({
+  defaults,
+  state,
+  research,
+}: {
+  defaults: PortfolioLabDefaults;
+  state: LabState;
+  research: boolean | undefined;
+}) {
+  const [start, setStart] = useState(defaults.start);
+  const [end, setEnd] = useState(defaults.end);
+  const [months, setMonths] = useState<1 | 3 | 6 | 12>(defaults.months);
+  const [topN, setTopN] = useState(defaults.top_n);
+  const [capital, setCapital] = useState(defaults.initial_capital);
+  const [schemes, setSchemes] = useState<Scheme[]>(defaults.schemes);
+  const [mode, setMode] = useState<'fast_dev' | 'validation'>(defaults.mode);
+  const [sample, setSample] = useState<50 | 100 | 200>(defaults.max_symbols);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -281,6 +287,163 @@ export function PortfolioLabPage() {
       },
     });
   }
+
+  return (
+    <form
+      className="grid gap-3 rounded-xl border bg-card p-5 text-sm sm:grid-cols-4"
+      aria-label="Ejecutar Portfolio Lab"
+      onSubmit={submit}
+    >
+      <label className="grid gap-1">
+        Inicio
+        <Input
+          type="date"
+          min="2010-01-01"
+          max="2025-07-02"
+          value={start}
+          onChange={(event) => setStart(event.target.value)}
+        />
+      </label>
+      <label className="grid gap-1">
+        Fin
+        <Input
+          type="date"
+          min="2010-01-01"
+          max="2025-07-02"
+          value={end}
+          onChange={(event) => setEnd(event.target.value)}
+        />
+      </label>
+      <label className="grid gap-1">
+        Rebalanceo
+        <NativeSelect
+          value={String(months)}
+          onChange={(event) => setMonths(Number(event.target.value) as 1 | 3 | 6 | 12)}
+        >
+          {[1, 3, 6, 12].map((value) => (
+            <NativeSelectOption key={value} value={String(value)}>
+              Cada {value} meses
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </label>
+      <label className="grid gap-1">
+        Nº de posiciones
+        <Input
+          type="number"
+          min={2}
+          max={50}
+          value={String(topN)}
+          onChange={(event) => setTopN(Number(event.target.value))}
+        />
+      </label>
+      <AdvancedOptions id="portfolio-lab" className="sm:col-span-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <HelpField
+            id="lab-capital"
+            label="Capital inicial ($)"
+            help="Dólares al empezar. Solo escala la curva de capital; no cambia los pesos."
+            className="grid gap-1"
+          >
+            <Input
+              id="lab-capital"
+              type="number"
+              min={1000}
+              max={10000000}
+              step={1000}
+              value={String(capital)}
+              onChange={(event) => setCapital(Number(event.target.value))}
+            />
+          </HelpField>
+          <HelpField
+            id="lab-mode"
+            label="Modo"
+            help="Desarrollo rápido usa una muestra de empresas; Validación, el universo completo de cada fecha (lento, el único citable)."
+            className="grid gap-1"
+          >
+            <NativeSelect
+              id="lab-mode"
+              value={mode}
+              onChange={(event) => setMode(event.target.value as 'fast_dev' | 'validation')}
+            >
+              <NativeSelectOption value="fast_dev">Desarrollo rápido (muestra)</NativeSelectOption>
+              <NativeSelectOption value="validation">
+                Validación (universo completo, lento)
+              </NativeSelectOption>
+            </NativeSelect>
+          </HelpField>
+          {mode === 'fast_dev' && (
+            <HelpField
+              id="lab-sample"
+              label="Tamaño de la muestra"
+              help="Empresas de la muestra en desarrollo rápido. Más empresas: más fiel y más lento."
+              className="grid gap-1"
+            >
+              <NativeSelect
+                id="lab-sample"
+                value={String(sample)}
+                onChange={(event) => setSample(Number(event.target.value) as 50 | 100 | 200)}
+              >
+                {[50, 100, 200].map((value) => (
+                  <NativeSelectOption key={value} value={String(value)}>
+                    {value} empresas
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </HelpField>
+          )}
+          <fieldset className="grid gap-1 sm:col-span-3">
+            <legend className="mb-1">Esquemas a comparar</legend>
+            <div className="flex flex-wrap gap-4">
+              {SCHEMES.map(([id, label]) => (
+                <label key={id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={schemes.includes(id)}
+                    onChange={(event) =>
+                      setSchemes((current) =>
+                        event.target.checked
+                          ? SCHEMES.map(([scheme]) => scheme).filter(
+                              (scheme) => scheme === id || current.includes(scheme),
+                            )
+                          : current.filter((scheme) => scheme !== id),
+                      )
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+      </AdvancedOptions>
+      <p className="text-xs text-muted-foreground sm:col-span-4">
+        Solo el histórico observado del S&amp;P 500 (2010-01-01 a 2025-07-02). Validación usa el
+        universo completo de cada fecha y es el único modo citable; puede tardar bastante.
+      </p>
+      <Button
+        type="submit"
+        className="w-fit"
+        disabled={schemes.length === 0 || state.start.isPending || research === false}
+      >
+        Ejecutar Portfolio Lab
+      </Button>
+      {research === false && (
+        <ResearchModeNotice action="Portfolio Lab" className="sm:col-span-4" />
+      )}
+    </form>
+  );
+}
+
+export function PortfolioLabPage() {
+  const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
+  const defaults = useFormDefaults();
+  const state = useJob('portfolio-lab');
+  const preview = useQuery({
+    queryKey: ['research', 'portfolio-lab', state.jobId],
+    queryFn: ({ signal }) => getPortfolioLab(state.jobId!, signal),
+    enabled: state.jobId != null && state.job.data?.status === 'succeeded',
+  });
 
   return (
     <div className="space-y-6">
@@ -326,132 +489,17 @@ export function PortfolioLabPage() {
           </li>
         </ul>
       </details>
-      <form
-        className="grid gap-3 rounded-xl border bg-card p-5 text-sm sm:grid-cols-3"
-        aria-label="Ejecutar Portfolio Lab"
-        onSubmit={submit}
-      >
-        <label className="grid gap-1">
-          Inicio
-          <Input
-            type="date"
-            min="2010-01-01"
-            max="2025-07-02"
-            value={start}
-            onChange={(event) => setStart(event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1">
-          Fin
-          <Input
-            type="date"
-            min="2010-01-01"
-            max="2025-07-02"
-            value={end}
-            onChange={(event) => setEnd(event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1">
-          Rebalanceo
-          <NativeSelect
-            value={String(months)}
-            onChange={(event) => setMonths(Number(event.target.value) as 1 | 3 | 6 | 12)}
-          >
-            {[1, 3, 6, 12].map((value) => (
-              <NativeSelectOption key={value} value={String(value)}>
-                Cada {value} meses
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
-        <label className="grid gap-1">
-          Nº de posiciones
-          <Input
-            type="number"
-            min={2}
-            max={50}
-            value={String(topN)}
-            onChange={(event) => setTopN(Number(event.target.value))}
-          />
-        </label>
-        <label className="grid gap-1">
-          Capital inicial ($)
-          <Input
-            type="number"
-            min={1000}
-            max={10000000}
-            step={1000}
-            value={String(capital)}
-            onChange={(event) => setCapital(Number(event.target.value))}
-          />
-        </label>
-        <label className="grid gap-1">
-          Modo
-          <NativeSelect
-            value={mode}
-            onChange={(event) => setMode(event.target.value as 'fast_dev' | 'validation')}
-          >
-            <NativeSelectOption value="fast_dev">Desarrollo rápido (muestra)</NativeSelectOption>
-            <NativeSelectOption value="validation">
-              Validación (universo completo, lento)
-            </NativeSelectOption>
-          </NativeSelect>
-        </label>
-        {mode === 'fast_dev' && (
-          <label className="grid gap-1">
-            Tamaño de la muestra
-            <NativeSelect
-              value={String(sample)}
-              onChange={(event) => setSample(Number(event.target.value) as 50 | 100 | 200)}
-            >
-              {[50, 100, 200].map((value) => (
-                <NativeSelectOption key={value} value={String(value)}>
-                  {value} empresas
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </label>
-        )}
-        <fieldset className="grid gap-1 sm:col-span-3">
-          <legend className="mb-1">Esquemas a comparar</legend>
-          <div className="flex flex-wrap gap-4">
-            {SCHEMES.map(([id, label]) => (
-              <label key={id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={schemes.includes(id)}
-                  onChange={(event) =>
-                    setSchemes((current) =>
-                      event.target.checked
-                        ? SCHEMES.map(([scheme]) => scheme).filter(
-                            (scheme) => scheme === id || current.includes(scheme),
-                          )
-                        : current.filter((scheme) => scheme !== id),
-                    )
-                  }
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <p className="text-xs text-muted-foreground sm:col-span-3">
-          Solo el histórico observado del S&amp;P 500 (2010-01-01 a 2025-07-02). Validación usa el
-          universo completo de cada fecha y es el único modo citable; puede tardar bastante.
-        </p>
-        <Button
-          type="submit"
-          className="w-fit"
-          disabled={
-            schemes.length === 0 || state.start.isPending || model.data?.mode !== 'RESEARCH'
-          }
-        >
-          Ejecutar Portfolio Lab
-        </Button>
-        {model.data && model.data.mode !== 'RESEARCH' && (
-          <ResearchModeNotice action="Portfolio Lab" className="sm:col-span-3" />
-        )}
-      </form>
+      {defaults.isPending && <LoadingState />}
+      {defaults.isError && (
+        <ErrorState error={defaults.error} retry={() => void defaults.refetch()} />
+      )}
+      {defaults.data && (
+        <LabForm
+          defaults={defaults.data.portfolio_lab}
+          state={state}
+          research={model.data ? model.data.mode === 'RESEARCH' : undefined}
+        />
+      )}
       <JobStatus state={state} />
       {preview.isPending && state.job.data?.status === 'succeeded' && <LoadingState />}
       {preview.isError && <ErrorState error={preview.error} retry={() => void preview.refetch()} />}
