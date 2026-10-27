@@ -122,9 +122,9 @@ class CompanyChecklist:
             row = {}
         return {key: _finite(row.get(key)) for key in checklist.REFERENCE_KEYS}
 
-    def company(self, symbol: str) -> dict:
-        symbol = normalize_symbol(symbol)
-        today = self.today()
+    def _evaluate(self, symbol: str, today: date) -> tuple[pd.DataFrame, dict, checklist.MarketInputs, dict,
+                                                           str | None, str | None]:
+        """One company's facts, market inputs, criteria and alarms, threshold warning and Yahoo sector."""
         references = self._references(symbol)
         frame = self.facts.issuer_facts(symbol, as_of=today.isoformat())
         facts = companyfacts(frame, today.isoformat())
@@ -145,13 +145,27 @@ class CompanyChecklist:
             insider_rows=insiders.to_dict("records"), today=today,
             split_factor_between=lambda start, end: (self._split_factor_after(symbol, start)
                                                      / self._split_factor_after(symbol, end)))
+        return frame, facts, market, result, warning, info.get("sector")
+
+    def summary(self, symbol: str) -> dict:
+        """Criteria met and evaluable, without the multiples history: what a list of companies shows."""
+        symbol = normalize_symbol(symbol)
+        today = self.today()
+        return _json({"symbol": symbol, "as_of": today.isoformat(),
+                      "summary": self._evaluate(symbol, today)[3]["summary"]})
+
+    def company(self, symbol: str) -> dict:
+        symbol = normalize_symbol(symbol)
+        today = self.today()
+        frame, facts, market, result, warning, sector = self._evaluate(symbol, today)
+        shares_date, source, history_ok = market.shares_date, market.shares_source, market.share_history_ok
         history = checklist.multiples_history(
             facts, close_on=lambda day: self._close_on(symbol, day),
             split_factor_after=lambda day: self._split_factor_after(symbol, day),
             financial=result["financial_sector"], share_history_ok=history_ok)
         filed = frame["filed_date"].dropna() if not frame.empty else pd.Series(dtype=str)
         return _json({
-            "symbol": symbol, "as_of": today.isoformat(), "sector": info.get("sector"),
+            "symbol": symbol, "as_of": today.isoformat(), "sector": sector,
             "thresholds_version": checklist.THRESHOLDS_VERSION, "thresholds_warning": warning,
             "sources": {"sec_last_filed": str(filed.max()) if len(filed) else None, "price_date": market.price_date,
                         "shares_date": shares_date, "shares_source": source,

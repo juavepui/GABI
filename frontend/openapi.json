@@ -15919,6 +15919,390 @@
         "title": "Unit",
         "type": "string"
       },
+      "WatchlistChecklists": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ChecklistSummary"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "WatchlistChecklists",
+        "type": "object"
+      },
+      "WatchlistCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "symbol": {
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "title": "WatchlistCreate",
+        "type": "object"
+      },
+      "WatchlistDeleted": {
+        "additionalProperties": false,
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "title": "WatchlistDeleted",
+        "type": "object"
+      },
+      "WatchlistEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "rank_at_add": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Posición global al añadirla, antes de filtros",
+            "title": "Rank At Add"
+          },
+          "score_at_add": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Score del modelo congelado al añadirla · 0 a 100",
+            "title": "Score At Add"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "added_at",
+          "note",
+          "model_id",
+          "score_at_add",
+          "rank_at_add",
+          "updated_at"
+        ],
+        "title": "WatchlistEntry",
+        "type": "object"
+      },
+      "WatchlistNote": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "WatchlistNote",
+        "type": "object"
+      },
+      "WatchlistRow": {
+        "additionalProperties": false,
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "composite_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Score actual del modelo congelado · 0 a 100",
+            "title": "Composite Score"
+          },
+          "in_ranking": {
+            "title": "In Ranking",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "next_earnings_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Earnings Date"
+          },
+          "next_earnings_is_estimate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Earnings Is Estimate"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "open_theses": {
+            "title": "Open Theses",
+            "type": "integer"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Posición global actual, antes de filtros",
+            "title": "Rank"
+          },
+          "rank_at_add": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank At Add"
+          },
+          "rank_change": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puestos ganados desde que se añadió (negativo = perdidos)",
+            "title": "Rank Change"
+          },
+          "same_model": {
+            "description": "False si se añadió con otro modelo: entonces no hay cambio comparable",
+            "title": "Same Model",
+            "type": "boolean"
+          },
+          "score_at_add": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score At Add"
+          },
+          "score_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puntos de score desde que se añadió",
+            "title": "Score Change"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "theses": {
+            "title": "Theses",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol",
+          "added_at",
+          "note",
+          "name",
+          "sector",
+          "in_ranking",
+          "composite_score",
+          "rank",
+          "score_at_add",
+          "rank_at_add",
+          "same_model",
+          "score_change",
+          "rank_change",
+          "next_earnings_date",
+          "next_earnings_is_estimate",
+          "open_theses",
+          "theses"
+        ],
+        "title": "WatchlistRow",
+        "type": "object"
+      },
+      "WatchlistSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WatchlistRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "ranking_ready": {
+            "title": "Ranking Ready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "model_id",
+          "ranking_ready",
+          "items"
+        ],
+        "title": "WatchlistSummary",
+        "type": "object"
+      },
+      "WatchlistSymbols": {
+        "additionalProperties": false,
+        "properties": {
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "required": [
+          "symbols"
+        ],
+        "title": "WatchlistSymbols",
+        "type": "object"
+      },
       "WeightsRequest": {
         "properties": {
           "momentum": {
@@ -26604,6 +26988,540 @@
         "summary": "Trials",
         "tags": [
           "research"
+        ]
+      }
+    },
+    "/api/v1/watchlist": {
+      "get": {
+        "description": "Read-only from the frozen ranking and the journal: it never downloads nor initializes the table.",
+        "operationId": "summary_api_v1_watchlist_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "market"
+        ]
+      },
+      "post": {
+        "operationId": "add_api_v1_watchlist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Add",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/watchlist/checklist": {
+      "get": {
+        "description": "Criteria met / evaluable per followed company, computed from SQLite; separate because it is slower.",
+        "operationId": "checklists_api_v1_watchlist_checklist_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistChecklists"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Checklists",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/watchlist/symbols": {
+      "get": {
+        "operationId": "symbols_api_v1_watchlist_symbols_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistSymbols"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Symbols",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/watchlist/{symbol}": {
+      "post": {
+        "operationId": "update_api_v1_watchlist__symbol__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistNote"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Update",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/watchlist/{symbol}/delete": {
+      "post": {
+        "operationId": "delete_api_v1_watchlist__symbol__delete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistDeleted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Delete",
+        "tags": [
+          "market"
         ]
       }
     }

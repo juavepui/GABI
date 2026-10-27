@@ -19,6 +19,7 @@ import { rankingParams, patchParams, sortOptions, type SortKey } from './params'
 import { Evidence } from './evidence';
 import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
 import { CoverageWarnings } from './coverage-warnings';
+import { FollowButton } from './follow-button';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { GitCompareArrows, Globe, Radar } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/page-header';
@@ -369,7 +370,10 @@ export function MarketPage() {
                           className="border-t transition-colors hover:bg-accent/35"
                         >
                           <td className="p-2 text-xs tabular-nums text-muted-foreground sm:p-4 sm:pl-5">
-                            {row.rank}
+                            <span className="inline-flex items-center gap-1">
+                              <FollowButton symbol={row.symbol} compact />
+                              {row.rank}
+                            </span>
                           </td>
                           <th scope="row" className="max-w-72 p-2 font-normal sm:p-4">
                             <Link

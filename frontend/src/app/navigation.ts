@@ -37,6 +37,7 @@ export const sections: Section[] = [
     pages: [
       { path: '/descubrir', label: 'Ranking' },
       { path: '/descubrir/comparar', label: 'Comparar empresas' },
+      { path: '/descubrir/seguidas', label: 'Empresas seguidas' },
     ],
     prefixes: ['/empresas/'],
   },

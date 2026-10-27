@@ -8385,6 +8385,202 @@ export type UndoResult = {
 export type Unit = 'fraction' | 'percent' | 'points_0_100' | 'USD' | 'ratio' | 'count';
 
 /**
+ * WatchlistChecklists
+ */
+export type WatchlistChecklists = {
+    /**
+     * Items
+     */
+    items: {
+        [key: string]: ChecklistSummary | null;
+    };
+};
+
+/**
+ * WatchlistCreate
+ */
+export type WatchlistCreate = {
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * WatchlistDeleted
+ */
+export type WatchlistDeleted = {
+    /**
+     * Deleted
+     */
+    deleted: boolean;
+};
+
+/**
+ * WatchlistEntry
+ */
+export type WatchlistEntry = {
+    /**
+     * Added At
+     */
+    added_at: string;
+    /**
+     * Model Id
+     */
+    model_id: string | null;
+    /**
+     * Note
+     */
+    note: string | null;
+    /**
+     * Rank At Add
+     *
+     * Posición global al añadirla, antes de filtros
+     */
+    rank_at_add: number | null;
+    /**
+     * Score At Add
+     *
+     * Score del modelo congelado al añadirla · 0 a 100
+     */
+    score_at_add: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * WatchlistNote
+ */
+export type WatchlistNote = {
+    /**
+     * Note
+     */
+    note?: string | null;
+};
+
+/**
+ * WatchlistRow
+ */
+export type WatchlistRow = {
+    /**
+     * Added At
+     */
+    added_at: string;
+    /**
+     * Composite Score
+     *
+     * Score actual del modelo congelado · 0 a 100
+     */
+    composite_score: number | null;
+    /**
+     * In Ranking
+     */
+    in_ranking: boolean;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Next Earnings Date
+     */
+    next_earnings_date: string | null;
+    /**
+     * Next Earnings Is Estimate
+     */
+    next_earnings_is_estimate: boolean | null;
+    /**
+     * Note
+     */
+    note: string | null;
+    /**
+     * Open Theses
+     */
+    open_theses: number;
+    /**
+     * Rank
+     *
+     * Posición global actual, antes de filtros
+     */
+    rank: number | null;
+    /**
+     * Rank At Add
+     */
+    rank_at_add: number | null;
+    /**
+     * Rank Change
+     *
+     * Puestos ganados desde que se añadió (negativo = perdidos)
+     */
+    rank_change: number | null;
+    /**
+     * Same Model
+     *
+     * False si se añadió con otro modelo: entonces no hay cambio comparable
+     */
+    same_model: boolean;
+    /**
+     * Score At Add
+     */
+    score_at_add: number | null;
+    /**
+     * Score Change
+     *
+     * Puntos de score desde que se añadió
+     */
+    score_change: number | null;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Theses
+     */
+    theses: number;
+};
+
+/**
+ * WatchlistSummary
+ */
+export type WatchlistSummary = {
+    /**
+     * Items
+     */
+    items: Array<WatchlistRow>;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Ranking Ready
+     */
+    ranking_ready: boolean;
+};
+
+/**
+ * WatchlistSymbols
+ */
+export type WatchlistSymbols = {
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+};
+
+/**
  * WeightsRequest
  */
 export type WeightsRequest = {
@@ -13926,3 +14122,283 @@ export type TrialsApiV1ResearchTrialsGetResponses = {
 };
 
 export type TrialsApiV1ResearchTrialsGetResponse = TrialsApiV1ResearchTrialsGetResponses[keyof TrialsApiV1ResearchTrialsGetResponses];
+
+export type SummaryApiV1WatchlistGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/watchlist';
+};
+
+export type SummaryApiV1WatchlistGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SummaryApiV1WatchlistGetError = SummaryApiV1WatchlistGetErrors[keyof SummaryApiV1WatchlistGetErrors];
+
+export type SummaryApiV1WatchlistGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: WatchlistSummary;
+};
+
+export type SummaryApiV1WatchlistGetResponse = SummaryApiV1WatchlistGetResponses[keyof SummaryApiV1WatchlistGetResponses];
+
+export type AddApiV1WatchlistPostData = {
+    body: WatchlistCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/watchlist';
+};
+
+export type AddApiV1WatchlistPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type AddApiV1WatchlistPostError = AddApiV1WatchlistPostErrors[keyof AddApiV1WatchlistPostErrors];
+
+export type AddApiV1WatchlistPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: WatchlistEntry;
+};
+
+export type AddApiV1WatchlistPostResponse = AddApiV1WatchlistPostResponses[keyof AddApiV1WatchlistPostResponses];
+
+export type ChecklistsApiV1WatchlistChecklistGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/watchlist/checklist';
+};
+
+export type ChecklistsApiV1WatchlistChecklistGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ChecklistsApiV1WatchlistChecklistGetError = ChecklistsApiV1WatchlistChecklistGetErrors[keyof ChecklistsApiV1WatchlistChecklistGetErrors];
+
+export type ChecklistsApiV1WatchlistChecklistGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: WatchlistChecklists;
+};
+
+export type ChecklistsApiV1WatchlistChecklistGetResponse = ChecklistsApiV1WatchlistChecklistGetResponses[keyof ChecklistsApiV1WatchlistChecklistGetResponses];
+
+export type SymbolsApiV1WatchlistSymbolsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/watchlist/symbols';
+};
+
+export type SymbolsApiV1WatchlistSymbolsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SymbolsApiV1WatchlistSymbolsGetError = SymbolsApiV1WatchlistSymbolsGetErrors[keyof SymbolsApiV1WatchlistSymbolsGetErrors];
+
+export type SymbolsApiV1WatchlistSymbolsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: WatchlistSymbols;
+};
+
+export type SymbolsApiV1WatchlistSymbolsGetResponse = SymbolsApiV1WatchlistSymbolsGetResponses[keyof SymbolsApiV1WatchlistSymbolsGetResponses];
+
+export type UpdateApiV1WatchlistSymbolPostData = {
+    body: WatchlistNote;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/watchlist/{symbol}';
+};
+
+export type UpdateApiV1WatchlistSymbolPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type UpdateApiV1WatchlistSymbolPostError = UpdateApiV1WatchlistSymbolPostErrors[keyof UpdateApiV1WatchlistSymbolPostErrors];
+
+export type UpdateApiV1WatchlistSymbolPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: WatchlistEntry;
+};
+
+export type UpdateApiV1WatchlistSymbolPostResponse = UpdateApiV1WatchlistSymbolPostResponses[keyof UpdateApiV1WatchlistSymbolPostResponses];
+
+export type DeleteApiV1WatchlistSymbolDeletePostData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/watchlist/{symbol}/delete';
+};
+
+export type DeleteApiV1WatchlistSymbolDeletePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeleteApiV1WatchlistSymbolDeletePostError = DeleteApiV1WatchlistSymbolDeletePostErrors[keyof DeleteApiV1WatchlistSymbolDeletePostErrors];
+
+export type DeleteApiV1WatchlistSymbolDeletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: WatchlistDeleted;
+};
+
+export type DeleteApiV1WatchlistSymbolDeletePostResponse = DeleteApiV1WatchlistSymbolDeletePostResponses[keyof DeleteApiV1WatchlistSymbolDeletePostResponses];

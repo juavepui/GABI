@@ -30,6 +30,7 @@ from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
 from gabi.application.market.snapshots import SnapshotTracking
+from gabi.application.market.watchlist import Watchlist
 from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.holdings import Holdings
 from gabi.application.portfolio.journal import Journal
@@ -91,6 +92,7 @@ from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
 from gabi.infrastructure.storage.smallmid import SmallmidFiles
 from gabi.infrastructure.storage.snapshot_prices import SqliteSnapshotPrices
+from gabi.infrastructure.storage.watchlist import SqliteWatchlist
 from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
 from gabi_api.routes.holdings import router as holdings_router
@@ -102,6 +104,7 @@ from gabi_api.routes.portfolio import router as portfolio_router
 from gabi_api.routes.research import router as research_router
 from gabi_api.routes.signals import router as signals_router
 from gabi_api.routes.simulations import router as simulations_router
+from gabi_api.routes.watchlist import router as watchlist_router
 from gabi_api.static import mount_frontend
 
 
@@ -203,6 +206,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         lambda: [(row.symbol, row.sector) for row in repository.universe(
             repository.small_file("sp500_constituents.csv")).itertuples(index=False)],
         market.company_metrics)
+    app.state.watchlist = Watchlist(
+        SqliteWatchlist(settings.data_dir), lambda: repository.ranking(dict(policy.frozen_weights), today()).table,
+        policy.frozen_id, SqliteJournal(settings.data_dir).theses, app.state.company_checklist.summary)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)
@@ -248,7 +254,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
-                          repository.cached_events)
+                          repository.cached_events, app.state.watchlist.symbols)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)
@@ -290,6 +296,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(signals_router)
     app.include_router(simulations_router)
     app.include_router(holdings_router)
+    app.include_router(watchlist_router)
     app.include_router(decisions_router)
     app.include_router(research_router)
     if frontend_dist is not None:

@@ -31,16 +31,21 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
   switch (alert.kind) {
     case 'earnings': {
       const holdings = detail.scope === 'holdings';
+      const watched = detail.scope === 'watchlist';
       const who = holdings
         ? count === 1
           ? 'Una empresa de Mi cartera presenta'
           : `${count} empresas de Mi cartera presentan`
-        : count === 1
-          ? 'Una de tus candidatas presenta'
-          : `${count} de tus candidatas presentan`;
+        : watched
+          ? count === 1
+            ? 'Una empresa que sigues presenta'
+            : `${count} empresas que sigues presentan`
+          : count === 1
+            ? 'Una de tus candidatas presenta'
+            : `${count} de tus candidatas presentan`;
       return {
         text: `${who} resultados esta semana: ${list(alert.symbols)} (desde el ${day(alert.date)}).`,
-        action: holdings ? 'Ver Mi cartera' : 'Ver eventos',
+        action: holdings ? 'Ver Mi cartera' : watched ? 'Ver empresas seguidas' : 'Ver eventos',
       };
     }
     case 'ex_dividend':
