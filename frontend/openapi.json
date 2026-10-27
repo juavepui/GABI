@@ -2286,6 +2286,93 @@
         "title": "BreakSealRequest",
         "type": "object"
       },
+      "CandidateSummary": {
+        "additionalProperties": false,
+        "description": "«Por qué está aquí» (#184): fixed rules over the score blocks; descriptive, never a recommendation.",
+        "properties": {
+          "blocks": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "propertyNames": {
+              "enum": [
+                "value",
+                "quality",
+                "momentum",
+                "risk"
+              ]
+            },
+            "title": "Blocks",
+            "type": "object"
+          },
+          "strengths": {
+            "items": {
+              "enum": [
+                "value",
+                "quality",
+                "momentum",
+                "risk"
+              ],
+              "type": "string"
+            },
+            "title": "Strengths",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "enum": [
+                  "coverage",
+                  "earnings",
+                  "drawdown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          },
+          "weakness": {
+            "anyOf": [
+              {
+                "enum": [
+                  "value",
+                  "quality",
+                  "momentum",
+                  "risk"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weakness"
+          }
+        },
+        "required": [
+          "text",
+          "blocks",
+          "strengths",
+          "weakness",
+          "warning"
+        ],
+        "title": "CandidateSummary",
+        "type": "object"
+      },
       "CapitalAllocation": {
         "additionalProperties": false,
         "properties": {
@@ -3853,6 +3940,9 @@
             ],
             "title": "Sector"
           },
+          "summary": {
+            "$ref": "#/components/schemas/CandidateSummary"
+          },
           "symbol": {
             "title": "Symbol",
             "type": "string"
@@ -3868,7 +3958,8 @@
           "identity",
           "provenance",
           "filings",
-          "next_earnings"
+          "next_earnings",
+          "summary"
         ],
         "title": "CompanyRow",
         "type": "object"
@@ -15521,6 +15612,9 @@
             ],
             "title": "Sector"
           },
+          "summary": {
+            "$ref": "#/components/schemas/CandidateSummary"
+          },
           "symbol": {
             "title": "Symbol",
             "type": "string"
@@ -15539,7 +15633,8 @@
           "score_coverage_fraction",
           "price_usd",
           "weight_percent",
-          "amount_eur"
+          "amount_eur",
+          "summary"
         ],
         "title": "TargetPosition",
         "type": "object"

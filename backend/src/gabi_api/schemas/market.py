@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, HttpUrl
 
 from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
+from gabi.domain.market.candidate_summary import summarize
 from gabi.domain.market.metric_sources import METRIC_SOURCES
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
@@ -76,6 +77,23 @@ class Earnings(WireModel):
     source: Literal["Yahoo Finance (info)"] = "Yahoo Finance (info)"
 
 
+Block = Literal["value", "quality", "momentum", "risk"]
+
+
+class CandidateSummary(WireModel):
+    """«Por qué está aquí» (#184): fixed rules over the score blocks; descriptive, never a recommendation."""
+
+    text: str
+    blocks: dict[Block, float | None]  # Points 0-100 of each block, 100 = best of the universe.
+    strengths: list[Block]
+    weakness: Block | None
+    warning: Literal["coverage", "earnings", "drawdown"] | None
+
+
+def candidate_summary(row: pd.Series) -> CandidateSummary:
+    return CandidateSummary.model_validate(summarize(row))
+
+
 class CompanyRow(WireModel):
     symbol: str
     name: str | None
@@ -87,6 +105,7 @@ class CompanyRow(WireModel):
     provenance: Provenance
     filings: list[Filing]
     next_earnings: Earnings | None
+    summary: CandidateSummary
 
 
 class ModelResponse(WireModel):
@@ -209,7 +228,7 @@ def company_row(symbol: str, row: pd.Series, result: RankingResult) -> CompanyRo
                       rank=int(result.snapshot.table.index.get_loc(symbol)) + 1, metrics=metrics,
                       golden_cross_recent=None if pd.isna(golden) else bool(golden),
                       identity=Identity.model_validate(result.snapshot.identities[symbol]), provenance=provenance,
-                      filings=filings, next_earnings=earnings)
+                      filings=filings, next_earnings=earnings, summary=candidate_summary(row))
 
 
 def ranking_response(result: RankingResult) -> RankingResponse:

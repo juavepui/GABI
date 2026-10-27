@@ -1171,6 +1171,36 @@ export type BreakSealRequest = {
 };
 
 /**
+ * CandidateSummary
+ *
+ * «Por qué está aquí» (#184): fixed rules over the score blocks; descriptive, never a recommendation.
+ */
+export type CandidateSummary = {
+    /**
+     * Blocks
+     */
+    blocks: {
+        [key: string]: number | null;
+    };
+    /**
+     * Strengths
+     */
+    strengths: Array<'value' | 'quality' | 'momentum' | 'risk'>;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Warning
+     */
+    warning: 'coverage' | 'earnings' | 'drawdown' | null;
+    /**
+     * Weakness
+     */
+    weakness: 'value' | 'quality' | 'momentum' | 'risk' | null;
+};
+
+/**
  * CapitalAllocation
  */
 export type CapitalAllocation = {
@@ -1994,6 +2024,7 @@ export type CompanyRow = {
      * Sector
      */
     sector: string | null;
+    summary: CandidateSummary;
     /**
      * Symbol
      */
@@ -8157,6 +8188,7 @@ export type TargetPosition = {
      * Sector
      */
     sector: string | null;
+    summary: CandidateSummary;
     /**
      * Symbol
      */
