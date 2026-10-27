@@ -16,6 +16,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
 import { Term } from '@/shared/ui/term';
 import { SectorBreakdown } from './sector-breakdown';
+import { ThesisMark } from './thesis-mark';
 import { ExperimentalPlan } from './decisions-page';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
@@ -357,6 +358,7 @@ export function PortfolioPage() {
                                 {row.symbol}
                               </Link>
                               <span className="ml-2 text-muted-foreground">{row.name}</span>
+                              <ThesisMark symbol={row.symbol} />
                               <details className="mt-1 sm:hidden">
                                 <summary className="cursor-pointer text-primary">
                                   Más datos de {row.symbol}

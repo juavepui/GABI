@@ -11,6 +11,7 @@ import {
   updateHolding,
 } from '@/shared/api/client';
 import { useJob } from '@/shared/api/use-job';
+import { ThesisMark } from './thesis-mark';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { NativeSelect } from '@/shared/ui/native-select';
@@ -304,6 +305,7 @@ function Positions({ summary }: { summary: HoldingsSummary }) {
                     {row.sector ?? 'Sin sector'}
                     {row.in_target ? ' · en la cartera objetivo' : ''}
                   </span>
+                  <ThesisMark symbol={row.symbol} />
                   {row.status !== 'ok' && (
                     <span className="block text-xs text-amber-700 dark:text-amber-300">
                       {STATUS[row.status]}

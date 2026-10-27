@@ -144,7 +144,6 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteSimulations(settings.data_dir).prices,
                         lambda: repository.ranking(dict(policy.frozen_weights), today()).table, today)
     portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
-    journal = Journal(SqliteJournal(settings.data_dir))
     macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata(),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
     signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
@@ -190,7 +189,6 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         market, LegacyEvidence(FileEvidenceCatalog(published_factors_root or evidence_root())), LegacyRankingQuality())
     app.state.jobs = jobs
     app.state.portfolio = portfolio
-    app.state.journal = journal
     app.state.macro = macro
     app.state.signals = signals
     app.state.company_research = CompanyResearch(
@@ -203,6 +201,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         lambda: [(row.symbol, row.sector) for row in repository.universe(
             repository.small_file("sp500_constituents.csv")).itertuples(index=False)],
         market.company_metrics)
+    # A new thesis captures price, frozen score and checklist (#186); all read from the local cache.
+    app.state.journal = Journal(SqliteJournal(settings.data_dir),
+                                lambda: repository.ranking(dict(policy.frozen_weights), today()).table,
+                                app.state.company_checklist.company, policy.frozen_id, today)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)

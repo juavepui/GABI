@@ -1,4 +1,7 @@
-"""Journal adapter for the existing gabi.db table; GET never initializes it."""
+"""Journal adapter for the existing gabi.db table; GET never initializes it.
+
+The thesis template of #186 adds columns. A write adds the missing ones to an older table; reads accept a
+table without them (their values are simply absent)."""
 
 import sqlite3
 from contextlib import closing
@@ -13,9 +16,22 @@ CREATE TABLE IF NOT EXISTS journal_entries (
  review_date TEXT, review_price REAL, review_notes TEXT
 );
 """
+# Template and automatic capture of #186: (column, SQLite type).
+ADDED_COLUMNS = (("invalidation", "TEXT"), ("review_due", "TEXT"), ("entry_price_date", "TEXT"),
+                 ("entry_score", "REAL"), ("model_id", "TEXT"), ("entry_checklist_passed", "INTEGER"),
+                 ("entry_checklist_evaluated", "INTEGER"))
 CREATE_COLUMNS = ("symbol", "created_at", "horizon", "entry_price", "thesis", "bear_price", "base_price",
                   "bull_price", "bear_prob", "base_prob", "bull_prob", "catalysts", "risks",
-                  "position_size_pct", "notes")
+                  "position_size_pct", "notes", *(name for name, _ in ADDED_COLUMNS))
+MAX_SYMBOLS = 500
+
+
+def _upgrade(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    present = {row[1] for row in db.execute("PRAGMA table_info(journal_entries)")}
+    for name, kind in ADDED_COLUMNS:
+        if name not in present:
+            db.execute(f"ALTER TABLE journal_entries ADD COLUMN {name} {kind}")
 
 
 class SqliteJournal:
@@ -33,15 +49,19 @@ class SqliteJournal:
             return None
         return db
 
-    def list_entries(self, limit: int, offset: int, only_open: bool = False) -> tuple[list[dict], int]:
+    def list_entries(self, limit: int, offset: int, only_open: bool = False,
+                     symbol: str | None = None) -> tuple[list[dict], int]:
         db = self._read()
         if db is None:
             return [], 0
-        where = " WHERE status='abierta'" if only_open else ""
+        conditions = (["status='abierta'"] if only_open else []) + (["symbol=?"] if symbol else [])
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        values = (symbol,) if symbol else ()
         with closing(db):
-            total = int(db.execute("SELECT COUNT(*) FROM journal_entries" + where).fetchone()[0])
+            total = int(db.execute("SELECT COUNT(*) FROM journal_entries" + where, values).fetchone()[0])
             rows = db.execute("SELECT * FROM journal_entries" + where +
-                              " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", (limit, offset)).fetchall()
+                              " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+                              (*values, limit, offset)).fetchall()
             return [dict(row) for row in rows], total
 
     def get(self, entry_id: int) -> dict | None:
@@ -55,7 +75,7 @@ class SqliteJournal:
     def create(self, entry: dict) -> int:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with closing(sqlite3.connect(self.path, timeout=5)) as db:
-            db.executescript(SCHEMA)
+            _upgrade(db)
             placeholders = ",".join("?" for _ in CREATE_COLUMNS)
             cursor = db.execute(
                 f"INSERT INTO journal_entries ({','.join(CREATE_COLUMNS)}) VALUES ({placeholders})",
@@ -87,3 +107,13 @@ class SqliteJournal:
             cursor = db.execute("DELETE FROM journal_entries WHERE id=?", (entry_id,))
             db.commit()
             return cursor.rowcount == 1
+
+    def thesis_counts(self) -> dict[str, dict]:
+        """Open and total theses per symbol, in one grouped query, for the positions without a thesis."""
+        db = self._read()
+        if db is None:
+            return {}
+        with closing(db):
+            rows = db.execute("SELECT symbol, SUM(status='abierta') AS open, COUNT(*) AS total FROM journal_entries"
+                              " GROUP BY symbol ORDER BY symbol LIMIT ?", (MAX_SYMBOLS,)).fetchall()
+            return {row["symbol"]: {"open": int(row["open"]), "total": int(row["total"])} for row in rows}

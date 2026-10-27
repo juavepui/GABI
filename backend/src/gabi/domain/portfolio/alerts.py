@@ -111,9 +111,16 @@ def _add_months(day: date, months: int) -> date:
 
 
 def overdue_theses(entries: list[dict], *, today: date) -> list[dict]:
-    """Open theses whose horizon has ended (a long horizon is reviewed yearly), oldest first."""
+    """Open theses whose review date has come: the one written in the thesis (#186) or, without it, the end
+    of its horizon (a long horizon is reviewed yearly), oldest first."""
     alerts = []
     for entry in entries:
+        written = _day(entry.get("review_due"))
+        if entry.get("status") == "abierta" and written is not None:
+            if written <= today:
+                alerts.append(_alert("thesis_review", "medium", written.isoformat(), symbols=[entry["symbol"]],
+                                     link="/cartera/diario", entry_id=entry["id"]))
+            continue
         months = REVIEW_MONTHS.get(str(entry.get("horizon") or ""))
         created = _day(entry.get("created_at"))
         if entry.get("status") != "abierta" or months is None or created is None:

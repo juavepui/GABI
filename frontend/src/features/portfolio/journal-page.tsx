@@ -2,7 +2,13 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { JournalCreate, JournalEntry } from '@/shared/api/generated/types.gen';
-import { createJournal, deleteJournal, getJournal, reviewJournal } from '@/shared/api/client';
+import {
+  createJournal,
+  deleteJournal,
+  getJournal,
+  getJournalChanges,
+  reviewJournal,
+} from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
@@ -14,6 +20,72 @@ import { Textarea } from '@/shared/ui/textarea';
 const numberOrNull = (value: FormDataEntryValue | null) =>
   value == null || String(value).trim() === '' ? null : Number(value);
 const money = (value: number | null | undefined) => formatNumber(value, { digits: 2 });
+
+const signed = (value: number | null | undefined, digits = 1) =>
+  formatNumber(value, { digits, fixed: true, signed: true });
+
+/** «Qué ha cambiado desde la tesis» (#186): read on demand, it computes the company's checklist. */
+function Changes({ entry }: { entry: JournalEntry }) {
+  const [asked, setAsked] = useState(false);
+  const changes = useQuery({
+    queryKey: ['portfolio', 'journal', 'changes', entry.id],
+    queryFn: ({ signal }) => getJournalChanges(entry.id, signal),
+    enabled: asked,
+  });
+  if (!asked)
+    return (
+      <Button type="button" size="sm" variant="outline" onClick={() => setAsked(true)}>
+        Ver qué ha cambiado desde la tesis
+      </Button>
+    );
+  if (changes.isPending) return <LoadingState />;
+  if (changes.isError)
+    return <ErrorState error={changes.error} retry={() => void changes.refetch()} />;
+  const data = changes.data;
+  return (
+    <dl
+      aria-label={'Qué ha cambiado en ' + entry.symbol}
+      className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-3"
+    >
+      <div>
+        <dt className="text-xs text-muted-foreground">Precio · USD</dt>
+        <dd>
+          {money(data.entry_price)} → {money(data.price)}
+          {data.price_return != null && (
+            <span className="ml-1 text-muted-foreground">
+              ({signed(data.price_return * 100)} %)
+            </span>
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs text-muted-foreground">Score del modelo congelado</dt>
+        <dd>
+          {formatNumber(data.entry_score, { digits: 1, fixed: true })} →{' '}
+          {formatNumber(data.score, { digits: 1, fixed: true })}
+          {data.score_change != null ? (
+            <span className="ml-1 text-muted-foreground">({signed(data.score_change)})</span>
+          ) : (
+            data.entry_score != null &&
+            !data.same_model && (
+              <span className="block text-xs text-muted-foreground">Escrita con otro modelo</span>
+            )
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs text-muted-foreground">Checklist · criterios cumplidos</dt>
+        <dd>
+          {data.entry_checklist_passed ?? '—'} / {data.entry_checklist_evaluated ?? '—'} →{' '}
+          {data.checklist_passed ?? '—'} / {data.checklist_evaluated ?? '—'}
+          {data.checklist_change != null && (
+            <span className="ml-1 text-muted-foreground">({signed(data.checklist_change, 0)})</span>
+          )}
+        </dd>
+      </div>
+    </dl>
+  );
+}
 
 function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void }) {
   const review = useMutation({
@@ -43,6 +115,9 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
           <span className="ml-2 text-xs text-muted-foreground">{dateLabel(entry.created_at)}</span>
           <p className="mt-1 text-xs text-muted-foreground">
             {entry.horizon || 'Sin horizonte'} · {entry.status}
+            {entry.status === 'abierta' && entry.review_due && (
+              <> · revisar el {dateLabel(entry.review_due)}</>
+            )}
           </p>
         </div>
         {entry.expected_value && (
@@ -55,7 +130,24 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
         )}
       </div>
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-        <p>Entrada: {money(entry.entry_price)} USD</p>
+        <p>
+          Entrada: {money(entry.entry_price)} USD
+          {entry.entry_price_date && (
+            <span className="block text-xs text-muted-foreground">
+              Cierre del {dateLabel(entry.entry_price_date)}, anotado al escribirla
+            </span>
+          )}
+        </p>
+        {entry.entry_score != null && (
+          <p>
+            Score al escribirla: {formatNumber(entry.entry_score, { digits: 1, fixed: true })}
+            {entry.entry_checklist_evaluated != null && (
+              <span className="block text-xs text-muted-foreground">
+                Checklist {entry.entry_checklist_passed} / {entry.entry_checklist_evaluated}
+              </span>
+            )}
+          </p>
+        )}
         <p>
           Escenario bajista: {money(entry.bear_price)} USD · {money(entry.bear_prob)} %
         </p>
@@ -72,6 +164,12 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
           <dt className="font-medium">Tesis</dt>
           <dd className="whitespace-pre-wrap text-muted-foreground">{entry.thesis || '—'}</dd>
         </div>
+        {entry.invalidation && (
+          <div>
+            <dt className="font-medium">Qué la invalidaría</dt>
+            <dd className="whitespace-pre-wrap text-muted-foreground">{entry.invalidation}</dd>
+          </div>
+        )}
         <div>
           <dt className="font-medium">Catalizadores</dt>
           <dd className="whitespace-pre-wrap text-muted-foreground">{entry.catalysts || '—'}</dd>
@@ -87,6 +185,11 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
           </div>
         )}
       </dl>
+      {entry.status === 'abierta' && (
+        <div className="mt-5 border-t pt-4">
+          <Changes entry={entry} />
+        </div>
+      )}
       {entry.status === 'abierta' ? (
         <form
           onSubmit={submitReview}
@@ -175,6 +278,8 @@ export function JournalPage() {
       risks: String(form.get('risks') ?? ''),
       position_size_pct: numberOrNull(form.get('position_size_pct')),
       notes: String(form.get('notes') ?? ''),
+      invalidation: String(form.get('invalidation') ?? ''),
+      review_due: String(form.get('review_due') ?? '') || null,
     };
     create.mutate(body, { onSuccess: () => element.reset() });
   }
@@ -221,6 +326,21 @@ export function JournalPage() {
             Tesis
             <Textarea name="thesis" maxLength={5000} rows={3} className="mt-1 w-full" />
           </label>
+          <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
+            <label className="block text-sm">
+              Qué la invalidaría
+              <Input className="mt-1" name="invalidation" maxLength={5000} />
+            </label>
+            <label className="block text-sm">
+              Fecha de revisión
+              <Input className="mt-1" name="review_due" type="date" />
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Sin precio de entrada se anota el último cierre de la caché; el score del modelo
+            congelado y el checklist de hoy se anotan siempre. Sin fecha de revisión, se revisa al
+            terminar el horizonte.
+          </p>
           <div className="grid gap-3 sm:grid-cols-3">
             {(['bear', 'base', 'bull'] as const).map((key, index) => (
               <div key={key} className="space-y-3 rounded-lg border p-3">

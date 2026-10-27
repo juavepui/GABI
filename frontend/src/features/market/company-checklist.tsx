@@ -674,6 +674,7 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
         <Dcf dcf={data.dcf} />
       </Folded>
       <Folded
+        id="criterios-cualitativos"
         title="Criterios cualitativos (los evalúas tú)"
         className="rounded-md border p-3 text-sm"
       >
