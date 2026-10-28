@@ -123,7 +123,9 @@ def backtest_prices(symbols: list[str], as_of: str, owners: dict | None = None) 
     ticker_prices = SqliteTickerPrices(config.DB_PATH)
     return identity_queries.backtest_prices(_reader(), symbols, as_of, owners,
         benchmark=config.BENCHMARK_SYMBOL, history=accredited_history(),
-        ticker_prices=ticker_prices.get, ticker_prices_many=ticker_prices.for_backtest)
+        ticker_prices=ticker_prices.get,
+        # Only sessions from the entry on are valued; whole histories exceeded the read budget.
+        ticker_prices_many=lambda symbols: ticker_prices.for_backtest(symbols, since=as_of))
 
 
 def last_filings(symbols: list[str], as_of: str) -> dict:

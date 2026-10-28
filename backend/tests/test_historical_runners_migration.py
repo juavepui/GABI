@@ -307,3 +307,21 @@ def test_price_snapshot_cache_is_bounded_and_expires_between_operations(local):
         db.commit()
     with reader.snapshot() as data:
         assert data.series('AAA', '2012-01-01', '2013-01-01', archive=False, source_id='').loc['2012-01-02', 'close'] == 777
+
+
+def test_backtest_price_reads_start_at_the_entry_and_stay_within_the_budget(tmp_path):
+    from gabi.infrastructure.storage.cache_writes import SCHEMA
+
+    path = tmp_path / 'gabi.db'
+    with closing(sqlite3.connect(path)) as db:
+        db.executescript(SCHEMA)
+        db.executemany('INSERT INTO prices (symbol,date,close,adj_close) VALUES (?,?,?,?)',
+                       [(symbol, day.date().isoformat(), 1.0, 1.0) for symbol in ('AAA', 'BBB')
+                        for day in pd.bdate_range('2000-01-03', '2019-12-31')])
+        db.commit()
+    reader = SqliteTickerPrices(path, max_rows=6000)
+    with pytest.raises(ValueError):  # whole histories: two series of ~5,200 sessions
+        reader.for_backtest(['AAA', 'BBB'])
+    bounded = reader.for_backtest(['AAA', 'BBB', 'missing'], since='2019-04-02')
+    assert bounded['AAA'].index.min() == pd.Timestamp('2019-04-02') and bounded['missing'].empty
+    assert_frame_equal(bounded['BBB'], reader.many(['BBB'])['BBB'].loc['2019-04-02':])

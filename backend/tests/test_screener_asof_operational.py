@@ -51,10 +51,12 @@ def market():
     identity.add_alias(identity.ensure_entity("1"), "AAA", "2026-10-28", "2026-10-29", source="observed-universe-snapshot")
 
 
-def test_default_path_is_unchanged_and_blocks_ticker_data_for_aliased_symbols(market):
-    table = screener_asof.build_ranking_as_of(DAY, symbols=["AAA"])["table"]
-    assert table.loc["AAA", "identity_status"] == "unresolved" and table.loc["AAA", "price"] is None
-    assert pd.isna(table.loc["AAA", "composite_score"])
+def test_default_path_reads_the_ticker_and_misses_history_stored_under_another_alias(market):
+    # A universe snapshot does not block the ticker cache; fundamentals by symbol miss the issuer's
+    # rows stored under its former ticker, which is why the live mode reads by issuer.
+    row = screener_asof.build_ranking_as_of(DAY, symbols=["AAA"])["table"].loc["AAA"]
+    assert row["identity_status"] == "unresolved" and row["entity_id"] is None
+    assert row["price"] == pytest.approx(399.0) and pd.isna(row["ps"])
 
 
 def test_operational_mode_reads_issuer_fundamentals_and_ticker_prices(market):

@@ -18,7 +18,8 @@ class SqliteTickerPrices:
         self.max_symbols, self.max_symbol_rows = max_symbols, max_symbol_rows
         self.limits = dict(max_rows=max_rows, max_bytes=max_bytes, max_field_bytes=max_field_bytes)
 
-    def many(self, symbols: list[str]) -> dict[str, pd.DataFrame]:
+    def many(self, symbols: list[str], since: str | None = None) -> dict[str, pd.DataFrame]:
+        """Ticker-keyed series in one snapshot; ``since`` drops older sessions (inclusive bound)."""
         requested = list(dict.fromkeys(symbols))
         if len(requested) > self.max_symbols:
             raise ValueError('Too many symbols for a compatibility price read')
@@ -38,12 +39,13 @@ class SqliteTickerPrices:
             columns = {r[1] for r in db.execute('PRAGMA table_info(prices)')}
             # Old databases may lack adj_close; a query must not ALTER TABLE.
             selected = ','.join(name if name in columns else f'NULL AS {name}' for name in PRICE_COLUMNS)
+            bound, extra = (' AND date>=?', (since,)) if since else ('', ())
             for index in range(0, len(requested), 200):
                 batch = requested[index:index + 200]
                 limits = self.limits | dict(max_rows=self.limits['max_rows'] - total_rows,
                                            max_bytes=self.limits['max_bytes'] - consumed)
                 records = bounded_records(db, f'SELECT symbol,{selected} FROM prices WHERE symbol IN '
-                    f"({','.join('?' for _ in batch)}) ORDER BY symbol,date ASC", tuple(batch), **limits)
+                    f"({','.join('?' for _ in batch)}){bound} ORDER BY symbol,date ASC", (*batch, *extra), **limits)
                 current = None
                 rows: list[tuple] = []
                 for row in records:
@@ -63,6 +65,7 @@ class SqliteTickerPrices:
     def get(self, symbol: str) -> pd.DataFrame:
         return self.many([symbol]).get(symbol, pd.DataFrame(columns=PRICE_COLUMNS))
 
-    def for_backtest(self, symbols: list[str]) -> dict[str, pd.DataFrame]:
-        found = self.many(symbols)
+    def for_backtest(self, symbols: list[str], since: str | None = None) -> dict[str, pd.DataFrame]:
+        """A backtest only values sessions from its entry on; whole histories exceeded the row budget."""
+        found = self.many(symbols, since)
         return {symbol: found.get(symbol, pd.DataFrame(columns=PRICE_COLUMNS)) for symbol in symbols}

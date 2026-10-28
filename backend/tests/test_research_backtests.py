@@ -467,3 +467,20 @@ def test_factor_contrast_job_matches_streamlit_block(tmp_path, monkeypatch):
     assert data["source_result_sha256"] == store.get(source["id"])["result_sha256"]
     assert data["independent_advantage_demonstrated"] is False
     assert "domain/research/academic_factors.py" in full["calculation_sources"]
+
+
+def test_backtest_without_covered_periods_is_reported_as_insufficient_data(tmp_path):
+    from gabi.application.research.backtest_market import NoCoveredPeriods
+
+    def uncovered(*_):
+        raise NoCoveredPeriods("Ningún periodo del rango tiene datos suficientes — se saltaron los 4 periodos.")
+
+    with pytest.raises(QueryError) as error:
+        build_backtest("backtest_v2", "2019-01-02", "2020-01-02", V2, uncovered)
+    assert error.value.code == "no_covered_periods" and isinstance(error.value.__cause__, ValueError)
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("backtest_v2", start="2019-01-02", end="2020-01-02", backtest_options=V2),
+                        "backtest-uncovered-1", "ui")
+    assert Worker(store, lambda command: build_backtest(command.kind, command.start, command.end,
+                                                        command.backtest_options, uncovered), tmp_path).run_once()
+    assert store.get(job["id"])["error_code"] == "insufficient_data"
