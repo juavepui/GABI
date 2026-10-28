@@ -457,3 +457,25 @@ test('Seguir desde el Ranking, la ficha y Comparar, y la lista con nota (#182)',
     await list.getByRole('button', { name: 'Dejar de seguir ' + symbol }).click();
   await expect(page.getByText('Aún no sigues ninguna empresa.')).toBeVisible();
 });
+
+test('«Por qué está aquí»: frase y bloques en Ranking, ficha y Cartera objetivo (#184)', async ({
+  page,
+  request,
+}) => {
+  const ranking: RankingResponse = await (
+    await request.get('http://127.0.0.1:8001/api/v1/ranking?limit=5')
+  ).json();
+  const first = ranking.items[0];
+  await page.goto('/descubrir?limit=5');
+  const row = page.locator('tbody tr').first();
+  await expect(row).toContainText(first.summary.text);
+  await expect(row).toContainText('Bloques del score: Valoración');
+  await page.goto('/empresas/' + first.symbol);
+  const why = page.getByRole('region', { name: 'Por qué está aquí' });
+  await expect(why).toContainText(first.summary.text);
+  await expect(why.getByRole('definition')).toHaveCount(4);
+  await page.goto('/cartera');
+  await expect(page.getByRole('row', { name: new RegExp(first.symbol) }).first()).toContainText(
+    first.summary.text,
+  );
+});

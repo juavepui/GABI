@@ -16,6 +16,7 @@ import { FollowButton } from './follow-button';
 import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
+import { BlockBars } from '@/shared/ui/score-summary';
 
 const PriceChart = lazy(() => import('./price-chart'));
 const groups = [
@@ -96,6 +97,14 @@ export function CompanyPage() {
                   </span>
                   <FollowButton symbol={company.symbol} />
                 </div>
+                <section
+                  aria-label="Por qué está aquí"
+                  className="mt-3 max-w-xl"
+                  title="Resumen descriptivo del score con reglas fijas; no es una recomendación."
+                >
+                  <p className="mb-2 text-sm font-medium">{company.summary.text}</p>
+                  <BlockBars summary={company.summary} />
+                </section>
                 <Link
                   className="mt-3 inline-block text-sm font-medium text-primary underline"
                   to={'/cartera/diario?symbol=' + encodeURIComponent(company.symbol)}

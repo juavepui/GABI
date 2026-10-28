@@ -6,7 +6,15 @@ from typing import Literal
 from pydantic import Field
 
 from gabi.application.portfolio.planning import PortfolioPlan
-from gabi_api.schemas.market import DataResponse, WireModel, data_response, finite, text_or_none
+from gabi_api.schemas.market import (
+    CandidateSummary,
+    DataResponse,
+    WireModel,
+    candidate_summary,
+    data_response,
+    finite,
+    text_or_none,
+)
 
 
 class PlanRequest(WireModel):
@@ -29,6 +37,7 @@ class TargetPosition(WireModel):
     price_usd: float | None
     weight_percent: float
     amount_eur: float
+    summary: CandidateSummary
 
 
 class CapitalAllocation(WireModel):
@@ -92,7 +101,8 @@ def plan_response(plan: PortfolioPlan) -> PlanResponse:
                                score_points=finite(row.get("composite_score")),
                                score_coverage_fraction=finite(row.get("score_coverage")),
                                price_usd=finite(row.get("price")), weight_percent=float(row["weight_pct"]),
-                               amount_eur=plan.capital_eur * float(row["weight_pct"]) / 100)
+                               amount_eur=plan.capital_eur * float(row["weight_pct"]) / 100,
+                               summary=candidate_summary(row))
                 for symbol, row in plan.target.iterrows()],
         allocations=[CapitalAllocation(symbol=item["symbol"], name=text_or_none(item["name"]),
                                        amount_eur=float(item["amount"])) for item in plan.allocations],

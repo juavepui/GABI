@@ -26,6 +26,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
 import { Term } from '@/shared/ui/term';
+import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
 
 /** 0-100 points (score, coverage or a sector percentile, 100 = best) as a 0..1 colour position. */
 const score = (value: number | null | undefined) => (value == null ? null : value / 100);
@@ -395,6 +396,8 @@ export function MarketPage() {
                                 {row.sector ?? 'Sin sector'}
                               </span>
                             </Link>
+                            <SummaryText summary={row.summary} className="mt-1" />
+                            <BlockBars summary={row.summary} compact />
                             <details className="mt-2 text-xs sm:hidden">
                               <summary className="cursor-pointer text-primary">
                                 Más métricas de {row.symbol}

@@ -15,6 +15,7 @@ import { formatMoney, formatNumber } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
 import { Term } from '@/shared/ui/term';
+import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
 import { SectorBreakdown } from './sector-breakdown';
 import { ExperimentalPlan } from './decisions-page';
 export { JournalPage } from './journal-page';
@@ -357,6 +358,8 @@ export function PortfolioPage() {
                                 {row.symbol}
                               </Link>
                               <span className="ml-2 text-muted-foreground">{row.name}</span>
+                              <SummaryText summary={row.summary} className="mt-1" />
+                              <BlockBars summary={row.summary} compact />
                               <details className="mt-1 sm:hidden">
                                 <summary className="cursor-pointer text-primary">
                                   Más datos de {row.symbol}
