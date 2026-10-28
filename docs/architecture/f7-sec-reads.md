@@ -120,6 +120,42 @@ Los SELECT nuevos son el inventario de tablas y tres lotes. Las consultas son
 entre uno y dos milisegundos más lentas en esta fixture; el cambio elimina
 escrituras de esquema en lecturas y acota los lotes, no promete más velocidad.
 
+## Lectores por símbolo y aliases del emisor (#201)
+
+La sincronización SEC escribe en `edgar_facts`, bajo el símbolo actual, solo
+los hechos que la entidad no conocía. Si el historial se guardó antes con otro
+alias (ticker anterior o clave histórica `CIK…`), leer `edgar_facts` por
+símbolo devuelve medio historial. `entity_observations` conserva el historial
+completo de la entidad. Clasificación de los lectores por símbolo:
+
+| Lector | Consumidores | Clase | Lectura |
+| --- | --- | --- | --- |
+| `SqliteSignals.filing_facts` | comparación de presentaciones 10-K/10-Q de señales | Mercado | Por entidad del CIK guardado en `edgar_metrics`; sin CIK o sin observaciones, por símbolo |
+| `SqliteSecReads.symbols_with_facts` (`edgar.get_symbols_with_facts`) | selección SEC de `ensure_edgar_data`, calidad de los datos | Ingesta y consulta | Símbolo con filas propias o cuya entidad tiene hechos |
+| `SqliteSecSelection.current` | selección SEC del CLI de fuentes | Ingesta | Igual que el anterior |
+| `SqliteSecReads.issuer_facts` | checklist y múltiplos sectoriales | Mercado | Por entidad desde #170 |
+| `SqliteSecReads.last_filed` en el checklist | clave de la caché de múltiplos sectoriales | Mercado | Sin cambio: una presentación nueva siempre se escribe bajo el símbolo actual y cambia la clave |
+| `facts`/`stored_facts`/`metrics_as_of`/`concept_value` sin `entity_id` (`edgar.get_edgar_facts`, `_facts_dict_from_stored`, `compute_edgar_metrics_as_of`, `get_shares_outstanding_as_of`) | `screener_asof` → ranking histórico, `full_universe_audit`, `overfitting_audit`, `r3_experiment` y demás investigación | Composite histórico y congelados | Sin cambio. Reciben `entity_id` cuando la identidad acreditada lo resuelve; leer por entidad en el resto exige versión nueva con validación separada |
+| `SqliteSecReads.last_filed` (`edgar.get_last_filed_dates`) | guard de reciclaje de Portfolio Lab | Investigación | Sin cambio |
+| `SqliteIdentityReads.filing_dates` | `identity.last_filings` → backtests | Composite histórico | Ya por entidad para propietarios acreditados; por ticker solo sin propietario |
+| `historical_data_audit` (`_ticker_inputs`, `year_counts`) y `historical_backfill` | auditorías históricas publicadas | Auditoría | Sin cambio: reproducen el flujo operativo que auditan |
+
+Las tres lecturas corregidas no cambian el Composite, el ranking ni los hashes
+congelados. La de señales conserva columnas, orden (`end_date`, `filed_date`),
+límite de 50.000 hechos y CIK devuelto; deduplica por clave XBRL como el
+lector por entidad y controla el tamaño del JSON antes de decodificarlo. En la
+cobertura, un símbolo sin filas propias cuesta una consulta por lote a
+`edgar_metrics` y otra a `entity_observations` (índice por entidad y dataset);
+sin tabla de entidades se conservan las consultas anteriores. Antes, un símbolo
+con todo su historial bajo otro alias se marcaba sin hechos y se volvía a
+descargar en cada actualización.
+
+`test_sec_alias_readers.py` cubre historial repartido entre alias, símbolo sin
+CIK, CIK sin hechos y JSON sobredimensionado. Pendiente, con validación
+separada: medir cuánto cambiaría el ranking si el Composite leyera por entidad
+y, como alternativa de raíz, reasignar al símbolo actual las filas de otros
+alias durante la sincronización (escritura explícita con migración y auditoría).
+
 ## Validación y medida
 
 La referencia capturada es `174f944210fe0a07d0186f8d60bbe05822c9c452`.

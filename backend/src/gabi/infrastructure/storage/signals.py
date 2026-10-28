@@ -11,6 +11,8 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from gabi.application.errors import QueryError
+from gabi.domain.market.sec_xbrl import KEYS
+from gabi.infrastructure.storage.sec_reads import FACT_COLUMNS
 
 SNAPSHOTS = """
 CREATE TABLE IF NOT EXISTS ranking_snapshots (
@@ -102,20 +104,47 @@ class SqliteSignals:
             return pd.DataFrame([dict(row) for row in rows]).set_index("symbol") if rows else pd.DataFrame()
 
     def filing_facts(self, symbol: str) -> tuple[pd.DataFrame, str | None]:
+        """10-K/10-Q facts of the symbol's SEC entity, whichever alias stored them (#201).
+
+        Without a stored CIK or entity observations, the symbol's own rows are read."""
         db = self._read("edgar_facts")
         if db is None:
             return pd.DataFrame(), None
         with closing(db):
+            cik = None
+            if db.execute("SELECT 1 FROM sqlite_schema WHERE name='edgar_metrics'").fetchone():
+                row = db.execute("SELECT cik FROM edgar_metrics WHERE symbol=?", (symbol,)).fetchone()
+                cik = str(row[0]) if row and row[0] else None
+            facts = self._entity_filing_facts(db, symbol, cik)
+            if facts is not None:
+                return facts, cik
             rows = db.execute("SELECT symbol,tag,unit,start_date,end_date,val,form,fp,fy,filed_date,accn "
                               "FROM edgar_facts WHERE symbol=? AND form IN ('10-K','10-Q') "
                               "ORDER BY end_date,filed_date LIMIT 50001", (symbol,)).fetchall()
             if len(rows) > 50000:
                 raise QueryError("resource_limit", "Un historial SEC supera 50000 hechos.", 422)
-            cik = None
-            if db.execute("SELECT 1 FROM sqlite_schema WHERE name='edgar_metrics'").fetchone():
-                row = db.execute("SELECT cik FROM edgar_metrics WHERE symbol=?", (symbol,)).fetchone()
-                cik = str(row[0]) if row and row[0] else None
             return pd.DataFrame([dict(row) for row in rows]), cik
+
+    @staticmethod
+    def _entity_filing_facts(db: sqlite3.Connection, symbol: str, cik: str | None) -> pd.DataFrame | None:
+        cik = cik.strip() if cik else ""
+        if not cik.isdigit() or db.execute("SELECT 1 FROM sqlite_schema WHERE name='entity_observations'").fetchone() is None:
+            return None
+        # Bounded like the symbol read; the payload guard runs before decoding JSON.
+        rows = db.execute("SELECT CASE WHEN length(CAST(payload_json AS BLOB))<=16384 THEN payload_json END "
+                          "FROM entity_observations WHERE entity_id=? AND dataset='edgar_facts' "
+                          "AND CASE WHEN length(CAST(payload_json AS BLOB))<=16384 "
+                          "THEN json_extract(payload_json,'$.form') IN ('10-K','10-Q') ELSE 1 END "
+                          "ORDER BY symbol,record_key LIMIT 50001", (f"cik:{int(cik):010d}",)).fetchall()
+        if len(rows) > 50000:
+            raise QueryError("resource_limit", "Un historial SEC supera 50000 hechos.", 422)
+        if any(row[0] is None for row in rows):
+            raise QueryError("resource_limit", "Un hecho SEC supera el límite de lectura.", 422)
+        if not rows:
+            return None
+        frame = pd.DataFrame([json.loads(row[0]) for row in rows]).drop_duplicates(KEYS)
+        frame = frame.assign(symbol=symbol).reindex(columns=FACT_COLUMNS)
+        return frame.sort_values(["end_date", "filed_date"], kind="stable").reset_index(drop=True)
 
     def record_filings(self, snapshot_id: int, results: list[dict]) -> int:
         if not self.path.is_file():

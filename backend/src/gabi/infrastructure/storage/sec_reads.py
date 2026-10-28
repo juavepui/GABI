@@ -194,4 +194,33 @@ class SqliteSecReads:
             return dict(self._rows(db, "SELECT symbol,cik FROM edgar_metrics"))
 
     def symbols_with_facts(self, symbols: list[str]) -> set[str]:
-        return {symbol for symbol, in self._by_symbol("edgar_facts", "symbol", symbols, distinct=True)}
+        """Symbols with dated facts under their own rows or under their stored CIK's entity (#201).
+
+        A symbol whose whole history was stored under a former alias has no rows of its own:
+        reading only by symbol marked it uncovered and re-downloaded it on every update."""
+        symbols = list(dict.fromkeys(symbols))
+        covered: set[str] = set()
+        with self._read() as (db, tables):
+            if db is None or "edgar_facts" not in tables:
+                return covered
+            db.execute("BEGIN")  # every batch observes one revision
+
+            def batches(sql, values):
+                for start in range(0, len(values), self.batch_size):
+                    chunk = values[start:start + self.batch_size]
+                    yield from self._rows(db, sql.format(",".join("?" for _ in chunk)), tuple(chunk))
+
+            covered.update(symbol for symbol, in batches("SELECT DISTINCT symbol FROM edgar_facts WHERE symbol IN ({})",
+                                                         symbols))
+            if not {"edgar_metrics", "entity_observations"} <= tables:
+                return covered
+            owners: dict[str, list[str]] = {}
+            for symbol, cik in batches("SELECT symbol,cik FROM edgar_metrics WHERE symbol IN ({})",
+                                       [symbol for symbol in symbols if symbol not in covered]):
+                cik = str(cik).strip() if cik else ""
+                if cik.isdigit():
+                    owners.setdefault(f"cik:{int(cik):010d}", []).append(symbol)
+            for entity, in batches("SELECT DISTINCT entity_id FROM entity_observations "
+                                   "WHERE dataset='edgar_facts' AND entity_id IN ({})", list(owners)):
+                covered.update(owners[entity])
+        return covered
