@@ -49,6 +49,7 @@ from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
+from gabi.domain.market.macro_series import macro_metadata
 from gabi.domain.market.selection import RankingFilter
 from gabi.domain.market.signals import compare_snapshots
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -145,7 +146,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                         lambda: repository.ranking(dict(policy.frozen_weights), today()).table, today)
     portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
     journal = Journal(SqliteJournal(settings.data_dir))
-    macro = MacroQueries(SqliteMacro(settings.data_dir), series_metadata(),
+    macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata(series_metadata()),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
     signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
                             compare_snapshots, compare_cached, jobs)

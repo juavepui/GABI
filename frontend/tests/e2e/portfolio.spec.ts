@@ -246,3 +246,19 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
     await lots.getByRole('button', { name: 'Borrar compra de ' + symbol }).click();
   await expect(page.getByRole('region', { name: 'Compras registradas' })).toHaveCount(0);
 });
+
+test('Inicio muestra la franja macro de la caché y el panel declara frecuencia y agregación (#195)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const strip = page.getByRole('region', { name: 'Contexto macro' });
+  await expect(strip).toContainText('Treasury 10 años');
+  await expect(strip).toContainText('Curva de tipos (10A-2A)');
+  await expect(strip).toContainText('Diaria · último valor publicado');
+  await expect(strip).not.toContainText('Fed Funds');
+  await strip.getByRole('link', { name: 'Ver panel macro' }).click();
+  await expect(page.getByRole('heading', { name: 'Panel macro' })).toBeVisible();
+  await expect(page.getByText('FRED FEDFUNDS · Mensual · media del mes')).toBeVisible();
+  await expect(page.getByText('FRED WALCL · Semanal · saldo de cada miércoles')).toBeVisible();
+  await expect(page.getByText(/no es alcista por sí mismo/)).toBeVisible();
+});

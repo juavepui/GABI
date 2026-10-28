@@ -10671,6 +10671,17 @@
       "MacroPoint": {
         "additionalProperties": false,
         "properties": {
+          "aggregation": {
+            "enum": [
+              "end_of_period",
+              "average",
+              "year_over_year",
+              "wednesday_level",
+              "three_month_average"
+            ],
+            "title": "Aggregation",
+            "type": "string"
+          },
           "change_3m": {
             "anyOf": [
               {
@@ -10686,9 +10697,22 @@
             "title": "Change Unit",
             "type": "string"
           },
+          "frequency": {
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "title": "Frequency",
+            "type": "string"
+          },
           "help": {
             "title": "Help",
             "type": "string"
+          },
+          "home": {
+            "title": "Home",
+            "type": "boolean"
           },
           "label": {
             "title": "Label",
@@ -10732,6 +10756,9 @@
           "unit",
           "change_unit",
           "help",
+          "frequency",
+          "aggregation",
+          "home",
           "latest_value",
           "latest_date",
           "change_3m"

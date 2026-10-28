@@ -1,24 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { getMacro } from '@/shared/api/client';
-import { dateLabel, formatCompactMoney, formatNumber } from '@/shared/lib/format';
+import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { PageHeader } from '@/shared/ui/page-header';
-
-/** A level or a change in the unit the API publishes; dollars read as «billones US$». */
-function amount(value: number | null, unit: string, signed = false): string {
-  if (unit === 'USD') {
-    const text = formatCompactMoney(value);
-    return signed && value != null && value > 0 ? '+' + text : text;
-  }
-  return formatNumber(value, { digits: 2, signed }) + ' ' + unit;
-}
+import { amount, cadence, trend, useMacro } from './macro-format';
 
 export function MacroPage() {
-  const query = useQuery({
-    queryKey: ['market', 'macro'],
-    queryFn: ({ signal }) => getMacro(signal),
-  });
+  const query = useMacro();
   return (
     <div className="space-y-6">
       <PageHeader
@@ -73,8 +60,16 @@ export function MacroPage() {
                   {item.latest_value == null
                     ? 'Sin dato local'
                     : 'Dato a ' + dateLabel(item.latest_date)}
-                  {item.change_3m != null &&
-                    ' · Cambio frente a 3 meses: ' + amount(item.change_3m, item.change_unit, true)}
+                  {item.change_3m != null && (
+                    <>
+                      {' · Cambio frente a 3 meses: '}
+                      <span aria-hidden="true">{trend(item.change_3m)} </span>
+                      {amount(item.change_3m, item.change_unit, true)}
+                    </>
+                  )}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  FRED {item.series_id} · {cadence(item)}
                 </p>
                 <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{item.help}</p>
               </article>
