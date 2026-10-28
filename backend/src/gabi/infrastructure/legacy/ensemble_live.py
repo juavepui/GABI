@@ -1,7 +1,7 @@
 """Live inputs of the prospective ENS record (#237) through the frozen and legacy engines.
 
 Nothing is reimplemented: features come from ``screener_asof`` (the code behind the
-retrospective rankings), blocks from the frozen ``strategy_discovery.score_frame`` and the
+retrospective rankings) in its opt-in operational mode, blocks from the frozen ``strategy_discovery.score_frame`` and the
 dated SIC from the frozen ``factor_sector_stability.assign``. Only its filings source changes:
 EDGAR submissions fetched when recording (decision D2), with the SIC current on that day.
 The #38 fiscal alignment is enabled once at command start, never per request.
@@ -112,20 +112,20 @@ class LegacyEnsembleSources:
     def ranking(self, signal: date, symbols: list[str]) -> pd.DataFrame:
         from gabi import screener_asof
 
-        table = screener_asof.build_ranking_as_of(signal.isoformat(), symbols=symbols)["table"].copy()
-        # Decision D1: the current ticker→CIK identity where no attributed alias resolves the symbol.
+        # Decision D1: issuers by the CIK stored by the SEC sync (current map, reviewed successions
+        # included) where no attributed alias resolves the signal; prices from the ticker cache.
         stored = SqliteSecReads(self.db).stored_ciks()
-        current = {symbol: f"cik:{int(cik):010d}" for symbol, cik in stored.items() if str(cik).strip().isdigit()}
-        missing = table["entity_id"].isna()
-        table.loc[missing, "identity_source"] = [("sec_cik_map" if symbol in current else None)
-                                                 for symbol in table.index[missing]]
-        table.loc[missing, "entity_id"] = [current.get(symbol) for symbol in table.index[missing]]
-        return table
+        current = {symbol: f"cik:{int(cik):010d}" for symbol, cik in stored.items()
+                   if symbol in set(symbols) and str(cik).strip().isdigit()}
+        return screener_asof.build_ranking_as_of(signal.isoformat(), symbols=symbols,
+                                                 operational_entities=current)["table"]
 
     def divisions(self, frame: pd.DataFrame, signal: date) -> pd.DataFrame:
         from gabi import factor_sector_stability as sic
 
         spec = sic.specification()
+        if frame.empty:  # the frozen rule cannot index an empty result
+            return pd.DataFrame(columns=["entity_id", "division", "reason"]).rename_axis("symbol")
         probe = _Calls()
         filings = []
         for entity in sorted({str(value) for value in frame["entity_id"].dropna() if str(value).startswith("cik:")}):

@@ -49,13 +49,18 @@ def _covers(as_of_date: str) -> bool:
     return identity.accredited_history().covers(as_of_date)
 
 
-def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
+def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None,
+                           ticker_prices: bool = False) -> dict:
     """Fundamentales + múltiplos clásicos (ROIC, deuda neta/EBITDA, crecimiento
     de FCF, márgenes, PER/P-VC/P-Ventas/EV-EBITDA) reconstruidos con lo que se
-    conocía en as_of_date."""
+    conocía en as_of_date.
+
+    ``ticker_prices`` (modo operativo en vivo, #237): fundamentales del emisor
+    ``entity_id`` y precios de la caché por ticker, sin serie atribuida."""
     m = edgar.compute_edgar_metrics_as_of(symbol, as_of_date, entity_id=entity_id)
     historical = _covers(as_of_date)
-    if entity_id:
+    attributed = bool(entity_id) and not ticker_prices
+    if attributed:
         history = identity.price_history(symbol, as_of_date, entity_id=entity_id)
         history = history[history.index <= pd.Timestamp(as_of_date)] if not history.empty else history
         price = float(history["close"].iloc[-1]) if not history.empty and pd.notna(history["adj_close"].iloc[-1]) else None
@@ -75,9 +80,9 @@ def _classic_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | Non
         # Cierre negociado de la serie acreditada (deshace splits solo si la
         # fuente es la caché Yahoo).
         price_asof_unadjusted = accredited_prices.as_traded_close(
-            identity.accredited_history().reader, history, as_of_date) if entity_id else None
+            identity.accredited_history().reader, history, as_of_date) if attributed else None
     elif price is not None:
-        if entity_id:
+        if attributed and entity_id:
             splits = identity.observations(entity_id, "splits")
             if not splits.empty:
                 splits = splits[splits["source_symbol"] == history.attrs.get("source_symbol", identity.normalize_symbol(symbol))]
@@ -184,7 +189,7 @@ def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp, *, entity_id: st
 
 
 def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = None,
-                        *, strict_identity: bool = False) -> dict:
+                        *, strict_identity: bool = False, operational_entities: dict[str, str] | None = None) -> dict:
     """Reconstruye el ranking completo para as_of_date (YYYY-MM-DD).
 
     symbols=None (por defecto) usa el universo histórico reconstruido para
@@ -205,7 +210,17 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     disponible para cuando se complete la migración/atribución y se quiera
     exigir identidad acreditada; hasta entonces, las empresas SIN alias
     registrado (todas, hoy) siguen leyendo de la caché legacy por ticker,
-    exactamente como antes de este cambio."""
+    exactamente como antes de este cambio.
+
+    `operational_entities` (modo operativo en vivo, #237; desactivado por
+    defecto): símbolo → entidad del mapa SEC vigente para los símbolos sin
+    alias que resuelva la fecha. Los fundamentales se leen por emisor y los
+    precios de la caché por ticker, porque en vivo no hay series atribuidas.
+    No se admite en fechas de la capa acreditada."""
+    live = operational_entities is not None
+    entities = operational_entities or {}
+    if live and (symbols is None or _covers(as_of_date)):
+        raise ValueError("El modo operativo exige símbolos explícitos y una fecha fuera de la capa acreditada.")
     if symbols is None:
         universe_info = universe.get_sp500_constituents_asof(as_of_date)
         symbols = universe_info["symbols"]
@@ -224,11 +239,14 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     for sym in symbols:
         resolved = identity.resolve(sym, as_of_date)
         entity_id = resolved["entity_id"]
+        source = resolved["source"]
+        if live and not entity_id and entities.get(sym):
+            entity_id, source = entities[sym], "sec_cik_map"
         # Explicit legacy mode is diagnostic only; a known conflicting/recycled
         # alias never falls back to ticker-indexed data.
-        allowed = entity_id or (not strict_identity and not historical and not identity.has_aliases(sym))
-        classic = _classic_metrics_as_of(sym, as_of_date, entity_id=entity_id) if allowed else {"pe": None, "roic": None, "market_cap": None, "price": None}
-        price_df = _price_history_as_of(sym, as_of_ts, entity_id=entity_id) if allowed else pd.DataFrame()
+        allowed = live or entity_id or (not strict_identity and not historical and not identity.has_aliases(sym))
+        classic = _classic_metrics_as_of(sym, as_of_date, entity_id=entity_id, ticker_prices=live) if allowed else {"pe": None, "roic": None, "market_cap": None, "price": None}
+        price_df = _price_history_as_of(sym, as_of_ts, entity_id=None if live else entity_id) if allowed else pd.DataFrame()
 
         t = technicals.compute_technicals(price_df, bench_df) if not price_df.empty else {}
         r = risk.compute_risk_metrics(price_df, bench_df) if not price_df.empty else {}
@@ -239,7 +257,7 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
         # que debe quedar — la de technicals es el cierre tal cual, sin esa
         # corrección, pensado para el screener "en vivo" donde no aplica.
         row = {"symbol": sym, "entity_id": entity_id, "identity_status": resolved["status"],
-               "identity_source": resolved["source"],
+               "identity_source": source,
                "price_source": price_df.attrs.get("source_id") if not price_df.empty else None}
         row.update(t)
         row.update(r)

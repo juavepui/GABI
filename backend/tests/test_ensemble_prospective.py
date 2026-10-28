@@ -186,6 +186,7 @@ def test_live_sources_use_the_frozen_sic_rule_and_scorer(tmp_path):
                                     sessions=lambda start, end: [])
     frame = pd.DataFrame({"entity_id": ["cik:0000000001", "cik:0000000002", "cik:0000000003", None]},
                          index=["AAA", "BBB", "CCC", "DDD"])
+    assert sources.divisions(frame.iloc[0:0], date(2026, 12, 21)).empty
     labels = sources.divisions(frame, date(2026, 12, 21))
     assert labels.division.to_dict() == {"AAA": "D", "BBB": "H", "CCC": "", "DDD": ""}
     assert labels.reason.to_dict() == {"AAA": "classified", "BBB": "classified", "CCC": "stale_filing",
