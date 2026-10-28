@@ -6095,6 +6095,10 @@ export type LocalSettingsResponse = {
  */
 export type MacroPoint = {
     /**
+     * Aggregation
+     */
+    aggregation: 'end_of_period' | 'average' | 'year_over_year' | 'wednesday_level' | 'three_month_average';
+    /**
      * Change 3M
      */
     change_3m: number | null;
@@ -6103,9 +6107,17 @@ export type MacroPoint = {
      */
     change_unit: string;
     /**
+     * Frequency
+     */
+    frequency: 'daily' | 'weekly' | 'monthly';
+    /**
      * Help
      */
     help: string;
+    /**
+     * Home
+     */
+    home: boolean;
     /**
      * Label
      */

@@ -29,7 +29,8 @@ class MacroQueries:
             unit, change_unit = UNITS.get(meta["unit"], (meta["unit"], meta["unit"]))
             scale = SCALE.get(meta["unit"], 1)
             rows.append({"series_id": series_id, "label": meta["label"], "unit": unit, "change_unit": change_unit,
-                         "help": meta["help"], "latest_value": latest[1] * scale if latest else None,
+                         "help": meta["help"], "frequency": meta["frequency"], "aggregation": meta["aggregation"],
+                         "home": meta["home"], "latest_value": latest[1] * scale if latest else None,
                          "latest_date": latest[0] if latest else None,
                          "change_3m": (latest[1] - older[1]) * scale if latest and older else None})
         return rows

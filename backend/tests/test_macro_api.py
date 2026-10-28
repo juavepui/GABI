@@ -53,3 +53,19 @@ def test_macro_says_whether_the_cached_series_can_be_refreshed(tmp_path):
         assert api.get("/api/v1/market/macro").json()["fred_key_configured"] is False
         (tmp_path / "fred_api_key.txt").write_text("clave-temporal", encoding="utf-8")
         assert api.get("/api/v1/market/macro").json()["fred_key_configured"] is True
+
+
+def test_every_series_declares_frequency_aggregation_and_the_home_strip(tmp_path):
+    from gabi.domain.market.fred import SERIES, series_metadata
+    with TestClient(create_app(Settings(tmp_path))) as api:
+        rows = {row["series_id"]: row for row in api.get("/api/v1/market/macro").json()["items"]}
+    assert set(rows) == set(SERIES)
+    assert (rows["FEDFUNDS"]["frequency"], rows["FEDFUNDS"]["aggregation"]) == ("monthly", "average")
+    assert (rows["CPIAUCSL"]["frequency"], rows["CPIAUCSL"]["aggregation"]) == ("monthly", "year_over_year")
+    assert (rows["WALCL"]["frequency"], rows["WALCL"]["aggregation"]) == ("weekly", "wednesday_level")
+    assert (rows["DGS10"]["frequency"], rows["DGS10"]["aggregation"]) == ("daily", "end_of_period")
+    assert {key for key, row in rows.items() if row["home"]} == {"DGS10", "DFII10", "T10Y2Y", "BAMLH0A0HYM2"}
+    # The revised texts no longer promise that a cut is bullish or that the curve times a recession.
+    assert "no es alcista por sí mismo" in rows["FEDFUNDS"]["help"] and "0,25" in rows["FEDFUNDS"]["help"]
+    assert "no indica cuándo" in rows["T10Y2Y"]["help"]
+    assert rows["DGS10"]["help"] == series_metadata()["DGS10"]["help"]  # unrevised texts stay as synchronized
