@@ -17,13 +17,19 @@ class PublishedArtifacts(Protocol):
     def read(self, ref: str) -> tuple[object, bool | None]: ...
 
 
+def _published(ledger: dict) -> list[dict]:
+    # Configurations registered after the reconciliation are trials too (#53).
+    return (ledger["legacy_entries"] + ledger["additional_observed_records"]
+            + ledger.get("registered_after_reconciliation", []))
+
+
 class ResearchCatalog:
     def __init__(self, source: PublishedLedger, artifacts: PublishedArtifacts | None = None):
         self.source, self.artifacts = source, artifacts
 
     def overview(self) -> dict:
         ledger = self.source.read()
-        published = ledger["legacy_entries"] + ledger["additional_observed_records"]
+        published = _published(ledger)
         return {
             "as_of": ledger["as_of"],
             "scope": ledger["scope"],
@@ -39,7 +45,7 @@ class ResearchCatalog:
 
     def trials(self, *, offset: int, limit: int, family: str | None = None) -> dict:
         ledger = self.source.read()
-        published = ledger["legacy_entries"] + ledger["additional_observed_records"]
+        published = _published(ledger)
         rows = [row for row in published if family is None or row["family"] == family]
         # Do not expose arbitrary configuration or raw artifact contents through this endpoint.
         fields = ("id", "family", "configuration_sha256", "specification_ref", "result_ref",
@@ -58,8 +64,7 @@ class ResearchCatalog:
     def trial(self, trial_id: str) -> dict:
         """One published trial: what was tested (its configuration) and what came out (its published result)."""
         ledger = self.source.read()
-        row = next((row for row in ledger["legacy_entries"] + ledger["additional_observed_records"]
-                    if row["id"] == trial_id), None)
+        row = next((row for row in _published(ledger) if row["id"] == trial_id), None)
         if row is None:
             raise QueryError("trial_not_found", "El ensayo no está en el registro publicado.", 404)
         detail = {field: row[field] for field in (

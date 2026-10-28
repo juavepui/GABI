@@ -17,6 +17,7 @@ FACTOR_CLASSIFICATIONS = {
 
 FAMILIES = {
     "discovery_three_models": "Descubrimiento de estrategias · tres modelos",
+    "ensemble_vqe_v1": "Ensemble de valor, calidad y expectativas (v1)",
     "r3_v2": "R3 E6 · variantes sobre V2",
     "r3_e6": "R3 E6 · variantes sobre V2",
     "repurchase_cash_v1": "Recompras y caja (v1)",

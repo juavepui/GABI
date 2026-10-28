@@ -14,6 +14,7 @@ def test_published_catalog_reconciles_convention_without_claiming_exhaustiveness
     assert ledger["counts"] == {
         "legacy_guard_entries": 34, "legacy_observed_entries": 33, "legacy_pending_entries": 1,
         "additional_observed_records": 4, "diagnostic_groups": 14,
+        "registered_after_reconciliation": 1, "known_minimum_candidate_configurations": 35,
     }
     assert ledger["exhaustive_search_history"] is False
     assert ledger["global_error_control_established"] is False
@@ -35,7 +36,7 @@ def test_all_four_new_candidates_retain_failures_without_promotion():
 
 def test_json_references_resolve_and_configuration_hashes_cover_settings():
     ledger = search_ledger.build(config.BASE_DIR)
-    for row in ledger["legacy_entries"] + ledger["additional_observed_records"]:
+    for row in ledger["legacy_entries"] + ledger["additional_observed_records"] + ledger["registered_after_reconciliation"]:
         assert row["configuration_sha256"] == fingerprint(row["configuration"])
         for reference in (row["specification_ref"], row["result_ref"]):
             if reference is None:
@@ -46,6 +47,21 @@ def test_json_references_resolve_and_configuration_hashes_cover_settings():
             value = json.loads((config.BASE_DIR / name).read_text(encoding="utf-8"))
             for key in pointer.strip("/").split("/"):
                 value = value[int(key)] if isinstance(value, list) else value[key]
+
+
+def test_ensemble_counts_as_a_new_configuration_outside_the_inherited_convention():
+    ledger = search_ledger.build(config.BASE_DIR)
+    assert ledger["version"] == 2 and ledger["revisions"][0]["added"] == ["ensemble/ENS-VQE-v1"]
+    (ensemble,) = ledger["registered_after_reconciliation"]
+    assert ensemble["configuration"]["model"] == "GABI-ENS-VQE-v1"
+    assert ensemble["configuration"]["multiple_testing"]["new_candidate_configurations"] == 1
+    # Nothing observed beyond robustness without returns; the prospective looks are still ahead.
+    assert ensemble["state"] == "pending_prospective" and ensemble["observed_sample"] is None
+    assert ensemble["result_ref"] is None and not ensemble["demonstrated_superiority"]
+    assert ensemble["retrospective_robustness"] == {
+        "result_ref": "docs/ensemble-robustness/resultado.json#/decision", "returns_read": False, "decision": "parcial"}
+    assert ensemble["planned_sample"]["looks"]["not_before"][0] == "2029-12-21"
+    assert all(row["id"] != ensemble["id"] for row in ledger["legacy_entries"])
 
 
 @pytest.fixture

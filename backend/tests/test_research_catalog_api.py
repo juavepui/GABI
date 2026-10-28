@@ -61,3 +61,20 @@ def test_catalog_absent_and_malformed_fail_closed_without_initializing_data(tmp_
         path.write_text('{"scope":"unpublished-reserve"}', encoding="utf-8")
         assert api.get("/api/v1/research/trials").status_code == 503
     assert not data.exists()
+
+
+def test_configurations_registered_after_reconciliation_are_listed_as_trials(tmp_path):
+    published = ledger_fixture(tmp_path)
+    ledger = json.loads(published.read_text(encoding="utf-8"))
+    ledger["registered_after_reconciliation"] = [{
+        **ledger["legacy_entries"][0], "id": "ensemble/ENS-VQE-v1", "family": "ensemble_vqe_v1",
+        "result_ref": None, "observed_sample": None, "planned_sample": {"first_record": "2026-12-21"},
+        "state": "pending_prospective", "decision": "await_preregistered_looks", "failures": None}]
+    published.write_text(json.dumps(ledger), encoding="utf-8")
+    with TestClient(create_app(Settings(tmp_path / "data"), published_ledger=published)) as api:
+        assert "ensemble_vqe_v1" in api.get("/api/v1/research/overview").json()["families"]
+        trials = api.get("/api/v1/research/trials?family=ensemble_vqe_v1").json()
+        assert trials["total"] == 1 and trials["items"][0]["family_label"].startswith("Ensemble")
+        detail = api.get("/api/v1/research/trial", params={"id": "ensemble/ENS-VQE-v1"})
+        assert detail.status_code == 200, detail.text
+        assert detail.json()["result_note"] == "Ensayo prospectivo: su resultado aún no existe."
