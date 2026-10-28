@@ -2,6 +2,7 @@
 
 This catalog preserves the historical 34-entry convention; it does not certify
 an exhaustive search count or recalculate any published result or correction.
+Configurations registered after the 2026-09-29 reconciliation are kept apart.
 """
 
 import hashlib
@@ -125,6 +126,19 @@ def build(load: Callable[[str], str]) -> dict:
                         "docs/strategy-discovery/repurchase-cash-v1/resultado.json#/summary",
                         dates, "observed", "failed_daily_gate", failures=rcf_result["summary"]["failures"]))
 
+    # Registered after the 2026-09-29 reconciliation; the inherited 34 stay untouched (#53).
+    ensemble_path = "docs/ensemble-robustness/preregistro.json"
+    ensemble = read(ensemble_path)["spec"]
+    robustness = read("docs/ensemble-robustness/resultado.json")
+    if robustness["returns_read"] is not False:
+        raise ValueError("ENS-VQE-v1 retrospective robustness must not read returns.")
+    plan = ensemble["prospective_plan"]
+    later = [entry("ensemble/ENS-VQE-v1", "ensemble_vqe_v1", ensemble, ensemble_path + "#/spec", None,
+                   {"first_record": plan["first_record"], "looks": plan["looks"],
+                    "universe": ensemble["universe"]["rule"]}, "pending_prospective", "await_preregistered_looks")
+             | {"retrospective_robustness": {"result_ref": "docs/ensemble-robustness/resultado.json#/decision",
+                                             "returns_read": False, "decision": robustness["decision"]["label"]}}]
+
     diagnostics = []
     for family in DIAGNOSTICS:
         protocol = f"docs/{family}/preregistro.json"
@@ -147,21 +161,28 @@ def build(load: Callable[[str], str]) -> dict:
     pin("docs/placebo-engine/weight_perturbations.csv")
     pin("docs/placebo-engine/null_distributions.csv")
 
-    if len(legacy) != 34 or len({item["id"] for item in legacy + additional}) != len(legacy + additional):
+    records = legacy + additional + later
+    if len(legacy) != 34 or len({item["id"] for item in records}) != len(records):
         raise ValueError("The historical convention changed; review the reconciliation before publishing.")
     return {
-        "version": 1, "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
+        "version": 2, "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
+        "revisions": [{"version": 2, "date": "2026-10-28", "issue": 53, "added": [row["id"] for row in later]}],
         "exhaustive_search_history": False, "global_error_control_established": False,
         "hash_convention": "UTF-8 text, canonical LF; does not replace original binary/canonical result hashes",
         "counts": {"legacy_guard_entries": len(legacy),
                    "legacy_observed_entries": sum(row["state"] == "observed" for row in legacy),
                    "legacy_pending_entries": sum(row["state"] != "observed" for row in legacy),
-                   "additional_observed_records": len(additional), "diagnostic_groups": len(diagnostics)},
-        "legacy_entries": legacy, "additional_observed_records": additional, "diagnostics": diagnostics,
+                   "additional_observed_records": len(additional), "diagnostic_groups": len(diagnostics),
+                   "registered_after_reconciliation": len(later),
+                   "known_minimum_candidate_configurations": len(legacy) + len(later)},
+        "legacy_entries": legacy, "additional_observed_records": additional,
+        "registered_after_reconciliation": later, "diagnostics": diagnostics,
         "unresolved_groups": v1["excluded"],
         "limitations": [
             "34 is the inherited bookkeeping convention, not an exhaustive count of observed searches.",
             "VALUE is specified but its prospective outcomes have not been observed.",
+            "ENS-VQE-v1 is specified; its retrospective robustness read no returns and its prospective outcomes "
+            "have not been observed. It counts as a new configuration outside the inherited 34.",
             "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
             "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",
             "13 Factor Zoo tests, 256 weight perturbations and 8192 null paths also exposed retrospective information.",

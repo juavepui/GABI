@@ -37,6 +37,23 @@ Las simulaciones nulas no equivalen a 8.192 estrategias buscadas; las pruebas
 académicas no validan la cartera GABI. Las auditorías de inputs añaden cero
 configuraciones de inversión.
 
+## Registradas después de la reconciliación (revisión 2)
+
+La revisión 2 (28-10-2026) añade una sección `registered_after_reconciliation`
+para las configuraciones preregistradas después del 29-09-2026. No toca las 34
+entradas heredadas, sus guards ni sus decisiones.
+
+| Entrada | Estado | Qué se ha observado |
+| --- | --- | --- |
+| `ensemble/ENS-VQE-v1` (#53) | Prospectiva pendiente | Robustez retrospectiva **sin retornos**: decisión «parcial». Primera revisión prospectiva no antes del 2029-12-21 |
+
+Su preregistro la declara como **una configuración candidata nueva**. Los tres
+Top-20 de sus componentes son comparadores diagnósticos, no candidatos. El
+mínimo conocido acumulado pasa a **35** (`known_minimum_candidate_configurations`).
+Sigue siendo un mínimo: no acredita un recuento global ni control global del
+error de selección. El catálogo de Investigación la lista como ensayo
+prospectivo, sin resultado.
+
 ## Lo que sigue sin poder recuperarse
 
 Se mantienen las cuatro exclusiones documentadas por #12: vectores completos de

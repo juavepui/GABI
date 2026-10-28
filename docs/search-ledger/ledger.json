@@ -1,7 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "as_of": "2026-09-29",
   "scope": "explicit_published_repository_artifacts_only",
+  "revisions": [
+    {
+      "version": 2,
+      "date": "2026-10-28",
+      "issue": 53,
+      "added": [
+        "ensemble/ENS-VQE-v1"
+      ]
+    }
+  ],
   "exhaustive_search_history": false,
   "global_error_control_established": false,
   "hash_convention": "UTF-8 text, canonical LF; does not replace original binary/canonical result hashes",
@@ -10,7 +20,9 @@
     "legacy_observed_entries": 33,
     "legacy_pending_entries": 1,
     "additional_observed_records": 4,
-    "diagnostic_groups": 14
+    "diagnostic_groups": 14,
+    "registered_after_reconciliation": 1,
+    "known_minimum_candidate_configurations": 35
   },
   "legacy_entries": [
     {
@@ -3090,6 +3102,257 @@
       "demonstrated_superiority": false
     }
   ],
+  "registered_after_reconciliation": [
+    {
+      "id": "ensemble/ENS-VQE-v1",
+      "family": "ensemble_vqe_v1",
+      "configuration": {
+        "version": 1,
+        "issue": 53,
+        "model": "GABI-ENS-VQE-v1",
+        "stage": "RESEARCH_RETROSPECTIVE_ROBUSTNESS_WITHOUT_RETURNS + PROSPECTIVE_PLAN",
+        "demonstrated": false,
+        "written_before": "cualquier cálculo del ensemble, de sus correlaciones, rotación o selecciones",
+        "components": {
+          "priority": [
+            "value",
+            "quality",
+            "expectations"
+          ],
+          "definition": "bloques value, quality y expectations de strategy-discovery (#60), spec_sha256 bf6fd97c170a62f4ace184b5649451c42b2673f742515cd7bf053c986fd87682, sin cambios",
+          "excluded": {
+            "momentum": "IC previo negativo o nulo en #40/#48; decisión fijada antes de calcular",
+            "risk": "sin evidencia previa en #40/#48",
+            "composite_investor": "referencia del modelo vigente, no componente"
+          },
+          "metrics": {
+            "value": [
+              "pe_pct",
+              "pb_pct",
+              "ev_ebitda_pct"
+            ],
+            "quality": [
+              "roic_persistence_mean_pct",
+              "operating_margin_persistence_mean_pct",
+              "fcf_positive_fraction_pct"
+            ],
+            "expectations": [
+              "expectations_gap_pct"
+            ]
+          },
+          "block_minimum_available": {
+            "value": 2,
+            "quality": 2,
+            "expectations": 1
+          }
+        },
+        "aggregation": {
+          "rule": "media aritmética equiponderada de los percentiles de bloque value, quality y expectations",
+          "weights": {
+            "value": 0.3333333333333333,
+            "quality": 0.3333333333333333,
+            "expectations": 0.3333333333333333
+          },
+          "required": "los tres bloques presentes; sin imputación",
+          "weight_optimization": "prohibida"
+        },
+        "inputs": {
+          "scores": {
+            "path": "docs/strategy-discovery/scores.csv",
+            "sha256_bytes": "d9eab0ef47ed166b687693e346b9a96cb9496d7236ce9b2b3b4149a6fdd64b78",
+            "must_match": "docs/strategy-discovery/resultado.json#/artifacts_sha256/scores.csv",
+            "columns": [
+              "fecha",
+              "symbol",
+              "entity_id",
+              "division",
+              "value",
+              "quality",
+              "expectations",
+              "value_available",
+              "quality_available",
+              "expectations_available",
+              "pe_pct",
+              "pb_pct",
+              "ev_ebitda_pct",
+              "roic_persistence_mean_pct",
+              "operating_margin_persistence_mean_pct",
+              "fcf_positive_fraction_pct",
+              "expectations_gap_pct"
+            ]
+          },
+          "ex_ante_risk": {
+            "path": "data/revalidation_2011_2025/acreditado-38/ranking-{fecha}.csv",
+            "dates": "exactamente las 57 fechas de scores.csv, 2011-07-02 a 2025-07-02",
+            "hashes": "docs/factor-zoo/resultado.json#/inputs_sha256, resultado con huella canónica 84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+            "columns": [
+              "volatility",
+              "max_drawdown",
+              "beta_calc",
+              "market_cap"
+            ],
+            "nature": "métricas calculadas con datos hasta la fecha de señal; no son retornos futuros"
+          },
+          "consistency_check": "recalcular value/quality/expectations desde los percentiles de métrica con los mínimos declarados debe reproducir las columnas publicadas (tolerancia 1e-12) antes de cualquier otro cálculo"
+        },
+        "forbidden_reads": [
+          "cualquier retorno: data/cross_section_test/forward-*.csv, columnas de retorno, quarterly.csv, benchmark_periods.csv, decisions.csv y resultados de backtests",
+          "data/gabi.db y cualquier base SQLite, incluidas blind_validation, experiments y live_ledger",
+          "datos, rankings o resultados de #43 (GABI-VALUE-v1) y #44 (smallmid)",
+          "rankings anteriores a 2011-07-02 o posteriores a 2025-07-02",
+          "red y descargas"
+        ],
+        "universe": {
+          "rule": "U_t = filas de scores.csv en la fecha t con value, quality y expectations no nulos",
+          "minimum_size": 40,
+          "below_minimum": "fecha no evaluable; se publica y no se elimina en silencio",
+          "coverage_reported": "tamaño de U_t frente a las filas elegibles de scores.csv en t"
+        },
+        "portfolios": {
+          "signals": [
+            "ENS",
+            "value",
+            "quality",
+            "expectations"
+          ],
+          "slots": 20,
+          "maximum_per_division": 6,
+          "ordering": "score descendente, symbol ascendente",
+          "empty_slots": "efectivo; cuentan como plazas en los denominadores",
+          "identity": "entity_id",
+          "universe": "U_t común para las cuatro señales"
+        },
+        "endpoints": {
+          "P1_turnover": {
+            "definition": "1 - |S_t ∩ S_(t-1)| / 20 entre fechas evaluables consecutivas del calendario; un hueco no evaluable rompe la pareja y no se unen fechas no vecinas",
+            "better": "menor"
+          },
+          "P2_noise_persistence": {
+            "definition": "media sobre réplicas de |S_t^r ∩ S_t| / 20; en cada réplica se suma U(-delta, delta) independiente a cada percentil de métrica disponible, se recalculan bloques (misma disponibilidad, mismo U_t), ENS y Top-20",
+            "delta": 0.05,
+            "replicates": 200,
+            "seed": 20261016,
+            "random_draws": "un único numpy.random.default_rng(seed) por valor de delta; por fecha en orden de calendario y réplica en orden, una matriz U(-delta, delta) de forma (|U_t| filas ordenadas por symbol, 7 métricas en el orden de components.metrics); los sorteos sobre métricas ausentes se descartan; sin recorte a [0, 1]; las cuatro señales usan las mismas perturbaciones",
+            "better": "mayor",
+            "sensitivity_delta": [
+              0.02,
+              0.1
+            ]
+          }
+        },
+        "secondary_descriptive": {
+          "redundancy": "Spearman transversal medio entre value, quality y expectations en U_t",
+          "overlap": "Jaccard medio del Top-20 entre cada par de señales",
+          "dominance": "media por fecha de max_c |S_ENS ∩ S_c| / 20 sobre los tres componentes",
+          "score_autocorrelation": "Spearman entre t y t-1 de cada señal en empresas presentes en U de ambas fechas",
+          "concentration": "divisiones SIC distintas, HHI de divisiones y plazas en efectivo del Top-20",
+          "ex_ante_risk": "media de volatility, max_drawdown y beta_calc y mediana de market_cap del Top-20 y de U_t; ausencias contadas, no imputadas",
+          "turnover_by_window": [
+            "2011-15",
+            "2016-20",
+            "2021-25"
+          ]
+        },
+        "inference": {
+          "method": "bootstrap circular por bloques de fechas sobre la diferencia media ENS - componente",
+          "comparisons": 6,
+          "block_length": 4,
+          "replicas": 5000,
+          "seed": 20261017,
+          "interval": "percentil bilateral al nivel 1 - 0.05/6 (Bonferroni)",
+          "joint_resampling": "dentro de cada endpoint, los mismos índices para las tres comparaciones; P1 (series de transiciones) y P2 (series de fechas) usan generadores default_rng(seed) y default_rng(seed + 1)",
+          "gaps": "si alguna fecha no es evaluable, no se calcula intervalo para ese endpoint y su decisión queda como no estimable; nunca se unen fechas no vecinas"
+        },
+        "decision": {
+          "redundancy_threshold": "si algún par de componentes tiene Spearman medio >= 0.80, ENS se declara redundante: no puede declararse más robusto y no se activa el plan prospectivo v1",
+          "dominance_threshold": "si la dominancia media >= 0.75, ENS se declara equivalente a un componente: no puede declararse más robusto",
+          "more_robust": "sin redundancia ni dominancia y, frente a los tres componentes, intervalo de P1 (ENS - c) enteramente < 0 e intervalo de P2 (ENS - c) enteramente > 0",
+          "partial": "algún criterio de more_robust se cumple pero no todos",
+          "no_improvement": "ningún intervalo favorable",
+          "mechanical_note": "promediar tres percentiles reduce mecánicamente la sensibilidad al ruido; superar P2 es esperable y poco informativo, fallar P2 sí sería informativo",
+          "never": [
+            "afirmar rentabilidad o capacidad predictiva",
+            "promover ENS o sustituir Investor",
+            "cambiar componentes, pesos, delta, umbrales o Top-N tras ver resultados"
+          ]
+        },
+        "prospective_plan": {
+          "activation": "acción explícita; requiere implementar antes la puntuación en vivo con SIC fechado (último filing <= 400 días antes de la señal) y el filtro de elegibilidad de GABI (composite no vacío y cobertura >= 70 %), verificada sin retornos",
+          "first_record": "primer rebalanceo del calendario de #43 (21 de marzo/junio/septiembre/diciembre) en o después del 2026-12-21 con la implementación terminada antes de esa fecha; nunca se rellena hacia atrás",
+          "record": "cadena de hashes con puntuación completa del universo y los cuatro Top-20 en cada rebalanceo",
+          "primary": "media del IC de Spearman trimestral entre ENS y el retorno del trimestre siguiente en U_t; z unilateral",
+          "secondary": "exceso trimestral del Top-20 de ENS frente a SPY y RSP, Holm; rotación y dispersión de ENS frente a los tres componentes",
+          "looks": {
+            "quarters": [
+              12,
+              24,
+              40
+            ],
+            "z_boundaries": [
+              3.39,
+              2.28,
+              1.68
+            ],
+            "spending": "O'Brien-Fleming, Lan-DeMets, alfa unilateral 0.05",
+            "not_before": [
+              "2029-12-21",
+              "2032-12-21",
+              "2036-12-21"
+            ]
+          },
+          "no_interim_looks": "antes de cada revisión solo se comprueban integridad, cobertura y continuidad, nunca retornos, IC ni excesos",
+          "independence_from_43": "ENS comparte métricas de valor con GABI-VALUE-v1: ninguna revisión se adelanta a la de #43 y ningún resultado de ENS modifica #43 ni al revés",
+          "model_change": "cualquier cambio termina el registro prospectivo de v1"
+        },
+        "multiple_testing": {
+          "new_candidate_configurations": 1,
+          "diagnostic_comparators": [
+            "Top-20 value",
+            "Top-20 quality",
+            "Top-20 expectations"
+          ],
+          "comparators_rule": "no son candidatos; proponer cualquiera de ellos exige un preregistro nuevo y cuenta como configuración nueva",
+          "ledger": "se añade a docs/search-ledger al publicar resultados; mínimo conocido acumulado 35"
+        },
+        "preservation": "no modifica motores congelados, modelos originales, Investor, #43, #44 ni la prueba ciega id 1"
+      },
+      "configuration_sha256": "8609a0770a49d00c72bf5bb507d55551eba88b895543b305ca66715292555bca",
+      "specification_ref": "docs/ensemble-robustness/preregistro.json#/spec",
+      "result_ref": null,
+      "observed_sample": null,
+      "planned_sample": {
+        "first_record": "primer rebalanceo del calendario de #43 (21 de marzo/junio/septiembre/diciembre) en o después del 2026-12-21 con la implementación terminada antes de esa fecha; nunca se rellena hacia atrás",
+        "looks": {
+          "quarters": [
+            12,
+            24,
+            40
+          ],
+          "z_boundaries": [
+            3.39,
+            2.28,
+            1.68
+          ],
+          "spending": "O'Brien-Fleming, Lan-DeMets, alfa unilateral 0.05",
+          "not_before": [
+            "2029-12-21",
+            "2032-12-21",
+            "2036-12-21"
+          ]
+        },
+        "universe": "U_t = filas de scores.csv en la fecha t con value, quality y expectations no nulos"
+      },
+      "state": "pending_prospective",
+      "decision": "await_preregistered_looks",
+      "failures": null,
+      "demonstrated_superiority": false,
+      "retrospective_robustness": {
+        "result_ref": "docs/ensemble-robustness/resultado.json#/decision",
+        "returns_read": false,
+        "decision": "parcial"
+      }
+    }
+  ],
   "diagnostics": [
     {
       "family": "factor-history",
@@ -3192,6 +3455,7 @@
   "limitations": [
     "34 is the inherited bookkeeping convention, not an exhaustive count of observed searches.",
     "VALUE is specified but its prospective outcomes have not been observed.",
+    "ENS-VQE-v1 is specified; its retrospective robustness read no returns and its prospective outcomes have not been observed. It counts as a new configuration outside the inherited 34.",
     "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
     "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",
     "13 Factor Zoo tests, 256 weight perturbations and 8192 null paths also exposed retrospective information.",
@@ -3206,6 +3470,8 @@
     "docs/block-bootstrap/resultado.json": "19bd7d85a0c8da00ec8efcd9d9a635aa387fec1004c6914fb930dfa0a63018c4",
     "docs/cross-section-test/preregistro.json": "6b7cca47a92b242a0be28db009b4be57181be291b78b3550006f97e053123ffc",
     "docs/cross-section-test/resultado.json": "19b4f0281d7e7d1b473622f1ccabc56c5ef1526649e6b0ff42fca1180aae5242",
+    "docs/ensemble-robustness/preregistro.json": "a13a991dd1e7cf1a0275707697b86e4270c8f448a36e30ebdd8642d45b68d287",
+    "docs/ensemble-robustness/resultado.json": "5952596698908a066efb0be7274f173ea75f0641673a5df40705daab7e2ad1fa",
     "docs/evidence-confidence/preregistro.json": "facc5fcffa2fb08c05ad4bc3387595ac23abc18186a710ad091c871eaf6fb3bd",
     "docs/evidence-confidence/sources.json": "b2a34696edf22108c364f60f1c6bea2fb9fb57f9b731d95a53aa09c364bec058",
     "docs/factor-benchmark/audit.json": "8290234e878fa270ce1ccbf8a4b61a77bc10d951bd82e2f1c46a303ecf5de28c",
