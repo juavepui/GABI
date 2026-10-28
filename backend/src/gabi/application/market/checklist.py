@@ -12,7 +12,7 @@ from gabi.application.errors import QueryError
 from gabi.application.market import cached_data
 from gabi.application.market.company_research import normalize_symbol
 from gabi.application.research.historical import _json_value
-from gabi.domain.market import checklist
+from gabi.domain.market import checklist, checklist_reference
 from gabi.domain.market.sec_reads import companyfacts
 
 
@@ -55,13 +55,16 @@ SECTOR_CACHE_ENTRIES = 16
 class CompanyChecklist:
     def __init__(self, facts: FactsReader, cache: cached_data.CacheReader, insiders: InsiderReader, store: ThresholdStore,
                  today: Callable[[], date], universe: Callable[[], list[tuple[str, str]]] = list,
-                 ranking_row: Callable[[str], dict] = lambda symbol: {}):
+                 ranking_row: Callable[[str], dict] = lambda symbol: {},
+                 reference: Callable[[], dict | None] = lambda: None):
         self.facts, self.cache, self.insiders, self.store, self.today = facts, cache, insiders, store, today
         # (symbol, sector) of the current universe; sector peers come from it, as in the ranking.
         self.universe = universe
         # The company's ranking row, the values its page shows (Yahoo multiples, beta against SPY):
         # the beta class and the secondary references of #169 come from it, never a second calculation.
         self.ranking_row = ranking_row
+        # Dated values of the S&P 500 per criterion and sector (#171): pass rates for context, never verdicts.
+        self.reference = reference
         # In-process memo of peer multiples, keyed by the peers' last filings and prices: a new
         # sync changes the key, so stale medians are never served. Nothing is written.
         self._sector_cache: OrderedDict[tuple, dict] = OrderedDict()
@@ -77,8 +80,10 @@ class CompanyChecklist:
 
     def thresholds(self) -> dict:
         values, edited, warning = self._thresholds()
+        presets = checklist_reference.presets()
+        active = next((preset["key"] for preset in presets if preset["values"] == values), None)
         return {"version": checklist.THRESHOLDS_VERSION, "values": values, "edited": sorted(edited),
-                "warning": warning, "catalog": checklist.threshold_catalog()}
+                "warning": warning, "catalog": checklist.threshold_catalog(), "presets": presets, "preset": active}
 
     def save_thresholds(self, overrides: dict) -> dict:
         try:
@@ -88,6 +93,15 @@ class CompanyChecklist:
         # Only values that differ from the Excel defaults are kept as edits.
         defaults = checklist.defaults()
         self.store.save({key: value for key, value in cleaned.items() if value != defaults[key]})
+        return self.thresholds()
+
+    def apply_preset(self, key: str) -> dict:
+        """Replace every threshold edit with a preset's values; explicit command, never a GET."""
+        try:
+            overrides = checklist_reference.preset_overrides(key)
+        except KeyError as exc:
+            raise QueryError("unknown_preset", "Preset de umbrales desconocido.", 422) from exc
+        self.store.save(checklist.validate_thresholds(overrides))
         return self.thresholds()
 
     def reset_thresholds(self) -> dict:
@@ -149,6 +163,12 @@ class CompanyChecklist:
             facts, close_on=lambda day: self._close_on(symbol, day),
             split_factor_after=lambda day: self._split_factor_after(symbol, day),
             financial=result["financial_sector"], share_history_ok=history_ok)
+        reference = self.reference()
+        # The universe's GICS sector, as the reference and the sector medians use; Yahoo names differ.
+        sector = next((member_sector for member, member_sector in self.universe() if member == symbol), None)
+        rates = checklist_reference.pass_rates(reference, values, sector)
+        for item in result["criteria"]:
+            item["pass_rate"] = rates.get(item["key"])
         filed = frame["filed_date"].dropna() if not frame.empty else pd.Series(dtype=str)
         return _json({
             "symbol": symbol, "as_of": today.isoformat(), "sector": info.get("sector"),
@@ -158,6 +178,8 @@ class CompanyChecklist:
                         "yahoo_fetched_at": market.yahoo_fetched_at},
             **result,
             "multiples_history": history,
+            "pass_rate_reference": None if not rates else {"as_of": reference["as_of"],
+                                                          "issuers": reference["issuers"], "sector": sector},
         })
 
     def sector_multiples(self, symbol: str) -> dict:

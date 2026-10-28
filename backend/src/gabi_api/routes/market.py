@@ -15,6 +15,7 @@ from gabi.domain.market.comparison import positions
 from gabi.domain.market.selection import EarningsWindow, RankingFilter, RankingSort, SortKey
 from gabi_api.ranking_export import ranking_csv
 from gabi_api.schemas.checklist import (
+    ChecklistPresetRequest,
     ChecklistSectorMultiples,
     ChecklistThresholds,
     ChecklistThresholdsRequest,
@@ -113,6 +114,11 @@ def checklist_thresholds(query: Checklist) -> dict:
 @router.post("/checklist/thresholds", response_model=ChecklistThresholds)
 def save_checklist_thresholds(body: ChecklistThresholdsRequest, query: Checklist) -> dict:
     return query.save_thresholds(body.values)
+
+
+@router.post("/checklist/thresholds/preset", response_model=ChecklistThresholds)
+def apply_checklist_preset(body: ChecklistPresetRequest, query: Checklist) -> dict:
+    return query.apply_preset(body.key)
 
 
 @router.post("/checklist/thresholds/reset", response_model=ChecklistThresholds)

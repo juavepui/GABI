@@ -2515,6 +2515,16 @@
             "title": "Label",
             "type": "string"
           },
+          "pass_rate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChecklistPassRate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "period": {
             "enum": [
               "fiscal_year",
@@ -2913,6 +2923,87 @@
         "title": "ChecklistMultiplesYear",
         "type": "object"
       },
+      "ChecklistPassRate": {
+        "description": "How many S&P 500 issuers, and of the company's sector, meet this threshold (#171); never a verdict.",
+        "properties": {
+          "sector": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChecklistRate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "universe": {
+            "$ref": "#/components/schemas/ChecklistRate"
+          }
+        },
+        "required": [
+          "universe",
+          "sector"
+        ],
+        "title": "ChecklistPassRate",
+        "type": "object"
+      },
+      "ChecklistPreset": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "enum": [
+              "excel",
+              "large_cap"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Values",
+            "type": "object"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "description",
+          "version",
+          "values"
+        ],
+        "title": "ChecklistPreset",
+        "type": "object"
+      },
+      "ChecklistPresetRequest": {
+        "properties": {
+          "key": {
+            "enum": [
+              "excel",
+              "large_cap"
+            ],
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "ChecklistPresetRequest",
+        "type": "object"
+      },
       "ChecklistQualitative": {
         "properties": {
           "hint": {
@@ -2934,6 +3025,61 @@
           "hint"
         ],
         "title": "ChecklistQualitative",
+        "type": "object"
+      },
+      "ChecklistRate": {
+        "properties": {
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "integer"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "required": [
+          "rate",
+          "evaluated"
+        ],
+        "title": "ChecklistRate",
+        "type": "object"
+      },
+      "ChecklistReference": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "issuers": {
+            "title": "Issuers",
+            "type": "integer"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          }
+        },
+        "required": [
+          "as_of",
+          "issuers",
+          "sector"
+        ],
+        "title": "ChecklistReference",
         "type": "object"
       },
       "ChecklistSectorMultiples": {
@@ -3217,6 +3363,28 @@
             "title": "Edited",
             "type": "array"
           },
+          "preset": {
+            "anyOf": [
+              {
+                "enum": [
+                  "excel",
+                  "large_cap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistPreset"
+            },
+            "title": "Presets",
+            "type": "array"
+          },
           "values": {
             "additionalProperties": {
               "type": "number"
@@ -3245,7 +3413,9 @@
           "values",
           "edited",
           "warning",
-          "catalog"
+          "catalog",
+          "presets",
+          "preset"
         ],
         "title": "ChecklistThresholds",
         "type": "object"
@@ -3307,6 +3477,16 @@
           "multiples_history": {
             "$ref": "#/components/schemas/ChecklistMultiplesHistory"
           },
+          "pass_rate_reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChecklistReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "qualitative": {
             "items": {
               "$ref": "#/components/schemas/ChecklistQualitative"
@@ -3365,7 +3545,8 @@
           "alarms",
           "dcf",
           "qualitative",
-          "multiples_history"
+          "multiples_history",
+          "pass_rate_reference"
         ],
         "title": "CompanyChecklistResponse",
         "type": "object"
@@ -16825,6 +17006,97 @@
           }
         },
         "summary": "Save Checklist Thresholds",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/checklist/thresholds/preset": {
+      "post": {
+        "operationId": "apply_checklist_preset_api_v1_checklist_thresholds_preset_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistPresetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistThresholds"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Apply Checklist Preset",
         "tags": [
           "market"
         ]

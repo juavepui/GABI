@@ -1,6 +1,6 @@
 """Read-only market audits.
 
-Usage: python -m gabi_cli market checklist-coverage [--output FILE] [--symbols A,B]
+Usage: python -m gabi_cli market checklist-coverage [--output FILE] [--reference FILE] [--symbols A,B]
 """
 
 import argparse
@@ -16,6 +16,8 @@ def main(checklist: ChecklistReader, universe: Callable[[], list[tuple[str, str]
     parser = argparse.ArgumentParser(prog="gabi_cli market", description=__doc__)
     parser.add_argument("action", choices=["checklist-coverage"])
     parser.add_argument("--output", type=Path, help="Guarda el informe JSON en este fichero")
+    parser.add_argument("--reference", type=Path,
+                        help="Guarda la referencia de tasas de cumplimiento (#171) en este fichero")
     parser.add_argument("--symbols", help="Limita la auditoría a estos símbolos, separados por comas")
     args = parser.parse_args(argv)
     members = universe()
@@ -34,6 +36,10 @@ def main(checklist: ChecklistReader, universe: Callable[[], list[tuple[str, str]
         args.output.write_text(text + "\n", encoding="utf-8")
     else:
         print(text)
+    if args.reference:
+        args.reference.parent.mkdir(parents=True, exist_ok=True)
+        args.reference.write_text(json.dumps(report["reference"], ensure_ascii=False, separators=(",", ":")) + "\n",
+                                  encoding="utf-8")
     share = report["revenue_share"]
     print(f"Ingresos SEC en {report['non_financial_issuers'] - len(report['without_revenue'])}/"
           f"{report['non_financial_issuers']} emisores no financieros"

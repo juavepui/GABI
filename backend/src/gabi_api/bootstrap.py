@@ -69,6 +69,7 @@ from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.blind_plans import FileBlindPlans
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.checklist_reference import load_checklist_reference
 from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
 from gabi.infrastructure.storage.decisions import SqliteDecisions
@@ -202,7 +203,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,
         lambda: [(row.symbol, row.sector) for row in repository.universe(
             repository.small_file("sp500_constituents.csv")).itertuples(index=False)],
-        market.company_metrics)
+        market.company_metrics, load_checklist_reference)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)
