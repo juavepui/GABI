@@ -32,6 +32,40 @@ resolver nuevo junto al adaptador Form 4. El fallback legacy del adaptador
 queda para sus consumidores directos existentes; la composición moderna de
 insiders no llama al mapa/resolución planos.
 
+## Sucesiones revisadas (#202)
+
+En una reorganización como holding, el fichero de tickers de la SEC pasa el
+ticker al registrante nuevo antes de que presente estados anuales, mientras la
+predecesora sigue presentando como filial. `domain/market/sec_succession.py`
+registra cada caso revisado contra el 8-K12B de la sucesora: CIK sucesora →
+CIK predecesora, fecha efectiva y accession. No se infiere nada de nombres ni
+de reutilización de tickers; un caso nuevo exige revisar EDGAR y añadir su
+entrada con test.
+
+La regla se aplica en `application/market/sec_xbrl.synchronize`, el único
+punto que ya descarga las presentaciones del CIK. Si el CIK resuelto es una
+sucesora revisada, se leen sus presentaciones. Mientras no incluyan un 10-K,
+la sincronización usa la predecesora: hechos, métricas, checkpoint y
+`edgar_metrics.cik`. Cuando la sucesora presente su primer 10-K, la siguiente
+sincronización pasa a ella sin tocar el CSV ni la tabla de resoluciones, que
+siguen reflejando el mapa vigente. La comprobación cuesta una petición a
+EDGAR, que se suma al intento del emisor; si falla, se registra como fallo de
+la sucesora y no escribe nada. Los lectores por entidad (#170, #201) unen el
+historial de los alias de la predecesora.
+
+| Sucesora | Predecesora | Ticker | Efectiva | Evidencia |
+| --- | --- | --- | --- | --- |
+| 0002115436 ExxonMobil Holdings Corp | 0000034088 Exxon Mobil Corp | XOM | 2026-07-01 | 8-K12B 0001193125-26-291990; 25-NSE de la predecesora el 2026-07-02 |
+
+Inventario del 28-10-2026, en solo lectura sobre la base local: de 621 símbolos
+con CIK guardado, 6 tienen un CIK sin 10-K entre sus hechos. Solo XOM es una
+sucesión de holding. HONA (CIK 0002089271, 69 hechos) es una escisión de
+Honeywell (Form 10-12B): no hereda los estados de la matriz y queda sin
+cambios hasta su primer 10-K. APC, EP, LB y STI son tickers históricos que el
+mapa actual asigna a otras empresas (ARKO Petroleum, Empire Petroleum,
+LandBridge y Solidion Technology), sin hechos guardados; son un caso de
+reutilización de tickers, no de sucesión.
+
 ## IO acotado e invalidación
 
 - Fuente SEC: User-Agent explícito, timeout 20 s, streaming en bloques de 64 KiB,

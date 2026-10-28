@@ -1,6 +1,7 @@
 """Explicit companyfacts synchronization; issuer attribution is a storage port."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
@@ -15,6 +16,7 @@ from gabi.domain.market.sec_facts import (
     compute_edgar_metrics,
     extract_latest_filings,
 )
+from gabi.domain.market.sec_succession import SUCCESSIONS, Succession, files_annual_report
 from gabi.domain.market.sec_xbrl import FIELDS, KEYS, facts_due, normalize_cik
 
 # Stored USD tags: the metric tags plus the checklist-only ones (#167). Metrics
@@ -37,12 +39,25 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
                 companyfacts: Callable[[str], dict], checkpoint: Callable[[str, str, str], dict],
                 attempt_factory: Callable, retry: Callable, fingerprint: Callable,
                 now: Callable[[], datetime], full_refresh: bool = False,
-                fiscal_alignment: bool = False) -> dict:
+                fiscal_alignment: bool = False, successions: Mapping[str, Succession] = SUCCESSIONS) -> dict:
+    succession = successions.get(normalize_cik(cik))
+    probe, own = _Calls(), None
+    if succession is not None:
+        # A reviewed successor without its own 10-K reads the predecessor's statements (#202).
+        try:
+            own = retry(lambda: submissions(cik), probe)
+            validate_issuer(own, cik)
+        except Exception as exc:
+            attempt_factory("sec", store.ensure_entity(cik), f"facts:{symbol}").finish("failed", reason=str(exc))
+            raise
+        if not files_annual_report(own):
+            cik, own = succession.predecessor, None
     entity = store.ensure_entity(cik)
     attempt = attempt_factory("sec", entity, f"facts:{symbol}")
+    attempt.calls += probe.calls
     cp = checkpoint("sec", entity, attempt.dataset)
     try:
-        filings = retry(lambda: submissions(cik), attempt)
+        filings = own if own is not None else retry(lambda: submissions(cik), attempt)
         validate_issuer(filings, cik)
         attempt.payload(filings)
         recent = filings.get("filings", {}).get("recent", {})
@@ -94,6 +109,13 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
     except Exception as exc:
         attempt.finish("failed", reason=str(exc))
         raise
+
+
+@dataclass
+class _Calls:
+    """Counts the successor probe's requests; they are added to the issuer attempt."""
+    source: str = "sec"
+    calls: int = 0
 
 
 def validate_issuer(payload: dict, cik: str) -> None:
