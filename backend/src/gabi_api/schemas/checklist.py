@@ -168,3 +168,37 @@ class ChecklistThresholds(BaseModel):
 
 class ChecklistThresholdsRequest(BaseModel):
     values: dict[str, float]
+
+
+class ComparedCriterion(BaseModel):
+    key: str
+    label: str
+    unit: Unit
+    value: float | None
+    threshold: float | None
+    comparison: str
+    verdict: Verdict
+    reason: str | None
+    source: Literal["sec_10k", "price+sec", "yahoo", "price+yahoo", "prices"]
+    period: Literal["fiscal_year", "snapshot", "cached_history"]
+
+
+class ComparedChecklist(BaseModel):
+    """One compared company's checklist digest (#194): the same values as its page's checklist."""
+    symbol: str
+    fiscal_year_end: str | None
+    financial_sector: bool
+    summary: ChecklistSummary
+    criteria: list[ComparedCriterion]
+    active_alarms: list[str]
+    history_medians: dict[str, ChecklistMedian]
+    history_years: int
+    sector: str | None
+    sector_peers: int
+    sector_reason: str | None
+    sector_medians: dict[str, ChecklistMedian]
+
+
+class ComparisonChecklistResponse(BaseModel):
+    items: list[ComparedChecklist]
+    revision: str

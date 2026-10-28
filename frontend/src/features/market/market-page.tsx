@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowDown,
@@ -29,11 +29,57 @@ import { Term } from '@/shared/ui/term';
 /** 0-100 points (score, coverage or a sector percentile, 100 = best) as a 0..1 colour position. */
 const score = (value: number | null | undefined) => (value == null ? null : value / 100);
 
+const MAX_COMPARED = 5;
+
+/** Companies ticked for Comparar; kept while the ranking is filtered or paged. */
+function ComparePicks({ picked, clear }: { picked: string[]; clear: () => void }) {
+  if (!picked.length) return null;
+  const target = new URLSearchParams();
+  picked.forEach((symbol) => target.append('symbols', symbol));
+  return (
+    <div
+      role="region"
+      aria-label="Empresas para comparar"
+      className="flex flex-wrap items-center gap-3 border-b bg-accent/40 px-5 py-3 text-sm"
+    >
+      <span>
+        Para comparar: <span className="font-semibold">{picked.join(', ')}</span>
+        <span className="ml-1 text-xs text-muted-foreground">
+          ({picked.length} de {MAX_COMPARED})
+        </span>
+      </span>
+      {picked.length >= 2 ? (
+        <Button asChild size="sm">
+          <Link to={'/descubrir/comparar?' + target.toString()}>
+            <GitCompareArrows aria-hidden="true" />
+            Comparar {picked.length}
+          </Link>
+        </Button>
+      ) : (
+        <span className="text-xs text-muted-foreground">Marca al menos otra empresa.</span>
+      )}
+      <Button size="sm" variant="ghost" onClick={clear}>
+        Quitar selección
+      </Button>
+    </div>
+  );
+}
+
 export function MarketPage() {
   const [params, setParams] = useSearchParams();
   const query = rankingParams(params);
   const result = useRanking(query);
   const data = result.data;
+  const [picked, setPicked] = useState<string[]>([]);
+  function toggle(symbol: string) {
+    setPicked((current) =>
+      current.includes(symbol)
+        ? current.filter((item) => item !== symbol)
+        : current.length < MAX_COMPARED
+          ? [...current, symbol]
+          : current,
+    );
+  }
   function filter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -308,6 +354,7 @@ export function MarketPage() {
               <EmptyState filtered={data.data.status !== 'empty'} />
             ) : (
               <>
+                <ComparePicks picked={picked} clear={() => setPicked([])} />
                 <DataTable label="Tabla desplazable">
                   <table className="w-full text-left text-sm sm:min-w-[770px]">
                     <caption className="sr-only">
@@ -369,7 +416,19 @@ export function MarketPage() {
                           className="border-t transition-colors hover:bg-accent/35"
                         >
                           <td className="p-2 text-xs tabular-nums text-muted-foreground sm:p-4 sm:pl-5">
-                            {row.rank}
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                className="size-4 accent-primary"
+                                aria-label={'Comparar ' + row.symbol}
+                                checked={picked.includes(row.symbol)}
+                                disabled={
+                                  !picked.includes(row.symbol) && picked.length >= MAX_COMPARED
+                                }
+                                onChange={() => toggle(row.symbol)}
+                              />
+                              {row.rank}
+                            </label>
                           </td>
                           <th scope="row" className="max-w-72 p-2 font-normal sm:p-4">
                             <Link

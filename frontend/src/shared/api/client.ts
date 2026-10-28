@@ -20,6 +20,8 @@ import type {
   JournalEntry,
   JournalList,
   JournalReview,
+  ComparisonChecklistResponse,
+  ComparisonPricesResponse,
   ComparisonResponse,
   MacroResponse,
   SaveSnapshot,
@@ -569,6 +571,29 @@ export function getComparison(
   const params = new URLSearchParams();
   symbols.forEach((symbol) => params.append('symbols', symbol));
   return get('/api/v1/comparison?' + params.toString(), signal);
+}
+
+function comparedParams(symbols: string[]): URLSearchParams {
+  const params = new URLSearchParams();
+  symbols.forEach((symbol) => params.append('symbols', symbol));
+  return params;
+}
+
+export function getComparisonChecklist(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<ComparisonChecklistResponse> {
+  return get('/api/v1/comparison/checklist?' + comparedParams(symbols).toString(), signal);
+}
+
+export function getComparisonPrices(
+  symbols: string[],
+  bars: number,
+  signal?: AbortSignal,
+): Promise<ComparisonPricesResponse> {
+  const params = comparedParams(symbols);
+  params.set('bars', String(bars));
+  return get('/api/v1/comparison/prices?' + params.toString(), signal);
 }
 
 export function getMacro(signal?: AbortSignal): Promise<MacroResponse> {
