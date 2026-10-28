@@ -420,3 +420,40 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   await expect(page.getByText('Score del modelo', { exact: true })).toBeInViewport();
   await expect(page.getByText(/Último cierre ·/)).toBeInViewport();
 });
+
+test('Seguir desde el Ranking, la ficha y Comparar, y la lista con nota (#182)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?search=T001');
+  await page.getByRole('button', { name: 'Seguir T001' }).click();
+  await expect(page.getByRole('button', { name: 'Seguir T001' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.goto('/empresas/T002');
+  await page.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Siguiendo' })).toBeVisible();
+  await page.goto('/descubrir/comparar?symbols=T001&symbols=T003');
+  const table = page.locator('table');
+  await expect(table.getByRole('button', { name: 'Siguiendo' })).toHaveCount(1); // T001
+  await table.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await expect(table.getByRole('button', { name: 'Siguiendo' })).toHaveCount(2);
+
+  await page.goto('/descubrir/seguidas');
+  await expect(page).toHaveTitle('Empresas seguidas · GABI');
+  const list = page.getByRole('region', { name: 'Empresas seguidas' });
+  const rows = list.locator('tbody tr');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.first()).toContainText('T001');
+  await expect(rows.first()).toContainText('0 puestos');
+  // The checklist arrives in its own query, without blocking the list.
+  await expect(rows.first().getByText('Calculando…')).toHaveCount(0);
+  await list.getByRole('button', { name: 'Editar la nota de T002' }).click();
+  await list.getByLabel('Nota de T002').fill('Vigilar márgenes');
+  await list.getByRole('button', { name: 'Guardar' }).click();
+  await page.reload(); // Followed companies and notes live in the local database.
+  await expect(rows.nth(1)).toContainText('Vigilar márgenes');
+  for (const symbol of ['T001', 'T002', 'T003'])
+    await list.getByRole('button', { name: 'Dejar de seguir ' + symbol }).click();
+  await expect(page.getByText('Aún no sigues ninguna empresa.')).toBeVisible();
+});

@@ -36,6 +36,7 @@ class AlertSources:
     open_theses: Callable[[], list[dict]]
     held: Callable[[], list[str]]  # Mi cartera
     events: Callable[[list[str], date], list[dict] | None]  # cached corporate events; None while busy
+    watched: Callable[[], list[str]] = list  # Empresas seguidas (#182)
 
 
 def _no_alerts() -> AlertSources:
@@ -93,17 +94,22 @@ class HomeQueries:
                         today: date) -> list[dict]:
         """Alerts that need the cached ranking: results, dividends and changes of the Top-20."""
         candidates = [str(symbol) for symbol in target.index]
+        # A followed company already among the candidates or in Mi cartera is announced there once.
+        watched = [symbol for symbol in self.sources.watched() if symbol not in {*candidates, *held}]
         columns = [column for column in ("next_earnings_date", "next_earnings_is_estimate") if column in table]
-        rows = table.loc[table.index.isin([*candidates, *held]), columns].to_dict("index")
+        rows = table.loc[table.index.isin([*candidates, *held, *watched]), columns].to_dict("index")
         earnings = {str(symbol): (row.get("next_earnings_date"), bool(row.get("next_earnings_is_estimate")))
                     for symbol, row in rows.items()}
         alerts = rules.upcoming_earnings(earnings, candidates, scope="target", today=today, link="/eventos")
         alerts += rules.upcoming_earnings(earnings, held, scope="holdings", today=today, link="/cartera/mi-cartera")
+        alerts += rules.upcoming_earnings(earnings, watched, scope="watchlist", today=today,
+                                          link="/descubrir/seguidas")
+        followed = list(dict.fromkeys([*candidates, *held, *watched]))
         try:
-            events = self.sources.events(list(dict.fromkeys([*candidates, *held])), today)
+            events = self.sources.events(followed, today)
         except QueryError:  # An oversized cached record must not break the home page.
             events = []
-        alerts += rules.upcoming_dividends(events or [], [*candidates, *held], today=today)
+        alerts += rules.upcoming_dividends(events or [], followed, today=today)
         saved = self.sources.latest_snapshot()
         if saved is not None:
             meta, symbols = saved

@@ -44,6 +44,17 @@ class SqliteJournal:
                               " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", (limit, offset)).fetchall()
             return [dict(row) for row in rows], total
 
+    def theses(self, symbols: list[str]) -> dict[str, dict]:
+        """Open and total theses of each symbol, in one grouped query."""
+        db = self._read()
+        if db is None or not symbols:
+            return {}
+        with closing(db):
+            rows = db.execute("SELECT symbol, SUM(status='abierta') AS open, COUNT(*) AS total FROM journal_entries"
+                              f" WHERE symbol IN ({','.join('?' * len(symbols))}) GROUP BY symbol",
+                              symbols).fetchall()
+            return {row["symbol"]: {"open": int(row["open"]), "total": int(row["total"])} for row in rows}
+
     def get(self, entry_id: int) -> dict | None:
         db = self._read()
         if db is None:

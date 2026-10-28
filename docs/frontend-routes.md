@@ -15,6 +15,7 @@ navegación ni se importan entre sí.
 | | `/eventos` | Eventos: cambios del ranking y de filings SEC desde una cesta guardada, y sus próximos resultados; destino de las alertas de Hoy (#193) | `market` |
 | **Descubrir** | `/descubrir` | Ranking | `market` |
 | | `/descubrir/comparar` | Comparar empresas | `market` |
+| | `/descubrir/seguidas` | Empresas seguidas: score, posición y cambios desde el alta (#182) | `market` |
 | | `/empresas/:symbol` | Ficha de empresa (sin entrada en el menú) | `market` |
 | **Cartera** | `/cartera` | Plan de cartera: regla congelada (Top-N equiponderado) o, con `?plan=experimental`, el plan experimental con límites (#191) | `portfolio` |
 | | `/cartera/mi-cartera` | Mi cartera (compras reales) | `portfolio` |
@@ -37,6 +38,10 @@ Ningún nombre de la navegación queda en inglés.
 La sección se llama «Cartera» y no «Mi cartera», como proponía la issue, porque
 «Mi cartera» ya nombra las compras reales (#181) en la interfaz y en los
 mensajes del backend.
+
+La lista de seguimiento de empresas (#182) se llama «Empresas seguidas» y vive en
+Descubrir, porque «Seguimiento» ya nombra las cestas guardadas (#193). Se añade y
+se quita con «Seguir» en la fila del Ranking, la ficha y Comparar.
 
 ## Redirecciones
 

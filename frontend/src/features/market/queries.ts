@@ -1,5 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { getRanking, getCompany, getSnapshots, type RankingQuery } from '@/shared/api/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  followCompany,
+  getCompany,
+  getRanking,
+  getSnapshots,
+  getWatchlistSymbols,
+  unfollowCompany,
+  type RankingQuery,
+} from '@/shared/api/client';
 
 export function useRanking(query: RankingQuery) {
   return useQuery({
@@ -19,4 +27,21 @@ export function useSnapshots() {
     queryKey: ['market', 'snapshots'],
     queryFn: ({ signal }) => getSnapshots(signal),
   });
+}
+
+/** The followed symbols alone: what every «Seguir» button needs, without reading the ranking. */
+export function useWatchlistSymbols() {
+  return useQuery({
+    queryKey: ['market', 'watchlist', 'symbols'],
+    queryFn: ({ signal }) => getWatchlistSymbols(signal),
+  });
+}
+/** Follow or stop following a company; both refresh every view of the list. */
+export function useFollow(symbol: string) {
+  const client = useQueryClient();
+  const changed = () => client.invalidateQueries({ queryKey: ['market', 'watchlist'] });
+  return {
+    follow: useMutation({ mutationFn: () => followCompany(symbol), onSuccess: changed }),
+    unfollow: useMutation({ mutationFn: () => unfollowCompany(symbol), onSuccess: changed }),
+  };
 }

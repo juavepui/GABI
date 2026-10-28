@@ -34,6 +34,11 @@ import type {
   HoldingDeleted,
   HoldingImportResult,
   HoldingsSummary,
+  WatchlistChecklists,
+  WatchlistEntry,
+  WatchlistDeleted,
+  WatchlistSummary,
+  WatchlistSymbols,
   SimulationCreate,
   SimulationPortfolio,
   SimulationList,
@@ -668,6 +673,34 @@ export function importHoldings(csv: string): Promise<HoldingImportResult> {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ csv }),
   });
+}
+
+/** Empresas seguidas (#182): the view reads the cache; following, the note and removing are explicit. */
+export function getWatchlist(signal?: AbortSignal): Promise<WatchlistSummary> {
+  return get('/api/v1/watchlist', signal);
+}
+export function getWatchlistSymbols(signal?: AbortSignal): Promise<WatchlistSymbols> {
+  return get('/api/v1/watchlist/symbols', signal);
+}
+export function getWatchlistChecklists(signal?: AbortSignal): Promise<WatchlistChecklists> {
+  return get('/api/v1/watchlist/checklist', signal);
+}
+export function followCompany(symbol: string, note?: string): Promise<WatchlistEntry> {
+  return request('/api/v1/watchlist', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol, note: note ?? null }),
+  });
+}
+export function updateWatchlistNote(symbol: string, note: string): Promise<WatchlistEntry> {
+  return request('/api/v1/watchlist/' + encodeURIComponent(symbol), {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note }),
+  });
+}
+export function unfollowCompany(symbol: string): Promise<WatchlistDeleted> {
+  return request('/api/v1/watchlist/' + encodeURIComponent(symbol) + '/delete', { method: 'POST' });
 }
 
 export function getDecisions(signal?: AbortSignal): Promise<DecisionList> {

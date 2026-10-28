@@ -8,6 +8,7 @@ import { metric } from '@/shared/lib/format';
 import type { Metric } from '@/shared/api/generated/types.gen';
 import { useRanking } from './queries';
 import { Evidence } from './evidence';
+import { FollowButton } from './follow-button';
 import { RankCell, RankLegend, RankValue } from '@/shared/ui/rank-cell';
 import { PageHeader } from '@/shared/ui/page-header';
 
@@ -103,6 +104,9 @@ export function ComparisonPage() {
                   >
                     {item.symbol} · {item.name}
                   </Link>
+                  <span className="ml-2">
+                    <FollowButton symbol={item.symbol} compact />
+                  </span>
                   <p className="mt-2 flex justify-between gap-2">
                     <span>Composite Score</span>
                     <RankValue
@@ -150,6 +154,9 @@ export function ComparisonPage() {
                         </Link>
                         <span className="mt-1 block text-xs font-normal text-muted-foreground">
                           {item.name}
+                        </span>
+                        <span className="mt-2 block">
+                          <FollowButton symbol={item.symbol} />
                         </span>
                       </th>
                     ))}

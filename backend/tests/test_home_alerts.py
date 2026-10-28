@@ -14,6 +14,7 @@ from ranking_fixture import RankingFixture
 from gabi.domain.portfolio import alerts as rules
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.watchlist import SqliteWatchlist
 from gabi_api.bootstrap import create_app
 
 
@@ -89,6 +90,9 @@ def test_home_shows_every_alert_from_stored_data_without_writing(tmp_path):
         db.execute("INSERT INTO journal_entries VALUES(1,'T002','2026-01-10T10:00:00','Corto (<6 meses)','abierta')")
     SqliteHoldings(tmp_path).add([{"symbol": "T029", "shares": 1, "price": 1, "purchase_date": "2026-06-01",
                                    "currency": "USD", "commission": 0, "fx_rate": None, "note": None}], "now")
+    watched = [f"T{index:03}" for index in range(18, 30)]  # Some are candidates, T029 is held.
+    for symbol in watched:
+        SqliteWatchlist(tmp_path).add({"symbol": symbol, "added_at": "2026-09-01T10:00:00"}, "now")
     app = create_app(Settings(tmp_path), today=lambda: TODAY)
     with TestClient(app) as client:
         app.state.jobs.list = lambda: [{"kind": "data_update", "status": "failed", "error_code": "source_failed",
@@ -104,9 +108,12 @@ def test_home_shows_every_alert_from_stored_data_without_writing(tmp_path):
     assert set(kinds) == {"job_failed", "filings", "thesis_review", "earnings", "ex_dividend", "top_changes"}
     target = [row["symbol"] for row in body["target"]]
     earnings = [alert for alert in body["alerts"] if alert["kind"] == "earnings"]
-    assert {alert["detail"]["scope"]: alert["symbols"] for alert in earnings} == {"target": sorted(target),
-                                                                                    "holdings": ["T029"]}
-    assert kinds["ex_dividend"]["symbols"] == sorted({*target, "T029"})
+    # A followed company is announced once: among the candidates, in Mi cartera or as followed.
+    only_watched = sorted(set(watched) - {*target, "T029"})
+    assert only_watched
+    assert {alert["detail"]["scope"]: alert["symbols"] for alert in earnings} == {
+        "target": sorted(target), "holdings": ["T029"], "watchlist": only_watched}
+    assert kinds["ex_dividend"]["symbols"] == sorted({*target, *watched})
     assert kinds["top_changes"]["detail"]["exited"] == ["GO-NE"]  # Dotted classes, dash spelling.
     assert kinds["top_changes"]["detail"]["entered"] == [symbol for symbol in target if symbol != "T000"]
     assert kinds["thesis_review"]["date"] == "2026-07-10" and kinds["filings"]["symbols"] == ["T001"]

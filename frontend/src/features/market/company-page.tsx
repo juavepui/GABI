@@ -12,6 +12,7 @@ import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
 import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
 import { CompanyChecklist } from './company-checklist';
+import { FollowButton } from './follow-button';
 import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
@@ -93,6 +94,7 @@ export function CompanyPage() {
                   <span className="self-center text-xs text-muted-foreground">
                     Posición global #{company.rank}
                   </span>
+                  <FollowButton symbol={company.symbol} />
                 </div>
                 <Link
                   className="mt-3 inline-block text-sm font-medium text-primary underline"
