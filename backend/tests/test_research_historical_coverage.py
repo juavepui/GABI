@@ -127,7 +127,8 @@ def test_historical_job_stores_sec_titles_once(monkeypatch):
     from gabi import edgar, screener_asof
     from gabi.infrastructure.legacy.historical import run_historical
 
-    monkeypatch.setattr(screener_asof, "build_ranking_as_of", lambda as_of: _table())
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
+                        lambda as_of, *, issuer_history: _table() if issuer_history is True else None)
     monkeypatch.setattr(edgar, "get_resolved_title", lambda symbol: f"SEC {symbol}" if symbol != "T001" else None)
     table = run_historical("2012-06-01")["table"]
     assert table.loc["T000", "resolved_title"] == "SEC T000"

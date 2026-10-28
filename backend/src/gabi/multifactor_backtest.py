@@ -26,11 +26,15 @@ _apply_holding_buffer = rules.apply_holding_buffer
 sharpe_standard_error = rules.sharpe_standard_error
 
 
-def market() -> BacktestMarket:
-    """The operational inputs, read when called: tests and frozen engines patch these modules."""
+def market(*, issuer_history: bool = False) -> BacktestMarket:
+    """The operational inputs, read when called: tests and frozen engines patch these modules.
+
+    ``issuer_history`` (app backtests only) reads each ticker's whole issuer history; frozen
+    engines never pass it, so their patched rankings keep the old signature."""
+    options = {"issuer_history": True} if issuer_history else {}
     return BacktestMarket(
         membership=lambda as_of: universe.get_sp500_constituents_asof(as_of),
-        ranking=lambda as_of, symbols: screener_asof.build_ranking_as_of(as_of, symbols=symbols)["table"],
+        ranking=lambda as_of, symbols: screener_asof.build_ranking_as_of(as_of, symbols=symbols, **options)["table"],
         quality=lambda ranked: quality_rules.ranking_quality(ranked),
         prices=lambda symbols, as_of, owners=None: identity.backtest_prices(symbols, as_of, owners),
         last_filings=lambda symbols, as_of: identity.last_filings(symbols, as_of=as_of),
@@ -57,9 +61,9 @@ def _risk_metrics(returns: pd.Series, periods_per_year: float, years: float = No
 def run(start: str, end: str, months: int = 3, top_n: int = 10,
         cost_bps: float = 10, min_coverage: float = .7, min_universe_coverage: float = .5,
         max_symbols: int | None = None, buffer_multiplier: float = 1.0,
-        rotation_hurdle_points: float = 0.0) -> dict:
+        rotation_hurdle_points: float = 0.0, issuer_history: bool = False) -> dict:
     """Backtest V1; ver ``backtest_v1.run``. ``_period_returns`` se resuelve en cada periodo."""
-    return backtest_v1.run(market(), lambda *args, **kwargs: _period_returns(*args, **kwargs), start, end,
+    return backtest_v1.run(market(issuer_history=issuer_history), lambda *args, **kwargs: _period_returns(*args, **kwargs), start, end,
                            months=months, top_n=top_n, cost_bps=cost_bps, min_coverage=min_coverage,
                            min_universe_coverage=min_universe_coverage, max_symbols=max_symbols,
                            buffer_multiplier=buffer_multiplier, rotation_hurdle_points=rotation_hurdle_points)

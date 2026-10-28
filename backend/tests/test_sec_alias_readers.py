@@ -69,3 +69,29 @@ def test_sec_selection_does_not_redownload_a_symbol_covered_through_its_entity(t
     _split_history(path, [])
     fetched, covered, failed = SqliteSecSelection(path, _now).current(["OLD", "NEW", "BARE"])
     assert covered == {"OLD", "NEW"} and set(fetched) == {"OLD", "NEW", "BARE"} and failed == {}
+
+
+def test_issuer_entities_only_when_the_entity_holds_every_fact_the_symbol_had(tmp_path):
+    path = tmp_path / "gabi.db"
+    _split_history(path, [_row("a3", 2024, 12.0)])
+    store = SqliteXbrl(path, _now)
+    store.store_facts("LEGACY", [_row("x1", 2024, 5.0)])  # no stored CIK
+    reads = SqliteSecReads(path)
+    entity = f"cik:{CIK}"
+    assert reads.issuer_entities(["NEW", "OLD", "BARE", "LEGACY", "ABSENT"], "2025-12-31") == {"NEW": entity,
+                                                                                             "OLD": entity}
+    # A later row under NEW that the entity never got (e.g. a successor's filing) only blocks from its filing on.
+    store.store_facts("NEW", [_row("s1", 2025, 1.0)])
+    assert reads.issuer_entities(["NEW"], "2026-02-14") == {"NEW": entity}
+    assert reads.issuer_entities(["NEW"], "2026-02-15") == {}
+
+
+def test_issuer_entities_skip_a_symbol_whose_own_rows_were_withdrawn_from_the_ticker_table(tmp_path):
+    import sqlite3
+    from contextlib import closing
+
+    path = tmp_path / "gabi.db"
+    _split_history(path, [_row("a3", 2024, 12.0), _row("w1", 2008, 1.0)])
+    with closing(sqlite3.connect(path)) as db, db:
+        db.execute("DELETE FROM edgar_facts WHERE accn='w1'")  # still an observation under NEW
+    assert SqliteSecReads(path).issuer_entities(["NEW", "OLD"], "2025-12-31") == {"OLD": f"cik:{CIK}"}

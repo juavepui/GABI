@@ -135,7 +135,7 @@ completo de la entidad. Clasificación de los lectores por símbolo:
 | `SqliteSecSelection.current` | selección SEC del CLI de fuentes | Ingesta | Igual que el anterior |
 | `SqliteSecReads.issuer_facts` | checklist y múltiplos sectoriales | Mercado | Por entidad desde #170 |
 | `SqliteSecReads.last_filed` en el checklist | clave de la caché de múltiplos sectoriales | Mercado | Sin cambio: una presentación nueva siempre se escribe bajo el símbolo actual y cambia la clave |
-| `facts`/`stored_facts`/`metrics_as_of`/`concept_value` sin `entity_id` (`edgar.get_edgar_facts`, `_facts_dict_from_stored`, `compute_edgar_metrics_as_of`, `get_shares_outstanding_as_of`) | `screener_asof` → ranking histórico, `full_universe_audit`, `overfitting_audit`, `r3_experiment` y demás investigación | Composite histórico y congelados | Sin cambio. Reciben `entity_id` cuando la identidad acreditada lo resuelve; leer por entidad en el resto exige versión nueva con validación separada |
+| `facts`/`stored_facts`/`metrics_as_of`/`concept_value` sin `entity_id` (`edgar.get_edgar_facts`, `_facts_dict_from_stored`, `compute_edgar_metrics_as_of`, `get_shares_outstanding_as_of`) | `screener_asof` → ranking histórico, `full_universe_audit`, `overfitting_audit`, `r3_experiment` y demás investigación | Composite histórico y congelados | Sin cambio por defecto. Reciben `entity_id` cuando la identidad acreditada lo resuelve. Con `issuer_history` (solo backtests V1/V2 y ranking histórico de la app), `SqliteSecReads.issuer_entities` elige la entidad del CIK guardado; ver más abajo |
 | `SqliteSecReads.last_filed` (`edgar.get_last_filed_dates`) | guard de reciclaje de Portfolio Lab | Investigación | Sin cambio |
 | `SqliteIdentityReads.filing_dates` | `identity.last_filings` → backtests | Composite histórico | Ya por entidad para propietarios acreditados; por ticker solo sin propietario |
 | `historical_data_audit` (`_ticker_inputs`, `year_counts`) y `historical_backfill` | auditorías históricas publicadas | Auditoría | Sin cambio: reproducen el flujo operativo que auditan |
@@ -151,10 +151,52 @@ con todo su historial bajo otro alias se marcaba sin hechos y se volvía a
 descargar en cada actualización.
 
 `test_sec_alias_readers.py` cubre historial repartido entre alias, símbolo sin
-CIK, CIK sin hechos y JSON sobredimensionado. Pendiente, con validación
-separada: medir cuánto cambiaría el ranking si el Composite leyera por entidad
-y, como alternativa de raíz, reasignar al símbolo actual las filas de otros
-alias durante la sincronización (escritura explícita con migración y auditoría).
+CIK, CIK sin hechos y JSON sobredimensionado.
+
+### Historial del emisor en el Composite de la app
+
+`build_ranking_as_of(..., issuer_history=True)` lee los fundamentales de un
+símbolo de la ruta por ticker desde la entidad de su CIK guardado, con precios
+de la caché por ticker (igual que el modo operativo de #237). Lo activan los
+puentes de la app (`infrastructure/legacy/backtests.py` mediante
+`multifactor_backtest.market(issuer_history=True)` e
+`infrastructure/legacy/historical.py`). Los motores congelados, las auditorías
+y Portfolio Lab no lo pasan y reproducen igual. La capa acreditada (2010-2015)
+no cambia.
+
+`issuer_entities(symbols, as_of)` devuelve la entidad solo si:
+
+1. otro alias de la entidad aporta una fila presentada hasta `as_of` que el
+   ticker no tiene;
+2. todas las filas de la entidad bajo el propio símbolo siguen en
+   `edgar_facts` (en AAPL y MSFT hay filas de 2008 y 1996 retiradas de la tabla
+   por ticker que, leídas, rompían la serie de ingresos);
+3. la entidad conoce todas las filas del ticker presentadas hasta `as_of` (las
+   del sucesor de XOM, desde 2026-08, no lo están).
+
+Las tres comprobaciones son `EXISTS` sobre las claves primarias de
+`edgar_facts` y `entity_observations` (la clave de registro es la lista JSON
+compacta de `KEYS`), tras descartar con un `GROUP BY` las entidades sin otro
+alias.
+
+Medición sobre `data/gabi.db` (solo lectura, 2026-10-28), miembros del S&P 500
+en cada fecha:
+
+| Fecha | Miembros | Por emisor | Símbolos con métricas distintas | Comprobación |
+| --- | --- | --- | --- | --- |
+| 2017-01-03 | 484 | 49 | XOM (gana 7 métricas) | 1,2 s |
+| 2019-01-02 | 497 | 46 | XOM (gana 7) | 1,4 s |
+| 2021-01-04 | 501 | 33 | XOM (gana 6) | 1,6 s |
+| 2023-01-03 | 498 | 22 | XOM (gana 7) | 1,8 s |
+| 2025-01-02 | 503 | 7 | XOM (gana 6) | 2,0 s |
+| 2026-09-23 | 503 | 4 | ninguno | 2,0 s |
+
+Ninguna métrica se pierde ni se mueve. Sin la condición 2, AAPL perdía el
+CAGR de ingresos en 2017-2019 y su último periodo pasaba a 2008. Desde el
+primer 10-Q del sucesor, XOM vuelve a la lectura por ticker. Queda pendiente,
+con validación separada, la alternativa de raíz: reasignar al símbolo actual
+las filas de otros alias durante la sincronización (escritura explícita con
+migración y auditoría).
 
 ## Validación y medida
 

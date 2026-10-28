@@ -43,9 +43,9 @@ def run(start: str, end: str, months: int = 3, top_n: int = 20, max_symbols: int
         mode: str = "validation", initial_capital: float = 100_000.0,
         commission_usd: float = broker_costs.STOCK_FEE_USD,
         spread_bps: float = 10.0, min_coverage: float = .7, min_universe_coverage: float = .5,
-        rotation_hurdle_points: float = 0.0) -> dict:
+        rotation_hurdle_points: float = 0.0, issuer_history: bool = False) -> dict:
     """Backtest V2; ver ``backtest_v2.run``. ``_rebalance`` y ``_daily_segment`` se resuelven en cada periodo."""
-    return backtest_v2.run(v1.market(), lambda *args, **kwargs: _rebalance(*args, **kwargs),
+    return backtest_v2.run(v1.market(issuer_history=issuer_history), lambda *args, **kwargs: _rebalance(*args, **kwargs),
                            lambda *args, **kwargs: _daily_segment(*args, **kwargs), start, end,
                            months=months, top_n=top_n, max_symbols=max_symbols, mode=mode,
                            initial_capital=initial_capital, commission_usd=commission_usd, spread_bps=spread_bps,
