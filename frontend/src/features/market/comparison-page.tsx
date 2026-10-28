@@ -14,6 +14,13 @@ import { RankCell, RankLegend, RankValue } from '@/shared/ui/rank-cell';
 import { PageHeader } from '@/shared/ui/page-header';
 import { sourceLabel } from './provenance';
 import { ComparisonChecklist } from './comparison-checklist';
+import {
+  drawdownDates,
+  drawdownOf,
+  drawdownValue,
+  historySpan,
+  useRiskWindows,
+} from './risk-windows';
 
 const ComparisonChart = lazy(() => import('./comparison-chart'));
 
@@ -55,7 +62,7 @@ const sections: { title: string; fields: [string, string][] }[] = [
     title: 'Riesgo',
     fields: [
       ['volatility', 'Volatilidad'],
-      ['max_drawdown', 'Caída máxima'],
+      ['max_drawdown', 'Caída máxima (todo el histórico)'],
       ['beta_calc', 'Beta frente al SPY'],
     ],
   },
@@ -161,6 +168,8 @@ export function ComparisonPage() {
     setParams(updated);
   }
   const compared = comparison.data?.items.map((item) => item.symbol) ?? [];
+  const windows = useRiskWindows(compared);
+  const risk = (symbol: string) => windows.data?.items.find((item) => item.symbol === symbol);
   return (
     <div className="space-y-6">
       <PageHeader
@@ -304,12 +313,42 @@ export function ComparisonPage() {
                             scope="de los comparados"
                           >
                             {show(key, item.metrics[key])}
+                            {(key === 'max_drawdown' || key === 'volatility') && (
+                              <span className="block text-xs text-muted-foreground">
+                                {key === 'max_drawdown'
+                                  ? drawdownDates(drawdownOf(risk(item.symbol), 'full'))
+                                  : historySpan(risk(item.symbol))}
+                              </span>
+                            )}
                           </RankCell>
                         ))}
                       </tr>
                     ))}
                   </tbody>
                 ))}
+                <tbody>
+                  {(['5y', '3y'] as const).map((window) => (
+                    <tr key={window} className="border-b">
+                      <th scope="row" className="py-3 pr-3 font-medium">
+                        Caída máxima · {window === '5y' ? '5 años' : '3 años'}
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          GABI con precios en caché · informativa, no puntúa
+                        </span>
+                      </th>
+                      {comparison.data.items.map((item) => {
+                        const row = drawdownOf(risk(item.symbol), window);
+                        return (
+                          <td key={item.symbol} className="px-3 py-3 tabular-nums">
+                            {windows.isPending ? '…' : drawdownValue(row)}
+                            <span className="block text-xs text-muted-foreground">
+                              {drawdownDates(row)}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
                 <tbody>
                   <SectionRow title="Catalizadores" span={comparison.data.items.length + 1} />
                   <tr>
@@ -331,7 +370,8 @@ export function ComparisonPage() {
             <RankLegend>
               Rojo peor, verde mejor entre las empresas comparadas, según si la métrica es mejor
               alta o baja en el score (un PER bajo o una volatilidad baja son mejores). Precio y
-              capitalización no tienen mejor ni peor y quedan sin color.
+              capitalización no tienen mejor ni peor y quedan sin color. Un asterisco (*) indica que
+              el histórico en caché es más corto que la ventana.
             </RankLegend>
           </section>
           <section className="rounded-xl border bg-card p-5" aria-labelledby="comparison-checklist">

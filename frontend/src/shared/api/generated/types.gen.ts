@@ -3066,6 +3066,36 @@ export type Diagnostic = {
 };
 
 /**
+ * DrawdownWindow
+ */
+export type DrawdownWindow = {
+    /**
+     * Complete
+     */
+    complete: boolean;
+    /**
+     * Peak Date
+     */
+    peak_date: string | null;
+    /**
+     * Start
+     */
+    start: string | null;
+    /**
+     * Trough Date
+     */
+    trough_date: string | null;
+    /**
+     * Value
+     */
+    value: number | null;
+    /**
+     * Window
+     */
+    window: 'full' | '5y' | '3y';
+};
+
+/**
  * Earnings
  */
 export type Earnings = {
@@ -7572,6 +7602,56 @@ export type RetryJobRequest = {
      * Idempotency Key
      */
     idempotency_key: string;
+};
+
+/**
+ * RiskWindows
+ *
+ * Windows and dates of a company's price-risk figures (#175); the full window is the ranking's.
+ */
+export type RiskWindows = {
+    /**
+     * Drawdowns
+     */
+    drawdowns: Array<DrawdownWindow>;
+    /**
+     * History End
+     */
+    history_end: string | null;
+    /**
+     * History Start
+     */
+    history_start: string | null;
+    /**
+     * Price Basis
+     */
+    price_basis: 'adj_close' | 'close' | null;
+    /**
+     * Sessions
+     */
+    sessions: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Volatility Window
+     */
+    volatility_window?: 'cached_history';
+};
+
+/**
+ * RiskWindowsResponse
+ */
+export type RiskWindowsResponse = {
+    /**
+     * Items
+     */
+    items: Array<RiskWindows>;
+    /**
+     * Revision
+     */
+    revision: string;
 };
 
 /**
@@ -15317,6 +15397,56 @@ export type TrialsApiV1ResearchTrialsGetResponses = {
 };
 
 export type TrialsApiV1ResearchTrialsGetResponse = TrialsApiV1ResearchTrialsGetResponses[keyof TrialsApiV1ResearchTrialsGetResponses];
+
+export type CompanyRiskWindowsApiV1RiskWindowsGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Symbols
+         */
+        symbols: Array<string>;
+    };
+    url: '/api/v1/risk-windows';
+};
+
+export type CompanyRiskWindowsApiV1RiskWindowsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyRiskWindowsApiV1RiskWindowsGetError = CompanyRiskWindowsApiV1RiskWindowsGetErrors[keyof CompanyRiskWindowsApiV1RiskWindowsGetErrors];
+
+export type CompanyRiskWindowsApiV1RiskWindowsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: RiskWindowsResponse;
+};
+
+export type CompanyRiskWindowsApiV1RiskWindowsGetResponse = CompanyRiskWindowsApiV1RiskWindowsGetResponses[keyof CompanyRiskWindowsApiV1RiskWindowsGetResponses];
 
 export type ScoreBlocksEvidenceApiV1ScoreBlocksEvidenceGetData = {
     body?: never;

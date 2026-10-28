@@ -631,3 +631,23 @@ test('el checklist muestra cuántas empresas cumplen cada umbral y aplica un pre
   await presets.getByRole('button', { name: 'Excel original' }).click();
   await expect(insiders).toContainText('≥ 10 %');
 });
+
+test('drawdown y volatilidad declaran su ventana y las fechas de pico y valle (#175)', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const risk = page
+    .locator('[data-slot="card"]')
+    .filter({ has: page.locator('[data-slot="card-title"]').getByText('Momentum y riesgo') });
+  await expect(risk).toContainText(/todo el histórico desde \w+\.? \d{4} \(\d+ sesiones\)/);
+  await expect(risk).toContainText(/pico \w+\.? \d{4} → valle \w+\.? \d{4}/);
+  await expect(risk).toContainText('Caída máxima · 5 años');
+  await expect(risk).toContainText('Caída máxima · 3 años');
+  await page.goto('/descubrir/comparar?symbols=T001&symbols=T002');
+  const table = page.locator('table').first();
+  await expect(
+    table.getByRole('row', { name: /^Caída máxima \(todo el histórico\)/ }),
+  ).toContainText(/pico .* → valle/);
+  await expect(table.getByRole('row', { name: /^Caída máxima · 5 años/ })).toContainText('%');
+  await expect(table.getByRole('row', { name: /^Volatilidad/ })).toContainText(/desde .* sesiones/);
+});

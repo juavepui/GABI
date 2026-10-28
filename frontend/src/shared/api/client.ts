@@ -26,6 +26,7 @@ import type {
   ComparisonChecklistResponse,
   ComparisonPricesResponse,
   ComparisonResponse,
+  RiskWindowsResponse,
   MacroResponse,
   SaveSnapshot,
   Snapshot,
@@ -616,6 +617,13 @@ function comparedParams(symbols: string[]): URLSearchParams {
   const params = new URLSearchParams();
   symbols.forEach((symbol) => params.append('symbols', symbol));
   return params;
+}
+
+export function getRiskWindows(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<RiskWindowsResponse> {
+  return get('/api/v1/risk-windows?' + comparedParams(symbols).toString(), signal);
 }
 
 export function getComparisonChecklist(

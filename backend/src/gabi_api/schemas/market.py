@@ -178,6 +178,31 @@ class ComparisonResponse(WireModel):
     revision: str
 
 
+class DrawdownWindow(WireModel):
+    window: Literal["full", "5y", "3y"]
+    complete: bool  # the history covers the whole window; otherwise it is the available history
+    value: float | None  # fraction, negative
+    peak_date: date | None
+    trough_date: date | None
+    start: date | None
+
+
+class RiskWindows(WireModel):
+    """Windows and dates of a company's price-risk figures (#175); the full window is the ranking's."""
+    symbol: str
+    history_start: date | None
+    history_end: date | None
+    sessions: int
+    price_basis: Literal["adj_close", "close"] | None
+    volatility_window: Literal["cached_history"] = "cached_history"
+    drawdowns: list[DrawdownWindow]
+
+
+class RiskWindowsResponse(WireModel):
+    items: list[RiskWindows]
+    revision: str
+
+
 class RebasedPoint(WireModel):
     date: date
     values: dict[str, float | None]  # symbol -> adjusted close as 100 at base_date; None without a close

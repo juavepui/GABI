@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   getComparison: vi.fn(),
   getComparisonChecklist: vi.fn(),
   getComparisonPrices: vi.fn(),
+  getRiskWindows: vi.fn(),
   getRanking: vi.fn(),
 }));
 vi.mock('@/shared/api/client', async (actual) => ({
@@ -18,6 +19,7 @@ vi.mock('@/shared/api/client', async (actual) => ({
   getComparison: api.getComparison,
   getComparisonChecklist: api.getComparisonChecklist,
   getComparisonPrices: api.getComparisonPrices,
+  getRiskWindows: api.getRiskWindows,
   getRanking: api.getRanking,
 }));
 const { ComparisonPage } = await import('../src/features/market/comparison-page');
@@ -39,6 +41,9 @@ function company(symbol: string, marketCap: number): CompanyRow {
 }
 
 let screen: ReturnType<typeof renderScreen> | undefined;
+beforeEach(() => {
+  api.getRiskWindows.mockReturnValue(new Promise(() => undefined));
+});
 afterEach(() => screen?.unmount());
 
 describe('Comparar (#173)', () => {
