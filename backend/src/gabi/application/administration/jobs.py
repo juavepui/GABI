@@ -18,6 +18,7 @@ from gabi.application.research.live_ledger import normalize_live_report
 from gabi.application.research.portfolio_lab import normalize_portfolio_lab
 from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
+from gabi.domain.portfolio.simulation import listing
 
 JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
@@ -59,6 +60,15 @@ def refresh_failures(result: dict) -> list[tuple[str, str]]:
     return pairs
 
 
+def _simulated_symbol(symbol: str) -> bool:
+    """A ticker as a simulated trade accepts it: US (`BRK.B`) or with a European suffix (`SAP.DE`)."""
+    try:
+        listing(symbol)
+    except ValueError:
+        return False
+    return True
+
+
 @dataclass(frozen=True)
 class JobCommand:
     kind: JobKind
@@ -92,7 +102,8 @@ class JobCommand:
             if not all(SYMBOL.fullmatch(symbol) for symbol in self.symbols):
                 raise QueryError("invalid_job", "Los símbolos no son válidos.", 422)
         elif self.kind == "sim_prices":
-            if len(self.symbols) > 1 or not all(SYMBOL.fullmatch(symbol) for symbol in self.symbols):
+            # The ticker as typed in a simulated trade (SAP.DE, BRK.B; #192); the use case normalizes it.
+            if len(self.symbols) > 1 or not all(_simulated_symbol(symbol) for symbol in self.symbols):
                 raise QueryError("invalid_job", "Indica un símbolo válido o ninguno para toda la cartera.", 422)
         elif self.symbols:
             raise QueryError("invalid_job", "Este trabajo no admite símbolos.", 422)

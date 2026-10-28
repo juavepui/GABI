@@ -1,6 +1,5 @@
 """Local simulated trades, with the replay and cost rules of domain.portfolio.simulation."""
 
-import re
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from math import isfinite
@@ -52,10 +51,17 @@ class Simulations:
 
     def trade(self, portfolio_id: int, payload: dict) -> dict:
         portfolio = self.portfolio(portfolio_id)
-        symbol = str(payload["symbol"]).strip().upper().replace(".", "-")
-        if not re.fullmatch(r"[A-Z0-9^][A-Z0-9^\-]{0,19}", symbol) or payload["asset_type"] not in ("STOCK", "ETF") \
-                or payload["side"] not in ("BUY", "SELL") or payload["market"] not in MARKETS:
-            raise QueryError("invalid_trade", "Símbolo, instrumento, operación o mercado no válido.", 422)
+        try:
+            symbol, market, currency = simulation.listing(payload["symbol"])
+        except ValueError as exc:
+            raise QueryError("invalid_trade", str(exc), 422) from exc
+        # Market and currency follow the ticker (#192) unless typed in «Opciones avanzadas».
+        payload = payload | {"market": payload.get("market") or market,
+                             "quote_currency": payload.get("quote_currency") or currency,
+                             "asset_type": payload.get("asset_type") or "STOCK", "side": payload.get("side") or "BUY"}
+        if payload["asset_type"] not in ("STOCK", "ETF") or payload["side"] not in ("BUY", "SELL") \
+                or payload["market"] not in MARKETS:
+            raise QueryError("invalid_trade", "Instrumento, operación o mercado no válido.", 422)
         notional = payload["notional"]
         commission = payload["commission"]
         if commission is None:
@@ -75,6 +81,10 @@ class Simulations:
         if currencies and currencies != {payload["quote_currency"]}:
             raise QueryError("currency_mismatch", "Un ticker no puede cambiar de divisa en la cartera.", 422)
         history = self.repository.prices([symbol], requested.isoformat()).get(symbol, pd.DataFrame())
+        if history.empty:
+            # The form offers the explicit download in the same step (#192): the code says what is missing.
+            raise QueryError("prices_missing", f"No hay precios de {symbol} en la caché local. Descárgalos y "
+                             "vuelve a registrar la operación.", 422)
         try:
             quote = execution_quote(history, requested.isoformat(), payload["market"], self.today())
             pair = simulation.fx_symbol(payload["quote_currency"], portfolio["base_currency"])

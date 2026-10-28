@@ -343,8 +343,17 @@ def synthetic_job(command, app):
         from gabi.domain.portfolio.simulation import fx_symbol
         from gabi.infrastructure.storage.simulations import SqliteSimulations
 
+        def download(symbols: list[str]) -> dict:
+            """A ticker without prices gets T000's history, so a trade can be retried after it (#192)."""
+            with sqlite3.connect(Path(app.state.settings.data_dir) / "gabi.db") as db:
+                for symbol in symbols:
+                    if db.execute("SELECT 1 FROM prices WHERE symbol=? LIMIT 1", (symbol,)).fetchone() is None:
+                        db.execute("INSERT INTO prices(symbol,date,close,adj_close) "
+                                   "SELECT ?,date,close,adj_close FROM prices WHERE symbol='T000'", (symbol,))
+            return {}
+
         return refresh_prices(SqliteSimulations(Path(app.state.settings.data_dir)), command.portfolio_id,
-                              command.symbols[0] if command.symbols else None, fx_symbol, lambda symbols: {})
+                              command.symbols[0] if command.symbols else None, fx_symbol, download)
     if command.kind == "sim_compare":
         return app.state.simulations.compare()
     if command.kind == "quality":

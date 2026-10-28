@@ -122,8 +122,16 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
   await expect(prices.getByText('Actualizados 4 símbolos; fallos: 0.')).toBeVisible({
     timeout: 15_000,
   });
-  await page.getByRole('button', { name: 'Calcular resultado' }).click();
+  // The result against SPY shows without asking (#192).
   await expect(page.getByRole('heading', { name: /Resultado simulado/ })).toBeVisible();
+  // A ticker without prices offers its download in the same step, then registers the trade.
+  await page.getByLabel('Símbolo').fill('NUEVA');
+  await page.getByLabel('Fecha').fill('2026-09-28');
+  await page.getByLabel('Importe cotizado').fill('50');
+  await page.getByRole('button', { name: 'Registrar operación' }).click();
+  await expect(page.getByRole('alert')).toContainText('No hay precios de NUEVA');
+  await page.getByRole('button', { name: 'Descargar precios de NUEVA y registrar' }).click();
+  await expect(page.getByText('28 sept 2026 · BUY · NUEVA')).toBeVisible({ timeout: 15_000 });
   await page.reload();
   await expect(page.getByText('28 sept 2026 · BUY · T000')).toBeVisible();
   await page.getByRole('button', { name: 'Calcular comparación' }).click();

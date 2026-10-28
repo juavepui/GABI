@@ -15236,6 +15236,7 @@
         "additionalProperties": false,
         "properties": {
           "asset_type": {
+            "default": "STOCK",
             "enum": [
               "STOCK",
               "ETF"
@@ -15273,7 +15274,6 @@
             "type": "integer"
           },
           "market": {
-            "default": "XNYS",
             "enum": [
               "XNYS",
               "XETR",
@@ -15295,7 +15295,6 @@
             "type": "integer"
           },
           "quote_currency": {
-            "default": "USD",
             "enum": [
               "USD",
               "EUR",
@@ -15314,6 +15313,7 @@
             "type": "string"
           },
           "side": {
+            "default": "BUY",
             "enum": [
               "BUY",
               "SELL"
@@ -15326,6 +15326,7 @@
             "type": "number"
           },
           "symbol": {
+            "description": "Como en Yahoo: AAPL, BRK.B, SAP.DE, BP.L",
             "maxLength": 20,
             "minLength": 1,
             "title": "Symbol",
@@ -15334,10 +15335,10 @@
         },
         "required": [
           "symbol",
-          "asset_type",
-          "side",
           "requested_date",
           "notional",
+          "market",
+          "quote_currency",
           "commission",
           "spread_bps",
           "fx_rate",
@@ -15352,8 +15353,10 @@
       },
       "SimulationTradeCreate": {
         "additionalProperties": false,
+        "description": "A US buy needs symbol, date and amount (#192); the rest has a default or follows the ticker.",
         "properties": {
           "asset_type": {
+            "default": "STOCK",
             "enum": [
               "STOCK",
               "ETF"
@@ -15395,16 +15398,23 @@
             "title": "Fx Rate"
           },
           "market": {
-            "default": "XNYS",
-            "enum": [
-              "XNYS",
-              "XETR",
-              "XLON",
-              "XMAD",
-              "XPAR"
+            "anyOf": [
+              {
+                "enum": [
+                  "XNYS",
+                  "XETR",
+                  "XLON",
+                  "XMAD",
+                  "XPAR"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Market",
-            "type": "string"
+            "description": "Vacío: según el sufijo del ticker (EE. UU. sin sufijo)",
+            "title": "Market"
           },
           "notional": {
             "exclusiveMinimum": 0.0,
@@ -15413,14 +15423,21 @@
             "type": "number"
           },
           "quote_currency": {
-            "default": "USD",
-            "enum": [
-              "USD",
-              "EUR",
-              "GBP"
+            "anyOf": [
+              {
+                "enum": [
+                  "USD",
+                  "EUR",
+                  "GBP"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Quote Currency",
-            "type": "string"
+            "description": "Vacío: la del mercado del ticker",
+            "title": "Quote Currency"
           },
           "requested_date": {
             "format": "date",
@@ -15428,6 +15445,7 @@
             "type": "string"
           },
           "side": {
+            "default": "BUY",
             "enum": [
               "BUY",
               "SELL"
@@ -15449,6 +15467,7 @@
             "title": "Spread Bps"
           },
           "symbol": {
+            "description": "Como en Yahoo: AAPL, BRK.B, SAP.DE, BP.L",
             "maxLength": 20,
             "minLength": 1,
             "title": "Symbol",
@@ -15457,8 +15476,6 @@
         },
         "required": [
           "symbol",
-          "asset_type",
-          "side",
           "requested_date",
           "notional"
         ],
@@ -15482,26 +15499,38 @@
             "type": "number"
           },
           "market": {
-            "default": "XNYS",
-            "enum": [
-              "XNYS",
-              "XETR",
-              "XLON",
-              "XMAD",
-              "XPAR"
+            "anyOf": [
+              {
+                "enum": [
+                  "XNYS",
+                  "XETR",
+                  "XLON",
+                  "XMAD",
+                  "XPAR"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Market",
-            "type": "string"
+            "title": "Market"
           },
           "quote_currency": {
-            "default": "USD",
-            "enum": [
-              "USD",
-              "EUR",
-              "GBP"
+            "anyOf": [
+              {
+                "enum": [
+                  "USD",
+                  "EUR",
+                  "GBP"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Quote Currency",
-            "type": "string"
+            "title": "Quote Currency"
           },
           "side": {
             "default": "BUY",
