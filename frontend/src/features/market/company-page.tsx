@@ -15,6 +15,13 @@ import { CompanyChecklist } from './company-checklist';
 import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
+import {
+  drawdownDates,
+  drawdownOf,
+  drawdownValue,
+  historySpan,
+  useRiskWindows,
+} from './risk-windows';
 
 const PriceChart = lazy(() => import('./price-chart'));
 const groups = [
@@ -42,7 +49,7 @@ const groups = [
       ['momentum_6m', 'Momentum · 6 meses'],
       ['momentum_12m', 'Momentum · 12 meses'],
       ['volatility', 'Volatilidad'],
-      ['max_drawdown', 'Máximo drawdown'],
+      ['max_drawdown', 'Caída máxima (drawdown)'],
     ],
   },
   {
@@ -66,6 +73,8 @@ export function CompanyPage() {
   const back = patchParams(params, { bars: null }, false);
   const data = result.data;
   const company = data?.company;
+  const windows = useRiskWindows(company ? [company.symbol] : []);
+  const risk = windows.data?.items[0];
   return (
     <>
       <div className="mb-3">
@@ -196,14 +205,43 @@ export function CompanyPage() {
                             {data.metric_sources[key] ? (
                               <span className="block text-xs">
                                 {sourceLabel(data.metric_sources[key])}
+                                {(key === 'volatility' || key === 'max_drawdown') && risk
+                                  ? ' ' + historySpan(risk)
+                                  : ''}
                               </span>
                             ) : null}
                           </dt>
-                          <dd className="whitespace-nowrap font-medium tabular-nums">
+                          <dd className="whitespace-nowrap text-right font-medium tabular-nums">
                             {metric(company.metrics[key], true)}
+                            {key === 'max_drawdown' && risk ? (
+                              <span className="block text-xs font-normal text-muted-foreground">
+                                {drawdownDates(drawdownOf(risk, 'full'))}
+                              </span>
+                            ) : null}
                           </dd>
                         </div>
                       ))}
+                      {group.name === 'Momentum y riesgo' &&
+                        (['5y', '3y'] as const).map((window) => {
+                          const row = drawdownOf(risk, window);
+                          return (
+                            <div key={window} className="flex justify-between gap-2 text-sm">
+                              <dt className="text-muted-foreground">
+                                Caída máxima · {window === '5y' ? '5 años' : '3 años'}
+                                <span className="block text-xs">
+                                  Informativa, no puntúa
+                                  {row && !row.complete ? ' · * histórico más corto' : ''}
+                                </span>
+                              </dt>
+                              <dd className="whitespace-nowrap text-right font-medium tabular-nums">
+                                {windows.isPending ? '…' : drawdownValue(row)}
+                                <span className="block text-xs font-normal text-muted-foreground">
+                                  {drawdownDates(row)}
+                                </span>
+                              </dd>
+                            </div>
+                          );
+                        })}
                     </dl>
                   </CardContent>
                 </Card>

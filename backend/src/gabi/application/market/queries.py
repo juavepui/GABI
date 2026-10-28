@@ -10,6 +10,9 @@ from gabi.application.errors import QueryError
 from gabi.domain.market.freshness import MAX_BEHIND_SHARE, prices_current
 from gabi.domain.market.selection import RankingFilter, RankingSort, filter_ranking, sort_ranking
 
+# Sessions of one company read whole for its risk windows (#175): about 80 years of trading days.
+HISTORY_ROWS = 20_000
+
 
 @dataclass
 class RankingSnapshot:
@@ -140,6 +143,23 @@ class MarketQueries:
         result.total = len(normalized)
         result.limit = len(normalized)
         return result
+
+    def histories(self, symbols: list[str]) -> tuple[RankingResult, dict[str, pd.DataFrame]]:
+        """Whole cached histories of 1–5 universe companies, as the ranking's risk metrics read them (#175)."""
+        normalized = list(dict.fromkeys(symbol.strip().upper().replace(".", "-") for symbol in symbols))
+        if not 1 <= len(normalized) <= 5:
+            raise QueryError("invalid_symbols", "Elige entre una y cinco empresas.", 422)
+        result = self.ranking(RankingFilter(hide_no_data=False), limit=1000)
+        if any(symbol not in result.snapshot.table.index for symbol in normalized):
+            raise QueryError("company_not_found", "Alguna empresa no está en el universo local cacheado.", 404)
+        frames = {}
+        for symbol in normalized:
+            # One row over the budget tells a long history from a truncated one: never cut silently.
+            frame = self.repository.price_history(symbol, HISTORY_ROWS + 1, result.snapshot.revision)
+            if len(frame) > HISTORY_ROWS:
+                raise QueryError("resource_limit", "El histórico supera el presupuesto de lectura.")
+            frames[symbol] = frame
+        return result, frames
 
     def compare_histories(self, symbols: list[str], extra: list[str], bars: int) -> tuple[RankingResult, dict]:
         """The compared companies plus `extra` series (SPY), each its last `bars` cached sessions."""

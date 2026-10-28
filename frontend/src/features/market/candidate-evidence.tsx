@@ -25,8 +25,8 @@ const METRIC_LABELS: Record<string, string> = {
   rel_strength_6m: 'Fuerza relativa 6M',
   price_vs_sma200: 'vs SMA200',
   debt_to_equity: 'Deuda/Patrimonio',
-  volatility: 'Volatilidad anualizada',
-  max_drawdown: 'Máximo drawdown',
+  volatility: 'Volatilidad anualizada (todo el histórico)',
+  max_drawdown: 'Caída máxima (todo el histórico)',
 };
 const label = (metric: string) => METRIC_LABELS[metric] ?? metric;
 const num = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });

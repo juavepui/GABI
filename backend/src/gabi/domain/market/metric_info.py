@@ -146,13 +146,15 @@ METRIC_INFO = {
     },
     "volatility": {
         "label": "Volatilidad anualizada (%)",
-        "help": "Dispersión de los retornos diarios de la acción, anualizada. Más alta = movimientos de precio más "
-                "bruscos (más riesgo), en ambas direcciones.",
+        "help": "Dispersión de los retornos diarios de la acción, anualizada, sobre todo el histórico de precios "
+                "cacheado (la ficha indica desde qué fecha). Más alta = movimientos de precio más bruscos (más "
+                "riesgo), en ambas direcciones.",
     },
     "max_drawdown": {
         "label": "Máximo drawdown (%)",
-        "help": "Mayor caída desde un máximo hasta un mínimo posterior en el histórico de precios cacheado. Cuanto "
-                "más cerca de 0%, menor ha sido la peor caída.",
+        "help": "Mayor caída desde un máximo hasta un mínimo posterior en todo el histórico de precios cacheado; "
+                "la ficha y Comparar indican las fechas del pico y del valle, y la caída de los últimos 5 y 3 "
+                "años. Cuanto más cerca de 0%, menor ha sido la peor caída.",
     },
     "sharpe_ratio": {
         "label": "Sharpe Ratio",

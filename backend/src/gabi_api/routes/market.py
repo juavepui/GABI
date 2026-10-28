@@ -12,6 +12,7 @@ from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.comparison import positions
+from gabi.domain.market.risk_windows import risk_windows
 from gabi.domain.market.selection import EarningsWindow, RankingFilter, RankingSort, SortKey
 from gabi_api.ranking_export import ranking_csv
 from gabi_api.schemas.checklist import (
@@ -42,6 +43,7 @@ from gabi_api.schemas.market import (
     ModelResponse,
     PricePoint,
     RankingResponse,
+    RiskWindowsResponse,
     company_row,
     data_response,
     finite,
@@ -265,3 +267,11 @@ def comparison_checklist(market: Service, query: Checklist, symbols: Compared) -
 @router.get("/comparison/prices", response_model=ComparisonPricesResponse)
 def comparison_prices(market: Service, symbols: Compared, bars: Annotated[int, Query(ge=20, le=1000)] = 252) -> dict:
     return compared.prices(market, symbols, bars)
+
+
+@router.get("/risk-windows", response_model=RiskWindowsResponse)
+def company_risk_windows(market: Service, symbols: Annotated[list[str], Query(min_length=1, max_length=5)]) -> dict:
+    """Window, peak and trough of the drawdown and the volatility window of 1–5 companies."""
+    result, frames = market.histories(symbols)
+    return {"items": [{"symbol": symbol, **risk_windows(frame)} for symbol, frame in frames.items()],
+            "revision": result.snapshot.revision}

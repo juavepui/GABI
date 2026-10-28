@@ -5669,6 +5669,81 @@
         "title": "Diagnostic",
         "type": "object"
       },
+      "DrawdownWindow": {
+        "additionalProperties": false,
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "peak_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Date"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "trough_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trough Date"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "window": {
+            "enum": [
+              "full",
+              "5y",
+              "3y"
+            ],
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "window",
+          "complete",
+          "value",
+          "peak_date",
+          "trough_date",
+          "start"
+        ],
+        "title": "DrawdownWindow",
+        "type": "object"
+      },
       "Earnings": {
         "additionalProperties": false,
         "properties": {
@@ -13894,6 +13969,104 @@
           "idempotency_key"
         ],
         "title": "RetryJobRequest",
+        "type": "object"
+      },
+      "RiskWindows": {
+        "additionalProperties": false,
+        "description": "Windows and dates of a company's price-risk figures (#175); the full window is the ranking's.",
+        "properties": {
+          "drawdowns": {
+            "items": {
+              "$ref": "#/components/schemas/DrawdownWindow"
+            },
+            "title": "Drawdowns",
+            "type": "array"
+          },
+          "history_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History End"
+          },
+          "history_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History Start"
+          },
+          "price_basis": {
+            "anyOf": [
+              {
+                "enum": [
+                  "adj_close",
+                  "close"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Basis"
+          },
+          "sessions": {
+            "title": "Sessions",
+            "type": "integer"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "volatility_window": {
+            "const": "cached_history",
+            "default": "cached_history",
+            "title": "Volatility Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "history_start",
+          "history_end",
+          "sessions",
+          "price_basis",
+          "drawdowns"
+        ],
+        "title": "RiskWindows",
+        "type": "object"
+      },
+      "RiskWindowsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RiskWindows"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "revision"
+        ],
+        "title": "RiskWindowsResponse",
         "type": "object"
       },
       "SaveEvaluationRequest": {
@@ -27824,6 +27997,104 @@
         "summary": "Trials",
         "tags": [
           "research"
+        ]
+      }
+    },
+    "/api/v1/risk-windows": {
+      "get": {
+        "description": "Window, peak and trough of the drawdown and the volatility window of 1–5 companies.",
+        "operationId": "company_risk_windows_api_v1_risk_windows_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "symbols",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 1,
+              "title": "Symbols",
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskWindowsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Risk Windows",
+        "tags": [
+          "market"
         ]
       }
     }
