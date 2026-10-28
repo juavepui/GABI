@@ -29,21 +29,26 @@ class SqliteSecSelection(SqliteIdentityReads):
         fetched: dict = {}
         covered: set[str] = set()
         failed: dict[str, set[str]] = {}
+        owners: dict[str, list[str]] = {}
         chunks = list(self._chunks(symbols))
         with self._read() as (db, tables):
             if db is None:
                 return fetched, covered, failed
             for chunk in chunks:
                 marks = ",".join("?" for _ in chunk)
+                if "edgar_facts" in tables:
+                    covered.update(row[0] for row in self._rows(db,
+                                   f"SELECT DISTINCT symbol FROM edgar_facts WHERE symbol IN ({marks})", chunk))
                 if "edgar_metrics" in tables:
-                    for symbol, at in self._rows(db, f"SELECT symbol,fetched_at FROM edgar_metrics WHERE symbol IN ({marks})", chunk):
+                    for symbol, at, cik in self._rows(db, "SELECT symbol,fetched_at,cik FROM edgar_metrics "
+                                                      f"WHERE symbol IN ({marks})", chunk):
                         try:
                             fetched[symbol] = datetime.fromisoformat(at)
                         except (ValueError, TypeError):
                             fetched[symbol] = None
-                if "edgar_facts" in tables:
-                    covered.update(row[0] for row in self._rows(db,
-                                   f"SELECT DISTINCT symbol FROM edgar_facts WHERE symbol IN ({marks})", chunk))
+                        cik = str(cik).strip() if cik else ""
+                        if symbol not in covered and cik.isdigit():
+                            owners.setdefault(f"cik:{int(cik):010d}", []).append(symbol)
                 if "sync_checkpoints" in tables:
                     rows = self._rows(db, "SELECT entity,dataset,CASE WHEN length(CAST(state_json AS BLOB))<=? "
                                       "THEN json_extract(state_json,'$.status') ELSE 'oversized' END "
@@ -54,6 +59,13 @@ class SqliteSecSelection(SqliteIdentityReads):
                             raise ValueError("El checkpoint SEC supera el límite de bytes.")
                         if status == "failed":
                             failed.setdefault(dataset.removeprefix("facts:"), set()).add(entity)
+            # History stored under a former alias covers the symbol too (#201).
+            if owners and "entity_observations" in tables:
+                for chunk in self._chunks(list(owners)):
+                    marks = ",".join("?" for _ in chunk)
+                    for entity, in self._rows(db, "SELECT DISTINCT entity_id FROM entity_observations "
+                                              f"WHERE dataset='edgar_facts' AND entity_id IN ({marks})", chunk):
+                        covered.update(owners[entity])
         return fetched, covered, failed
 
     def covered_entities(self, entities: list[str]) -> set[str]:
