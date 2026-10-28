@@ -147,7 +147,7 @@ class ReadOnlyMarket:
                 mode = json.loads(mode_bytes).get("mode", "INVESTOR") if mode_bytes else "INVESTOR"
                 if mode not in {"INVESTOR", "RESEARCH"}:
                     raise ValueError("Invalid mode")
-                weights = json.loads(weights_bytes) if weights_bytes else dict(self.policy.frozen_weights)
+                weights = json.loads(weights_bytes) if weights_bytes else dict(self.policy.weights)
                 if not isinstance(weights, dict):
                     raise ValueError("Invalid weights")
                 weights = {str(key): float(value) for key, value in weights.items()}
@@ -184,7 +184,7 @@ class ReadOnlyMarket:
 
     def _key(self, revision: str, weights: dict[str, float], today: date) -> tuple:
         return (revision, today.isoformat(), tuple(sorted(weights.items())), self.benchmark_symbol,
-                self.risk_free_rate, self.policy.frozen_id)
+                self.risk_free_rate, self.policy.model_id)
 
     def cached_ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot | None:
         """The cached snapshot while it is fresh. Never computes; None while another request computes it."""

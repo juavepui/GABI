@@ -55,14 +55,14 @@ class HomeQueries:
     def summary(self, compute: bool = False) -> dict:
         """`compute=False` answers at once from the cache; `compute=True` builds the frozen ranking if needed."""
         today = self.today()
-        weights = dict(self.policy.frozen_weights)
+        weights = dict(self.policy.weights)
         snapshot = self.market.ranking(weights, today) if compute else self.market.cached_ranking(weights, today)
         jobs = self.jobs.list()
         last_update = next((job for job in jobs if job["kind"] in UPDATE_KINDS
                             and job["status"] == "succeeded"), None)
         keys = self.configured_keys()
         result: dict = {
-            "as_of": today.isoformat(), "model_id": self.policy.frozen_id, "ranking_ready": snapshot is not None,
+            "as_of": today.isoformat(), "model_id": self.policy.model_id, "ranking_ready": snapshot is not None,
             "data": None, "target": [], "target_positions": FROZEN_POSITIONS, "alerts": [],
             "last_update": None if last_update is None else {
                 "kind": last_update["kind"], "finished_at": last_update["finished_at"]},

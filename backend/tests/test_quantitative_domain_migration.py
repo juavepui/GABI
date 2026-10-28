@@ -10,6 +10,7 @@ import pytest
 
 from gabi import config, live_ledger, storage
 from gabi.domain.market import risk, technicals
+from gabi.domain.market.technicals import TechnicalParameters
 from gabi.domain.portfolio import metrics, rotation
 from gabi.domain.research import statistics
 from gabi.infrastructure.legacy.market import calculators
@@ -118,8 +119,9 @@ def test_explicit_parameters_and_legacy_configuration(reference, monkeypatch):
     old_risk = importlib.import_module("gabi.risk")
     assert_reference(canonical(old_tech.compute_technicals(stock, benchmark)), reference["custom_technicals"])
     assert_reference(canonical(old_risk.compute_risk_metrics(stock, benchmark)), reference["default"]["risk"])
-    # Composition captures the parameters; later global changes do not affect an operation.
-    composed = calculators()
+    # Composition receives the parameters explicitly; global changes do not affect an operation.
+    composed = calculators(TechnicalParameters(sma_short=20, sma_long=80, rsi_period=14,
+                                               momentum_short_days=21, momentum_long_days=63))
     monkeypatch.setattr(config, "SMA_SHORT", 3)
     assert_reference(canonical(composed.technicals(stock, benchmark)), reference["custom_technicals"])
     assert composed.risk is risk.compute_risk_metrics

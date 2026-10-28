@@ -81,10 +81,12 @@ class PortfolioQueries:
             holdings, unvalued = self.saved_holdings()
             source = "saved" if holdings or unvalued else "none"
         today = self.today()
-        snapshot = self.market.ranking(dict(self.policy.frozen_weights), today)
+        snapshot = self.market.ranking(dict(self.policy.weights), today)
         target = target_portfolio(snapshot.table, n_positions)
         allocation = allocate_new_capital(target, holdings, new_capital_eur)
-        frozen = n_positions == 20
+        reference_size = n_positions == 20
+        # A new model version starts without evidence (ADR 0008): only the sealed hypothesis is FROZEN.
+        frozen = reference_size and self.policy.status(dict(self.policy.weights)) == "FROZEN"
         # Descriptive only (#180): the breakdown reads the selection, it never changes it.
         industries = self.industries()
         sectors = sector_breakdown(target, snapshot.table)
@@ -93,7 +95,7 @@ class PortfolioQueries:
                              allocation["outside_target"], describe_data(snapshot, today), today,
                              snapshot.revision, n_positions, capital_eur,
                              "FROZEN" if frozen else "EXPERIMENTAL",
-                             self.policy.frozen_id if frozen else "EXPERIMENTAL_TOP_N",
+                             self.policy.model_id if reference_size else "EXPERIMENTAL_TOP_N",
                              industries, sectors, held,
                              concentration_warnings(sectors, held, sector_limit_pct=sector_limit_pct,
                                                     industry_limit_pct=industry_limit_pct),

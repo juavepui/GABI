@@ -54,7 +54,7 @@ def test_snapshot_of_the_target_keeps_exactly_the_plan_candidates():
         def ranking(self, weights, today):
             return SimpleNamespace(table=table)
 
-    monitor = SignalMonitor(Repository(), Market(), SimpleNamespace(frozen_weights={}), lambda: TODAY,
+    monitor = SignalMonitor(Repository(), Market(), SimpleNamespace(weights={}), lambda: TODAY,
                             compare=None, compare_filings=None, jobs=None)
     monitor.save("Top", 2)
     monitor.save("Objetivo", 2, target=True)

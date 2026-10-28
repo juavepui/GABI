@@ -64,9 +64,10 @@ from gabi.infrastructure.legacy.experiments import LegacyExperimentMath
 from gabi.infrastructure.legacy.filings import compare_cached
 from gabi.infrastructure.legacy.historical import LegacyRankingQuality
 from gabi.infrastructure.legacy.live_ledger import LegacyLiveLedger
-from gabi.infrastructure.legacy.market import calculators, defaults, metric_blocks, metric_directions, model_policy
+from gabi.infrastructure.legacy.market import calculators, metric_blocks, metric_directions, model_policy
 from gabi.infrastructure.legacy.published_factors import evidence_root
 from gabi.infrastructure.legacy.smallmid import smallmid_freeze_deadline
+from gabi.infrastructure.model_versions import active_model
 from gabi.infrastructure.serialization.decisions import build_decisions
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.blind import SqliteBlindStore
@@ -134,9 +135,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                blind_plans_root: Path | None = None, session: Callable[[], date] | None = None) -> FastAPI:
     settings = settings or Settings.from_environment()
     session = session or (lambda: last_completed_session(datetime.now(UTC)))
-    benchmark, risk_free_rate = defaults()
-    policy = model_policy()
-    repository = ReadOnlyMarket(settings, calculators(), policy, benchmark, risk_free_rate)
+    model = active_model()
+    policy = model_policy(model)
+    repository = ReadOnlyMarket(settings, calculators(model.technical), policy, model.benchmark_symbol,
+                                model.risk_free_rate)
     model_queries = ModelQueries(repository, policy)
     market = MarketQueries(repository, model_queries, today, session)
     model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir), FileMode(settings.data_dir))
@@ -149,7 +151,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                                                                        strict=True) if isinstance(industry, str)}
 
     holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteSimulations(settings.data_dir).prices,
-                        lambda: repository.ranking(dict(policy.frozen_weights), today()).table, today)
+                        lambda: repository.ranking(dict(policy.weights), today()).table, today)
     portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
     macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata(series_metadata()),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
@@ -210,13 +212,13 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
             repository.small_file("sp500_constituents.csv")).itertuples(index=False)],
         market.company_metrics, load_checklist_reference)
     app.state.watchlist = Watchlist(
-        SqliteWatchlist(settings.data_dir), lambda: repository.ranking(dict(policy.frozen_weights), today()).table,
-        policy.frozen_id, SqliteJournal(settings.data_dir).theses, app.state.company_checklist.summary)
+        SqliteWatchlist(settings.data_dir), lambda: repository.ranking(dict(policy.weights), today()).table,
+        policy.model_id, SqliteJournal(settings.data_dir).theses, app.state.company_checklist.summary)
 
     # A new thesis captures price, frozen score and checklist (#186); all read from the local cache.
     app.state.journal = Journal(SqliteJournal(settings.data_dir),
-                                lambda: repository.ranking(dict(policy.frozen_weights), today()).table,
-                                app.state.company_checklist.company, policy.frozen_id, today)
+                                lambda: repository.ranking(dict(policy.weights), today()).table,
+                                app.state.company_checklist.company, policy.model_id, today)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)
@@ -225,7 +227,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors
-    app.state.block_evidence = BlockEvidence(published_factor_files.read, lambda: dict(policy.frozen_weights))
+    app.state.block_evidence = BlockEvidence(published_factor_files.read, lambda: dict(policy.weights))
     app.state.blind_validations = blind_validations
     app.state.blind_commands = BlindCommands(blind_validations, LegacyBlindWriter(settings.data_dir),
                                              lambda: model_queries.model().mode == "RESEARCH")

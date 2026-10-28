@@ -72,16 +72,18 @@ class LegacyExecutor:
 
             from gabi.application.administration.jobs import Jobs
             from gabi.application.portfolio.decisions import Decisions
-            from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+            from gabi.infrastructure.legacy.market import calculators, model_policy
+            from gabi.infrastructure.model_versions import active_model
             from gabi.infrastructure.serialization.decisions import build_decisions
             from gabi.infrastructure.storage.decisions import SqliteDecisions
             from gabi.infrastructure.storage.jobs import SqliteJobs
             from gabi.infrastructure.storage.market import ReadOnlyMarket
 
             assert command.decision_policy is not None and command.holdings_text is not None
-            benchmark, risk_free_rate = defaults()
-            policy = model_policy()
-            market = ReadOnlyMarket(self.settings, calculators(), policy, benchmark, risk_free_rate)
+            model = active_model()
+            policy = model_policy(model)
+            market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
+                                    model.risk_free_rate)
             try:
                 service = Decisions(market, SqliteDecisions(self.settings.data_dir), policy, date.today,
                                     build_decisions, Jobs(SqliteJobs(self.settings.data_dir)))
@@ -95,15 +97,17 @@ class LegacyExecutor:
             from gabi.application.market.signals import SignalMonitor
             from gabi.domain.market.signals import compare_snapshots
             from gabi.infrastructure.legacy.filings import compare_cached
-            from gabi.infrastructure.legacy.market import calculators, defaults, model_policy
+            from gabi.infrastructure.legacy.market import calculators, model_policy
+            from gabi.infrastructure.model_versions import active_model
             from gabi.infrastructure.storage.jobs import SqliteJobs
             from gabi.infrastructure.storage.market import ReadOnlyMarket
             from gabi.infrastructure.storage.signals import SqliteSignals
 
             assert command.snapshot_id is not None
-            benchmark, risk_free_rate = defaults()
-            policy = model_policy()
-            market = ReadOnlyMarket(self.settings, calculators(), policy, benchmark, risk_free_rate)
+            model = active_model()
+            policy = model_policy(model)
+            market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
+                                    model.risk_free_rate)
             try:
                 monitor = SignalMonitor(SqliteSignals(self.settings.data_dir), market, policy,
                                         date.today, compare_snapshots, compare_cached,

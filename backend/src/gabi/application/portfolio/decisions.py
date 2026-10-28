@@ -74,7 +74,7 @@ class Decisions:
     def generate(self, options: dict, holdings_text: str) -> dict:
         holdings = parse_holdings(holdings_text)
         day = self.today()
-        snapshot = self.market.ranking(dict(self.model.frozen_weights), day)
+        snapshot = self.market.ranking(dict(self.model.weights), day)
         table = snapshot.table
         if table.empty or len(table) > 1000:
             raise QueryError("data_unavailable", "No hay un universo local válido para decisiones.", 503)
@@ -84,7 +84,7 @@ class Decisions:
         except (ValueError, KeyError, TypeError) as exc:
             raise QueryError("decision_unavailable", str(exc), 422) from exc
         state = describe_data(snapshot, day)
-        return plan | {"as_of": day.isoformat(), "model_id": self.model.frozen_id,
+        return plan | {"as_of": day.isoformat(), "model_id": self.model.model_id,
                        "revision": snapshot.revision, "data_status": state.status,
                        "coverage": {"universe": state.universe_count, "prices": state.prices_available,
                                     "scored": state.scored_count}}
@@ -109,7 +109,7 @@ class Decisions:
     def freshness(self, plan_id: int) -> dict:
         """A saved plan against today's ranking with the same frozen weights; reads the cache only."""
         plan = self.get(plan_id)
-        table = self.market.ranking(dict(self.model.frozen_weights), self.today()).table
+        table = self.market.ranking(dict(self.model.weights), self.today()).table
         scores = table["composite_score"] if "composite_score" in table else {}
         current = {str(symbol): (None if pd.isna(value) else float(value)) for symbol, value in scores.items()}
         policy = plan.get("policy") or {}
