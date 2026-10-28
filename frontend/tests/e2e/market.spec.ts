@@ -568,3 +568,36 @@ test('Comparar desde el Ranking: secciones, checklist de cada ficha y precio en 
   );
   await expect(prices).toContainText('T001:');
 });
+
+test('Ranking: columnas recordadas, filtros nuevos y CSV de la vista filtrada (#196)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=25&order_by=market_cap&direction=asc');
+  const table = page.getByRole('region', { name: 'Tabla desplazable' });
+  await expect(table.locator('tbody tr').first()).toBeVisible({ timeout: 30_000 });
+  await page.getByText(/^Columnas \(/).click();
+  await page.getByRole('checkbox', { name: 'ROE' }).check();
+  await page.getByRole('checkbox', { name: 'Próximos resultados' }).check();
+  await expect(table.getByRole('columnheader', { name: 'ROE' })).toBeVisible();
+  // Sorting by a new column is done by the backend on the whole universe.
+  await table.getByRole('button', { name: 'ROE' }).click();
+  await expect(page).toHaveURL(/order_by=roe/);
+  const download = page.waitForEvent('download');
+  await page.getByRole('link', { name: /Exportar CSV/ }).click();
+  const file = await download;
+  const text = await (await file.createReadStream()).toArray();
+  const csv = Buffer.concat(text).toString('utf-8');
+  expect(csv).toContain('# GABI · Ranking consultado el ');
+  expect(csv).toContain('roe [fracción (0.05 = 5 %)]');
+  expect(csv).toContain('next_earnings_days [días]');
+  // A bare /descubrir reopens the remembered columns, order and rows.
+  await page.goto('/descubrir');
+  await expect(page).toHaveURL(/order_by=roe/);
+  await expect(page).toHaveURL(/limit=25/);
+  await expect(table.getByRole('columnheader', { name: 'ROE' })).toBeVisible();
+  await page.getByText('Excluir sectores').click();
+  await page.getByRole('group', { name: 'Sectores excluidos' }).getByText('Financials').click();
+  await page.getByRole('button', { name: 'Aplicar filtros' }).click();
+  await expect(page).toHaveURL(/exclude_sectors=Financials/);
+  await expect(table.locator('tbody')).not.toContainText('BRK-A');
+});

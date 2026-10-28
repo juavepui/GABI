@@ -12726,6 +12726,14 @@ export type RankingApiV1RankingGetData = {
     path?: never;
     query?: {
         /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
          * Search
          */
         search?: string;
@@ -12733,6 +12741,10 @@ export type RankingApiV1RankingGetData = {
          * Sectors
          */
         sectors?: Array<string> | null;
+        /**
+         * Exclude Sectors
+         */
+        exclude_sectors?: Array<string> | null;
         /**
          * Min Market Cap
          */
@@ -12746,17 +12758,17 @@ export type RankingApiV1RankingGetData = {
          */
         hide_no_data?: boolean;
         /**
-         * Offset
+         * Earnings
          */
-        offset?: number;
+        earnings?: 'only' | 'exclude' | null;
         /**
-         * Limit
+         * Earnings Days
          */
-        limit?: number;
+        earnings_days?: number;
         /**
          * Order By
          */
-        order_by?: 'composite_score' | 'market_cap' | 'pe' | 'price' | 'confidence' | 'name';
+        order_by?: 'composite_score' | 'market_cap' | 'pe' | 'price' | 'confidence' | 'name' | 'value_score' | 'quality_score' | 'momentum_score' | 'risk_score' | 'roe' | 'debt_to_equity' | 'dividend_yield' | 'momentum_12m' | 'volatility' | 'next_earnings_days';
         /**
          * Direction
          */
@@ -12872,6 +12884,114 @@ export type RankingCoverageApiV1RankingCoverageGetResponses = {
 };
 
 export type RankingCoverageApiV1RankingCoverageGetResponse = RankingCoverageApiV1RankingCoverageGetResponses[keyof RankingCoverageApiV1RankingCoverageGetResponses];
+
+export type RankingExportApiV1RankingExportCsvGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Columns
+         */
+        columns?: Array<string> | null;
+        /**
+         * Search
+         */
+        search?: string;
+        /**
+         * Sectors
+         */
+        sectors?: Array<string> | null;
+        /**
+         * Exclude Sectors
+         */
+        exclude_sectors?: Array<string> | null;
+        /**
+         * Min Market Cap
+         */
+        min_market_cap?: number;
+        /**
+         * Golden Cross Only
+         */
+        golden_cross_only?: boolean;
+        /**
+         * Hide No Data
+         */
+        hide_no_data?: boolean;
+        /**
+         * Earnings
+         */
+        earnings?: 'only' | 'exclude' | null;
+        /**
+         * Earnings Days
+         */
+        earnings_days?: number;
+        /**
+         * Order By
+         */
+        order_by?: 'composite_score' | 'market_cap' | 'pe' | 'price' | 'confidence' | 'name' | 'value_score' | 'quality_score' | 'momentum_score' | 'risk_score' | 'roe' | 'debt_to_equity' | 'dividend_yield' | 'momentum_12m' | 'volatility' | 'next_earnings_days';
+        /**
+         * Direction
+         */
+        direction?: 'asc' | 'desc';
+        /**
+         * Mode
+         */
+        mode?: 'INVESTOR' | 'RESEARCH' | null;
+        /**
+         * Value
+         */
+        value?: number | null;
+        /**
+         * Quality
+         */
+        quality?: number | null;
+        /**
+         * Momentum
+         */
+        momentum?: number | null;
+        /**
+         * Risk
+         */
+        risk?: number | null;
+    };
+    url: '/api/v1/ranking/export.csv';
+};
+
+export type RankingExportApiV1RankingExportCsvGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type RankingExportApiV1RankingExportCsvGetError = RankingExportApiV1RankingExportCsvGetErrors[keyof RankingExportApiV1RankingExportCsvGetErrors];
+
+export type RankingExportApiV1RankingExportCsvGetResponses = {
+    /**
+     * Ranking en CSV
+     */
+    200: unknown;
+};
 
 export type RankingStabilityApiV1RankingStabilityGetData = {
     body?: never;

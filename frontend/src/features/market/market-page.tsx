@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowDown,
   ArrowUp,
   ChevronLeft,
   ChevronRight,
+  Columns3,
+  Download,
   Search,
   SlidersHorizontal,
   RotateCw,
@@ -13,7 +15,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { LoadingState, ErrorState, EmptyState } from '@/shared/ui/resource-state';
-import { metric, dateLabel } from '@/shared/lib/format';
+import { dateLabel } from '@/shared/lib/format';
 import { useBlockEvidence, useRanking } from './queries';
 import { rankingParams, patchParams, sortOptions, type SortKey } from './params';
 import { Evidence } from './evidence';
@@ -27,11 +29,15 @@ import { DataTable } from '@/shared/ui/data-table';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
 import { Term } from '@/shared/ui/term';
 import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
-
 import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
-
-/** 0-100 points (score, coverage or a sector percentile, 100 = best) as a 0..1 colour position. */
-const score = (value: number | null | undefined) => (value == null ? null : value / 100);
+import {
+  exportHref,
+  keptQuery,
+  loadPreferences,
+  RANKING_COLUMNS,
+  savePreferences,
+  visibleColumns,
+} from './ranking-columns';
 
 const MAX_COMPARED = 5;
 
@@ -76,6 +82,26 @@ export function MarketPage() {
   const evidence = useBlockEvidence();
   const data = result.data;
   const [picked, setPicked] = useState<string[]>([]);
+  const [saved] = useState(loadPreferences);
+  const [chosen, setChosen] = useState(saved.columns);
+  const columns = visibleColumns(chosen);
+  // A bare /descubrir reopens the last filters, order and rows; a link with its own query wins.
+  useEffect(() => {
+    if (!params.toString() && saved.query)
+      setParams(new URLSearchParams(saved.query), { replace: true });
+    // Only on arrival: «Restablecer» must be able to clear them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    savePreferences({ columns: chosen, query: keptQuery(params) });
+  }, [chosen, params]);
+  function choose(key: string, on: boolean) {
+    setChosen((current) =>
+      on
+        ? [...current.filter((item) => item !== key), key]
+        : current.filter((item) => item !== key),
+    );
+  }
   function toggle(symbol: string) {
     setPicked((current) =>
       current.includes(symbol)
@@ -92,6 +118,9 @@ export function MarketPage() {
       patchParams(params, {
         search: String(form.get('search') ?? '').trim(),
         sectors: form.getAll('sectors').map(String).filter(Boolean),
+        exclude_sectors: form.getAll('exclude_sectors').map(String).filter(Boolean),
+        earnings: String(form.get('earnings') ?? '') || null,
+        earnings_days: form.get('earnings') ? String(form.get('earnings_days') ?? '') : null,
         min_market_cap: String(form.get('min_market_cap') ?? ''),
         golden_cross_only: form.has('golden_cross_only') ? 'true' : null,
         hide_no_data: form.has('hide_no_data') ? null : 'false',
@@ -279,6 +308,52 @@ export function MarketPage() {
               />
               Solo cruce dorado reciente
             </label>
+            <details className="relative">
+              <summary className="flex cursor-pointer items-center gap-1">
+                Excluir sectores
+                {query.exclude_sectors?.length ? ` (${query.exclude_sectors.length})` : ''}
+                <ChevronRight size={12} aria-hidden="true" />
+              </summary>
+              <fieldset className="absolute left-0 top-6 z-20 max-h-64 w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
+                <legend className="sr-only">Sectores excluidos</legend>
+                {Array.from(
+                  new Set([...(data?.sectors ?? []), ...(query.exclude_sectors ?? [])]),
+                ).map((s) => (
+                  <label
+                    className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
+                    key={s}
+                  >
+                    <input
+                      type="checkbox"
+                      name="exclude_sectors"
+                      value={s}
+                      defaultChecked={query.exclude_sectors?.includes(s)}
+                      className="size-4 accent-primary"
+                    />
+                    {s}
+                  </label>
+                ))}
+              </fieldset>
+            </details>
+            <label className="flex items-center gap-2">
+              Resultados
+              <NativeSelect name="earnings" defaultValue={query.earnings ?? ''} className="h-8">
+                <option value="">Indiferente</option>
+                <option value="only">Solo los que presentan</option>
+                <option value="exclude">Excluir los que presentan</option>
+              </NativeSelect>
+              en los próximos
+              <Input
+                name="earnings_days"
+                type="number"
+                min={0}
+                max={90}
+                defaultValue={query.earnings_days}
+                aria-label="Días hasta los resultados"
+                className="h-8 w-16"
+              />
+              días
+            </label>
             <Button
               type="button"
               variant="link"
@@ -359,6 +434,40 @@ export function MarketPage() {
               <EmptyState filtered={data.data.status !== 'empty'} />
             ) : (
               <>
+                <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3 text-sm">
+                  <details className="relative">
+                    <summary className="flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3">
+                      <Columns3 size={14} aria-hidden="true" />
+                      Columnas ({columns.length - 1} de {RANKING_COLUMNS.length - 1})
+                    </summary>
+                    <fieldset className="absolute left-0 top-11 z-20 max-h-80 w-64 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
+                      <legend className="sr-only">Columnas visibles</legend>
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        Se recuerdan en este navegador. Empresa y Score siempre se muestran.
+                      </p>
+                      {RANKING_COLUMNS.filter((column) => !column.fixed).map((column) => (
+                        <label
+                          key={column.key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 text-xs hover:bg-muted"
+                        >
+                          <input
+                            type="checkbox"
+                            className="size-4 accent-primary"
+                            checked={chosen.includes(column.key)}
+                            onChange={(event) => choose(column.key, event.target.checked)}
+                          />
+                          {column.label}
+                        </label>
+                      ))}
+                    </fieldset>
+                  </details>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={exportHref(params, columns)} download>
+                      <Download aria-hidden="true" />
+                      Exportar CSV ({data.total} filas)
+                    </a>
+                  </Button>
+                </div>
                 <ComparePicks picked={picked} clear={() => setPicked([])} />
                 <DataTable label="Tabla desplazable">
                   <table className="w-full text-left text-sm sm:min-w-[770px]">
@@ -370,21 +479,15 @@ export function MarketPage() {
                         <th scope="col" className="p-2 sm:p-4 sm:pl-5">
                           Pos.
                         </th>
-                        {(
-                          [
-                            ['name', 'Empresa'],
-                            ['price', 'Precio · USD'],
-                            ['composite_score', 'Score'],
-                            ['confidence', 'Cobertura ponderada'],
-                            ['market_cap', 'Capitalización'],
-                            ['pe', 'PER'],
-                          ] as const
-                        ).map(([key, label]) => (
+                        {[
+                          { key: 'name', label: 'Empresa', sort: 'name' as SortKey, mobile: true },
+                          ...columns,
+                        ].map((column) => (
                           <th
                             scope="col"
-                            key={key}
+                            key={column.key}
                             aria-sort={
-                              query.order_by === key
+                              query.order_by === column.sort
                                 ? query.direction === 'desc'
                                   ? 'descending'
                                   : 'ascending'
@@ -392,18 +495,16 @@ export function MarketPage() {
                             }
                             className={
                               'p-2 sm:p-4' +
-                              (key === 'name' ? '' : ' num') +
-                              (key === 'name' || key === 'composite_score'
-                                ? ''
-                                : ' hidden sm:table-cell')
+                              (column.key === 'name' ? '' : ' num') +
+                              (column.mobile ? '' : ' hidden sm:table-cell')
                             }
                           >
                             <button
                               className="flex items-center gap-1 whitespace-nowrap"
-                              onClick={() => sort(key)}
+                              onClick={() => sort(column.sort)}
                             >
-                              {label}
-                              {query.order_by === key &&
+                              {column.label}
+                              {query.order_by === column.sort &&
                                 (query.direction === 'desc' ? (
                                   <ArrowDown size={12} aria-hidden="true" />
                                 ) : (
@@ -465,46 +566,32 @@ export function MarketPage() {
                                 Más métricas de {row.symbol}
                               </summary>
                               <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-foreground">
-                                <dt>Precio USD</dt>
-                                <dd className="text-right">{metric(row.metrics.price)}</dd>
-                                <dt>Cobertura ponderada</dt>
-                                <dd className="text-right">{metric(row.metrics.confidence)}</dd>
-                                <dt>Capitalización</dt>
-                                <dd className="text-right">
-                                  {metric(row.metrics.market_cap, true)}
-                                </dd>
-                                <dt>PER</dt>
-                                <dd className="text-right">{metric(row.metrics.pe)}</dd>
+                                {columns
+                                  .filter((column) => !column.mobile)
+                                  .map((column) => (
+                                    <div key={column.key} className="contents">
+                                      <dt>{column.label}</dt>
+                                      <dd className="text-right">{column.value(row)}</dd>
+                                    </div>
+                                  ))}
                               </dl>
                             </details>
                           </th>
-                          <td className="num hidden whitespace-nowrap p-4 sm:table-cell">
-                            {metric(row.metrics.price)}
-                          </td>
-                          <RankCell
-                            className="num p-2 font-semibold sm:p-4"
-                            position={score(row.metrics.composite_score?.value)}
-                            scope="del universo"
-                          >
-                            {metric(row.metrics.composite_score)}
-                          </RankCell>
-                          <RankCell
-                            className="num hidden p-4 sm:table-cell"
-                            position={score(row.metrics.confidence?.value)}
-                            scope="del universo"
-                          >
-                            {metric(row.metrics.confidence)}
-                          </RankCell>
-                          <td className="num hidden whitespace-nowrap p-4 sm:table-cell">
-                            {metric(row.metrics.market_cap, true)}
-                          </td>
-                          <RankCell
-                            className="num hidden p-4 sm:table-cell"
-                            position={score(row.metrics.pe_pct?.value)}
-                            scope="de su sector"
-                          >
-                            {metric(row.metrics.pe)}
-                          </RankCell>
+                          {columns.map((column) => (
+                            <RankCell
+                              key={column.key}
+                              className={
+                                'num whitespace-nowrap ' +
+                                (column.mobile
+                                  ? 'p-2 font-semibold sm:p-4'
+                                  : 'hidden p-4 sm:table-cell')
+                              }
+                              position={column.position?.(row)}
+                              scope={column.scope ?? ''}
+                            >
+                              {column.value(row)}
+                            </RankCell>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
