@@ -23,6 +23,16 @@ function job(
     result_ref: null,
     result_sha256: null,
     checkpoint: {},
+    failure:
+      status === 'failed'
+        ? {
+            category: 'interrupted',
+            label: 'Trabajo interrumpido',
+            message: 'El proceso que ejecutaba el trabajo se detuvo (cierre de GABI o del equipo).',
+            action: 'Reintenta cuando GABI vuelva a estar en marcha.',
+            retry: 'now',
+          }
+        : null,
   };
 }
 
@@ -45,7 +55,7 @@ test('repetir un trabajo interrumpido evita doble clic, enlaza el nuevo intento 
   });
   await page.goto('/administracion');
   const original = page.locator('#job-' + source.id);
-  await expect(original.getByText(/El worker se interrumpió/)).toBeVisible();
+  await expect(original.getByText('Trabajo interrumpido')).toBeVisible();
   await expect(original.getByRole('button', { name: 'Ver resultado' })).toHaveCount(0);
   await expect(
     page.locator('#job-' + restricted.id).getByRole('button', { name: 'Solicitar nuevo intento' }),
@@ -58,7 +68,7 @@ test('repetir un trabajo interrumpido evita doble clic, enlaza el nuevo intento 
   expect(posts).toBe(1);
   expect(key.length).toBeGreaterThanOrEqual(8);
   await page.reload();
-  await expect(original.getByText(/El worker se interrumpió/)).toBeVisible();
+  await expect(original.getByText('Trabajo interrumpido')).toBeVisible();
   await page.getByRole('link', { name: /Ver nuevo intento/ }).click();
   await expect(page.locator('#job-' + replacement.id)).toBeVisible();
   await expect(
@@ -122,4 +132,53 @@ test('un fallo imprevisto indica su traza local y los trabajos terminados no rep
   const finished = page.locator('#job-' + done.id);
   await expect(finished.getByText('Actualización completa', { exact: true })).toBeVisible();
   await expect(finished.getByText('Completado', { exact: true })).toHaveCount(1);
+});
+
+test('cada trabajo fallido dice su causa, su último paso y qué hacer; el historial se pliega (#179)', async ({
+  page,
+}) => {
+  const failed = (id: string, kind: string, failure: JobResponse['failure'], last: string) => ({
+    ...job(id.repeat(32), kind, 'failed', failure?.category ?? null),
+    failure,
+    last_activity: last,
+  });
+  const jobs = [
+    failed(
+      '1',
+      'refresh',
+      {
+        category: 'rate_limited',
+        label: 'Límite de peticiones',
+        message: 'La fuente limitó el número de peticiones.',
+        action: 'Espera al menos una hora antes de reintentar.',
+        retry: 'later',
+      },
+      'Descargando precios de Yahoo',
+    ),
+    failed(
+      '2',
+      'quality',
+      {
+        category: 'key_missing',
+        label: 'Falta una clave',
+        message: 'La fuente necesita una clave de acceso que no está guardada en este equipo.',
+        action: 'Guarda la clave en Administración → Claves y vuelve a intentarlo.',
+        retry: 'after_fix',
+      },
+      'Leyendo FRED',
+    ),
+    ...['3', '4', '5', '6', '7'].map((id) => job(id.repeat(32), 'quality', 'succeeded')),
+  ];
+  await page.route('**/api/v1/jobs', (route) => route.fulfill({ json: { jobs } }));
+  await page.goto('/administracion');
+  const limited = page.locator('#job-' + '1'.repeat(32));
+  await expect(limited.getByText('Límite de peticiones')).toBeVisible();
+  await expect(limited).toContainText('Último paso antes del fallo: Descargando precios de Yahoo');
+  await expect(limited).toContainText('Qué hacer: Espera al menos una hora antes de reintentar.');
+  await expect(page.locator('#job-' + '2'.repeat(32))).toContainText('Falta una clave');
+  await expect(page.locator('[id^="job-"]')).toHaveCount(5);
+  await page.getByRole('button', { name: 'Ver todos (7)' }).click();
+  await expect(page.locator('[id^="job-"]')).toHaveCount(7);
+  await page.getByRole('button', { name: 'Ver solo los últimos 5' }).click();
+  await expect(page.locator('[id^="job-"]')).toHaveCount(5);
 });

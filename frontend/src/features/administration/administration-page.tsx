@@ -62,6 +62,17 @@ function SourceFailures({
   );
 }
 
+const RECENT_JOBS = 5;
+
+/** The latest jobs, plus any still running or just retried, so the actions stay above the history. */
+function visibleJobs(jobs: JobResponse[], all: boolean, retried: string | null): JobResponse[] {
+  if (all) return jobs;
+  return jobs.filter(
+    (job, index) =>
+      index < RECENT_JOBS || ['queued', 'running'].includes(job.status) || job.id === retried,
+  );
+}
+
 function JobRow({
   job,
   onCancel,
@@ -111,16 +122,25 @@ function JobRow({
           <p className="mt-3 text-sm text-muted-foreground">{job.phase}</p>
         )
       )}
-      {job.status === 'failed' && (
-        <p className="mt-2 text-sm text-destructive">
-          {job.error_code === 'worker_interrupted'
-            ? 'El worker se interrumpió. No se publicó un resultado. Puedes solicitar un nuevo intento cuando vuelva a estar en marcha.'
-            : job.error_code === 'sources_failed'
-              ? 'Fallaron fuentes externas para estos símbolos. El resto de los datos se actualizó; no se publicó un resultado.'
-              : job.diagnostic
-                ? `El trabajo falló por una causa no prevista y no publicó un resultado. La traza está en la carpeta de datos local, en jobs/logs/${job.id}.log.`
-                : 'El trabajo falló y no publicó un resultado. Revisa las fuentes locales antes de repetirlo.'}
-        </p>
+      {job.status === 'failed' && job.failure && (
+        <div className="mt-2 space-y-1 text-sm" aria-label="Causa del fallo">
+          <p className="font-medium text-destructive">{job.failure.label}</p>
+          <p>{job.failure.message} No se publicó un resultado.</p>
+          {job.last_activity && (
+            <p className="text-xs text-muted-foreground">
+              Último paso antes del fallo: {job.last_activity}
+            </p>
+          )}
+          <p>
+            <span className="font-medium">Qué hacer: </span>
+            {job.failure.action}
+          </p>
+          {job.diagnostic && (
+            <p className="text-xs text-muted-foreground">
+              Traza local en la carpeta de datos: jobs/logs/{job.id}.log
+            </p>
+          )}
+        </div>
       )}
       {job.status === 'cancelled' && (
         <p className="mt-2 text-sm text-muted-foreground">
@@ -156,6 +176,13 @@ function JobRow({
               variant="outline"
               disabled={retryPending}
               onClick={() => onRetry(job.id)}
+              title={
+                job.failure?.retry === 'no'
+                  ? 'Un error interno probablemente se repetirá'
+                  : job.failure?.retry === 'after_fix'
+                    ? 'Corrige antes la causa indicada'
+                    : undefined
+              }
             >
               Solicitar nuevo intento
             </Button>
@@ -213,6 +240,7 @@ function qualityRows(value: unknown): { name: string; covered: number; total: nu
 export function AdministrationPage() {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const [showAllJobs, setShowAllJobs] = useState(false);
   const retryInFlight = useRef(false);
   const retryKeys = useRef(new Map<string, string>());
   const [symbols, setSymbols] = useState('');
@@ -510,7 +538,7 @@ export function AdministrationPage() {
             </p>
           ) : jobs.data?.jobs.length ? (
             <ul className="space-y-3">
-              {jobs.data.jobs.map((job) => (
+              {visibleJobs(jobs.data.jobs, showAllJobs, retriedJob).map((job) => (
                 <JobRow
                   key={job.id}
                   job={job}
@@ -520,6 +548,20 @@ export function AdministrationPage() {
                   retryPending={repeat.isPending}
                 />
               ))}
+              {jobs.data.jobs.length > RECENT_JOBS && (
+                <li>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-expanded={showAllJobs}
+                    onClick={() => setShowAllJobs(!showAllJobs)}
+                  >
+                    {showAllJobs
+                      ? 'Ver solo los últimos ' + RECENT_JOBS
+                      : `Ver todos (${jobs.data.jobs.length})`}
+                  </Button>
+                </li>
+              )}
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">

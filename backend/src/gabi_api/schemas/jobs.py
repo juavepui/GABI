@@ -171,6 +171,16 @@ class JobSourceFailure(BaseModel):
     symbol: str
 
 
+class JobFailure(BaseModel):
+    """Closed category of a failed or cancelled job with a message and an action (#179); no exception text."""
+    category: Literal["source_unavailable", "key_missing", "key_rejected", "rate_limited", "insufficient_data",
+                      "interrupted", "internal_error", "cancelled"]
+    label: str
+    message: str
+    action: str
+    retry: Literal["now", "later", "after_fix", "no"]
+
+
 class JobResponse(BaseModel):
     id: str
     kind: str
@@ -191,6 +201,8 @@ class JobResponse(BaseModel):
     failures_total: int = 0
     # A local trace exists at `jobs/logs/<id>.log` in the data folder; its content never travels over HTTP.
     diagnostic: bool = False
+    last_activity: str | None = None  # the last step a failed job reported before failing
+    failure: JobFailure | None = None
     events: list[JobEvent] | None = None
 
 

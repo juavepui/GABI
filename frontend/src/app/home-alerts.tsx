@@ -72,7 +72,7 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
       return {
         text:
           `«${jobName(String(detail.job_kind))}» falló el ${day(alert.date)}` +
-          (detail.error_code ? ` (${String(detail.error_code)})` : '') +
+          (detail.failure ? `: ${String(detail.failure).toLowerCase()}` : '') +
           (failures > 0 ? `, con ${failures} fallos de fuente` : '') +
           '.',
         action: 'Ver Administración',

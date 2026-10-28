@@ -4860,6 +4860,34 @@ export type JobEvent = {
 };
 
 /**
+ * JobFailure
+ *
+ * Closed category of a failed or cancelled job with a message and an action (#179); no exception text.
+ */
+export type JobFailure = {
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Category
+     */
+    category: 'source_unavailable' | 'key_missing' | 'key_rejected' | 'rate_limited' | 'insufficient_data' | 'interrupted' | 'internal_error' | 'cancelled';
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Retry
+     */
+    retry: 'now' | 'later' | 'after_fix' | 'no';
+};
+
+/**
  * JobListResponse
  */
 export type JobListResponse = {
@@ -4899,6 +4927,7 @@ export type JobResponse = {
      * Events
      */
     events?: Array<JobEvent> | null;
+    failure?: JobFailure | null;
     /**
      * Failures
      */
@@ -4919,6 +4948,10 @@ export type JobResponse = {
      * Kind
      */
     kind: string;
+    /**
+     * Last Activity
+     */
+    last_activity?: string | null;
     /**
      * Origin
      */
