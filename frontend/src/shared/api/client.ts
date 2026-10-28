@@ -20,6 +20,8 @@ import type {
   JournalEntry,
   JournalList,
   JournalReview,
+  JournalChanges,
+  ThesisCounts,
   ComparisonResponse,
   MacroResponse,
   SaveSnapshot,
@@ -551,6 +553,18 @@ export function getJournal(
 ): Promise<JournalList> {
   const filter = onlyOpen ? '&only_open=true' : '';
   return get('/api/v1/portfolio/journal?limit=50&offset=' + offset + filter, signal);
+}
+/** One company's theses, newest first (#186). */
+export function getCompanyJournal(symbol: string, signal?: AbortSignal): Promise<JournalList> {
+  return get('/api/v1/portfolio/journal?limit=20&symbol=' + encodeURIComponent(symbol), signal);
+}
+/** Open and total theses per company, to mark positions without one. */
+export function getThesisCounts(signal?: AbortSignal): Promise<ThesisCounts> {
+  return get('/api/v1/portfolio/journal/symbols', signal);
+}
+/** Price, score and checklist now against the thesis; read on demand, nothing is downloaded. */
+export function getJournalChanges(id: number, signal?: AbortSignal): Promise<JournalChanges> {
+  return get('/api/v1/portfolio/journal/' + id + '/changes', signal);
 }
 export function createJournal(body: JournalCreate): Promise<JournalEntry> {
   return request('/api/v1/portfolio/journal', {

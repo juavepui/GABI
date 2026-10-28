@@ -5031,6 +5031,80 @@ export type JobSourceFailure = {
 };
 
 /**
+ * JournalChanges
+ *
+ * What moved since the thesis: now against what was captured when it was written.
+ */
+export type JournalChanges = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Checklist Change
+     */
+    checklist_change: number | null;
+    /**
+     * Checklist Evaluated
+     */
+    checklist_evaluated: number | null;
+    /**
+     * Checklist Passed
+     */
+    checklist_passed: number | null;
+    /**
+     * Entry Checklist Evaluated
+     */
+    entry_checklist_evaluated: number | null;
+    /**
+     * Entry Checklist Passed
+     */
+    entry_checklist_passed: number | null;
+    /**
+     * Entry Id
+     */
+    entry_id: number;
+    /**
+     * Entry Price
+     */
+    entry_price: number | null;
+    /**
+     * Entry Score
+     */
+    entry_score: number | null;
+    /**
+     * Price
+     */
+    price: number | null;
+    /**
+     * Price Date
+     */
+    price_date: string | null;
+    /**
+     * Price Return
+     *
+     * Fracción: 0,1 = +10 % desde el precio de entrada
+     */
+    price_return: number | null;
+    /**
+     * Same Model
+     */
+    same_model: boolean;
+    /**
+     * Score
+     */
+    score: number | null;
+    /**
+     * Score Change
+     */
+    score_change: number | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * JournalCreate
  */
 export type JournalCreate = {
@@ -5071,6 +5145,12 @@ export type JournalCreate = {
      */
     horizon?: string | null;
     /**
+     * Invalidation
+     *
+     * Qué invalidaría la tesis
+     */
+    invalidation?: string | null;
+    /**
      * Notes
      */
     notes?: string | null;
@@ -5078,6 +5158,12 @@ export type JournalCreate = {
      * Position Size Pct
      */
     position_size_pct?: number | null;
+    /**
+     * Review Due
+     *
+     * Fecha en que revisarla; vacía = fin del horizonte
+     */
+    review_due?: string | null;
     /**
      * Risks
      */
@@ -5129,9 +5215,27 @@ export type JournalEntry = {
      */
     created_at: string;
     /**
+     * Entry Checklist Evaluated
+     */
+    entry_checklist_evaluated?: number | null;
+    /**
+     * Entry Checklist Passed
+     */
+    entry_checklist_passed?: number | null;
+    /**
      * Entry Price
      */
     entry_price?: number | null;
+    /**
+     * Entry Price Date
+     */
+    entry_price_date?: string | null;
+    /**
+     * Entry Score
+     *
+     * Score del modelo congelado al escribirla · 0 a 100
+     */
+    entry_score?: number | null;
     expected_value: ExpectedValue | null;
     /**
      * Horizon
@@ -5141,6 +5245,16 @@ export type JournalEntry = {
      * Id
      */
     id: number;
+    /**
+     * Invalidation
+     *
+     * Qué invalidaría la tesis
+     */
+    invalidation?: string | null;
+    /**
+     * Model Id
+     */
+    model_id?: string | null;
     /**
      * Notes
      */
@@ -5153,6 +5267,12 @@ export type JournalEntry = {
      * Review Date
      */
     review_date: string | null;
+    /**
+     * Review Due
+     *
+     * Fecha en que revisarla; vacía = fin del horizonte
+     */
+    review_due?: string | null;
     /**
      * Review Notes
      */
@@ -8384,6 +8504,32 @@ export type TaxYear = {
 };
 
 /**
+ * ThesisCount
+ */
+export type ThesisCount = {
+    /**
+     * Open
+     */
+    open: number;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
+ * ThesisCounts
+ */
+export type ThesisCounts = {
+    /**
+     * Items
+     */
+    items: {
+        [key: string]: ThesisCount;
+    };
+};
+
+/**
  * TrialDetail
  *
  * A published trial with its configuration and its published result, never recomputed.
@@ -11353,6 +11499,10 @@ export type ListEntriesApiV1PortfolioJournalGetData = {
          * Only Open
          */
         only_open?: boolean;
+        /**
+         * Symbol
+         */
+        symbol?: string | null;
     };
     url: '/api/v1/portfolio/journal';
 };
@@ -11439,6 +11589,101 @@ export type CreateApiV1PortfolioJournalPostResponses = {
 };
 
 export type CreateApiV1PortfolioJournalPostResponse = CreateApiV1PortfolioJournalPostResponses[keyof CreateApiV1PortfolioJournalPostResponses];
+
+export type ThesisCountsApiV1PortfolioJournalSymbolsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/journal/symbols';
+};
+
+export type ThesisCountsApiV1PortfolioJournalSymbolsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ThesisCountsApiV1PortfolioJournalSymbolsGetError = ThesisCountsApiV1PortfolioJournalSymbolsGetErrors[keyof ThesisCountsApiV1PortfolioJournalSymbolsGetErrors];
+
+export type ThesisCountsApiV1PortfolioJournalSymbolsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ThesisCounts;
+};
+
+export type ThesisCountsApiV1PortfolioJournalSymbolsGetResponse = ThesisCountsApiV1PortfolioJournalSymbolsGetResponses[keyof ThesisCountsApiV1PortfolioJournalSymbolsGetResponses];
+
+export type ChangesApiV1PortfolioJournalEntryIdChangesGetData = {
+    body?: never;
+    path: {
+        /**
+         * Entry Id
+         */
+        entry_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/journal/{entry_id}/changes';
+};
+
+export type ChangesApiV1PortfolioJournalEntryIdChangesGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ChangesApiV1PortfolioJournalEntryIdChangesGetError = ChangesApiV1PortfolioJournalEntryIdChangesGetErrors[keyof ChangesApiV1PortfolioJournalEntryIdChangesGetErrors];
+
+export type ChangesApiV1PortfolioJournalEntryIdChangesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: JournalChanges;
+};
+
+export type ChangesApiV1PortfolioJournalEntryIdChangesGetResponse = ChangesApiV1PortfolioJournalEntryIdChangesGetResponses[keyof ChangesApiV1PortfolioJournalEntryIdChangesGetResponses];
 
 export type DeleteApiV1PortfolioJournalEntryIdDeletePostData = {
     body?: never;

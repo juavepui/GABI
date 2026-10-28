@@ -13,6 +13,8 @@ import { CompanyEvidenceDetail } from './candidate-evidence';
 import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
 import { CompanyChecklist } from './company-checklist';
 import { FollowButton } from './follow-button';
+
+import { CompanyTheses } from './company-theses';
 import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
@@ -109,12 +111,12 @@ export function CompanyPage() {
                   <p className="mb-2 text-sm font-medium">{company.summary.text}</p>
                   <BlockBars summary={company.summary} />
                 </section>
-                <Link
+                <a
                   className="mt-3 inline-block text-sm font-medium text-primary underline"
-                  to={'/cartera/diario?symbol=' + encodeURIComponent(company.symbol)}
+                  href="#tesis"
                 >
-                  Escribir tesis en el diario →
-                </Link>
+                  Tus tesis sobre {company.symbol} ↓
+                </a>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-semibold tabular-nums">
@@ -363,6 +365,9 @@ export function CompanyPage() {
               </Card>
             </div>
             <CompanyChecklist symbol={company.symbol} />
+            <div id="tesis" className="scroll-mt-4">
+              <CompanyTheses symbol={company.symbol} />
+            </div>
             <FilingChanges symbol={company.symbol} />
             <div className="mb-6 space-y-3">
               <CompanyResearch symbol={company.symbol} />

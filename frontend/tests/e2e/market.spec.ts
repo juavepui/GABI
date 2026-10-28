@@ -507,3 +507,33 @@ test('evidencia publicada de cada bloque en la ficha, el Ranking y la Cartera ob
     page.getByText('El score combina bloques con evidencia retrospectiva desigual'),
   ).toBeVisible();
 });
+
+test('tesis desde la ficha con precio y score anotados, qué ha cambiado y posiciones sin tesis (#186)', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const theses = page.getByRole('region', { name: 'Tus tesis sobre T001' });
+  await expect(theses).toContainText('Aún no has escrito ninguna');
+  await theses.getByRole('button', { name: 'Escribir una tesis' }).click();
+  await theses.getByLabel('Por qué merece su precio').fill('Barata y rentable');
+  await theses.getByLabel('Qué la invalidaría').fill('Que caiga el margen');
+  await theses.getByRole('button', { name: 'Guardar tesis' }).click();
+  await expect(theses.getByRole('listitem')).toHaveCount(1);
+  await expect(theses.getByRole('listitem')).toContainText('Abierta');
+  await expect(theses.getByRole('listitem')).toContainText('score');
+  await expect(theses.getByRole('listitem')).toContainText('La invalidaría: Que caiga el margen');
+
+  await page.goto('/cartera');
+  await expect(page.getByRole('link', { name: /Sin tesis · escribir una/ }).first()).toBeVisible();
+  const own = page.getByRole('row', { name: /T001/ });
+  if (await own.count()) await expect(own.getByText(/Sin tesis/)).toHaveCount(0);
+
+  await page.goto('/cartera/diario');
+  const entry = page.getByRole('article').filter({ hasText: 'Barata y rentable' });
+  await expect(entry).toContainText('Qué la invalidaría');
+  await entry.getByRole('button', { name: 'Ver qué ha cambiado desde la tesis' }).click();
+  await expect(entry.getByLabel('Qué ha cambiado en T001')).toContainText('(0,0 %)');
+  await entry.getByText('Eliminar entrada').click();
+  await entry.getByRole('button', { name: 'Confirmar eliminación' }).click();
+  await expect(page.getByText('Barata y rentable')).toHaveCount(0);
+});

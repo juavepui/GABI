@@ -4,15 +4,19 @@ import { useState, type ReactNode } from 'react';
 export function Folded({
   title,
   className = 'rounded-xl border bg-card p-5 text-sm',
+  id,
   children,
 }: {
   title: string;
+  /** Anchor for links that open and scroll to it. */
+  id?: string;
   className?: string;
   children: ReactNode;
 }) {
   const [opened, setOpened] = useState(false);
   return (
     <details
+      id={id}
       className={className}
       onToggle={(event) => event.currentTarget.open && setOpened(true)}
     >

@@ -24,6 +24,7 @@ import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
 
 import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
 import { SectorBreakdown } from './sector-breakdown';
+import { ThesisMark } from './thesis-mark';
 import { ExperimentalPlan } from './decisions-page';
 export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
@@ -375,6 +376,8 @@ export function PortfolioPage() {
                               <span className="ml-2 text-muted-foreground">{row.name}</span>
                               <SummaryText summary={row.summary} className="mt-1" />
                               <BlockBars summary={row.summary} compact />
+
+                              <ThesisMark symbol={row.symbol} />
                               <details className="mt-1 sm:hidden">
                                 <summary className="cursor-pointer text-primary">
                                   Más datos de {row.symbol}
