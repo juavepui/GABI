@@ -11,6 +11,7 @@ from gabi.domain.market.identity import normalize_symbol, resolve_claims
 from gabi.domain.market.sec_identity import accredited_resolution, resolve_accredited
 from gabi.domain.research.periods import P2010, Period
 from gabi.infrastructure.storage.bounded_reads import bounded_rows, read_only
+from gabi.infrastructure.storage.entity_snapshots import SOURCE as SNAPSHOT_SOURCE
 
 
 class SqliteIdentityReads:
@@ -99,6 +100,10 @@ class SqliteIdentityReads:
         return pd.DataFrame.from_records(rows, columns=columns, coerce_float=True)
 
     def registered(self, symbols: list[str]) -> set[str]:
+        """Symbols whose identity is modelled by dated aliases, so ticker-keyed data must not stand in.
+
+        A universe snapshot only observes today's ticker for one day; it says nothing about the
+        symbol's past and must not block the ticker cache for older dates."""
         chunks = list(self._chunks([normalize_symbol(symbol) for symbol in symbols]))
         result: set[str] = set()
         with self._read() as (db, tables):
@@ -106,7 +111,8 @@ class SqliteIdentityReads:
                 for chunk in chunks:
                     marks = ",".join("?" for _ in chunk)
                     result.update(row[0] for row in self._rows(db,
-                                  f"SELECT DISTINCT symbol FROM entity_aliases WHERE symbol IN ({marks})", chunk))
+                                  f"SELECT DISTINCT symbol FROM entity_aliases WHERE symbol IN ({marks}) "
+                                  "AND source<>?", (*chunk, SNAPSHOT_SOURCE)))
         return result
 
     def _observations(self, db, entity_id, dataset):

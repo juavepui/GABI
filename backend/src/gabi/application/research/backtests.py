@@ -6,6 +6,7 @@ from datetime import date
 import pandas as pd
 
 from gabi.application.errors import QueryError
+from gabi.application.research.backtest_market import NoCoveredPeriods
 from gabi.application.research.historical import _json_value
 from gabi.application.research.reservations import require_observed_period
 
@@ -80,7 +81,10 @@ def _curve(series: dict[str, pd.Series]) -> list[dict]:
 def build_backtest(kind: str, start: str, end: str, options: dict,
                    run: Callable[[str, str, dict], dict]) -> dict:
     options = normalize_backtest(kind, start, end, options)
-    result = run(start, end, options)
+    try:
+        result = run(start, end, options)
+    except NoCoveredPeriods as exc:  # the job reports missing data, not an internal error
+        raise QueryError("no_covered_periods", str(exc), 422) from exc
     artifact = {
         "kind": kind, "status": "RETROSPECTIVE_EXPLORATORY",
         "independent_advantage_demonstrated": False, "start": start, "end": end,

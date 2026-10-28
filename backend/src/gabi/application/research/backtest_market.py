@@ -13,6 +13,10 @@ from typing import Any
 import pandas as pd
 
 
+class NoCoveredPeriods(ValueError):
+    """Every rebalance was skipped for lack of local data: a data condition, not a code fault."""
+
+
 @dataclass(frozen=True)
 class BacktestMarket:
     membership: Callable[[str], dict]  # {"symbols", "is_exact", "note"} at a date

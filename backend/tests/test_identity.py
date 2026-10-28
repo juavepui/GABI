@@ -268,3 +268,16 @@ def test_research_command_backs_up_migrates_and_reports_on_the_configured_databa
     written = json.loads(report.read_text(encoding="utf-8"))
     assert written["recovered_symbols"] == ["FB"] and written["after_unmapped_pct"] == 50
     assert len(written["history_sha256"]) == 64
+
+
+def test_universe_snapshot_alias_does_not_block_older_ticker_data():
+    # Since the identity migration, each universe refresh records a one-day alias. It observes today's
+    # ticker only, so a 2019 ranking must keep reading the ticker cache (V2 backtests failed otherwise).
+    storage.upsert_prices("SNAP", _prices("2019-01-01", 100))
+    identity.add_alias(identity.ensure_entity("7"), "SNAP", "2026-10-28", "2026-10-29",
+                       source="observed-universe-snapshot")
+    assert not identity.has_aliases("SNAP")
+    assert screener_asof.build_ranking_as_of("2019-06-01", symbols=["SNAP"])["table"].loc["SNAP", "price"] == 100
+    identity.add_alias(identity.ensure_entity("7"), "SNAP", "2025-01-01", None, source="test:dated-evidence")
+    assert identity.has_aliases("SNAP")  # dated evidence still models the ticker
+    assert screener_asof.build_ranking_as_of("2019-06-01", symbols=["SNAP"])["table"].loc["SNAP", "price"] is None

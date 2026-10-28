@@ -9,7 +9,7 @@ from collections.abc import Callable
 
 import pandas as pd
 
-from gabi.application.research.backtest_market import BacktestMarket
+from gabi.application.research.backtest_market import BacktestMarket, NoCoveredPeriods
 from gabi.domain.portfolio import backtest as rules
 from gabi.domain.portfolio import broker_costs, rotation
 
@@ -215,7 +215,7 @@ def run(market: BacktestMarket, rebalance: Callable[..., dict], daily_segment: C
                                       exit_warnings)
 
     if not rows:
-        raise ValueError("Ningún periodo del rango tiene datos suficientes — "
+        raise NoCoveredPeriods("Ningún periodo del rango tiene datos suficientes — "
                          f"se saltaron los {len(skipped)} periodos por falta de cobertura.")
 
     nav_curve = pd.concat(nav_pieces).sort_index()

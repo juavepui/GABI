@@ -62,8 +62,11 @@ Decisiones aprobadas por el propietario el 28-10-2026, antes del primer registro
   guardado por la sincronización SEC, con el historial completo del emisor (#201),
   y precios de la caché por ticker. El camino por defecto, que usan los motores
   congelados, no cambia. Hace falta porque en vivo no hay series de precios
-  atribuidas, y los alias diarios de las fotos del universo bloquean el camino por
-  ticker: sin este modo, ninguna empresa alcanzaba la cobertura del 70 %.
+  atribuidas, y el camino por ticker lee los fundamentales por símbolo, con medio
+  historial en los emisores con alias (#201). En el ensayo inicial, además, los
+  alias diarios de las fotos del universo bloqueaban el camino por ticker y nadie
+  alcanzaba la cobertura del 70 %; ese bloqueo se corrigió después en el registro
+  de identidad, que ya no cuenta las fotos como alias fechados.
 - **D2. SIC fechado.** Se aplica la regla congelada de #48b
   (`factor_sector_stability.assign`: 10-K/10-Q y sus enmiendas, ≤ 400 días, sin
   etiquetas futuras), con las presentaciones de EDGAR `submissions` descargadas al

@@ -9,7 +9,7 @@ from collections.abc import Callable
 
 import pandas as pd
 
-from gabi.application.research.backtest_market import BacktestMarket
+from gabi.application.research.backtest_market import BacktestMarket, NoCoveredPeriods
 from gabi.domain.portfolio import backtest as rules
 from gabi.domain.portfolio import rotation
 
@@ -186,7 +186,7 @@ def run(market: BacktestMarket, period_returns: PeriodReturns, start: str, end: 
             skipped.append({"fecha": as_of, "motivo": str(exc)})
         current += pd.DateOffset(months=months)
     if not rows:
-        raise ValueError("Ningún periodo del rango tiene datos suficientes — "
+        raise NoCoveredPeriods("Ningún periodo del rango tiene datos suficientes — "
                          f"se saltaron los {len(skipped)} periodos por falta de cobertura.")
     periods = pd.DataFrame(rows)
     periods["capital"] = (1 + periods["retorno"]).cumprod()
