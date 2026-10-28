@@ -22581,6 +22581,30 @@
         "parameters": [
           {
             "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
             "name": "search",
             "required": false,
             "schema": {
@@ -22608,6 +22632,26 @@
                 }
               ],
               "title": "Sectors"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exclude_sectors",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 11,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Exclude Sectors"
             }
           },
           {
@@ -22644,25 +22688,33 @@
           },
           {
             "in": "query",
-            "name": "offset",
+            "name": "earnings",
             "required": false,
             "schema": {
-              "default": 0,
-              "maximum": 1000,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "enum": [
+                    "only",
+                    "exclude"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Earnings"
             }
           },
           {
             "in": "query",
-            "name": "limit",
+            "name": "earnings_days",
             "required": false,
             "schema": {
-              "default": 100,
-              "maximum": 500,
-              "minimum": 1,
-              "title": "Limit",
+              "default": 7,
+              "maximum": 90,
+              "minimum": 0,
+              "title": "Earnings Days",
               "type": "integer"
             }
           },
@@ -22678,7 +22730,17 @@
                 "pe",
                 "price",
                 "confidence",
-                "name"
+                "name",
+                "value_score",
+                "quality_score",
+                "momentum_score",
+                "risk_score",
+                "roe",
+                "debt_to_equity",
+                "dividend_yield",
+                "momentum_12m",
+                "volatility",
+                "next_earnings_days"
               ],
               "title": "Order By",
               "type": "string"
@@ -22959,6 +23021,355 @@
           }
         },
         "summary": "Ranking Coverage",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/ranking/export.csv": {
+      "get": {
+        "description": "The filtered view with its visible columns, every row; the same calculation as /ranking.",
+        "operationId": "ranking_export_api_v1_ranking_export_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "columns",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 60,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Columns"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 100,
+              "title": "Search",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectors",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 11,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sectors"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exclude_sectors",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 11,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Exclude Sectors"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_market_cap",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000000000000.0,
+              "minimum": 0,
+              "title": "Min Market Cap",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "golden_cross_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Golden Cross Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hide_no_data",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Hide No Data",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "earnings",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "only",
+                    "exclude"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Earnings"
+            }
+          },
+          {
+            "in": "query",
+            "name": "earnings_days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 0,
+              "title": "Earnings Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order_by",
+            "required": false,
+            "schema": {
+              "default": "composite_score",
+              "enum": [
+                "composite_score",
+                "market_cap",
+                "pe",
+                "price",
+                "confidence",
+                "name",
+                "value_score",
+                "quality_score",
+                "momentum_score",
+                "risk_score",
+                "roe",
+                "debt_to_equity",
+                "dividend_yield",
+                "momentum_12m",
+                "volatility",
+                "next_earnings_days"
+              ],
+              "title": "Order By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "INVESTOR",
+                    "RESEARCH"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mode"
+            }
+          },
+          {
+            "in": "query",
+            "name": "value",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Value"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Quality"
+            }
+          },
+          {
+            "in": "query",
+            "name": "momentum",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Momentum"
+            }
+          },
+          {
+            "in": "query",
+            "name": "risk",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {}
+            },
+            "description": "Ranking en CSV"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Ranking Export",
         "tags": [
           "market"
         ]

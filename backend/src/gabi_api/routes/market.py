@@ -1,4 +1,5 @@
-from typing import Annotated, Literal
+from dataclasses import dataclass
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import Response
@@ -11,7 +12,8 @@ from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.domain.market.comparison import positions
-from gabi.domain.market.selection import RankingFilter, RankingSort, SortKey
+from gabi.domain.market.selection import EarningsWindow, RankingFilter, RankingSort, SortKey
+from gabi_api.ranking_export import ranking_csv
 from gabi_api.schemas.checklist import (
     ChecklistSectorMultiples,
     ChecklistThresholds,
@@ -165,28 +167,60 @@ def data_status(market: Service) -> DataResponse:
     return data_response(market.ranking(RankingFilter(hide_no_data=False), limit=1).data)
 
 
-@router.get("/ranking", response_model=RankingResponse)
-def ranking(market: Service, search: Annotated[str, Query(max_length=100)] = "",
-            sectors: Annotated[list[str] | None, Query(max_length=11)] = None,
-            min_market_cap: Annotated[float, Query(ge=0, le=1e15, allow_inf_nan=False)] = 0,
-            golden_cross_only: bool = False, hide_no_data: bool = True,
-            offset: Annotated[int, Query(ge=0, le=1000)] = 0,
-            limit: Annotated[int, Query(ge=1, le=500)] = 100,
-            order_by: SortKey = "composite_score", direction: Literal["asc", "desc"] = "desc",
-            mode: Literal["INVESTOR", "RESEARCH"] | None = None,
-            value: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
-            quality: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
-            momentum: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
-            risk: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None) -> RankingResponse:
+@dataclass(frozen=True)
+class Selection:
+    filters: RankingFilter
+    order: RankingSort
+    weights: dict[str, float] | None
+    mode: Literal["INVESTOR", "RESEARCH"] | None
+
+
+def selection(search: Annotated[str, Query(max_length=100)] = "",
+              sectors: Annotated[list[str] | None, Query(max_length=11)] = None,
+              exclude_sectors: Annotated[list[str] | None, Query(max_length=11)] = None,
+              min_market_cap: Annotated[float, Query(ge=0, le=1e15, allow_inf_nan=False)] = 0,
+              golden_cross_only: bool = False, hide_no_data: bool = True,
+              earnings: EarningsWindow | None = None, earnings_days: Annotated[int, Query(ge=0, le=90)] = 7,
+              order_by: SortKey = "composite_score", direction: Literal["asc", "desc"] = "desc",
+              mode: Literal["INVESTOR", "RESEARCH"] | None = None,
+              value: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
+              quality: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
+              momentum: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None,
+              risk: Annotated[float | None, Query(ge=0, le=1, allow_inf_nan=False)] = None) -> Selection:
     overrides = {"value": value, "quality": quality, "momentum": momentum, "risk": risk}
     weights = None
     if any(weight is not None for weight in overrides.values()):
         if any(weight is None for weight in overrides.values()):
             raise QueryError("invalid_weights", "Indica los cuatro pesos para experimentar.", 422)
         weights = {key: float(weight) for key, weight in overrides.items() if weight is not None}
-    result = market.ranking(RankingFilter(search, tuple(sectors or ()), min_market_cap, golden_cross_only, hide_no_data),
-                            offset, limit, weights, mode, RankingSort(order_by, direction))
+    filters = RankingFilter(search, tuple(sectors or ()), min_market_cap, golden_cross_only, hide_no_data,
+                            tuple(exclude_sectors or ()), earnings, earnings_days)
+    return Selection(filters, RankingSort(order_by, direction), weights, mode)
+
+
+Selected = Annotated[Selection, Depends(selection)]
+
+
+@router.get("/ranking", response_model=RankingResponse)
+def ranking(market: Service, selected: Selected, offset: Annotated[int, Query(ge=0, le=1000)] = 0,
+            limit: Annotated[int, Query(ge=1, le=500)] = 100) -> RankingResponse:
+    result = market.ranking(selected.filters, offset, limit, selected.weights, selected.mode, selected.order)
     return ranking_response(result)
+
+
+CSV: dict[int | str, dict[str, Any]] = {200: {"content": {"text/csv": {}}, "description": "Ranking en CSV"}}
+
+
+@router.get("/ranking/export.csv", response_class=Response, responses=CSV)
+def ranking_export(request: Request, market: Service, selected: Selected,
+                   columns: Annotated[list[str] | None, Query(max_length=60)] = None) -> Response:
+    """The filtered view with its visible columns, every row; the same calculation as /ranking."""
+    result = market.ranking(selected.filters, 0, 1000, selected.weights, selected.mode, selected.order)
+    query = "&".join(f"{key}={value}" for key, value in request.query_params.multi_items() if key != "columns")
+    body = ranking_csv(result, columns or [], query).encode("utf-8-sig")  # the BOM Excel needs
+    name = f"gabi_ranking_{result.snapshot.generated_at.date().isoformat()}.csv"
+    return Response(body, media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @router.get("/companies/{symbol}", response_model=CompanyResponse)
