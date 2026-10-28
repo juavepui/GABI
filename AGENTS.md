@@ -53,6 +53,10 @@ retirar un módulo, quitarlo de la lista (ADR 0006).
 - Conservar unidades, ausencias, fechas, procedencia, hashes y resultados.
   Los 18 motores/configuración congelados no se reformatean, mueven ni reesellan
   para aplicar arquitectura: se usan mediante adaptadores o nuevas versiones.
+- El producto evoluciona por versiones de modelo, configuración y métricas sin
+  esperar revisiones de estudios; la evidencia queda ligada a su versión y no se
+  hereda. Un camino que ejecuta un estudio prospectivo activo no cambia de
+  semántica: la mejora va en una versión nueva (ADR 0008).
 - Todos los tests usan datos temporales, incluidos pesos, claves y cachés.
   Nunca usar `data/gabi.db`, descargar fuentes o consultar holdouts para validar
   una refactorización.
@@ -77,4 +81,5 @@ rendimiento e invalidación requieren tests y revisión del caso de uso.
 Si hace falta cambiar un límite, justificarlo en un ADR de `docs/adr/`, actualizar
 la arquitectura y sus pruebas en el mismo cambio. No añadir excepciones generales
 ni desactivar una guarda. Refactorización estructural y cambio de estrategia se
-entregan con validaciones separadas. La #60 sigue pendiente de evidencia.
+entregan con validaciones separadas. La #60 sigue pendiente de evidencia; un
+cambio de producto no la acredita ni la bloquea.
