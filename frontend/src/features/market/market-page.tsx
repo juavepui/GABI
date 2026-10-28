@@ -14,7 +14,7 @@ import { Input } from '@/shared/ui/input';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { LoadingState, ErrorState, EmptyState } from '@/shared/ui/resource-state';
 import { metric, dateLabel } from '@/shared/lib/format';
-import { useRanking } from './queries';
+import { useBlockEvidence, useRanking } from './queries';
 import { rankingParams, patchParams, sortOptions, type SortKey } from './params';
 import { Evidence } from './evidence';
 import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
@@ -28,6 +28,8 @@ import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
 import { Term } from '@/shared/ui/term';
 import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
 
+import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
+
 /** 0-100 points (score, coverage or a sector percentile, 100 = best) as a 0..1 colour position. */
 const score = (value: number | null | undefined) => (value == null ? null : value / 100);
 
@@ -35,6 +37,7 @@ export function MarketPage() {
   const [params, setParams] = useSearchParams();
   const query = rankingParams(params);
   const result = useRanking(query);
+  const evidence = useBlockEvidence();
   const data = result.data;
   function filter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -455,6 +458,9 @@ export function MarketPage() {
                     PER se colorea por su <Term k="percentile">percentil dentro del sector</Term>:
                     verde es un PER bajo frente a sus comparables, no un PER bajo en absoluto.
                   </RankLegend>
+                  {evidence.data && (
+                    <UnevenEvidenceNote evidence={evidence.data} className="pb-3" />
+                  )}
                 </div>
               </>
             )}

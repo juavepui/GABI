@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Folded } from '@/shared/ui/folded';
-import { metric, dateLabel } from '@/shared/lib/format';
-import { useCompany } from './queries';
+import { metric, dateLabel, formatNumber } from '@/shared/lib/format';
+import { useBlockEvidence, useCompany } from './queries';
 import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
 import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
@@ -17,6 +17,9 @@ import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
 import { BlockBars } from '@/shared/ui/score-summary';
+
+import { BlockEvidenceBadge, FACTOR_LAB } from '@/shared/ui/block-evidence';
+import { Hash } from '@/shared/ui/hash';
 
 const PriceChart = lazy(() => import('./price-chart'));
 const groups = [
@@ -65,6 +68,7 @@ export function CompanyPage() {
   const window = Number(params.get('bars') ?? 252);
   const bars = [63, 252, 1000].includes(window) ? window : 252;
   const result = useCompany(symbol, bars);
+  const evidence = useBlockEvidence();
   const back = patchParams(params, { bars: null }, false);
   const data = result.data;
   const company = data?.company;
@@ -234,17 +238,33 @@ export function CompanyPage() {
                       <dt className="text-muted-foreground">Modelo</dt>
                       <dd className="break-all text-right">{data.model.model_id}</dd>
                     </div>
-                    {[
-                      ['value_score', 'Valoración'],
-                      ['quality_score', 'Calidad'],
-                      ['momentum_score', 'Momentum'],
-                      ['risk_score', 'Riesgo'],
-                    ].map(([key, label]) => (
-                      <div key={key} className="flex justify-between gap-3">
-                        <dt className="text-muted-foreground">{label}</dt>
-                        <dd className="tabular-nums">{metric(company.metrics[key])} / 100</dd>
-                      </div>
-                    ))}
+                    {(
+                      [
+                        ['value', 'Valoración'],
+                        ['quality', 'Calidad'],
+                        ['momentum', 'Momentum'],
+                        ['risk', 'Riesgo'],
+                      ] as const
+                    ).map(([key, label]) => {
+                      const block = evidence.data?.blocks.find((row) => row.block === key);
+                      const weight = data.model.weights[key];
+                      return (
+                        <div key={key} className="flex flex-wrap justify-between gap-x-3 gap-y-1">
+                          <dt className="text-muted-foreground">
+                            {label}
+                            {weight != null && (
+                              <span className="ml-1 text-xs">
+                                · peso {formatNumber(weight * 100, { digits: 0 })} %
+                              </span>
+                            )}
+                          </dt>
+                          <dd className="flex items-center gap-2 tabular-nums">
+                            {block && <BlockEvidenceBadge block={block} />}
+                            {metric(company.metrics[key + '_score'])} / 100
+                          </dd>
+                        </div>
+                      );
+                    })}
                     <div className="flex justify-between gap-3">
                       <dt className="text-muted-foreground">Fundamentales · Yahoo</dt>
                       <dd>{dateLabel(company.provenance.fundamentals_fetched_at)}</dd>
@@ -270,6 +290,24 @@ export function CompanyPage() {
                     Datos de la caché local. Estas métricas utilizan el histórico disponible y no
                     constituyen un análisis histórico point-in-time.
                   </p>
+                  {evidence.data ? (
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                      Evidencia de cada bloque: la mejor clasificación retrospectiva de sus métricas
+                      en Factor Lab; no cambia los pesos.{' '}
+                      <Link className="text-primary underline" to={FACTOR_LAB}>
+                        Ver el detalle
+                      </Link>
+                      <span className="mt-1 block">
+                        Catálogo publicado <Hash value={evidence.data.catalog_sha256} />
+                      </span>
+                    </p>
+                  ) : (
+                    evidence.isError && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        La evidencia publicada de los bloques no está disponible.
+                      </p>
+                    )
+                  )}
                 </CardContent>
               </Card>
               <Card className="gap-4 shadow-none">

@@ -5,6 +5,7 @@ from fastapi.responses import Response
 
 from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
+from gabi.application.market.block_evidence import BlockEvidence
 from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.market.company_research import CompanyResearch
 from gabi.application.market.evidence import EvidenceQueries
@@ -25,6 +26,7 @@ from gabi_api.schemas.evidence import (
     EvidenceTop,
     RankingCoverage,
     RankingStability,
+    ScoreBlocksEvidence,
 )
 from gabi_api.schemas.market import (
     METRIC_SOURCE_WIRE,
@@ -113,6 +115,13 @@ def save_checklist_thresholds(body: ChecklistThresholdsRequest, query: Checklist
 @router.post("/checklist/thresholds/reset", response_model=ChecklistThresholds)
 def reset_checklist_thresholds(query: Checklist) -> dict:
     return query.reset_thresholds()
+
+
+@router.get("/score-blocks/evidence", response_model=ScoreBlocksEvidence)
+def score_blocks_evidence(request: Request) -> dict:
+    """Published Factor Zoo evidence of each score block; read-only, also in Investor mode."""
+    query: BlockEvidence = request.app.state.block_evidence
+    return query.summary()
 
 
 @router.get("/evidence", response_model=EvidenceTop)

@@ -3,6 +3,7 @@ import {
   followCompany,
   getCompany,
   getRanking,
+  getScoreBlocksEvidence,
   getSnapshots,
   getWatchlistSymbols,
   unfollowCompany,
@@ -44,4 +45,13 @@ export function useFollow(symbol: string) {
     follow: useMutation({ mutationFn: () => followCompany(symbol), onSuccess: changed }),
     unfollow: useMutation({ mutationFn: () => unfollowCompany(symbol), onSuccess: changed }),
   };
+}
+
+/** Published Factor Zoo evidence of each score block (#185): a sealed file, read once and kept. */
+export function useBlockEvidence() {
+  return useQuery({
+    queryKey: ['market', 'score-blocks-evidence'],
+    queryFn: ({ signal }) => getScoreBlocksEvidence(signal),
+    staleTime: Infinity,
+  });
 }

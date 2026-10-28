@@ -1920,6 +1920,78 @@
         "title": "BlockCoverage",
         "type": "object"
       },
+      "BlockMetricEvidence": {
+        "properties": {
+          "classification": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sin_evidencia",
+                  "indicio",
+                  "requiere_OOS",
+                  "robusta_retrospectivamente"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification"
+          },
+          "classification_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification Label"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "p_holm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Holm"
+          },
+          "published": {
+            "title": "Published",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "metric",
+          "published",
+          "ic_mean",
+          "p_holm",
+          "classification",
+          "classification_label"
+        ],
+        "title": "BlockMetricEvidence",
+        "type": "object"
+      },
       "BlockOutcome": {
         "properties": {
           "block": {
@@ -13814,6 +13886,150 @@
           "limitations"
         ],
         "title": "SavedRankStability",
+        "type": "object"
+      },
+      "ScoreBlockEvidence": {
+        "properties": {
+          "block": {
+            "enum": [
+              "value",
+              "quality",
+              "momentum",
+              "risk"
+            ],
+            "title": "Block",
+            "type": "string"
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sin_evidencia",
+                  "indicio",
+                  "requiere_OOS",
+                  "robusta_retrospectivamente"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification"
+          },
+          "classification_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification Label"
+          },
+          "frozen_weight": {
+            "title": "Frozen Weight",
+            "type": "number"
+          },
+          "holm_significant": {
+            "title": "Holm Significant",
+            "type": "integer"
+          },
+          "ic_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ic Mean"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/BlockMetricEvidence"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "metrics_at_classification": {
+            "title": "Metrics At Classification",
+            "type": "integer"
+          },
+          "metrics_published": {
+            "title": "Metrics Published",
+            "type": "integer"
+          },
+          "metrics_with_evidence": {
+            "title": "Metrics With Evidence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "block",
+          "frozen_weight",
+          "classification",
+          "classification_label",
+          "metrics_at_classification",
+          "metrics_with_evidence",
+          "metrics_published",
+          "ic_mean",
+          "holm_significant",
+          "metrics"
+        ],
+        "title": "ScoreBlockEvidence",
+        "type": "object"
+      },
+      "ScoreBlocksEvidence": {
+        "description": "«¿Qué bloques tienen respaldo?» (#185): the published Factor Zoo grouped by score block.",
+        "properties": {
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreBlockEvidence"
+            },
+            "title": "Blocks",
+            "type": "array"
+          },
+          "catalog": {
+            "const": "factor-zoo",
+            "title": "Catalog",
+            "type": "string"
+          },
+          "catalog_sha256": {
+            "title": "Catalog Sha256",
+            "type": "string"
+          },
+          "holm_significant_count": {
+            "title": "Holm Significant Count",
+            "type": "integer"
+          },
+          "independent_advantage_demonstrated": {
+            "const": false,
+            "title": "Independent Advantage Demonstrated",
+            "type": "boolean"
+          },
+          "n_dates": {
+            "title": "N Dates",
+            "type": "integer"
+          },
+          "status": {
+            "const": "RETROSPECTIVE_DESCRIPTIVE",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "independent_advantage_demonstrated",
+          "catalog",
+          "catalog_sha256",
+          "n_dates",
+          "holm_significant_count",
+          "blocks"
+        ],
+        "title": "ScoreBlocksEvidence",
         "type": "object"
       },
       "SearchTrial": {
@@ -27083,6 +27299,88 @@
         "summary": "Trials",
         "tags": [
           "research"
+        ]
+      }
+    },
+    "/api/v1/score-blocks/evidence": {
+      "get": {
+        "description": "Published Factor Zoo evidence of each score block; read-only, also in Investor mode.",
+        "operationId": "score_blocks_evidence_api_v1_score_blocks_evidence_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreBlocksEvidence"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Score Blocks Evidence",
+        "tags": [
+          "market"
         ]
       }
     },

@@ -2,7 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { PlanRequest } from '@/shared/api/generated/types.gen';
-import { getEvidenceTop, getPortfolioPlan, saveSnapshot } from '@/shared/api/client';
+import {
+  getEvidenceTop,
+  getPortfolioPlan,
+  getScoreBlocksEvidence,
+  saveSnapshot,
+} from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
@@ -16,6 +21,8 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
 import { Term } from '@/shared/ui/term';
 import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
+
+import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
 import { SectorBreakdown } from './sector-breakdown';
 import { ExperimentalPlan } from './decisions-page';
 export { JournalPage } from './journal-page';
@@ -115,6 +122,11 @@ export function PortfolioPage() {
   const [params, setParams] = useSearchParams();
   const experimental = params.get('plan') === 'experimental';
   const [submitted, setSubmitted] = useState(initial);
+  const blockEvidence = useQuery({
+    queryKey: ['market', 'score-blocks-evidence'],
+    queryFn: ({ signal }) => getScoreBlocksEvidence(signal),
+    staleTime: Infinity,
+  });
   const plan = useQuery({
     queryKey: ['portfolio', 'plan', submitted],
     queryFn: ({ signal }) => getPortfolioPlan(submitted, signal),
@@ -321,6 +333,9 @@ export function PortfolioPage() {
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{data.evidence_note}</p>
+                {blockEvidence.data && (
+                  <UnevenEvidenceNote evidence={blockEvidence.data} className="mt-1" />
+                )}
                 {data.target.length > 0 && <TrackTarget positions={data.n_positions} />}
                 <p className="mt-1 text-xs text-muted-foreground">
                   Empresas con score en la caché local: {data.data.scored_count} de{' '}

@@ -60,6 +60,7 @@ import type {
   FactorPreview,
   ModeRequest,
   PublishedFactors,
+  ScoreBlocksEvidence,
   EstimateCaptureStatus,
   EstimateAnalysisPreview,
   BacktestPreview,
@@ -337,6 +338,10 @@ export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses
 }
 export function getFactorPreview(id: string, signal?: AbortSignal): Promise<FactorPreview> {
   return get('/api/v1/research/factors/' + encodeURIComponent(id), signal);
+}
+/** Published Factor Zoo evidence of each score block (#185); readable in both modes. */
+export function getScoreBlocksEvidence(signal?: AbortSignal): Promise<ScoreBlocksEvidence> {
+  return get('/api/v1/score-blocks/evidence', signal);
 }
 export function getPublishedFactors(signal?: AbortSignal): Promise<PublishedFactors> {
   return get('/api/v1/research/published-factors', signal);
