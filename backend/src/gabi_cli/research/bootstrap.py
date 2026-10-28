@@ -78,6 +78,49 @@ def ensemble_robustness(settings: Settings, args: argparse.Namespace) -> None:
     print(json.dumps({"sha256": result["sha256"], "decision": result["decision"]["label"]}, ensure_ascii=False))
 
 
+def ensemble_record(settings: Settings, args: argparse.Namespace) -> None:
+    from gabi.application.research import ensemble_prospective
+    from gabi.infrastructure.storage.ensemble_records import FileEnsembleRecords
+
+    root = settings.data_dir.parent
+    store = FileEnsembleRecords(args.directory or root / "docs" / "ensemble-prospective")
+    if args.verify:
+        print(json.dumps(ensemble_prospective.verify(store), ensure_ascii=False))
+        return
+    import subprocess
+    from datetime import date
+
+    import exchange_calendars as xcals
+
+    from gabi.infrastructure.legacy.ensemble_live import (
+        LegacyEnsembleSources,
+        check_engine_data,
+        fiscally_aligned,
+        frozen_inputs,
+    )
+    from gabi.infrastructure.legacy.insiders import sec_user_agent
+    from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+    from gabi.infrastructure.providers.source_retry import retry
+
+    check_engine_data(settings.data_dir)
+    record = json.loads((root / "docs" / "ensemble-robustness" / "preregistro.json").read_text(encoding="utf-8"))
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+    dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "backend/src"], cwd=root,
+                                capture_output=True, text=True, check=True).stdout.strip())
+    if dirty:
+        raise SystemExit("Hay cambios sin commit en backend/src: el registro debe identificar el código exacto.")
+    calendar = xcals.get_calendar("XNYS")
+    sec = SecXbrl(sec_user_agent())
+    sources = LegacyEnsembleSources(
+        settings.data_dir, submissions=sec.submissions, pages=sec.submissions_page, retry=retry,
+        sessions=lambda start, end: [day.date() for day in calendar.sessions_in_range(start.isoformat(), end.isoformat())])
+    inputs = {"code_commit": commit, **frozen_inputs()}
+    with fiscally_aligned():
+        result = ensemble_prospective.record_due(date.today(), spec=record["spec"], sources=sources, store=store,
+                                                 inputs=lambda: inputs)
+    print(json.dumps(result, ensure_ascii=False))
+
+
 def entity_migration(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.legacy import entity_migration as migration
 
@@ -446,6 +489,12 @@ def main(argv: list[str]) -> None:
     actions.add_argument("--verify", action="store_true", help="Recalcular y exigir la huella publicada")
     command.add_argument("--output", type=Path, help="Por defecto docs/ensemble-robustness; usar un directorio nuevo")
     command.set_defaults(run=ensemble_robustness)
+    command = commands.add_parser("ensemble-record", help="Registro prospectivo de ENS-VQE-v1 (#237): registrar el trimestre abierto o verificar la cadena")
+    actions = command.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--record", action="store_true", help="Descarga SEC y escribe el trimestre abierto; nunca sobrescribe")
+    actions.add_argument("--verify", action="store_true", help="Solo integridad, cobertura y continuidad; sin retornos")
+    command.add_argument("--directory", type=Path, help="Por defecto docs/ensemble-prospective")
+    command.set_defaults(run=ensemble_record)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")
