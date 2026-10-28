@@ -47,8 +47,9 @@ test('real API: filters, full-universe sorting, pagination, company and reload p
   const company: CompanyResponse = await (
     await request.get('http://127.0.0.1:8001/api/v1/companies/BRK-A?bars=252')
   ).json();
+  // The header price; a session of the chart's data table may show the same amount.
   await expect(
-    page.getByText(metric(company.company.metrics.price), { exact: true }),
+    page.getByText(metric(company.company.metrics.price), { exact: true }).first(),
   ).toBeVisible();
   await expect(page.getByText(/Evidencia: no demostrada/)).toBeVisible();
   await expect(page.getByRole('img', { name: /Histórico de cierre ajustado/ })).toBeVisible();
@@ -580,7 +581,7 @@ test('Ranking: columnas recordadas, filtros nuevos y CSV de la vista filtrada (#
   await page.getByRole('checkbox', { name: 'Próximos resultados' }).check();
   await expect(table.getByRole('columnheader', { name: 'ROE' })).toBeVisible();
   // Sorting by a new column is done by the backend on the whole universe.
-  await table.getByRole('button', { name: 'ROE' }).click();
+  await table.getByRole('button', { name: 'ROE', exact: true }).click();
   await expect(page).toHaveURL(/order_by=roe/);
   const download = page.waitForEvent('download');
   await page.getByRole('link', { name: /Exportar CSV/ }).click();
@@ -650,4 +651,37 @@ test('drawdown y volatilidad declaran su ventana y las fechas de pico y valle (#
   ).toContainText(/pico .* → valle/);
   await expect(table.getByRole('row', { name: /^Caída máxima · 5 años/ })).toContainText('%');
   await expect(table.getByRole('row', { name: /^Volatilidad/ })).toContainText(/desde .* sesiones/);
+});
+
+test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la busca (#197)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=10');
+  const table = page.getByRole('region', { name: 'Tabla desplazable' });
+  for (const label of ['Score', 'Cobertura ponderada', 'Capitalización', 'PER'])
+    await expect(table.getByRole('button', { name: 'Qué es ' + label, exact: true })).toBeVisible();
+  const hint = table.getByRole('button', { name: 'Qué es PER', exact: true });
+  await hint.scrollIntoViewIfNeeded();
+  await hint.click();
+  await expect(page.locator('[data-term-tip]')).toContainText('PER');
+  await page.keyboard.press('Escape');
+  await page.goto('/empresas/T001');
+  for (const label of [
+    'ROIC',
+    'Volatilidad',
+    'Caída máxima · 5 años',
+    'Beta calculada frente al SPY',
+  ])
+    await expect(page.getByRole('button', { name: 'Qué es ' + label, exact: true })).toBeVisible();
+  await page.goto('/descubrir/comparar?symbols=T001&symbols=T002');
+  const compared = page.locator('table').first();
+  // 21 metrics in four sections, the 5- and 3-year drawdowns and the next earnings.
+  await expect(compared.getByRole('button', { name: /^Qué es / })).toHaveCount(24);
+  await page.goto('/ayuda?tab=glosario');
+  const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' });
+  await search.fill('volatil');
+  await expect(page.locator('dt', { hasText: 'Volatilidad anualizada (%)' })).toBeVisible();
+  await expect(page.locator('dt', { hasText: 'PER' })).toHaveCount(0);
+  await search.fill('zzzz');
+  await expect(page.getByText('Ningún término contiene «zzzz».')).toBeVisible();
 });

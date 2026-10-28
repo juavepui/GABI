@@ -499,18 +499,26 @@ export function MarketPage() {
                               (column.mobile ? '' : ' hidden sm:table-cell')
                             }
                           >
-                            <button
-                              className="flex items-center gap-1 whitespace-nowrap"
-                              onClick={() => sort(column.sort)}
-                            >
-                              {column.label}
-                              {query.order_by === column.sort &&
-                                (query.direction === 'desc' ? (
-                                  <ArrowDown size={12} aria-hidden="true" />
-                                ) : (
-                                  <ArrowUp size={12} aria-hidden="true" />
-                                ))}
-                            </button>
+                            <span className="flex items-center gap-1">
+                              <button
+                                className="flex items-center gap-1 whitespace-nowrap"
+                                onClick={() => sort(column.sort)}
+                              >
+                                {column.label}
+                                {query.order_by === column.sort &&
+                                  (query.direction === 'desc' ? (
+                                    <ArrowDown size={12} aria-hidden="true" />
+                                  ) : (
+                                    <ArrowUp size={12} aria-hidden="true" />
+                                  ))}
+                              </button>
+                              {column.key !== 'name' && (
+                                <Term
+                                  k={('term' in column && column.term) || column.key}
+                                  name={column.label}
+                                />
+                              )}
+                            </span>
                           </th>
                         ))}
                       </tr>
@@ -570,7 +578,9 @@ export function MarketPage() {
                                   .filter((column) => !column.mobile)
                                   .map((column) => (
                                     <div key={column.key} className="contents">
-                                      <dt>{column.label}</dt>
+                                      <dt>
+                                        <Term k={column.term ?? column.key}>{column.label}</Term>
+                                      </dt>
                                       <dd className="text-right">{column.value(row)}</dd>
                                     </div>
                                   ))}

@@ -1,9 +1,10 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMetricGlossary } from '@/shared/api/client';
 import { useResearchMode } from '@/shared/api/use-model';
 import { ErrorState } from '@/shared/ui/resource-state';
+import { Input } from '@/shared/ui/input';
 import {
   BIASES,
   ENGINE_COMPARISON,
@@ -394,9 +395,20 @@ function Glossary() {
     staleTime: Infinity,
   });
   const { hash } = useLocation();
+  const [search, setSearch] = useState('');
   useEffect(() => {
     if (glossary.data && hash) document.getElementById(hash.slice(1))?.scrollIntoView();
   }, [glossary.data, hash]);
+  // Accent- and case-insensitive: «volatil» finds «Volatilidad», «per» finds «PER».
+  const plain = (text: string) =>
+    text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  const needle = plain(search.trim());
+  const entries = (glossary.data?.glossary ?? []).filter(
+    (entry) => !needle || plain(entry.term + ' ' + entry.definition).includes(needle),
+  );
   if (glossary.isError)
     return <ErrorState error={glossary.error} retry={() => void glossary.refetch()} />;
   return (
@@ -405,8 +417,21 @@ function Glossary() {
         Los términos técnicos que aparecen en GABI, con la misma definición que muestra el icono ⓘ
         junto a cada uno.
       </p>
+      <Input
+        type="search"
+        aria-label="Buscar en el glosario"
+        placeholder="Buscar término (p. ej. drawdown, PER, Holm)"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        className="max-w-md"
+      />
+      {glossary.data && !entries.length && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Ningún término contiene «{search.trim()}».
+        </p>
+      )}
       <dl className="divide-y rounded-xl border bg-card">
-        {glossary.data?.glossary.map((entry) => (
+        {entries.map((entry) => (
           <div
             key={entry.key}
             id={'termino-' + entry.key}

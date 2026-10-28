@@ -39,3 +39,22 @@ def test_each_coverage_concept_has_one_distinct_name_and_definition():
                      "block_coverage": "Cobertura del universo por bloque"}
     assert glossary["score_coverage"]["definition"] == METRIC_INFO["score_coverage"]["help"]
     assert all(name.lower() != "cobertura" for name in names.values())
+
+
+# Every metric Ranking, the company page and Comparar label with an ⓘ (#197).
+SHOWN_METRICS = {
+    "price", "composite_score", "confidence", "market_cap", "pe", "value_score", "quality_score", "momentum_score",
+    "risk_score", "roe", "debt_to_equity", "dividend_yield", "momentum_12m", "volatility", "next_earnings_days",
+    "pb", "ev_ebitda", "free_cashflow", "roic", "operating_margin", "momentum_6m", "max_drawdown", "beta_calc",
+    "alpha", "win_rate_monthly", "beta", "avg_volume", "score_coverage", "revenue_growth_yoy",
+}
+
+
+def test_every_visible_metric_has_its_help_in_the_one_glossary():
+    with TestClient(create_app(Settings(config.DATA_DIR))) as client:
+        glossary = {entry["key"]: entry for entry in client.get("/api/v1/learn/metrics").json()["glossary"]}
+    assert SHOWN_METRICS <= set(glossary)
+    for key in SHOWN_METRICS:
+        assert glossary[key]["definition"] == METRIC_INFO[key]["help"], key  # the ⓘ and the Ayuda read one text
+    assert "name" not in glossary and "sector" not in glossary
+    assert len({entry["key"] for entry in glossary.values()}) == len(glossary)
