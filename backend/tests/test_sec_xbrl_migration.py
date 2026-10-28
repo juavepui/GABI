@@ -457,3 +457,54 @@ def test_historical_bootstrap_uses_dated_issuer_and_explicit_database(tmp_path, 
     assert operation(["REC"], as_of="2012-01-01") == {"edgar_refreshed": 0, "failed": {}}
     assert calls == ["0000000001"]
     assert len(read_tables(path)["entity_observations"]) == 2
+
+
+def test_reviewed_successor_reads_predecessor_until_its_own_10k(tmp_path):
+    from gabi.domain.market.sec_succession import Succession
+    from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+    service = modern(tmp_path)
+    successions = {"0000000002": Succession("0000000001", "2026-07-01", "8-K12B test")}
+    successor = {"cik": 2, "filings": {"recent": {"form": ["10-Q", "8-K12B"], "filingDate": ["2026-08-03", "2026-07-01"],
+                                                  "accessionNumber": ["s2", "s1"], "primaryDocument": ["q.htm", "k.htm"]}}}
+    service.source.submissions = lambda cik: successor if int(cik) == 2 else filings()
+    event = service.run("XOM", "0000000002", successions=successions)
+    # Holding without 10-K: the predecessor's statements, attributed and checkpointed to the predecessor.
+    assert event["status"] == "new" and event["entity"] == "cik:0000000001" and event["calls"] == 3
+    assert SqliteSecReads(service.path).stored_ciks() == {"XOM": "0000000001"}
+    assert not SqliteSecReads(service.path).issuer_facts("XOM").empty
+
+    successor["filings"]["recent"]["form"][0] = "10-K"
+    service.source.companyfacts = lambda cik: {**payload(200, "b1", "2027-02-20"), "cik": int(cik)}
+    event = service.run("XOM", "0000000002", successions=successions)
+    assert event["entity"] == "cik:0000000002" and event["calls"] == 2  # its submissions are read once
+    assert SqliteSecReads(service.path).stored_ciks() == {"XOM": "0000000002"}
+    assert service.run("A", "1", successions=successions)["entity"] == "cik:0000000001"  # unrelated issuers unchanged
+
+
+def test_successor_probe_failure_is_recorded_without_touching_storage(tmp_path):
+    from gabi.domain.market.sec_succession import Succession
+
+    service = modern(tmp_path)
+
+    def unavailable(cik):
+        raise requests.HTTPError("503")
+
+    service.source.submissions = unavailable
+    with pytest.raises(requests.HTTPError):
+        service.run("XOM", "2", successions={"0000000002": Succession("0000000001", "2026-07-01", "8-K12B test")})
+    assert service.events.get("sec", "cik:0000000002", "facts:XOM")["status"] == "failed"
+    assert read_tables(service.path)["edgar_metrics"] == []
+
+
+def test_published_successions_are_reviewed_holding_reorganizations():
+    from gabi.domain.market.sec_succession import SUCCESSIONS, files_annual_report
+    from gabi.domain.market.sec_xbrl import normalize_cik
+
+    assert SUCCESSIONS["0002115436"].predecessor == "0000034088"  # XOM, #202
+    for successor, entry in SUCCESSIONS.items():
+        assert normalize_cik(successor) == successor and normalize_cik(entry.predecessor) == entry.predecessor
+        assert successor != entry.predecessor and entry.evidence.startswith("8-K12B")
+        assert entry.predecessor not in SUCCESSIONS  # no chains
+    assert files_annual_report({"filings": {"recent": {"form": ["8-K", "10-K/A"]}}})
+    assert not files_annual_report({"filings": {"recent": {"form": ["10-Q", "8-K12B"]}}}) and not files_annual_report({})
