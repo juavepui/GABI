@@ -10,6 +10,8 @@ export type RankingColumn = {
   label: string;
   /** Backend order key; the backend sorts the whole filtered universe. */
   sort: SortKey;
+  /** Glossary key of its ⓘ (#197); the column key unless it differs. */
+  term?: string;
   /** Backend columns written to the CSV for this column. */
   exportAs: string[];
   /** Always shown; not offered in the column picker. */
@@ -65,6 +67,7 @@ export const RANKING_COLUMNS: RankingColumn[] = [
     key: 'next_earnings',
     label: 'Próximos resultados',
     sort: 'next_earnings_days',
+    term: 'next_earnings_days',
     exportAs: ['next_earnings_date', 'next_earnings_days'],
     value: earnings,
   },

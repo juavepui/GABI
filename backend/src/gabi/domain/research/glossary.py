@@ -46,12 +46,13 @@ TERMS: dict[str, tuple[str, str]] = {
                    "sector en esa métrica, ya teniendo en cuenta si conviene un valor alto o bajo."),
 }
 
-# Metric help reused as terms (same text as the tooltips of every table).
-METRIC_TERMS = ("composite_score", "confidence", "score_coverage", "sharpe_ratio", "sortino_ratio", "max_drawdown", "volatility")
+# Every metric's help is a term (#197): the ⓘ of Ranking, company page and Comparar and the Ayuda
+# glossary read the same text. Identity fields are not metrics.
+NOT_TERMS = frozenset({"name", "sector"})
 
 
 def glossary(metric_info: dict[str, dict[str, str]]) -> list[dict[str, str]]:
     entries = [{"key": key, "term": term, "definition": definition} for key, (term, definition) in TERMS.items()]
-    entries += [{"key": key, "term": metric_info[key]["label"], "definition": metric_info[key]["help"]}
-                for key in METRIC_TERMS if key in metric_info]
+    entries += [{"key": key, "term": info["label"], "definition": info["help"]}
+                for key, info in metric_info.items() if key not in NOT_TERMS]
     return sorted(entries, key=lambda entry: entry["term"].lower())

@@ -11,6 +11,7 @@ import { useRanking } from './queries';
 import { Evidence } from './evidence';
 import { RankCell, RankLegend, RankValue } from '@/shared/ui/rank-cell';
 import { PageHeader } from '@/shared/ui/page-header';
+import { Term } from '@/shared/ui/term';
 import { sourceLabel } from './provenance';
 import { ComparisonChecklist } from './comparison-checklist';
 import {
@@ -246,7 +247,9 @@ export function ComparisonPage() {
                             .filter(([key]) => key !== 'composite_score')
                             .map(([key, label]) => (
                               <div className="flex justify-between gap-3" key={key}>
-                                <dt>{label}</dt>
+                                <dt>
+                                  <Term k={key}>{label}</Term>
+                                </dt>
                                 <dd className="text-right">
                                   <RankValue
                                     position={comparison.data.positions[key]?.[item.symbol]}
@@ -295,7 +298,7 @@ export function ComparisonPage() {
                     {section.fields.map(([key, label]) => (
                       <tr key={key} className="border-b last:border-0">
                         <th scope="row" className="py-3 pr-3 font-medium">
-                          {label}
+                          <Term k={key}>{label}</Term>
                           <FieldSource data={comparison.data} field={key} />
                         </th>
                         {comparison.data.items.map((item) => (
@@ -323,7 +326,9 @@ export function ComparisonPage() {
                   {(['5y', '3y'] as const).map((window) => (
                     <tr key={window} className="border-b">
                       <th scope="row" className="py-3 pr-3 font-medium">
-                        Caída máxima · {window === '5y' ? '5 años' : '3 años'}
+                        <Term k="max_drawdown">
+                          {'Caída máxima · ' + (window === '5y' ? '5 años' : '3 años')}
+                        </Term>
                         <span className="block text-xs font-normal text-muted-foreground">
                           GABI con precios en caché · informativa, no puntúa
                         </span>
@@ -346,7 +351,7 @@ export function ComparisonPage() {
                   <SectionRow title="Catalizadores" span={comparison.data.items.length + 1} />
                   <tr>
                     <th scope="row" className="py-3 pr-3 font-medium">
-                      Próximos resultados
+                      <Term k="next_earnings_days">Próximos resultados</Term>
                       <span className="block text-xs font-normal text-muted-foreground">
                         Yahoo Finance
                       </span>

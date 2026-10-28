@@ -11,7 +11,15 @@ const WIDTH = 288;
  * to the full glossary in the Ayuda. The live region only exists while the hint is open, so pages with
  * many terms do not carry empty status regions.
  */
-export function Term({ k, children }: { k: string; children: ReactNode }) {
+export function Term({
+  k,
+  name: label,
+  children,
+}: {
+  k: string;
+  name?: string;
+  children?: ReactNode;
+}) {
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
@@ -23,7 +31,8 @@ export function Term({ k, children }: { k: string; children: ReactNode }) {
     enabled: open,
   });
   const entry = glossary.data?.glossary.find((item) => item.key === k);
-  const name = typeof children === 'string' ? children : (entry?.term ?? k);
+  // An explicit name lets the ⓘ sit next to another control (a sort button) instead of inside it.
+  const name = label ?? (typeof children === 'string' ? children : (entry?.term ?? k));
 
   useEffect(() => {
     if (!open) return;

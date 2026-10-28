@@ -15,6 +15,7 @@ import { CompanyChecklist } from './company-checklist';
 import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
+import { Term } from '@/shared/ui/term';
 import {
   drawdownDates,
   drawdownOf,
@@ -201,7 +202,7 @@ export function CompanyPage() {
                       {group.keys.map(([key, label]) => (
                         <div key={key} className="flex justify-between gap-2 text-sm">
                           <dt className="text-muted-foreground">
-                            {label}
+                            <Term k={key}>{label}</Term>
                             {data.metric_sources[key] ? (
                               <span className="block text-xs">
                                 {sourceLabel(data.metric_sources[key])}
@@ -227,7 +228,9 @@ export function CompanyPage() {
                           return (
                             <div key={window} className="flex justify-between gap-2 text-sm">
                               <dt className="text-muted-foreground">
-                                Caída máxima · {window === '5y' ? '5 años' : '3 años'}
+                                <Term k="max_drawdown">
+                                  {'Caída máxima · ' + (window === '5y' ? '5 años' : '3 años')}
+                                </Term>
                                 <span className="block text-xs">
                                   Informativa, no puntúa
                                   {row && !row.complete ? ' · * histórico más corto' : ''}
