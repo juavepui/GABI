@@ -424,7 +424,8 @@ function LabForm({
       <Button
         type="submit"
         className="w-fit"
-        disabled={schemes.length === 0 || state.start.isPending || research === false}
+        disabled={schemes.length === 0 || research === false}
+        pending={state.running}
       >
         Ejecutar Portfolio Lab
       </Button>

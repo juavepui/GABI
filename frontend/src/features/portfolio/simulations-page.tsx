@@ -125,7 +125,7 @@ function MissingPrices({
       <Button
         type="button"
         variant="outline"
-        disabled={running}
+        pending={running}
         onClick={() =>
           start.mutate({ kind: 'sim_prices', portfolio_id: portfolioId, symbols: [symbol] })
         }
@@ -378,7 +378,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
               </HelpField>
             </div>
           </AdvancedOptions>
-          <Button className="mt-4" type="submit" disabled={add.isPending}>
+          <Button className="mt-4" type="submit" pending={add.isPending}>
             Registrar operación
           </Button>
           {add.isError && (
@@ -419,7 +419,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
             type="button"
             variant="outline"
             className="mt-4"
-            disabled={undo.isPending}
+            pending={undo.isPending}
             onClick={() => undo.mutate()}
           >
             Deshacer última operación
@@ -449,7 +449,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
             <Button
               className="mt-2"
               type="button"
-              disabled={queue.isPending}
+              pending={queue.isPending}
               onClick={() => queue.mutate()}
             >
               Encolar cálculo largo
@@ -621,7 +621,7 @@ export function SimulationsPage() {
                 </HelpField>
               </div>
             </AdvancedOptions>
-            <Button className="w-fit" type="submit" disabled={create.isPending}>
+            <Button className="w-fit" type="submit" pending={create.isPending}>
               Crear cartera
             </Button>
             {create.isError && (
@@ -669,7 +669,7 @@ export function SimulationsPage() {
             className="mt-4"
             type="button"
             variant="outline"
-            disabled={compare.isPending}
+            pending={compare.isPending}
             onClick={() => compare.mutate()}
           >
             Calcular comparación

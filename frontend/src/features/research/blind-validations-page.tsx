@@ -124,7 +124,7 @@ function CreateValidation() {
             onChange={(event) => setForm({ ...form, unlock_date: event.target.value })}
           />
         </label>
-        <Button type="submit" className="w-fit" disabled={create.isPending}>
+        <Button type="submit" className="w-fit" pending={create.isPending}>
           Crear validación
         </Button>
       </form>
@@ -176,7 +176,8 @@ function BreakSeal({ item }: { item: BlindStatus }) {
           type="submit"
           variant="outline"
           className="w-fit"
-          disabled={!reason.trim() || breakSeal.isPending}
+          disabled={!reason.trim()}
+          pending={breakSeal.isPending}
         >
           Romper el sello
         </Button>

@@ -28,7 +28,7 @@ function Rename({ id, name }: { id: number; name: string }) {
         Cambiar nombre de este ranking
         <Input value={value} maxLength={80} onChange={(event) => setValue(event.target.value)} />
       </label>
-      <Button type="submit" variant="outline" disabled={rename.isPending || !value.trim()}>
+      <Button type="submit" variant="outline" pending={rename.isPending} disabled={!value.trim()}>
         Guardar nombre
       </Button>
       {rename.isError && <ErrorState error={rename.error} retry={() => rename.reset()} />}

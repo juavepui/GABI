@@ -65,7 +65,8 @@ export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean
       <Button
         className="mt-4"
         type="button"
-        disabled={!researchAllowed || start.isPending}
+        disabled={!researchAllowed}
+        pending={start.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
         onClick={() => {
           setJobId(null);
           start.mutate();
@@ -89,7 +90,7 @@ export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean
           className="mt-2"
           type="button"
           variant="outline"
-          disabled={cancel.isPending}
+          pending={cancel.isPending}
           onClick={() => cancel.mutate()}
         >
           Solicitar cancelación

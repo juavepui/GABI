@@ -82,7 +82,10 @@ export function HistoricalPage() {
             required
           />
         </label>
-        <Button disabled={start.isPending} type="submit">
+        <Button
+          pending={start.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+          type="submit"
+        >
           Calcular ranking
         </Button>
       </form>
@@ -125,7 +128,7 @@ export function HistoricalPage() {
             <Button
               className="mt-3"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación

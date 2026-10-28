@@ -70,7 +70,7 @@ export function DataUpdate() {
           Forzar descarga aunque los datos estén frescos
         </label>
         <Button
-          disabled={running}
+          pending={running}
           onClick={() =>
             start.mutate({
               universe_limit: limit === 'all' ? null : (Number(limit) as 50 | 150),
@@ -127,7 +127,7 @@ export function DataUpdate() {
               )}
               <Button
                 variant="outline"
-                disabled={running}
+                pending={running}
                 onClick={() => start.mutate({ symbols: data.failed_symbols, force: true })}
               >
                 Reintentar solo los fallidos

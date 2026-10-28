@@ -409,7 +409,7 @@ export function ExperimentalPlan() {
             </label>
           </AdvancedOptions>
         )}
-        <Button className="mt-4" type="submit" disabled={generate.isPending || !defaults}>
+        <Button className="mt-4" type="submit" pending={generate.isPending} disabled={!defaults}>
           Generar decisiones
         </Button>
         {generate.isError && (
@@ -453,7 +453,8 @@ export function ExperimentalPlan() {
               <Button
                 type="button"
                 className="mt-4"
-                disabled={save.isPending || !name}
+                pending={save.isPending}
+                disabled={!name}
                 onClick={() => save.mutate()}
               >
                 Guardar plan

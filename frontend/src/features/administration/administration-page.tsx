@@ -174,7 +174,7 @@ function JobRow({
             <Button
               size="sm"
               variant="outline"
-              disabled={retryPending}
+              pending={retryPending}
               onClick={() => onRetry(job.id)}
               title={
                 job.failure?.retry === 'no'
@@ -375,16 +375,13 @@ export function AdministrationPage() {
               series macro de FRED. Es la que el Programador lanza cada día.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => submit.mutate({ kind: 'refresh' })}
-                disabled={submit.isPending}
-              >
+              <Button onClick={() => submit.mutate({ kind: 'refresh' })} pending={submit.isPending}>
                 Actualización completa
               </Button>
               <Button
                 variant="outline"
                 onClick={() => submit.mutate({ kind: 'quality' })}
-                disabled={submit.isPending}
+                pending={submit.isPending}
               >
                 Auditar cobertura
               </Button>
@@ -411,7 +408,7 @@ export function AdministrationPage() {
                   onChange={(event) => setSymbols(event.target.value)}
                   placeholder="SPY, RSP"
                 />
-                <Button type="submit" variant="outline" disabled={submit.isPending}>
+                <Button type="submit" variant="outline" pending={submit.isPending}>
                   Solicitar
                 </Button>
               </div>
@@ -504,7 +501,7 @@ export function AdministrationPage() {
                   required
                 />
               </label>
-              <Button type="submit" disabled={submit.isPending}>
+              <Button type="submit" pending={submit.isPending}>
                 Iniciar backtest
               </Button>
             </form>

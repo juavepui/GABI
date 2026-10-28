@@ -18,5 +18,7 @@ export function useJob(prefix: string) {
       ['queued', 'running'].includes(query.state.data?.status ?? '') ? 2000 : false,
   });
   const cancel = useMutation({ mutationFn: () => cancelJob(jobId!) });
-  return { jobId, setJobId, start, job, cancel };
+  // Launching or still queued/running: the launch button shows it is in progress.
+  const running = start.isPending || ['queued', 'running'].includes(job.data?.status ?? '');
+  return { jobId, setJobId, start, job, cancel, running };
 }

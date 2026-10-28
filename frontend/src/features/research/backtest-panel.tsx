@@ -373,7 +373,12 @@ function Panel({
           puede tardar 20-30 minutos en rangos de varios años. Los datos deben estar preparados; el
           job no descarga fuentes.
         </p>
-        <Button className="w-fit" type="submit" disabled={run.isPending || !researchAllowed}>
+        <Button
+          className="w-fit"
+          type="submit"
+          pending={run.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+          disabled={!researchAllowed}
+        >
           Ejecutar backtest
         </Button>
       </form>
@@ -399,7 +404,7 @@ function Panel({
             <Button
               className="mt-3"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación
