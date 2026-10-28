@@ -171,9 +171,27 @@ class ComparisonResponse(WireModel):
     items: list[CompanyRow]
     # metric -> symbol -> 1 best .. 0 worst among the compared companies; None when there is no winner.
     positions: dict[str, dict[str, float | None]]
+    metric_sources: dict[str, MetricSource]
     model: ModelResponse
     data: DataResponse
     generated_at: datetime
+    revision: str
+
+
+class RebasedPoint(WireModel):
+    date: date
+    values: dict[str, float | None]  # symbol -> adjusted close as 100 at base_date; None without a close
+
+
+class ComparisonPricesResponse(WireModel):
+    """Adjusted closes of the compared companies and SPY over the same cached sessions (#194)."""
+    symbols: list[str]
+    benchmark: Literal["SPY"]
+    base_date: date | None  # first session every series has a close; null when there is none
+    bars: int
+    points: list[RebasedPoint]
+    unit: Literal["index_100"] = "index_100"
+    source: Literal["local_cache_yahoo"] = "local_cache_yahoo"
     revision: str
 
 

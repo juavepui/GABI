@@ -22,3 +22,20 @@ def positions(values: dict[str, dict[str, float | None]], directions: dict[str, 
             ((known[symbol] - low) / (high - low) if direction == "higher" else (high - known[symbol]) / (high - low))
             for symbol in cells}
     return result
+
+
+def rebased(histories: dict[str, list[tuple[str, float | None]]]) -> tuple[str | None, list[dict]]:
+    """Adjusted closes of every series as 100 at the first session all of them have a positive close.
+
+    Sessions before that common start are dropped; a missing close stays None, never filled forward."""
+    closes = {symbol: {day: value for day, value in rows
+                       if isinstance(value, int | float) and math.isfinite(value) and value > 0}
+              for symbol, rows in histories.items()}
+    days = sorted({day for rows in histories.values() for day, _ in rows})
+    start = next((day for day in days if all(day in series for series in closes.values())), None)
+    if start is None:
+        return None, []
+    points = [{"date": day, "values": {symbol: (series[day] / series[start] * 100 if day in series else None)
+                                       for symbol, series in closes.items()}}
+              for day in days if day >= start]
+    return start, points

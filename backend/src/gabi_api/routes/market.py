@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import Response
 
 from gabi.application.errors import QueryError
+from gabi.application.market import comparison as compared
 from gabi.application.market.analysis_prompt import AnalysisPrompt
 from gabi.application.market.block_evidence import BlockEvidence
 from gabi.application.market.checklist import CompanyChecklist
@@ -17,6 +18,7 @@ from gabi_api.schemas.checklist import (
     ChecklistThresholds,
     ChecklistThresholdsRequest,
     CompanyChecklistResponse,
+    ComparisonChecklistResponse,
 )
 from gabi_api.schemas.evidence import (
     CompanyEvidence,
@@ -32,6 +34,7 @@ from gabi_api.schemas.market import (
     METRIC_SOURCE_WIRE,
     AnalysisPromptResponse,
     CompanyResponse,
+    ComparisonPricesResponse,
     ComparisonResponse,
     DataResponse,
     MetricGlossary,
@@ -215,5 +218,19 @@ def comparison(request: Request, market: Service, symbols: Annotated[list[str], 
     items = [company_row(str(symbol), row, result) for symbol, row in result.rows.iterrows()]
     values = {item.symbol: {key: metric.value for key, metric in item.metrics.items()} for item in items}
     return ComparisonResponse(items=items, positions=positions(values, request.app.state.metric_directions),
+                              metric_sources=METRIC_SOURCE_WIRE,
                               model=model_response(result.model), data=data_response(result.data),
                               generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)
+
+
+Compared = Annotated[list[str], Query(min_length=2, max_length=5)]
+
+
+@router.get("/comparison/checklist", response_model=ComparisonChecklistResponse)
+def comparison_checklist(market: Service, query: Checklist, symbols: Compared) -> dict:
+    return compared.checklists(market, query, symbols)
+
+
+@router.get("/comparison/prices", response_model=ComparisonPricesResponse)
+def comparison_prices(market: Service, symbols: Compared, bars: Annotated[int, Query(ge=20, le=1000)] = 252) -> dict:
+    return compared.prices(market, symbols, bars)

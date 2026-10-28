@@ -141,5 +141,12 @@ class MarketQueries:
         result.limit = len(normalized)
         return result
 
+    def compare_histories(self, symbols: list[str], extra: list[str], bars: int) -> tuple[RankingResult, dict]:
+        """The compared companies plus `extra` series (SPY), each its last `bars` cached sessions."""
+        result = self.compare(symbols)
+        names = list(dict.fromkeys([str(symbol) for symbol in result.rows.index] + extra))
+        return result, {symbol: self.repository.price_history(symbol, bars, result.snapshot.revision)
+                        for symbol in names}
+
     def close(self) -> None:
         self.repository.close()

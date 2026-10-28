@@ -537,3 +537,34 @@ test('tesis desde la ficha con precio y score anotados, qué ha cambiado y posic
   await entry.getByRole('button', { name: 'Confirmar eliminación' }).click();
   await expect(page.getByText('Barata y rentable')).toHaveCount(0);
 });
+
+test('Comparar desde el Ranking: secciones, checklist de cada ficha y precio en base 100 (#194)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=25');
+  await page.getByRole('checkbox', { name: 'Comparar T001' }).check();
+  const picks = page.getByRole('region', { name: 'Empresas para comparar' });
+  await expect(picks).toContainText('Marca al menos otra empresa');
+  await page.getByRole('checkbox', { name: 'Comparar T002' }).check();
+  await picks.getByRole('link', { name: 'Comparar 2' }).click();
+  await expect(page).toHaveURL(/\/descubrir\/comparar\?symbols=T001&symbols=T002$/);
+  for (const section of [
+    'Score y bloques',
+    'Valoración',
+    'Calidad y salud',
+    'Riesgo',
+    'Catalizadores',
+  ])
+    await expect(page.getByRole('columnheader', { name: section })).toBeVisible();
+  const checklist = page.getByRole('region', { name: 'Checklist comparado' });
+  await expect(checklist.getByRole('row', { name: /^Checklist/ })).toBeVisible({ timeout: 30_000 });
+  await expect(checklist.getByRole('row', { name: /^FCF yield/ })).toBeVisible();
+  const prices = page.getByRole('list', { name: /^Valor el / });
+  await expect(prices).toContainText('SPY:');
+  await page.getByRole('button', { name: '6 meses' }).click();
+  await expect(page.getByRole('button', { name: '6 meses' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(prices).toContainText('T001:');
+});

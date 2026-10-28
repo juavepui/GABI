@@ -4204,6 +4204,299 @@
         "title": "CompareSignals",
         "type": "object"
       },
+      "ComparedChecklist": {
+        "description": "One compared company's checklist digest (#194): the same values as its page's checklist.",
+        "properties": {
+          "active_alarms": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Active Alarms",
+            "type": "array"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedCriterion"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "financial_sector": {
+            "title": "Financial Sector",
+            "type": "boolean"
+          },
+          "fiscal_year_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fiscal Year End"
+          },
+          "history_medians": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ChecklistMedian"
+            },
+            "title": "History Medians",
+            "type": "object"
+          },
+          "history_years": {
+            "title": "History Years",
+            "type": "integer"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "sector_medians": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ChecklistMedian"
+            },
+            "title": "Sector Medians",
+            "type": "object"
+          },
+          "sector_peers": {
+            "title": "Sector Peers",
+            "type": "integer"
+          },
+          "sector_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector Reason"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChecklistSummary"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "fiscal_year_end",
+          "financial_sector",
+          "summary",
+          "criteria",
+          "active_alarms",
+          "history_medians",
+          "history_years",
+          "sector",
+          "sector_peers",
+          "sector_reason",
+          "sector_medians"
+        ],
+        "title": "ComparedChecklist",
+        "type": "object"
+      },
+      "ComparedCriterion": {
+        "properties": {
+          "comparison": {
+            "title": "Comparison",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "fiscal_year",
+              "snapshot",
+              "cached_history"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "source": {
+            "enum": [
+              "sec_10k",
+              "price+sec",
+              "yahoo",
+              "price+yahoo",
+              "prices"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "unit": {
+            "enum": [
+              "fraction",
+              "ratio",
+              "USD",
+              "count"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verdict": {
+            "enum": [
+              "pass",
+              "fail",
+              "missing",
+              "not_applicable",
+              "info"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "value",
+          "threshold",
+          "comparison",
+          "verdict",
+          "reason",
+          "source",
+          "period"
+        ],
+        "title": "ComparedCriterion",
+        "type": "object"
+      },
+      "ComparisonChecklistResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedChecklist"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "revision"
+        ],
+        "title": "ComparisonChecklistResponse",
+        "type": "object"
+      },
+      "ComparisonPricesResponse": {
+        "additionalProperties": false,
+        "description": "Adjusted closes of the compared companies and SPY over the same cached sessions (#194).",
+        "properties": {
+          "bars": {
+            "title": "Bars",
+            "type": "integer"
+          },
+          "base_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Date"
+          },
+          "benchmark": {
+            "const": "SPY",
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/RebasedPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "source": {
+            "const": "local_cache_yahoo",
+            "default": "local_cache_yahoo",
+            "title": "Source",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "unit": {
+            "const": "index_100",
+            "default": "index_100",
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbols",
+          "benchmark",
+          "base_date",
+          "bars",
+          "points",
+          "revision"
+        ],
+        "title": "ComparisonPricesResponse",
+        "type": "object"
+      },
       "ComparisonResponse": {
         "additionalProperties": false,
         "properties": {
@@ -4221,6 +4514,13 @@
             },
             "title": "Items",
             "type": "array"
+          },
+          "metric_sources": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricSource"
+            },
+            "title": "Metric Sources",
+            "type": "object"
           },
           "model": {
             "$ref": "#/components/schemas/ModelResponse"
@@ -4250,6 +4550,7 @@
         "required": [
           "items",
           "positions",
+          "metric_sources",
           "model",
           "data",
           "generated_at",
@@ -14007,6 +14308,36 @@
         "title": "RankingStability",
         "type": "object"
       },
+      "RebasedPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "date",
+          "values"
+        ],
+        "title": "RebasedPoint",
+        "type": "object"
+      },
       "ResearchLogRequest": {
         "additionalProperties": false,
         "description": "Register one finished V1/V2 backtest in Research Lab.",
@@ -19003,6 +19334,212 @@
           }
         },
         "summary": "Comparison",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/comparison/checklist": {
+      "get": {
+        "operationId": "comparison_checklist_api_v1_comparison_checklist_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "symbols",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 2,
+              "title": "Symbols",
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonChecklistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Comparison Checklist",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/comparison/prices": {
+      "get": {
+        "operationId": "comparison_prices_api_v1_comparison_prices_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "symbols",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 2,
+              "title": "Symbols",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bars",
+            "required": false,
+            "schema": {
+              "default": 252,
+              "maximum": 1000,
+              "minimum": 20,
+              "title": "Bars",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonPricesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Comparison Prices",
         "tags": [
           "market"
         ]

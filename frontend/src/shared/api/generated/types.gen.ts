@@ -2158,6 +2158,163 @@ export type CompareSignals = {
 };
 
 /**
+ * ComparedChecklist
+ *
+ * One compared company's checklist digest (#194): the same values as its page's checklist.
+ */
+export type ComparedChecklist = {
+    /**
+     * Active Alarms
+     */
+    active_alarms: Array<string>;
+    /**
+     * Criteria
+     */
+    criteria: Array<ComparedCriterion>;
+    /**
+     * Financial Sector
+     */
+    financial_sector: boolean;
+    /**
+     * Fiscal Year End
+     */
+    fiscal_year_end: string | null;
+    /**
+     * History Medians
+     */
+    history_medians: {
+        [key: string]: ChecklistMedian;
+    };
+    /**
+     * History Years
+     */
+    history_years: number;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Sector Medians
+     */
+    sector_medians: {
+        [key: string]: ChecklistMedian;
+    };
+    /**
+     * Sector Peers
+     */
+    sector_peers: number;
+    /**
+     * Sector Reason
+     */
+    sector_reason: string | null;
+    summary: ChecklistSummary;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * ComparedCriterion
+ */
+export type ComparedCriterion = {
+    /**
+     * Comparison
+     */
+    comparison: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Period
+     */
+    period: 'fiscal_year' | 'snapshot' | 'cached_history';
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Source
+     */
+    source: 'sec_10k' | 'price+sec' | 'yahoo' | 'price+yahoo' | 'prices';
+    /**
+     * Threshold
+     */
+    threshold: number | null;
+    /**
+     * Unit
+     */
+    unit: 'fraction' | 'ratio' | 'USD' | 'count';
+    /**
+     * Value
+     */
+    value: number | null;
+    /**
+     * Verdict
+     */
+    verdict: 'pass' | 'fail' | 'missing' | 'not_applicable' | 'info';
+};
+
+/**
+ * ComparisonChecklistResponse
+ */
+export type ComparisonChecklistResponse = {
+    /**
+     * Items
+     */
+    items: Array<ComparedChecklist>;
+    /**
+     * Revision
+     */
+    revision: string;
+};
+
+/**
+ * ComparisonPricesResponse
+ *
+ * Adjusted closes of the compared companies and SPY over the same cached sessions (#194).
+ */
+export type ComparisonPricesResponse = {
+    /**
+     * Bars
+     */
+    bars: number;
+    /**
+     * Base Date
+     */
+    base_date: string | null;
+    /**
+     * Benchmark
+     */
+    benchmark: 'SPY';
+    /**
+     * Points
+     */
+    points: Array<RebasedPoint>;
+    /**
+     * Revision
+     */
+    revision: string;
+    /**
+     * Source
+     */
+    source?: 'local_cache_yahoo';
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+    /**
+     * Unit
+     */
+    unit?: 'index_100';
+};
+
+/**
  * ComparisonResponse
  */
 export type ComparisonResponse = {
@@ -2170,6 +2327,12 @@ export type ComparisonResponse = {
      * Items
      */
     items: Array<CompanyRow>;
+    /**
+     * Metric Sources
+     */
+    metric_sources: {
+        [key: string]: MetricSource;
+    };
     model: ModelResponse;
     /**
      * Positions
@@ -7218,6 +7381,22 @@ export type RankingStability = {
 };
 
 /**
+ * RebasedPoint
+ */
+export type RebasedPoint = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number | null;
+    };
+};
+
+/**
  * ResearchLogRequest
  *
  * Register one finished V1/V2 backtest in Research Lab.
@@ -9937,6 +10116,110 @@ export type ComparisonApiV1ComparisonGetResponses = {
 };
 
 export type ComparisonApiV1ComparisonGetResponse = ComparisonApiV1ComparisonGetResponses[keyof ComparisonApiV1ComparisonGetResponses];
+
+export type ComparisonChecklistApiV1ComparisonChecklistGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Symbols
+         */
+        symbols: Array<string>;
+    };
+    url: '/api/v1/comparison/checklist';
+};
+
+export type ComparisonChecklistApiV1ComparisonChecklistGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ComparisonChecklistApiV1ComparisonChecklistGetError = ComparisonChecklistApiV1ComparisonChecklistGetErrors[keyof ComparisonChecklistApiV1ComparisonChecklistGetErrors];
+
+export type ComparisonChecklistApiV1ComparisonChecklistGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ComparisonChecklistResponse;
+};
+
+export type ComparisonChecklistApiV1ComparisonChecklistGetResponse = ComparisonChecklistApiV1ComparisonChecklistGetResponses[keyof ComparisonChecklistApiV1ComparisonChecklistGetResponses];
+
+export type ComparisonPricesApiV1ComparisonPricesGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Symbols
+         */
+        symbols: Array<string>;
+        /**
+         * Bars
+         */
+        bars?: number;
+    };
+    url: '/api/v1/comparison/prices';
+};
+
+export type ComparisonPricesApiV1ComparisonPricesGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ComparisonPricesApiV1ComparisonPricesGetError = ComparisonPricesApiV1ComparisonPricesGetErrors[keyof ComparisonPricesApiV1ComparisonPricesGetErrors];
+
+export type ComparisonPricesApiV1ComparisonPricesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ComparisonPricesResponse;
+};
+
+export type ComparisonPricesApiV1ComparisonPricesGetResponse = ComparisonPricesApiV1ComparisonPricesGetResponses[keyof ComparisonPricesApiV1ComparisonPricesGetResponses];
 
 export type DataStatusApiV1DataStatusGetData = {
     body?: never;
