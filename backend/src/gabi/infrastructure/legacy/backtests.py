@@ -14,7 +14,7 @@ def run_backtest_v1(start: str, end: str, options: dict) -> dict:
     return multifactor_backtest.run(
         start, end, options["months"], options["top_n"], options["cost_bps"],
         max_symbols=options["universe_size"],
-        rotation_hurdle_points=options["rotation_hurdle_points"],
+        rotation_hurdle_points=options["rotation_hurdle_points"], issuer_history=True,
     )
 
 
@@ -27,6 +27,7 @@ def run_backtest_v2(start: str, end: str, options: dict) -> dict:
         max_symbols=options["max_symbols"], mode=options["mode"],
         initial_capital=options["initial_capital"], commission_usd=options["commission_usd"],
         spread_bps=options["spread_bps"], rotation_hurdle_points=options["rotation_hurdle_points"],
+        issuer_history=True,
     )
     nav, nav_spy = result["nav_curve"], result["nav_curve_spy"]
     daily = multifactor_backtest.daily_risk_metrics(nav)

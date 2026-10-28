@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from gabi.domain.market.identity import normalize_symbol
 from gabi.domain.market.sec_xbrl import KEYS
 
 FACT_COLUMNS = ["symbol", "tag", "unit", "start_date", "end_date", "val", "form", "fp", "fy", "filed_date", "accn"]
@@ -192,6 +193,73 @@ class SqliteSecReads:
             if db is None or "edgar_metrics" not in tables:
                 return {}
             return dict(self._rows(db, "SELECT symbol,cik FROM edgar_metrics"))
+
+    def issuer_entities(self, symbols: list[str], as_of: str) -> dict[str, str]:
+        """Stored-CIK entity of each symbol whose history by ``as_of`` it completes from other aliases.
+
+        The sync writes under the current symbol only the facts its entity did not know, so a
+        history stored under an old ticker or a historical ``CIK…`` key is only in the entity.
+        The entity is returned only when it adds such rows and loses none: it holds every row
+        the symbol had (not so for a successor's filings under the same ticker) and its rows
+        under the symbol itself are still in the ticker table (not so for withdrawn rows).
+        Symbols whose entity has no other alias are discarded from the primary key index."""
+        symbols = list(dict.fromkeys(symbols))
+        if len(symbols) > self.max_symbols:
+            raise ValueError("Los símbolos SEC superan el límite de consulta.")
+        found: dict[str, str] = {}
+        with self._read() as (db, tables):
+            if db is None or not {"edgar_facts", "edgar_metrics", "entity_observations"} <= tables:
+                return found
+
+            def probe(sql, params):
+                return db.execute(sql + " LIMIT 1", params).fetchone() is not None
+
+            db.execute("BEGIN")  # every symbol observes one revision
+            owners: dict[str, str] = {}
+            for start in range(0, len(symbols), self.batch_size):
+                chunk = symbols[start:start + self.batch_size]
+                for symbol, cik in self._rows(db, "SELECT symbol,cik FROM edgar_metrics WHERE symbol IN ("
+                                              + ",".join("?" for _ in chunk) + ")", tuple(chunk)):
+                    cik = str(cik).strip() if cik else ""
+                    if cik.isdigit():
+                        owners[symbol] = f"cik:{int(cik):010d}"
+            entities = sorted(set(owners.values()))
+            aliases_of: dict[str, set[str]] = {}
+            for start in range(0, len(entities), self.batch_size):
+                chunk = entities[start:start + self.batch_size]
+                for entity, alias in self._rows(db, "SELECT entity_id,symbol FROM entity_observations "
+                                                "WHERE dataset='edgar_facts' AND entity_id IN ("
+                                                + ",".join("?" for _ in chunk) + ") GROUP BY entity_id,symbol",
+                                                tuple(chunk)):
+                    aliases_of.setdefault(entity, set()).add(alias)
+            # The writer's record key is the compact JSON list of KEYS; both primary keys answer each probe.
+            in_ticker = ("EXISTS (SELECT 1 FROM edgar_facts f WHERE f.symbol=? AND f.tag=json_extract(o.record_key,'$[0]') "
+                         "AND f.unit=json_extract(o.record_key,'$[1]') AND f.start_date=json_extract(o.record_key,'$[2]') "
+                         "AND f.end_date=json_extract(o.record_key,'$[3]') AND f.accn=json_extract(o.record_key,'$[4]'))")
+            observed = ("FROM entity_observations o WHERE o.entity_id=? AND o.dataset='edgar_facts' "
+                        "AND o.symbol IN ({}) AND json_valid(o.record_key)")
+            for symbol, entity in owners.items():
+                alias = normalize_symbol(symbol)
+                others = sorted(aliases_of.get(entity, set()) - {alias})
+                if not others:
+                    continue
+                marks = ",".join("?" for _ in others)
+                # Other aliases add a row the ticker lacks, filed by the date.
+                adds = probe(f"SELECT 1 {observed.format(marks)} AND CASE WHEN length(CAST(o.payload_json "
+                             f"AS BLOB))<=? THEN json_extract(o.payload_json,'$.filed_date')<=? END "
+                             f"AND NOT {in_ticker}", (entity, *others, self.max_row_bytes, as_of, symbol))
+                # An entity row under this very symbol missing from the ticker table was withdrawn from it.
+                withdrawn = adds and probe(f"SELECT 1 {observed.format('?')} AND NOT {in_ticker}",
+                                           (entity, alias, symbol))
+                # Every ticker row filed by the date is in the entity (not so for a successor's filings).
+                lost = adds and not withdrawn and probe(
+                    "SELECT 1 FROM edgar_facts f WHERE f.symbol=? AND f.filed_date<=? AND NOT EXISTS (SELECT 1 "
+                    "FROM entity_observations o WHERE o.entity_id=? AND o.dataset='edgar_facts' AND o.symbol IN "
+                    f"(?,{marks}) AND o.record_key=json_array(f.tag,f.unit,f.start_date,f.end_date,f.accn))",
+                    (symbol, as_of, entity, alias, *others))
+                if adds and not withdrawn and not lost:
+                    found[symbol] = entity
+        return found
 
     def symbols_with_facts(self, symbols: list[str]) -> set[str]:
         """Symbols with dated facts under their own rows or under their stored CIK's entity (#201).

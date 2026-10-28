@@ -4,7 +4,8 @@
 def run_historical(as_of: str) -> dict:
     from gabi import edgar, screener_asof
 
-    result = screener_asof.build_ranking_as_of(as_of)
+    # The app reads each ticker's whole issuer history; frozen engines keep the ticker rows.
+    result = screener_asof.build_ranking_as_of(as_of, issuer_history=True)
     table = result["table"]
     if not table.empty:
         # The old page looked the SEC title up on every render; the job stores it once with the artifact.

@@ -74,3 +74,17 @@ def test_operational_mode_requires_explicit_symbols_outside_the_accredited_layer
         screener_asof.build_ranking_as_of(DAY, operational_entities={})
     with pytest.raises(ValueError, match="operativo"):
         screener_asof.build_ranking_as_of("2012-06-29", symbols=["AAA"], operational_entities={})
+
+
+def test_issuer_history_reads_the_stored_cik_entity_with_ticker_prices(market):
+    from datetime import UTC, datetime
+
+    from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
+
+    SqliteXbrl(config.DB_PATH, lambda: datetime(2026, 10, 1, tzinfo=UTC)).store_metrics("AAA", "1", {})
+    default = screener_asof.build_ranking_as_of(DAY, symbols=["AAA"])["table"].loc["AAA"]
+    row = screener_asof.build_ranking_as_of(DAY, symbols=["AAA"], issuer_history=True)["table"].loc["AAA"]
+    assert pd.isna(default["ps"])
+    assert row["entity_id"] == "cik:0000000001" and row["identity_source"] == "sec_cik_issuer"
+    assert row["price"] == pytest.approx(399.0) and row["ps"] == pytest.approx(3990.0 / 5000.0)
+    assert row["momentum_12m"] == default["momentum_12m"]  # prices stay the ticker cache's

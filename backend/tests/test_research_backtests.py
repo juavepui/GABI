@@ -176,11 +176,11 @@ def test_legacy_adapters_pass_parameters_and_match_streamlit_metrics(monkeypatch
         v2=(args, kwargs)) or _v2_engine())
     run_backtest_v1("2019-01-02", "2020-01-02", V1 | {"rotation_hurdle_points": 2.0})
     assert seen["v1"] == (("2019-01-02", "2020-01-02", 3, 10, 10),
-                          {"max_symbols": 50, "rotation_hurdle_points": 2.0})
+                          {"max_symbols": 50, "rotation_hurdle_points": 2.0, "issuer_history": True})
     result = run_backtest_v2("2019-01-02", "2020-01-02", V2)
     assert seen["v2"][1] == {"months": 3, "top_n": 20, "max_symbols": 200, "mode": "fast_dev",
                              "initial_capital": 100_000, "commission_usd": 1, "spread_bps": 10,
-                             "rotation_hurdle_points": 0}
+                             "rotation_hurdle_points": 0, "issuer_history": True}
 
     nav, nav_spy = _nav(1), _nav(2)
     returns, returns_spy = nav.pct_change().dropna(), nav_spy.pct_change().dropna()

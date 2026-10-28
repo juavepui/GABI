@@ -189,7 +189,8 @@ def _price_history_as_of(symbol: str, as_of_date: pd.Timestamp, *, entity_id: st
 
 
 def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = None,
-                        *, strict_identity: bool = False, operational_entities: dict[str, str] | None = None) -> dict:
+                        *, strict_identity: bool = False, operational_entities: dict[str, str] | None = None,
+                        issuer_history: bool = False) -> dict:
     """Reconstruye el ranking completo para as_of_date (YYYY-MM-DD).
 
     symbols=None (por defecto) usa el universo histórico reconstruido para
@@ -216,7 +217,15 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     defecto): símbolo → entidad del mapa SEC vigente para los símbolos sin
     alias que resuelva la fecha. Los fundamentales se leen por emisor y los
     precios de la caché por ticker, porque en vivo no hay series atribuidas.
-    No se admite en fechas de la capa acreditada."""
+    No se admite en fechas de la capa acreditada.
+
+    `issuer_history` (desactivado por defecto; los motores congelados no lo
+    usan): un símbolo que se leería por ticker lee los fundamentales de la
+    entidad de su CIK guardado cuando esta conoce todos los hechos que el
+    símbolo tenía en la fecha. La sincronización solo escribe bajo el símbolo
+    actual lo que la entidad no conocía, así que un historial guardado con
+    otro alias (p. ej. la clave «CIK0000034088» de XOM) solo está en la
+    entidad. Los precios siguen siendo los de la caché por ticker."""
     live = operational_entities is not None
     entities = operational_entities or {}
     if live and (symbols is None or _covers(as_of_date)):
@@ -234,19 +243,23 @@ def build_ranking_as_of(as_of_date: str, weights: dict = None, symbols: list = N
     bench_df = _price_history_as_of("SPY", as_of_ts)
     # 2010-2015: solo entidades con identidad acreditada, sin caché por ticker.
     historical = _covers(as_of_date)
+    issuers = edgar.get_issuer_entities(symbols, as_of_date) if issuer_history and not live and not historical else {}
 
     rows = []
     for sym in symbols:
         resolved = identity.resolve(sym, as_of_date)
         entity_id = resolved["entity_id"]
         source = resolved["source"]
+        ticker_prices = live
         if live and not entity_id and entities.get(sym):
             entity_id, source = entities[sym], "sec_cik_map"
         # Explicit legacy mode is diagnostic only; a known conflicting/recycled
         # alias never falls back to ticker-indexed data.
         allowed = live or entity_id or (not strict_identity and not historical and not identity.has_aliases(sym))
-        classic = _classic_metrics_as_of(sym, as_of_date, entity_id=entity_id, ticker_prices=live) if allowed else {"pe": None, "roic": None, "market_cap": None, "price": None}
-        price_df = _price_history_as_of(sym, as_of_ts, entity_id=None if live else entity_id) if allowed else pd.DataFrame()
+        if allowed and not entity_id and issuers.get(sym):
+            entity_id, source, ticker_prices = issuers[sym], "sec_cik_issuer", True
+        classic = _classic_metrics_as_of(sym, as_of_date, entity_id=entity_id, ticker_prices=ticker_prices) if allowed else {"pe": None, "roic": None, "market_cap": None, "price": None}
+        price_df = _price_history_as_of(sym, as_of_ts, entity_id=None if ticker_prices else entity_id) if allowed else pd.DataFrame()
 
         t = technicals.compute_technicals(price_df, bench_df) if not price_df.empty else {}
         r = risk.compute_risk_metrics(price_df, bench_df) if not price_df.empty else {}

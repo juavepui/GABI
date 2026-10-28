@@ -215,3 +215,12 @@ def test_pure_rules_keep_their_historical_names():
     same(captured("multifactor_backtest").daily_risk_metrics(curve), v1.daily_risk_metrics(curve))
     returns = pd.Series([.02, -.01, .03])
     same(captured("multifactor_backtest")._risk_metrics(returns, 4, years=.75), v1._risk_metrics(returns, 4, years=.75))
+
+
+def test_app_market_asks_the_ranking_for_the_issuer_history(monkeypatch):
+    seen = []
+    monkeypatch.setattr(screener_asof, "build_ranking_as_of",
+                        lambda as_of, symbols, **options: seen.append(options) or {"table": ranking(as_of, symbols)})
+    v1.market().ranking("2019-01-02", ["AAA"])
+    v1.market(issuer_history=True).ranking("2019-01-02", ["AAA"])
+    assert seen == [{}, {"issuer_history": True}]  # frozen engines keep the old call

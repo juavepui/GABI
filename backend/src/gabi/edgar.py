@@ -243,6 +243,11 @@ def get_issuer_facts_as_of(cik: str, as_of_date: str, tags: list | None = None) 
     return issuer_facts(_fact_reader(), cik, as_of_date, tags)
 
 
+def get_issuer_entities(symbols: list, as_of: str) -> dict:
+    """{symbol: entidad del CIK guardado} cuando la entidad conoce todo lo que el símbolo tenía en as_of."""
+    return _fact_reader().issuer_entities(symbols, as_of)
+
+
 def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
     """{symbol: fecha del filing SEC más reciente que tenemos} para cada
     símbolo (de cualquier tipo: 10-K, 10-Q...). Una empresa viva presenta un
