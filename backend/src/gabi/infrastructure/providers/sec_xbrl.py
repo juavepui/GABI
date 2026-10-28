@@ -1,6 +1,7 @@
 """Bounded SEC JSON downloads, closed before any SQLite operation."""
 
 import json
+import re
 
 import requests
 
@@ -30,6 +31,12 @@ class SecXbrl:
     def submissions(self, cik: str) -> dict:
         return self._fetch(f"https://data.sec.gov/submissions/CIK{normalize_cik(cik)}.json",
                            "SEC EDGAR no tiene historial de filings para esta empresa")
+
+    def submissions_page(self, name: str) -> dict:
+        """An older page listed in ``filings.files`` of the submissions payload."""
+        if not re.fullmatch(r"CIK\d{10}-submissions-\d{3}\.json", name):
+            raise ValueError("Página de submissions SEC inválida.")
+        return self._fetch(f"https://data.sec.gov/submissions/{name}", "SEC EDGAR no tiene esa página de filings")
 
     def companyfacts(self, cik: str) -> dict:
         return self._fetch(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{normalize_cik(cik)}.json",

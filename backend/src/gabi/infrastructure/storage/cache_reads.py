@@ -95,17 +95,19 @@ class SqliteCacheReads:
             result["macro_by_series"] = {sid: {"first": lo, "last": hi, "rows": count} for sid, lo, hi, count in series}
             return result
 
-    def latest_adjusted(self, symbols: list[str]) -> dict[str, tuple]:
+    def latest_adjusted(self, symbols: list[str], as_of: str | None = None) -> dict[str, tuple]:
         """Newest (date, close, adj_close) with a positive adjusted close, per symbol, in one snapshot.
 
-        One indexed backward lookup per symbol stops at the first match; a set-wide MAX would scan histories."""
+        ``as_of`` bounds the session (inclusive). One indexed backward lookup per symbol stops at the
+        first match; a set-wide MAX would scan histories."""
         with read_only(self.path, self.max_field_bytes) as (db, tables):
             if db is None or "prices" not in tables or self._adjusted(db) == "NULL":
                 return {}
             found = {}
+            bound, extra = (" AND date<=?", (as_of,)) if as_of else ("", ())
             for symbol in dict.fromkeys(symbols):
                 rows = self._rows(db, "SELECT * FROM (SELECT date,close,adj_close FROM prices WHERE symbol=? "
-                                  "AND adj_close>0 ORDER BY date DESC LIMIT 1)", (symbol,), max_rows=1)
+                                  f"AND adj_close>0{bound} ORDER BY date DESC LIMIT 1)", (symbol, *extra), max_rows=1)
                 if rows:
                     found[symbol] = rows[0]
             return found
