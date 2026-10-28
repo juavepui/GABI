@@ -44,7 +44,7 @@ def rows(saved: list[dict], table: pd.DataFrame | None, model_id: str, theses: d
     for item in saved:
         symbol = item["symbol"]
         listed = table is not None and symbol in table.index
-        row = table.loc[symbol] if listed else {}
+        row = table.loc[symbol] if listed and table is not None else {}
         score, rank = standing(table, symbol) if listed else (None, None)
         comparable = item.get("model_id") == model_id
         added_score, added_rank = _number(item.get("score_at_add")), item.get("rank_at_add")

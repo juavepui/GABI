@@ -37,10 +37,10 @@ def checklists(market: MarketQueries, checklist: CompanyChecklist, symbols: list
 def prices(market: MarketQueries, symbols: list[str], bars: int) -> dict:
     """The last `bars` cached sessions of each company and SPY, as 100 at their first common session."""
     result, frames = market.compare_histories(symbols, [BENCHMARK], bars)
-    histories = {symbol: [] if frame.empty else [(str(day), float(close)) for day, close in
-                                                 zip(frame["date"], frame["adj_close"], strict=True)
-                                                 if close is not None]
-                 for symbol, frame in frames.items()}
+    histories: dict[str, list[tuple[str, float | None]]] = {
+        symbol: [] if frame.empty else [(str(day), float(close)) for day, close in
+                                        zip(frame["date"], frame["adj_close"], strict=True) if close is not None]
+        for symbol, frame in frames.items()}
     base_date, points = rebased(histories)
     return {"symbols": [str(symbol) for symbol in result.rows.index], "benchmark": BENCHMARK,
             "base_date": base_date, "bars": bars, "points": points, "revision": result.snapshot.revision}
