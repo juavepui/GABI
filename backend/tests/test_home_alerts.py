@@ -54,6 +54,8 @@ def test_dividends_entries_exits_filings_jobs_and_theses():
             {"kind": "refresh", "status": "failed", "finished_at": "2026-09-01T08:00:00"}]
     [job] = rules.failed_jobs(jobs, today=TODAY)  # One per kind; solved and old failures are left out.
     assert job["date"] == "2026-09-28" and job["detail"]["error_code"] == "key"
+    # An unknown code reads as unclassified; the alert shows the category, never the raw code (#179).
+    assert job["detail"]["failure"] == "Causa no clasificada"
     theses = [{"id": 1, "symbol": "A", "horizon": "Corto (<6 meses)", "created_at": "2026-03-15T10:00:00",
                "status": "abierta"},
               {"id": 2, "symbol": "B", "horizon": "Medio (6-12 meses)", "created_at": "2026-03-15T10:00:00",

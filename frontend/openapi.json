@@ -10314,6 +10314,56 @@
         "title": "JobEvent",
         "type": "object"
       },
+      "JobFailure": {
+        "description": "Closed category of a failed or cancelled job with a message and an action (#179); no exception text.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "source_unavailable",
+              "key_missing",
+              "key_rejected",
+              "rate_limited",
+              "insufficient_data",
+              "interrupted",
+              "internal_error",
+              "cancelled"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retry": {
+            "enum": [
+              "now",
+              "later",
+              "after_fix",
+              "no"
+            ],
+            "title": "Retry",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "label",
+          "message",
+          "action",
+          "retry"
+        ],
+        "title": "JobFailure",
+        "type": "object"
+      },
       "JobListResponse": {
         "properties": {
           "jobs": {
@@ -10375,6 +10425,16 @@
             ],
             "title": "Events"
           },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "failures": {
             "default": [],
             "items": {
@@ -10406,6 +10466,17 @@
           "kind": {
             "title": "Kind",
             "type": "string"
+          },
+          "last_activity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity"
           },
           "origin": {
             "title": "Origin",

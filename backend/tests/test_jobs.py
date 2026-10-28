@@ -124,7 +124,7 @@ def test_running_cancellation_and_failed_execution_never_publish(tmp_path):
     Worker(store, fails, tmp_path).run_once()
     failed = store.get(second["id"])
     assert failed["status"] == "failed"
-    assert failed["error_code"] == "job_failed"
+    assert failed["error_code"] == "internal_error"
     assert "secret" not in json.dumps(failed)
     assert failed["failures"] == [] and failed["failures_total"] == 0
     assert failed["diagnostic"] is True
@@ -144,7 +144,7 @@ def test_unexpected_failure_trace_omits_message_for_blind_and_maintenance(tmp_pa
 
     Worker(store, fails, tmp_path).run_once()
     failed = store.get(job["id"])
-    assert failed["error_code"] == "job_failed" and failed["diagnostic"] is True
+    assert failed["error_code"] == "internal_error" and failed["diagnostic"] is True
     trace = (tmp_path / "jobs" / "logs" / f"{job['id']}.log").read_text(encoding="utf-8")
     assert "builtins.ValueError (mensaje omitido)" in trace and "in fails" in trace
     assert "zqxw" not in trace

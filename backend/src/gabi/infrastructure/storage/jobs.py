@@ -17,6 +17,7 @@ from uuid import uuid4
 
 from gabi.application.administration.jobs import JobCommand
 from gabi.application.errors import QueryError
+from gabi.domain.administration.job_failures import describe_failure
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS jobs (
@@ -96,6 +97,9 @@ class SqliteJobs:
         result["failures"] = result["checkpoint"].get("failures", []) if failed else []
         result["failures_total"] = result["checkpoint"].get("failures_total", 0) if failed else 0
         result["diagnostic"] = bool(result["checkpoint"].get("diagnostic")) if failed else False
+        result["last_activity"] = result["checkpoint"].get("last_phase") if failed else None
+        result["failure"] = describe_failure(result["error_code"], cancelled=result["status"] == "cancelled") \
+            if failed or result["status"] == "cancelled" else None
         if events is not None:
             result["events"] = [{"at": event["at"], "message": event["message"]} for event in events]
         return result
@@ -252,12 +256,15 @@ class SqliteJobs:
         with self.connection(write=True) as db:
             assert db is not None
             db.execute("BEGIN IMMEDIATE")
-            row = db.execute("SELECT cancel_requested FROM jobs WHERE id=? AND worker_token=? AND status='running'",
-                             (job_id, token)).fetchone()
+            row = db.execute("SELECT cancel_requested,phase FROM jobs WHERE id=? AND worker_token=? "
+                             "AND status='running'", (job_id, token)).fetchone()
             if row is None:
                 return False
             if row["cancel_requested"]:
                 status, error, ref, digest = "cancelled", None, None, None
+            if status == "failed":
+                # The last step it reported, shown next to the failure category (#179).
+                checkpoint = (checkpoint or {}) | {"last_phase": row["phase"]}
             phase = {"succeeded": "Completado", "failed": "Fallido", "cancelled": "Cancelado"}[status]
             db.execute("UPDATE jobs SET status=?, progress=?, phase=?, finished_at=?, error_code=?, "
                        "result_ref=?, result_sha256=?, worker_token=NULL, lease_until=NULL WHERE id=?",

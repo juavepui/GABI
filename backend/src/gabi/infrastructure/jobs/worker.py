@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 import sys
 import threading
 import traceback
@@ -13,6 +14,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from gabi.application.administration.jobs import BLIND_KINDS, JobCommand, SourceFailures
+from gabi.application.errors import QueryError
 from gabi.infrastructure.storage.jobs import SqliteJobs
 
 
@@ -55,6 +57,45 @@ class _Cancelled(Exception):
 
 # Their exception text may quote blind or pending #43/#44 output; the trace keeps only types and frames.
 _QUIET_KINDS = BLIND_KINDS | {"maintenance", "tiingo"}
+
+
+# QueryError codes meaning the local data cannot support the calculation, not a code fault.
+_DATA_CODES = re.compile(r"(no_.*|.*_missing|.*_unavailable|.*_limit|universe_too_large|data_changed|returns_missing)")
+_MISSING_KEY = re.compile(r"falta la clave|sin clave|no_api_key|api key (is )?(missing|required)", re.IGNORECASE)
+_NETWORK_NAMES = ("ConnectionError", "Timeout", "ConnectTimeout", "ReadTimeout", "SSLError", "ProxyError",
+                  "ChunkedEncodingError", "URLError", "RemoteDisconnected", "gaierror")
+
+
+def _chain(exc: BaseException) -> Iterator[BaseException]:
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        yield current
+        current = current.__cause__ or current.__context__
+
+
+def classify_failure(exc: BaseException) -> str:
+    """A closed failure code for an unexpected exception (#179), looking through its causes.
+
+    Exception text is read only here, locally, to recognise a missing key; it never leaves the worker."""
+    for error in _chain(exc):
+        names = {cls.__name__ for cls in type(error).__mro__}
+        response = getattr(error, "response", None)
+        status = getattr(response, "status_code", None) or getattr(error, "status_code", None)
+        if "YFRateLimitError" in names or status == 429 or any("RateLimit" in name for name in names):
+            return "rate_limited"
+        if status in (401, 403):
+            return "key_rejected"
+        if isinstance(status, int) and status >= 500:
+            return "source_unavailable"
+        if names & set(_NETWORK_NAMES):
+            return "source_unavailable"
+        if isinstance(error, QueryError) and _DATA_CODES.fullmatch(error.code):
+            return "insufficient_data"
+        if _MISSING_KEY.search(str(error)):
+            return "key_missing"
+    return "internal_error"
 
 
 def write_diagnostic(data_dir: Path, job_id: str, kind: str, exc: BaseException) -> bool:
@@ -169,7 +210,7 @@ class Worker:
         except Exception as exc:
             # No exception text, local paths, credentials or blind output over HTTP: only whether a local trace exists.
             diagnostic = write_diagnostic(self.data_dir, job_id, job["kind"], exc)
-            self.store.finish(job_id, token, "failed", error="job_failed",
+            self.store.finish(job_id, token, "failed", error=classify_failure(exc),
                               checkpoint={"stage": "failed", "diagnostic": diagnostic})
             if artifact is not None:
                 artifact.unlink(missing_ok=True)

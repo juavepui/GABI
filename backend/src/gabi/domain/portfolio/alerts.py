@@ -6,6 +6,8 @@ symbols and the screen that resolves it. React writes the sentence.
 
 from datetime import date, datetime, timedelta
 
+from gabi.domain.administration.job_failures import describe_failure
+
 SEVERITY_ORDER = {"high": 0, "medium": 1, "info": 2}
 WINDOW_DAYS = 7
 FILING_DAYS = 14
@@ -95,6 +97,7 @@ def failed_jobs(jobs: list[dict], *, today: date) -> list[dict]:
                 solved.add(job["kind"])  # One alert per kind: the latest failure.
                 alerts.append(_alert("job_failed", "high", when.isoformat(), link="/administracion",
                                      job_kind=job["kind"], error_code=job.get("error_code"),
+                                     failure=describe_failure(job.get("error_code"))["label"],
                                      failures=job.get("failures_total") or 0))
     return alerts
 
