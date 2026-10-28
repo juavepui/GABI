@@ -192,7 +192,7 @@ class CompanyChecklist:
                         "yahoo_fetched_at": market.yahoo_fetched_at},
             **result,
             "multiples_history": history,
-            "pass_rate_reference": None if not rates else {"as_of": reference["as_of"],
+            "pass_rate_reference": None if not rates or reference is None else {"as_of": reference["as_of"],
                                                           "issuers": reference["issuers"], "sector": gics},
         })
 

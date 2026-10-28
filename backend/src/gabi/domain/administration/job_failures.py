@@ -51,7 +51,7 @@ FAILURES: dict[str, tuple[str, str, str, str, Retry]] = {
 }
 
 
-def describe_failure(code: str | None, *, cancelled: bool = False) -> dict | None:
+def describe_failure(code: str | None, *, cancelled: bool = False) -> dict:
     """Category, label, message, action and retry advice of a failed or cancelled job."""
     if cancelled:
         return {"category": "cancelled", "label": "Cancelado", "message": "Se canceló a petición y no publicó un "

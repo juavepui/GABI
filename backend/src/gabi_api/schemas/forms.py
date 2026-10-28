@@ -14,6 +14,8 @@ from gabi_api.schemas.decisions import DecisionPolicy
 from gabi_api.schemas.simulations import SimulationCreate, SimulationTradeCreate
 
 Scheme = Literal["equal_weight", "inverse_vol", "min_variance", "score_weighted", "score_constrained", "risk_parity"]
+SCHEMES: tuple[Scheme, ...] = ("equal_weight", "inverse_vol", "min_variance", "score_weighted", "score_constrained",
+                               "risk_parity")
 
 
 def _default(model: type[BaseModel], name: str):
@@ -68,8 +70,7 @@ class PortfolioLabDefaults(Defaults):
     months: Literal[1, 3, 6, 12] = 3
     top_n: int = 20
     initial_capital: float = 100_000
-    schemes: list[Scheme] = Field(default_factory=lambda: ["equal_weight", "inverse_vol", "min_variance",
-                                                           "score_weighted", "score_constrained", "risk_parity"])
+    schemes: list[Scheme] = Field(default_factory=lambda: list(SCHEMES))
     mode: Literal["validation", "fast_dev"] = "fast_dev"
     max_symbols: Literal[50, 100, 200] = 100
 

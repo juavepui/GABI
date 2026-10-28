@@ -8,6 +8,7 @@ not a new test. Weights, selection and the frozen hypothesis are untouched.
 
 import math
 from collections.abc import Mapping
+from typing import Any
 
 from gabi.domain.market.scoring import SCORE_METRICS
 from gabi.domain.research import labels
@@ -27,7 +28,7 @@ def blocks(factors: Mapping[str, Mapping], score_metrics: Mapping[str, list[str]
     """One row per block, with each scored metric's mean IC, Holm p-value and classification."""
     result = []
     for block, names in score_metrics.items():
-        metrics = []
+        metrics: list[dict[str, Any]] = []
         for name in names:
             factor = factors.get(name)
             code = None if factor is None else str(factor.get("classification"))

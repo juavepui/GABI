@@ -33,7 +33,7 @@ def list_entries(journal: Annotated[Journal, Depends(service)],
 @router.get("/symbols", response_model=ThesisCounts)
 def thesis_counts(journal: Annotated[Journal, Depends(service)]) -> ThesisCounts:
     """Open and total theses per company, for marking positions without a thesis."""
-    return ThesisCounts(items=journal.thesis_counts())
+    return ThesisCounts.model_validate({"items": journal.thesis_counts()})
 
 
 @router.get("/{entry_id}/changes", response_model=JournalChanges)
