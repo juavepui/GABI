@@ -246,3 +246,26 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
     await lots.getByRole('button', { name: 'Borrar compra de ' + symbol }).click();
   await expect(page.getByRole('region', { name: 'Compras registradas' })).toHaveCount(0);
 });
+
+test('formularios con valores del backend y «Opciones avanzadas» recordadas (#190)', async ({
+  page,
+  request,
+}) => {
+  const defaults = await (await request.get('http://127.0.0.1:8001/api/v1/forms/defaults')).json();
+  await page.goto('/cartera/simuladas');
+  await page.getByText('Crear cartera simulada').click();
+  await expect(page.getByLabel('Capital inicial')).toHaveValue(
+    String(defaults.simulation.initial_cash),
+  );
+  // Commissions and spread are folded; once opened, the backend's values and their help show.
+  const create = page.locator('form').filter({ has: page.getByLabel('Capital inicial') });
+  await expect(create.getByLabel('Spread pb')).toBeHidden();
+  await create.getByText('Opciones avanzadas').click();
+  await expect(create.getByLabel('Spread pb')).toHaveValue(String(defaults.simulation.spread_bps));
+  await create.getByRole('button', { name: 'Ayuda: Spread pb' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Puntos básicos' })).toBeVisible();
+  // The open state is remembered in this browser.
+  await page.reload();
+  await page.getByText('Crear cartera simulada').click();
+  await expect(create.getByLabel('Spread pb')).toBeVisible();
+});

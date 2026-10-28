@@ -1,7 +1,13 @@
 import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { cancelJob, createJob, getBacktestPreview, getJob } from '@/shared/api/client';
-import type { BacktestOptions, BacktestPreview } from '@/shared/api/generated/types.gen';
+import type {
+  BacktestDefaults,
+  BacktestOptions,
+  BacktestPreview,
+} from '@/shared/api/generated/types.gen';
+import { useFormDefaults } from '@/shared/api/use-form-defaults';
+import { AdvancedOptions, HelpField } from '@/shared/ui/advanced-options';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
@@ -33,20 +39,35 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Waits for the backend's defaults (#190), the panel's initial state. */
 export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean }) {
+  const defaults = useFormDefaults();
+  if (defaults.isPending) return <LoadingState />;
+  if (defaults.isError)
+    return <ErrorState error={defaults.error} retry={() => void defaults.refetch()} />;
+  return <Panel researchAllowed={researchAllowed} defaults={defaults.data.backtest} />;
+}
+
+function Panel({
+  researchAllowed,
+  defaults,
+}: {
+  researchAllowed: boolean;
+  defaults: BacktestDefaults;
+}) {
   const [engine, setEngine] = useState<Engine>('backtest_v1');
-  const [start, setStart] = useState('2019-01-02');
-  const [end, setEnd] = useState('2020-01-02');
-  const [months, setMonths] = useState<1 | 3 | 6 | 12>(3);
-  const [topN, setTopN] = useState(10);
-  const [hurdle, setHurdle] = useState(0);
-  const [costBps, setCostBps] = useState(10);
-  const [universe, setUniverse] = useState<50 | 100 | 500>(50);
-  const [mode, setMode] = useState<'fast_dev' | 'validation'>('fast_dev');
-  const [sample, setSample] = useState<50 | 100 | 200>(200);
-  const [capital, setCapital] = useState(100000);
-  const [commission, setCommission] = useState(1);
-  const [spread, setSpread] = useState(10);
+  const [start, setStart] = useState(defaults.start);
+  const [end, setEnd] = useState(defaults.end);
+  const [months, setMonths] = useState<1 | 3 | 6 | 12>(defaults.months);
+  const [topN, setTopN] = useState(defaults.top_n_v1);
+  const [hurdle, setHurdle] = useState(defaults.rotation_hurdle_points);
+  const [costBps, setCostBps] = useState(defaults.cost_bps);
+  const [universe, setUniverse] = useState<50 | 100 | 500>(defaults.universe_size);
+  const [mode, setMode] = useState<'fast_dev' | 'validation'>(defaults.mode);
+  const [sample, setSample] = useState<50 | 100 | 200>(defaults.max_symbols);
+  const [capital, setCapital] = useState(defaults.initial_capital);
+  const [commission, setCommission] = useState(defaults.commission_usd);
+  const [spread, setSpread] = useState(defaults.spread_bps);
   const [jobId, setJobId] = useState<string | null>(null);
 
   const options = (): BacktestOptions =>
@@ -95,7 +116,7 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
 
   function selectEngine(next: Engine) {
     setEngine(next);
-    setTopN(next === 'backtest_v1' ? 10 : 20);
+    setTopN(next === 'backtest_v1' ? defaults.top_n_v1 : defaults.top_n_v2);
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -191,110 +212,162 @@ export function BacktestPanel({ researchAllowed }: { researchAllowed: boolean })
             required
           />
         </Field>
-        <Field label="Umbral de rotación (puntos Composite)">
-          <Input
-            className="mt-1.5"
-            type="number"
-            min={0}
-            max={100}
-            step={1}
-            value={hurdle}
-            onChange={(event) => setHurdle(Number(event.target.value))}
-            required
-          />
-        </Field>
-        {engine === 'backtest_v1' ? (
-          <>
-            <Field label="Coste por lado (pb)">
+        <AdvancedOptions id="backtest" className="sm:col-span-2 lg:col-span-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <HelpField
+              id="backtest-hurdle"
+              label="Umbral de rotación (puntos Composite)"
+              help="Puntos de score que debe superar una candidata nueva para sustituir a una posición. Más alto: menos rotación y menos costes."
+              className="text-xs font-medium"
+            >
               <Input
-                className="mt-1.5"
-                type="number"
-                min={0}
-                max={500}
-                step={0.5}
-                value={costBps}
-                onChange={(event) => setCostBps(Number(event.target.value))}
-                required
-              />
-            </Field>
-            <Field label="Universo">
-              <NativeSelect
-                className={selectClass}
-                value={universe}
-                onChange={(event) => setUniverse(Number(event.target.value) as 50 | 100 | 500)}
-              >
-                {[50, 100, 500].map((value) => (
-                  <option key={value} value={value}>
-                    {value} empresas
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </>
-        ) : (
-          <>
-            <Field label="Modo">
-              <NativeSelect
-                className={selectClass}
-                value={mode}
-                onChange={(event) => setMode(event.target.value as 'fast_dev' | 'validation')}
-              >
-                <option value="fast_dev">Muestra rápida</option>
-                <option value="validation">Universo completo</option>
-              </NativeSelect>
-            </Field>
-            {mode === 'fast_dev' && (
-              <Field label="Empresas de muestra">
-                <NativeSelect
-                  className={selectClass}
-                  value={sample}
-                  onChange={(event) => setSample(Number(event.target.value) as 50 | 100 | 200)}
-                >
-                  {[50, 100, 200].map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </Field>
-            )}
-            <Field label="Capital inicial ($)">
-              <Input
-                className="mt-1.5"
-                type="number"
-                min={1000}
-                step={1000}
-                value={capital}
-                onChange={(event) => setCapital(Number(event.target.value))}
-                required
-              />
-            </Field>
-            <Field label="Comisión fija por operación ($)">
-              <Input
+                id="backtest-hurdle"
                 className="mt-1.5"
                 type="number"
                 min={0}
                 max={100}
-                step={0.5}
-                value={commission}
-                onChange={(event) => setCommission(Number(event.target.value))}
+                step={1}
+                value={hurdle}
+                onChange={(event) => setHurdle(Number(event.target.value))}
                 required
               />
-            </Field>
-            <Field label="Spread (pb)">
-              <Input
-                className="mt-1.5"
-                type="number"
-                min={0}
-                max={500}
-                step={0.5}
-                value={spread}
-                onChange={(event) => setSpread(Number(event.target.value))}
-                required
-              />
-            </Field>
-          </>
-        )}
+            </HelpField>
+            {engine === 'backtest_v1' ? (
+              <>
+                <HelpField
+                  id="backtest-cost"
+                  label="Coste por lado (pb)"
+                  help="Puntos básicos (1 pb = 0,01 %) cobrados al comprar y otra vez al vender cada posición nueva."
+                  className="text-xs font-medium"
+                >
+                  <Input
+                    id="backtest-cost"
+                    className="mt-1.5"
+                    type="number"
+                    min={0}
+                    max={500}
+                    step={0.5}
+                    value={costBps}
+                    onChange={(event) => setCostBps(Number(event.target.value))}
+                    required
+                  />
+                </HelpField>
+                <HelpField
+                  id="backtest-universe"
+                  label="Universo"
+                  help="Empresas reconstruidas en cada fecha. 50 o 100 son pruebas parciales; 500 es el índice completo."
+                  className="text-xs font-medium"
+                >
+                  <NativeSelect
+                    id="backtest-universe"
+                    className={selectClass}
+                    value={universe}
+                    onChange={(event) => setUniverse(Number(event.target.value) as 50 | 100 | 500)}
+                  >
+                    {[50, 100, 500].map((value) => (
+                      <option key={value} value={value}>
+                        {value} empresas
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </HelpField>
+              </>
+            ) : (
+              <>
+                <HelpField
+                  id="backtest-mode"
+                  label="Modo"
+                  help="Muestra rápida para iterar; universo completo para un resultado citable (lento)."
+                  className="text-xs font-medium"
+                >
+                  <NativeSelect
+                    id="backtest-mode"
+                    className={selectClass}
+                    value={mode}
+                    onChange={(event) => setMode(event.target.value as 'fast_dev' | 'validation')}
+                  >
+                    <option value="fast_dev">Muestra rápida</option>
+                    <option value="validation">Universo completo</option>
+                  </NativeSelect>
+                </HelpField>
+                {mode === 'fast_dev' && (
+                  <HelpField
+                    id="backtest-sample"
+                    label="Empresas de muestra"
+                    help="Empresas de la muestra rápida. Más empresas: más fiel y más lento."
+                    className="text-xs font-medium"
+                  >
+                    <NativeSelect
+                      id="backtest-sample"
+                      className={selectClass}
+                      value={sample}
+                      onChange={(event) => setSample(Number(event.target.value) as 50 | 100 | 200)}
+                    >
+                      {[50, 100, 200].map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </HelpField>
+                )}
+                <HelpField
+                  id="backtest-capital"
+                  label="Capital inicial ($)"
+                  help="Dólares al empezar. Con comisión fija, un capital pequeño paga más en proporción."
+                  className="text-xs font-medium"
+                >
+                  <Input
+                    id="backtest-capital"
+                    className="mt-1.5"
+                    type="number"
+                    min={1000}
+                    step={1000}
+                    value={capital}
+                    onChange={(event) => setCapital(Number(event.target.value))}
+                    required
+                  />
+                </HelpField>
+                <HelpField
+                  id="backtest-commission"
+                  label="Comisión fija por operación ($)"
+                  help="Dólares por cada compra o venta, como cobra el bróker calibrado."
+                  className="text-xs font-medium"
+                >
+                  <Input
+                    id="backtest-commission"
+                    className="mt-1.5"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={commission}
+                    onChange={(event) => setCommission(Number(event.target.value))}
+                    required
+                  />
+                </HelpField>
+                <HelpField
+                  id="backtest-spread"
+                  label="Spread (pb)"
+                  help="Puntos básicos (1 pb = 0,01 %) que empeoran cada precio de compra y venta."
+                  className="text-xs font-medium"
+                >
+                  <Input
+                    id="backtest-spread"
+                    className="mt-1.5"
+                    type="number"
+                    min={0}
+                    max={500}
+                    step={0.5}
+                    value={spread}
+                    onChange={(event) => setSpread(Number(event.target.value))}
+                    required
+                  />
+                </HelpField>
+              </>
+            )}
+          </div>
+        </AdvancedOptions>
         <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
           Fija el umbral de rotación y los costes antes de mirar el resultado. El universo completo
           puede tardar 20-30 minutos en rangos de varios años. Los datos deben estar preparados; el

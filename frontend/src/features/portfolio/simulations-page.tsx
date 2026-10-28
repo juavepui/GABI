@@ -18,6 +18,8 @@ import {
   undoSimulationTrade,
 } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
+import { AdvancedOptions, HelpField } from '@/shared/ui/advanced-options';
+import { useFormDefaults } from '@/shared/api/use-form-defaults';
 import { Input } from '@/shared/ui/input';
 import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { Badge } from '@/shared/ui/badge';
@@ -120,6 +122,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
     queryFn: ({ signal }) => getJobResult(jobId!, signal),
     enabled: job.data?.status === 'succeeded',
   });
+  const trade = useFormDefaults().data?.simulation_trade;
   const add = useMutation({
     mutationFn: (body: SimulationTradeCreate) => createSimulationTrade(id, body),
     onSuccess: () => {
@@ -174,94 +177,166 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
         </p>
       </section>
       <SimulationPrices portfolioId={id} hasTrades={(trades.data?.items.length ?? 0) > 0} />
-      <form onSubmit={submit} className="rounded-xl border bg-card p-5">
-        <h2 className="text-lg font-semibold">Registrar operación simulada</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Se usa el cierre de la primera sesión. Si faltan precios o cambio en caché, se rechaza sin
-          guardar. Actualiza sus precios en «Precios públicos», más arriba.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <label className="text-sm">
-            Símbolo
-            <Input className="mt-1" name="symbol" required maxLength={20} />
-          </label>
-          <label className="text-sm">
-            Instrumento
-            <NativeSelect name="asset_type" className="mt-1 w-full">
-              <option value="STOCK">Acción</option>
-              <option value="ETF">ETF</option>
-            </NativeSelect>
-          </label>
-          <label className="text-sm">
-            Lado
-            <NativeSelect name="side" className="mt-1 w-full">
-              <option value="BUY">Comprar</option>
-              <option value="SELL">Vender</option>
-            </NativeSelect>
-          </label>
-          <label className="text-sm">
-            Fecha
-            <Input className="mt-1" name="requested_date" type="date" required />
-          </label>
-          <label className="text-sm">
-            Importe cotizado
-            <Input className="mt-1" name="notional" type="number" min={0.01} step="0.01" required />
-          </label>
-          <label className="text-sm">
-            Mercado
-            <NativeSelect name="market" className="mt-1 w-full">
-              {['XNYS', 'XETR', 'XLON', 'XMAD', 'XPAR'].map((market) => (
-                <option key={market}>{market}</option>
-              ))}
-            </NativeSelect>
-          </label>
-          <label className="text-sm">
-            Divisa cotizada
-            <NativeSelect name="quote_currency" className="mt-1 w-full">
-              <option>USD</option>
-              <option>EUR</option>
-              <option>GBP</option>
-            </NativeSelect>
-          </label>
-          <label className="text-sm">
-            Cambio manual (opcional)
-            <Input className="mt-1" name="fx_rate" type="number" min={0.000001} step="0.000001" />
-          </label>
-          <label className="text-sm">
-            Comisión (opcional)
-            <Input className="mt-1" name="commission" type="number" min={0} step="0.01" />
-          </label>
-          <label className="text-sm">
-            Spread pb (opcional)
-            <Input className="mt-1" name="spread_bps" type="number" min={0} step="0.1" />
-          </label>
-          <label className="text-sm">
-            Coste cambio pb
-            <Input
-              className="mt-1"
-              name="fx_fee_bps"
-              type="number"
-              min={0}
-              step="0.1"
-              defaultValue={0}
-              required
-            />
-          </label>
-        </div>
-        <Button className="mt-4" type="submit" disabled={add.isPending}>
-          Registrar operación
-        </Button>
-        {add.isError && (
-          <p role="alert" className="mt-2 text-sm text-destructive">
-            {add.error.message}
+      {!trade && <LoadingState />}
+      {trade && (
+        <form onSubmit={submit} className="rounded-xl border bg-card p-5">
+          <h2 className="text-lg font-semibold">Registrar operación simulada</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Se usa el cierre de la primera sesión. Si faltan precios o cambio en caché, se rechaza
+            sin guardar. Actualiza sus precios en «Precios públicos», más arriba.
           </p>
-        )}
-        {add.isSuccess && (
-          <p role="status" className="mt-2 text-sm">
-            Operación registrada.
-          </p>
-        )}
-      </form>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <label className="text-sm">
+              Símbolo
+              <Input className="mt-1" name="symbol" required maxLength={20} />
+            </label>
+            <label className="text-sm">
+              Lado
+              <NativeSelect name="side" className="mt-1 w-full" defaultValue={trade.side}>
+                <option value="BUY">Comprar</option>
+                <option value="SELL">Vender</option>
+              </NativeSelect>
+            </label>
+            <label className="text-sm">
+              Fecha
+              <Input className="mt-1" name="requested_date" type="date" required />
+            </label>
+            <label className="text-sm">
+              Importe cotizado
+              <Input
+                className="mt-1"
+                name="notional"
+                type="number"
+                min={0.01}
+                step="0.01"
+                required
+              />
+            </label>
+          </div>
+          <AdvancedOptions id="operacion-simulada" className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <HelpField
+                id="trade-asset"
+                label="Instrumento"
+                help="Acción o ETF: decide qué comisión de la cartera se aplica."
+              >
+                <NativeSelect
+                  id="trade-asset"
+                  name="asset_type"
+                  className="mt-1 w-full"
+                  defaultValue={trade.asset_type}
+                >
+                  <option value="STOCK">Acción</option>
+                  <option value="ETF">ETF</option>
+                </NativeSelect>
+              </HelpField>
+              <HelpField
+                id="trade-market"
+                label="Mercado"
+                help="Bolsa (código ISO 10383) cuyo calendario fija la primera sesión de cierre."
+              >
+                <NativeSelect
+                  id="trade-market"
+                  name="market"
+                  className="mt-1 w-full"
+                  defaultValue={trade.market}
+                >
+                  {['XNYS', 'XETR', 'XLON', 'XMAD', 'XPAR'].map((market) => (
+                    <option key={market}>{market}</option>
+                  ))}
+                </NativeSelect>
+              </HelpField>
+              <HelpField
+                id="trade-currency"
+                label="Divisa cotizada"
+                help="Divisa del importe y del precio. Si no es la base de la cartera, se convierte."
+              >
+                <NativeSelect
+                  id="trade-currency"
+                  name="quote_currency"
+                  className="mt-1 w-full"
+                  defaultValue={trade.quote_currency}
+                >
+                  <option>USD</option>
+                  <option>EUR</option>
+                  <option>GBP</option>
+                </NativeSelect>
+              </HelpField>
+              <HelpField
+                id="trade-fx"
+                label="Cambio manual (opcional)"
+                help="Unidades de la divisa base por unidad cotizada. Vacío: el cambio de la caché de ese día."
+              >
+                <Input
+                  id="trade-fx"
+                  className="mt-1"
+                  name="fx_rate"
+                  type="number"
+                  min={0.000001}
+                  step="0.000001"
+                />
+              </HelpField>
+              <HelpField
+                id="trade-commission"
+                label="Comisión (opcional)"
+                help="En la divisa cotizada. Vacío: la comisión de la cartera para ese instrumento."
+              >
+                <Input
+                  id="trade-commission"
+                  className="mt-1"
+                  name="commission"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                />
+              </HelpField>
+              <HelpField
+                id="trade-spread"
+                label="Spread pb (opcional)"
+                help="Puntos básicos (1 pb = 0,01 %) que empeoran el precio. Vacío: el de la cartera."
+              >
+                <Input
+                  id="trade-spread"
+                  className="mt-1"
+                  name="spread_bps"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                />
+              </HelpField>
+              <HelpField
+                id="trade-fx-fee"
+                label="Coste cambio pb"
+                help="Puntos básicos cobrados al convertir divisa; 0 si no hay conversión."
+              >
+                <Input
+                  id="trade-fx-fee"
+                  className="mt-1"
+                  name="fx_fee_bps"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  defaultValue={trade.fx_fee_bps}
+                  required
+                />
+              </HelpField>
+            </div>
+          </AdvancedOptions>
+          <Button className="mt-4" type="submit" disabled={add.isPending}>
+            Registrar operación
+          </Button>
+          {add.isError && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {add.error.message}
+            </p>
+          )}
+          {add.isSuccess && (
+            <p role="status" className="mt-2 text-sm">
+              Operación registrada.
+            </p>
+          )}
+        </form>
+      )}
       <section className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Operaciones</h2>
         {trades.isPending && <LoadingState />}
@@ -372,6 +447,7 @@ export function SimulationsPage() {
     queryFn: ({ signal }) => getSimulations(signal),
   });
   const [active, setActive] = useState<number | null>(null);
+  const simulation = useFormDefaults().data?.simulation;
   const current =
     portfolios.data?.items.find((item) => item.id === active) ?? portfolios.data?.items[0];
   const create = useMutation({
@@ -407,75 +483,98 @@ export function SimulationsPage() {
       />
       <details className="rounded-xl border bg-card p-5">
         <summary className="cursor-pointer font-semibold">Crear cartera simulada</summary>
-        <form onSubmit={submit} className="mt-5 grid gap-3 sm:grid-cols-3">
-          <label className="text-sm">
-            Nombre
-            <Input name="name" className="mt-1" maxLength={80} required />
-          </label>
-          <label className="text-sm">
-            Capital inicial
-            <Input
-              name="initial_cash"
-              className="mt-1"
-              type="number"
-              min={1}
-              step="0.01"
-              defaultValue={10000}
-              required
-            />
-          </label>
-          <label className="text-sm">
-            Divisa base
-            <NativeSelect name="base_currency" className="mt-1 w-full">
-              <option>USD</option>
-              <option>EUR</option>
-            </NativeSelect>
-          </label>
-          <label className="text-sm">
-            Comisión acción
-            <Input
-              name="stock_commission"
-              className="mt-1"
-              type="number"
-              min={0}
-              step="0.01"
-              defaultValue={1}
-              required
-            />
-          </label>
-          <label className="text-sm">
-            Comisión ETF
-            <Input
-              name="etf_commission"
-              className="mt-1"
-              type="number"
-              min={0}
-              step="0.01"
-              defaultValue={0}
-              required
-            />
-          </label>
-          <label className="text-sm">
-            Spread pb
-            <Input
-              name="spread_bps"
-              className="mt-1"
-              type="number"
-              min={0}
-              step="0.1"
-              defaultValue={10}
-              required
-            />
-          </label>
-          <Button className="w-fit" type="submit" disabled={create.isPending}>
-            Crear cartera
-          </Button>
-          {create.isError && (
-            <p role="alert" className="text-sm text-destructive">
-              {create.error.message}
-            </p>
-          )}
-        </form>
+        {!simulation && <LoadingState />}
+        {simulation && (
+          <form onSubmit={submit} className="mt-5 grid gap-3 sm:grid-cols-3">
+            <label className="text-sm">
+              Nombre
+              <Input name="name" className="mt-1" maxLength={80} required />
+            </label>
+            <label className="text-sm">
+              Capital inicial
+              <Input
+                name="initial_cash"
+                className="mt-1"
+                type="number"
+                min={1}
+                step="0.01"
+                defaultValue={simulation.initial_cash}
+                required
+              />
+            </label>
+            <label className="text-sm">
+              Divisa base
+              <NativeSelect
+                name="base_currency"
+                className="mt-1 w-full"
+                defaultValue={simulation.base_currency}
+              >
+                <option>USD</option>
+                <option>EUR</option>
+              </NativeSelect>
+            </label>
+            <AdvancedOptions id="crear-simulada" className="sm:col-span-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <HelpField
+                  id="sim-stock-commission"
+                  label="Comisión acción"
+                  help="Importe fijo por operación con acciones, en la divisa cotizada."
+                >
+                  <Input
+                    id="sim-stock-commission"
+                    name="stock_commission"
+                    className="mt-1"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    defaultValue={simulation.stock_commission}
+                    required
+                  />
+                </HelpField>
+                <HelpField
+                  id="sim-etf-commission"
+                  label="Comisión ETF"
+                  help="Importe fijo por operación con ETF, en la divisa cotizada."
+                >
+                  <Input
+                    id="sim-etf-commission"
+                    name="etf_commission"
+                    className="mt-1"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    defaultValue={simulation.etf_commission}
+                    required
+                  />
+                </HelpField>
+                <HelpField
+                  id="sim-spread"
+                  label="Spread pb"
+                  help="Puntos básicos (1 pb = 0,01 %) que empeoran cada precio de compra y venta."
+                >
+                  <Input
+                    id="sim-spread"
+                    name="spread_bps"
+                    className="mt-1"
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    defaultValue={simulation.spread_bps}
+                    required
+                  />
+                </HelpField>
+              </div>
+            </AdvancedOptions>
+            <Button className="w-fit" type="submit" disabled={create.isPending}>
+              Crear cartera
+            </Button>
+            {create.isError && (
+              <p role="alert" className="text-sm text-destructive">
+                {create.error.message}
+              </p>
+            )}
+          </form>
+        )}
       </details>
       {portfolios.isPending && <LoadingState />}
       {portfolios.isError && (
