@@ -19,6 +19,23 @@ class ChecklistAlternative(BaseModel):
     explanation: str
 
 
+class ChecklistRate(BaseModel):
+    rate: float | None  # fraction meeting the threshold; None when the sector has too few values
+    evaluated: int
+
+
+class ChecklistPassRate(BaseModel):
+    """How many S&P 500 issuers, and of the company's sector, meet this threshold (#171); never a verdict."""
+    universe: ChecklistRate
+    sector: ChecklistRate | None
+
+
+class ChecklistReference(BaseModel):
+    as_of: str
+    issuers: int
+    sector: str | None  # the universe (GICS) sector the sector rate refers to
+
+
 class ChecklistCriterion(BaseModel):
     key: str
     block: str
@@ -39,6 +56,7 @@ class ChecklistCriterion(BaseModel):
     explanation: str
     caveat: Literal["share_classes"] | None
     detail: dict[str, Any]
+    pass_rate: ChecklistPassRate | None = None
 
 
 class ChecklistAlarm(BaseModel):
@@ -143,6 +161,7 @@ class CompanyChecklistResponse(BaseModel):
     dcf: ChecklistDcf
     qualitative: list[ChecklistQualitative]
     multiples_history: ChecklistMultiplesHistory
+    pass_rate_reference: ChecklistReference | None
 
 
 class ChecklistThreshold(BaseModel):
@@ -158,12 +177,26 @@ class ChecklistThreshold(BaseModel):
     explanation: str
 
 
+class ChecklistPreset(BaseModel):
+    key: Literal["excel", "large_cap"]
+    label: str
+    description: str
+    version: int
+    values: dict[str, float]
+
+
 class ChecklistThresholds(BaseModel):
     version: int
     values: dict[str, float]
     edited: list[str]
     warning: str | None
     catalog: list[ChecklistThreshold]
+    presets: list[ChecklistPreset]
+    preset: Literal["excel", "large_cap"] | None  # the preset the current thresholds match, if any
+
+
+class ChecklistPresetRequest(BaseModel):
+    key: Literal["excel", "large_cap"]
 
 
 class ChecklistThresholdsRequest(BaseModel):

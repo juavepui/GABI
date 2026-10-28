@@ -601,3 +601,33 @@ test('Ranking: columnas recordadas, filtros nuevos y CSV de la vista filtrada (#
   await expect(page).toHaveURL(/exclude_sectors=Financials/);
   await expect(table.locator('tbody')).not.toContainText('BRK-A');
 });
+
+test('el checklist muestra cuántas empresas cumplen cada umbral y aplica un preset (#171)', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const checklist = page.getByRole('table', { name: 'Criterios del checklist' });
+  const insiders = checklist.getByRole('row', { name: /^% en manos de directivos/ });
+  await expect(insiders).toContainText('≥ 10 %');
+  await expect(insiders).toContainText(
+    /Lo cumple el \d+ % del S&P 500 · \d+ % de Information Technology/,
+  );
+  const before = await insiders.getByText(/Lo cumple el/).innerText();
+  await page.getByText('Editar umbrales').click();
+  const presets = page.getByRole('group', { name: 'Presets' });
+  await expect(presets.getByRole('button', { name: 'Excel original' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await presets.getByRole('button', { name: 'Gran empresa S&P 500' }).click();
+  await expect(presets.getByRole('button', { name: 'Gran empresa S&P 500' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(insiders).toContainText('≥ 1 %');
+  // A lower threshold is met by more of the index: the rate follows the threshold in use.
+  await expect(insiders.getByText(/Lo cumple el/)).not.toHaveText(before);
+  await expect(page.getByLabel('Umbral: Cobertura de intereses')).toHaveValue('8');
+  await presets.getByRole('button', { name: 'Excel original' }).click();
+  await expect(insiders).toContainText('≥ 10 %');
+});

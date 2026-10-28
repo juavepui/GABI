@@ -109,6 +109,7 @@ import type {
   CompanyChecklistResponse,
   ChecklistSectorMultiples,
   ChecklistThresholds,
+  ChecklistPresetRequest,
   ChecklistThresholdsRequest,
 } from './generated/types.gen';
 
@@ -461,6 +462,15 @@ export function saveChecklistThresholds(
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+  });
+}
+export function applyChecklistPreset(
+  key: ChecklistPresetRequest['key'],
+): Promise<ChecklistThresholds> {
+  return request('/api/v1/checklist/thresholds/preset', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
   });
 }
 export function resetChecklistThresholds(): Promise<ChecklistThresholds> {

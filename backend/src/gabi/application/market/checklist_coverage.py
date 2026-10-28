@@ -8,6 +8,8 @@ from collections import Counter
 from collections.abc import Callable
 from typing import Protocol
 
+from gabi.domain.market import checklist_reference
+
 EVALUATED = frozenset({"pass", "fail", "info"})
 # Reasons meaning the annual revenue or CAPEX of the fiscal anchor is not in the stored facts.
 REVENUE_MISSING = frozenset({"no_revenue"})
@@ -34,6 +36,8 @@ def checklist_coverage(checklist: ChecklistReader, universe: list[tuple[str, str
     without_capex: list[dict] = []
     evaluated_counts: dict[str, int] = {}
     as_of = None
+    # Values with a verdict, per criterion and sector, for the pass-rate reference (#171).
+    values: dict[str, dict[str, dict]] = {}
     for index, (symbol, sector) in enumerate(universe, start=1):
         body = checklist.company(symbol)
         as_of = body["as_of"]
@@ -47,6 +51,12 @@ def checklist_coverage(checklist: ChecklistReader, universe: list[tuple[str, str
             applicable[key] += 1
             counts = by_sector.setdefault(key, {}).setdefault(sector, Counter())
             counts["applicable"] += 1
+            if item["verdict"] in {"pass", "fail"}:
+                group = values.setdefault(key, {}).setdefault(sector, {"values": [], "always_pass": 0})
+                if item["value"] is None:
+                    group["always_pass"] += 1  # interest coverage without debt passes with no ratio
+                else:
+                    group["values"].append(float(item["value"]))
             if item["verdict"] in EVALUATED:
                 evaluated[key] += 1
                 counts["evaluated"] += 1
@@ -61,6 +71,8 @@ def checklist_coverage(checklist: ChecklistReader, universe: list[tuple[str, str
                 without_capex.append(issuer | {"reason": criteria["fcf"]["reason"]})
         if progress:
             progress(index, len(universe))
+    reference = checklist_reference.reference_from_values(as_of or "", len(universe), values)
+    rates = {preset["key"]: _rates(reference, preset["values"], sectors) for preset in checklist_reference.presets()}
     return {
         "as_of": as_of,
         "issuers": len(universe),
@@ -78,4 +90,16 @@ def checklist_coverage(checklist: ChecklistReader, universe: list[tuple[str, str
         "without_revenue": without_revenue,
         "without_capex": without_capex,
         "evaluated_per_issuer": evaluated_counts,
+        "pass_rates": rates,
+        "reference": reference,
     }
+
+
+def _rates(reference: dict, thresholds: dict[str, float], sectors: Counter) -> dict:
+    """Pass rate of every threshold criterion in the universe and in each sector, for one threshold set."""
+    universe = checklist_reference.pass_rates(reference, thresholds, None)
+    by_sector = {sector: checklist_reference.pass_rates(reference, thresholds, sector) for sector in sorted(sectors)}
+    return {key: {"threshold": thresholds[key], **rate["universe"],
+                  "by_sector": {sector: rates[key]["sector"] for sector, rates in by_sector.items()
+                                if rates.get(key, {}).get("sector")}}
+            for key, rate in universe.items()}

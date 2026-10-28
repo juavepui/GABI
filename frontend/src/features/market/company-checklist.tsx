@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ListChecks } from 'lucide-react';
 import {
+  applyChecklistPreset,
   getChecklistThresholds,
   getCompanyChecklist,
   getCompanyChecklistSector,
@@ -100,7 +101,34 @@ function CriterionHint({ item }: { item: ChecklistCriterion }) {
   );
 }
 
-type Sources = Pick<CompanyChecklistResponse, 'fiscal_year_end' | 'sources'>;
+type Sources = Pick<
+  CompanyChecklistResponse,
+  'fiscal_year_end' | 'sources' | 'pass_rate_reference'
+>;
+
+/** How much of the S&P 500, and of the sector, meets the threshold that applies now (#171). */
+function PassRate({ item, data }: { item: ChecklistCriterion; data: Sources }) {
+  const rate = item.pass_rate;
+  const reference = data.pass_rate_reference;
+  if (!rate || !reference || rate.universe.rate == null) return null;
+  const sector =
+    rate.sector?.rate != null
+      ? ` · ${formatPercent(rate.sector.rate, { digits: 0 })} de ${reference.sector ?? 'su sector'}`
+      : '';
+  return (
+    <span className="block text-muted-foreground">
+      <Hint
+        content={`Emisores del S&P 500 con este criterio evaluado en la auditoría del ${dateLabel(
+          reference.as_of,
+        )} (${rate.universe.evaluated} de ${reference.issuers}${
+          rate.sector ? `; ${rate.sector.evaluated} de su sector` : ''
+        }) que cumplen el umbral actual. Es contexto: no cambia el ✔/✘ de esta empresa.`}
+      >
+        Lo cumple el {formatPercent(rate.universe.rate, { digits: 0 })} del S&P 500{sector}
+      </Hint>
+    </span>
+  );
+}
 
 /** Source and period of a criterion value, as the backend declares them. */
 function criterionSource(item: ChecklistCriterion, data: Sources): string {
@@ -173,7 +201,10 @@ function Criteria({ criteria, data }: { criteria: ChecklistCriterion[]; data: So
                     </span>
                     <Alternative item={item} />
                   </td>
-                  <td className="py-1.5 pr-3 tabular-nums">{thresholdText(item)}</td>
+                  <td className="py-1.5 pr-3 tabular-nums">
+                    {thresholdText(item)}
+                    <PassRate item={item} data={data} />
+                  </td>
                   <td className="py-1.5 pr-3">
                     <Badge variant={VERDICTS[item.verdict].variant}>
                       {VERDICTS[item.verdict].label}
@@ -402,6 +433,7 @@ function ThresholdEditor() {
   };
   const save = useMutation({ mutationFn: saveChecklistThresholds, onSuccess: refresh });
   const reset = useMutation({ mutationFn: resetChecklistThresholds, onSuccess: refresh });
+  const preset = useMutation({ mutationFn: applyChecklistPreset, onSuccess: refresh });
   if (thresholds.isPending) return <LoadingState />;
   if (thresholds.isError)
     return <ErrorState error={thresholds.error} retry={() => void thresholds.refetch()} />;
@@ -416,7 +448,7 @@ function ThresholdEditor() {
     }
     save.mutate({ values });
   };
-  const error = save.error ?? reset.error;
+  const error = save.error ?? reset.error ?? preset.error;
   return (
     <form
       className="space-y-3"
@@ -429,6 +461,30 @@ function ThresholdEditor() {
         Por defecto, los umbrales del Excel. Los porcentajes se escriben en %. Solo cambian el ✔/✘
         del checklist: no afectan a los valores, al Composite ni al ranking.
       </p>
+      <fieldset className="space-y-2 rounded-md border p-3 text-xs">
+        <legend className="px-1 font-medium">Presets</legend>
+        <p className="text-muted-foreground">
+          {data.preset
+            ? `Umbrales actuales: ${data.presets.find((item) => item.key === data.preset)?.label}.`
+            : 'Umbrales actuales: editados a mano.'}{' '}
+          Aplicar un preset sustituye todos los umbrales; después se pueden seguir editando.
+        </p>
+        {data.presets.map((item) => (
+          <div key={item.key} className="flex flex-wrap items-start gap-3">
+            <Button
+              type="button"
+              size="sm"
+              variant={data.preset === item.key ? 'default' : 'outline'}
+              aria-pressed={data.preset === item.key}
+              disabled={preset.isPending}
+              onClick={() => preset.mutate(item.key)}
+            >
+              {item.label}
+            </Button>
+            <span className="min-w-56 flex-1 text-muted-foreground">{item.description}</span>
+          </div>
+        ))}
+      </fieldset>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {data.catalog.map((item) => (
           <label key={item.key} className="space-y-1 text-xs">

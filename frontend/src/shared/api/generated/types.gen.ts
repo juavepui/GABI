@@ -1425,6 +1425,7 @@ export type ChecklistCriterion = {
      * Label
      */
     label: string;
+    pass_rate?: ChecklistPassRate | null;
     /**
      * Period
      */
@@ -1594,6 +1595,54 @@ export type ChecklistMultiplesYear = {
 };
 
 /**
+ * ChecklistPassRate
+ *
+ * How many S&P 500 issuers, and of the company's sector, meet this threshold (#171); never a verdict.
+ */
+export type ChecklistPassRate = {
+    sector: ChecklistRate | null;
+    universe: ChecklistRate;
+};
+
+/**
+ * ChecklistPreset
+ */
+export type ChecklistPreset = {
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Key
+     */
+    key: 'excel' | 'large_cap';
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number;
+    };
+    /**
+     * Version
+     */
+    version: number;
+};
+
+/**
+ * ChecklistPresetRequest
+ */
+export type ChecklistPresetRequest = {
+    /**
+     * Key
+     */
+    key: 'excel' | 'large_cap';
+};
+
+/**
  * ChecklistQualitative
  */
 export type ChecklistQualitative = {
@@ -1609,6 +1658,38 @@ export type ChecklistQualitative = {
      * Label
      */
     label: string;
+};
+
+/**
+ * ChecklistRate
+ */
+export type ChecklistRate = {
+    /**
+     * Evaluated
+     */
+    evaluated: number;
+    /**
+     * Rate
+     */
+    rate: number | null;
+};
+
+/**
+ * ChecklistReference
+ */
+export type ChecklistReference = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Issuers
+     */
+    issuers: number;
+    /**
+     * Sector
+     */
+    sector: string | null;
 };
 
 /**
@@ -1774,6 +1855,14 @@ export type ChecklistThresholds = {
      */
     edited: Array<string>;
     /**
+     * Preset
+     */
+    preset: 'excel' | 'large_cap' | null;
+    /**
+     * Presets
+     */
+    presets: Array<ChecklistPreset>;
+    /**
      * Values
      */
     values: {
@@ -1827,6 +1916,7 @@ export type CompanyChecklistResponse = {
      */
     fiscal_year_end: string | null;
     multiples_history: ChecklistMultiplesHistory;
+    pass_rate_reference: ChecklistReference | null;
     /**
      * Qualitative
      */
@@ -9568,6 +9658,51 @@ export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponses = {
 };
 
 export type SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponse = SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponses[keyof SaveChecklistThresholdsApiV1ChecklistThresholdsPostResponses];
+
+export type ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostData = {
+    body: ChecklistPresetRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/checklist/thresholds/preset';
+};
+
+export type ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostError = ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostErrors[keyof ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostErrors];
+
+export type ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChecklistThresholds;
+};
+
+export type ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostResponse = ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostResponses[keyof ApplyChecklistPresetApiV1ChecklistThresholdsPresetPostResponses];
 
 export type ResetChecklistThresholdsApiV1ChecklistThresholdsResetPostData = {
     body?: never;
