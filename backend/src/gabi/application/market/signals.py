@@ -49,7 +49,7 @@ class SignalMonitor:
         name = name.strip()
         if not name or len(name) > 80 or not 1 <= top_n <= 30:
             raise QueryError("invalid_snapshot", "Indica nombre y tamaño de snapshot válidos.", 422)
-        snapshot = self.market.ranking(dict(self.policy.frozen_weights), self.today())
+        snapshot = self.market.ranking(dict(self.policy.weights), self.today())
         if snapshot.table.empty or snapshot.table["composite_score"].notna().sum() == 0:
             raise QueryError("no_candidates", "No hay candidatas con score para guardar.", 409)
         table = target_portfolio(snapshot.table, top_n) if target else snapshot.table
@@ -64,7 +64,7 @@ class SignalMonitor:
         previous = self.repository.snapshot(snapshot_id)
         if previous.empty:
             raise QueryError("snapshot_not_found", "No existe un snapshot con candidatas.", 404)
-        current = self.market.ranking(dict(self.policy.frozen_weights), self.today()).table
+        current = self.market.ranking(dict(self.policy.weights), self.today()).table
         current = current[current["composite_score"].notna()].copy()
         current["rank"] = range(1, len(current) + 1)
         thresholds = {"rank_change": rank_change, "score_change": score_change,
@@ -78,7 +78,7 @@ class SignalMonitor:
         if previous.empty:
             raise QueryError("snapshot_not_found", "No existe un snapshot con candidatas.", 404)
         today = self.today()
-        table = self.market.ranking(dict(self.policy.frozen_weights), today).table
+        table = self.market.ranking(dict(self.policy.weights), today).table
         rows = []
         for symbol in previous.index:
             if symbol not in table.index:

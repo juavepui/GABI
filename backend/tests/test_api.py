@@ -473,10 +473,11 @@ def test_concurrent_cold_queries_share_one_calculation(api):
     from concurrent.futures import ThreadPoolExecutor
 
     from gabi.infrastructure.legacy.market import calculators
+    from gabi.infrastructure.model_versions import GABI_MF_V1
 
     _, repository, _ = api
     calls = []
-    original = calculators().scores
+    original = calculators(GABI_MF_V1.technical).scores
     def scores(*args, **kwargs):
         calls.append(1)
         return original(*args, **kwargs)
@@ -491,8 +492,9 @@ def test_concurrent_cold_queries_share_one_calculation(api):
 def test_mid_query_change_is_rejected_instead_of_caching_mixed_data(api):
     _, repository, root = api
     from gabi.infrastructure.legacy.market import calculators
+    from gabi.infrastructure.model_versions import GABI_MF_V1
 
-    original = calculators().scores
+    original = calculators(GABI_MF_V1.technical).scores
     def scores(*args, **kwargs):
         (root / "sp500_constituents.csv").write_text((root / "sp500_constituents.csv").read_text().replace("Company T000", "Renamed T000"))
         return original(*args, **kwargs)

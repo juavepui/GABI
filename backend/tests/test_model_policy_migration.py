@@ -7,6 +7,7 @@ import pytest
 
 from gabi.domain.market import model_policy
 from gabi.infrastructure.legacy.market import model_policy as create_policy
+from gabi.infrastructure.model_versions import GABI_MF_V1
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/model_policy_migration.json").read_text(encoding="utf-8"))
 
@@ -25,10 +26,10 @@ def test_modern_policy_has_no_file_or_legacy_configuration_dependency(monkeypatc
         raise AssertionError("implicit file access")
 
     monkeypatch.setattr(Path, "open", forbidden)
-    policy = create_policy()
-    assert policy.frozen_weights == {"value": .3, "quality": .35, "momentum": .25, "risk": .1}
-    assert policy.matches(policy.frozen_weights)
-    assert policy.status(policy.frozen_weights, live_forward_active=True) == "LIVE_FORWARD"
+    policy = create_policy(GABI_MF_V1)
+    assert policy.weights == {"value": .3, "quality": .35, "momentum": .25, "risk": .1}
+    assert policy.matches(policy.weights)
+    assert policy.status(policy.weights, live_forward_active=True) == "LIVE_FORWARD"
     with pytest.raises(TypeError):
         model_policy.FROZEN_WEIGHTS["value"] = 1.0
 

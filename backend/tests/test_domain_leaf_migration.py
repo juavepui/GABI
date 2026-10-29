@@ -11,6 +11,7 @@ from gabi import config, live_ledger, storage
 from gabi.domain.market import fundamentals, valuation_expectations
 from gabi.domain.portfolio import broker_costs, capital_allocation
 from gabi.infrastructure.legacy.market import calculators
+from gabi.infrastructure.model_versions import GABI_MF_V1
 
 
 @pytest.mark.parametrize(("legacy", "domain", "exports"), [
@@ -26,7 +27,7 @@ def test_legacy_entry_points_are_the_same_domain_implementation(legacy, domain, 
 
 
 def test_api_ranking_uses_domain_fundamentals_directly():
-    assert calculators().fundamentals is fundamentals.compute_fundamental_metrics
+    assert calculators(GABI_MF_V1.technical).fundamentals is fundamentals.compute_fundamental_metrics
 
 
 def test_domain_calculations_never_use_a_connection_or_network(monkeypatch):

@@ -13,6 +13,7 @@ from gabi.domain.market import scoring as domain_scoring
 from gabi.domain.market import sec_facts
 from gabi.domain.research import periods
 from gabi.infrastructure.legacy.market import calculators
+from gabi.infrastructure.model_versions import GABI_MF_V1
 
 CASES = ("full", "missing", "stale", "revision", "conflict", "gap", "empty", "zero")
 
@@ -114,8 +115,8 @@ def test_legacy_functions_and_ranking_use_single_domain_implementations():
     frame = pd.DataFrame({"pe": [10, 20]}, index=["A", "B"])
     pd.testing.assert_frame_equal(scoring.build_scores(frame), domain_scoring.build_scores(frame))
     pd.testing.assert_series_equal(scoring.compute_confidence(frame), domain_scoring.compute_confidence(frame))
-    assert calculators().scores is domain_scoring.build_scores
-    assert calculators().confidence is domain_scoring.compute_confidence
+    assert calculators(GABI_MF_V1.technical).scores is domain_scoring.build_scores
+    assert calculators(GABI_MF_V1.technical).confidence is domain_scoring.compute_confidence
     assert historical_period.Period is periods.Period
     assert historical_period.P2010 is periods.P2010
     assert edgar._extract_annual_values is sec_facts._extract_annual_values

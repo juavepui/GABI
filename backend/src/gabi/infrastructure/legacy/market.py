@@ -1,31 +1,25 @@
 from functools import partial
 
 import gabi.domain.market.scoring as scoring
-from gabi import config
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
 from gabi.domain.market import events as events_calendar
-from gabi.domain.market import model_policy as policy
+from gabi.domain.market import model_version
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
+from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.risk import compute_risk_metrics
 from gabi.domain.market.technicals import TechnicalParameters, compute_technicals
 
 
-def calculators() -> Calculators:
-    parameters = TechnicalParameters(config.SMA_SHORT, config.SMA_LONG, config.RSI_PERIOD,
-                                     config.MOMENTUM_SHORT_DAYS, config.MOMENTUM_LONG_DAYS)
+def calculators(parameters: TechnicalParameters) -> Calculators:
     return Calculators(compute_fundamental_metrics, partial(compute_technicals, parameters=parameters),
                        compute_risk_metrics, events_calendar.parse_corporate_events,
                        scoring.build_scores, scoring.compute_confidence)
 
 
-def model_policy() -> ModelPolicy:
-    return ModelPolicy(dict(policy.FROZEN_WEIGHTS), policy.FROZEN_MODEL_ID,
-                       policy.weights_match_frozen, policy.model_status)
-
-
-def defaults() -> tuple[str, float]:
-    return config.BENCHMARK_SYMBOL, config.RISK_FREE_RATE
+def model_policy(version: ModelVersion) -> ModelPolicy:
+    return ModelPolicy(dict(version.weights), version.model_id,
+                       partial(model_version.matches, version), partial(model_version.status, version))
 
 
 def metric_blocks() -> tuple[dict[str, list[str]], dict[str, list[str]]]:

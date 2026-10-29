@@ -8,8 +8,8 @@ from gabi.application.errors import QueryError
 
 @dataclass(frozen=True)
 class ModelPolicy:
-    frozen_weights: dict[str, float]
-    frozen_id: str
+    weights: dict[str, float]
+    model_id: str
     matches: Callable[..., bool]
     status: Callable[..., str]
 
@@ -55,15 +55,15 @@ class ModelQueries:
         if override is not None and local.mode != "RESEARCH":
             raise QueryError("research_required", "Los pesos alternativos requieren el modo Research local.", 403)
         weights = override if override is not None else (
-            self.policy.frozen_weights if local.mode == "INVESTOR" else local.saved_weights)
-        if set(weights) != set(self.policy.frozen_weights) or any(
+            self.policy.weights if local.mode == "INVESTOR" else local.saved_weights)
+        if set(weights) != set(self.policy.weights) or any(
             not isfinite(value) or value < 0 or value > 1 for value in weights.values()
         ) or abs(sum(weights.values()) - 1) > 1e-6:
             raise QueryError("invalid_weights", "Los cuatro pesos deben ser fracciones cuya suma sea 1.", 422)
         matches = self.policy.matches(weights)
         source = ("blind_validation" if local.blind_id is not None else
                   "research_lab" if local.weak_tracking else None) if matches else None
-        return ModelState(local.mode, self.policy.frozen_id if matches else "EXPERIMENTAL",
+        return ModelState(local.mode, self.policy.model_id if matches else "EXPERIMENTAL",
                           self.policy.status(weights, live_forward_active=source is not None), dict(weights), matches,
                           source, local.blind_id if matches else None)
 

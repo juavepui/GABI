@@ -66,7 +66,7 @@ class EvidenceQueries:
 
         `frozen` uses the frozen weights in any mode, as the old «Mi cartera» page did for its plan."""
         if frozen and self.market.model().mode == "RESEARCH":
-            override = dict(self.market.models.policy.frozen_weights)
+            override = dict(self.market.models.policy.weights)
         result, evidence = self._evidence(override)
         ordered = sorted(evidence, key=lambda s: (-(evidence[s]["score"] if evidence[s]["score"] is not None else -1), s))
         selected = [s for s in ordered if evidence[s]["score"] is not None
