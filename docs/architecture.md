@@ -314,6 +314,12 @@ Si un cambio de motor hace falta, se crea una versión nueva con procedencia
 explícita; no se cambia el hash esperado de una publicación antigua. No abrir
 holdouts ni generar ensayos para comprobar imports, rutas o rendimiento de UI.
 
+La evidencia pertenece a una versión: commit y manifiesto de cada estudio. El
+modelo activo, su configuración y sus métricas cambian mediante versiones nuevas,
+que empiezan sin evidencia, sin esperar las revisiones de estudios en curso. Los
+caminos que esos estudios ejecutan en vivo no cambian de semántica, y `config.py`
+queda como snapshot sellado ([ADR 0008](adr/0008-versioned-models-and-evidence.md)).
+
 | Control | Qué comprueba | Qué se comprueba además |
 | --- | --- | --- |
 | `scripts/check_architecture.py` en CI | Capas Python, imports estáticos/dinámicos literales, I/O directo conocido, ciclos nuevos y deuda legacy exacta | Equivalencia, efectos, revisión de puertos/adaptadores |
