@@ -1,0 +1,88 @@
+{
+  "adr": "docs/adr/0008-versioned-models-and-evidence.md",
+  "studies": [
+    {
+      "id": "GABI-ENS-VQE-v1",
+      "issues": [53, 237],
+      "kind": "prospective",
+      "decision": "continue",
+      "decided": "2026-10-29",
+      "reason": "Evidencia prospectiva que no se puede recuperar después; con el ADR 0008 no bloquea versiones nuevas del producto.",
+      "evidence_state": "prospective_not_started",
+      "sealed": {"spec_sha256": "8609a0770a49d00c72bf5bb507d55551eba88b895543b305ca66715292555bca"},
+      "first_record": "2026-12-21",
+      "reviews": ["2029-12-21", "2032-12-21", "2036-12-21"],
+      "pinned_paths": [
+        "backend/src/gabi/screener_asof.py",
+        "backend/src/gabi/domain/market/sec_facts.py",
+        "backend/src/gabi/infrastructure/legacy/ensemble_live.py",
+        "backend/src/gabi/factor_sector_stability.py",
+        "backend/src/gabi/strategy_discovery.py"
+      ],
+      "docs": ["docs/ensemble-prospective/README.md", "docs/ensemble-robustness/PREREGISTRO.md"]
+    },
+    {
+      "id": "GABI-VALUE-v1",
+      "issues": [43],
+      "kind": "prospective",
+      "decision": "continue",
+      "decided": "2026-10-29",
+      "reason": "Prueba ciega id 3 con cadena de hashes; su coste es el registro trimestral y no frena el producto.",
+      "evidence_state": "prospective_not_started",
+      "sealed": {"spec_sha256": "72360fe95bdfa3c0585d76aa49e7f0680e114e1845725ec5a3ed87d52bb6b1e0", "blind_validation_id": 3},
+      "first_record": "2026-12-21",
+      "reviews": ["2029-12-21", "2032-12-21", "2036-12-21"],
+      "pinned_paths": [
+        "backend/src/gabi/screener_asof.py",
+        "backend/src/gabi/domain/market/sec_facts.py",
+        "backend/src/gabi/infrastructure/legacy/blind_validation.py"
+      ],
+      "docs": ["docs/value-hypothesis/PREREGISTRO.md", "docs/prospective-plan/README.md"]
+    },
+    {
+      "id": "GABI-MF-v1",
+      "issues": [42],
+      "kind": "prospective",
+      "decision": "continue",
+      "decided": "2026-10-29",
+      "reason": "Prueba ciega id 1 de la hipótesis congelada; sigue en paralelo aunque el modelo activo cambie de versión.",
+      "evidence_state": "prospective_not_started",
+      "sealed": {"plan": "docs/prospective-plan/gabi-id1.json", "blind_validation_id": 1},
+      "first_record": "2026-12-21",
+      "reviews": ["2029-09-21"],
+      "pinned_paths": [
+        "backend/src/gabi/screener_asof.py",
+        "backend/src/gabi/domain/market/sec_facts.py",
+        "backend/src/gabi/infrastructure/legacy/blind_validation.py"
+      ],
+      "docs": ["docs/prospective-plan/README.md"]
+    },
+    {
+      "id": "STAT-4-smallmid",
+      "issues": [44],
+      "kind": "retrospective",
+      "decision": "finish_then_close",
+      "decided": "2026-10-29",
+      "reason": "Se ejecuta el análisis único preregistrado tras congelar los datos y después se cierra, retirando sus módulos y excepciones de I/O.",
+      "evidence_state": "data_collection",
+      "sealed": {"preregistrations": ["docs/smallmid-test/PREREGISTRO-A1.md", "docs/smallmid-test/PREREGISTRO-A2.md", "docs/smallmid-test/PREREGISTRO-A3.md"]},
+      "data_freeze_by": "2027-01-15",
+      "pinned_paths": [
+        "backend/src/gabi/smallmid_test.py",
+        "backend/src/gabi/historical_archive.py",
+        "backend/src/gabi/historical_tiingo.py",
+        "backend/src/gabi/historical_wiki.py"
+      ],
+      "docs": ["docs/smallmid-test/PREREGISTRO.md", "docs/architecture/compatibility-inventory.md"]
+    }
+  ],
+  "objectives": [
+    {
+      "id": "beat-sp500-net",
+      "issues": [60],
+      "decision": "continue",
+      "decided": "2026-10-29",
+      "reason": "Objetivo de evidencia, no estudio: su entrega concreta es #252. El contador acumulado de intentos (mínimo 33) no se reinicia."
+    }
+  ]
+}
