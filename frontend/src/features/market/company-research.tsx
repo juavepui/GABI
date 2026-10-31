@@ -85,7 +85,7 @@ function SyncButton({
         type="button"
         variant="outline"
         size="sm"
-        disabled={start.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+        pending={start.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
         onClick={() => start.mutate()}
       >
         {label}

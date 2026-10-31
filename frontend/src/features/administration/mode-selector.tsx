@@ -43,7 +43,7 @@ export function ModeSelector({ model }: { model: ModelResponse }) {
       <Button
         type="button"
         variant="outline"
-        disabled={change.isPending}
+        pending={change.isPending}
         onClick={() => change.mutate(research ? 'INVESTOR' : 'RESEARCH')}
       >
         {research ? 'Activar Investor' : 'Activar Research'}

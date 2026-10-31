@@ -90,7 +90,8 @@ function TrackTarget({ positions }: { positions: number }) {
         type="button"
         variant="outline"
         size="sm"
-        disabled={save.isPending || save.isSuccess}
+        pending={save.isPending}
+        disabled={save.isSuccess}
         onClick={() => save.mutate()}
       >
         Guardar esta cartera para seguirla
@@ -136,7 +137,7 @@ export function PortfolioPage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    setSubmitted({
+    const next: PlanRequest = {
       n_positions: Number(form.get('n_positions')),
       capital_eur: Number(form.get('capital_eur')),
       holdings_text: String(form.get('holdings_text') ?? ''),
@@ -144,7 +145,11 @@ export function PortfolioPage() {
       sector_limit_percent: Number(form.get('sector_limit_percent')),
       industry_limit_percent: Number(form.get('industry_limit_percent')),
       use_saved_holdings: true,
-    });
+    };
+    // The same request keeps the query key, so it would silently reuse the cached plan:
+    // recalculating makes the click visible and picks up holdings saved since then.
+    if (JSON.stringify(next) === JSON.stringify(submitted)) void plan.refetch();
+    else setSubmitted(next);
   }
   const data = plan.data;
   return (
@@ -315,7 +320,7 @@ export function PortfolioPage() {
               placeholder={'AAPL,300\nMSFT,200'}
               className="mt-1.5 w-full"
             />
-            <Button className="mt-4" type="submit" disabled={plan.isFetching}>
+            <Button className="mt-4" type="submit" pending={plan.isFetching}>
               Calcular plan
             </Button>
           </form>

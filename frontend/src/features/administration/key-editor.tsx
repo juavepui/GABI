@@ -57,7 +57,7 @@ function KeyRow({ source, configured }: { source: string; configured: boolean })
             aria-label={`Nueva clave ${info.label}`}
             onChange={(event) => setValue(event.target.value)}
           />
-          <Button type="submit" variant="outline" disabled={!value.trim() || save.isPending}>
+          <Button type="submit" variant="outline" disabled={!value.trim()} pending={save.isPending}>
             Guardar
           </Button>
         </div>

@@ -2,9 +2,10 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/lib/utils';
 import * as Slot from '@radix-ui/react-slot';
+import { LoaderCircle } from 'lucide-react';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none active:brightness-95 motion-safe:active:scale-[0.97] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 disabled:aria-busy:opacity-80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -35,15 +36,23 @@ const buttonVariants = cva(
   },
 );
 
+/**
+ * `pending` marks an action in progress: the button is disabled, announces
+ * `aria-busy` and shows a spinner, so a click never looks ignored.
+ */
 function Button({
   className,
   variant = 'default',
   size = 'default',
   asChild = false,
+  pending = false,
+  disabled,
+  children,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    pending?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : 'button';
 
@@ -53,8 +62,20 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || pending}
+      aria-busy={pending || undefined}
       {...props}
-    />
+    >
+      {pending && !asChild ? (
+        <>
+          <LoaderCircle className="animate-spin" aria-hidden="true" />
+          {/* An icon-only button swaps its icon for the spinner. */}
+          {!size?.startsWith('icon') && children}
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   );
 }
 

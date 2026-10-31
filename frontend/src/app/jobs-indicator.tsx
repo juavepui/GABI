@@ -185,7 +185,8 @@ export function JobsIndicator() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={job.cancel_requested || cancel.isPending}
+                    disabled={job.cancel_requested}
+                    pending={cancel.isPending}
                     onClick={() => cancel.mutate(job.id)}
                   >
                     {job.cancel_requested ? 'Cancelación solicitada' : 'Solicitar cancelación'}

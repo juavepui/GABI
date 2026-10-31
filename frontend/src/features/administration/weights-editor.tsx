@@ -76,7 +76,8 @@ export function WeightsEditor({ model }: { model: ModelResponse }) {
           <Button
             type="submit"
             variant="outline"
-            disabled={save.isPending || Math.abs(total - 100) > 0.001}
+            pending={save.isPending}
+            disabled={Math.abs(total - 100) > 0.001}
           >
             Guardar pesos
           </Button>

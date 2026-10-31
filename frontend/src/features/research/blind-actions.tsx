@@ -137,7 +137,8 @@ export function BlindActions({ item }: { item: BlindStatus }) {
       <div>
         <Button
           variant="outline"
-          disabled={!item.rebalance_due || rebalance.start.isPending}
+          disabled={!item.rebalance_due}
+          pending={rebalance.running}
           title={
             item.rebalance_due
               ? 'Reconstruye el ranking de hoy y fija los precios de entrada.'
@@ -156,7 +157,7 @@ export function BlindActions({ item }: { item: BlindStatus }) {
         <div>
           <div className="flex flex-wrap gap-3">
             <Button
-              disabled={performance.start.isPending}
+              pending={performance.running}
               onClick={() =>
                 performance.start.mutate({
                   kind: 'blind_performance',
@@ -168,7 +169,8 @@ export function BlindActions({ item }: { item: BlindStatus }) {
             </Button>
             <Button
               variant="outline"
-              disabled={exporting.start.isPending || exporting.jobId != null}
+              pending={exporting.running}
+              disabled={exporting.jobId != null}
               onClick={() =>
                 exporting.start.mutate({ kind: 'blind_export', blind: { validation_id: item.id } })
               }

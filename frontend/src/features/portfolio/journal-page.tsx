@@ -203,7 +203,7 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
             Aprendizaje
             <Input className="mt-1" name="review_notes" maxLength={5000} />
           </label>
-          <Button className="self-end" type="submit" disabled={review.isPending}>
+          <Button className="self-end" type="submit" pending={review.isPending}>
             Marcar revisada
           </Button>
           {review.isError && (
@@ -227,7 +227,7 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
           type="button"
           size="sm"
           variant="destructive"
-          disabled={remove.isPending}
+          pending={remove.isPending}
           onClick={() => remove.mutate()}
         >
           Confirmar eliminación
@@ -388,7 +388,7 @@ export function JournalPage() {
               <Input className="mt-1" name="notes" maxLength={5000} />
             </label>
           </div>
-          <Button type="submit" disabled={create.isPending}>
+          <Button type="submit" pending={create.isPending}>
             Guardar tesis
           </Button>
           {create.isError && (

@@ -48,7 +48,7 @@ export function PrepareData({
       <Button
         type="button"
         variant="outline"
-        disabled={run.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+        pending={run.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
         onClick={() => {
           setJobId(null);
           run.mutate();
@@ -70,7 +70,7 @@ export function PrepareData({
               className="ml-3"
               size="sm"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación

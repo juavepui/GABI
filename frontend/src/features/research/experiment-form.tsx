@@ -172,7 +172,7 @@ export function ManualExperimentForm({ stages }: { stages: ExperimentStage[] }) 
           Un 0 en Sharpe, Sortino o drawdown se guarda como «sin dato», igual que antes. Se
           registran también el commit, las versiones de dependencias y la huella de uv.lock.
         </p>
-        <Button type="submit" className="w-fit" disabled={create.isPending}>
+        <Button type="submit" className="w-fit" pending={create.isPending}>
           Registrar
         </Button>
       </form>
@@ -216,7 +216,7 @@ export function DeleteExperiment() {
           onChange={(event) => setId(Math.max(0, Math.trunc(Number(event.target.value))))}
         />
       </label>
-      <Button type="submit" variant="outline" disabled={id === 0 || remove.isPending}>
+      <Button type="submit" variant="outline" disabled={id === 0} pending={remove.isPending}>
         Eliminar
       </Button>
       {remove.isError && <ErrorState error={remove.error} retry={() => remove.reset()} />}

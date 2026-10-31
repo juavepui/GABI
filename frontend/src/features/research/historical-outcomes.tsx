@@ -119,7 +119,11 @@ export function HistoricalOutcomes({
             required
           />
         </label>
-        <Button type="submit" disabled={run.isPending || !researchAllowed}>
+        <Button
+          type="submit"
+          pending={run.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+          disabled={!researchAllowed}
+        >
           Evaluar resultado posterior
         </Button>
       </form>
@@ -132,7 +136,7 @@ export function HistoricalOutcomes({
               className="ml-3"
               size="sm"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación

@@ -36,7 +36,7 @@ export function JobStatus({ state }: { state: ReturnType<typeof useJob> }) {
             <Button
               className="ml-3"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación
@@ -154,7 +154,8 @@ export function PboPanel() {
       )}
       <Button
         className="mt-3"
-        disabled={picked.length < 2 || state.start.isPending}
+        disabled={picked.length < 2}
+        pending={state.running}
         onClick={() => {
           state.setJobId(null);
           state.start.mutate({
@@ -269,7 +270,8 @@ export function BootstrapPanel() {
       )}
       <Button
         className="mt-3"
-        disabled={strategy === 0 || state.start.isPending}
+        disabled={strategy === 0}
+        pending={state.running}
         onClick={() => {
           state.setJobId(null);
           state.start.mutate({

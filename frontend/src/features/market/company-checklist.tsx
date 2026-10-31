@@ -476,7 +476,7 @@ function ThresholdEditor() {
               size="sm"
               variant={data.preset === item.key ? 'default' : 'outline'}
               aria-pressed={data.preset === item.key}
-              disabled={preset.isPending}
+              pending={preset.isPending}
               onClick={() => preset.mutate(item.key)}
             >
               {item.label}
@@ -515,14 +515,15 @@ function ThresholdEditor() {
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" size="sm" disabled={save.isPending}>
+        <Button type="submit" size="sm" pending={save.isPending}>
           Guardar umbrales
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          disabled={reset.isPending || !data.edited.length}
+          pending={reset.isPending}
+          disabled={!data.edited.length}
           onClick={() => reset.mutate()}
         >
           Restablecer valores del Excel

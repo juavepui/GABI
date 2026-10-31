@@ -111,7 +111,7 @@ export function RunButton({
   children: ReactNode;
 }) {
   return (
-    <Button variant="outline" disabled={running} onClick={onClick}>
+    <Button variant="outline" pending={running} onClick={onClick}>
       {children}
     </Button>
   );

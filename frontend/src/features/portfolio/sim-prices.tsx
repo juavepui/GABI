@@ -61,10 +61,15 @@ export function SimulationPrices({
             onChange={(event) => setSymbol(event.target.value.toUpperCase().trim())}
           />
         </label>
-        <Button variant="outline" disabled={running || !symbol} onClick={() => run([symbol])}>
+        <Button
+          variant="outline"
+          pending={running}
+          disabled={!symbol}
+          onClick={() => run([symbol])}
+        >
           Actualizar precios de este ticker
         </Button>
-        <Button variant="outline" disabled={running || !hasTrades} onClick={() => run([])}>
+        <Button variant="outline" pending={running} disabled={!hasTrades} onClick={() => run([])}>
           Actualizar precios de esta cartera y SPY
         </Button>
       </div>

@@ -79,7 +79,7 @@ function Note({ row }: { row: WatchlistRow }) {
         autoFocus
       />
       <span className="flex gap-2">
-        <Button size="xs" type="submit" disabled={save.isPending}>
+        <Button size="xs" type="submit" pending={save.isPending}>
           Guardar
         </Button>
         <Button size="xs" type="button" variant="ghost" onClick={() => setEditing(false)}>
@@ -106,7 +106,7 @@ function Remove({ symbol }: { symbol: string }) {
       <Button
         size="xs"
         variant="ghost"
-        disabled={remove.isPending}
+        pending={remove.isPending}
         aria-label={'Dejar de seguir ' + symbol}
         onClick={() => remove.mutate()}
       >

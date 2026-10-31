@@ -181,7 +181,7 @@ export function EventsPage() {
               />
             </label>
           </div>
-          <Button className="mt-4" type="submit" disabled={compare.isPending}>
+          <Button className="mt-4" type="submit" pending={compare.isPending}>
             Comparar ahora
           </Button>
           {compare.isError && (
@@ -215,7 +215,7 @@ export function EventsPage() {
               className="mt-4"
               type="button"
               variant="outline"
-              disabled={checkFilings.isPending}
+              pending={checkFilings.isPending}
               onClick={() => checkFilings.mutate(activeSnapshot)}
             >
               Comprobar filings
@@ -255,7 +255,8 @@ export function EventsPage() {
                 <Button
                   type="button"
                   className="mt-3"
-                  disabled={recordFilings.isPending || recordFilings.isSuccess}
+                  pending={recordFilings.isPending}
+                  disabled={recordFilings.isSuccess}
                   onClick={() => recordFilings.mutate()}
                 >
                   Guardar comparación y eventos
