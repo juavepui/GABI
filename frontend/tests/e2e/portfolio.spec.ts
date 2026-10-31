@@ -317,3 +317,22 @@ test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', 
     page.getByRole('form', { name: 'Perfil de inversor' }).getByLabel('Aportación mensual (€)'),
   ).toHaveValue('500');
 });
+
+test('Riesgo y política guarda la política y propone órdenes sin enviarlas', async ({ page }) => {
+  await page.goto('/cartera/riesgo');
+  await expect(page.getByRole('heading', { name: 'Riesgo y política', level: 1 })).toBeVisible();
+  const form = page.getByRole('form', { name: 'Política de cartera' });
+  await form.getByLabel('Peso máximo por emisor (%)').fill('8');
+  await form.getByRole('button', { name: 'Guardar política' }).click();
+  await expect(form.getByRole('status')).toContainText('revisión');
+  await page.reload();
+  await expect(
+    page
+      .getByRole('form', { name: 'Política de cartera' })
+      .getByLabel('Peso máximo por emisor (%)'),
+  ).toHaveValue('8');
+  // The test cache has no EUR rate: the proposal points to the explicit download instead of guessing.
+  await expect(page.getByRole('region', { name: 'Equiponderada frente a política' })).toContainText(
+    'USDEUR=X',
+  );
+});

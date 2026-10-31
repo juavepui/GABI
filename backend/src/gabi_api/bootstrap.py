@@ -2,7 +2,7 @@
 import threading
 from collections.abc import Callable
 from contextlib import asynccontextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +37,7 @@ from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.holdings import Holdings
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
+from gabi.application.portfolio.risk import PortfolioRisk
 from gabi.application.portfolio.simulations import Simulations
 from gabi.application.research.backtest_diagnostics import BacktestDiagnostics
 from gabi.application.research.blind import BlindCommands, BlindValidationQueries
@@ -82,6 +83,7 @@ from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.identity import SqliteIdentityReads
 from gabi.infrastructure.storage.investor_profile import SqliteInvestorProfile
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
@@ -110,6 +112,7 @@ from gabi_api.routes.macro import router as macro_router
 from gabi_api.routes.market import router
 from gabi_api.routes.portfolio import router as portfolio_router
 from gabi_api.routes.research import router as research_router
+from gabi_api.routes.risk import router as risk_router
 from gabi_api.routes.signals import router as signals_router
 from gabi_api.routes.simulations import router as simulations_router
 from gabi_api.routes.watchlist import router as watchlist_router
@@ -230,6 +233,23 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.investor = InvestorBenchmark(SqliteInvestorProfile(settings.data_dir),
                                            SqliteSimulations(settings.data_dir).prices, today,
                                            lots=holdings.lots)
+    identity_reads = SqliteIdentityReads(settings.data_dir / "gabi.db")
+
+    def issuers(symbols: list[str]) -> dict[str, str]:
+        """Two share classes of one issuer resolve to one SEC entity (#248)."""
+        resolved = identity_reads.resolve_many(symbols, today().isoformat())
+        return {symbol: row.get("entity_id") or symbol for symbol, row in resolved.items()}
+
+    def euros_per_dollar() -> float | None:
+        start = (today() - timedelta(days=10)).isoformat()
+        frame = SqliteSimulations(settings.data_dir).prices(["USDEUR=X"], start).get("USDEUR=X")
+        closes = frame["close"].dropna() if frame is not None and "close" in frame else None
+        return float(closes.iloc[-1]) if closes is not None and not closes.empty and closes.iloc[-1] > 0 else None
+
+    app.state.portfolio_risk = PortfolioRisk(
+        SqliteInvestorProfile(settings.data_dir, "portfolio_policies"), holdings.positions,
+        lambda: repository.ranking(dict(policy.weights), today()).table, issuers, industries,
+        app.state.investor.profile, euros_per_dollar, today)
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors
@@ -314,6 +334,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(simulations_router)
     app.include_router(holdings_router)
     app.include_router(investor_router)
+    app.include_router(risk_router)
     app.include_router(watchlist_router)
     app.include_router(decisions_router)
     app.include_router(forms_router)

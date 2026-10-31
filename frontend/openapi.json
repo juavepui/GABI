@@ -7030,6 +7030,26 @@
         "title": "EvidenceTop",
         "type": "object"
       },
+      "ExcludedCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "no_price | illiquid",
+            "title": "Reason",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "reason"
+        ],
+        "title": "ExcludedCandidate",
+        "type": "object"
+      },
       "ExcludedLot": {
         "additionalProperties": false,
         "properties": {
@@ -8076,6 +8096,84 @@
         "title": "ExperimentTailRisk",
         "type": "object"
       },
+      "Exposure": {
+        "additionalProperties": false,
+        "properties": {
+          "breaches": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Breaches",
+            "type": "array"
+          },
+          "economic_currency": {
+            "items": {
+              "$ref": "#/components/schemas/GroupWeight"
+            },
+            "title": "Economic Currency",
+            "type": "array"
+          },
+          "factors": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactorTilt"
+            },
+            "title": "Factors",
+            "type": "object"
+          },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/GroupWeight"
+            },
+            "title": "Industries",
+            "type": "array"
+          },
+          "issuers": {
+            "items": {
+              "$ref": "#/components/schemas/IssuerExposure"
+            },
+            "title": "Issuers",
+            "type": "array"
+          },
+          "liquidity": {
+            "items": {
+              "$ref": "#/components/schemas/LiquidityRow"
+            },
+            "title": "Liquidity",
+            "type": "array"
+          },
+          "listing_currency": {
+            "items": {
+              "$ref": "#/components/schemas/GroupWeight"
+            },
+            "title": "Listing Currency",
+            "type": "array"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/GroupWeight"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "total_eur": {
+            "title": "Total Eur",
+            "type": "number"
+          }
+        },
+        "required": [
+          "total_eur",
+          "issuers",
+          "sectors",
+          "industries",
+          "listing_currency",
+          "economic_currency",
+          "factors",
+          "liquidity",
+          "breaches"
+        ],
+        "title": "Exposure",
+        "type": "object"
+      },
       "FactorBenchmark": {
         "properties": {
           "expanding": {
@@ -8555,6 +8653,33 @@
         "title": "FactorSummaryRow",
         "type": "object"
       },
+      "FactorTilt": {
+        "additionalProperties": false,
+        "properties": {
+          "coverage": {
+            "title": "Coverage",
+            "type": "number"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Media ponderada de 0 a 100",
+            "title": "Score"
+          }
+        },
+        "required": [
+          "score",
+          "coverage"
+        ],
+        "title": "FactorTilt",
+        "type": "object"
+      },
       "FactorTurnoverRow": {
         "properties": {
           "factor": {
@@ -8958,6 +9083,36 @@
           "definition"
         ],
         "title": "GlossaryTerm",
+        "type": "object"
+      },
+      "GroupWeight": {
+        "additionalProperties": false,
+        "properties": {
+          "exceeds": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exceeds"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "weight"
+        ],
+        "title": "GroupWeight",
         "type": "object"
       },
       "HealthResponse": {
@@ -10973,6 +11128,43 @@
         "title": "InvestorProfileState",
         "type": "object"
       },
+      "IssuerExposure": {
+        "additionalProperties": false,
+        "properties": {
+          "exceeds": {
+            "title": "Exceeds",
+            "type": "boolean"
+          },
+          "issuer": {
+            "title": "Issuer",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "value_eur": {
+            "title": "Value Eur",
+            "type": "number"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "issuer",
+          "symbols",
+          "value_eur",
+          "weight",
+          "exceeds"
+        ],
+        "title": "IssuerExposure",
+        "type": "object"
+      },
       "JobEvent": {
         "properties": {
           "at": {
@@ -12319,6 +12511,54 @@
         "title": "LedgerReplay",
         "type": "object"
       },
+      "LiquidityRow": {
+        "additionalProperties": false,
+        "properties": {
+          "daily_volume_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Volume Eur"
+          },
+          "days_to_trade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days To Trade"
+          },
+          "illiquid": {
+            "title": "Illiquid",
+            "type": "boolean"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "value_eur": {
+            "title": "Value Eur",
+            "type": "number"
+          }
+        },
+        "required": [
+          "symbol",
+          "value_eur",
+          "daily_volume_eur",
+          "days_to_trade",
+          "illiquid"
+        ],
+        "title": "LiquidityRow",
+        "type": "object"
+      },
       "LiveForwardReport": {
         "properties": {
           "as_of": {
@@ -13650,6 +13890,155 @@
         "title": "PlanResponse",
         "type": "object"
       },
+      "PolicyAlternative": {
+        "additionalProperties": false,
+        "properties": {
+          "breaches": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Breaches",
+            "type": "array"
+          },
+          "cash": {
+            "title": "Cash",
+            "type": "number"
+          },
+          "costs_eur": {
+            "title": "Costs Eur",
+            "type": "number"
+          },
+          "issuers": {
+            "items": {
+              "$ref": "#/components/schemas/IssuerExposure"
+            },
+            "title": "Issuers",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/ProposedOrder"
+            },
+            "title": "Orders",
+            "type": "array"
+          },
+          "residual_cash_eur": {
+            "title": "Residual Cash Eur",
+            "type": "number"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/GroupWeight"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "unfunded": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unfunded",
+            "type": "array"
+          },
+          "weights": {
+            "items": {
+              "$ref": "#/components/schemas/SymbolWeight"
+            },
+            "title": "Weights",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "weights",
+          "cash",
+          "issuers",
+          "sectors",
+          "breaches",
+          "orders",
+          "residual_cash_eur",
+          "costs_eur",
+          "unfunded"
+        ],
+        "title": "PolicyAlternative",
+        "type": "object"
+      },
+      "PolicyProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "alternatives": {
+            "description": "Órdenes propuestas: GABI no las envía",
+            "items": {
+              "$ref": "#/components/schemas/PolicyAlternative"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "contribution_eur": {
+            "title": "Contribution Eur",
+            "type": "number"
+          },
+          "euros_per_dollar": {
+            "title": "Euros Per Dollar",
+            "type": "number"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedCandidate"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "n_positions": {
+            "title": "N Positions",
+            "type": "integer"
+          },
+          "outside_target": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outside Target",
+            "type": "array"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Revision"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "as_of",
+          "policy_version",
+          "policy_revision",
+          "n_positions",
+          "contribution_eur",
+          "euros_per_dollar",
+          "excluded",
+          "outside_target",
+          "alternatives"
+        ],
+        "title": "PolicyProposal",
+        "type": "object"
+      },
       "PortfolioDaily": {
         "properties": {
           "anualizado": {
@@ -14081,6 +14470,129 @@
           "comision_pagada"
         ],
         "title": "PortfolioPeriod",
+        "type": "object"
+      },
+      "PortfolioPolicyInput": {
+        "additionalProperties": false,
+        "properties": {
+          "cash_weight": {
+            "default": 0,
+            "description": "Reserva de caja (fracción)",
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.0,
+            "title": "Cash Weight",
+            "type": "number"
+          },
+          "max_cost_share": {
+            "default": 0.01,
+            "description": "Coste máximo de una orden (fracción)",
+            "exclusiveMinimum": 0.0,
+            "maximum": 0.2,
+            "title": "Max Cost Share",
+            "type": "number"
+          },
+          "max_issuer_weight": {
+            "description": "Peso máximo por emisor (fracción)",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Issuer Weight",
+            "type": "number"
+          },
+          "max_sector_weight": {
+            "description": "Peso máximo por sector (fracción)",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Sector Weight",
+            "type": "number"
+          },
+          "min_daily_dollar_volume": {
+            "default": 5000000.0,
+            "description": "Volumen diario mínimo en USD",
+            "maximum": 1000000000000.0,
+            "minimum": 0.0,
+            "title": "Min Daily Dollar Volume",
+            "type": "number"
+          },
+          "participation": {
+            "default": 0.1,
+            "description": "Parte del volumen diario negociable",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Participation",
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_issuer_weight",
+          "max_sector_weight"
+        ],
+        "title": "PortfolioPolicyInput",
+        "type": "object"
+      },
+      "PortfolioPolicyRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/PortfolioPolicyInput"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "version",
+          "created_at",
+          "profile"
+        ],
+        "title": "PortfolioPolicyRevision",
+        "type": "object"
+      },
+      "PortfolioPolicyState": {
+        "additionalProperties": false,
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PortfolioPolicyRevision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "default": {
+            "$ref": "#/components/schemas/PortfolioPolicyInput"
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/PortfolioPolicyRevision"
+            },
+            "title": "Revisions",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current",
+          "revisions",
+          "default",
+          "version"
+        ],
+        "title": "PortfolioPolicyState",
         "type": "object"
       },
       "PortfolioScenario": {
@@ -14523,6 +15035,45 @@
           "adj_close"
         ],
         "title": "PricePoint",
+        "type": "object"
+      },
+      "ProposedOrder": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_eur": {
+            "title": "Amount Eur",
+            "type": "number"
+          },
+          "commission_eur": {
+            "title": "Commission Eur",
+            "type": "number"
+          },
+          "fx_cost_eur": {
+            "title": "Fx Cost Eur",
+            "type": "number"
+          },
+          "gap_eur": {
+            "title": "Gap Eur",
+            "type": "number"
+          },
+          "shares": {
+            "title": "Shares",
+            "type": "number"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "shares",
+          "amount_eur",
+          "commission_eur",
+          "fx_cost_eur",
+          "gap_eur"
+        ],
+        "title": "ProposedOrder",
         "type": "object"
       },
       "Provenance": {
@@ -15545,6 +16096,133 @@
           "idempotency_key"
         ],
         "title": "RetryJobRequest",
+        "type": "object"
+      },
+      "RiskPanel": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "economic_currency_note": {
+            "title": "Economic Currency Note",
+            "type": "string"
+          },
+          "exposure": {
+            "$ref": "#/components/schemas/Exposure"
+          },
+          "loss_tolerance": {
+            "title": "Loss Tolerance",
+            "type": "number"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PortfolioPolicyInput"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Revision"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "positions": {
+            "title": "Positions",
+            "type": "integer"
+          },
+          "stress": {
+            "$ref": "#/components/schemas/RiskStress"
+          },
+          "unvalued": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unvalued",
+            "type": "array"
+          }
+        },
+        "required": [
+          "as_of",
+          "policy_version",
+          "policy_revision",
+          "policy",
+          "loss_tolerance",
+          "positions",
+          "unvalued",
+          "exposure",
+          "stress",
+          "economic_currency_note"
+        ],
+        "title": "RiskPanel",
+        "type": "object"
+      },
+      "RiskScenario": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "title": "Change",
+            "type": "number"
+          },
+          "change_eur": {
+            "title": "Change Eur",
+            "type": "number"
+          },
+          "exceeds_tolerance": {
+            "description": "Motivo para revisar, nunca una venta automática",
+            "title": "Exceeds Tolerance",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "change",
+          "change_eur",
+          "exceeds_tolerance"
+        ],
+        "title": "RiskScenario",
+        "type": "object"
+      },
+      "RiskStress": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/RiskScenario"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenarios",
+          "notes"
+        ],
+        "title": "RiskStress",
         "type": "object"
       },
       "RiskWindows": {
@@ -17869,6 +18547,25 @@
           "exceeds_tolerance"
         ],
         "title": "StressScenario",
+        "type": "object"
+      },
+      "SymbolWeight": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "symbol",
+          "weight"
+        ],
+        "title": "SymbolWeight",
         "type": "object"
       },
       "TailLevel": {
@@ -25456,6 +26153,366 @@
           }
         },
         "summary": "Plan",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/risk": {
+      "get": {
+        "description": "Read-only exposure of Mi cartera from the cache: it never downloads nor writes.",
+        "operationId": "panel_api_v1_portfolio_risk_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskPanel"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Panel",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/risk/policy": {
+      "get": {
+        "operationId": "policy_api_v1_portfolio_risk_policy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioPolicyState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Policy",
+        "tags": [
+          "portfolio"
+        ]
+      },
+      "post": {
+        "operationId": "save_policy_api_v1_portfolio_risk_policy_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortfolioPolicyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioPolicyRevision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Save Policy",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/risk/proposal": {
+      "get": {
+        "description": "Read-only: equal weight against the policy limits and the orders a contribution needs; nothing is sent.",
+        "operationId": "proposal_api_v1_portfolio_risk_proposal_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "contribution_eur",
+            "required": false,
+            "schema": {
+              "default": 700,
+              "maximum": 100000000.0,
+              "minimum": 0,
+              "title": "Contribution Eur",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "n_positions",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 30,
+              "minimum": 5,
+              "title": "N Positions",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyProposal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Proposal",
         "tags": [
           "portfolio"
         ]

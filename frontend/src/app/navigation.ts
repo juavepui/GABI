@@ -49,6 +49,7 @@ export const sections: Section[] = [
       { path: '/cartera', label: 'Cartera objetivo' },
       { path: '/cartera/mi-cartera', label: 'Mi cartera' },
       { path: '/cartera/perfil', label: 'Perfil y benchmark' },
+      { path: '/cartera/riesgo', label: 'Riesgo y política' },
       { path: '/cartera/seguimiento', label: 'Seguimiento' },
       { path: '/cartera/diario', label: 'Diario de inversión' },
       { path: '/cartera/simuladas', label: 'Carteras simuladas' },

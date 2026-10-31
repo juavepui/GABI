@@ -52,6 +52,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/portfolio/holdings/{lot_id}/delete", "/api/v1/watchlist",
                                          "/api/v1/portfolio/investor/profile", "/api/v1/portfolio/investor/benchmark",
                                          "/api/v1/portfolio/investor/holdings-benchmark",
+                                         "/api/v1/portfolio/risk", "/api/v1/portfolio/risk/policy", "/api/v1/portfolio/risk/proposal",
                                          "/api/v1/watchlist/symbols", "/api/v1/watchlist/checklist",
                                          "/api/v1/watchlist/{symbol}", "/api/v1/watchlist/{symbol}/delete",
                                          "/api/v1/data/status", "/api/v1/forms/defaults", "/api/v1/ranking",

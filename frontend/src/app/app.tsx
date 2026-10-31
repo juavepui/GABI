@@ -27,6 +27,7 @@ import {
   JournalPage,
   LearnPage,
   PortfolioPage,
+  RiskPage,
   SimulationsPage,
 } from '@/features/portfolio/index';
 import {
@@ -312,6 +313,7 @@ function Shell() {
           <Route path="/cartera" element={<PortfolioPage />} />
           <Route path="/cartera/mi-cartera" element={<HoldingsPage />} />
           <Route path="/cartera/perfil" element={<InvestorPage />} />
+          <Route path="/cartera/riesgo" element={<RiskPage />} />
           <Route path="/cartera/seguimiento" element={<TrackingPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />

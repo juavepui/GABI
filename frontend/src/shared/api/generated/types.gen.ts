@@ -3607,6 +3607,22 @@ export type EvidenceTop = {
 };
 
 /**
+ * ExcludedCandidate
+ */
+export type ExcludedCandidate = {
+    /**
+     * Reason
+     *
+     * no_price | illiquid
+     */
+    reason: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * ExcludedLot
  */
 export type ExcludedLot = {
@@ -4115,6 +4131,50 @@ export type ExperimentTailRisk = {
 };
 
 /**
+ * Exposure
+ */
+export type Exposure = {
+    /**
+     * Breaches
+     */
+    breaches: Array<string>;
+    /**
+     * Economic Currency
+     */
+    economic_currency: Array<GroupWeight>;
+    /**
+     * Factors
+     */
+    factors: {
+        [key: string]: FactorTilt;
+    };
+    /**
+     * Industries
+     */
+    industries: Array<GroupWeight>;
+    /**
+     * Issuers
+     */
+    issuers: Array<IssuerExposure>;
+    /**
+     * Liquidity
+     */
+    liquidity: Array<LiquidityRow>;
+    /**
+     * Listing Currency
+     */
+    listing_currency: Array<GroupWeight>;
+    /**
+     * Sectors
+     */
+    sectors: Array<GroupWeight>;
+    /**
+     * Total Eur
+     */
+    total_eur: number;
+};
+
+/**
  * FactorBenchmark
  */
 export type FactorBenchmark = {
@@ -4381,6 +4441,22 @@ export type FactorSummaryRow = {
 };
 
 /**
+ * FactorTilt
+ */
+export type FactorTilt = {
+    /**
+     * Coverage
+     */
+    coverage: number;
+    /**
+     * Score
+     *
+     * Media ponderada de 0 a 100
+     */
+    score: number | null;
+};
+
+/**
  * FactorTurnoverRow
  */
 export type FactorTurnoverRow = {
@@ -4595,6 +4671,24 @@ export type GlossaryTerm = {
      * Term
      */
     term: string;
+};
+
+/**
+ * GroupWeight
+ */
+export type GroupWeight = {
+    /**
+     * Exceeds
+     */
+    exceeds?: boolean | null;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Weight
+     */
+    weight: number;
 };
 
 /**
@@ -5694,6 +5788,32 @@ export type InvestorProfileState = {
 };
 
 /**
+ * IssuerExposure
+ */
+export type IssuerExposure = {
+    /**
+     * Exceeds
+     */
+    exceeds: boolean;
+    /**
+     * Issuer
+     */
+    issuer: string;
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+    /**
+     * Value Eur
+     */
+    value_eur: number;
+    /**
+     * Weight
+     */
+    weight: number;
+};
+
+/**
  * JobEvent
  */
 export type JobEvent = {
@@ -6309,6 +6429,32 @@ export type LedgerReplay = {
      * Scores Match
      */
     scores_match: boolean;
+};
+
+/**
+ * LiquidityRow
+ */
+export type LiquidityRow = {
+    /**
+     * Daily Volume Eur
+     */
+    daily_volume_eur: number | null;
+    /**
+     * Days To Trade
+     */
+    days_to_trade: number | null;
+    /**
+     * Illiquid
+     */
+    illiquid: boolean;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Value Eur
+     */
+    value_eur: number;
 };
 
 /**
@@ -7072,6 +7218,96 @@ export type PlanResponse = {
 };
 
 /**
+ * PolicyAlternative
+ */
+export type PolicyAlternative = {
+    /**
+     * Breaches
+     */
+    breaches: Array<string>;
+    /**
+     * Cash
+     */
+    cash: number;
+    /**
+     * Costs Eur
+     */
+    costs_eur: number;
+    /**
+     * Issuers
+     */
+    issuers: Array<IssuerExposure>;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Orders
+     */
+    orders: Array<ProposedOrder>;
+    /**
+     * Residual Cash Eur
+     */
+    residual_cash_eur: number;
+    /**
+     * Sectors
+     */
+    sectors: Array<GroupWeight>;
+    /**
+     * Unfunded
+     */
+    unfunded: Array<string>;
+    /**
+     * Weights
+     */
+    weights: Array<SymbolWeight>;
+};
+
+/**
+ * PolicyProposal
+ */
+export type PolicyProposal = {
+    /**
+     * Alternatives
+     *
+     * Órdenes propuestas: GABI no las envía
+     */
+    alternatives: Array<PolicyAlternative>;
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Contribution Eur
+     */
+    contribution_eur: number;
+    /**
+     * Euros Per Dollar
+     */
+    euros_per_dollar: number;
+    /**
+     * Excluded
+     */
+    excluded: Array<ExcludedCandidate>;
+    /**
+     * N Positions
+     */
+    n_positions: number;
+    /**
+     * Outside Target
+     */
+    outside_target: Array<string>;
+    /**
+     * Policy Revision
+     */
+    policy_revision: number | null;
+    /**
+     * Policy Version
+     */
+    policy_version: string;
+};
+
+/**
  * PortfolioDaily
  */
 export type PortfolioDaily = {
@@ -7296,6 +7532,83 @@ export type PortfolioPeriod = {
 };
 
 /**
+ * PortfolioPolicyInput
+ */
+export type PortfolioPolicyInput = {
+    /**
+     * Cash Weight
+     *
+     * Reserva de caja (fracción)
+     */
+    cash_weight?: number;
+    /**
+     * Max Cost Share
+     *
+     * Coste máximo de una orden (fracción)
+     */
+    max_cost_share?: number;
+    /**
+     * Max Issuer Weight
+     *
+     * Peso máximo por emisor (fracción)
+     */
+    max_issuer_weight: number;
+    /**
+     * Max Sector Weight
+     *
+     * Peso máximo por sector (fracción)
+     */
+    max_sector_weight: number;
+    /**
+     * Min Daily Dollar Volume
+     *
+     * Volumen diario mínimo en USD
+     */
+    min_daily_dollar_volume?: number;
+    /**
+     * Participation
+     *
+     * Parte del volumen diario negociable
+     */
+    participation?: number;
+};
+
+/**
+ * PortfolioPolicyRevision
+ */
+export type PortfolioPolicyRevision = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    profile: PortfolioPolicyInput;
+    /**
+     * Revision
+     */
+    revision: number;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
+ * PortfolioPolicyState
+ */
+export type PortfolioPolicyState = {
+    current: PortfolioPolicyRevision | null;
+    default: PortfolioPolicyInput;
+    /**
+     * Revisions
+     */
+    revisions: Array<PortfolioPolicyRevision>;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
  * PortfolioScenario
  */
 export type PortfolioScenario = {
@@ -7502,6 +7815,36 @@ export type PricePoint = {
      * Date
      */
     date: string;
+};
+
+/**
+ * ProposedOrder
+ */
+export type ProposedOrder = {
+    /**
+     * Amount Eur
+     */
+    amount_eur: number;
+    /**
+     * Commission Eur
+     */
+    commission_eur: number;
+    /**
+     * Fx Cost Eur
+     */
+    fx_cost_eur: number;
+    /**
+     * Gap Eur
+     */
+    gap_eur: number;
+    /**
+     * Shares
+     */
+    shares: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
 };
 
 /**
@@ -8046,6 +8389,85 @@ export type RetryJobRequest = {
      * Idempotency Key
      */
     idempotency_key: string;
+};
+
+/**
+ * RiskPanel
+ */
+export type RiskPanel = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Economic Currency Note
+     */
+    economic_currency_note: string;
+    exposure: Exposure;
+    /**
+     * Loss Tolerance
+     */
+    loss_tolerance: number;
+    policy: PortfolioPolicyInput;
+    /**
+     * Policy Revision
+     */
+    policy_revision: number | null;
+    /**
+     * Policy Version
+     */
+    policy_version: string;
+    /**
+     * Positions
+     */
+    positions: number;
+    stress: RiskStress;
+    /**
+     * Unvalued
+     */
+    unvalued: Array<string>;
+};
+
+/**
+ * RiskScenario
+ */
+export type RiskScenario = {
+    /**
+     * Change
+     */
+    change: number;
+    /**
+     * Change Eur
+     */
+    change_eur: number;
+    /**
+     * Exceeds Tolerance
+     *
+     * Motivo para revisar, nunca una venta automática
+     */
+    exceeds_tolerance: boolean;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+};
+
+/**
+ * RiskStress
+ */
+export type RiskStress = {
+    /**
+     * Notes
+     */
+    notes: Array<string>;
+    /**
+     * Scenarios
+     */
+    scenarios: Array<RiskScenario>;
 };
 
 /**
@@ -9363,6 +9785,20 @@ export type StressScenario = {
      * Value Eur
      */
     value_eur: number;
+};
+
+/**
+ * SymbolWeight
+ */
+export type SymbolWeight = {
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Weight
+     */
+    weight: number;
 };
 
 /**
@@ -13334,6 +13770,195 @@ export type PlanApiV1PortfolioPlanPostResponses = {
 };
 
 export type PlanApiV1PortfolioPlanPostResponse = PlanApiV1PortfolioPlanPostResponses[keyof PlanApiV1PortfolioPlanPostResponses];
+
+export type PanelApiV1PortfolioRiskGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/risk';
+};
+
+export type PanelApiV1PortfolioRiskGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PanelApiV1PortfolioRiskGetError = PanelApiV1PortfolioRiskGetErrors[keyof PanelApiV1PortfolioRiskGetErrors];
+
+export type PanelApiV1PortfolioRiskGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: RiskPanel;
+};
+
+export type PanelApiV1PortfolioRiskGetResponse = PanelApiV1PortfolioRiskGetResponses[keyof PanelApiV1PortfolioRiskGetResponses];
+
+export type PolicyApiV1PortfolioRiskPolicyGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/risk/policy';
+};
+
+export type PolicyApiV1PortfolioRiskPolicyGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PolicyApiV1PortfolioRiskPolicyGetError = PolicyApiV1PortfolioRiskPolicyGetErrors[keyof PolicyApiV1PortfolioRiskPolicyGetErrors];
+
+export type PolicyApiV1PortfolioRiskPolicyGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PortfolioPolicyState;
+};
+
+export type PolicyApiV1PortfolioRiskPolicyGetResponse = PolicyApiV1PortfolioRiskPolicyGetResponses[keyof PolicyApiV1PortfolioRiskPolicyGetResponses];
+
+export type SavePolicyApiV1PortfolioRiskPolicyPostData = {
+    body: PortfolioPolicyInput;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/risk/policy';
+};
+
+export type SavePolicyApiV1PortfolioRiskPolicyPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SavePolicyApiV1PortfolioRiskPolicyPostError = SavePolicyApiV1PortfolioRiskPolicyPostErrors[keyof SavePolicyApiV1PortfolioRiskPolicyPostErrors];
+
+export type SavePolicyApiV1PortfolioRiskPolicyPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: PortfolioPolicyRevision;
+};
+
+export type SavePolicyApiV1PortfolioRiskPolicyPostResponse = SavePolicyApiV1PortfolioRiskPolicyPostResponses[keyof SavePolicyApiV1PortfolioRiskPolicyPostResponses];
+
+export type ProposalApiV1PortfolioRiskProposalGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Contribution Eur
+         */
+        contribution_eur?: number;
+        /**
+         * N Positions
+         */
+        n_positions?: number;
+    };
+    url: '/api/v1/portfolio/risk/proposal';
+};
+
+export type ProposalApiV1PortfolioRiskProposalGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ProposalApiV1PortfolioRiskProposalGetError = ProposalApiV1PortfolioRiskProposalGetErrors[keyof ProposalApiV1PortfolioRiskProposalGetErrors];
+
+export type ProposalApiV1PortfolioRiskProposalGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PolicyProposal;
+};
+
+export type ProposalApiV1PortfolioRiskProposalGetResponse = ProposalApiV1PortfolioRiskProposalGetResponses[keyof ProposalApiV1PortfolioRiskProposalGetResponses];
 
 export type PortfoliosApiV1PortfolioSimulationsGetData = {
     body?: never;

@@ -100,6 +100,11 @@ class Holdings:
         except ValueError as exc:
             raise QueryError("valuation_unavailable", str(exc), 422) from exc
 
+    def positions(self) -> list[dict]:
+        """Valued positions from the cache (price return), each with its currency and status."""
+        lots = self.store.lots()
+        return self._valuation(lots)["positions"] if lots else []
+
     def values_eur(self) -> tuple[dict[str, float], list[str]]:
         """Current euro value by symbol for the contribution plan, and the symbols that cannot be valued."""
         lots = self.store.lots()
