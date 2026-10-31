@@ -35,6 +35,8 @@ VEHICLES: tuple[dict[str, Any], ...] = (
 )
 LOOKBACK_DAYS = 7
 MAX_YEARS = 30
+# Shares of each purchase sent to the index instead of the active portfolio: a range to compare, not advice.
+INDEX_WEIGHTS = (0.0, 0.25, 0.5, 0.75, 1.0)
 
 
 class ProfileStore(Protocol):
@@ -142,13 +144,45 @@ class InvestorBenchmark:
         except ValueError as exc:
             raise QueryError("benchmark_unavailable", str(exc), 422) from exc
         portfolio, benchmark = rules.performance(real, profile), rules.performance(spy, profile)
+        value = sum(real["value_by_currency"].values())
+        usd_share = (value - real["value_by_currency"].get("EUR", 0.0)) / value if value > 0 else 0.0
         return {
             "as_of": self.today().isoformat(), "profile_revision": saved["revision"],
             "profile_version": profile.version, "source": self._source(prices, euros_per_dollar),
             "portfolio": portfolio, "benchmark": benchmark, "comparison": rules.compare(portfolio, benchmark),
             "excluded": real["excluded"], "incomplete_sessions": real["incomplete_sessions"],
             "portfolio_series": self._points(real["daily"]), "benchmark_series": self._points(spy["daily"]),
+            "usd_share": usd_share,
+            "scenarios": rules.scenarios(value, usd_share, profile.loss_tolerance) if value > 0 else [],
+            "alternatives": self._alternatives(lots, adjusted, euros_per_unit, prices, euros_per_dollar,
+                                               real, spy, vehicle, profile),
         }
+
+    @staticmethod
+    def _alternatives(lots: list[dict], adjusted: dict[str, pd.Series], euros_per_unit: dict[str, pd.Series],
+                      prices: pd.Series, euros_per_dollar: pd.Series, real: dict, spy: dict,
+                      vehicle: rules.Vehicle, profile: rules.Profile) -> list[dict]:
+        """Each purchase split between the active portfolio and the index; no weight is recommended.
+
+        The active part scales the shares and the commission of each lot; the
+        index part pays the broker costs on its own share of every purchase."""
+        rows = []
+        for weight in INDEX_WEIGHTS:
+            if weight == 0:
+                result = real
+            elif weight == 1:
+                result = spy
+            else:
+                scaled = [lot | {"shares": lot["shares"] * (1 - weight), "commission": lot["commission"] * (1 - weight)}
+                          for lot in lots]
+                active = rules.lots_history(scaled, adjusted, euros_per_unit, prices.index)
+                index = rules.simulate([(day, amount * weight) for day, amount in real["flows"]], prices, vehicle,
+                                       1 / euros_per_dollar)
+                result = rules.combine(active, index)
+            label = ("Activa: tu cartera" if weight == 0 else "Indexada: SPY" if weight == 1
+                     else f"Mixta: {round(weight * 100)} % índice")
+            rows.append({"index_weight": weight, "label": label, "performance": rules.performance(result, profile)})
+        return rows
 
     def benchmark(self, start: date | None = None) -> dict:
         """Read-only: the profile's contributions since ``start`` bought in SPY through the investor's broker."""
@@ -175,9 +209,17 @@ class InvestorBenchmark:
             "performance": rules.performance(result, profile),
             "pending": [{"date": day.isoformat(), "amount_eur": amount} for day, amount in result["pending"]],
             "series": self._points(result["daily"]),
+            "scenarios": self._plan_scenarios(result, profile),
             "vehicles": [self._vehicle(spec, histories, flows, start, euros_per_dollar, profile)
                          for spec in VEHICLES],
         }
+
+    @staticmethod
+    def _plan_scenarios(result: dict, profile: rules.Profile) -> list[dict]:
+        """The S&P 500 is a dollar asset even when bought through a euro-listed vehicle."""
+        daily = result["daily"]
+        value = float(daily["value_eur"].iloc[-1]) if not daily.empty else 0.0
+        return rules.scenarios(value, 1.0, profile.loss_tolerance) if value > 0 else []
 
     @staticmethod
     def _vehicle(spec: dict, histories: dict[str, pd.DataFrame], flows: list[tuple[date, float]], start: date,

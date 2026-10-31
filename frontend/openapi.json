@@ -1,6 +1,30 @@
 {
   "components": {
     "schemas": {
+      "Alternative": {
+        "additionalProperties": false,
+        "properties": {
+          "index_weight": {
+            "description": "Parte de cada compra en el índice; 0 = activa, 1 = indexada",
+            "title": "Index Weight",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/BenchmarkPerformance"
+          }
+        },
+        "required": [
+          "index_weight",
+          "label",
+          "performance"
+        ],
+        "title": "Alternative",
+        "type": "object"
+      },
       "AnalysisPromptResponse": {
         "description": "Text to paste into an AI assistant; every number in it comes from GABI's deterministic code.",
         "properties": {
@@ -10051,6 +10075,14 @@
       "HoldingsBenchmarkResult": {
         "additionalProperties": false,
         "properties": {
+          "alternatives": {
+            "description": "Un rango para comparar, no una recomendación de pesos",
+            "items": {
+              "$ref": "#/components/schemas/Alternative"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
           "as_of": {
             "format": "date",
             "title": "As Of",
@@ -10099,8 +10131,20 @@
             "title": "Profile Version",
             "type": "string"
           },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/StressScenario"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
           "source": {
             "$ref": "#/components/schemas/BenchmarkSource"
+          },
+          "usd_share": {
+            "description": "Valor actual en posiciones no cotizadas en EUR (aproximación)",
+            "title": "Usd Share",
+            "type": "number"
           }
         },
         "required": [
@@ -10114,7 +10158,10 @@
           "excluded",
           "incomplete_sessions",
           "portfolio_series",
-          "benchmark_series"
+          "benchmark_series",
+          "usd_share",
+          "scenarios",
+          "alternatives"
         ],
         "title": "HoldingsBenchmarkResult",
         "type": "object"
@@ -10720,6 +10767,14 @@
             "title": "Profile Version",
             "type": "string"
           },
+          "scenarios": {
+            "description": "Exposición al dólar del 100 %: el S&P 500",
+            "items": {
+              "$ref": "#/components/schemas/StressScenario"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
           "series": {
             "items": {
               "$ref": "#/components/schemas/BenchmarkPoint"
@@ -10754,6 +10809,7 @@
           "performance",
           "pending",
           "series",
+          "scenarios",
           "vehicles"
         ],
         "title": "InvestorBenchmarkResult",
@@ -17759,6 +17815,59 @@
           "contribution_to_full_quarterly_alpha"
         ],
         "title": "StabilityYear",
+        "type": "object"
+      },
+      "StressScenario": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "description": "Efecto en euros (fracción)",
+            "title": "Change",
+            "type": "number"
+          },
+          "change_eur": {
+            "title": "Change Eur",
+            "type": "number"
+          },
+          "euro": {
+            "description": "Variación del euro frente al dólar (fracción)",
+            "title": "Euro",
+            "type": "number"
+          },
+          "exceeds_tolerance": {
+            "description": "Motivo para revisar el plan; nunca una venta automática",
+            "title": "Exceeds Tolerance",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "market": {
+            "description": "Shock de mercado en moneda local (fracción)",
+            "title": "Market",
+            "type": "number"
+          },
+          "value_eur": {
+            "title": "Value Eur",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "market",
+          "euro",
+          "change",
+          "change_eur",
+          "value_eur",
+          "exceeds_tolerance"
+        ],
+        "title": "StressScenario",
         "type": "object"
       },
       "TailLevel": {

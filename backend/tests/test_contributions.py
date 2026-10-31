@@ -162,3 +162,27 @@ def test_an_incomplete_session_is_dropped_and_its_flow_enters_on_the_next_one():
     assert daily.index.tolist() == [pd.Timestamp("2025-01-06")]
     assert daily["flow_eur"].tolist() == [1500] and daily["value_eur"].tolist() == [1500]
     assert c.performance(result, PROFILE)["twr"] == pytest.approx(0.0)
+
+
+def test_scenarios_convert_market_and_euro_shocks_and_flag_the_tolerance():
+    rows = {row["id"]: row for row in c.scenarios(10_000, 1.0, 0.20)}
+    assert rows["market_-10"]["change_eur"] == pytest.approx(-1_000)
+    assert rows["euro_+10"]["change"] == pytest.approx(1 / 1.1 - 1)
+    assert rows["market_-20_euro_+10"]["change"] == pytest.approx(0.8 / 1.1 - 1)
+    assert rows["market_-20_euro_+10"]["exceeds_tolerance"] and not rows["market_-10"]["exceeds_tolerance"]
+    euro_only = {row["id"]: row for row in c.scenarios(10_000, 0.0, 0.20)}
+    assert euro_only["euro_+10"]["change"] == 0 and euro_only["market_-20"]["change"] == pytest.approx(-0.2)
+    with pytest.raises(ValueError):
+        c.scenarios(1.0, 1.5, 0.2)
+
+
+def test_combine_adds_two_results_and_keeps_the_last_value_of_a_missing_session():
+    eur = c.Vehicle("IDX", currency="EUR")
+    a = c.simulate([(date(2025, 1, 2), 1000.0)], series([100, 110, 121]), eur)
+    b = c.simulate([(date(2025, 1, 3), 500.0)], series([50, 50, 50]), eur)
+    b["daily"] = b["daily"].drop(pd.Timestamp("2025-01-06"))
+    combined = c.combine(a, b)
+    daily = combined["daily"]
+    assert daily["contributed_eur"].tolist() == [1000, 1500, 1500]
+    assert daily["flow_eur"].tolist() == [1000, 500, 0]
+    assert daily["value_eur"].iloc[-1] == pytest.approx(1210 + 500)
