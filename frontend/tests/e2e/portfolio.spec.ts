@@ -297,3 +297,23 @@ test('Inicio muestra la franja macro de la caché y el panel declara frecuencia 
   await expect(page.getByText('FRED WALCL · Semanal · saldo de cada miércoles')).toBeVisible();
   await expect(page.getByText(/no es alcista por sí mismo/)).toBeVisible();
 });
+
+test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', async ({
+  page,
+}) => {
+  await page.goto('/cartera/perfil');
+  await expect(page.getByRole('heading', { name: 'Perfil y benchmark', level: 1 })).toBeVisible();
+  await expect(page.getByText('Guarda tu perfil para ver tu plan')).toBeVisible();
+  const form = page.getByRole('form', { name: 'Perfil de inversor' });
+  await form.getByLabel('Aportación mensual (€)').fill('500');
+  await form.getByRole('button', { name: 'Guardar perfil' }).click();
+  await expect(form.getByRole('status')).toContainText('revisión');
+  // The test cache has SPY but no EUR rate: the page says so instead of downloading it.
+  const plan = page.getByRole('region', { name: 'Tu plan en el S&P 500' });
+  await expect(plan).toContainText('USDEUR=X');
+  await expect(plan.getByRole('button', { name: 'Actualizar benchmark' })).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole('form', { name: 'Perfil de inversor' }).getByLabel('Aportación mensual (€)'),
+  ).toHaveValue('500');
+});
