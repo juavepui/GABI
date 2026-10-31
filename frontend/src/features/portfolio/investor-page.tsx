@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import type {
   BenchmarkPerformance,
   BenchmarkSource,
+  BenchmarkVehicle,
   InvestorProfileInput,
   InvestorProfileRevision,
 } from '@/shared/api/generated/types.gen';
@@ -253,7 +254,7 @@ function BenchmarkPrices() {
         Actualizar benchmark
       </Button>
       <p className="text-xs text-muted-foreground">
-        Descarga de Yahoo Finance: SPY y el cambio USDEUR=X.
+        Descarga de Yahoo Finance: SPY, el cambio USDEUR=X, el índice ^SP500TR y el ETF SXR8.DE.
       </p>
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {job.data && job.data.status !== 'succeeded' && (
@@ -388,9 +389,60 @@ function PlanBenchmark() {
             </p>
           )}
           <SourceNote source={data.source} />
+          <Vehicles reference={data.performance} vehicles={data.vehicles} />
         </>
       )}
     </section>
+  );
+}
+
+/** The same contributions in the theoretical index and in a vehicle an EU investor can buy. */
+function Vehicles({
+  reference,
+  vehicles,
+}: {
+  reference: BenchmarkPerformance;
+  vehicles: BenchmarkVehicle[];
+}) {
+  const rows: [string, string, BenchmarkPerformance | null | undefined][] = [
+    ['SPY (referencia de arriba)', 'Cierre ajustado con dividendos brutos', reference],
+    ...vehicles.map((row): [string, string, BenchmarkPerformance | null | undefined] => [
+      row.symbol + (row.theoretical ? ' · teórico' : ' · invertible'),
+      row.status === 'ok' ? row.label : 'Sin precios en caché: pulsa «Actualizar benchmark».',
+      row.performance,
+    ]),
+  ];
+  return (
+    <div className="mt-5 overflow-x-auto">
+      <h3 className="font-semibold">Índice teórico frente a vehículo invertible</h3>
+      <table className="mt-2 w-full text-left text-xs sm:text-sm">
+        <thead className="border-b text-xs text-muted-foreground">
+          <tr>
+            <th className="pb-2">Vehículo</th>
+            <th className="pb-2">Valor final</th>
+            <th className="pb-2">Costes</th>
+            <th className="pb-2">TWR</th>
+            <th className="pb-2">XIRR</th>
+            <th className="pb-2">Caída máxima</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([name, note, performance]) => (
+            <tr key={name} className="border-b align-top last:border-0">
+              <td className="py-2">
+                <span className="font-medium">{name}</span>
+                <span className="block max-w-sm text-xs text-muted-foreground">{note}</span>
+              </td>
+              <td className="py-2 tabular-nums">{eur(performance?.final_value_eur)}</td>
+              <td className="py-2 tabular-nums">{eur(performance?.costs_eur)}</td>
+              <td className="py-2 tabular-nums">{pct(performance?.twr)}</td>
+              <td className="py-2 tabular-nums">{pct(performance?.xirr)}</td>
+              <td className="py-2 tabular-nums">{pct(performance?.max_drawdown)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

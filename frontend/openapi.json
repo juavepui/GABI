@@ -1566,6 +1566,84 @@
         "title": "BenchmarkSource",
         "type": "object"
       },
+      "BenchmarkVehicle": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "first_price": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Price"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_price": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Price"
+          },
+          "performance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkPerformance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "description": "ok | missing_prices",
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "theoretical": {
+            "description": "Índice sin costes; no es invertible",
+            "title": "Theoretical",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "label",
+          "currency",
+          "theoretical",
+          "status",
+          "first_price",
+          "last_price",
+          "performance"
+        ],
+        "title": "BenchmarkVehicle",
+        "type": "object"
+      },
       "BlindCreateRequest": {
         "additionalProperties": false,
         "description": "A new blind validation; weights in percent.",
@@ -10656,6 +10734,14 @@
             "format": "date",
             "title": "Start",
             "type": "string"
+          },
+          "vehicles": {
+            "description": "Las mismas aportaciones en el índice TR y en un ETF Acc",
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkVehicle"
+            },
+            "title": "Vehicles",
+            "type": "array"
           }
         },
         "required": [
@@ -10667,7 +10753,8 @@
           "source",
           "performance",
           "pending",
-          "series"
+          "series",
+          "vehicles"
         ],
         "title": "InvestorBenchmarkResult",
         "type": "object"

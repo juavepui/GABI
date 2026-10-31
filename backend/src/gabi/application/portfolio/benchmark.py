@@ -8,7 +8,7 @@ refreshes. A missing series is reported, never filled in.
 import dataclasses
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
 import pandas as pd
 
@@ -25,6 +25,14 @@ BENCHMARK_SOURCE = {
                "sin retención en origen; el precio ya descuenta su TER.",
     "fx": FX_SYMBOL,
 }
+# The theoretical index (no costs, no withholding) apart from an accumulating vehicle an EU investor can buy.
+VEHICLES: tuple[dict[str, Any], ...] = (
+    {"id": "index_tr", "symbol": "^SP500TR", "currency": "USD", "theoretical": True,
+     "label": "Índice S&P 500 Total Return: teórico, sin costes ni retención sobre dividendos."},
+    {"id": "accumulating_etf", "symbol": "SXR8.DE", "currency": "EUR", "theoretical": False,
+     "label": "iShares Core S&P 500 UCITS ETF (Acc) en Xetra, en EUR: acumula dividendos tras la retención "
+              "en origen y su precio ya descuenta el TER; con los costes de tu bróker, sin conversión."},
+)
 LOOKBACK_DAYS = 7
 MAX_YEARS = 30
 
@@ -36,8 +44,8 @@ class ProfileStore(Protocol):
 
 
 def refresh_prices(fetch: Callable[[list[str]], dict]) -> dict:
-    """The explicit download behind «Actualizar benchmark»: SPY and the EUR/USD rate."""
-    symbols = [BENCHMARK_SYMBOL, FX_SYMBOL]
+    """The explicit download behind «Actualizar benchmark»: SPY, the EUR/USD rate, the TR index and the ETF."""
+    symbols = [BENCHMARK_SYMBOL, FX_SYMBOL, *(vehicle["symbol"] for vehicle in VEHICLES)]
     failed = {str(key): str(reason) for key, reason in fetch(symbols).items()}
     return {"kind": "benchmark_prices", "symbols": symbols, "updated": len(symbols) - len(failed), "failed": failed}
 
@@ -51,7 +59,7 @@ def _stored(profile: rules.Profile) -> dict:
 
 def _series(frame: pd.DataFrame | None, column: str) -> pd.Series:
     if frame is None or frame.empty or column not in frame:
-        return pd.Series(dtype=float)
+        return pd.Series(dtype=float, index=pd.DatetimeIndex([]))
     values = frame[column].dropna()
     return values[values > 0]
 
@@ -149,7 +157,8 @@ class InvestorBenchmark:
         start = start or rules.add_months(today, -profile.horizon_months)
         if not today - timedelta(days=365 * MAX_YEARS) <= start < today:
             raise QueryError("invalid_period", f"El inicio debe ser pasado y de los últimos {MAX_YEARS} años.", 422)
-        histories = self.prices([BENCHMARK_SYMBOL, FX_SYMBOL], (start - timedelta(days=LOOKBACK_DAYS)).isoformat())
+        histories = self.prices([BENCHMARK_SYMBOL, FX_SYMBOL, *(vehicle["symbol"] for vehicle in VEHICLES)],
+                                (start - timedelta(days=LOOKBACK_DAYS)).isoformat())
         prices, euros_per_dollar = self._benchmark_series(histories)
         flows = rules.schedule(profile, start, today)
         vehicle = rules.broker_vehicle(profile, BENCHMARK_SYMBOL, "USD")
@@ -166,4 +175,25 @@ class InvestorBenchmark:
             "performance": rules.performance(result, profile),
             "pending": [{"date": day.isoformat(), "amount_eur": amount} for day, amount in result["pending"]],
             "series": self._points(result["daily"]),
+            "vehicles": [self._vehicle(spec, histories, flows, start, euros_per_dollar, profile)
+                         for spec in VEHICLES],
         }
+
+    @staticmethod
+    def _vehicle(spec: dict, histories: dict[str, pd.DataFrame], flows: list[tuple[date, float]], start: date,
+                 euros_per_dollar: pd.Series, profile: rules.Profile) -> dict:
+        """The same contributions in another vehicle; a missing series is reported, not an error."""
+        prices = _series(histories.get(spec["symbol"]), "adj_close")
+        prices = prices[prices.index >= pd.Timestamp(start)]
+        base = {key: spec[key] for key in ("id", "symbol", "label", "currency", "theoretical")}
+        if prices.empty:
+            return base | {"status": "missing_prices", "first_price": None, "last_price": None, "performance": None}
+        vehicle = (rules.Vehicle(spec["symbol"], spec["currency"], theoretical=True) if spec["theoretical"]
+                   else rules.broker_vehicle(profile, spec["symbol"], spec["currency"]))
+        try:
+            result = rules.simulate(flows, prices, vehicle, None if spec["currency"] == "EUR" else 1 / euros_per_dollar)
+        except ValueError:
+            return base | {"status": "missing_prices", "first_price": None, "last_price": None, "performance": None}
+        return base | {"status": "ok", "first_price": prices.index[0].date().isoformat(),
+                       "last_price": prices.index[-1].date().isoformat(),
+                       "performance": rules.performance(result, profile)}

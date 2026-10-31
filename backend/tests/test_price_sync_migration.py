@@ -128,3 +128,10 @@ def test_skip_rule(latest, checkpoint, due, expected):
     from gabi.domain.market.price_sync import already_checked
     assert already_checked(latest, "2024-01-10", checkpoint, force=False, full_refresh=False, due=due) is expected
     assert already_checked(latest, "2024-01-10", checkpoint, force=True, full_refresh=False, due=due) is False
+
+
+def test_yahoo_symbol_keeps_exchange_suffixes_and_converts_share_classes():
+    from gabi.domain.market.price_sync import yahoo_symbol
+
+    assert [yahoo_symbol(s) for s in ("BRK.B", "SAP.DE", "SXR8.DE", "VOD.L", "^SP500TR", "AAPL")] == [
+        "BRK-B", "SAP.DE", "SXR8.DE", "VOD.L", "^SP500TR", "AAPL"]

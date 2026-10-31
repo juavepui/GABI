@@ -79,6 +79,30 @@ const benchmark: InvestorBenchmarkResult = {
   performance,
   pending: [],
   series: [],
+  vehicles: [
+    {
+      id: 'index_tr',
+      symbol: '^SP500TR',
+      label: 'Índice teórico.',
+      currency: 'USD',
+      theoretical: true,
+      status: 'ok',
+      first_price: '2024-10-31',
+      last_price: '2026-10-30',
+      performance: { ...performance, final_value_eur: 30500, costs_eur: 0 },
+    },
+    {
+      id: 'accumulating_etf',
+      symbol: 'SXR8.DE',
+      label: 'ETF Acc.',
+      currency: 'EUR',
+      theoretical: false,
+      status: 'missing_prices',
+      first_price: null,
+      last_price: null,
+      performance: null,
+    },
+  ],
 };
 
 let screen: ReturnType<typeof renderScreen> | undefined;
@@ -108,6 +132,8 @@ describe('Perfil y benchmark (#244)', () => {
     expect(screen.text()).toContain('TWR+25 %');
     expect(screen.text()).toContain('El 2025-04-08; revisar, no vender por sí solo');
     expect(screen.text()).toContain('Todavía no has registrado compras.');
+    expect(screen.text()).toContain('^SP500TR · teórico');
+    expect(screen.text()).toContain('SXR8.DE · invertibleSin precios en caché');
     const fx = screen.container.querySelector<HTMLInputElement>('[name=fx_cost_pct]');
     expect(fx?.value).toBe('0.6');
   });

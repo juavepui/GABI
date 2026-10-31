@@ -76,6 +76,18 @@ class BenchmarkPoint(WireModel):
     contributed_eur: float
 
 
+class BenchmarkVehicle(WireModel):
+    id: str
+    symbol: str
+    label: str
+    currency: str
+    theoretical: bool = Field(description="Índice sin costes; no es invertible")
+    status: str = Field(description="ok | missing_prices")
+    first_price: date | None
+    last_price: date | None
+    performance: BenchmarkPerformance | None
+
+
 class InvestorBenchmarkResult(WireModel):
     as_of: date
     start: date
@@ -86,6 +98,7 @@ class InvestorBenchmarkResult(WireModel):
     performance: BenchmarkPerformance
     pending: list[PendingContribution]
     series: list[BenchmarkPoint]
+    vehicles: list[BenchmarkVehicle] = Field(description="Las mismas aportaciones en el índice TR y en un ETF Acc")
 
 
 class ExcludedLot(WireModel):

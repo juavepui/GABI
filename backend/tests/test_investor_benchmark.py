@@ -62,14 +62,15 @@ def test_missing_cached_prices_are_reported_and_never_downloaded(tmp_path):
     with pytest.raises(QueryError) as error:
         service.benchmark()
     assert error.value.code == "benchmark_prices_missing" and "SPY, USDEUR=X" in error.value.message
-    assert asked == [["SPY", "USDEUR=X"]]
+    assert asked == [["SPY", "USDEUR=X", "^SP500TR", "SXR8.DE"]]
 
 
 def test_the_explicit_job_downloads_spy_and_the_rate():
     asked = []
     result = refresh_prices(lambda symbols: asked.append(symbols) or {"USDEUR=X": "sin datos"})
-    assert asked == [["SPY", "USDEUR=X"]]
-    assert result == {"kind": "benchmark_prices", "symbols": ["SPY", "USDEUR=X"], "updated": 1,
+    symbols = ["SPY", "USDEUR=X", "^SP500TR", "SXR8.DE"]
+    assert asked == [symbols]
+    assert result == {"kind": "benchmark_prices", "symbols": symbols, "updated": 3,
                       "failed": {"USDEUR=X": "sin datos"}}
 
 
@@ -121,3 +122,19 @@ def test_real_purchases_and_spy_receive_the_same_euros_on_the_same_sessions(tmp_
     with pytest.raises(QueryError) as error:
         empty.holdings()
     assert error.value.code == "no_holdings"
+
+
+def test_the_same_contributions_go_to_the_theoretical_index_and_the_accumulating_etf(tmp_path):
+    prices = {"SPY": _frame("adj_close", [500.0] * 30, "2026-08-03"),
+              "USDEUR=X": _frame("close", [0.9] * 30, "2026-08-03"),
+              "^SP500TR": _frame("adj_close", [10_000.0] * 30, "2026-08-03")}
+    service = InvestorBenchmark(SqliteInvestorProfile(tmp_path), lambda symbols, start: prices, lambda: TODAY)
+    service.save(PROFILE | {"horizon_months": 1})
+    vehicles = {row["id"]: row for row in service.benchmark(date(2026, 8, 3))["vehicles"]}
+    index = vehicles["index_tr"]
+    # The theoretical index pays no broker commission nor conversion: every euro is invested.
+    assert index["status"] == "ok" and index["theoretical"]
+    assert index["performance"]["final_value_eur"] == pytest.approx(11_700)
+    assert index["performance"]["costs_eur"] == 0
+    assert vehicles["accumulating_etf"]["status"] == "missing_prices"
+    assert vehicles["accumulating_etf"]["performance"] is None
