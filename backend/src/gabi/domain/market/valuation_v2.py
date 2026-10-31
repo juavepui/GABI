@@ -100,7 +100,9 @@ def wacc(facts: dict, anchor: str, market_cap: float | None, assumptions: Assump
     rate, tax_convention, tax_inputs = v2.tax_rate(facts, anchor)
     debt_value = debt.value or 0.0
     interest = v2.at(v2.series(facts, INTEREST_EXPENSE_TAGS, duration=True), anchor)
-    observed = (interest.value / debt_value if _reported(interest) and debt_value > 0 else None)
+    observed = (interest.value / debt_value
+                if interest.value is not None and _reported(interest) and debt_value > 0 else None)
+    inputs: tuple[Fact, ...]
     if observed is not None and 0 < observed <= MAX_OBSERVED_COST_OF_DEBT:
         cost_of_debt, debt_convention, inputs = observed, "kd=interest_expense/closing_debt", (interest,)
     else:
