@@ -733,6 +733,49 @@ export type BenchmarkSource = {
 };
 
 /**
+ * BenchmarkVehicle
+ */
+export type BenchmarkVehicle = {
+    /**
+     * Currency
+     */
+    currency: string;
+    /**
+     * First Price
+     */
+    first_price: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Last Price
+     */
+    last_price: string | null;
+    performance: BenchmarkPerformance | null;
+    /**
+     * Status
+     *
+     * ok | missing_prices
+     */
+    status: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Theoretical
+     *
+     * Índice sin costes; no es invertible
+     */
+    theoretical: boolean;
+};
+
+/**
  * BlindCreateRequest
  *
  * A new blind validation; weights in percent.
@@ -5511,6 +5554,12 @@ export type InvestorBenchmarkResult = {
      * Start
      */
     start: string;
+    /**
+     * Vehicles
+     *
+     * Las mismas aportaciones en el índice TR y en un ETF Acc
+     */
+    vehicles: Array<BenchmarkVehicle>;
 };
 
 /**

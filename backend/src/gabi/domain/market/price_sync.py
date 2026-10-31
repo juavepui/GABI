@@ -1,5 +1,6 @@
 """Incremental Yahoo price rules: what to skip, the overlap window, response validation and adjustment changes."""
 
+import re
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -10,9 +11,13 @@ COLS = {"Open": "open", "High": "high", "Low": "low", "Close": "close",
 OVERLAP_DAYS = 14
 
 
+# Exchange suffixes Yahoo keeps with a dot (SAP.DE, SXR8.DE, VOD.L); a US share class is not one.
+EXCHANGE_SUFFIX = re.compile(r"[A-Z0-9^][A-Z0-9^\-]*\.(DE|L|MC|PA|AS|MI|SW)")
+
+
 def yahoo_symbol(symbol: str) -> str:
-    """Yahoo Finance uses '-' instead of '.' (BRK.B -> BRK-B)."""
-    return symbol.replace(".", "-")
+    """Yahoo Finance uses '-' instead of '.' for share classes (BRK.B -> BRK-B), not for exchange suffixes."""
+    return symbol if EXCHANGE_SUFFIX.fullmatch(symbol) else symbol.replace(".", "-")
 
 
 def already_checked(latest: str | None, session: str, checkpoint: dict, *, force: bool, full_refresh: bool,

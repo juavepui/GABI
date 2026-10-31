@@ -56,7 +56,19 @@ cambio de su fecha se excluye y se informa; una sesión con huecos de más de ci
 sesiones se descarta y sus flujos entran en la siguiente completa. SPY recibe
 exactamente esos flujos. `GET /api/v1/portfolio/investor/holdings-benchmark`.
 
+## Índice teórico y vehículo invertible (parte 5a)
+
+El benchmark del plan devuelve también `vehicles`: las mismas aportaciones en
+`^SP500TR` (índice total return teórico: sin costes, conversión ni retención) y en
+`SXR8.DE` (iShares Core S&P 500 UCITS Acc en Xetra, en EUR: acumula dividendos tras
+la retención, precio neto de TER, con los costes del bróker y sin conversión). La
+diferencia entre ambos es el coste real de invertir el índice. Sin precios en
+caché, el vehículo se marca `missing_prices` sin bloquear el resto. El job
+`benchmark_prices` descarga los cuatro símbolos.
+
+`yahoo_symbol` conserva los sufijos de bolsa (`.DE`, `.L`, `.MC`, `.PA`, `.AS`,
+`.MI`, `.SW`) y solo convierte las clases de acciones de EE. UU. (BRK.B → BRK-B).
+
 ## Pendiente
 
-Escenarios EUR/USD y de mercado, alternativas indexada/activa/mixta, índice TR
-teórico frente a vehículo de acumulación, y la UI.
+Escenarios EUR/USD y de mercado, y alternativas indexada/activa/mixta.
