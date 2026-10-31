@@ -95,3 +95,29 @@ def test_api_saves_revisions_and_reads_the_benchmark_without_writing(tmp_path):
         assert body["series"][-1]["date"] == TODAY.isoformat()
         assert api.get("/api/v1/portfolio/investor/benchmark", params={"start": "2027-01-01"}).status_code == 422
         assert (tmp_path / "gabi.db").stat().st_mtime_ns == stamp  # Reading the benchmark writes nothing.
+
+
+def test_real_purchases_and_spy_receive_the_same_euros_on_the_same_sessions(tmp_path):
+    sessions = "2026-08-03"
+    prices = {"SPY": _frame("adj_close", [500.0] * 10 + [550.0] * 10, sessions),
+              "AAA": _frame("adj_close", [100.0] * 10 + [120.0] * 10, sessions),
+              "USDEUR=X": _frame("close", [0.9] * 20, sessions)}
+    lots = [{"id": 1, "symbol": "AAA", "shares": 10.0, "price": 100.0, "purchase_date": "2026-08-03",
+             "currency": "USD", "commission": 0.0, "fx_rate": None}]
+    asked = []
+    service = InvestorBenchmark(SqliteInvestorProfile(tmp_path),
+                                lambda symbols, start: asked.append((symbols, start)) or prices, lambda: TODAY,
+                                lots=lambda: lots)
+    with pytest.raises(QueryError):
+        service.holdings()  # No profile yet.
+    service.save(PROFILE | {"commission_fixed_eur": 0, "fx_cost_pct": 0})
+    result = service.holdings()
+    assert asked[-1] == (["AAA", "SPY", "USDEUR=X"], "2026-07-27")
+    assert result["portfolio"]["contributed_eur"] == result["benchmark"]["contributed_eur"] == pytest.approx(900)
+    assert result["portfolio"]["twr"] == pytest.approx(0.20) and result["benchmark"]["twr"] == pytest.approx(0.10)
+    assert result["comparison"]["wealth_difference_eur"] == pytest.approx(900 * 0.10)
+    assert result["excluded"] == [] and result["portfolio_series"][-1]["value_eur"] == pytest.approx(1080)
+    empty = InvestorBenchmark(SqliteInvestorProfile(tmp_path), lambda symbols, start: prices, lambda: TODAY)
+    with pytest.raises(QueryError) as error:
+        empty.holdings()
+    assert error.value.code == "no_holdings"

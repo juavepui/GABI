@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from gabi.application.portfolio.benchmark import InvestorBenchmark
 from gabi_api.schemas.investor import (
+    HoldingsBenchmarkResult,
     InvestorBenchmarkResult,
     InvestorProfileInput,
     InvestorProfileRevision,
@@ -35,3 +36,9 @@ def benchmark(investor: Annotated[InvestorBenchmark, Depends(service)],
               start: Annotated[date | None, Query()] = None) -> InvestorBenchmarkResult:
     """Read-only from cached prices: the profile's contributions bought in SPY; it never downloads."""
     return InvestorBenchmarkResult.model_validate(investor.benchmark(start))
+
+
+@router.get("/holdings-benchmark", response_model=HoldingsBenchmarkResult)
+def holdings_benchmark(investor: Annotated[InvestorBenchmark, Depends(service)]) -> HoldingsBenchmarkResult:
+    """Read-only from cached prices: the real purchases against SPY bought with the same euros."""
+    return HoldingsBenchmarkResult.model_validate(investor.holdings())

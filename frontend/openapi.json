@@ -1214,76 +1214,6 @@
         "title": "BenchmarkActive",
         "type": "object"
       },
-      "BenchmarkComparison": {
-        "properties": {
-          "active": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/BenchmarkActive"
-            },
-            "default": {},
-            "title": "Active",
-            "type": "object"
-          },
-          "end": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "End"
-          },
-          "metrics": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/BenchmarkMetrics"
-            },
-            "default": {},
-            "title": "Metrics",
-            "type": "object"
-          },
-          "n_obs": {
-            "title": "N Obs",
-            "type": "integer"
-          },
-          "periods": {
-            "default": [],
-            "items": {
-              "$ref": "#/components/schemas/BenchmarkPeriod"
-            },
-            "title": "Periods",
-            "type": "array"
-          },
-          "start": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Start"
-          },
-          "status": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Status"
-          }
-        },
-        "required": [
-          "n_obs"
-        ],
-        "title": "BenchmarkComparison",
-        "type": "object"
-      },
       "BenchmarkMethod": {
         "properties": {
           "embargo_quarters": {
@@ -6997,6 +6927,44 @@
         "title": "EvidenceTop",
         "type": "object"
       },
+      "ExcludedLot": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "purchase_date": {
+            "format": "date",
+            "title": "Purchase Date",
+            "type": "string"
+          },
+          "reason": {
+            "description": "missing_price | missing_fx | after_last_session",
+            "title": "Reason",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "purchase_date",
+          "reason"
+        ],
+        "title": "ExcludedLot",
+        "type": "object"
+      },
       "ExcludedTrial": {
         "properties": {
           "reason": {
@@ -8008,10 +7976,10 @@
       "FactorBenchmark": {
         "properties": {
           "expanding": {
-            "$ref": "#/components/schemas/BenchmarkComparison"
+            "$ref": "#/components/schemas/gabi_api__schemas__research__BenchmarkComparison"
           },
           "in_sample": {
-            "$ref": "#/components/schemas/BenchmarkComparison"
+            "$ref": "#/components/schemas/gabi_api__schemas__research__BenchmarkComparison"
           },
           "limitations": {
             "items": {
@@ -10000,6 +9968,77 @@
           "complete"
         ],
         "title": "HoldingTotals",
+        "type": "object"
+      },
+      "HoldingsBenchmarkResult": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "benchmark": {
+            "$ref": "#/components/schemas/BenchmarkPerformance"
+          },
+          "benchmark_series": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkPoint"
+            },
+            "title": "Benchmark Series",
+            "type": "array"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/gabi_api__schemas__investor__BenchmarkComparison"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedLot"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "incomplete_sessions": {
+            "title": "Incomplete Sessions",
+            "type": "integer"
+          },
+          "portfolio": {
+            "$ref": "#/components/schemas/BenchmarkPerformance",
+            "description": "Cierre ajustado: rentabilidad total, no solo precio"
+          },
+          "portfolio_series": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkPoint"
+            },
+            "title": "Portfolio Series",
+            "type": "array"
+          },
+          "profile_revision": {
+            "title": "Profile Revision",
+            "type": "integer"
+          },
+          "profile_version": {
+            "title": "Profile Version",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/BenchmarkSource"
+          }
+        },
+        "required": [
+          "as_of",
+          "profile_revision",
+          "profile_version",
+          "source",
+          "portfolio",
+          "benchmark",
+          "comparison",
+          "excluded",
+          "incomplete_sessions",
+          "portfolio_series",
+          "benchmark_series"
+        ],
+        "title": "HoldingsBenchmarkResult",
         "type": "object"
       },
       "HoldingsSummary": {
@@ -18729,6 +18768,134 @@
         ],
         "title": "WeightsRequest",
         "type": "object"
+      },
+      "gabi_api__schemas__investor__BenchmarkComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "max_drawdown_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown Difference"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "twr_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twr Difference"
+          },
+          "wealth_difference_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wealth Difference Eur"
+          },
+          "xirr_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr Difference"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "BenchmarkComparison",
+        "type": "object"
+      },
+      "gabi_api__schemas__research__BenchmarkComparison": {
+        "properties": {
+          "active": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BenchmarkActive"
+            },
+            "default": {},
+            "title": "Active",
+            "type": "object"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BenchmarkMetrics"
+            },
+            "default": {},
+            "title": "Metrics",
+            "type": "object"
+          },
+          "n_obs": {
+            "title": "N Obs",
+            "type": "integer"
+          },
+          "periods": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkPeriod"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "n_obs"
+        ],
+        "title": "BenchmarkComparison",
+        "type": "object"
       }
     }
   },
@@ -24159,6 +24326,88 @@
           }
         },
         "summary": "Benchmark",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/investor/holdings-benchmark": {
+      "get": {
+        "description": "Read-only from cached prices: the real purchases against SPY bought with the same euros.",
+        "operationId": "holdings_benchmark_api_v1_portfolio_investor_holdings_benchmark_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingsBenchmarkResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Holdings Benchmark",
         "tags": [
           "portfolio"
         ]

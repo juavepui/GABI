@@ -86,3 +86,32 @@ class InvestorBenchmarkResult(WireModel):
     performance: BenchmarkPerformance
     pending: list[PendingContribution]
     series: list[BenchmarkPoint]
+
+
+class ExcludedLot(WireModel):
+    id: int | None
+    symbol: str
+    purchase_date: date
+    reason: str = Field(description="missing_price | missing_fx | after_last_session")
+
+
+class BenchmarkComparison(WireModel):
+    status: str
+    wealth_difference_eur: float | None = None
+    twr_difference: float | None = None
+    xirr_difference: float | None = None
+    max_drawdown_difference: float | None = None
+
+
+class HoldingsBenchmarkResult(WireModel):
+    as_of: date
+    profile_revision: int
+    profile_version: str
+    source: BenchmarkSource
+    portfolio: BenchmarkPerformance = Field(description="Cierre ajustado: rentabilidad total, no solo precio")
+    benchmark: BenchmarkPerformance
+    comparison: BenchmarkComparison
+    excluded: list[ExcludedLot]
+    incomplete_sessions: int
+    portfolio_series: list[BenchmarkPoint]
+    benchmark_series: list[BenchmarkPoint]
