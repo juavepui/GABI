@@ -60,6 +60,36 @@ class LegacyExecutor:
             from gabi.infrastructure.storage.holdings import SqliteHoldings
 
             return refresh_holdings(SqliteHoldings(self.settings.data_dir), fetch_max_history)
+        if command.kind == "metrics_comparison":
+            from gabi.application.market.cached_data import fundamentals_info
+            from gabi.application.market.metrics_comparison import compare_metrics
+            from gabi.domain.market.sec_facts import compute_edgar_metrics
+            from gabi.domain.market.sec_reads import companyfacts
+            from gabi.infrastructure.legacy.market import calculators, model_policy
+            from gabi.infrastructure.model_versions import active_model
+            from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+            from gabi.infrastructure.storage.market import ReadOnlyMarket
+            from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+            model = active_model()
+            policy = model_policy(model)
+            calculator = calculators(model.technical)
+            market = ReadOnlyMarket(self.settings, calculator, policy, model.benchmark_symbol, model.risk_free_rate)
+            database = self.settings.data_dir / "gabi.db"
+            reader, cache, today = SqliteSecReads(database), SqliteCacheReads(database), self.today()
+            try:
+                return compare_metrics(
+                    universe=lambda: [(row.symbol, row.sector) for row in market.universe(
+                        market.small_file("sp500_constituents.csv")).itertuples(index=False)],
+                    facts=lambda symbol, day: companyfacts(reader.issuer_facts(symbol, as_of=day), day),
+                    v1_metrics=compute_edgar_metrics,
+                    infos=lambda symbols: fundamentals_info(cache, symbols),
+                    ranking=lambda: market.ranking(dict(policy.weights), today).table,
+                    rescore=lambda table: calculator.scores(table, weights=dict(policy.weights)),
+                    as_of=date.fromisoformat(command.start) if command.start else today, today=today,
+                    progress=lambda done, total: progress(done / total, "Comparando métricas") if progress else None)
+            finally:
+                market.close()
         if command.kind == "benchmark_prices":
             from gabi.application.portfolio.benchmark import refresh_prices as refresh_benchmark
             from gabi.infrastructure.legacy.sim_prices import fetch_max_history

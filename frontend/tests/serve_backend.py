@@ -354,6 +354,10 @@ def synthetic_job(command, app):
 
         return refresh_prices(SqliteSimulations(Path(app.state.settings.data_dir)), command.portfolio_id,
                               command.symbols[0] if command.symbols else None, fx_symbol, download)
+    if command.kind == "metrics_comparison":  # Read-only over the fixture: the real worker path.
+        from gabi.infrastructure.legacy.jobs import LegacyExecutor
+
+        return LegacyExecutor(app.state.settings, today=lambda: TODAY)(command)
     if command.kind == "sim_compare":
         return app.state.simulations.compare()
     if command.kind == "quality":

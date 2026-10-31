@@ -204,3 +204,11 @@ def implied_growth(facts: dict, anchor: str, market_cap: float | None, assumptio
             low, f_low = middle, f_middle
     inputs = observed.inputs + flow.inputs + rate.inputs
     return Metric((low + high) / 2, "computed", None, convention, inputs)
+
+
+# Every USD tag V2 reads, so that the SEC synchronization stores them.
+USD_TAGS = tuple(dict.fromkeys(
+    v2.OPERATING_INCOME_TAGS + v2.TAX_EXPENSE_TAGS + v2.PRETAX_INCOME_TAGS + v2.EQUITY_TAGS
+    + v2.LONG_TERM_DEBT_TOTAL_TAGS + v2.LONG_TERM_DEBT_NONCURRENT_TAGS + v2.LONG_TERM_DEBT_CURRENT_TAGS
+    + v2.SHORT_TERM_DEBT_TAGS + v2.CASH_TAGS + v2.SHORT_TERM_INVESTMENT_TAGS + OPERATING_CASH_FLOW_TAGS
+    + CAPEX_TAGS + INTEREST_PAID_TAGS + INTEREST_EXPENSE_TAGS))

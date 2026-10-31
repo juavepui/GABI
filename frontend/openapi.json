@@ -5361,7 +5361,8 @@
               "data_health",
               "sim_prices",
               "holdings_prices",
-              "benchmark_prices"
+              "benchmark_prices",
+              "metrics_comparison"
             ],
             "title": "Kind",
             "type": "string"

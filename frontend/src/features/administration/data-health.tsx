@@ -47,7 +47,7 @@ export function HealthStatus({
   state,
   failure,
 }: {
-  state: ReturnType<typeof useHealthJob>;
+  state: Pick<ReturnType<typeof useHealthJob>, 'start' | 'job' | 'result'>;
   failure: string;
 }) {
   const { start, job, result } = state;
