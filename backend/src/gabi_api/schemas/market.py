@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, HttpUrl
 from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
 from gabi.domain.market.candidate_summary import summarize
-from gabi.domain.market.metric_sources import METRIC_SOURCES
+from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
 
@@ -36,9 +36,12 @@ class MetricSource(WireModel):
     source: Literal["yahoo", "sec_10k", "prices"]
     period: Literal["ttm", "mrq", "snapshot", "5y_monthly", "3m", "fiscal_year", "fiscal_years_3", "6m", "12m",
                     "cached_history"]
+    # A version-1 approximation of the named metric (#245); None is the metric as defined.
+    approximation: Literal["net_income_over_equity_plus_long_term_debt"] | None = None
 
 
-METRIC_SOURCE_WIRE = {key: MetricSource(source=source, period=period)  # type: ignore[arg-type]
+METRIC_SOURCE_WIRE = {key: MetricSource(source=source, period=period,  # type: ignore[arg-type]
+                                        approximation=METRIC_APPROXIMATIONS.get(key))  # type: ignore[arg-type]
                       for key, (source, period) in METRIC_SOURCES.items()}
 
 

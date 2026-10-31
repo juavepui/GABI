@@ -6315,6 +6315,10 @@ export type MetricGlossary = {
  */
 export type MetricSource = {
     /**
+     * Approximation
+     */
+    approximation?: 'net_income_over_equity_plus_long_term_debt' | null;
+    /**
      * Period
      */
     period: 'ttm' | 'mrq' | 'snapshot' | '5y_monthly' | '3m' | 'fiscal_year' | 'fiscal_years_3' | '6m' | '12m' | 'cached_history';

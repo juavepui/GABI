@@ -57,7 +57,8 @@ METRIC_INFO = {
     "roic": {
         "label": "ROIC (%)",
         "help": "Rentabilidad sobre el capital invertido (Return on Invested Capital), aproximada a partir de datos oficiales de "
-                "SEC EDGAR: beneficio neto entre (patrimonio neto + deuda a largo plazo). Mide si la empresa gana más de lo que "
+                "SEC EDGAR: beneficio neto entre (patrimonio neto + deuda a largo plazo) al cierre, sin ajuste fiscal, "
+                "sin restar caja ni promediar el capital. No es el ROIC de manual (NOPAT / capital invertido medio). Mide si la empresa gana más de lo que "
                 "le cuesta el capital que usa — clave para saber si tiene una ventaja competitiva (moat) real. Puede faltar si "
                 "la empresa no reporta esas partidas con las etiquetas XBRL habituales (ej. empresas casi sin deuda a largo plazo).",
     },
