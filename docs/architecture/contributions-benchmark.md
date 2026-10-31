@@ -46,8 +46,17 @@ es un umbral de revisión, no una garantía ni una venta automática.
   `GET /api/v1/portfolio/investor/benchmark?start=`; la respuesta declara fuente,
   serie, primeras y últimas fechas de precio y de cambio, y la revisión del perfil.
 
+## Cartera real frente a SPY (parte 3)
+
+`lots_history` convierte las compras de #181 en flujos: coste con comisión al
+cambio que aplicó el bróker o, si falta, al cambio en caché de su fecha. Su valor
+sigue el cierre ajustado desde la compra (rentabilidad total, como el benchmark;
+la valoración de «Mi cartera» sigue siendo de precio). Una compra sin precio o
+cambio de su fecha se excluye y se informa; una sesión con huecos de más de cinco
+sesiones se descarta y sus flujos entran en la siguiente completa. SPY recibe
+exactamente esos flujos. `GET /api/v1/portfolio/investor/holdings-benchmark`.
+
 ## Pendiente
 
-Conexión con la cartera real de #181 (mismos flujos que sus compras), escenarios
-EUR/USD y de mercado, alternativas indexada/activa/mixta, índice TR teórico frente
-a vehículo de acumulación, y la UI.
+Escenarios EUR/USD y de mercado, alternativas indexada/activa/mixta, índice TR
+teórico frente a vehículo de acumulación, y la UI.

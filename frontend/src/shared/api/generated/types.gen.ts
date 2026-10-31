@@ -547,44 +547,6 @@ export type BenchmarkActive = {
 };
 
 /**
- * BenchmarkComparison
- */
-export type BenchmarkComparison = {
-    /**
-     * Active
-     */
-    active?: {
-        [key: string]: BenchmarkActive;
-    };
-    /**
-     * End
-     */
-    end?: string | null;
-    /**
-     * Metrics
-     */
-    metrics?: {
-        [key: string]: BenchmarkMetrics;
-    };
-    /**
-     * N Obs
-     */
-    n_obs: number;
-    /**
-     * Periods
-     */
-    periods?: Array<BenchmarkPeriod>;
-    /**
-     * Start
-     */
-    start?: string | null;
-    /**
-     * Status
-     */
-    status?: string | null;
-};
-
-/**
  * BenchmarkMethod
  */
 export type BenchmarkMethod = {
@@ -3585,6 +3547,30 @@ export type EvidenceTop = {
 };
 
 /**
+ * ExcludedLot
+ */
+export type ExcludedLot = {
+    /**
+     * Id
+     */
+    id: number | null;
+    /**
+     * Purchase Date
+     */
+    purchase_date: string;
+    /**
+     * Reason
+     *
+     * missing_price | missing_fx | after_last_session
+     */
+    reason: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * ExcludedTrial
  */
 export type ExcludedTrial = {
@@ -4072,8 +4058,8 @@ export type ExperimentTailRisk = {
  * FactorBenchmark
  */
 export type FactorBenchmark = {
-    expanding: BenchmarkComparison;
-    in_sample: BenchmarkComparison;
+    expanding: GabiApiSchemasResearchBenchmarkComparison;
+    in_sample: GabiApiSchemasResearchBenchmarkComparison;
     /**
      * Limitations
      */
@@ -5172,6 +5158,47 @@ export type HoldingTotals = {
      * Valued
      */
     valued: number;
+};
+
+/**
+ * HoldingsBenchmarkResult
+ */
+export type HoldingsBenchmarkResult = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    benchmark: BenchmarkPerformance;
+    /**
+     * Benchmark Series
+     */
+    benchmark_series: Array<BenchmarkPoint>;
+    comparison: GabiApiSchemasInvestorBenchmarkComparison;
+    /**
+     * Excluded
+     */
+    excluded: Array<ExcludedLot>;
+    /**
+     * Incomplete Sessions
+     */
+    incomplete_sessions: number;
+    /**
+     * Cierre ajustado: rentabilidad total, no solo precio
+     */
+    portfolio: BenchmarkPerformance;
+    /**
+     * Portfolio Series
+     */
+    portfolio_series: Array<BenchmarkPoint>;
+    /**
+     * Profile Revision
+     */
+    profile_revision: number;
+    /**
+     * Profile Version
+     */
+    profile_version: string;
+    source: BenchmarkSource;
 };
 
 /**
@@ -9793,6 +9820,70 @@ export type WeightsRequest = {
     value: number;
 };
 
+/**
+ * BenchmarkComparison
+ */
+export type GabiApiSchemasInvestorBenchmarkComparison = {
+    /**
+     * Max Drawdown Difference
+     */
+    max_drawdown_difference?: number | null;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Twr Difference
+     */
+    twr_difference?: number | null;
+    /**
+     * Wealth Difference Eur
+     */
+    wealth_difference_eur?: number | null;
+    /**
+     * Xirr Difference
+     */
+    xirr_difference?: number | null;
+};
+
+/**
+ * BenchmarkComparison
+ */
+export type GabiApiSchemasResearchBenchmarkComparison = {
+    /**
+     * Active
+     */
+    active?: {
+        [key: string]: BenchmarkActive;
+    };
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Metrics
+     */
+    metrics?: {
+        [key: string]: BenchmarkMetrics;
+    };
+    /**
+     * N Obs
+     */
+    n_obs: number;
+    /**
+     * Periods
+     */
+    periods?: Array<BenchmarkPeriod>;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status?: string | null;
+};
+
 export type SaveKeyApiV1AdministrationKeysSourcePostData = {
     body: KeyRequest;
     path: {
@@ -12627,6 +12718,51 @@ export type BenchmarkApiV1PortfolioInvestorBenchmarkGetResponses = {
 };
 
 export type BenchmarkApiV1PortfolioInvestorBenchmarkGetResponse = BenchmarkApiV1PortfolioInvestorBenchmarkGetResponses[keyof BenchmarkApiV1PortfolioInvestorBenchmarkGetResponses];
+
+export type HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/investor/holdings-benchmark';
+};
+
+export type HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetError = HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetErrors[keyof HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetErrors];
+
+export type HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HoldingsBenchmarkResult;
+};
+
+export type HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetResponse = HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetResponses[keyof HoldingsBenchmarkApiV1PortfolioInvestorHoldingsBenchmarkGetResponses];
 
 export type ProfileApiV1PortfolioInvestorProfileGetData = {
     body?: never;

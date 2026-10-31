@@ -228,7 +228,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.simulations = simulations
     app.state.holdings = holdings
     app.state.investor = InvestorBenchmark(SqliteInvestorProfile(settings.data_dir),
-                                           SqliteSimulations(settings.data_dir).prices, today)
+                                           SqliteSimulations(settings.data_dir).prices, today,
+                                           lots=holdings.lots)
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors

@@ -270,3 +270,60 @@ def compare(portfolio: dict, benchmark: dict) -> dict:
     return {"status": "ok", "wealth_difference_eur": difference("final_value_eur"),
             "twr_difference": difference("twr"), "xirr_difference": difference("xirr"),
             "max_drawdown_difference": difference("max_drawdown")}
+
+
+def _at_or_before(series: pd.Series, day: pd.Timestamp, lookback_days: int = 7) -> float | None:
+    if series.empty:
+        return None
+    recent = series[(series.index <= day) & (series.index >= day - pd.Timedelta(days=lookback_days))]
+    return float(recent.iloc[-1]) if not recent.empty else None
+
+
+def lots_history(lots: list[dict], adjusted: dict[str, pd.Series], euros_per_unit: dict[str, pd.Series],
+                 sessions: pd.DatetimeIndex) -> dict:
+    """Daily EUR value of real purchase lots, as a simulation result for ``performance``.
+
+    Each lot is a contribution of its cost with commission, converted with the
+    rate the broker applied or else the cached rate of its date. Its value
+    follows the adjusted close from the purchase (total return, like the
+    benchmark) and the cached rate of each session. A lot without the price or
+    rate of its purchase is excluded and reported, so that the same flows can buy
+    the benchmark."""
+    sessions = sessions.sort_values()
+    total = pd.Series(0.0, index=sessions)
+    flows = pd.Series(0.0, index=sessions)
+    commissions, excluded, executed = 0.0, [], []
+    for lot in lots:
+        symbol, currency = lot["symbol"], lot["currency"]
+        bought = pd.Timestamp(lot["purchase_date"])
+        prices = adjusted.get(symbol, pd.Series(dtype=float)).dropna()
+        rates = pd.Series(1.0, index=sessions) if currency == "EUR" \
+            else euros_per_unit.get(currency, pd.Series(dtype=float)).dropna()
+        price_then = _at_or_before(prices, bought)
+        rate_then = lot.get("fx_rate") or (1.0 if currency == "EUR" else _at_or_before(rates, bought))
+        later = sessions[sessions >= bought]
+        reason = ("missing_price" if price_then is None else "missing_fx" if rate_then is None
+                  else "after_last_session" if later.empty else None)
+        if reason:
+            excluded.append({"id": lot.get("id"), "symbol": symbol, "purchase_date": lot["purchase_date"],
+                             "reason": reason})
+            continue
+        assert price_then is not None and rate_then is not None
+        cost_eur = (lot["shares"] * lot["price"] + lot["commission"]) * rate_then
+        commissions += lot["commission"] * rate_then
+        first = later[0]
+        path = prices.reindex(sessions).ffill(limit=5) / price_then
+        fx_path = rates.reindex(sessions).ffill(limit=5)
+        value = lot["shares"] * lot["price"] * path * fx_path
+        value[sessions < first] = 0.0
+        total = total + value  # A missing price or rate after the purchase leaves the session incomplete.
+        flows[first] += cost_eur
+        executed.append((first.date(), cost_eur))
+    invested = flows.cumsum()
+    frame = pd.DataFrame({"flow_eur": flows, "contributed_eur": invested, "value_eur": total})
+    incomplete = frame.index[frame["value_eur"].isna()]
+    frame = frame[(frame["contributed_eur"] > 0) & frame["value_eur"].notna()].copy()
+    # A flow on a dropped session enters on the next complete one.
+    frame["flow_eur"] = frame["contributed_eur"].diff().fillna(frame["contributed_eur"])
+    return {"daily": frame, "costs_eur": commissions, "pending": [], "pending_eur": 0.0, "flows": executed,
+            "excluded": excluded, "incomplete_sessions": len(incomplete)}

@@ -14,6 +14,8 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.domain.portfolio import contributions as rules
+from gabi.domain.portfolio.holdings import price_symbols
+from gabi.domain.portfolio.simulation import fx_symbol
 
 BENCHMARK_SYMBOL = "SPY"
 FX_SYMBOL = "USDEUR=X"  # Euros per dollar, as cached by the price downloads.
@@ -56,9 +58,10 @@ def _series(frame: pd.DataFrame | None, column: str) -> pd.Series:
 
 class InvestorBenchmark:
     def __init__(self, store: ProfileStore, prices: Callable[[list[str], str], dict[str, pd.DataFrame]],
-                 today: Callable[[], date], now: Callable[[], datetime] = lambda: datetime.now(UTC)):
-        """`prices(symbols, start)` reads cached daily prices."""
-        self.store, self.prices, self.today, self.now = store, prices, today, now
+                 today: Callable[[], date], now: Callable[[], datetime] = lambda: datetime.now(UTC),
+                 lots: Callable[[], list[dict]] = list):
+        """`prices(symbols, start)` reads cached daily prices; `lots()` the real purchases of #181."""
+        self.store, self.prices, self.today, self.now, self.lots = store, prices, today, now, lots
 
     def profile(self) -> dict | None:
         return self.store.latest()
@@ -87,6 +90,58 @@ class InvestorBenchmark:
                                 version=saved["version"])
         return profile, saved
 
+    def _benchmark_series(self, histories: dict[str, pd.DataFrame]) -> tuple[pd.Series, pd.Series]:
+        prices = _series(histories.get(BENCHMARK_SYMBOL), "adj_close")
+        euros_per_dollar = _series(histories.get(FX_SYMBOL), "close")
+        missing = [symbol for symbol, values in ((BENCHMARK_SYMBOL, prices), (FX_SYMBOL, euros_per_dollar))
+                   if values.empty]
+        if missing:
+            raise QueryError("benchmark_prices_missing",
+                             f"Faltan precios en caché de {', '.join(missing)}: pulsa «Actualizar benchmark».", 409)
+        return prices, euros_per_dollar
+
+    @staticmethod
+    def _source(prices: pd.Series, euros_per_dollar: pd.Series) -> dict:
+        return BENCHMARK_SOURCE | {
+            "first_price": prices.index[0].date().isoformat(), "last_price": prices.index[-1].date().isoformat(),
+            "first_fx": euros_per_dollar.index[0].date().isoformat(),
+            "last_fx": euros_per_dollar.index[-1].date().isoformat()}
+
+    @staticmethod
+    def _points(daily: pd.DataFrame) -> list[dict]:
+        return [{"date": day.date().isoformat(), "value_eur": float(row.value_eur),
+                 "contributed_eur": float(row.contributed_eur)} for day, row in daily.iterrows()]
+
+    def holdings(self) -> dict:
+        """Read-only: the real purchases against SPY bought with the same euros on the same sessions."""
+        profile, saved = self._current()
+        lots = self.lots()
+        if not lots:
+            raise QueryError("no_holdings", "Mi cartera no tiene compras que comparar.", 404)
+        start = min(date.fromisoformat(lot["purchase_date"]) for lot in lots) - timedelta(days=LOOKBACK_DAYS)
+        histories = self.prices(price_symbols(lots), start.isoformat())
+        prices, euros_per_dollar = self._benchmark_series(histories)
+        euros_per_unit = {currency: _series(histories.get(pair), "close")
+                          for currency in {lot["currency"] for lot in lots}
+                          if (pair := fx_symbol(currency, "EUR"))}
+        adjusted = {lot["symbol"]: _series(histories.get(lot["symbol"]), "adj_close") for lot in lots}
+        real = rules.lots_history(lots, adjusted, euros_per_unit, prices.index)
+        if not real["flows"]:
+            raise QueryError("valuation_unavailable", "Ninguna compra tiene precio y cambio en caché.", 422)
+        vehicle = rules.broker_vehicle(profile, BENCHMARK_SYMBOL, "USD")
+        try:
+            spy = rules.simulate(real["flows"], prices, vehicle, 1 / euros_per_dollar)
+        except ValueError as exc:
+            raise QueryError("benchmark_unavailable", str(exc), 422) from exc
+        portfolio, benchmark = rules.performance(real, profile), rules.performance(spy, profile)
+        return {
+            "as_of": self.today().isoformat(), "profile_revision": saved["revision"],
+            "profile_version": profile.version, "source": self._source(prices, euros_per_dollar),
+            "portfolio": portfolio, "benchmark": benchmark, "comparison": rules.compare(portfolio, benchmark),
+            "excluded": real["excluded"], "incomplete_sessions": real["incomplete_sessions"],
+            "portfolio_series": self._points(real["daily"]), "benchmark_series": self._points(spy["daily"]),
+        }
+
     def benchmark(self, start: date | None = None) -> dict:
         """Read-only: the profile's contributions since ``start`` bought in SPY through the investor's broker."""
         profile, saved = self._current()
@@ -95,13 +150,7 @@ class InvestorBenchmark:
         if not today - timedelta(days=365 * MAX_YEARS) <= start < today:
             raise QueryError("invalid_period", f"El inicio debe ser pasado y de los últimos {MAX_YEARS} años.", 422)
         histories = self.prices([BENCHMARK_SYMBOL, FX_SYMBOL], (start - timedelta(days=LOOKBACK_DAYS)).isoformat())
-        prices = _series(histories.get(BENCHMARK_SYMBOL), "adj_close")
-        euros_per_dollar = _series(histories.get(FX_SYMBOL), "close")
-        missing = [symbol for symbol, values in ((BENCHMARK_SYMBOL, prices), (FX_SYMBOL, euros_per_dollar))
-                   if values.empty]
-        if missing:
-            raise QueryError("benchmark_prices_missing",
-                             f"Faltan precios en caché de {', '.join(missing)}: pulsa «Actualizar benchmark».", 409)
+        prices, euros_per_dollar = self._benchmark_series(histories)
         flows = rules.schedule(profile, start, today)
         vehicle = rules.broker_vehicle(profile, BENCHMARK_SYMBOL, "USD")
         try:
@@ -109,17 +158,12 @@ class InvestorBenchmark:
                                     1 / euros_per_dollar)
         except ValueError as exc:
             raise QueryError("benchmark_unavailable", str(exc), 422) from exc
-        daily = result["daily"]
         return {
             "as_of": today.isoformat(), "start": start.isoformat(), "profile_revision": saved["revision"],
             "profile_version": profile.version,
             "capital_need_before_horizon": rules.capital_need_before_horizon(profile, today),
-            "source": BENCHMARK_SOURCE | {
-                "first_price": prices.index[0].date().isoformat(), "last_price": prices.index[-1].date().isoformat(),
-                "first_fx": euros_per_dollar.index[0].date().isoformat(),
-                "last_fx": euros_per_dollar.index[-1].date().isoformat()},
+            "source": self._source(prices, euros_per_dollar),
             "performance": rules.performance(result, profile),
             "pending": [{"date": day.isoformat(), "amount_eur": amount} for day, amount in result["pending"]],
-            "series": [{"date": day.date().isoformat(), "value_eur": float(row.value_eur),
-                        "contributed_eur": float(row.contributed_eur)} for day, row in daily.iterrows()],
+            "series": self._points(result["daily"]),
         }

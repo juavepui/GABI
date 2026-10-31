@@ -121,3 +121,44 @@ def test_compare_requires_identical_contributions():
     other = c.performance(c.simulate([(date(2025, 1, 2), 2000.0)], series([100, 110]), eur), PROFILE)
     with pytest.raises(ValueError):
         c.compare(a, other)
+
+
+def _lot(symbol="AAA", shares=10.0, price=100.0, day="2025-01-02", currency="USD", commission=1.0, fx_rate=None):
+    return {"id": 1, "symbol": symbol, "shares": shares, "price": price, "purchase_date": day,
+            "currency": currency, "commission": commission, "fx_rate": fx_rate}
+
+
+def test_lots_history_follows_the_adjusted_close_and_the_rate_of_each_session():
+    sessions = pd.bdate_range("2025-01-02", periods=3)
+    adjusted = {"AAA": pd.Series([100.0, 110.0, 121.0], index=sessions)}  # Includes reinvested dividends.
+    rates = {"USD": pd.Series([0.90, 0.90, 0.80], index=sessions)}  # Euros per dollar.
+    result = c.lots_history([_lot(fx_rate=0.92)], adjusted, rates, sessions)
+    daily = result["daily"]
+    assert daily["flow_eur"].tolist() == pytest.approx([1001 * 0.92, 0, 0])
+    assert daily["value_eur"].tolist() == pytest.approx([900, 990, 968])
+    assert result["costs_eur"] == pytest.approx(0.92)
+    assert result["flows"] == [(date(2025, 1, 2), pytest.approx(1001 * 0.92))]
+
+
+def test_lots_without_purchase_price_or_rate_are_excluded_and_reported():
+    sessions = pd.bdate_range("2025-01-02", periods=3)
+    adjusted = {"AAA": pd.Series([100.0, 100.0, 100.0], index=sessions), "SAN": pd.Series(dtype=float)}
+    result = c.lots_history([_lot(), _lot(symbol="SAN", currency="EUR", day="2025-01-03")], adjusted, {},
+                            sessions)
+    assert [(row["symbol"], row["reason"]) for row in result["excluded"]] == [("AAA", "missing_fx"),
+                                                                             ("SAN", "missing_price")]
+    assert result["flows"] == [] and result["daily"].empty
+
+
+def test_an_incomplete_session_is_dropped_and_its_flow_enters_on_the_next_one():
+    sessions = pd.bdate_range("2025-01-02", periods=3)
+    lots = [_lot(currency="EUR", commission=0), _lot(symbol="BBB", price=50, currency="EUR", commission=0)]
+    # BBB has its purchase price from the day before, but no close in the first two sessions.
+    adjusted = {"AAA": pd.Series([100.0, 100.0, 100.0], index=sessions),
+                "BBB": pd.Series([50.0, 50.0], index=pd.to_datetime(["2025-01-01", "2025-01-06"]))}
+    result = c.lots_history(lots, adjusted, {}, sessions)
+    daily = result["daily"]
+    assert result["incomplete_sessions"] == 2
+    assert daily.index.tolist() == [pd.Timestamp("2025-01-06")]
+    assert daily["flow_eur"].tolist() == [1500] and daily["value_eur"].tolist() == [1500]
+    assert c.performance(result, PROFILE)["twr"] == pytest.approx(0.0)
