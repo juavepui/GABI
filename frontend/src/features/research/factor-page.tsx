@@ -162,7 +162,8 @@ export function FactorPage() {
         <Button
           className="w-fit sm:col-span-2"
           type="submit"
-          disabled={startJob.isPending || model.data?.mode !== 'RESEARCH'}
+          pending={startJob.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+          disabled={model.data?.mode !== 'RESEARCH'}
         >
           Ejecutar Factor Lab
         </Button>
@@ -179,7 +180,7 @@ export function FactorPage() {
             <Button
               className="mt-3"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación

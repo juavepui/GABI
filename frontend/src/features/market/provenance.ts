@@ -20,7 +20,17 @@ const PERIODS: Record<MetricSource['period'] | ChecklistAlternative['period'], s
   cached_history: 'todo el histórico',
 };
 
-export function sourceLabel(value: Pick<MetricSource, 'source' | 'period'> | undefined): string {
+const APPROXIMATIONS: Record<NonNullable<MetricSource['approximation']>, string> = {
+  net_income_over_equity_plus_long_term_debt:
+    'aproximado: beneficio neto / (patrimonio + deuda LP)',
+};
+
+export function sourceLabel(
+  value:
+    | (Pick<MetricSource, 'source' | 'period'> & Partial<Pick<MetricSource, 'approximation'>>)
+    | undefined,
+): string {
   if (!value) return '';
-  return `${SOURCES[value.source]} · ${PERIODS[value.period]}`;
+  const label = `${SOURCES[value.source]} · ${PERIODS[value.period]}`;
+  return value.approximation ? `${label} · ${APPROXIMATIONS[value.approximation]}` : label;
 }

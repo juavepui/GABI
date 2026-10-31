@@ -50,6 +50,28 @@ describe('shared controls', () => {
     expect(textarea.className).not.toContain('min-h-20');
     expect(view.querySelector('button')!.className).toContain('text-sm');
   });
+
+  it('Button shows a click and a pending action', () => {
+    const view = render(
+      <>
+        <Button>Guardar</Button>
+        <Button pending>Ejecutar backtest</Button>
+        <Button size="icon-xs" aria-label="Seguir AAPL" pending>
+          <svg data-testid="star" />
+        </Button>
+      </>,
+    );
+    const [idle, busy, icon] = view.querySelectorAll('button');
+    expect(idle.className).toContain('active:scale-[0.97]');
+    expect(idle.disabled).toBe(false);
+    expect(idle.hasAttribute('aria-busy')).toBe(false);
+    expect(busy.disabled).toBe(true);
+    expect(busy.getAttribute('aria-busy')).toBe('true');
+    expect(busy.textContent).toBe('Ejecutar backtest');
+    expect(busy.querySelector('svg.animate-spin')).not.toBeNull();
+    expect(icon.querySelector('[data-testid="star"]')).toBeNull();
+    expect(icon.querySelector('svg.animate-spin')).not.toBeNull();
+  });
 });
 
 describe('theme.css', () => {

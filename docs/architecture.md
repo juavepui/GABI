@@ -319,6 +319,8 @@ modelo activo, su configuración y sus métricas cambian mediante versiones nuev
 que empiezan sin evidencia, sin esperar las revisiones de estudios en curso. Los
 caminos que esos estudios ejecutan en vivo no cambian de semántica, y `config.py`
 queda como snapshot sellado ([ADR 0008](adr/0008-versioned-models-and-evidence.md)).
+El [registro de estudios](studies/README.md) fecha la decisión de cada estudio y
+lista los caminos que fija.
 
 | Control | Qué comprueba | Qué se comprueba además |
 | --- | --- | --- |

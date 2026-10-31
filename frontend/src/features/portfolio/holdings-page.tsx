@@ -142,7 +142,7 @@ function LotForm({
         <Input className="mt-1" name="note" maxLength={200} defaultValue={lot?.note ?? ''} />
       </label>
       <div className="sm:col-span-4">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" pending={pending}>
           {label}
         </Button>
       </div>
@@ -179,7 +179,7 @@ function LotRow({ lot, changed }: { lot: Holding; changed: () => void }) {
           <Button
             variant="outline"
             size="sm"
-            disabled={remove.isPending}
+            pending={remove.isPending}
             onClick={() => remove.mutate()}
           >
             Borrar compra de {lot.symbol}
@@ -223,7 +223,7 @@ function HoldingsPrices({ summary }: { summary: HoldingsSummary }) {
     <div className="mt-3 space-y-2">
       <Button
         variant="outline"
-        disabled={running}
+        pending={running}
         onClick={() => start.mutate({ kind: 'holdings_prices' })}
       >
         Actualizar precios de mi cartera
@@ -445,7 +445,7 @@ function ImportCsv({ changed }: { changed: () => void }) {
         }
         className="w-full"
       />
-      <Button disabled={!text.trim() || run.isPending} onClick={() => run.mutate()}>
+      <Button disabled={!text.trim()} pending={run.isPending} onClick={() => run.mutate()}>
         Importar compras
       </Button>
       {run.isError && <ErrorState error={run.error} retry={() => run.reset()} />}

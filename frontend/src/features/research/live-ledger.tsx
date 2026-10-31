@@ -169,7 +169,8 @@ function Report({ jobId }: { jobId: string }) {
         </a>
         <Button
           variant="outline"
-          disabled={save.isPending || save.isSuccess}
+          pending={save.isPending}
+          disabled={save.isSuccess}
           onClick={() => save.mutate()}
         >
           Guardar evaluación como evento nuevo
@@ -206,7 +207,7 @@ function Performance({ versions }: { versions: string[] }) {
           </NativeSelect>
         </label>
         <Button
-          disabled={state.start.isPending}
+          pending={state.running}
           onClick={() => {
             state.setJobId(null);
             state.start.mutate({

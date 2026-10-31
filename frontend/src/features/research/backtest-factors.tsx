@@ -117,7 +117,10 @@ export function BacktestFactors({
             />
           </label>
         )}
-        <Button type="submit" disabled={run.isPending}>
+        <Button
+          type="submit"
+          pending={run.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+        >
           Calcular contraste
         </Button>
       </form>
@@ -134,7 +137,7 @@ export function BacktestFactors({
               className="ml-3"
               size="sm"
               variant="outline"
-              disabled={cancel.isPending}
+              pending={cancel.isPending}
               onClick={() => cancel.mutate()}
             >
               Solicitar cancelación

@@ -43,3 +43,10 @@ METRIC_SOURCES: dict[str, tuple[str, str]] = {
     "alpha": ("prices", "cached_history"),
     "win_rate_monthly": ("prices", "cached_history"),
 }
+
+# Version-1 approximations still in use (#245). The value is unchanged; the label says
+# what it approximates so it is not read as the textbook metric. SEC metrics V2
+# (``sec_metrics_v2``) replaces them only through a new model version (ADR 0008).
+METRIC_APPROXIMATIONS: dict[str, str] = {
+    "roic": "net_income_over_equity_plus_long_term_debt",
+}

@@ -114,7 +114,12 @@ export function BacktestRegister({ sourceJobId }: { sourceJobId: string }) {
             onChange={(event) => setNotes(event.target.value)}
           />
         </label>
-        <Button className="w-fit" type="submit" disabled={register.isPending || jobId != null}>
+        <Button
+          className="w-fit"
+          type="submit"
+          pending={register.isPending}
+          disabled={jobId != null}
+        >
           Registrar en Research Lab
         </Button>
       </form>

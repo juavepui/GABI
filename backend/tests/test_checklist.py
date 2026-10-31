@@ -511,9 +511,12 @@ def test_api_get_has_no_side_effects_and_thresholds_are_explicit_commands(api):
     assert not (root / "checklist_thresholds.json").exists()
     # The checklist's secondary references are the company page's own values (#169).
     page = client.get("/api/v1/companies/T001").json()
-    assert page["metric_sources"]["pe"] == {"source": "yahoo", "period": "ttm"}
-    assert page["metric_sources"]["beta_calc"] == {"source": "prices", "period": "cached_history"}
-    assert page["metric_sources"]["roic"] == {"source": "sec_10k", "period": "fiscal_year"}
+    assert page["metric_sources"]["pe"] == {"source": "yahoo", "period": "ttm", "approximation": None}
+    assert page["metric_sources"]["beta_calc"] == {"source": "prices", "period": "cached_history",
+                                                   "approximation": None}
+    # The version-1 ROIC is labelled as the approximation it is, without changing its value (#245).
+    assert page["metric_sources"]["roic"] == {"source": "sec_10k", "period": "fiscal_year",
+                                              "approximation": "net_income_over_equity_plus_long_term_debt"}
     for key, metric in (("pe", "pe"), ("beta", "beta")):
         alternative = criteria[key]["alternative"]
         assert alternative is None or alternative["value"] == pytest.approx(page["company"]["metrics"][metric]["value"])

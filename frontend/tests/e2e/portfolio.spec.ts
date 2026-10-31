@@ -246,7 +246,11 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
   await expect(lots).toContainText('T001');
 
   await page.goto('/cartera');
+  await expect(page.getByText('Calculado sobre Mi cartera')).toBeVisible();
+  // The form still holds the values the page loaded with: the click recalculates anyway.
+  const recalculated = page.waitForRequest('**/api/v1/portfolio/plan');
   await page.getByRole('button', { name: 'Calcular plan' }).click();
+  await recalculated;
   await expect(page.getByText('Calculado sobre Mi cartera')).toBeVisible();
 
   await page.goto('/cartera/mi-cartera');

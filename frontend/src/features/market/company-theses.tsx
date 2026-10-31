@@ -160,7 +160,7 @@ export function CompanyTheses({ symbol }: { symbol: string }) {
             .
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" size="sm" disabled={create.isPending}>
+            <Button type="submit" size="sm" pending={create.isPending}>
               Guardar tesis
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setWriting(false)}>

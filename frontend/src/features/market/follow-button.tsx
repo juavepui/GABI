@@ -9,7 +9,6 @@ export function FollowButton({ symbol, compact = false }: { symbol: string; comp
   const { follow, unfollow } = useFollow(symbol);
   const following = symbols.data?.symbols.includes(symbol) ?? false;
   const action = following ? unfollow : follow;
-  const busy = symbols.isPending || follow.isPending || unfollow.isPending;
   const label = following ? 'Dejar de seguir ' + symbol : 'Seguir ' + symbol;
   const error = follow.error ?? unfollow.error;
   return (
@@ -21,7 +20,8 @@ export function FollowButton({ symbol, compact = false }: { symbol: string; comp
         aria-pressed={compact ? following : undefined}
         aria-label={compact ? 'Seguir ' + symbol : undefined}
         title={label}
-        disabled={busy || symbols.isError}
+        disabled={symbols.isPending || symbols.isError}
+        pending={follow.isPending || unfollow.isPending}
         onClick={() => {
           follow.reset();
           unfollow.reset();
