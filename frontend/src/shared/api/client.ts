@@ -40,6 +40,11 @@ import type {
   HoldingDeleted,
   HoldingImportResult,
   HoldingsSummary,
+  HoldingsBenchmarkResult,
+  InvestorBenchmarkResult,
+  InvestorProfileInput,
+  InvestorProfileRevision,
+  InvestorProfileState,
   WatchlistChecklists,
   WatchlistEntry,
   WatchlistDeleted,
@@ -740,6 +745,28 @@ export function importHoldings(csv: string): Promise<HoldingImportResult> {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ csv }),
   });
+}
+
+/** Perfil de inversor y benchmark S&P 500 en EUR (#244): reads use the cache; saving adds a revision. */
+export function getInvestorProfile(signal?: AbortSignal): Promise<InvestorProfileState> {
+  return get('/api/v1/portfolio/investor/profile', signal);
+}
+export function saveInvestorProfile(body: InvestorProfileInput): Promise<InvestorProfileRevision> {
+  return request('/api/v1/portfolio/investor/profile', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getInvestorBenchmark(
+  start: string | null,
+  signal?: AbortSignal,
+): Promise<InvestorBenchmarkResult> {
+  const query = start ? '?start=' + encodeURIComponent(start) : '';
+  return get('/api/v1/portfolio/investor/benchmark' + query, signal);
+}
+export function getHoldingsBenchmark(signal?: AbortSignal): Promise<HoldingsBenchmarkResult> {
+  return get('/api/v1/portfolio/investor/holdings-benchmark', signal);
 }
 
 /** Empresas seguidas (#182): the view reads the cache; following, the note and removing are explicit. */

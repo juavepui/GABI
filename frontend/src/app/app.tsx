@@ -23,6 +23,7 @@ import {
 } from '@/features/market/index';
 import {
   HoldingsPage,
+  InvestorPage,
   JournalPage,
   LearnPage,
   PortfolioPage,
@@ -310,6 +311,7 @@ function Shell() {
           <Route path="/empresas/:symbol" element={<CompanyPage />} />
           <Route path="/cartera" element={<PortfolioPage />} />
           <Route path="/cartera/mi-cartera" element={<HoldingsPage />} />
+          <Route path="/cartera/perfil" element={<InvestorPage />} />
           <Route path="/cartera/seguimiento" element={<TrackingPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />

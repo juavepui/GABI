@@ -19,6 +19,7 @@ navegación ni se importan entre sí.
 | | `/empresas/:symbol` | Ficha de empresa (sin entrada en el menú) | `market` |
 | **Cartera** | `/cartera` | Plan de cartera: regla congelada (Top-N equiponderado) o, con `?plan=experimental`, el plan experimental con límites (#191) | `portfolio` |
 | | `/cartera/mi-cartera` | Mi cartera (compras reales) | `portfolio` |
+| | `/cartera/perfil` | Perfil de inversor y benchmark S&P 500 en EUR con los mismos flujos (#244) | `portfolio` |
 | | `/cartera/seguimiento` | Seguimiento de cestas guardadas frente a SPY (#193) | `market` |
 | | `/cartera/diario` | Diario de inversión | `portfolio` |
 | | `/cartera/simuladas` | Carteras simuladas | `portfolio` |

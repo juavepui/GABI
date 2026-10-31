@@ -30,6 +30,7 @@ export { JournalPage } from './journal-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
 export { HoldingsPage } from './holdings-page';
+export { InvestorPage } from './investor-page';
 
 const euro = (value: number) => formatMoney(value, { currency: 'EUR', digits: 2 });
 const decimal = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });
