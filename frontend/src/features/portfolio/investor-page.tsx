@@ -1,10 +1,16 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type {
   BenchmarkPerformance,
   BenchmarkSource,
   InvestorProfileInput,
+  InvestorProfileRevision,
 } from '@/shared/api/generated/types.gen';
 import {
   ApiError,
@@ -76,12 +82,10 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function ProfileForm({ profile }: { profile: InvestorProfileInput }) {
-  const queryClient = useQueryClient();
-  const save = useMutation({
-    mutationFn: saveInvestorProfile,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['portfolio', 'investor'] }),
-  });
+type SaveProfile = UseMutationResult<InvestorProfileRevision, Error, InvestorProfileInput>;
+
+/** The mutation lives in the page: a new revision remounts the form, but its confirmation stays. */
+function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: SaveProfile }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     save.mutate(profileBody(new FormData(event.currentTarget)));
@@ -462,6 +466,11 @@ function HoldingsComparison() {
 }
 
 export function InvestorPage() {
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: saveInvestorProfile,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['portfolio', 'investor'] }),
+  });
   const profile = useQuery({
     queryKey: PROFILE_KEY,
     queryFn: ({ signal }) => getInvestorProfile(signal),
@@ -493,6 +502,7 @@ export function InvestorPage() {
           <ProfileForm
             key={current?.revision ?? 0}
             profile={current ? current.profile : DEFAULTS}
+            save={save}
           />
           {current ? (
             <>
