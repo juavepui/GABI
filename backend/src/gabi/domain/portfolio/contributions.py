@@ -34,6 +34,12 @@ class Profile:
     loss_tolerance: float
     capital_needed_by: date | None = None
     tax_residence: str | None = None
+    # The investor's broker: applied identically to every vehicle the contributions buy.
+    commission_fixed_eur: float = 0.0
+    commission_pct: float = 0.0
+    fx_cost_pct: float = 0.0
+    min_order_eur: float = 0.0
+    fractional: bool = True
     version: str = PROFILE_VERSION
 
 
@@ -73,7 +79,25 @@ def validate_profile(raw: dict, today: date) -> Profile:
     if needed is not None and needed <= today:
         raise ValueError("La fecha en que se necesita el dinero debe ser futura.")
     residence = str(raw.get("tax_residence") or "").strip().upper()[:2] or None
-    return Profile(initial, monthly, horizon, tolerance, needed, residence)
+    try:
+        costs = {key: float(raw.get(key) or 0) for key in
+                 ("commission_fixed_eur", "commission_pct", "fx_cost_pct", "min_order_eur")}
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Los costes del bróker deben ser números.") from exc
+    if not (0 <= costs["commission_fixed_eur"] <= 1000 and 0 <= costs["min_order_eur"] <= 1e6
+            and 0 <= costs["commission_pct"] < 0.1 and 0 <= costs["fx_cost_pct"] < 0.1):
+        raise ValueError("Los costes del bróker deben ser no negativos y los porcentajes menores del 10 %.")
+    return Profile(initial, monthly, horizon, tolerance, needed, residence,
+                   commission_fixed_eur=costs["commission_fixed_eur"], commission_pct=costs["commission_pct"],
+                   fx_cost_pct=costs["fx_cost_pct"], min_order_eur=costs["min_order_eur"],
+                   fractional=bool(raw.get("fractional", True)))
+
+
+def broker_vehicle(profile: Profile, symbol: str, currency: str, *, annual_cost_pct: float = 0.0,
+                   theoretical: bool = False) -> Vehicle:
+    """``symbol`` bought through the investor's broker, so portfolio and benchmark pay the same costs."""
+    return Vehicle(symbol, currency, profile.fractional, profile.commission_fixed_eur, profile.commission_pct,
+                   profile.fx_cost_pct, profile.min_order_eur, annual_cost_pct, theoretical)
 
 
 def capital_need_before_horizon(profile: Profile, start: date) -> bool | None:

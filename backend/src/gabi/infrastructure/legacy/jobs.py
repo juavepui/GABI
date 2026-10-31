@@ -60,6 +60,11 @@ class LegacyExecutor:
             from gabi.infrastructure.storage.holdings import SqliteHoldings
 
             return refresh_holdings(SqliteHoldings(self.settings.data_dir), fetch_max_history)
+        if command.kind == "benchmark_prices":
+            from gabi.application.portfolio.benchmark import refresh_prices as refresh_benchmark
+            from gabi.infrastructure.legacy.sim_prices import fetch_max_history
+
+            return refresh_benchmark(fetch_max_history)
         if command.kind == "sim_compare":
             from datetime import date
 

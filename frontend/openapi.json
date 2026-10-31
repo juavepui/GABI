@@ -1334,6 +1334,192 @@
         "title": "BenchmarkMetrics",
         "type": "object"
       },
+      "BenchmarkPerformance": {
+        "additionalProperties": false,
+        "properties": {
+          "contributed_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contributed Eur"
+          },
+          "costs_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Costs Eur"
+          },
+          "current_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Drawdown"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "euros_at_risk_at_tolerance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Euros At Risk At Tolerance"
+          },
+          "final_value_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Value Eur"
+          },
+          "max_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sobre el NAV unitizado: el dinero nuevo no la oculta",
+            "title": "Max Drawdown"
+          },
+          "max_euros_lost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Euros Lost"
+          },
+          "max_loss_on_contributions": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Loss On Contributions"
+          },
+          "pending_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Eur"
+          },
+          "review_threshold_reached_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Revisión, nunca venta automática",
+            "title": "Review Threshold Reached On"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "twr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rentabilidad ponderada por tiempo (habilidad)",
+            "title": "Twr"
+          },
+          "twr_annualised": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twr Annualised"
+          },
+          "xirr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rentabilidad ponderada por dinero (experiencia)",
+            "title": "Xirr"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "BenchmarkPerformance",
+        "type": "object"
+      },
       "BenchmarkPeriod": {
         "properties": {
           "fecha": {
@@ -1365,6 +1551,89 @@
           "wealth"
         ],
         "title": "BenchmarkPeriod",
+        "type": "object"
+      },
+      "BenchmarkPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "contributed_eur": {
+            "title": "Contributed Eur",
+            "type": "number"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "value_eur": {
+            "title": "Value Eur",
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "value_eur",
+          "contributed_eur"
+        ],
+        "title": "BenchmarkPoint",
+        "type": "object"
+      },
+      "BenchmarkSource": {
+        "additionalProperties": false,
+        "properties": {
+          "first_fx": {
+            "format": "date",
+            "title": "First Fx",
+            "type": "string"
+          },
+          "first_price": {
+            "format": "date",
+            "title": "First Price",
+            "type": "string"
+          },
+          "fx": {
+            "title": "Fx",
+            "type": "string"
+          },
+          "last_fx": {
+            "format": "date",
+            "title": "Last Fx",
+            "type": "string"
+          },
+          "last_price": {
+            "format": "date",
+            "title": "Last Price",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "series": {
+            "title": "Series",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "vehicle": {
+            "title": "Vehicle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "series",
+          "provider",
+          "vehicle",
+          "fx",
+          "first_price",
+          "last_price",
+          "first_fx",
+          "last_fx"
+        ],
+        "title": "BenchmarkSource",
         "type": "object"
       },
       "BlindCreateRequest": {
@@ -5059,7 +5328,8 @@
               "data_update",
               "data_health",
               "sim_prices",
-              "holdings_prices"
+              "holdings_prices",
+              "benchmark_prices"
             ],
             "title": "Kind",
             "type": "string"
@@ -10296,6 +10566,230 @@
         "title": "InsiderTransaction",
         "type": "object"
       },
+      "InvestorBenchmarkResult": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "capital_need_before_horizon": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capital Need Before Horizon"
+          },
+          "pending": {
+            "items": {
+              "$ref": "#/components/schemas/PendingContribution"
+            },
+            "title": "Pending",
+            "type": "array"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/BenchmarkPerformance"
+          },
+          "profile_revision": {
+            "title": "Profile Revision",
+            "type": "integer"
+          },
+          "profile_version": {
+            "title": "Profile Version",
+            "type": "string"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkPoint"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "source": {
+            "$ref": "#/components/schemas/BenchmarkSource"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "as_of",
+          "start",
+          "profile_revision",
+          "profile_version",
+          "capital_need_before_horizon",
+          "source",
+          "performance",
+          "pending",
+          "series"
+        ],
+        "title": "InvestorBenchmarkResult",
+        "type": "object"
+      },
+      "InvestorProfileInput": {
+        "additionalProperties": false,
+        "properties": {
+          "capital_needed_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cuándo se necesita el dinero, si se sabe",
+            "title": "Capital Needed By"
+          },
+          "commission_fixed_eur": {
+            "default": 0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Fixed Eur",
+            "type": "number"
+          },
+          "commission_pct": {
+            "default": 0,
+            "description": "Fracción del importe",
+            "exclusiveMaximum": 0.1,
+            "minimum": 0.0,
+            "title": "Commission Pct",
+            "type": "number"
+          },
+          "fractional": {
+            "default": true,
+            "title": "Fractional",
+            "type": "boolean"
+          },
+          "fx_cost_pct": {
+            "default": 0,
+            "description": "Fracción del importe convertido",
+            "exclusiveMaximum": 0.1,
+            "minimum": 0.0,
+            "title": "Fx Cost Pct",
+            "type": "number"
+          },
+          "horizon_months": {
+            "description": "Horizonte de evaluación de GABI",
+            "maximum": 600.0,
+            "minimum": 1.0,
+            "title": "Horizon Months",
+            "type": "integer"
+          },
+          "initial_eur": {
+            "maximum": 1000000000.0,
+            "minimum": 0.0,
+            "title": "Initial Eur",
+            "type": "number"
+          },
+          "loss_tolerance": {
+            "description": "Umbral de revisión (fracción), no una garantía",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Loss Tolerance",
+            "type": "number"
+          },
+          "min_order_eur": {
+            "default": 0,
+            "maximum": 1000000.0,
+            "minimum": 0.0,
+            "title": "Min Order Eur",
+            "type": "number"
+          },
+          "monthly_eur": {
+            "default": 0,
+            "maximum": 100000000.0,
+            "minimum": 0.0,
+            "title": "Monthly Eur",
+            "type": "number"
+          },
+          "tax_residence": {
+            "anyOf": [
+              {
+                "maxLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 3166; la fiscalidad solo se aplica si está confirmada",
+            "title": "Tax Residence"
+          }
+        },
+        "required": [
+          "initial_eur",
+          "horizon_months",
+          "loss_tolerance"
+        ],
+        "title": "InvestorProfileInput",
+        "type": "object"
+      },
+      "InvestorProfileRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/InvestorProfileInput"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "version",
+          "created_at",
+          "profile"
+        ],
+        "title": "InvestorProfileRevision",
+        "type": "object"
+      },
+      "InvestorProfileState": {
+        "additionalProperties": false,
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestorProfileRevision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/InvestorProfileRevision"
+            },
+            "title": "Revisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "current",
+          "revisions"
+        ],
+        "title": "InvestorProfileState",
+        "type": "object"
+      },
       "JobEvent": {
         "properties": {
           "at": {
@@ -12736,6 +13230,26 @@
           "pbo"
         ],
         "title": "PboSensitivity",
+        "type": "object"
+      },
+      "PendingContribution": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_eur": {
+            "title": "Amount Eur",
+            "type": "number"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "amount_eur"
+        ],
+        "title": "PendingContribution",
         "type": "object"
       },
       "PeriodQualityWarning": {
@@ -23544,6 +24058,278 @@
           }
         },
         "summary": "Delete",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/investor/benchmark": {
+      "get": {
+        "description": "Read-only from cached prices: the profile's contributions bought in SPY; it never downloads.",
+        "operationId": "benchmark_api_v1_portfolio_investor_benchmark_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestorBenchmarkResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Benchmark",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/investor/profile": {
+      "get": {
+        "description": "Read-only: the current profile and its earlier revisions; it never initializes the table.",
+        "operationId": "profile_api_v1_portfolio_investor_profile_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestorProfileState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Profile",
+        "tags": [
+          "portfolio"
+        ]
+      },
+      "post": {
+        "operationId": "save_api_v1_portfolio_investor_profile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestorProfileInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestorProfileRevision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Save",
         "tags": [
           "portfolio"
         ]

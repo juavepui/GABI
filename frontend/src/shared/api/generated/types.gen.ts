@@ -613,6 +613,84 @@ export type BenchmarkMetrics = {
 };
 
 /**
+ * BenchmarkPerformance
+ */
+export type BenchmarkPerformance = {
+    /**
+     * Contributed Eur
+     */
+    contributed_eur?: number | null;
+    /**
+     * Costs Eur
+     */
+    costs_eur?: number | null;
+    /**
+     * Current Drawdown
+     */
+    current_drawdown?: number | null;
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Euros At Risk At Tolerance
+     */
+    euros_at_risk_at_tolerance?: number | null;
+    /**
+     * Final Value Eur
+     */
+    final_value_eur?: number | null;
+    /**
+     * Max Drawdown
+     *
+     * Sobre el NAV unitizado: el dinero nuevo no la oculta
+     */
+    max_drawdown?: number | null;
+    /**
+     * Max Euros Lost
+     */
+    max_euros_lost?: number | null;
+    /**
+     * Max Loss On Contributions
+     */
+    max_loss_on_contributions?: number | null;
+    /**
+     * Pending Eur
+     */
+    pending_eur?: number | null;
+    /**
+     * Review Threshold Reached On
+     *
+     * Revisión, nunca venta automática
+     */
+    review_threshold_reached_on?: string | null;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Twr
+     *
+     * Rentabilidad ponderada por tiempo (habilidad)
+     */
+    twr?: number | null;
+    /**
+     * Twr Annualised
+     */
+    twr_annualised?: number | null;
+    /**
+     * Xirr
+     *
+     * Rentabilidad ponderada por dinero (experiencia)
+     */
+    xirr?: number | null;
+};
+
+/**
  * BenchmarkPeriod
  */
 export type BenchmarkPeriod = {
@@ -630,6 +708,66 @@ export type BenchmarkPeriod = {
     wealth: {
         [key: string]: number | null;
     };
+};
+
+/**
+ * BenchmarkPoint
+ */
+export type BenchmarkPoint = {
+    /**
+     * Contributed Eur
+     */
+    contributed_eur: number;
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Value Eur
+     */
+    value_eur: number;
+};
+
+/**
+ * BenchmarkSource
+ */
+export type BenchmarkSource = {
+    /**
+     * First Fx
+     */
+    first_fx: string;
+    /**
+     * First Price
+     */
+    first_price: string;
+    /**
+     * Fx
+     */
+    fx: string;
+    /**
+     * Last Fx
+     */
+    last_fx: string;
+    /**
+     * Last Price
+     */
+    last_price: string;
+    /**
+     * Provider
+     */
+    provider: string;
+    /**
+     * Series
+     */
+    series: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Vehicle
+     */
+    vehicle: string;
 };
 
 /**
@@ -2544,7 +2682,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices' | 'benchmark_prices';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -5313,6 +5451,134 @@ export type InsiderTransaction = {
 };
 
 /**
+ * InvestorBenchmarkResult
+ */
+export type InvestorBenchmarkResult = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Capital Need Before Horizon
+     */
+    capital_need_before_horizon: boolean | null;
+    /**
+     * Pending
+     */
+    pending: Array<PendingContribution>;
+    performance: BenchmarkPerformance;
+    /**
+     * Profile Revision
+     */
+    profile_revision: number;
+    /**
+     * Profile Version
+     */
+    profile_version: string;
+    /**
+     * Series
+     */
+    series: Array<BenchmarkPoint>;
+    source: BenchmarkSource;
+    /**
+     * Start
+     */
+    start: string;
+};
+
+/**
+ * InvestorProfileInput
+ */
+export type InvestorProfileInput = {
+    /**
+     * Capital Needed By
+     *
+     * Cuándo se necesita el dinero, si se sabe
+     */
+    capital_needed_by?: string | null;
+    /**
+     * Commission Fixed Eur
+     */
+    commission_fixed_eur?: number;
+    /**
+     * Commission Pct
+     *
+     * Fracción del importe
+     */
+    commission_pct?: number;
+    /**
+     * Fractional
+     */
+    fractional?: boolean;
+    /**
+     * Fx Cost Pct
+     *
+     * Fracción del importe convertido
+     */
+    fx_cost_pct?: number;
+    /**
+     * Horizon Months
+     *
+     * Horizonte de evaluación de GABI
+     */
+    horizon_months: number;
+    /**
+     * Initial Eur
+     */
+    initial_eur: number;
+    /**
+     * Loss Tolerance
+     *
+     * Umbral de revisión (fracción), no una garantía
+     */
+    loss_tolerance: number;
+    /**
+     * Min Order Eur
+     */
+    min_order_eur?: number;
+    /**
+     * Monthly Eur
+     */
+    monthly_eur?: number;
+    /**
+     * Tax Residence
+     *
+     * ISO 3166; la fiscalidad solo se aplica si está confirmada
+     */
+    tax_residence?: string | null;
+};
+
+/**
+ * InvestorProfileRevision
+ */
+export type InvestorProfileRevision = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    profile: InvestorProfileInput;
+    /**
+     * Revision
+     */
+    revision: number;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
+ * InvestorProfileState
+ */
+export type InvestorProfileState = {
+    current: InvestorProfileRevision | null;
+    /**
+     * Revisions
+     */
+    revisions: Array<InvestorProfileRevision>;
+};
+
+/**
  * JobEvent
  */
 export type JobEvent = {
@@ -6541,6 +6807,20 @@ export type PboSensitivity = {
      * Splits
      */
     splits: number;
+};
+
+/**
+ * PendingContribution
+ */
+export type PendingContribution = {
+    /**
+     * Amount Eur
+     */
+    amount_eur: number;
+    /**
+     * Date
+     */
+    date: string;
 };
 
 /**
@@ -12297,6 +12577,146 @@ export type DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses = {
 };
 
 export type DeleteApiV1PortfolioHoldingsLotIdDeletePostResponse = DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses[keyof DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses];
+
+export type BenchmarkApiV1PortfolioInvestorBenchmarkGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Start
+         */
+        start?: string | null;
+    };
+    url: '/api/v1/portfolio/investor/benchmark';
+};
+
+export type BenchmarkApiV1PortfolioInvestorBenchmarkGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type BenchmarkApiV1PortfolioInvestorBenchmarkGetError = BenchmarkApiV1PortfolioInvestorBenchmarkGetErrors[keyof BenchmarkApiV1PortfolioInvestorBenchmarkGetErrors];
+
+export type BenchmarkApiV1PortfolioInvestorBenchmarkGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvestorBenchmarkResult;
+};
+
+export type BenchmarkApiV1PortfolioInvestorBenchmarkGetResponse = BenchmarkApiV1PortfolioInvestorBenchmarkGetResponses[keyof BenchmarkApiV1PortfolioInvestorBenchmarkGetResponses];
+
+export type ProfileApiV1PortfolioInvestorProfileGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/investor/profile';
+};
+
+export type ProfileApiV1PortfolioInvestorProfileGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ProfileApiV1PortfolioInvestorProfileGetError = ProfileApiV1PortfolioInvestorProfileGetErrors[keyof ProfileApiV1PortfolioInvestorProfileGetErrors];
+
+export type ProfileApiV1PortfolioInvestorProfileGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvestorProfileState;
+};
+
+export type ProfileApiV1PortfolioInvestorProfileGetResponse = ProfileApiV1PortfolioInvestorProfileGetResponses[keyof ProfileApiV1PortfolioInvestorProfileGetResponses];
+
+export type SaveApiV1PortfolioInvestorProfilePostData = {
+    body: InvestorProfileInput;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/investor/profile';
+};
+
+export type SaveApiV1PortfolioInvestorProfilePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveApiV1PortfolioInvestorProfilePostError = SaveApiV1PortfolioInvestorProfilePostErrors[keyof SaveApiV1PortfolioInvestorProfilePostErrors];
+
+export type SaveApiV1PortfolioInvestorProfilePostResponses = {
+    /**
+     * Successful Response
+     */
+    201: InvestorProfileRevision;
+};
+
+export type SaveApiV1PortfolioInvestorProfilePostResponse = SaveApiV1PortfolioInvestorProfilePostResponses[keyof SaveApiV1PortfolioInvestorProfilePostResponses];
 
 export type ListEntriesApiV1PortfolioJournalGetData = {
     body?: never;
