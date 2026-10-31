@@ -32,6 +32,7 @@ from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
 from gabi.application.market.snapshots import SnapshotTracking
 from gabi.application.market.watchlist import Watchlist
+from gabi.application.portfolio.benchmark import InvestorBenchmark
 from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.holdings import Holdings
 from gabi.application.portfolio.journal import Journal
@@ -81,6 +82,7 @@ from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.investor_profile import SqliteInvestorProfile
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.keys import configured_keys
@@ -101,6 +103,7 @@ from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
 from gabi_api.routes.forms import router as forms_router
 from gabi_api.routes.holdings import router as holdings_router
+from gabi_api.routes.investor import router as investor_router
 from gabi_api.routes.jobs import router as jobs_router
 from gabi_api.routes.journal import router as journal_router
 from gabi_api.routes.macro import router as macro_router
@@ -224,6 +227,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         SnapshotCalculations(), today)
     app.state.simulations = simulations
     app.state.holdings = holdings
+    app.state.investor = InvestorBenchmark(SqliteInvestorProfile(settings.data_dir),
+                                           SqliteSimulations(settings.data_dir).prices, today)
     app.state.decisions = decisions
     app.state.research_catalog = research_catalog
     app.state.published_factors = published_factors
@@ -307,6 +312,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(signals_router)
     app.include_router(simulations_router)
     app.include_router(holdings_router)
+    app.include_router(investor_router)
     app.include_router(watchlist_router)
     app.include_router(decisions_router)
     app.include_router(forms_router)

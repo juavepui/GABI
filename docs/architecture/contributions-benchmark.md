@@ -33,8 +33,21 @@ es un umbral de revisión, no una garantía ni una venta automática.
   perdidos; también euros en riesgo con la tolerancia.
 - `compare` exige aportaciones idénticas.
 
+## Perfil persistente y benchmark (parte 2)
+
+- `infrastructure/storage/investor_profile.py`: cada guardado añade una revisión a
+  `investor_profiles`; las anteriores no cambian. Un GET no crea la tabla.
+- `application/portfolio/benchmark.py`: el plan del perfil (por defecto desde hace
+  un horizonte) compra SPY con los costes del bróker del perfil. Lee de la caché
+  el cierre ajustado de SPY (dividendos reinvertidos brutos, sin retención; precio
+  neto de TER) y `USDEUR=X`. Sin caché responde 409; nunca descarga.
+- El job explícito `benchmark_prices` descarga SPY y `USDEUR=X`.
+- API: `GET/POST /api/v1/portfolio/investor/profile` y
+  `GET /api/v1/portfolio/investor/benchmark?start=`; la respuesta declara fuente,
+  serie, primeras y últimas fechas de precio y de cambio, y la revisión del perfil.
+
 ## Pendiente
 
-Persistencia del perfil versionado, job explícito de descarga del benchmark TR y
-del EUR/USD con fuente y fecha, conexión con la cartera real de #181, escenarios
-EUR/USD y de mercado, alternativas indexada/activa/mixta, API y UI.
+Conexión con la cartera real de #181 (mismos flujos que sus compras), escenarios
+EUR/USD y de mercado, alternativas indexada/activa/mixta, índice TR teórico frente
+a vehículo de acumulación, y la UI.
