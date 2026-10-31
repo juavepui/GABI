@@ -138,3 +138,22 @@ def test_the_same_contributions_go_to_the_theoretical_index_and_the_accumulating
     assert index["performance"]["costs_eur"] == 0
     assert vehicles["accumulating_etf"]["status"] == "missing_prices"
     assert vehicles["accumulating_etf"]["performance"] is None
+
+
+def test_alternatives_split_each_purchase_and_scenarios_use_the_dollar_exposure(tmp_path):
+    prices = {"SPY": _frame("adj_close", [500.0] * 10 + [550.0] * 10, "2026-08-03"),
+              "AAA": _frame("adj_close", [100.0] * 10 + [120.0] * 10, "2026-08-03"),
+              "USDEUR=X": _frame("close", [0.9] * 20, "2026-08-03")}
+    lots = [{"id": 1, "symbol": "AAA", "shares": 10.0, "price": 100.0, "purchase_date": "2026-08-03",
+             "currency": "USD", "commission": 0.0, "fx_rate": None}]
+    service = InvestorBenchmark(SqliteInvestorProfile(tmp_path), lambda symbols, start: prices, lambda: TODAY,
+                                lots=lambda: lots)
+    service.save(PROFILE | {"commission_fixed_eur": 0, "fx_cost_pct": 0})
+    result = service.holdings()
+    finals = {row["index_weight"]: row["performance"]["final_value_eur"] for row in result["alternatives"]}
+    # Without costs, the mix is linear: 900 € grow 20 % in AAA and 10 % in SPY.
+    assert finals == pytest.approx({0.0: 1080, 0.25: 1057.5, 0.5: 1035, 0.75: 1012.5, 1.0: 990})
+    assert [row["label"] for row in result["alternatives"]][::4] == ["Activa: tu cartera", "Indexada: SPY"]
+    assert result["usd_share"] == 1.0
+    scenario = {row["id"]: row for row in result["scenarios"]}["euro_+10"]
+    assert scenario["change_eur"] == pytest.approx(1080 * (1 / 1.1 - 1))

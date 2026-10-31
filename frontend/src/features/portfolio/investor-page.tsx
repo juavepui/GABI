@@ -7,11 +7,13 @@ import {
 } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type {
+  Alternative,
   BenchmarkPerformance,
   BenchmarkSource,
   BenchmarkVehicle,
   InvestorProfileInput,
   InvestorProfileRevision,
+  StressScenario,
 } from '@/shared/api/generated/types.gen';
 import {
   ApiError,
@@ -390,6 +392,10 @@ function PlanBenchmark() {
           )}
           <SourceNote source={data.source} />
           <Vehicles reference={data.performance} vehicles={data.vehicles} />
+          <Scenarios
+            rows={data.scenarios}
+            note="Todo el plan está expuesto al dólar: es el S&P 500."
+          />
         </>
       )}
     </section>
@@ -438,6 +444,74 @@ function Vehicles({
               <td className="py-2 tabular-nums">{pct(performance?.twr)}</td>
               <td className="py-2 tabular-nums">{pct(performance?.xirr)}</td>
               <td className="py-2 tabular-nums">{pct(performance?.max_drawdown)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Declared shocks, not forecasts: crossing the tolerance means reviewing the plan, never selling by itself. */
+function Scenarios({ rows, note }: { rows: StressScenario[]; note: string }) {
+  if (!rows.length) return null;
+  return (
+    <div className="mt-5 overflow-x-auto">
+      <h3 className="font-semibold">Escenarios de estrés</h3>
+      <p className="text-xs text-muted-foreground">
+        Efecto inmediato sobre el valor actual. No son previsiones. {note}
+      </p>
+      <table className="mt-2 w-full text-left text-xs sm:text-sm">
+        <thead className="border-b text-xs text-muted-foreground">
+          <tr>
+            <th className="pb-2">Escenario</th>
+            <th className="pb-2">Efecto</th>
+            <th className="pb-2">En euros</th>
+            <th className="pb-2">Tu tolerancia</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id} className="border-b last:border-0">
+              <td className="py-2">{row.label}</td>
+              <td className="py-2 tabular-nums">{pct(row.change)}</td>
+              <td className="py-2 tabular-nums">{eur(row.change_eur)}</td>
+              <td className="py-2">{row.exceeds_tolerance ? 'Superada: revisar el plan' : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** A range of splits between the active portfolio and the index; GABI does not pick one. */
+function Alternatives({ rows }: { rows: Alternative[] }) {
+  return (
+    <div className="mt-5 overflow-x-auto">
+      <h3 className="font-semibold">Activa, mixta e indexada con las mismas compras</h3>
+      <p className="text-xs text-muted-foreground">
+        Cada compra repartida entre tu cartera y SPY. Es un rango para comparar, no una
+        recomendación de pesos.
+      </p>
+      <table className="mt-2 w-full text-left text-xs sm:text-sm">
+        <thead className="border-b text-xs text-muted-foreground">
+          <tr>
+            <th className="pb-2">Alternativa</th>
+            <th className="pb-2">Valor final</th>
+            <th className="pb-2">TWR</th>
+            <th className="pb-2">XIRR</th>
+            <th className="pb-2">Caída máxima</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.index_weight} className="border-b last:border-0">
+              <td className="py-2">{row.label}</td>
+              <td className="py-2 tabular-nums">{eur(row.performance.final_value_eur)}</td>
+              <td className="py-2 tabular-nums">{pct(row.performance.twr)}</td>
+              <td className="py-2 tabular-nums">{pct(row.performance.xirr)}</td>
+              <td className="py-2 tabular-nums">{pct(row.performance.max_drawdown)}</td>
             </tr>
           ))}
         </tbody>
@@ -510,6 +584,15 @@ function HoldingsComparison() {
               Sesiones sin precio de alguna posición omitidas: {data.incomplete_sessions}.
             </p>
           )}
+          <Alternatives rows={data.alternatives} />
+          <Scenarios
+            rows={data.scenarios}
+            note={
+              'Exposición al dólar aproximada por la divisa de cotización: ' +
+              formatPercent(data.usd_share, { digits: 0 }) +
+              ' del valor actual.'
+            }
+          />
           <SourceNote source={data.source} />
         </>
       )}

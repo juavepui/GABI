@@ -293,6 +293,7 @@ def lots_history(lots: list[dict], adjusted: dict[str, pd.Series], euros_per_uni
     total = pd.Series(0.0, index=sessions)
     flows = pd.Series(0.0, index=sessions)
     commissions, excluded, executed = 0.0, [], []
+    by_currency: dict[str, pd.Series] = {}
     for lot in lots:
         symbol, currency = lot["symbol"], lot["currency"]
         bought = pd.Timestamp(lot["purchase_date"])
@@ -317,6 +318,7 @@ def lots_history(lots: list[dict], adjusted: dict[str, pd.Series], euros_per_uni
         value = lot["shares"] * lot["price"] * path * fx_path
         value[sessions < first] = 0.0
         total = total + value  # A missing price or rate after the purchase leaves the session incomplete.
+        by_currency[currency] = by_currency.get(currency, pd.Series(0.0, index=sessions)) + value
         flows[first] += cost_eur
         executed.append((first.date(), cost_eur))
     invested = flows.cumsum()
@@ -325,5 +327,56 @@ def lots_history(lots: list[dict], adjusted: dict[str, pd.Series], euros_per_uni
     frame = frame[(frame["contributed_eur"] > 0) & frame["value_eur"].notna()].copy()
     # A flow on a dropped session enters on the next complete one.
     frame["flow_eur"] = frame["contributed_eur"].diff().fillna(frame["contributed_eur"])
+    last = frame.index[-1] if not frame.empty else None
+    value_by_currency = {currency: float(values[last]) for currency, values in by_currency.items()}         if last is not None else {}
     return {"daily": frame, "costs_eur": commissions, "pending": [], "pending_eur": 0.0, "flows": executed,
-            "excluded": excluded, "incomplete_sessions": len(incomplete)}
+            "excluded": excluded, "incomplete_sessions": len(incomplete), "value_by_currency": value_by_currency}
+
+
+# Declared shocks, not forecasts: market in local currency, the euro against the dollar and an opening gap.
+SCENARIOS = (
+    ("market_-10", "Mercado −10 %", -0.10, 0.0),
+    ("market_-20", "Mercado −20 %", -0.20, 0.0),
+    ("market_-35", "Mercado −35 %, como en 2020", -0.35, 0.0),
+    ("euro_+10", "El euro sube un 10 % frente al dólar", 0.0, 0.10),
+    ("euro_-10", "El euro baja un 10 % frente al dólar", 0.0, -0.10),
+    ("market_-20_euro_+10", "Mercado −20 % y euro +10 %", -0.20, 0.10),
+    ("gap_-7", "Apertura con hueco del −7 %: no se puede vender antes del hueco", -0.07, 0.0),
+)
+
+
+def scenarios(value_eur: float, usd_share: float, loss_tolerance: float) -> list[dict]:
+    """Instant EUR effect of each declared shock on ``value_eur`` with ``usd_share`` exposed to the dollar.
+
+    A dollar asset loses ``1 − 1/(1 + e)`` in euros when the euro rises by ``e``.
+    Exceeding the tolerance is a reason to review the plan, never an automatic sale."""
+    if not 0 <= usd_share <= 1:
+        raise ValueError("La exposición al dólar debe estar entre 0 y 1.")
+    rows = []
+    for key, label, market, euro in SCENARIOS:
+        currency = (1 - usd_share) + usd_share / (1 + euro)
+        change = (1 + market) * currency - 1
+        rows.append({"id": key, "label": label, "market": market, "euro": euro, "change": change,
+                     "change_eur": value_eur * change, "value_eur": value_eur * (1 + change),
+                     "exceeds_tolerance": change <= -loss_tolerance})
+    return rows
+
+
+def combine(first: dict, second: dict) -> dict:
+    """Two simulation results held together, as a ``performance`` input.
+
+    On a session missing from one side, that side keeps its last value (a lot
+    history drops incomplete sessions)."""
+    a, b = first["daily"], second["daily"]
+    days = a.index.union(b.index)
+
+    def side(frame: pd.DataFrame, column: str) -> pd.Series:
+        return frame[column].reindex(days).ffill().fillna(0.0)
+
+    frame = pd.DataFrame({"contributed_eur": side(a, "contributed_eur") + side(b, "contributed_eur"),
+                          "value_eur": side(a, "value_eur") + side(b, "value_eur")})
+    frame = frame[frame["contributed_eur"] > 0].copy()
+    frame["flow_eur"] = frame["contributed_eur"].diff().fillna(frame["contributed_eur"])
+    return {"daily": frame, "costs_eur": first["costs_eur"] + second["costs_eur"],
+            "pending": [*first["pending"], *second["pending"]],
+            "pending_eur": first["pending_eur"] + second["pending_eur"]}

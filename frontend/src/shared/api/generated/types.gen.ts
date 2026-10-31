@@ -5,6 +5,23 @@ export type ClientOptions = {
 };
 
 /**
+ * Alternative
+ */
+export type Alternative = {
+    /**
+     * Index Weight
+     *
+     * Parte de cada compra en el índice; 0 = activa, 1 = indexada
+     */
+    index_weight: number;
+    /**
+     * Label
+     */
+    label: string;
+    performance: BenchmarkPerformance;
+};
+
+/**
  * AnalysisPromptResponse
  *
  * Text to paste into an AI assistant; every number in it comes from GABI's deterministic code.
@@ -5208,6 +5225,12 @@ export type HoldingTotals = {
  */
 export type HoldingsBenchmarkResult = {
     /**
+     * Alternatives
+     *
+     * Un rango para comparar, no una recomendación de pesos
+     */
+    alternatives: Array<Alternative>;
+    /**
      * As Of
      */
     as_of: string;
@@ -5241,7 +5264,17 @@ export type HoldingsBenchmarkResult = {
      * Profile Version
      */
     profile_version: string;
+    /**
+     * Scenarios
+     */
+    scenarios: Array<StressScenario>;
     source: BenchmarkSource;
+    /**
+     * Usd Share
+     *
+     * Valor actual en posiciones no cotizadas en EUR (aproximación)
+     */
+    usd_share: number;
 };
 
 /**
@@ -5545,6 +5578,12 @@ export type InvestorBenchmarkResult = {
      * Profile Version
      */
     profile_version: string;
+    /**
+     * Scenarios
+     *
+     * Exposición al dólar del 100 %: el S&P 500
+     */
+    scenarios: Array<StressScenario>;
     /**
      * Series
      */
@@ -9278,6 +9317,52 @@ export type StabilityYear = {
      * Year Of Start
      */
     year_of_start: number;
+};
+
+/**
+ * StressScenario
+ */
+export type StressScenario = {
+    /**
+     * Change
+     *
+     * Efecto en euros (fracción)
+     */
+    change: number;
+    /**
+     * Change Eur
+     */
+    change_eur: number;
+    /**
+     * Euro
+     *
+     * Variación del euro frente al dólar (fracción)
+     */
+    euro: number;
+    /**
+     * Exceeds Tolerance
+     *
+     * Motivo para revisar el plan; nunca una venta automática
+     */
+    exceeds_tolerance: boolean;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Market
+     *
+     * Shock de mercado en moneda local (fracción)
+     */
+    market: number;
+    /**
+     * Value Eur
+     */
+    value_eur: number;
 };
 
 /**

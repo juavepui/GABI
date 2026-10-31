@@ -79,6 +79,18 @@ const benchmark: InvestorBenchmarkResult = {
   performance,
   pending: [],
   series: [],
+  scenarios: [
+    {
+      id: 'market_-20_euro_+10',
+      label: 'Mercado −20 % y euro +10 %',
+      market: -0.2,
+      euro: 0.1,
+      change: -0.2727,
+      change_eur: -8181,
+      value_eur: 21819,
+      exceeds_tolerance: true,
+    },
+  ],
   vehicles: [
     {
       id: 'index_tr',
@@ -133,6 +145,7 @@ describe('Perfil y benchmark (#244)', () => {
     expect(screen.text()).toContain('El 2025-04-08; revisar, no vender por sí solo');
     expect(screen.text()).toContain('Todavía no has registrado compras.');
     expect(screen.text()).toContain('^SP500TR · teórico');
+    expect(screen.text()).toContain('Superada: revisar el plan');
     expect(screen.text()).toContain('SXR8.DE · invertibleSin precios en caché');
     const fx = screen.container.querySelector<HTMLInputElement>('[name=fx_cost_pct]');
     expect(fx?.value).toBe('0.6');

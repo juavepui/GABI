@@ -76,6 +76,23 @@ class BenchmarkPoint(WireModel):
     contributed_eur: float
 
 
+class StressScenario(WireModel):
+    id: str
+    label: str
+    market: float = Field(description="Shock de mercado en moneda local (fracción)")
+    euro: float = Field(description="Variación del euro frente al dólar (fracción)")
+    change: float = Field(description="Efecto en euros (fracción)")
+    change_eur: float
+    value_eur: float
+    exceeds_tolerance: bool = Field(description="Motivo para revisar el plan; nunca una venta automática")
+
+
+class Alternative(WireModel):
+    index_weight: float = Field(description="Parte de cada compra en el índice; 0 = activa, 1 = indexada")
+    label: str
+    performance: BenchmarkPerformance
+
+
 class BenchmarkVehicle(WireModel):
     id: str
     symbol: str
@@ -98,6 +115,7 @@ class InvestorBenchmarkResult(WireModel):
     performance: BenchmarkPerformance
     pending: list[PendingContribution]
     series: list[BenchmarkPoint]
+    scenarios: list[StressScenario] = Field(description="Exposición al dólar del 100 %: el S&P 500")
     vehicles: list[BenchmarkVehicle] = Field(description="Las mismas aportaciones en el índice TR y en un ETF Acc")
 
 
@@ -128,3 +146,6 @@ class HoldingsBenchmarkResult(WireModel):
     incomplete_sessions: int
     portfolio_series: list[BenchmarkPoint]
     benchmark_series: list[BenchmarkPoint]
+    usd_share: float = Field(description="Valor actual en posiciones no cotizadas en EUR (aproximación)")
+    scenarios: list[StressScenario]
+    alternatives: list[Alternative] = Field(description="Un rango para comparar, no una recomendación de pesos")

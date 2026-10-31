@@ -69,6 +69,18 @@ caché, el vehículo se marca `missing_prices` sin bloquear el resto. El job
 `yahoo_symbol` conserva los sufijos de bolsa (`.DE`, `.L`, `.MC`, `.PA`, `.AS`,
 `.MI`, `.SW`) y solo convierte las clases de acciones de EE. UU. (BRK.B → BRK-B).
 
-## Pendiente
+## Escenarios y alternativas (parte 5b)
 
-Escenarios EUR/USD y de mercado, y alternativas indexada/activa/mixta.
+- `scenarios`: efecto inmediato en euros de choques declarados (mercado −10/−20/−35 %,
+  euro ±10 %, mercado −20 % con euro +10 % y hueco de apertura −7 %). Un activo en
+  dólares pierde `1 − 1/(1 + e)` en euros si el euro sube `e`. El plan del perfil
+  tiene exposición al dólar del 100 %; la cartera real, la parte de su valor actual
+  no cotizada en EUR (aproximación por divisa de cotización). Superar la tolerancia
+  significa revisar el plan, nunca vender.
+- `alternatives`: cada compra real repartida entre la cartera activa y SPY al 0, 25,
+  50, 75 y 100 %. La parte activa escala acciones y comisión de cada compra; la del
+  índice paga los costes del bróker sobre su parte. Es un rango para comparar: GABI
+  no recomienda pesos.
+
+Con esto la #244 queda cubierta en su alcance de producto; la fiscalidad requiere
+residencia confirmada y no se calcula todavía.
