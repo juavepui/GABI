@@ -225,3 +225,9 @@ def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     if average <= 0:
         return Metric(None, "not_meaningful", "non_positive_invested_capital", convention, tuple(inputs))
     return Metric(operating.value * (1 - rate) / average, "computed", None, convention, tuple(inputs))
+
+
+def latest_annual_end(facts: dict) -> str | None:
+    """The last fiscal year end with an annual 10-K balance sheet: the anchor of the metrics."""
+    ends = series(facts, EQUITY_TAGS, duration=False)
+    return max(ends) if ends else None

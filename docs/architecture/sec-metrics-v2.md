@@ -59,8 +59,27 @@ fija la versión del modelo que active la valuación; el dominio no los fija. El
 valor baja con la WACC y la β y sube con el crecimiento y la caja; con más deuda
 no es monótono, porque abarata el capital.
 
+## Comparación con V1 (#245)
+
+El job explícito `metrics_comparison` (Administración › Calidad de los datos)
+compara, sobre la caché y sin escribir:
+
+- **ROIC V1 frente a V2** con los mismos hechos SEC presentados hasta la fecha:
+  estados y motivos de la V2, acuerdo de orden (Spearman), quintil alto compartido,
+  diferencia mediana, mayores diferencias y los casos en que V1 daba un número que
+  V2 declara ausente o no aplicable.
+- **Hoy** además: EV de Yahoo frente al EV SEC V2 y el ranking operativo puntuado
+  con cada ROIC (Top-20 compartido, entradas y salidas).
+- **Fecha pasada** (solo histórico observado 2010–jul. 2025; nunca una reserva):
+  únicamente hechos SEC presentados hasta esa fecha, porque Yahoo y el ranking en
+  caché no son point in time.
+
+El sector financiero se aproxima con GICS (Financials y Real Estate), declarado en
+el informe. La sincronización SEC guarda también `CommercialPaper`, `InterestPaid`
+e `InterestPaidNet`; las métricas V1 no los leen. Una corrección de definición no
+demuestra alfa: la calibración de selección es un estudio distinto.
+
 ## Pendiente
 
-Comparación de rankings Yahoo/SEC e histórico SEC frente a V1 y activación
-mediante una versión nueva del modelo con sus `Assumptions`. Validar la
-calibración de selección es un estudio distinto.
+Activación mediante una versión nueva del modelo que use estas métricas y fije las
+`Assumptions` de la valoración, sin cambiar los caminos de los estudios activos.

@@ -99,6 +99,16 @@ test.describe('calidad de los datos', () => {
     await expect(provenance.getByText('Aproximado')).toBeVisible();
   });
 
+  test('métricas SEC V2 frente a V1 como trabajo explícito', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const section = page.getByRole('region', { name: 'Métricas SEC V2 frente a V1' });
+    await section.getByRole('button', { name: 'Comparar métricas' }).click();
+    await expect(section.getByRole('table', { name: 'Estado del ROIC V2' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(section).toContainText('Ranking operativo con el ROIC V2');
+  });
+
   test('identidades del universo', async ({ page }) => {
     await page.goto('/administracion/calidad');
     const company = page.getByRole('region', { name: 'Procedencia de una empresa' });

@@ -7,6 +7,7 @@ import { Folded } from '@/shared/ui/folded';
 import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
 import { DateField, HealthStatus, RunButton, Section, Table } from './data-health';
+import { MetricsComparison } from './metrics-comparison';
 import { age, pct, useHealthJob, useToday, type Row } from './data-health-job';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
@@ -600,6 +601,7 @@ export function DataHealthPage() {
       />
       <UniverseSection state={universe} />
       <BlockCoverage />
+      <MetricsComparison />
       <CompanySection universe={universe.result.data?.universe ?? []} />
       <ArchiveSection />
     </div>

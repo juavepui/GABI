@@ -20,7 +20,7 @@ from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 from gabi.domain.portfolio.simulation import listing
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
                   "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"}
@@ -133,6 +133,12 @@ class JobCommand:
                                normalize_backtest(self.kind, self.start, self.end, self.backtest_options))
         elif self.kind == "portfolio_lab":
             pass  # Its dates are validated with its options below.
+        elif self.kind == "metrics_comparison":
+            # Today, or SEC facts filed up to an observed historical date (never a reserved period).
+            if self.end is not None:
+                raise QueryError("invalid_job", "La comparación de métricas admite una sola fecha.", 422)
+            if self.start is not None:
+                require_observed_period(self.start)
         elif self.kind == "prepare_history":
             object.__setattr__(self, "preparation", normalize_preparation(self.start, self.end, self.preparation))
         elif self.start is not None or self.end is not None:
