@@ -1,6 +1,6 @@
 # Mapa de ventajas económicas y selección de hipótesis (#268)
 
-**Estado:** propuesta del 2026-10-31, pendiente de aprobación del propietario.
+**Estado:** decisión aprobada por el propietario el 2026-10-31 (secciones 5 y 6).
 Ni este documento ni su elaboración incluyen código de trading, cálculo de
 rentabilidades ni consulta de muestras reservadas (#43, #44 y #237).
 
@@ -301,8 +301,9 @@ prerrequisitos:
 
 ## 7. Enlaces y tiempo
 
-- Cuando el propietario apruebe la decisión, se anotará en #60 (familia nueva
-  `cbop_v1`, todavía sin resultados) y en #242.
+- Decisión aprobada el 2026-10-31 y anotada en #60 (familia nueva `cbop_v1`,
+  todavía sin resultados) y en #242. Se registrará en el ledger de #60 al
+  congelar el preregistro definitivo, antes de cualquier cálculo.
 - Tiempo invertido en esta entrega: unas 2 h de trabajo asistido el 2026-10-31,
   entre revisión del registro de #60, búsqueda y verificación de fuentes y
   redacción. El propietario añade aquí su tiempo de revisión.
