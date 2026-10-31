@@ -45,6 +45,11 @@ import type {
   InvestorProfileInput,
   InvestorProfileRevision,
   InvestorProfileState,
+  PolicyProposal,
+  PortfolioPolicyInput,
+  PortfolioPolicyRevision,
+  PortfolioPolicyState,
+  RiskPanel,
   WatchlistChecklists,
   WatchlistEntry,
   WatchlistDeleted,
@@ -767,6 +772,32 @@ export function getInvestorBenchmark(
 }
 export function getHoldingsBenchmark(signal?: AbortSignal): Promise<HoldingsBenchmarkResult> {
   return get('/api/v1/portfolio/investor/holdings-benchmark', signal);
+}
+
+/** Riesgo por emisor y política de cartera (#248): reads use the cache; saving adds a policy revision. */
+export function getRiskPanel(signal?: AbortSignal): Promise<RiskPanel> {
+  return get('/api/v1/portfolio/risk', signal);
+}
+export function getPortfolioPolicy(signal?: AbortSignal): Promise<PortfolioPolicyState> {
+  return get('/api/v1/portfolio/risk/policy', signal);
+}
+export function savePortfolioPolicy(body: PortfolioPolicyInput): Promise<PortfolioPolicyRevision> {
+  return request('/api/v1/portfolio/risk/policy', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getPolicyProposal(
+  contribution: number,
+  positions: number,
+  signal?: AbortSignal,
+): Promise<PolicyProposal> {
+  const params = new URLSearchParams({
+    contribution_eur: String(contribution),
+    n_positions: String(positions),
+  });
+  return get('/api/v1/portfolio/risk/proposal?' + params.toString(), signal);
 }
 
 /** Empresas seguidas (#182): the view reads the cache; following, the note and removing are explicit. */
