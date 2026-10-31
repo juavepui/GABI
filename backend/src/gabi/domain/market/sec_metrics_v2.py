@@ -182,6 +182,15 @@ def _previous_year_end(values: dict[str, Fact], anchor: str) -> str | None:
     return max(earlier) if earlier else None
 
 
+def tax_rate(facts: dict, anchor: str) -> tuple[float, str, tuple[Fact, ...]]:
+    """Effective tax rate (tax expense / pretax income, bounded to [0, 1)) or the declared statutory 21 %."""
+    tax = at(series(facts, TAX_EXPENSE_TAGS, duration=True), anchor)
+    pretax = at(series(facts, PRETAX_INCOME_TAGS, duration=True), anchor)
+    if tax.value is not None and pretax.value is not None and pretax.value > 0:
+        return min(max(tax.value / pretax.value, 0.0), 0.99), "effective_tax", (tax, pretax)
+    return STATUTORY_TAX_RATE, "statutory_tax_21", ()
+
+
 def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     """NOPAT / average invested capital over the anchor year.
 
@@ -195,18 +204,13 @@ def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     operating = at(series(facts, OPERATING_INCOME_TAGS, duration=True), anchor)
     if operating.value is None:
         return Metric(None, operating.state, f"operating_income_{operating.state}", "nopat/average_invested_capital")
-    tax = at(series(facts, TAX_EXPENSE_TAGS, duration=True), anchor)
-    pretax = at(series(facts, PRETAX_INCOME_TAGS, duration=True), anchor)
-    if tax.value is not None and pretax.value is not None and pretax.value > 0:
-        rate, tax_convention = min(max(tax.value / pretax.value, 0.0), 0.99), "effective_tax"
-    else:
-        rate, tax_convention = STATUTORY_TAX_RATE, "statutory_tax_21"
+    rate, tax_convention, tax_inputs = tax_rate(facts, anchor)
     convention = f"nopat({tax_convention})/average_invested_capital"
     equity_series = series(facts, EQUITY_TAGS, duration=False)
     opening = _previous_year_end(equity_series, anchor) if equity_series else None
     if opening is None:
         return Metric(None, "absent", "no_opening_balance_sheet", convention)
-    capitals, inputs = [], [operating] + [fact for fact in (tax, pretax) if fact.value is not None]
+    capitals, inputs = [], [operating, *tax_inputs]
     for end in (opening, anchor):
         equity = at(equity_series, end)
         debt, debt_parts = total_debt(facts, end)

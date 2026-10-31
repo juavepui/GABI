@@ -33,9 +33,34 @@ Solo cuentan valores anuales completos (340–380 días) de 10-K y 10-K/A; para 
 cierre gana la presentación más reciente, y dos valores distintos en la misma
 presentación anulan ese ejercicio.
 
+## Valoración FCFF-WACC
+
+`domain/market/valuation_v2.py` (versión `valuation-v2-fcff-wacc`) sustituye, para
+la V2, el reverse DCF de `valuation_expectations` (CFO − capex frente a EV con
+9 %/2,5 % fijos), que sigue en los caminos activos.
+
+- **FCFF** = flujo operativo + intereses pagados × (1 − t) − capex. Sin capex o sin
+  intereses pagados es ausente; los intereses pueden faltar solo con deuda
+  financiera declarada cero.
+- **WACC** = E/(D+E)·(rf + β·ERP) + D/(D+E)·kd·(1 − t), con E la capitalización y D
+  la deuda contable (aproximación declarada de su valor de mercado). kd = gasto
+  financiero / deuda al cierre si está en (0, 25 %]; si no, el kd de reserva de la
+  versión del modelo, declarado como `kd=assumed`.
+- **DCF**: FCFF creciendo a `g` durante el horizonte más valor terminal de Gordon;
+  no se calcula si el crecimiento terminal no es menor que la WACC o el FCFF no es
+  positivo.
+- **Puente**: valor del capital = EV del DCF − deuda financiera + caja; valor por
+  acción = capital / acciones diluidas medias. Capital no positivo: `not_meaningful`.
+- **Crecimiento implícito**: el `g` constante que iguala el DCF al EV observado,
+  buscado en [−50 %, +100 %].
+
+rf, ERP, β, kd de reserva, horizonte y crecimiento terminal son `Assumptions` que
+fija la versión del modelo que active la valuación; el dominio no los fija. El
+valor baja con la WACC y la β y sube con el crecimiento y la caja; con más deuda
+no es monótono, porque abarata el capital.
+
 ## Pendiente
 
-Valoración FCFF-WACC con puente a valor por acción, comparación de rankings
-Yahoo/SEC e histórico SEC frente a V1, etiquetado de las aproximaciones V1 en la
-interfaz y activación mediante una versión nueva del modelo. Validar la
+Comparación de rankings Yahoo/SEC e histórico SEC frente a V1 y activación
+mediante una versión nueva del modelo con sus `Assumptions`. Validar la
 calibración de selección es un estudio distinto.
