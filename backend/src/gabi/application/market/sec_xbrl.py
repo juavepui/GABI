@@ -7,6 +7,7 @@ from typing import Protocol
 
 import pandas as pd
 
+from gabi.application.market import stored_metrics_v2
 from gabi.domain.market.checklist import CHECKLIST_TAGS, DILUTED_SHARES_TAGS
 from gabi.domain.market.observations import change_status, delta_rows
 from gabi.domain.market.sec_facts import (
@@ -35,6 +36,7 @@ class XbrlStore(Protocol):
     def metrics(self, symbol: str) -> dict | None: ...
     def facts(self, entity: str) -> pd.DataFrame: ...
     def save(self, symbol: str, cik: str, rows: list[dict], metrics: dict) -> None: ...
+    def save_metrics_v2(self, symbol: str, cik: str | None, row: dict) -> None: ...
 
 
 def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callable[[str], dict],
@@ -102,6 +104,8 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
                 for r in changed.reset_index().to_dict("records")]
         metrics = {**compute_edgar_metrics(facts, fiscal_alignment=fiscal_alignment), **links}
         store.save(symbol, cik, rows, metrics)
+        # SEC metrics V2 (#245) from the stored history, the only source of the V2 rows.
+        stored_metrics_v2.refresh(store, symbol, cik)
         state["fact_tags"] = tags_version
         filed = incoming.filed_date.dropna()
         state["watermark"] = max(cp.get("watermark", ""), str(filed.max()) if len(filed) else "")

@@ -144,7 +144,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     model = active_model()
     policy = model_policy(model)
     repository = ReadOnlyMarket(settings, calculators(model.technical), policy, model.benchmark_symbol,
-                                model.risk_free_rate)
+                                model.risk_free_rate, metrics_version=model.metrics_version)
     model_queries = ModelQueries(repository, policy)
     market = MarketQueries(repository, model_queries, today, session)
     model_commands = ModelCommands(model_queries, FileWeights(settings.data_dir), FileMode(settings.data_dir))
