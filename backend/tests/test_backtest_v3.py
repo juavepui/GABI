@@ -112,6 +112,15 @@ def test_benchmark_uses_the_same_calendar_flows_and_accounting():
     assert result["daily"][-1]["nav"] == pytest.approx(10 * 110 + 500 / 110 * 110)
 
 
+def test_benchmark_reinvests_its_dividends_like_a_total_return_index():
+    bars = {"SPY": flat(100.0)}
+    events = [v3.Event("dividend", "SPY", DAYS[2], cash=2.0)]
+    result = v3.benchmark("SPY", DAYS, bars, costs=FREE, initial_cash=1000.0, events=events)
+    buys = [trade["day"] for trade in result["trades"] if trade["side"] == "BUY"]
+    assert buys == [DAYS[1].isoformat(), DAYS[3].isoformat()]
+    assert result["daily"][-1]["cash"] == pytest.approx(0.0) and result["final_shares"]["SPY"] == pytest.approx(10.2)
+
+
 def test_leverage_is_off_by_default_and_only_explicit():
     assert v3.Costs().leverage is False and v3.BASE.leverage is False and v3.STRESS.leverage is False
     with pytest.raises(ValueError):

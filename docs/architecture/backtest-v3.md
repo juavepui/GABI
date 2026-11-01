@@ -24,7 +24,10 @@ grandes compañías líquidas, y `STRESS` (30 pb, 25 pb, 2 %) para mercados estr
 
 `benchmark` invierte las mismas aportaciones, en el mismo calendario y con la
 misma contabilidad, en un único símbolo: cada aportación se invierte en la
-apertura siguiente, como lo haría un rebalanceo.
+apertura siguiente, como lo haría un rebalanceo. Sus dividendos también se
+reinvierten en la apertura siguiente al pago, como en un índice de rentabilidad
+total: si se quedaran en caja para siempre, el benchmark perdería en torno a un
+punto anual con SPY e inflaría cualquier exceso sobre él.
 
 ## Comprobaciones
 
