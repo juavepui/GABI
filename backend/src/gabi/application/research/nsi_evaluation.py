@@ -4,7 +4,8 @@ Over the observed history (signals in July 2011–2024, last window ending on th
 2025 signal, inside the observed period), each configuration selects once a year
 with :mod:`nsi_portfolio`, weights with the #248 limits and runs in the V3 engine
 with a euro account: 11,000 € initial and 700 € a month, converted to dollars at
-the day's rate net of the broker's deposit conversion cost, 15 % dividend
+the day's rate net of the broker's deposit conversion cost and, by amendment 1,
+invested at the next open in the current selection, 15 % dividend
 withholding, and the same calendar, flows and accounting for the S&P 500 (SPY).
 Results are measured in euros, time-weighted. The comparators are the equally
 weighted universe with data and the FF5+UMD regression.
@@ -59,14 +60,27 @@ def selections(signals: list[date], members: dict[date, dict[str, str | None]], 
 
 
 def weights(row: dict, top_n: int, sectors: dict[str, str | None], policy: risk_policy.Policy) -> tuple[dict, bool]:
-    """#248 limits over the selection; an empty slot of the Top-N stays in cash."""
+    """#248 limits over a Top-N whose empty slots stay in cash.
+
+    Each empty slot takes part as its own issuer and sector, so every name starts
+    at 1/top_n and the caps act on the real names only; the slots' weight is cash."""
     selected = row["selected"]
     if not selected:
         return {}, False
-    limited = risk_policy.apply_limits(selected, {symbol: row["issuers"][symbol] for symbol in selected},
-                                       sectors, policy)
-    scale = len(selected) / top_n
-    return {symbol: weight * scale for symbol, weight in limited["weights"].items()}, bool(limited["capped"])
+    slots = [f"__cash_{index}" for index in range(max(top_n - len(selected), 0))]
+    limited = risk_policy.apply_limits(selected + slots,
+                                       {**{symbol: row["issuers"][symbol] for symbol in selected},
+                                        **{slot: slot for slot in slots}},
+                                       {**sectors, **{slot: slot for slot in slots}}, policy)
+    real = {symbol: weight for symbol, weight in limited["weights"].items() if symbol in selected}
+    return real, bool(set(limited["capped"]) & set(selected))
+
+
+def with_contributions(row: dict, target: dict[str, float], flows: dict[date, float]) -> list[v3.Rebalance]:
+    """Amendment 1 (2026-11-01, before any return): each contribution day inside the window re-targets the
+    window's selection, so the contribution is invested at the next open instead of waiting for July."""
+    days = sorted(day for day in flows if row["signal"] < day < row["end"])
+    return [v3.Rebalance(row["signal"], target), *(v3.Rebalance(day, target) for day in days)]
 
 
 def _rates(sessions: list[date], euros_per_dollar: pd.Series) -> pd.Series:
@@ -140,7 +154,7 @@ def evaluate(signals: list[date], members: dict[date, dict[str, str | None]], *,
         plan, capped = [], 0
         for row in rows:
             target, limited = weights(row, top_n, sectors(row["selected"], row["as_of"]), policy)
-            plan.append(v3.Rebalance(row["signal"], target))
+            plan += with_contributions(row, target, dollars)
             capped += limited
         progress(f"Motor V3 {name}")
         run = v3.run(sessions, data.bars, rebalances=plan, costs=costs, initial_cash=initial, flows=dollars,
@@ -178,6 +192,8 @@ def evaluate(signals: list[date], members: dict[date, dict[str, str | None]], *,
             "data": {"missing": data.missing, "exits": data.exits, "anomalies": len(data.anomalies),
                      "strict": data.strict, "bases": _count(data.bases)},
             "decision": results["primary"]["decision"],
+            "amendments": [{"id": 1, "date": "2026-11-01", "ref": "docs/research/nsi-v1/enmienda-1.json",
+                            "rule": "cada aportación se invierte en la apertura siguiente en la selección vigente"}],
             "assumptions": {"fx_deposit_cost": FX_COST, "dividend_withholding": WITHHOLDING,
                             "initial_conversion_cost_outside_metrics": True,
                             "alpha_rule": "intervalo del 95 % del alfa anual contiene el cero",
@@ -213,8 +229,8 @@ def _equal_weight(signals: list[date], members: dict[date, dict[str, str | None]
     rates = _rates(sessions, euros_per_dollar)
     initial, dollars, flows_eur = _account(sessions, rates)
     costs = replace(v3.BASE, dividend_withholding=WITHHOLDING)
-    plan = [v3.Rebalance(row["signal"], {symbol: 1 / len(row["selected"]) for symbol in row["selected"]})
-            for row in universe_rows if row["selected"]]
+    plan = [rebalance for row in universe_rows if row["selected"] for rebalance in with_contributions(
+        row, {symbol: 1 / len(row["selected"]) for symbol in row["selected"]}, dollars)]
     run = v3.run(sessions, data.bars, rebalances=plan, costs=costs, initial_cash=initial, flows=dollars,
                  events=data.events)
     measured = _measure(run, rates, flows_eur, market.risk_free_rate)

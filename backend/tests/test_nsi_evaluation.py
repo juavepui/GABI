@@ -73,10 +73,31 @@ def test_the_evaluation_selects_buyers_back_and_measures_them_in_euros_against_s
     contributed = primary["strategy"]["metrics_eur"]["contributed"]
     assert contributed == pytest.approx(primary["strategy"]["metrics_eur"]["initial"] + 700 * 24, rel=1e-6)
     assert primary["strategy"]["metrics_eur"]["initial"] == pytest.approx(11_000 * (1 - nsi_evaluation.FX_COST))
-    # Two names of a Top-20: the other eighteen slots stay in cash.
-    assert primary["strategy"]["average_cash_share"] > 0.8
+    # Two names of a Top-20: the other eighteen slots stay in cash; contributions are invested monthly.
+    assert 0.85 < primary["strategy"]["average_cash_share"] < 0.95
+    assert primary["benchmark"]["trades"] >= 24  # The index invests each contribution the next session.
     assert result["equal_weight_universe"]["metrics_eur"]["cagr"] is not None
     assert not math.isnan(primary["alpha_ff5_umd"]["alpha_annual"])
+
+
+def test_amendment_one_invests_each_contribution_in_the_current_selection():
+    row = {"signal": date(2022, 7, 1), "end": date(2023, 7, 3)}
+    flows = {date(2022, 6, 1): 1.0, date(2022, 8, 1): 1.0, date(2023, 6, 1): 1.0, date(2023, 7, 3): 1.0}
+    plan = nsi_evaluation.with_contributions(row, {"S0": 0.05}, flows)
+    assert [rebalance.signal_day for rebalance in plan] == [date(2022, 7, 1), date(2022, 8, 1), date(2023, 6, 1)]
+    assert all(rebalance.weights == {"S0": 0.05} for rebalance in plan)
+
+
+def test_policy_weights_start_at_one_over_top_n_and_empty_slots_stay_in_cash():
+    from gabi.domain.portfolio.risk_policy import Policy
+
+    row = {"selected": ["A", "B", "C", "D"], "issuers": {"A": "1", "B": "2", "C": "3", "D": "4"}}
+    target, capped = nsi_evaluation.weights(row, 20, {"A": "Tech", "B": "Tech", "C": "Tech", "D": "Energy"},
+                                            Policy())
+    assert target == {name: pytest.approx(0.05) for name in "ABCD"} and not capped
+    crowded = {"selected": [f"T{i}" for i in range(20)], "issuers": {f"T{i}": str(i) for i in range(20)}}
+    target, capped = nsi_evaluation.weights(crowded, 20, {f"T{i}": "Tech" for i in range(20)}, Policy())
+    assert capped and sum(target.values()) == pytest.approx(0.30)  # Sector cap: the rest is cash.
 
 
 def test_a_missing_exchange_rate_stops_the_evaluation_and_reserved_dates_are_refused():

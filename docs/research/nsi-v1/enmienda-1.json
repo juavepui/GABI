@@ -1,0 +1,17 @@
+{
+  "amendment": 1,
+  "model": "GABI-NSI-v1",
+  "date": "2026-11-01",
+  "approved_by": "propietario",
+  "returns_read": false,
+  "preregistration_sha256_lf": "a6d08bbb8831ac58eedbdaff037b3cc2610cfce8a62d4ee345103d3e62897863",
+  "changes": {
+    "account.contributions": {
+      "before": "en caja hasta el rebalanceo siguiente",
+      "after": "cada aportación se invierte en la apertura siguiente en la selección vigente, reequilibrando a sus pesos objetivo; la selección sigue siendo anual"
+    }
+  },
+  "reason": "Con rebalanceo anual, una aportación podía esperar hasta 11 meses en caja mientras el benchmark la invierte al día siguiente: el resultado mediría la gestión de caja, no la señal. Detectado al programar la evaluación, antes de calcular ningún retorno.",
+  "effect_on_budget": "ninguno: las tres configuraciones del ledger no cambian",
+  "implementation": "backend/src/gabi/application/research/nsi_evaluation.py#with_contributions"
+}

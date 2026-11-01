@@ -378,6 +378,30 @@ def nsi_gate(settings: Settings, args: argparse.Namespace) -> None:
                      ensure_ascii=False))
 
 
+def nsi_evaluate(settings: Settings, args: argparse.Namespace) -> None:
+    """NSI-v1 exploratory evaluation (#252), as preregistered; writes its result once and never overwrites."""
+    from gabi.application.research import cbop_coverage, nsi_evaluation
+    from gabi.domain.research.prospective_plan import json_value
+    from gabi.infrastructure.legacy import nsi_evaluation as legacy_inputs
+    from gabi.infrastructure.legacy.cbop_gate import july_signals, membership
+    from gabi.infrastructure.storage.cbop_facts import SqliteCbopFacts, identity_intervals
+
+    destination = args.output or settings.data_dir.parent / "docs" / "research" / "nsi-v1"
+    if (destination / "resultado.json").exists():
+        raise SystemExit(f"Ya existe un resultado en {destination}; usar --output con una carpeta nueva.")
+    store = SqliteCbopFacts(settings.data_dir / "nsi" / "facts.db")
+    signals = july_signals(2011, 2025)
+    members = cbop_coverage.issuers(signals, membership, identity_intervals(settings.data_dir / "gabi.db"))
+    result = nsi_evaluation.evaluate(signals, members, facts=store.facts, sic=store.sic,
+                                     progress=lambda message: print(message, file=sys.stderr),
+                                     **legacy_inputs.inputs(settings.data_dir))
+    result["downloads"] = store.downloaded_summary()
+    destination.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(json_value(result), ensure_ascii=False, indent=2)
+    (destination / "resultado.json").write_text(text + chr(10), encoding="utf-8")
+    print(json.dumps(json_value(result["decision"]), ensure_ascii=False))
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -597,6 +621,9 @@ def main(argv: list[str]) -> None:
     command.add_argument("--last-year", type=int, default=2025)
     command.add_argument("--output", type=Path, help="Por defecto docs/research/nsi-v1")
     command.set_defaults(run=nsi_gate)
+    command = commands.add_parser("nsi-evaluate", help="Evaluación exploratoria preregistrada de NSI-v1 (#252); lee retornos 2011-2025")
+    command.add_argument("--output", type=Path, help="Por defecto docs/research/nsi-v1")
+    command.set_defaults(run=nsi_evaluate)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")
