@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "as_of": "2026-09-29",
   "scope": "explicit_published_repository_artifacts_only",
   "revisions": [
@@ -24,6 +24,17 @@
         "cbop_v1_data_gate: close_unfeasible",
         "nsi_v1_data_gate: continue_to_exploratory"
       ]
+    },
+    {
+      "version": 4,
+      "date": "2026-11-01",
+      "issue": 252,
+      "observed": [
+        "issuance/NSI-v1/primary",
+        "issuance/NSI-v1/stress",
+        "issuance/NSI-v1/top30"
+      ],
+      "decision": "NSI-v1 abandoned by its preregistered rule; accepted by the owner"
     }
   ],
   "exhaustive_search_history": false,
@@ -3480,9 +3491,8 @@
       },
       "configuration_sha256": "92d65dbb4c8e3691e7e6c11597b55b7adbbaa65b016ac67ab9c8e7bfdc769aa5",
       "specification_ref": "docs/research/nsi-v1/preregistro.json#/spec/configurations/primary",
-      "result_ref": null,
-      "observed_sample": null,
-      "planned_sample": {
+      "result_ref": "docs/research/nsi-v1/resultado.json#/configurations/primary/decision",
+      "observed_sample": {
         "windows": [
           [
             "2011-07-01",
@@ -3498,11 +3508,19 @@
           ]
         ],
         "universe": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno",
-        "exploratory": "historia observada 2011–2025, nunca evidencia independiente"
+        "exploratory": "historia observada 2011–2025, nunca evidencia independiente",
+        "start": "2011-07-01",
+        "end": "2025-07-01",
+        "periods": 14,
+        "continuous": true
       },
-      "state": "preregistered_exploratory_pending",
-      "decision": "await_exploratory_evaluation",
-      "failures": null,
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "abandoned",
+      "failures": [
+        "net_excess_not_positive",
+        "execution_defect_2011_2015_no_open_prices_full_cash"
+      ],
       "demonstrated_superiority": false
     },
     {
@@ -3619,9 +3637,8 @@
       },
       "configuration_sha256": "ffe0a44a5cc7006d36a1abada19bebc022e1ddc0f6ac5fe43971455a31a957fe",
       "specification_ref": "docs/research/nsi-v1/preregistro.json#/spec/configurations/stress",
-      "result_ref": null,
-      "observed_sample": null,
-      "planned_sample": {
+      "result_ref": "docs/research/nsi-v1/resultado.json#/configurations/stress/decision",
+      "observed_sample": {
         "windows": [
           [
             "2011-07-01",
@@ -3637,11 +3654,19 @@
           ]
         ],
         "universe": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno",
-        "exploratory": "historia observada 2011–2025, nunca evidencia independiente"
+        "exploratory": "historia observada 2011–2025, nunca evidencia independiente",
+        "start": "2011-07-01",
+        "end": "2025-07-01",
+        "periods": 14,
+        "continuous": true
       },
-      "state": "preregistered_exploratory_pending",
-      "decision": "await_exploratory_evaluation",
-      "failures": null,
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "sensitivity_not_decisive",
+      "failures": [
+        "net_excess_not_positive",
+        "execution_defect_2011_2015_no_open_prices_full_cash"
+      ],
       "demonstrated_superiority": false
     },
     {
@@ -3758,9 +3783,8 @@
       },
       "configuration_sha256": "129f154e71cf99dd4dacea9941b1ccb3358f7973b3c3fd7e98889e7c66db2575",
       "specification_ref": "docs/research/nsi-v1/preregistro.json#/spec/configurations/top30",
-      "result_ref": null,
-      "observed_sample": null,
-      "planned_sample": {
+      "result_ref": "docs/research/nsi-v1/resultado.json#/configurations/top30/decision",
+      "observed_sample": {
         "windows": [
           [
             "2011-07-01",
@@ -3776,11 +3800,19 @@
           ]
         ],
         "universe": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno",
-        "exploratory": "historia observada 2011–2025, nunca evidencia independiente"
+        "exploratory": "historia observada 2011–2025, nunca evidencia independiente",
+        "start": "2011-07-01",
+        "end": "2025-07-01",
+        "periods": 14,
+        "continuous": true
       },
-      "state": "preregistered_exploratory_pending",
-      "decision": "await_exploratory_evaluation",
-      "failures": null,
+      "planned_sample": null,
+      "state": "observed",
+      "decision": "sensitivity_not_decisive",
+      "failures": [
+        "net_excess_not_positive",
+        "execution_defect_2011_2015_no_open_prices_full_cash"
+      ],
       "demonstrated_superiority": false
     }
   ],
@@ -3899,7 +3931,7 @@
     "34 is the inherited bookkeeping convention, not an exhaustive count of observed searches.",
     "VALUE is specified but its prospective outcomes have not been observed.",
     "ENS-VQE-v1 is specified; its retrospective robustness read no returns and its prospective outcomes have not been observed. It counts as a new configuration outside the inherited 34.",
-    "NSI-v1 (three configurations) is preregistered after a data gate that read no returns; its exploratory evaluation over 2011-2025 reuses observed history and can never count as independent evidence.",
+    "NSI-v1 (three configurations) was preregistered after a data gate that read no returns; its exploratory evaluation over 2011-2025 reused observed history, was abandoned by its rule and had an execution defect in 2011-2015 (no open prices: full cash); it can never count as independent evidence.",
     "CBOP-v1 closed at its data gate (coverage), before any return; it adds no configuration.",
     "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
     "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",
@@ -3943,7 +3975,9 @@
     "docs/rank-stability/resultado.json": "80a5c1d4546c4cf16342643ddbd6ca25ffa920faca3742da20808f90b01120a3",
     "docs/research/cbop-v1/cobertura.json": "d64bb30579d965ea97eacdbf2b2f7dcc81bf7727579a2eedf93123b9c65ab4ec",
     "docs/research/nsi-v1/cobertura.json": "aa00f83df16bc8391876e28d893ba6038baf1b325d5665ac7144222d5ee76c55",
+    "docs/research/nsi-v1/enmienda-1.json": "e8a2e931092c51b04da959487ed8aa29f160367f41affc586aca8f0190d12fa9",
     "docs/research/nsi-v1/preregistro.json": "a6d08bbb8831ac58eedbdaff037b3cc2610cfce8a62d4ee345103d3e62897863",
+    "docs/research/nsi-v1/resultado.json": "3a05d1e1f5bf100f350c95304b0196263767a62e8b003181396a4be76f002dd3",
     "docs/rotation-experiment/audit.json": "5704891b7e6fb3f5655dd69573b508e6f85a50bec1fa23e1c9050f3072f2f9c9",
     "docs/rotation-experiment/protocol.json": "2dcfc3f511a5121901322a14a4cd907315e395ea40c5cff484e53581b7ecf265",
     "docs/strategy-discovery/capital-inputs/preregistro.json": "e7ef4f6591c7806fe0a71fe32a9f75ba71cf48c5f5867b7a92a47d5c5c8aeb28",

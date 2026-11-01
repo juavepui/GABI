@@ -1,5 +1,8 @@
 # Resultado exploratorio de NSI-v1 (#252)
 
+**Decisión: ABANDONADA (2026-11-01).** El propietario aceptó el abandono que
+marca el preregistro, y queda registrado en el ledger de #60 (revisión 4).
+
 **Decisión según el preregistro: `abandon`.** La evaluación tiene un defecto de
 ejecución en 2011–2015, declarado más abajo. Con ese defecto, la regla que se
 aplica es «exceso neto ≤ 0». Sin la ventana defectuosa, la decisión sigue siendo
@@ -73,8 +76,6 @@ y momentum 0,01.
 
 ## Pendiente
 
-- El propietario decide si se acepta el abandono y se registra en el ledger de
-  #60 como intento observado.
 - El defecto del motor V3 con el archivo de 2010–2015 (sin apertura ni volumen)
   queda como limitación conocida para cualquier evaluación futura de ese
   periodo.

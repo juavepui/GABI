@@ -147,10 +147,20 @@ def build(load: Callable[[str], str]) -> dict:
     nsi_spec = nsi["spec"]
     nsi_plan = {"windows": nsi_spec["evaluation"]["windows"], "universe": nsi_spec["universe"]["rule"],
                 "exploratory": "historia observada 2011–2025, nunca evidencia independiente"}
+    # Revision 4: the exploratory evaluation was observed and the owner accepted its abandonment.
+    nsi_result_path = "docs/research/nsi-v1/resultado.json"
+    nsi_result = read(nsi_result_path)
+    read("docs/research/nsi-v1/enmienda-1.json")
     for name, label in nsi_spec["configurations"].items():
+        observed = nsi_result["configurations"][name]
         later.append(entry("issuance/NSI-v1/" + name, "net_issuance_v1", {"configuration": label, "spec": nsi_spec},
-                           nsi_path + "#/spec/configurations/" + name, None, nsi_plan,
-                           "preregistered_exploratory_pending", "await_exploratory_evaluation"))
+                           nsi_path + "#/spec/configurations/" + name,
+                           nsi_result_path + "#/configurations/" + name + "/decision",
+                           {**nsi_plan, "start": nsi_result["signals"][0], "end": nsi_result["signals"][-1],
+                            "periods": len(nsi_result["selections"]), "continuous": True},
+                           "observed", "abandoned" if observed["decision"]["applies"] else "sensitivity_not_decisive",
+                           failures=[observed["decision"]["reason"],
+                                     "execution_defect_2011_2015_no_open_prices_full_cash"]))
 
     diagnostics = []
     for family in DIAGNOSTICS:
@@ -185,10 +195,13 @@ def build(load: Callable[[str], str]) -> dict:
     if len(legacy) != 34 or len({item["id"] for item in records}) != len(records):
         raise ValueError("The historical convention changed; review the reconciliation before publishing.")
     return {
-        "version": 3, "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
+        "version": 4, "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
         "revisions": [{"version": 2, "date": "2026-10-28", "issue": 53, "added": [later[0]["id"]]},
                       {"version": 3, "date": "2026-11-01", "issue": 252, "added": [row["id"] for row in later[1:]],
-                       "data_gates": ["cbop_v1_data_gate: close_unfeasible", "nsi_v1_data_gate: continue_to_exploratory"]}],
+                       "data_gates": ["cbop_v1_data_gate: close_unfeasible", "nsi_v1_data_gate: continue_to_exploratory"]},
+                      {"version": 4, "date": "2026-11-01", "issue": 252,
+                       "observed": [row["id"] for row in later[1:]],
+                       "decision": "NSI-v1 abandoned by its preregistered rule; accepted by the owner"}],
         "exhaustive_search_history": False, "global_error_control_established": False,
         "hash_convention": "UTF-8 text, canonical LF; does not replace original binary/canonical result hashes",
         "counts": {"legacy_guard_entries": len(legacy),
@@ -205,8 +218,9 @@ def build(load: Callable[[str], str]) -> dict:
             "VALUE is specified but its prospective outcomes have not been observed.",
             "ENS-VQE-v1 is specified; its retrospective robustness read no returns and its prospective outcomes "
             "have not been observed. It counts as a new configuration outside the inherited 34.",
-            "NSI-v1 (three configurations) is preregistered after a data gate that read no returns; its exploratory "
-            "evaluation over 2011-2025 reuses observed history and can never count as independent evidence.",
+            "NSI-v1 (three configurations) was preregistered after a data gate that read no returns; its exploratory "
+            "evaluation over 2011-2025 reused observed history, was abandoned by its rule and had an execution defect "
+            "in 2011-2015 (no open prices: full cash); it can never count as independent evidence.",
             "CBOP-v1 closed at its data gate (coverage), before any return; it adds no configuration.",
             "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
             "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",

@@ -76,6 +76,20 @@ configuraciones de inversión**:
   retornos;
 - `nsi_v1_data_gate`: pasa.
 
+## Revisión 4 (01-11-2026, #252)
+
+Se ejecutó la evaluación exploratoria preregistrada de NSI-v1, que marcó
+**abandonar**. El propietario aceptó el abandono.
+- **Configuración primaria:** −4,8 pp anuales frente al S&P 500 TR en EUR con los
+  mismos flujos. El alfa FF5+UMD es de −0,7 pp, con un intervalo de [−4,3; +2,9].
+- **Ventanas:** las cotas inferiores son negativas en las dos ventanas válidas.
+- **Defecto declarado:** el archivo de precios de 2010–2015 no tiene apertura, y
+  la estrategia estuvo en caja esos años.
+
+Las tres entradas pasan a `observed`: la primaria como `abandoned` y las dos de
+sensibilidad como `sensitivity_not_decisive`. El mínimo conocido sigue en 38.
+Detalle en [docs/research/nsi-v1-resultado.md](../research/nsi-v1-resultado.md).
+
 ## Lo que sigue sin poder recuperarse
 
 Se mantienen las cuatro exclusiones documentadas por #12: vectores completos de
