@@ -61,7 +61,35 @@ trataba como último precio). Sin evento confirmado se paga el último cierre y 
 salida queda como no estricta (`V3Data.strict`). Las fusiones solo en acciones con
 sucesor también quedan como no estrictas, como en V2.
 
+## Comparación V2/V3
+
+`application/research/backtest_v3_comparison.py` toma los rebalanceos que V2 ha
+ejecutado (universo histórico, ranking a fecha y rotación) y V3 ejecuta esas mismas
+selecciones equiponderadas con su contabilidad. Los precios se leen por ventana de
+rebalanceo, como en V2, para las posiciones de entrada y las nuevas; si dos ventanas
+se solapan, se queda la serie de la posterior. Hay tres escenarios de costes:
+`v2_equivalent` (1 $ por orden y 10 pb de spread, sin límite de liquidez ni reserva),
+que aísla la ejecución y la contabilidad; `base`; y `stress`. La diferencia entre
+ambos motores es de ingeniería, no de estrategia: es un diagnóstico y no hereda
+evidencia (ADR 0008). `infrastructure/legacy/backtests.run_backtest_v3_comparison`
+lo conecta con los datos locales.
+
+`trades` marca como parcial tanto una orden limitada por el volumen como una compra
+reducida para que los costes quepan en la caja.
+
+## Validación económica de la política de #248
+
+`application/research/policy_validation.py` ejecuta con V3, sobre las mismas
+señales y datos, la selección equiponderada frente a la misma con los límites de
+`portfolio-policy-v1` (emisor y sector; lo que no cabe queda en caja). Usa una
+cuenta grande (100.000) y la pequeña de #248 (11.000 iniciales y 700 al mes, en
+dólares y sin coste de cambio), con una orden mínima que mantiene la comisión fija
+por debajo del coste máximo de la política. Las aportaciones esperan en caja al
+siguiente rebalanceo; el benchmark las invierte en la apertura siguiente. Con
+aportaciones, rentabilidad y drawdown son ponderados en el tiempo. El número de
+posiciones es el del modelo y no se optimiza. El sector es el del ranking a fecha
+(aproximado donde no hay foto histórica) y el emisor, la entidad dueña del ticker.
+
 ## Pendiente
 
-Job explícito con señales del ranking histórico, comparación V2/V3 sobre
-los mismos datos y validación económica de la política de #248.
+Job F4 y pantalla para lanzar la comparación desde la aplicación.
