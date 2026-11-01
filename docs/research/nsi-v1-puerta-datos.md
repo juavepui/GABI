@@ -1,9 +1,8 @@
 # Puerta de datos de NSI-v1: emisión neta de acciones (#252)
 
 **Estado: PASA (2026-11-01).** La definición se fijó en el commit 0e46fb0, antes
-de descargar o ejecutar nada. No se ha leído ningún rendimiento. El siguiente paso
-es el preregistro definitivo, que debe aprobar el propietario antes de cualquier
-cálculo de retornos.
+de descargar o ejecutar nada. No se ha leído ningún rendimiento. El preregistro
+está aprobado y congelado.
 
 Es la candidata de reserva de [#268](268-mapa-hipotesis.md), apartado 5. Pasa a
 ser la siguiente tras el cierre de [CBOP-v1](cbop-v1-puerta-datos.md) por
@@ -122,12 +121,16 @@ manifiesto SHA-256 `018d3dd7…` está en [`nsi-v1/cobertura.json`](nsi-v1/cober
 
 ## Siguiente paso
 
-Antes de calcular ningún retorno, el propietario debe aprobar un preregistro
-definitivo con estos elementos:
+**Hecho el 2026-11-01.** El propietario aprobó tal cual la
+[propuesta de preregistro](nsi-v1-preregistro-propuesta.md). Quedó congelada en
+[`nsi-v1/preregistro.json`](nsi-v1/preregistro.json), con el commit 07f3ea0 y la
+huella del texto aprobado, y registrada en el ledger de #60 (revisión 3) antes
+de cualquier retorno. La propuesta incluía estos elementos:
 - señal, cartera, rebalanceo y banda;
 - benchmark S&P 500 TR en EUR con los mismos flujos;
 - costes BASE y STRESS de V3;
 - ventanas, test estadístico y presupuesto de intentos;
 - criterio de abandono.
 
-Después se congela con el hash del commit y se registra en el ledger de #60.
+La fase exploratoria espera a la implementación del ranking, el adaptador V3 y la
+conversión a EUR.

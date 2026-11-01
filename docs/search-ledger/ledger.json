@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "as_of": "2026-09-29",
   "scope": "explicit_published_repository_artifacts_only",
   "revisions": [
@@ -9,6 +9,20 @@
       "issue": 53,
       "added": [
         "ensemble/ENS-VQE-v1"
+      ]
+    },
+    {
+      "version": 3,
+      "date": "2026-11-01",
+      "issue": 252,
+      "added": [
+        "issuance/NSI-v1/primary",
+        "issuance/NSI-v1/stress",
+        "issuance/NSI-v1/top30"
+      ],
+      "data_gates": [
+        "cbop_v1_data_gate: close_unfeasible",
+        "nsi_v1_data_gate: continue_to_exploratory"
       ]
     }
   ],
@@ -20,9 +34,9 @@
     "legacy_observed_entries": 33,
     "legacy_pending_entries": 1,
     "additional_observed_records": 4,
-    "diagnostic_groups": 14,
-    "registered_after_reconciliation": 1,
-    "known_minimum_candidate_configurations": 35
+    "diagnostic_groups": 16,
+    "registered_after_reconciliation": 4,
+    "known_minimum_candidate_configurations": 38
   },
   "legacy_entries": [
     {
@@ -3351,6 +3365,423 @@
         "returns_read": false,
         "decision": "parcial"
       }
+    },
+    {
+      "id": "issuance/NSI-v1/primary",
+      "family": "net_issuance_v1",
+      "configuration": {
+        "configuration": "Top-20 BASE",
+        "spec": {
+          "model": "GABI-NSI-v1",
+          "issue": 252,
+          "stage": "PREREGISTERED_EXPLORATORY_PENDING",
+          "demonstrated": false,
+          "written_before": "cualquier cálculo de rendimiento, ranking o selección de NSI",
+          "hypothesis": "las empresas que reducen su número de acciones rinden más que las que emiten (Pontiff y Woodgate, 2008; Fama y French, 2008)",
+          "measure": {
+            "version": "nsi-v1",
+            "definition": "ln(acciones medias básicas t / comparativa t−1 del mismo 10-K original)",
+            "tags": [
+              "WeightedAverageNumberOfSharesOutstandingBasic",
+              "WeightedAverageNumberOfSharesOutstandingBasicAndDiluted"
+            ],
+            "lag": "10-K presentado antes de la sesión de señal",
+            "max_anchor_age_days": 550,
+            "data_gate": {
+              "ref": "docs/research/nsi-v1/cobertura.json",
+              "decision": "continue_to_exploratory",
+              "returns_read": false
+            }
+          },
+          "universe": {
+            "rule": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno"
+          },
+          "signal": {
+            "direction": "menor emisión es mejor",
+            "ranking": "percentil dentro del universo con dato",
+            "combination": "ninguna"
+          },
+          "portfolio": {
+            "positions": 20,
+            "weights": "equiponderados",
+            "max_per_sic_division": 6,
+            "band": {
+              "enter": "quintil de menor emisión",
+              "hold": "40 % de menor emisión"
+            },
+            "rebalance": "anual, primera sesión NYSE de julio",
+            "engine": "backtest-v3, ejecución en la apertura siguiente",
+            "exits": "eventos V3"
+          },
+          "account": {
+            "initial_eur": 11000,
+            "monthly_eur": 700,
+            "contributions": "en caja hasta el rebalanceo siguiente",
+            "policy": "límites de #248: emisor ≤ 10 %, sector ≤ 30 %, comisión ≤ 1 % de la orden"
+          },
+          "costs": {
+            "scenarios": [
+              "BASE",
+              "STRESS"
+            ],
+            "fx": "conversión EUR/USD",
+            "dividend_withholding": 0.15
+          },
+          "benchmark": {
+            "primary": "S&P 500 TR en EUR (#244) con el mismo calendario, flujos y contabilidad",
+            "comparators": [
+              "equiponderado del universo con dato",
+              "regresión FF5 + UMD (Ken French)"
+            ]
+          },
+          "evaluation": {
+            "phases": [
+              "puerta de datos (pasada)",
+              "exploratoria 2011–2025, historia observada, nunca evidencia independiente",
+              "seguimiento prospectivo desde el registro, primera revisión no antes de 3 años"
+            ],
+            "windows": [
+              [
+                "2011-07-01",
+                "2016-06-30"
+              ],
+              [
+                "2016-07-01",
+                "2021-06-30"
+              ],
+              [
+                "2021-07-01",
+                "2025-07-01"
+              ]
+            ],
+            "test": "exceso neto mensual frente al benchmark; cota inferior unilateral por bootstrap circular de bloques de 12 meses, 5.000 réplicas, alfa 0,05/3",
+            "abandon": [
+              "exceso neto BASE ≤ 0 en el conjunto",
+              "cota inferior < 0 en al menos dos de las tres ventanas",
+              "alfa FF5+UMD con intervalo centrado en ≈ 0: exposición factorial, no se promociona"
+            ],
+            "risk_limits": {
+              "volatility_vs_index_max": 1.1,
+              "drawdown_worse_than_index_max_pp": 5,
+              "loss_budget": 0.2
+            }
+          },
+          "configurations": {
+            "primary": "Top-20 BASE",
+            "stress": "Top-20 STRESS",
+            "top30": "Top-30 BASE (sensibilidad)"
+          },
+          "multiple_testing": {
+            "new_candidate_configurations": 3,
+            "budget": 3
+          },
+          "contamination": "RCF v1 (#60) vista y descartada, solape parcial; emisión neta no medida antes en GABI; no compite con ENS-VQE (#237)"
+        }
+      },
+      "configuration_sha256": "92d65dbb4c8e3691e7e6c11597b55b7adbbaa65b016ac67ab9c8e7bfdc769aa5",
+      "specification_ref": "docs/research/nsi-v1/preregistro.json#/spec/configurations/primary",
+      "result_ref": null,
+      "observed_sample": null,
+      "planned_sample": {
+        "windows": [
+          [
+            "2011-07-01",
+            "2016-06-30"
+          ],
+          [
+            "2016-07-01",
+            "2021-06-30"
+          ],
+          [
+            "2021-07-01",
+            "2025-07-01"
+          ]
+        ],
+        "universe": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno",
+        "exploratory": "historia observada 2011–2025, nunca evidencia independiente"
+      },
+      "state": "preregistered_exploratory_pending",
+      "decision": "await_exploratory_evaluation",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "issuance/NSI-v1/stress",
+      "family": "net_issuance_v1",
+      "configuration": {
+        "configuration": "Top-20 STRESS",
+        "spec": {
+          "model": "GABI-NSI-v1",
+          "issue": 252,
+          "stage": "PREREGISTERED_EXPLORATORY_PENDING",
+          "demonstrated": false,
+          "written_before": "cualquier cálculo de rendimiento, ranking o selección de NSI",
+          "hypothesis": "las empresas que reducen su número de acciones rinden más que las que emiten (Pontiff y Woodgate, 2008; Fama y French, 2008)",
+          "measure": {
+            "version": "nsi-v1",
+            "definition": "ln(acciones medias básicas t / comparativa t−1 del mismo 10-K original)",
+            "tags": [
+              "WeightedAverageNumberOfSharesOutstandingBasic",
+              "WeightedAverageNumberOfSharesOutstandingBasicAndDiluted"
+            ],
+            "lag": "10-K presentado antes de la sesión de señal",
+            "max_anchor_age_days": 550,
+            "data_gate": {
+              "ref": "docs/research/nsi-v1/cobertura.json",
+              "decision": "continue_to_exploratory",
+              "returns_read": false
+            }
+          },
+          "universe": {
+            "rule": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno"
+          },
+          "signal": {
+            "direction": "menor emisión es mejor",
+            "ranking": "percentil dentro del universo con dato",
+            "combination": "ninguna"
+          },
+          "portfolio": {
+            "positions": 20,
+            "weights": "equiponderados",
+            "max_per_sic_division": 6,
+            "band": {
+              "enter": "quintil de menor emisión",
+              "hold": "40 % de menor emisión"
+            },
+            "rebalance": "anual, primera sesión NYSE de julio",
+            "engine": "backtest-v3, ejecución en la apertura siguiente",
+            "exits": "eventos V3"
+          },
+          "account": {
+            "initial_eur": 11000,
+            "monthly_eur": 700,
+            "contributions": "en caja hasta el rebalanceo siguiente",
+            "policy": "límites de #248: emisor ≤ 10 %, sector ≤ 30 %, comisión ≤ 1 % de la orden"
+          },
+          "costs": {
+            "scenarios": [
+              "BASE",
+              "STRESS"
+            ],
+            "fx": "conversión EUR/USD",
+            "dividend_withholding": 0.15
+          },
+          "benchmark": {
+            "primary": "S&P 500 TR en EUR (#244) con el mismo calendario, flujos y contabilidad",
+            "comparators": [
+              "equiponderado del universo con dato",
+              "regresión FF5 + UMD (Ken French)"
+            ]
+          },
+          "evaluation": {
+            "phases": [
+              "puerta de datos (pasada)",
+              "exploratoria 2011–2025, historia observada, nunca evidencia independiente",
+              "seguimiento prospectivo desde el registro, primera revisión no antes de 3 años"
+            ],
+            "windows": [
+              [
+                "2011-07-01",
+                "2016-06-30"
+              ],
+              [
+                "2016-07-01",
+                "2021-06-30"
+              ],
+              [
+                "2021-07-01",
+                "2025-07-01"
+              ]
+            ],
+            "test": "exceso neto mensual frente al benchmark; cota inferior unilateral por bootstrap circular de bloques de 12 meses, 5.000 réplicas, alfa 0,05/3",
+            "abandon": [
+              "exceso neto BASE ≤ 0 en el conjunto",
+              "cota inferior < 0 en al menos dos de las tres ventanas",
+              "alfa FF5+UMD con intervalo centrado en ≈ 0: exposición factorial, no se promociona"
+            ],
+            "risk_limits": {
+              "volatility_vs_index_max": 1.1,
+              "drawdown_worse_than_index_max_pp": 5,
+              "loss_budget": 0.2
+            }
+          },
+          "configurations": {
+            "primary": "Top-20 BASE",
+            "stress": "Top-20 STRESS",
+            "top30": "Top-30 BASE (sensibilidad)"
+          },
+          "multiple_testing": {
+            "new_candidate_configurations": 3,
+            "budget": 3
+          },
+          "contamination": "RCF v1 (#60) vista y descartada, solape parcial; emisión neta no medida antes en GABI; no compite con ENS-VQE (#237)"
+        }
+      },
+      "configuration_sha256": "ffe0a44a5cc7006d36a1abada19bebc022e1ddc0f6ac5fe43971455a31a957fe",
+      "specification_ref": "docs/research/nsi-v1/preregistro.json#/spec/configurations/stress",
+      "result_ref": null,
+      "observed_sample": null,
+      "planned_sample": {
+        "windows": [
+          [
+            "2011-07-01",
+            "2016-06-30"
+          ],
+          [
+            "2016-07-01",
+            "2021-06-30"
+          ],
+          [
+            "2021-07-01",
+            "2025-07-01"
+          ]
+        ],
+        "universe": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno",
+        "exploratory": "historia observada 2011–2025, nunca evidencia independiente"
+      },
+      "state": "preregistered_exploratory_pending",
+      "decision": "await_exploratory_evaluation",
+      "failures": null,
+      "demonstrated_superiority": false
+    },
+    {
+      "id": "issuance/NSI-v1/top30",
+      "family": "net_issuance_v1",
+      "configuration": {
+        "configuration": "Top-30 BASE (sensibilidad)",
+        "spec": {
+          "model": "GABI-NSI-v1",
+          "issue": 252,
+          "stage": "PREREGISTERED_EXPLORATORY_PENDING",
+          "demonstrated": false,
+          "written_before": "cualquier cálculo de rendimiento, ranking o selección de NSI",
+          "hypothesis": "las empresas que reducen su número de acciones rinden más que las que emiten (Pontiff y Woodgate, 2008; Fama y French, 2008)",
+          "measure": {
+            "version": "nsi-v1",
+            "definition": "ln(acciones medias básicas t / comparativa t−1 del mismo 10-K original)",
+            "tags": [
+              "WeightedAverageNumberOfSharesOutstandingBasic",
+              "WeightedAverageNumberOfSharesOutstandingBasicAndDiluted"
+            ],
+            "lag": "10-K presentado antes de la sesión de señal",
+            "max_anchor_age_days": 550,
+            "data_gate": {
+              "ref": "docs/research/nsi-v1/cobertura.json",
+              "decision": "continue_to_exploratory",
+              "returns_read": false
+            }
+          },
+          "universe": {
+            "rule": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno"
+          },
+          "signal": {
+            "direction": "menor emisión es mejor",
+            "ranking": "percentil dentro del universo con dato",
+            "combination": "ninguna"
+          },
+          "portfolio": {
+            "positions": 20,
+            "weights": "equiponderados",
+            "max_per_sic_division": 6,
+            "band": {
+              "enter": "quintil de menor emisión",
+              "hold": "40 % de menor emisión"
+            },
+            "rebalance": "anual, primera sesión NYSE de julio",
+            "engine": "backtest-v3, ejecución en la apertura siguiente",
+            "exits": "eventos V3"
+          },
+          "account": {
+            "initial_eur": 11000,
+            "monthly_eur": 700,
+            "contributions": "en caja hasta el rebalanceo siguiente",
+            "policy": "límites de #248: emisor ≤ 10 %, sector ≤ 30 %, comisión ≤ 1 % de la orden"
+          },
+          "costs": {
+            "scenarios": [
+              "BASE",
+              "STRESS"
+            ],
+            "fx": "conversión EUR/USD",
+            "dividend_withholding": 0.15
+          },
+          "benchmark": {
+            "primary": "S&P 500 TR en EUR (#244) con el mismo calendario, flujos y contabilidad",
+            "comparators": [
+              "equiponderado del universo con dato",
+              "regresión FF5 + UMD (Ken French)"
+            ]
+          },
+          "evaluation": {
+            "phases": [
+              "puerta de datos (pasada)",
+              "exploratoria 2011–2025, historia observada, nunca evidencia independiente",
+              "seguimiento prospectivo desde el registro, primera revisión no antes de 3 años"
+            ],
+            "windows": [
+              [
+                "2011-07-01",
+                "2016-06-30"
+              ],
+              [
+                "2016-07-01",
+                "2021-06-30"
+              ],
+              [
+                "2021-07-01",
+                "2025-07-01"
+              ]
+            ],
+            "test": "exceso neto mensual frente al benchmark; cota inferior unilateral por bootstrap circular de bloques de 12 meses, 5.000 réplicas, alfa 0,05/3",
+            "abandon": [
+              "exceso neto BASE ≤ 0 en el conjunto",
+              "cota inferior < 0 en al menos dos de las tres ventanas",
+              "alfa FF5+UMD con intervalo centrado en ≈ 0: exposición factorial, no se promociona"
+            ],
+            "risk_limits": {
+              "volatility_vs_index_max": 1.1,
+              "drawdown_worse_than_index_max_pp": 5,
+              "loss_budget": 0.2
+            }
+          },
+          "configurations": {
+            "primary": "Top-20 BASE",
+            "stress": "Top-20 STRESS",
+            "top30": "Top-30 BASE (sensibilidad)"
+          },
+          "multiple_testing": {
+            "new_candidate_configurations": 3,
+            "budget": 3
+          },
+          "contamination": "RCF v1 (#60) vista y descartada, solape parcial; emisión neta no medida antes en GABI; no compite con ENS-VQE (#237)"
+        }
+      },
+      "configuration_sha256": "129f154e71cf99dd4dacea9941b1ccb3358f7973b3c3fd7e98889e7c66db2575",
+      "specification_ref": "docs/research/nsi-v1/preregistro.json#/spec/configurations/top30",
+      "result_ref": null,
+      "observed_sample": null,
+      "planned_sample": {
+        "windows": [
+          [
+            "2011-07-01",
+            "2016-06-30"
+          ],
+          [
+            "2016-07-01",
+            "2021-06-30"
+          ],
+          [
+            "2021-07-01",
+            "2025-07-01"
+          ]
+        ],
+        "universe": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno",
+        "exploratory": "historia observada 2011–2025, nunca evidencia independiente"
+      },
+      "state": "preregistered_exploratory_pending",
+      "decision": "await_exploratory_evaluation",
+      "failures": null,
+      "demonstrated_superiority": false
     }
   ],
   "diagnostics": [
@@ -3432,6 +3863,18 @@
       "family": "capital_inputs/v2",
       "specification_ref": "docs/strategy-discovery/capital-inputs/v2/preregistro.json",
       "classification": "input_audit_zero_strategy_configurations"
+    },
+    {
+      "family": "cbop_v1_data_gate",
+      "result_ref": "docs/research/cbop-v1/cobertura.json#/decision",
+      "decision": "close_unfeasible",
+      "classification": "data_gate_zero_strategy_configurations"
+    },
+    {
+      "family": "nsi_v1_data_gate",
+      "result_ref": "docs/research/nsi-v1/cobertura.json#/decision",
+      "decision": "continue_to_exploratory",
+      "classification": "data_gate_zero_strategy_configurations"
     }
   ],
   "unresolved_groups": [
@@ -3456,6 +3899,8 @@
     "34 is the inherited bookkeeping convention, not an exhaustive count of observed searches.",
     "VALUE is specified but its prospective outcomes have not been observed.",
     "ENS-VQE-v1 is specified; its retrospective robustness read no returns and its prospective outcomes have not been observed. It counts as a new configuration outside the inherited 34.",
+    "NSI-v1 (three configurations) is preregistered after a data gate that read no returns; its exploratory evaluation over 2011-2025 reuses observed history and can never count as independent evidence.",
+    "CBOP-v1 closed at its data gate (coverage), before any return; it adds no configuration.",
     "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
     "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",
     "13 Factor Zoo tests, 256 weight perturbations and 8192 null paths also exposed retrospective information.",
@@ -3496,6 +3941,9 @@
     "docs/r3-e6-experiment/preregistro.json": "3156d67401780b2ca5c3411d7cf4037b500e7332ede32986316314a219f9c5a5",
     "docs/rank-stability/preregistro.json": "d22bd76d5dafbe4eac642b85d85dadcaa0da3c4c2b4e045d68c3977f0faf2098",
     "docs/rank-stability/resultado.json": "80a5c1d4546c4cf16342643ddbd6ca25ffa920faca3742da20808f90b01120a3",
+    "docs/research/cbop-v1/cobertura.json": "d64bb30579d965ea97eacdbf2b2f7dcc81bf7727579a2eedf93123b9c65ab4ec",
+    "docs/research/nsi-v1/cobertura.json": "aa00f83df16bc8391876e28d893ba6038baf1b325d5665ac7144222d5ee76c55",
+    "docs/research/nsi-v1/preregistro.json": "a6d08bbb8831ac58eedbdaff037b3cc2610cfce8a62d4ee345103d3e62897863",
     "docs/rotation-experiment/audit.json": "5704891b7e6fb3f5655dd69573b508e6f85a50bec1fa23e1c9050f3072f2f9c9",
     "docs/rotation-experiment/protocol.json": "2dcfc3f511a5121901322a14a4cd907315e395ea40c5cff484e53581b7ecf265",
     "docs/strategy-discovery/capital-inputs/preregistro.json": "e7ef4f6591c7806fe0a71fe32a9f75ba71cf48c5f5867b7a92a47d5c5c8aeb28",

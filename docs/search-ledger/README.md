@@ -54,6 +54,28 @@ Sigue siendo un mínimo: no acredita un recuento global ni control global del
 error de selección. El catálogo de Investigación la lista como ensayo
 prospectivo, sin resultado.
 
+## Revisión 3 (01-11-2026, #252)
+
+La revisión 3 añade la candidata **NSI-v1**, emisión neta de acciones. Se
+preregistró con la aprobación del propietario después de pasar su puerta de
+datos, y antes de calcular ningún rendimiento.
+
+| Entrada | Estado | Qué se ha observado |
+| --- | --- | --- |
+| `issuance/NSI-v1/primary` (Top-20 BASE) | Preregistrada, exploratoria pendiente | Solo la cobertura de datos, sin retornos |
+| `issuance/NSI-v1/stress` (Top-20 STRESS) | Ídem | Ídem |
+| `issuance/NSI-v1/top30` (Top-30 BASE, sensibilidad) | Ídem | Ídem |
+
+Su presupuesto es de tres configuraciones, y el mínimo conocido acumulado pasa a
+**38**. La fase exploratoria reutiliza la historia observada de 2011–2025 y
+nunca contará como evidencia independiente.
+
+Las dos puertas de datos de #252 se registran como **auditorías sin
+configuraciones de inversión**:
+- `cbop_v1_data_gate`: CBOP-v1 se cerró por inviable por cobertura, sin leer
+  retornos;
+- `nsi_v1_data_gate`: pasa.
+
 ## Lo que sigue sin poder recuperarse
 
 Se mantienen las cuatro exclusiones documentadas por #12: vectores completos de
