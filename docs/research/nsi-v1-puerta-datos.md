@@ -1,7 +1,9 @@
 # Puerta de datos de NSI-v1: emisión neta de acciones (#252)
 
-**Estado:** definición fijada antes de descargar o ejecutar nada. No calcula ni
-lee rendimientos.
+**Estado: PASA (2026-11-01).** La definición se fijó en el commit 0e46fb0, antes
+de descargar o ejecutar nada. No se ha leído ningún rendimiento. El siguiente paso
+es el preregistro definitivo, que debe aprobar el propietario antes de cualquier
+cálculo de retornos.
 
 Es la candidata de reserva de [#268](268-mapa-hipotesis.md), apartado 5. Pasa a
 ser la siguiente tras el cierre de [CBOP-v1](cbop-v1-puerta-datos.md) por
@@ -77,6 +79,54 @@ uv run --project backend python -m gabi_cli research nsi-gate --download
 uv run --project backend python -m gabi_cli research nsi-gate --audit   # escribe docs/research/nsi-v1/cobertura.json
 ```
 
-## Resultado
+## Resultado (2026-11-01)
 
-Pendiente.
+**Descarga.** Los 767 CIK, en 1.534 peticiones, sin ninguna ausencia. El
+manifiesto SHA-256 `018d3dd7…` está en [`nsi-v1/cobertura.json`](nsi-v1/cobertura.json).
+
+**Decisión: `continue_to_exploratory`.** Las 15 fechas pasan las dos condiciones.
+
+| Señal | Miembros | Con emisión | Cobertura | Auditables | Concilian | Reexpresadas por split |
+|---|---:|---:|---:|---:|---:|---:|
+| 2011-07-01 | 497 | 396 | 79.7 % | 202 | 96.5 % | 4 |
+| 2012-07-02 | 497 | 462 | 93.0 % | 379 | 96.0 % | 13 |
+| 2013-07-01 | 497 | 465 | 93.6 % | 451 | 97.3 % | 9 |
+| 2014-07-01 | 498 | 469 | 94.2 % | 458 | 98.7 % | 15 |
+| 2015-07-01 | 500 | 474 | 94.8 % | 462 | 99.6 % | 8 |
+| 2016-07-01 | 479 | 454 | 94.8 % | 446 | 99.1 % | 10 |
+| 2017-07-03 | 489 | 464 | 94.9 % | 453 | 99.1 % | 8 |
+| 2018-07-02 | 496 | 469 | 94.6 % | 461 | 99.3 % | 7 |
+| 2019-07-01 | 497 | 470 | 94.6 % | 461 | 99.8 % | 5 |
+| 2020-07-01 | 501 | 480 | 95.8 % | 467 | 98.7 % | 2 |
+| 2021-07-01 | 501 | 480 | 95.8 % | 475 | 100.0 % | 7 |
+| 2022-07-01 | 498 | 482 | 96.8 % | 474 | 99.6 % | 9 |
+| 2023-07-03 | 503 | 485 | 96.4 % | 483 | 98.6 % | 7 |
+| 2024-07-01 | 503 | 483 | 96.0 % | 479 | 99.0 % | 6 |
+| 2025-07-01 | 503 | 486 | 96.6 % | 480 | 99.6 % | 13 |
+
+**Lectura.**
+- **Cobertura:** está entre el 80 y el 97 %.
+  - El año más débil es 2011, el de entrada en XBRL: 89 miembros no tenían
+    todavía un 10-K con XBRL.
+  - Ese año solo hay 202 emisor-fechas auditables, porque muchos no tenían
+    10-K XBRL anterior. Aun así, concilia el 96,5 %.
+- **Conciliación:** está entre el 96 y el 100 %.
+  - La reexpresión por splits que exige ASC 260 se cumple en la práctica: entre
+    2 y 15 emisores por año aparecen reexpresados por un split.
+  - Los casos `mismatch` (por ejemplo, en 2020 AIV, GRMN, HST, PCAR, VIAC y WRB)
+    corresponden a REIT con unidades operativas, fusiones de clases y dividendos
+    en acciones con proporciones no sencillas.
+- **Riesgo de sesgo que queda:** entre 4 y 14 miembros por año tienen el último
+  10-K demasiado antiguo o una identidad sin resolver.
+
+## Siguiente paso
+
+Antes de calcular ningún retorno, el propietario debe aprobar un preregistro
+definitivo con estos elementos:
+- señal, cartera, rebalanceo y banda;
+- benchmark S&P 500 TR en EUR con los mismos flujos;
+- costes BASE y STRESS de V3;
+- ventanas, test estadístico y presupuesto de intentos;
+- criterio de abandono.
+
+Después se congela con el hash del commit y se registra en el ledger de #60.
