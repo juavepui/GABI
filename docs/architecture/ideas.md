@@ -54,9 +54,39 @@ ajustado del valor, SPY y USDEUR=X. Nada se descarga.
 
 La página es **Cartera → Historial de ideas** (`/cartera/ideas`).
 
-## Pendiente (segunda parte)
+## Alertas
 
-- **Alertas:** un job explícito e idempotente que evalúa las condiciones de
-  invalidación registradas con los datos disponibles (resultados, filings,
-  insiders, revisiones y tendencia). Distingue deterioro, revisión del dato y
-  ausencia, y solo pide revisión: nunca opera.
+**Job explícito e idempotente** `idea_alerts`:
+- se lanza con «Buscar alertas» en el Historial de ideas;
+- usa `domain/portfolio/idea_alerts.py` (`idea-alerts-v1`) y
+  `application/portfolio/idea_alerts.py`;
+- en el worker, lo compone `infrastructure/legacy/idea_alerts.py`.
+
+Para cada idea **abierta** lee solo datos locales: su ficha publicada, la
+checklist de la empresa, los últimos 10-K/10-Q, las sorpresas de resultados, la
+revisión del consenso a 90 días, el resumen de insiders y su evaluación. No
+descarga nada: para traer datos nuevos están los jobs de sincronización ya
+existentes.
+
+| Alerta | Cuándo |
+|---|---|
+| `invalidacion` | La condición registrada (métrica de la checklist, operador y umbral) se cumple en tantos ejercicios fiscales distintos seguidos como pide su persistencia. |
+| `revision_dato` | El mismo ejercicio tiene otro valor (un dato reexpresado o corregido). No es un deterioro por sí solo. |
+| `ausencia` | La métrica no tiene valor. Falta el dato, no es un deterioro. |
+| `no_evaluable` | La condición nombra una métrica que la checklist no calcula. Hay que revisarla a mano. |
+| `revision_vencida` | Llega la fecha de revisión de la ficha o de una condición. |
+| `filing` | Hay un 10-K o 10-Q presentado después de la publicación. |
+| `resultados` | Sorpresa negativa en resultados posteriores a la publicación. |
+| `estimaciones` | El consenso de BPA baja al menos un 5 % en 90 días. |
+| `insiders` | Al menos dos insiders venden en neto en seis meses. |
+| `tendencia` | La idea va 10 puntos por detrás del índice o ha caído un 20 % desde su máximo. |
+
+- **Persistencia:** el job guarda las observaciones de cada condición
+  (`idea_observations`), y con ellas cuenta los ejercicios seguidos y distingue
+  una reexpresión de un deterioro.
+- **Idempotencia:** cada alerta tiene una clave estable, así que repetir el job
+  con los mismos datos no añade nada.
+- **Alertas pendientes:** son las detectadas después de la última revisión,
+  cierre o retirada del inversor. Atenderlas es añadir una revisión.
+- **Alcance:** las ideas cerradas o retiradas dejan de vigilarse, pero se siguen
+  evaluando. **Ninguna alerta opera**: solo piden revisar.

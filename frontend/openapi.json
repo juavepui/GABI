@@ -5710,7 +5710,8 @@
               "holdings_prices",
               "benchmark_prices",
               "metrics_comparison",
-              "backtest_v3_comparison"
+              "backtest_v3_comparison",
+              "idea_alerts"
             ],
             "title": "Kind",
             "type": "string"
@@ -11026,6 +11027,14 @@
             "title": "Idea Id",
             "type": "integer"
           },
+          "pending_alerts": {
+            "description": "Alertas posteriores a la última revisión; piden revisar",
+            "items": {
+              "$ref": "#/components/schemas/IdeaAlert"
+            },
+            "title": "Pending Alerts",
+            "type": "array"
+          },
           "review_due": {
             "anyOf": [
               {
@@ -11047,6 +11056,7 @@
         },
         "required": [
           "idea_id",
+          "pending_alerts",
           "symbol",
           "card_id",
           "review_due",
@@ -11057,9 +11067,63 @@
         "title": "Idea",
         "type": "object"
       },
+      "IdeaAlert": {
+        "additionalProperties": false,
+        "properties": {
+          "detected_at": {
+            "title": "Detected At",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalidacion",
+              "revision_dato",
+              "ausencia",
+              "no_evaluable",
+              "revision_vencida",
+              "filing",
+              "resultados",
+              "estimaciones",
+              "insiders",
+              "tendencia"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "detected_at",
+          "message",
+          "evidence"
+        ],
+        "title": "IdeaAlert",
+        "type": "object"
+      },
       "IdeaDetail": {
         "additionalProperties": false,
         "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/IdeaAlert"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
           "card_id": {
             "title": "Card Id",
             "type": "integer"
@@ -11089,6 +11153,14 @@
             "title": "Notes",
             "type": "array"
           },
+          "pending_alerts": {
+            "description": "Alertas posteriores a la última revisión; piden revisar",
+            "items": {
+              "$ref": "#/components/schemas/IdeaAlert"
+            },
+            "title": "Pending Alerts",
+            "type": "array"
+          },
           "review_due": {
             "anyOf": [
               {
@@ -11110,6 +11182,7 @@
         },
         "required": [
           "idea_id",
+          "pending_alerts",
           "symbol",
           "card_id",
           "review_due",
@@ -11117,7 +11190,8 @@
           "evaluation",
           "chain_ok",
           "events",
-          "notes"
+          "notes",
+          "alerts"
         ],
         "title": "IdeaDetail",
         "type": "object"

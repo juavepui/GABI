@@ -1,8 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { Idea, IdeaDetail, IdeaEventCreate } from '@/shared/api/generated/types.gen';
-import { addIdeaEvent, addIdeaNote, deleteIdeaNote, getIdea, getIdeas } from '@/shared/api/client';
+import {
+  addIdeaEvent,
+  addIdeaNote,
+  deleteIdeaNote,
+  getIdea,
+  getIdeas,
+  getJobResult,
+} from '@/shared/api/client';
+import { useJob } from '@/shared/api/use-job';
+import { ProgressBar } from '@/shared/ui/progress-bar';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { HowToRead } from '@/shared/ui/how-to-read';
@@ -35,6 +44,81 @@ function eventText(event: IdeaDetail['events'][number]) {
   if (event.kind === 'corregida')
     return `corrige el evento ${String(body.corrects)}: ${String(body.text)}`;
   return String(body.text ?? '');
+}
+
+const ALERT: Record<string, string> = {
+  invalidacion: 'Condición de invalidación',
+  revision_dato: 'Revisión del dato',
+  ausencia: 'Falta el dato',
+  no_evaluable: 'Condición no evaluable',
+  revision_vencida: 'Revisión prevista',
+  filing: 'Nuevo informe',
+  resultados: 'Resultados',
+  estimaciones: 'Estimaciones',
+  insiders: 'Insiders',
+  tendencia: 'Tendencia',
+};
+
+function Alerts({ alerts, title }: { alerts: Idea['pending_alerts']; title: string }) {
+  if (!alerts.length) return null;
+  return (
+    <div className="mt-2 rounded-lg border border-amber-500/40 p-2 text-xs">
+      <p className="font-medium">{title}</p>
+      <ul className="mt-1 space-y-1">
+        {alerts.map((alert) => (
+          <li key={alert.key}>
+            <span className="font-medium">{ALERT[alert.kind] ?? alert.kind}:</span> {alert.message}{' '}
+            <span className="text-muted-foreground">
+              ({dateLabel(alert.detected_at.slice(0, 10))})
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+type AlertsResult = { ideas: number; new_alerts: number };
+
+/** The explicit, idempotent alert job: reads only local data and never trades. */
+function AlertJob() {
+  const client = useQueryClient();
+  const { start, job } = useJob('idea-alerts');
+  const running = start.isPending || ['queued', 'running'].includes(job.data?.status ?? '');
+  const result = useQuery({
+    queryKey: ['job', job.data?.id, 'result'],
+    queryFn: ({ signal }) => getJobResult(job.data!.id, signal) as Promise<AlertsResult>,
+    enabled: job.data?.status === 'succeeded',
+  });
+  const done = result.data != null;
+  useEffect(() => {
+    if (done) void client.invalidateQueries({ queryKey: ['portfolio', 'ideas'] });
+  }, [done, client]);
+  return (
+    <div className="space-y-2">
+      <Button
+        variant="outline"
+        pending={running}
+        onClick={() => start.mutate({ kind: 'idea_alerts' })}
+      >
+        Buscar alertas
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Comprueba las condiciones de invalidación de cada idea abierta y los datos locales de
+        informes, resultados, estimaciones, insiders y precio. Repetirlo no duplica alertas; solo
+        piden revisar la idea, nunca se opera.
+      </p>
+      {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
+      {job.data && job.data.status !== 'succeeded' && (
+        <ProgressBar value={job.data.progress} phase={job.data.phase} status={job.data.status} />
+      )}
+      {result.data && (
+        <p role="status" className="text-sm">
+          {result.data.new_alerts} alertas nuevas en {result.data.ideas} ideas abiertas.
+        </p>
+      )}
+    </div>
+  );
 }
 
 function Actions({ idea, onDone }: { idea: IdeaDetail; onDone: () => void }) {
@@ -213,6 +297,10 @@ function IdeaRow({ idea }: { idea: Idea }) {
           ? `${pct(evaluation.return_net)} neto · S&P 500 ${pct(evaluation.index_return)} · diferencia ${pct(evaluation.excess)} · máx. caída ${pct(evaluation.max_drawdown)} · ${evaluation.days} días`
           : `Sin precios suficientes en caché (${(evaluation.missing ?? []).join(', ') || 'menos de dos sesiones'})`}
       </p>
+      <Alerts
+        alerts={idea.pending_alerts}
+        title="Pendientes de revisar (añade una revisión al atenderlas)"
+      />
       <Button size="sm" variant="ghost" onClick={() => setOpen(!open)}>
         {open ? 'Ocultar historial' : 'Ver historial y notas'}
       </Button>
@@ -231,6 +319,7 @@ function IdeaRow({ idea }: { idea: Idea }) {
               </li>
             ))}
           </ol>
+          <Alerts alerts={detail.data.alerts} title="Todas las alertas de esta idea" />
           <Actions
             idea={detail.data}
             onDone={() => void client.invalidateQueries({ queryKey: ['portfolio', 'ideas'] })}
@@ -261,6 +350,7 @@ export function IdeasPage() {
         llegaste a invertir: mirar solo las ganadoras engaña. Cada idea se mide desde el día en que
         se publicó, neta de los costes de su ficha, frente al S&P 500 en euros en las mismas fechas.
       </HowToRead>
+      <AlertJob />
       {ideas.isPending && <LoadingState />}
       {ideas.isError && <ErrorState error={ideas.error} retry={() => void ideas.refetch()} />}
       {summary && (

@@ -3,6 +3,7 @@ import type { IdeaList } from '../src/shared/api/generated/types.gen';
 import { renderScreen } from './render';
 
 const api = vi.hoisted(() => ({
+  getJobs: vi.fn(),
   getIdeas: vi.fn(),
   getIdea: vi.fn(),
   addIdeaEvent: vi.fn(),
@@ -34,6 +35,7 @@ const listing: IdeaList = {
   items: [
     {
       idea_id: 2,
+      pending_alerts: [],
       symbol: 'LOSS',
       card_id: 2,
       review_due: '2027-01-01',
@@ -57,6 +59,15 @@ const listing: IdeaList = {
     },
     {
       idea_id: 1,
+      pending_alerts: [
+        {
+          key: 'invalidacion:0:2025-12-31',
+          kind: 'invalidacion',
+          detected_at: '2026-10-31T09:00:00+00:00',
+          message: 'Se cumple la condición de invalidación «Cae el margen».',
+          evidence: {},
+        },
+      ],
       symbol: 'NEW',
       card_id: 1,
       review_due: null,
@@ -88,6 +99,10 @@ describe('historial de ideas', () => {
     expect(text).toContain('Sin precios suficientes en caché (NEW)');
     expect(text).toContain('Historial alterado');
     expect(text).toContain('nada se reescribe ni se borra');
+    expect(text).toContain(
+      'Condición de invalidación: Se cumple la condición de invalidación «Cae el margen».',
+    );
+    expect(text).toContain('Buscar alertas');
     screen.unmount();
   });
 });

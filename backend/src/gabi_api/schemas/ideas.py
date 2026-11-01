@@ -61,8 +61,18 @@ class IdeaNote(WireModel):
     text: str
 
 
+class IdeaAlert(WireModel):
+    key: str
+    kind: Literal["invalidacion", "revision_dato", "ausencia", "no_evaluable", "revision_vencida", "filing",
+                  "resultados", "estimaciones", "insiders", "tendencia"]
+    detected_at: str
+    message: str
+    evidence: dict[str, Any]
+
+
 class Idea(WireModel):
     idea_id: int
+    pending_alerts: list[IdeaAlert] = Field(description="Alertas posteriores a la última revisión; piden revisar")
     symbol: str
     card_id: int
     review_due: str | None
@@ -74,6 +84,7 @@ class Idea(WireModel):
 class IdeaDetail(Idea):
     events: list[IdeaEvent]
     notes: list[IdeaNote]
+    alerts: list[IdeaAlert]
 
 
 class IdeaSummary(WireModel):

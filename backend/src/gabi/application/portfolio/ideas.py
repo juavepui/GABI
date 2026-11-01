@@ -13,9 +13,12 @@ from typing import Protocol
 import pandas as pd
 
 from gabi.application.errors import QueryError
+from gabi.domain.portfolio import idea_alerts
 from gabi.domain.portfolio import ideas as rules
 
 INDEX, FX = "SPY", "USDEUR=X"
+Rows = list[dict]  # Named outside the class, whose ``list`` method would shadow the builtin.
+History = dict[int, list[dict]]
 MAX_IDEAS = 200
 
 
@@ -24,6 +27,9 @@ class IdeaStore(Protocol):
     def events(self, idea_id: int) -> list[dict]: ...
     def append(self, event: dict) -> bool: ...
     def notes(self, idea_id: int) -> list[dict]: ...
+    def observations(self, idea_id: int) -> dict[int, list[dict]]: ...
+    def record(self, idea_id: int, observations: list[dict], alerts: list[dict], now: str) -> int: ...
+    def alerts(self, idea_id: int) -> list[dict]: ...
     def add_note(self, idea_id: int, text: str, now: str) -> int: ...
     def save_note(self, note_id: int, text: str, now: str) -> bool: ...
     def delete_note(self, note_id: int) -> bool: ...
@@ -106,7 +112,8 @@ class Ideas:
 
     def _row(self, idea_id: int, events: list[dict]) -> dict:
         status = rules.state(events)
-        return {"idea_id": idea_id, "symbol": events[0]["payload"]["symbol"], "card_id": events[0]["payload"]["card_id"],
+        alerts = self.store.alerts(idea_id)
+        return {"pending_alerts": idea_alerts.pending(alerts, events), "idea_id": idea_id, "symbol": events[0]["payload"]["symbol"], "card_id": events[0]["payload"]["card_id"],
                 "review_due": events[0]["payload"].get("review_due"), "state": status,
                 "evaluation": self._evaluate(events, status), "chain_ok": rules.verify(events)}
 
@@ -120,7 +127,15 @@ class Ideas:
         events = self.store.events(idea_id)
         if not events:
             raise QueryError("idea_not_found", "No existe esa idea.", 404)
-        return self._row(idea_id, events) | {"events": events, "notes": self.store.notes(idea_id)}
+        return self._row(idea_id, events) | {"events": events, "notes": self.store.notes(idea_id),
+                                             "alerts": self.store.alerts(idea_id)}
+
+    def observations(self, idea_id: int) -> History:
+        return self.store.observations(idea_id)
+
+    def record_alerts(self, idea_id: int, observations: Rows, alerts: Rows) -> int:
+        """Stores the alert job's new observations and alerts; returns how many alerts were new."""
+        return self.store.record(idea_id, observations, alerts, self._stamp())
 
     def add_note(self, idea_id: int, text: str) -> dict:
         if not self.store.events(idea_id):

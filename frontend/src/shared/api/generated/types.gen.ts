@@ -2882,7 +2882,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices' | 'benchmark_prices' | 'metrics_comparison' | 'backtest_v3_comparison';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices' | 'benchmark_prices' | 'metrics_comparison' | 'backtest_v3_comparison' | 'idea_alerts';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -5745,6 +5745,12 @@ export type Idea = {
      */
     idea_id: number;
     /**
+     * Pending Alerts
+     *
+     * Alertas posteriores a la última revisión; piden revisar
+     */
+    pending_alerts: Array<IdeaAlert>;
+    /**
      * Review Due
      */
     review_due: string | null;
@@ -5756,9 +5762,41 @@ export type Idea = {
 };
 
 /**
+ * IdeaAlert
+ */
+export type IdeaAlert = {
+    /**
+     * Detected At
+     */
+    detected_at: string;
+    /**
+     * Evidence
+     */
+    evidence: {
+        [key: string]: unknown;
+    };
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Kind
+     */
+    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia';
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
  * IdeaDetail
  */
 export type IdeaDetail = {
+    /**
+     * Alerts
+     */
+    alerts: Array<IdeaAlert>;
     /**
      * Card Id
      */
@@ -5780,6 +5818,12 @@ export type IdeaDetail = {
      * Notes
      */
     notes: Array<IdeaNote>;
+    /**
+     * Pending Alerts
+     *
+     * Alertas posteriores a la última revisión; piden revisar
+     */
+    pending_alerts: Array<IdeaAlert>;
     /**
      * Review Due
      */

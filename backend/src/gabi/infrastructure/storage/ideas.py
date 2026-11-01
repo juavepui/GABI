@@ -1,6 +1,8 @@
 """SQLite store of the idea history (#247) in ``gabi.db``: events are only inserted, notes are editable.
 
-``idea_events`` has no UPDATE or DELETE path: a correction is a new event. Private
+``idea_events`` has no UPDATE or DELETE path: a correction is a new event. The
+alert job's observations and alerts are also insert-only, keyed so that a second
+run adds nothing. Private
 notes live in ``idea_notes`` and can be edited or deleted without touching any event.
 """
 
@@ -16,6 +18,14 @@ CREATE TABLE IF NOT EXISTS idea_events (
  PRIMARY KEY(idea_id, sequence)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_idea_events_publication ON idea_events(idea_id) WHERE kind='publicada';
+CREATE TABLE IF NOT EXISTS idea_observations (
+ idea_id INTEGER NOT NULL, condition INTEGER NOT NULL, period TEXT NOT NULL, value REAL NOT NULL,
+ recorded_at TEXT NOT NULL, PRIMARY KEY(idea_id, condition, period, value)
+);
+CREATE TABLE IF NOT EXISTS idea_alerts (
+ idea_id INTEGER NOT NULL, key TEXT NOT NULL, kind TEXT NOT NULL, detected_at TEXT NOT NULL,
+ message TEXT NOT NULL, evidence_json TEXT NOT NULL, PRIMARY KEY(idea_id, key)
+);
 CREATE TABLE IF NOT EXISTS idea_notes (
  id INTEGER PRIMARY KEY AUTOINCREMENT, idea_id INTEGER NOT NULL, created_at TEXT NOT NULL,
  updated_at TEXT NOT NULL, text TEXT NOT NULL
@@ -106,3 +116,43 @@ class SqliteIdeas:
     def delete_note(self, note_id: int) -> bool:
         with closing(self._write()) as db, db:
             return db.execute("DELETE FROM idea_notes WHERE id=?", (note_id,)).rowcount == 1
+
+    def _table(self, db: sqlite3.Connection, name: str) -> bool:
+        return db.execute("SELECT 1 FROM sqlite_schema WHERE name=?", (name,)).fetchone() is not None
+
+    def observations(self, idea_id: int) -> dict[int, list[dict]]:
+        db = self._read()
+        if db is None:
+            return {}
+        with closing(db):
+            if not self._table(db, "idea_observations"):
+                return {}
+            rows = db.execute("SELECT condition,period,value FROM idea_observations WHERE idea_id=? "
+                              "ORDER BY recorded_at, rowid", (idea_id,)).fetchall()
+        history: dict[int, list[dict]] = {}
+        for condition, period, value in rows:
+            history.setdefault(condition, []).append({"period": period, "value": value})
+        return history
+
+    def record(self, idea_id: int, observations: list[dict], alerts: list[dict], now: str) -> int:
+        """Inserts what is new in one transaction; returns how many alerts were new."""
+        with closing(self._write()) as db, db:
+            db.executemany("INSERT OR IGNORE INTO idea_observations VALUES (?,?,?,?,?)",
+                           [(idea_id, row["condition"], row["period"], row["value"], now) for row in observations])
+            before = db.total_changes
+            db.executemany("INSERT OR IGNORE INTO idea_alerts VALUES (?,?,?,?,?,?)",
+                           [(idea_id, alert["key"], alert["kind"], now, alert["message"],
+                             json.dumps(alert["evidence"], ensure_ascii=False, default=str)) for alert in alerts])
+            return db.total_changes - before
+
+    def alerts(self, idea_id: int) -> list[dict]:
+        db = self._read()
+        if db is None:
+            return []
+        with closing(db):
+            if not self._table(db, "idea_alerts"):
+                return []
+            rows = db.execute("SELECT key,kind,detected_at,message,evidence_json FROM idea_alerts WHERE idea_id=? "
+                              "ORDER BY detected_at DESC, key", (idea_id,)).fetchall()
+        return [{"key": key, "kind": kind, "detected_at": detected, "message": message, "evidence": json.loads(evidence)}
+                for key, kind, detected, message, evidence in rows]
