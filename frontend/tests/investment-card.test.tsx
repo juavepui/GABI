@@ -80,6 +80,27 @@ describe('ficha de inversión', () => {
         price: { value: 100, date: '2026-10-30' },
         evidence: { data_coverage: 0.8, statistical_evidence: 'retrospectiva' },
         absent: ['métrica: Deuda'],
+        decision: {
+          position_eur: 2000,
+          costs: { buy_eur: 13, round_trip_eur: 26, round_trip_share: 0.013 },
+          concentration: {
+            issuer_weight_after: 0.1,
+            issuer_cap: 0.1,
+            issuer_exceeds: false,
+            sector: 'Industrials',
+            sector_weight_after: 0.325,
+            sector_cap: 0.3,
+            sector_exceeds: true,
+          },
+          passive: {
+            horizon_days: 181,
+            base_annualised_net: 0.18,
+            index_annualised_past: 0.12,
+            margin_over_index: 0.06,
+            costs_included: true,
+            note: 'Ninguna cifra es una previsión.',
+          },
+        },
       },
       snapshot_sha256: 'a'.repeat(64),
       scenario_returns: { bear: -0.2, base: 0.1, bull: 0.4 },
@@ -93,6 +114,11 @@ describe('ficha de inversión', () => {
     expect(text).toContain('Ninguna es una probabilidad de beneficio.');
     expect(text).toContain('Sin dato al publicar: métrica: Deuda');
     expect(text).toContain('Abrir una versión nueva');
+    expect(text).toContain('26 € ida y vuelta');
+    expect(text).toContain('Industrials 32,5 % (límite 30 %) · lo supera');
+    expect(text).toContain('S&P 500 en € 12 % anual pasado');
+    expect(text).toContain('Ninguna cifra es una previsión.');
+    expect(text).not.toContain('durante  periodos');
     screen.unmount();
   });
 });

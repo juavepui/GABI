@@ -43,6 +43,7 @@ class CardContent(WireModel):
     confidence: Literal["baja", "media", "alta"] | None = Field(
         default=None, description="Confianza subjetiva; no es una probabilidad de beneficio")
     review_due: date | None = None
+    position_eur: float | None = Field(default=None, description="Importe previsto de la posición, en euros")
     notes: str = Field(default="", max_length=2000)
 
 
