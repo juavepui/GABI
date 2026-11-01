@@ -250,10 +250,13 @@ def benchmark(symbol: str, sessions: list[date], bars: dict[str, dict[date, Bar]
               events: list[Event] | None = None) -> dict:
     """The same calendar, flows, costs and accounting fully invested in one symbol.
 
-    Each contribution is invested at the next session's open, as a portfolio
-    rebalance would be."""
+    Each contribution and each dividend is invested at the next session's open,
+    as a total-return index would be: dividends left in cash forever would
+    understate the benchmark and inflate any excess over it."""
     flows = flows or {}
-    signal_days = sorted({sessions[0], *(day for day in flows if day in sessions)})
+    own = [event for event in events or [] if event.symbol == symbol]
+    paid = {event.day for event in own if event.kind == "dividend"}
+    signal_days = sorted({sessions[0], *(day for day in {*flows, *paid} if day in sessions)})
     rebalances = [Rebalance(day, {symbol: 1.0}) for day in signal_days]
     return run(sessions, {symbol: bars[symbol]}, rebalances=rebalances, costs=costs, initial_cash=initial_cash,
-               flows=flows, events=[event for event in events or [] if event.symbol == symbol])
+               flows=flows, events=own)
