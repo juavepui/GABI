@@ -13,8 +13,8 @@ def test_published_catalog_reconciles_convention_without_claiming_exhaustiveness
     ledger = search_ledger.build(config.BASE_DIR)
     assert ledger["counts"] == {
         "legacy_guard_entries": 34, "legacy_observed_entries": 33, "legacy_pending_entries": 1,
-        "additional_observed_records": 4, "diagnostic_groups": 14,
-        "registered_after_reconciliation": 1, "known_minimum_candidate_configurations": 35,
+        "additional_observed_records": 4, "diagnostic_groups": 16,
+        "registered_after_reconciliation": 4, "known_minimum_candidate_configurations": 38,
     }
     assert ledger["exhaustive_search_history"] is False
     assert ledger["global_error_control_established"] is False
@@ -51,8 +51,8 @@ def test_json_references_resolve_and_configuration_hashes_cover_settings():
 
 def test_ensemble_counts_as_a_new_configuration_outside_the_inherited_convention():
     ledger = search_ledger.build(config.BASE_DIR)
-    assert ledger["version"] == 2 and ledger["revisions"][0]["added"] == ["ensemble/ENS-VQE-v1"]
-    (ensemble,) = ledger["registered_after_reconciliation"]
+    assert ledger["version"] == 4 and ledger["revisions"][0]["added"] == ["ensemble/ENS-VQE-v1"]
+    ensemble = ledger["registered_after_reconciliation"][0]
     assert ensemble["configuration"]["model"] == "GABI-ENS-VQE-v1"
     assert ensemble["configuration"]["multiple_testing"]["new_candidate_configurations"] == 1
     # Nothing observed beyond robustness without returns; the prospective looks are still ahead.
@@ -62,6 +62,22 @@ def test_ensemble_counts_as_a_new_configuration_outside_the_inherited_convention
         "result_ref": "docs/ensemble-robustness/resultado.json#/decision", "returns_read": False, "decision": "parcial"}
     assert ensemble["planned_sample"]["looks"]["not_before"][0] == "2029-12-21"
     assert all(row["id"] != ensemble["id"] for row in ledger["legacy_entries"])
+
+
+def test_nsi_registers_its_three_configurations_and_their_abandonment_and_the_gates_add_none():
+    ledger = search_ledger.build(config.BASE_DIR)
+    nsi = [row for row in ledger["registered_after_reconciliation"] if row["family"] == "net_issuance_v1"]
+    assert [row["id"] for row in nsi] == ["issuance/NSI-v1/primary", "issuance/NSI-v1/stress", "issuance/NSI-v1/top30"]
+    assert [row["decision"] for row in nsi] == ["abandoned", "sensitivity_not_decisive", "sensitivity_not_decisive"]
+    assert all(row["state"] == "observed" and row["planned_sample"] is None and not row["demonstrated_superiority"]
+               and "execution_defect_2011_2015_no_open_prices_full_cash" in row["failures"] for row in nsi)
+    assert ledger["revisions"][1] == {
+        "version": 3, "date": "2026-11-01", "issue": 252, "added": [row["id"] for row in nsi],
+        "data_gates": ["cbop_v1_data_gate: close_unfeasible", "nsi_v1_data_gate: continue_to_exploratory"]}
+    assert ledger["revisions"][2]["observed"] == [row["id"] for row in nsi]
+    gates = {row["family"]: row for row in ledger["diagnostics"] if row["family"].endswith("_data_gate")}
+    assert {name: row["decision"] for name, row in gates.items()} == {
+        "cbop_v1_data_gate": "close_unfeasible", "nsi_v1_data_gate": "continue_to_exploratory"}
 
 
 @pytest.fixture

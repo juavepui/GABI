@@ -1,0 +1,116 @@
+{
+  "spec": {
+    "model": "GABI-NSI-v1",
+    "issue": 252,
+    "stage": "PREREGISTERED_EXPLORATORY_PENDING",
+    "demonstrated": false,
+    "written_before": "cualquier cálculo de rendimiento, ranking o selección de NSI",
+    "hypothesis": "las empresas que reducen su número de acciones rinden más que las que emiten (Pontiff y Woodgate, 2008; Fama y French, 2008)",
+    "measure": {
+      "version": "nsi-v1",
+      "definition": "ln(acciones medias básicas t / comparativa t−1 del mismo 10-K original)",
+      "tags": [
+        "WeightedAverageNumberOfSharesOutstandingBasic",
+        "WeightedAverageNumberOfSharesOutstandingBasicAndDiluted"
+      ],
+      "lag": "10-K presentado antes de la sesión de señal",
+      "max_anchor_age_days": 550,
+      "data_gate": {
+        "ref": "docs/research/nsi-v1/cobertura.json",
+        "decision": "continue_to_exploratory",
+        "returns_read": false
+      }
+    },
+    "universe": {
+      "rule": "miembros del S&P 500 en la señal con identidad histórica acreditada y emisión calculada; financieras incluidas; sin relleno"
+    },
+    "signal": {
+      "direction": "menor emisión es mejor",
+      "ranking": "percentil dentro del universo con dato",
+      "combination": "ninguna"
+    },
+    "portfolio": {
+      "positions": 20,
+      "weights": "equiponderados",
+      "max_per_sic_division": 6,
+      "band": {
+        "enter": "quintil de menor emisión",
+        "hold": "40 % de menor emisión"
+      },
+      "rebalance": "anual, primera sesión NYSE de julio",
+      "engine": "backtest-v3, ejecución en la apertura siguiente",
+      "exits": "eventos V3"
+    },
+    "account": {
+      "initial_eur": 11000,
+      "monthly_eur": 700,
+      "contributions": "en caja hasta el rebalanceo siguiente",
+      "policy": "límites de #248: emisor ≤ 10 %, sector ≤ 30 %, comisión ≤ 1 % de la orden"
+    },
+    "costs": {
+      "scenarios": [
+        "BASE",
+        "STRESS"
+      ],
+      "fx": "conversión EUR/USD",
+      "dividend_withholding": 0.15
+    },
+    "benchmark": {
+      "primary": "S&P 500 TR en EUR (#244) con el mismo calendario, flujos y contabilidad",
+      "comparators": [
+        "equiponderado del universo con dato",
+        "regresión FF5 + UMD (Ken French)"
+      ]
+    },
+    "evaluation": {
+      "phases": [
+        "puerta de datos (pasada)",
+        "exploratoria 2011–2025, historia observada, nunca evidencia independiente",
+        "seguimiento prospectivo desde el registro, primera revisión no antes de 3 años"
+      ],
+      "windows": [
+        [
+          "2011-07-01",
+          "2016-06-30"
+        ],
+        [
+          "2016-07-01",
+          "2021-06-30"
+        ],
+        [
+          "2021-07-01",
+          "2025-07-01"
+        ]
+      ],
+      "test": "exceso neto mensual frente al benchmark; cota inferior unilateral por bootstrap circular de bloques de 12 meses, 5.000 réplicas, alfa 0,05/3",
+      "abandon": [
+        "exceso neto BASE ≤ 0 en el conjunto",
+        "cota inferior < 0 en al menos dos de las tres ventanas",
+        "alfa FF5+UMD con intervalo centrado en ≈ 0: exposición factorial, no se promociona"
+      ],
+      "risk_limits": {
+        "volatility_vs_index_max": 1.1,
+        "drawdown_worse_than_index_max_pp": 5,
+        "loss_budget": 0.2
+      }
+    },
+    "configurations": {
+      "primary": "Top-20 BASE",
+      "stress": "Top-20 STRESS",
+      "top30": "Top-30 BASE (sensibilidad)"
+    },
+    "multiple_testing": {
+      "new_candidate_configurations": 3,
+      "budget": 3
+    },
+    "contamination": "RCF v1 (#60) vista y descartada, solape parcial; emisión neta no medida antes en GABI; no compite con ENS-VQE (#237)"
+  },
+  "approved": {
+    "by": "propietario",
+    "date": "2026-11-01",
+    "proposal": "docs/research/nsi-v1-preregistro-propuesta.md",
+    "proposal_commit": "07f3ea015040709b5015b4fa183fb7ece08ff2d9",
+    "proposal_sha256_lf": "5312d47a79fe05615ae0a5697ff996b10cb9d2c513e167968478cfff4f6d1b3b"
+  },
+  "returns_read": false
+}

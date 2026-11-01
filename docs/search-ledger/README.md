@@ -54,6 +54,42 @@ Sigue siendo un mínimo: no acredita un recuento global ni control global del
 error de selección. El catálogo de Investigación la lista como ensayo
 prospectivo, sin resultado.
 
+## Revisión 3 (01-11-2026, #252)
+
+La revisión 3 añade la candidata **NSI-v1**, emisión neta de acciones. Se
+preregistró con la aprobación del propietario después de pasar su puerta de
+datos, y antes de calcular ningún rendimiento.
+
+| Entrada | Estado | Qué se ha observado |
+| --- | --- | --- |
+| `issuance/NSI-v1/primary` (Top-20 BASE) | Preregistrada, exploratoria pendiente | Solo la cobertura de datos, sin retornos |
+| `issuance/NSI-v1/stress` (Top-20 STRESS) | Ídem | Ídem |
+| `issuance/NSI-v1/top30` (Top-30 BASE, sensibilidad) | Ídem | Ídem |
+
+Su presupuesto es de tres configuraciones, y el mínimo conocido acumulado pasa a
+**38**. La fase exploratoria reutiliza la historia observada de 2011–2025 y
+nunca contará como evidencia independiente.
+
+Las dos puertas de datos de #252 se registran como **auditorías sin
+configuraciones de inversión**:
+- `cbop_v1_data_gate`: CBOP-v1 se cerró por inviable por cobertura, sin leer
+  retornos;
+- `nsi_v1_data_gate`: pasa.
+
+## Revisión 4 (01-11-2026, #252)
+
+Se ejecutó la evaluación exploratoria preregistrada de NSI-v1, que marcó
+**abandonar**. El propietario aceptó el abandono.
+- **Configuración primaria:** −4,8 pp anuales frente al S&P 500 TR en EUR con los
+  mismos flujos. El alfa FF5+UMD es de −0,7 pp, con un intervalo de [−4,3; +2,9].
+- **Ventanas:** las cotas inferiores son negativas en las dos ventanas válidas.
+- **Defecto declarado:** el archivo de precios de 2010–2015 no tiene apertura, y
+  la estrategia estuvo en caja esos años.
+
+Las tres entradas pasan a `observed`: la primaria como `abandoned` y las dos de
+sensibilidad como `sensitivity_not_decisive`. El mínimo conocido sigue en 38.
+Detalle en [docs/research/nsi-v1-resultado.md](../research/nsi-v1-resultado.md).
+
 ## Lo que sigue sin poder recuperarse
 
 Se mantienen las cuatro exclusiones documentadas por #12: vectores completos de
