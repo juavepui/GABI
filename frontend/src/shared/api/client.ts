@@ -16,6 +16,10 @@ import type {
   WeightsRequest,
   PlanRequest,
   PlanResponse,
+  CardContent,
+  CardMove,
+  InvestmentCard,
+  InvestmentCardList,
   JournalCreate,
   JournalEntry,
   JournalList,
@@ -593,6 +597,25 @@ export function getThesisCounts(signal?: AbortSignal): Promise<ThesisCounts> {
 /** Price, score and checklist now against the thesis; read on demand, nothing is downloaded. */
 export function getJournalChanges(id: number, signal?: AbortSignal): Promise<JournalChanges> {
   return get('/api/v1/portfolio/journal/' + id + '/changes', signal);
+}
+export function getCompanyCards(symbol: string, signal?: AbortSignal): Promise<InvestmentCardList> {
+  return get('/api/v1/portfolio/cards?limit=20&symbol=' + encodeURIComponent(symbol), signal);
+}
+function postCard(path: string, body: unknown): Promise<InvestmentCard> {
+  return request('/api/v1/portfolio/cards' + path, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function createCard(symbol: string, content: CardContent): Promise<InvestmentCard> {
+  return postCard('', { symbol, content });
+}
+export function saveCard(id: number, content: CardContent): Promise<InvestmentCard> {
+  return postCard('/' + id + '/save', { content });
+}
+export function moveCard(id: number, body: CardMove): Promise<InvestmentCard> {
+  return postCard('/' + id + '/state', body);
 }
 export function createJournal(body: JournalCreate): Promise<JournalEntry> {
   return request('/api/v1/portfolio/journal', {

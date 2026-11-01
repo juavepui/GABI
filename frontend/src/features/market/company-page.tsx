@@ -15,6 +15,7 @@ import { CompanyChecklist } from './company-checklist';
 import { FollowButton } from './follow-button';
 
 import { CompanyTheses } from './company-theses';
+import { InvestmentCardSection } from './investment-card';
 import { patchParams } from './params';
 import { sourceLabel } from './provenance';
 import { BackLink } from '@/shared/ui/section-links';
@@ -407,6 +408,9 @@ export function CompanyPage() {
               </Card>
             </div>
             <CompanyChecklist symbol={company.symbol} />
+            <div id="ficha-inversion" className="scroll-mt-4">
+              <InvestmentCardSection symbol={company.symbol} />
+            </div>
             <div id="tesis" className="scroll-mt-4">
               <CompanyTheses symbol={company.symbol} />
             </div>
