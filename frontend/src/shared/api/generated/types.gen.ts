@@ -1467,6 +1467,178 @@ export type CapitalAllocation = {
 };
 
 /**
+ * CardCatalyst
+ */
+export type CardCatalyst = {
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Horizon
+     */
+    horizon?: string | null;
+};
+
+/**
+ * CardContent
+ */
+export type CardContent = {
+    /**
+     * Catalysts
+     */
+    catalysts?: Array<CardCatalyst>;
+    /**
+     * Confidence
+     *
+     * Confianza subjetiva; no es una probabilidad de beneficio
+     */
+    confidence?: 'baja' | 'media' | 'alta' | null;
+    /**
+     * Discrepancy
+     *
+     * Qué descuenta el mercado y por qué discrepas
+     */
+    discrepancy?: string;
+    /**
+     * Invalidation
+     */
+    invalidation?: Array<CardInvalidation>;
+    /**
+     * Notes
+     */
+    notes?: string;
+    /**
+     * Review Due
+     */
+    review_due?: string | null;
+    /**
+     * Risks
+     */
+    risks?: Array<string>;
+    scenarios?: CardScenarios;
+    /**
+     * Sensitivity
+     */
+    sensitivity?: string;
+    /**
+     * Thesis
+     *
+     * Tesis en un máximo de tres líneas
+     */
+    thesis?: Array<string>;
+};
+
+/**
+ * CardCreate
+ */
+export type CardCreate = {
+    content?: CardContent;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * CardInvalidation
+ */
+export type CardInvalidation = {
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Metric
+     */
+    metric?: string;
+    /**
+     * Operator
+     */
+    operator?: '<' | '<=' | '>' | '>=' | null;
+    /**
+     * Persistence
+     *
+     * Periodos consecutivos que debe cumplirse
+     */
+    persistence?: number | null;
+    /**
+     * Review By
+     */
+    review_by?: string | null;
+    /**
+     * Source
+     */
+    source?: string;
+    /**
+     * Threshold
+     */
+    threshold?: number | null;
+};
+
+/**
+ * CardMove
+ */
+export type CardMove = {
+    /**
+     * Reason
+     */
+    reason?: string;
+    /**
+     * Target
+     */
+    target: 'analizada' | 'publicada' | 'descartada';
+};
+
+/**
+ * CardSave
+ */
+export type CardSave = {
+    content: CardContent;
+};
+
+/**
+ * CardScenario
+ */
+export type CardScenario = {
+    /**
+     * Assumptions
+     */
+    assumptions?: string;
+    /**
+     * Price
+     */
+    price?: number | null;
+};
+
+/**
+ * CardScenarioReturns
+ */
+export type CardScenarioReturns = {
+    /**
+     * Base
+     */
+    base: number | null;
+    /**
+     * Bear
+     */
+    bear: number | null;
+    /**
+     * Bull
+     */
+    bull: number | null;
+};
+
+/**
+ * CardScenarios
+ */
+export type CardScenarios = {
+    base?: CardScenario;
+    bear?: CardScenario;
+    bull?: CardScenario;
+};
+
+/**
  * ChecklistAlarm
  */
 export type ChecklistAlarm = {
@@ -5645,6 +5817,89 @@ export type InsiderTransaction = {
      * Transaction Label
      */
     transaction_label: string | null;
+};
+
+/**
+ * InvestmentCard
+ */
+export type InvestmentCard = {
+    content: CardContent;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Discard Reason
+     */
+    discard_reason: string | null;
+    /**
+     * Discarded At
+     */
+    discarded_at: string | null;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Missing
+     *
+     * Lo que falta para publicar; vacío si está completa
+     */
+    missing: Array<string>;
+    /**
+     * Not A Probability
+     */
+    not_a_probability: string;
+    /**
+     * Published At
+     */
+    published_at: string | null;
+    /**
+     * Movimiento de cada escenario sobre el precio publicado
+     */
+    scenario_returns: CardScenarioReturns;
+    /**
+     * Snapshot
+     *
+     * Inputs capturados al publicar, con fuente y fecha
+     */
+    snapshot: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Snapshot Sha256
+     */
+    snapshot_sha256: string | null;
+    /**
+     * State
+     */
+    state: 'incompleta' | 'analizada' | 'publicada' | 'descartada';
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Version Rules
+     */
+    version_rules: string;
+};
+
+/**
+ * InvestmentCardList
+ */
+export type InvestmentCardList = {
+    /**
+     * Items
+     */
+    items: Array<InvestmentCard>;
 };
 
 /**
@@ -12522,6 +12777,255 @@ export type NoticesApiV1NoticesGetResponses = {
 };
 
 export type NoticesApiV1NoticesGetResponse = NoticesApiV1NoticesGetResponses[keyof NoticesApiV1NoticesGetResponses];
+
+export type ListCardsApiV1PortfolioCardsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Symbol
+         */
+        symbol?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/portfolio/cards';
+};
+
+export type ListCardsApiV1PortfolioCardsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ListCardsApiV1PortfolioCardsGetError = ListCardsApiV1PortfolioCardsGetErrors[keyof ListCardsApiV1PortfolioCardsGetErrors];
+
+export type ListCardsApiV1PortfolioCardsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvestmentCardList;
+};
+
+export type ListCardsApiV1PortfolioCardsGetResponse = ListCardsApiV1PortfolioCardsGetResponses[keyof ListCardsApiV1PortfolioCardsGetResponses];
+
+export type CreateCardApiV1PortfolioCardsPostData = {
+    body: CardCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/cards';
+};
+
+export type CreateCardApiV1PortfolioCardsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CreateCardApiV1PortfolioCardsPostError = CreateCardApiV1PortfolioCardsPostErrors[keyof CreateCardApiV1PortfolioCardsPostErrors];
+
+export type CreateCardApiV1PortfolioCardsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: InvestmentCard;
+};
+
+export type CreateCardApiV1PortfolioCardsPostResponse = CreateCardApiV1PortfolioCardsPostResponses[keyof CreateCardApiV1PortfolioCardsPostResponses];
+
+export type GetCardApiV1PortfolioCardsCardIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Card Id
+         */
+        card_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/cards/{card_id}';
+};
+
+export type GetCardApiV1PortfolioCardsCardIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type GetCardApiV1PortfolioCardsCardIdGetError = GetCardApiV1PortfolioCardsCardIdGetErrors[keyof GetCardApiV1PortfolioCardsCardIdGetErrors];
+
+export type GetCardApiV1PortfolioCardsCardIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvestmentCard;
+};
+
+export type GetCardApiV1PortfolioCardsCardIdGetResponse = GetCardApiV1PortfolioCardsCardIdGetResponses[keyof GetCardApiV1PortfolioCardsCardIdGetResponses];
+
+export type SaveCardApiV1PortfolioCardsCardIdSavePostData = {
+    body: CardSave;
+    path: {
+        /**
+         * Card Id
+         */
+        card_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/cards/{card_id}/save';
+};
+
+export type SaveCardApiV1PortfolioCardsCardIdSavePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveCardApiV1PortfolioCardsCardIdSavePostError = SaveCardApiV1PortfolioCardsCardIdSavePostErrors[keyof SaveCardApiV1PortfolioCardsCardIdSavePostErrors];
+
+export type SaveCardApiV1PortfolioCardsCardIdSavePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvestmentCard;
+};
+
+export type SaveCardApiV1PortfolioCardsCardIdSavePostResponse = SaveCardApiV1PortfolioCardsCardIdSavePostResponses[keyof SaveCardApiV1PortfolioCardsCardIdSavePostResponses];
+
+export type MoveCardApiV1PortfolioCardsCardIdStatePostData = {
+    body: CardMove;
+    path: {
+        /**
+         * Card Id
+         */
+        card_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/cards/{card_id}/state';
+};
+
+export type MoveCardApiV1PortfolioCardsCardIdStatePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type MoveCardApiV1PortfolioCardsCardIdStatePostError = MoveCardApiV1PortfolioCardsCardIdStatePostErrors[keyof MoveCardApiV1PortfolioCardsCardIdStatePostErrors];
+
+export type MoveCardApiV1PortfolioCardsCardIdStatePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvestmentCard;
+};
+
+export type MoveCardApiV1PortfolioCardsCardIdStatePostResponse = MoveCardApiV1PortfolioCardsCardIdStatePostResponses[keyof MoveCardApiV1PortfolioCardsCardIdStatePostResponses];
 
 export type ListPlansApiV1PortfolioDecisionsGetData = {
     body?: never;

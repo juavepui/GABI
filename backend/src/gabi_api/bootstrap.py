@@ -35,6 +35,7 @@ from gabi.application.market.watchlist import Watchlist
 from gabi.application.portfolio.benchmark import InvestorBenchmark
 from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.holdings import Holdings
+from gabi.application.portfolio.investment_cards import InvestmentCards
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
 from gabi.application.portfolio.risk import PortfolioRisk
@@ -84,6 +85,7 @@ from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.holdings import SqliteHoldings
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
+from gabi.infrastructure.storage.investment_cards import SqliteInvestmentCards
 from gabi.infrastructure.storage.investor_profile import SqliteInvestorProfile
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.journal import SqliteJournal
@@ -105,6 +107,7 @@ from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
 from gabi_api.routes.forms import router as forms_router
 from gabi_api.routes.holdings import router as holdings_router
+from gabi_api.routes.investment_cards import router as investment_cards_router
 from gabi_api.routes.investor import router as investor_router
 from gabi_api.routes.jobs import router as jobs_router
 from gabi_api.routes.journal import router as journal_router
@@ -225,6 +228,20 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.journal = Journal(SqliteJournal(settings.data_dir),
                                 lambda: repository.ranking(dict(policy.weights), today()).table,
                                 app.state.company_checklist.company, policy.model_id, today)
+    # Investment cards (#246): the snapshot at publication reads the same local cache as the thesis.
+    card_identity = SqliteIdentityReads(settings.data_dir / "gabi.db")
+    card_ciks = SqliteSecReads(settings.data_dir / "gabi.db")
+
+    def card_issuer(symbol: str) -> dict:
+        resolved = card_identity.resolve_many([symbol], today().isoformat()).get(symbol, {})
+        cik = card_ciks.stored_ciks().get(symbol)
+        return {"entity_id": resolved.get("entity_id"), "source": resolved.get("source"),
+                "cik": resolved.get("cik") or cik}
+
+    app.state.investment_cards = InvestmentCards(
+        SqliteInvestmentCards(settings.data_dir), ranking=lambda: repository.ranking(dict(policy.weights), today()).table,
+        checklist=app.state.company_checklist.company, evidence=app.state.evidence.company, identity=card_issuer,
+        model_id=policy.model_id, today=today)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)
@@ -329,6 +346,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(jobs_router)
     app.include_router(portfolio_router)
     app.include_router(journal_router)
+    app.include_router(investment_cards_router)
     app.include_router(macro_router)
     app.include_router(signals_router)
     app.include_router(simulations_router)
