@@ -52,19 +52,35 @@ def test_only_facts_filed_before_the_signal_count():
     assert cbop.cbop(facts(old, new), date(2024, 7, 2), sic=None).anchor == "2023-12-31"
 
 
-def test_a_line_never_reported_is_zero_and_declared_but_a_missing_year_is_not():
+def test_a_working_capital_line_missing_for_the_anchor_year_is_zero_and_declared():
     never = {key: val for key, val in BASE.items() if key != "IncreaseDecreaseInInventories"}
     value = cbop.cbop(facts(year(never)), SIGNAL, sic=None)
     assert value.metric.state == "computed" and value.imputed == ("d_inventories",)
     assert value.metric.value == pytest.approx(0.11)
     old = year(BASE, end="2022-12-31", filed="2023-02-15", accn="0001-23-1")
-    gap = cbop.cbop(facts(old, year(never)), SIGNAL, sic=None)
-    assert gap.metric.value is None and gap.metric.reason == "d_inventories_stale"
+    gap = cbop.cbop(facts(old, year(never)), SIGNAL, sic=None)  # Amendment 1: stopped presenting it.
+    assert gap.metric.value == pytest.approx(0.11) and gap.imputed == ("d_inventories",)
+
+
+def test_amendment_one_rebuilds_sga_and_falls_back_to_total_operating_costs():
+    split = {key: val for key, val in BASE.items() if key != "SellingGeneralAndAdministrativeExpense"}
+    split |= {"SellingAndMarketingExpense": 120.0, "GeneralAndAdministrativeExpense": 80.0}
+    assert cbop.cbop(facts(year(split)), SIGNAL, sic=None).metric.value == pytest.approx(0.10)
+    utility = {key: val for key, val in BASE.items()
+               if key not in {"CostOfRevenue", "SellingGeneralAndAdministrativeExpense"}}
+    # Costs and expenses 950 − D&A 100 − R&D 50 = 800 = cost of revenue + SG&A.
+    utility |= {"CostsAndExpenses": 950.0, "DepreciationDepletionAndAmortization": 100.0}
+    value = cbop.cbop(facts(year(utility)), SIGNAL, sic=4911)
+    assert value.metric.value == pytest.approx(0.10) and "total_costs" in value.metric.convention
+    no_amortization = {key: val for key, val in utility.items() if key != "DepreciationDepletionAndAmortization"}
+    assert cbop.cbop(facts(year(no_amortization)), SIGNAL, sic=None).metric.reason == "cost_of_revenue_absent"
 
 
 def test_required_lines_financials_and_stale_issuers_are_not_computed():
     no_sga = {key: val for key, val in BASE.items() if key != "SellingGeneralAndAdministrativeExpense"}
     assert cbop.cbop(facts(year(no_sga)), SIGNAL, sic=None).metric.reason == "sga_absent"
+    no_revenue = {key: val for key, val in BASE.items() if key != "Revenues"}
+    assert cbop.cbop(facts(year(no_revenue)), SIGNAL, sic=None).metric.reason == "revenue_absent"
     assert cbop.cbop(facts(year(BASE)), SIGNAL, sic=6021).metric.state == "not_applicable"
     assert cbop.cbop(facts(year(BASE)), date(2025, 7, 10), sic=None).metric.reason == "annual_report_too_old"
     assert cbop.cbop({"facts": {"us-gaap": {}}}, SIGNAL, sic=None).metric.reason == "no_annual_report"
@@ -126,7 +142,7 @@ def test_the_download_is_resumable_keeps_only_cbop_tags_and_records_absent_issue
         return payload
 
     calls = []
-    result = cbop_coverage.download(["0000000001", "0000000002"], done=set(store.downloaded()), save=store.save,
+    result = cbop_coverage.download(["0000000001", "0000000002"], done=set(store.downloaded(cbop_coverage.tags_sha256())), save=store.save,
                                     companyfacts=companyfacts, submissions=lambda cik: calls.append(cik) or {"sic": "3571"},
                                     now=lambda: "2026-11-01T12:00:00+00:00")
     assert result == {"pending": 2, "ok": 1, "absent": 1}
@@ -138,6 +154,8 @@ def test_the_download_is_resumable_keeps_only_cbop_tags_and_records_absent_issue
                                    save=store.save, companyfacts=companyfacts,
                                    submissions=lambda cik: calls.append(cik) or {}, now=lambda: "x")
     assert again["pending"] == 1 and calls[-1] == "0000000003" and store.sic("0000000003") is None
+    assert set(store.downloaded(cbop_coverage.tags_sha256())) == {"0000000001", "0000000002", "0000000003"}
+    assert store.downloaded("another tag set") == {}  # A new tag set downloads everything again.
     summary = store.downloaded_summary()
     assert (summary["issuers"], summary["ok"], summary["absent"]) == (3, 2, 1) and len(summary["manifest_sha256"]) == 64
 

@@ -315,7 +315,7 @@ def cbop_gate(settings: Settings, args: argparse.Namespace) -> None:
         sec, calls = SecXbrl(sec_user_agent()), Calls()
         ciks = {cik for day in members.values() for cik in day.values() if cik}
         result = cbop_coverage.download(
-            ciks, done=set(store.downloaded()), save=store.save,
+            ciks, done=set(store.downloaded(cbop_coverage.tags_sha256())), save=store.save,
             companyfacts=lambda cik: retry(lambda: sec.companyfacts(cik), calls),
             submissions=lambda cik: retry(lambda: sec.submissions(cik), calls),
             now=lambda: datetime.now(UTC).isoformat(timespec="seconds"),
@@ -327,7 +327,8 @@ def cbop_gate(settings: Settings, args: argparse.Namespace) -> None:
     if (destination / "cobertura.json").exists():
         raise SystemExit(f"Ya existe un resultado en {destination}; usar --output con una carpeta nueva.")
     destination.mkdir(parents=True, exist_ok=True)
-    report["downloads"] = store.downloaded_summary()
+    report["downloads"] = {**store.downloaded_summary(),
+                           "current_tags": len(store.downloaded(cbop_coverage.tags_sha256()))}
     text = json.dumps(json_value(report), ensure_ascii=False, indent=2)
     (destination / "cobertura.json").write_text(text + chr(10), encoding="utf-8")
     print(json.dumps({"decision": report["decision"], "failed_signals": report["failed_signals"]},

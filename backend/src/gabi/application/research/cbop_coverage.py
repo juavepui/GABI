@@ -46,17 +46,23 @@ def issuers(signals: list[date], membership: Callable[[str], dict], intervals: l
                      for symbol in membership(signal.isoformat())["symbols"]} for signal in sorted(signals)}
 
 
-def _sha256(payload: dict) -> str:
+def _sha256(payload: object) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def tags_sha256() -> str:
+    """Fingerprint of the stored tag set: a download made with another set is fetched again."""
+    return _sha256(list(cbop.USD_TAGS))
 
 
 def download(ciks: Iterable[str], *, done: set[str], companyfacts: Callable[[str], dict],
              submissions: Callable[[str], dict], save: Callable[..., None], now: Callable[[], str],
              progress: Callable[[int, int], None] = lambda done, total: None) -> dict:
-    """Downloads each pending CIK once; an issuer SEC has no XBRL for is stored as ``absent``.
+    """Downloads each CIK not in ``done`` (those stored with the current tags); no XBRL is stored as ``absent``.
 
     Only the CbOP tags are kept. Transient failures propagate after the caller's
     retries; what was saved stays, so a new run resumes."""
+    tags = tags_sha256()
     pending = sorted(set(ciks) - done)
     counts = {"pending": len(pending), "ok": 0, "absent": 0}
     for index, cik in enumerate(pending, 1):
@@ -67,12 +73,12 @@ def download(ciks: Iterable[str], *, done: set[str], companyfacts: Callable[[str
             facts = companyfacts(cik)
         except ValueError as exc:  # SEC answers 404: no structured data for this issuer.
             save(cik, rows=[], sic=sic, status="absent", reason=str(exc), fetched_at=now(), facts_sha256=None,
-                 submissions_sha256=_sha256(filings))
+                 submissions_sha256=_sha256(filings), tags_sha256=tags)
             counts["absent"] += 1
         else:
             rows = _extract_raw_facts(facts, list(cbop.USD_TAGS), unit="USD")
             save(cik, rows=rows, sic=sic, status="ok", reason=None, fetched_at=now(), facts_sha256=_sha256(facts),
-                 submissions_sha256=_sha256(filings))
+                 submissions_sha256=_sha256(filings), tags_sha256=tags)
             counts["ok"] += 1
         progress(index, len(pending))
     return counts
@@ -105,7 +111,7 @@ def audit(members: dict[date, dict[str, str | None]], *, facts: Callable[[str], 
                                               if row["state"] not in {"computed", "not_applicable"})[:40]
         progress(done, len(signals))
     failed = [year["signal"] for year in years if not year["passes"]]
-    return {"version": cbop.VERSION, "threshold": threshold, "signals": years, "missing_examples": examples,
+    return {"version": cbop.VERSION, "data_amendment": cbop.DATA_AMENDMENT, "threshold": threshold, "signals": years, "missing_examples": examples,
             "passes": not failed, "failed_signals": failed,
             "decision": "continue_to_exploratory" if not failed else "close_unfeasible",
             "returns_read": False}
