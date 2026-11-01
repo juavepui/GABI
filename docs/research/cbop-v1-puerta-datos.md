@@ -1,6 +1,6 @@
 # Puerta de datos de CBOP-v1 (#252)
 
-**Estado:** la puerta **no pasa** con la definición fijada: la cobertura ronda el 40 % en todas las fechas. Hay que decidir entre cerrar CBOP-v1 por inviable o enmendar la definición de datos, antes de mirar ningún rendimiento.
+**Estado:** con la enmienda 1, la puerta pasa en 14 de 15 fechas. Falla en 2011 por poco (69,3 %), así que la regla da `close_unfeasible`. La decisión sobre 2011 está pendiente del propietario. No se ha leído ningún rendimiento.
 No calcula ni lee rendimientos.
 
 Es la fase 1 del preregistro propuesto en
@@ -147,6 +147,47 @@ Hay dos caminos, y los dos se deciden antes de cualquier rendimiento:
    - Tratar como cero la partida de circulante que el emisor deja de presentar.
 
    Es una búsqueda sobre datos, no sobre retornos, pero queda registrada como tal.
+
+## Resultado con la enmienda 1 (2026-11-01)
+
+**Decisión.** El propietario eligió enmendar y repetir, con la condición de cerrar
+si la cobertura seguía sin llegar al 70 %. La enmienda está en el commit 9c45859,
+anterior a esta ejecución.
+
+**Descarga.** Se repitió la descarga de los 767 CIK con el nuevo conjunto de
+etiquetas. El manifiesto `9d08e042…` está en `cbop-v1/cobertura.json`. El
+resultado anterior se conserva en `cbop-v1/cobertura-definicion-original.json`.
+
+| Señal | Elegibles | Con CbOP | Cobertura | Pasa |
+|---|---:|---:|---:|---|
+| 2011-07-01 | 410 | 284 | 69.3 % | **no** |
+| 2012-07-02 | 411 | 301 | 73.2 % | sí |
+| 2013-07-01 | 413 | 305 | 73.8 % | sí |
+| 2014-07-01 | 411 | 308 | 74.9 % | sí |
+| 2015-07-01 | 410 | 312 | 76.1 % | sí |
+| 2016-07-01 | 384 | 299 | 77.9 % | sí |
+| 2017-07-03 | 389 | 304 | 78.1 % | sí |
+| 2018-07-02 | 393 | 302 | 76.8 % | sí |
+| 2019-07-01 | 395 | 346 | 87.6 % | sí |
+| 2020-07-01 | 403 | 361 | 89.6 % | sí |
+| 2021-07-01 | 406 | 364 | 89.7 % | sí |
+| 2022-07-01 | 401 | 358 | 89.3 % | sí |
+| 2023-07-03 | 408 | 361 | 88.5 % | sí |
+| 2024-07-01 | 409 | 363 | 88.8 % | sí |
+| 2025-07-01 | 406 | 363 | 89.4 % | sí |
+
+**Lectura de 2011.**
+- Es el año de entrada en XBRL de muchos emisores:
+  - 22 no tenían todavía un 10-K con XBRL;
+  - 59 no tienen una etiqueta de ingresos reconocida (variantes antiguas de
+    `SalesRevenue…`);
+  - 11 tienen la identidad sin resolver.
+- Desde 2019 la cobertura supera el 88 %.
+
+**Comprobación adicional.** Algunos 10-K vienen etiquetados con `fp = Q4` en lugar
+de `FY` (Costco, por ejemplo, en el ejercicio 2019), y la lectura anual los
+ignora. Aceptarlos no cambia la cobertura de 2011 ni la de 2012: se comprobó en
+un borrador, sin modificar el código. Queda anotado como limitación conocida.
 
 ## Tiempo
 
