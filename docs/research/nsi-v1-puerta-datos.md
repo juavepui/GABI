@@ -113,9 +113,10 @@ manifiesto SHA-256 `018d3dd7…` está en [`nsi-v1/cobertura.json`](nsi-v1/cober
 - **Conciliación:** está entre el 96 y el 100 %.
   - La reexpresión por splits que exige ASC 260 se cumple en la práctica: entre
     2 y 15 emisores por año aparecen reexpresados por un split.
-  - Los casos `mismatch` (por ejemplo, en 2020 AIV, GRMN, HST, PCAR, VIAC y WRB)
-    corresponden a REIT con unidades operativas, fusiones de clases y dividendos
-    en acciones con proporciones no sencillas.
+  - Hay casos `mismatch`, por ejemplo en 2020 AIV, GRMN, HST, PCAR, VIAC y WRB.
+    Las causas posibles son REIT con unidades operativas, fusiones de clases o
+    dividendos en acciones con proporciones no sencillas, pero no se han
+    verificado una a una.
 - **Riesgo de sesgo que queda:** entre 4 y 14 miembros por año tienen el último
   10-K demasiado antiguo o una identidad sin resolver.
 
