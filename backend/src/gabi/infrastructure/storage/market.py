@@ -21,6 +21,8 @@ from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot
 from gabi.application.market.ranking import Calculators, MarketBatch, build_ranking
 from gabi.domain.market.identity import resolve_claims
+from gabi.domain.market.model_version import SEC_METRICS_V1, SEC_METRICS_VERSIONS
+from gabi.domain.market.sec_metrics_v2 import stored_roic
 from gabi.infrastructure.settings import Settings
 
 
@@ -62,14 +64,17 @@ class SqlInputs:
             symbols = tuple(frame["symbol"])
             yield MarketBatch(frame, self.owner.fundamentals(symbols),
                               self.owner.closes(symbols, self.owner.settings.max_price_rows_per_batch),
-                              self.owner.sec(symbols))
+                              self.owner.sec(symbols, dict(zip(frame["symbol"], frame["sector"], strict=True))))
 
 
 class ReadOnlyMarket:
     def __init__(self, settings: Settings, calculators: Calculators, policy: ModelPolicy,
-                 benchmark_symbol: str, risk_free_rate: float):
+                 benchmark_symbol: str, risk_free_rate: float, *, metrics_version: str = SEC_METRICS_V1):
+        if metrics_version not in SEC_METRICS_VERSIONS:
+            raise ValueError(f"Unknown SEC metrics version: {metrics_version}")
         self.settings, self.calculators, self.policy = settings, calculators, policy
         self.benchmark_symbol, self.risk_free_rate = benchmark_symbol, risk_free_rate
+        self.metrics_version = metrics_version
         self.db = settings.data_dir / "gabi.db"
         self.connection: sqlite3.Connection | None = None
         self.file_identity: tuple | None = None
@@ -184,7 +189,7 @@ class ReadOnlyMarket:
 
     def _key(self, revision: str, weights: dict[str, float], today: date) -> tuple:
         return (revision, today.isoformat(), tuple(sorted(weights.items())), self.benchmark_symbol,
-                self.risk_free_rate, self.policy.model_id)
+                self.risk_free_rate, self.policy.model_id, self.metrics_version)
 
     def cached_ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot | None:
         """The cached snapshot while it is fresh. Never computes; None while another request computes it."""
@@ -296,14 +301,27 @@ class ReadOnlyMarket:
         return {symbol: {"fetched_at": fetched, "info": json.loads(info), "quarterly_income": json.loads(income),
                          "quarterly_cashflow": json.loads(cashflow)} for symbol, fetched, info, income, cashflow in rows}
 
-    def sec(self, symbols: tuple[str, ...]) -> dict:
+    def sec(self, symbols: tuple[str, ...], sectors: dict[str, str | None] | None = None) -> dict:
+        """SEC metrics of the batch. With SEC metrics V2 only the ROIC comes from ``sec_metrics_v2``:
+        absent, outdated or financial-sector rows leave it missing, never the V1 value (#245)."""
         if not symbols or "edgar_metrics" not in self.tables:
             return {}
         columns = ("revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url",
                    "latest_10q_date", "latest_10q_url", "fetched_at")
         placeholders = ",".join("?" * len(symbols))
         records = self.rows(f"SELECT symbol,{','.join(columns)} FROM edgar_metrics WHERE symbol IN ({placeholders})", symbols, len(symbols))
-        return {row[0]: dict(zip(columns, row[1:], strict=True)) for row in records}
+        result = {row[0]: dict(zip(columns, row[1:], strict=True)) for row in records}
+        if self.metrics_version == SEC_METRICS_V1:
+            return result
+        stored = {}
+        if "sec_metrics_v2" in self.tables:
+            v2_columns = ("metrics_version", "roic", "roic_state")
+            stored = {row[0]: dict(zip(v2_columns, row[1:], strict=True)) for row in self.rows(
+                f"SELECT symbol,{','.join(v2_columns)} FROM sec_metrics_v2 WHERE symbol IN ({placeholders})",
+                symbols, len(symbols))}
+        for symbol, metrics in result.items():
+            metrics["roic"] = stored_roic(stored.get(symbol), sector=(sectors or {}).get(symbol))
+        return result
 
     def identities(self, symbols: tuple[str, ...], today: date) -> dict[str, dict]:
         grouped: dict[str, list[tuple]] = {symbol: [] for symbol in symbols}

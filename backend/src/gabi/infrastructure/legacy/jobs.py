@@ -63,6 +63,7 @@ class LegacyExecutor:
         if command.kind == "metrics_comparison":
             from gabi.application.market.cached_data import fundamentals_info
             from gabi.application.market.metrics_comparison import compare_metrics
+            from gabi.domain.market.model_version import SEC_METRICS_V1
             from gabi.domain.market.sec_facts import compute_edgar_metrics
             from gabi.domain.market.sec_reads import companyfacts
             from gabi.infrastructure.legacy.market import calculators, model_policy
@@ -74,7 +75,9 @@ class LegacyExecutor:
             model = active_model()
             policy = model_policy(model)
             calculator = calculators(model.technical)
-            market = ReadOnlyMarket(self.settings, calculator, policy, model.benchmark_symbol, model.risk_free_rate)
+            # The comparison's baseline is the V1 ranking, whatever metrics the active version uses.
+            market = ReadOnlyMarket(self.settings, calculator, policy, model.benchmark_symbol, model.risk_free_rate,
+                                    metrics_version=SEC_METRICS_V1)
             database = self.settings.data_dir / "gabi.db"
             reader, cache, today = SqliteSecReads(database), SqliteCacheReads(database), self.today()
             try:
@@ -118,7 +121,7 @@ class LegacyExecutor:
             model = active_model()
             policy = model_policy(model)
             market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
-                                    model.risk_free_rate)
+                                    model.risk_free_rate, metrics_version=model.metrics_version)
             try:
                 service = Decisions(market, SqliteDecisions(self.settings.data_dir), policy, date.today,
                                     build_decisions, Jobs(SqliteJobs(self.settings.data_dir)))
@@ -142,7 +145,7 @@ class LegacyExecutor:
             model = active_model()
             policy = model_policy(model)
             market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
-                                    model.risk_free_rate)
+                                    model.risk_free_rate, metrics_version=model.metrics_version)
             try:
                 monitor = SignalMonitor(SqliteSignals(self.settings.data_dir), market, policy,
                                         date.today, compare_snapshots, compare_cached,
