@@ -44,6 +44,26 @@ def run_backtest_v2(start: str, end: str, options: dict) -> dict:
     return result
 
 
+def run_backtest_v3_comparison(start: str, end: str, options: dict) -> dict:
+    """V2 with its usual inputs, then V3 over the same signals and price cache (#249), and the
+    economic validation of the #248 policy over those same inputs."""
+    from gabi import config, entity_master, multifactor_backtest
+    from gabi.application.research import backtest_v3_comparison, policy_validation
+    from gabi.infrastructure.storage.ticker_prices import SqliteTickerPrices
+
+    v2 = run_backtest_v2(start, end, options)
+    market = multifactor_backtest.market(issuer_history=True)
+    splits = SqliteTickerPrices(config.DB_PATH).splits_many
+    prepared = backtest_v3_comparison.prepare(market, v2, top_n=options["top_n"], splits=splits)
+    result = backtest_v3_comparison.compare(market, v2, top_n=options["top_n"], splits=splits, prepared=prepared)
+    result["v2"]["options"] = {"start": start, "end": end, **options}
+    result["v2"]["periods"] = v2["periods"].to_dict(orient="records")
+    result["policy_248"] = policy_validation.validate(
+        market, prepared, sectors=lambda symbols, as_of: {
+            symbol: row["sector"] for symbol, row in entity_master.get_sector_asof(symbols, as_of).items()})
+    return result
+
+
 def _already_registered(data_dir: Path, source_job_id: str) -> int | None:
     path = data_dir / "gabi.db"
     if not path.is_file():

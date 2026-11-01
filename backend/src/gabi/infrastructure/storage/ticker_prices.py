@@ -69,3 +69,20 @@ class SqliteTickerPrices:
         """A backtest only values sessions from its entry on; whole histories exceeded the row budget."""
         found = self.many(symbols, since)
         return {symbol: found.get(symbol, pd.DataFrame(columns=PRICE_COLUMNS)) for symbol in symbols}
+
+    def splits_many(self, symbols: list[str]) -> dict[str, pd.Series]:
+        """Cached split ratios by ex-date (new shares per old), one bounded query per 200 symbols."""
+        requested = list(dict.fromkeys(symbols))
+        if len(requested) > self.max_symbols:
+            raise ValueError('Too many symbols for a compatibility split read')
+        found: dict[str, dict] = {symbol: {} for symbol in requested}
+        with read_only(self.path, self.limits['max_field_bytes']) as (db, tables):
+            if db is None or 'splits' not in tables:
+                return {symbol: pd.Series(dtype=float) for symbol in requested}
+            for index in range(0, len(requested), 200):
+                batch = requested[index:index + 200]
+                for symbol, day, ratio in bounded_records(
+                        db, f"SELECT symbol,date,ratio FROM splits WHERE symbol IN ({','.join('?' for _ in batch)}) "
+                        "ORDER BY symbol,date", tuple(batch), **self.limits):
+                    found[symbol][pd.Timestamp(day)] = float(ratio)
+        return {symbol: pd.Series(rows, dtype=float) for symbol, rows in found.items()}
