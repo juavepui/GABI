@@ -20,11 +20,12 @@ from gabi.domain.market.sec_facts import (
 from gabi.domain.market.sec_succession import SUCCESSIONS, Succession, files_annual_report
 from gabi.domain.market.sec_xbrl import FIELDS, KEYS, facts_due, normalize_cik
 from gabi.domain.market.valuation_v2 import USD_TAGS as V2_USD_TAGS
+from gabi.domain.research.cbop import USD_TAGS as CBOP_USD_TAGS
 
-# Stored USD tags: the metric tags plus the checklist-only ones (#167) and those of
-# SEC metrics V2 (#245). Metrics keep reading TRACKED_TAGS; the extra rows only feed
-# the checklist and V2.
-FACT_TAGS = list(dict.fromkeys(TRACKED_TAGS + list(CHECKLIST_TAGS) + list(V2_USD_TAGS)))
+# Stored USD tags: the metric tags plus the checklist-only ones (#167), those of
+# SEC metrics V2 (#245) and those of the CBOP-v1 data gate (#252). Metrics keep
+# reading TRACKED_TAGS; the extra rows only feed their own readers.
+FACT_TAGS = list(dict.fromkeys(TRACKED_TAGS + list(CHECKLIST_TAGS) + list(V2_USD_TAGS) + list(CBOP_USD_TAGS)))
 # Share-unit tags: outstanding shares plus the 10-K diluted average, the checklist's
 # fallback for issuers that only report shares per class.
 SHARE_FACT_TAGS = list(dict.fromkeys(SHARES_TAGS + DILUTED_SHARES_TAGS))
