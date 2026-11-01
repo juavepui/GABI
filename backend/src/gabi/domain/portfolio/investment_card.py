@@ -14,6 +14,12 @@ analyse; the decision is the investor's, and the card records it explicitly:
 - Data coverage, statistical evidence and subjective confidence are kept apart;
   none of them is a probability of profit.
 
+- The planned position (euros) is required to publish, so that the card shows
+  what it costs, how it changes the portfolio's concentration against the #248
+  limits, and how the base scenario compares with the passive alternative: the
+  S&P 500 in euros with the investor's own contributions. That comparison uses
+  the index's past return, never a forecast.
+
 Nothing here reads market data: the snapshot of inputs is captured by the use case.
 """
 
@@ -78,6 +84,13 @@ def _items(value, field: str) -> list:
     return value
 
 
+def _position(value) -> float | None:
+    amount = _number(value, "importe previsto")
+    if amount is not None and not 0 < amount <= 1e8:
+        raise CardError("El importe previsto debe ser positivo.")
+    return amount
+
+
 def normalize(raw: dict) -> dict:
     """The card content with types checked and blanks removed; it may still be incomplete."""
     if not isinstance(raw, dict):
@@ -127,6 +140,7 @@ def normalize(raw: dict) -> dict:
             "scenarios": scenarios, "sensitivity": _text(raw.get("sensitivity"), "sensibilidad"),
             "catalysts": catalysts, "risks": risks, "invalidation": invalidation, "confidence": confidence,
             "review_due": _day(raw.get("review_due"), "fecha de revisión"),
+            "position_eur": _position(raw.get("position_eur")),
             "notes": _text(raw.get("notes"), "notas")}
 
 
@@ -155,6 +169,8 @@ def missing(content: dict) -> list[str]:
         gaps.append("la confianza subjetiva")
     if content["review_due"] is None:
         gaps.append("la fecha de revisión")
+    if content.get("position_eur") is None:
+        gaps.append("el importe previsto de la posición")
     return gaps
 
 
@@ -186,3 +202,51 @@ def scenario_returns(content: dict, price: float | None) -> dict[str, float | No
     """Each scenario's move from the price captured at publication; ``None`` without a price."""
     return {name: (content["scenarios"][name]["price"] / price - 1
                    if price and content["scenarios"][name]["price"] is not None else None) for name in SCENARIOS}
+
+
+def position_costs(amount_eur: float | None, profile: dict | None) -> dict | None:
+    """Buying and later selling the planned amount through the investor's broker (commission and FX)."""
+    if amount_eur is None or not profile:
+        return None
+    fixed = float(profile.get("commission_fixed_eur") or 0.0)
+    rate = float(profile.get("commission_pct") or 0.0) + float(profile.get("fx_cost_pct") or 0.0)
+    one_way = fixed + rate * amount_eur
+    return {"amount_eur": amount_eur, "buy_eur": one_way, "round_trip_eur": 2 * one_way,
+            "round_trip_share": 2 * one_way / amount_eur}
+
+
+def concentration(symbol: str, sector: str | None, amount_eur: float | None, exposure: dict | None,
+                  caps: dict | None) -> dict | None:
+    """Issuer and sector weights now and after adding the planned amount, against the policy caps."""
+    if amount_eur is None or exposure is None or caps is None:
+        return None
+    total = float(exposure.get("total_eur") or 0.0)
+    issuer_now = sum(row["weight"] * total for row in exposure.get("issuers", []) if symbol in row.get("symbols", []))
+    sector_now = sum(row["weight"] * total for row in exposure.get("sectors", []) if sector and row["name"] == sector)
+    after = total + amount_eur
+    issuer_after, sector_after = (issuer_now + amount_eur) / after, (sector_now + amount_eur) / after
+    return {"portfolio_eur": total, "issuer_weight_now": issuer_now / total if total else 0.0,
+            "issuer_weight_after": issuer_after, "issuer_cap": caps["max_issuer_weight"],
+            "issuer_exceeds": issuer_after > caps["max_issuer_weight"] + 1e-9, "sector": sector,
+            "sector_weight_now": sector_now / total if total else 0.0,
+            "sector_weight_after": sector_after if sector else None, "sector_cap": caps["max_sector_weight"],
+            "sector_exceeds": bool(sector) and sector_after > caps["max_sector_weight"] + 1e-9}
+
+
+def passive_comparison(content: dict, price: float | None, published: date, index_annual: float | None,
+                       costs: dict | None) -> dict | None:
+    """The base scenario, annualised to the review date and net of round-trip costs, beside the index's past
+    return in euros with the investor's contributions. Not a forecast of either."""
+    base = content["scenarios"]["base"]["price"]
+    if price is None or base is None or content["review_due"] is None:
+        return None
+    days = (date.fromisoformat(content["review_due"]) - published).days
+    if days <= 0:
+        return None
+    gross = base / price
+    net = gross * (1 - (costs or {}).get("round_trip_share", 0.0))
+    annual = net ** (365 / days) - 1 if net > 0 else -1.0
+    return {"horizon_days": days, "base_move": gross - 1, "base_annualised_net": annual,
+            "costs_included": costs is not None, "index_annualised_past": index_annual,
+            "margin_over_index": annual - index_annual if index_annual is not None else None,
+            "note": "El índice es su rentabilidad pasada con tus aportaciones; ninguna cifra es una previsión."}

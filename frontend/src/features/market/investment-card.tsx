@@ -48,6 +48,7 @@ type Draft = Required<
     | 'invalidation'
     | 'confidence'
     | 'review_due'
+    | 'position_eur'
     | 'notes'
   >
 >;
@@ -69,6 +70,7 @@ function draftOf(content?: CardContent): Draft {
     invalidation: content?.invalidation?.length ? content.invalidation : [EMPTY_CONDITION],
     confidence: content?.confidence ?? null,
     review_due: content?.review_due ?? null,
+    position_eur: content?.position_eur ?? null,
     notes: content?.notes ?? '',
   };
 }
@@ -299,6 +301,15 @@ function CardForm({
             <option value="alta">Alta</option>
           </NativeSelect>
         </Field>
+        <Field label="Importe previsto de la posición (€)">
+          <Input
+            type="number"
+            min="1"
+            step="any"
+            value={draft.position_eur ?? ''}
+            onChange={(event) => set({ position_eur: number(event.target.value) })}
+          />
+        </Field>
         <Field label="Fecha de revisión">
           <Input
             type="date"
@@ -326,9 +337,78 @@ function clean(draft: Draft): CardContent {
   };
 }
 
+type Decision = {
+  position_eur?: number | null;
+  costs?: { buy_eur: number; round_trip_eur: number; round_trip_share: number } | null;
+  concentration?: {
+    issuer_weight_after: number;
+    issuer_cap: number;
+    issuer_exceeds: boolean;
+    sector: string | null;
+    sector_weight_after: number | null;
+    sector_cap: number;
+    sector_exceeds: boolean;
+  } | null;
+  passive?: {
+    horizon_days: number;
+    base_annualised_net: number;
+    index_annualised_past: number | null;
+    margin_over_index: number | null;
+    costs_included: boolean;
+    note: string;
+  } | null;
+};
+
+const euros = (value: number | null | undefined) =>
+  value == null ? 'sin dato' : formatNumber(value, { digits: 0 }) + ' €';
+const share = (value: number | null | undefined, digits = 1) => formatPercent(value, { digits });
+
+function DecisionContext({ decision }: { decision: Decision }) {
+  const { costs, concentration: mix, passive } = decision;
+  return (
+    <div className="grid gap-2 rounded-lg border p-3 text-xs sm:grid-cols-3">
+      <p>
+        <span className="block text-muted-foreground">Costes de la posición</span>
+        {costs
+          ? `${euros(costs.buy_eur)} al comprar · ${euros(costs.round_trip_eur)} ida y vuelta ` +
+            `(${share(costs.round_trip_share, 2)} de ${euros(decision.position_eur)})`
+          : 'Sin perfil del inversor: costes no calculados'}
+      </p>
+      <p>
+        <span className="block text-muted-foreground">Riesgo de cartera tras añadirla</span>
+        {mix
+          ? `Emisor ${share(mix.issuer_weight_after)} (límite ${share(mix.issuer_cap, 0)})` +
+            (mix.issuer_exceeds ? ' · lo supera' : '') +
+            (mix.sector
+              ? ` · ${mix.sector} ${share(mix.sector_weight_after)} (límite ${share(mix.sector_cap, 0)})` +
+                (mix.sector_exceeds ? ' · lo supera' : '')
+              : ' · sector desconocido')
+          : 'Sin datos de cartera'}
+      </p>
+      <p>
+        <span className="block text-muted-foreground">Frente a la alternativa pasiva</span>
+        {passive
+          ? `Base ${formatPercent(passive.base_annualised_net, { digits: 1, signed: true })} anual neto` +
+            (passive.costs_included ? '' : ' (sin costes)') +
+            ` en ${passive.horizon_days} días · S&P 500 en € ` +
+            (passive.index_annualised_past == null
+              ? 'sin dato'
+              : share(passive.index_annualised_past) + ' anual pasado') +
+            (passive.margin_over_index == null
+              ? ''
+              : ' · margen ' +
+                formatPercent(passive.margin_over_index, { digits: 1, signed: true }))
+          : 'Sin precio o fecha de revisión'}
+      </p>
+      {passive && <p className="text-muted-foreground sm:col-span-3">{passive.note}</p>}
+    </div>
+  );
+}
+
 function Published({ card }: { card: InvestmentCard }) {
   const content = draftOf(card.content);
   const snapshot = (card.snapshot ?? {}) as {
+    decision?: Decision;
     price?: { value?: number | null; date?: string | null };
     evidence?: { data_coverage?: number | null; statistical_evidence?: string | null } | null;
     absent?: string[];
@@ -371,19 +451,20 @@ function Published({ card }: { card: InvestmentCard }) {
       {content.sensitivity && <p>Sensibilidad: {content.sensitivity}</p>}
       <p>
         Catalizadores:{' '}
-        {content.catalysts
+        {(card.content.catalysts ?? [])
           .map((item) => `${item.description} (${dateLabel(item.horizon ?? '')})`)
           .join(' · ')}
       </p>
       <p>Riesgos: {content.risks.join(' · ')}</p>
       <ul className="list-disc pl-5">
-        {content.invalidation.map((item, index) => (
+        {(card.content.invalidation ?? []).map((item, index) => (
           <li key={index}>
             {item.description}: {item.metric} ({item.source}) {item.operator} {item.threshold}{' '}
             durante {item.persistence} periodos · revisar el {dateLabel(item.review_by ?? '')}
           </li>
         ))}
       </ul>
+      {snapshot.decision && <DecisionContext decision={snapshot.decision} />}
       <div className="grid gap-2 rounded-lg border p-3 text-xs sm:grid-cols-3">
         <p>
           <span className="block text-muted-foreground">Cobertura del dato</span>

@@ -1509,6 +1509,12 @@ export type CardContent = {
      */
     notes?: string;
     /**
+     * Position Eur
+     *
+     * Importe previsto de la posición, en euros
+     */
+    position_eur?: number | null;
+    /**
      * Review Due
      */
     review_due?: string | null;

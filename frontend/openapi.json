@@ -2957,6 +2957,18 @@
             "title": "Notes",
             "type": "string"
           },
+          "position_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Importe previsto de la posición, en euros",
+            "title": "Position Eur"
+          },
           "review_due": {
             "anyOf": [
               {

@@ -20,7 +20,7 @@ def complete(**changes) -> dict:
         "risks": ["Pérdida del contrato principal"],
         "invalidation": [{"description": "El margen cae", "metric": "margen operativo", "source": "10-K",
                           "operator": "<", "threshold": 0.12, "persistence": 2, "review_by": "2027-03-31"}],
-        "confidence": "media", "review_due": "2027-05-01",
+        "confidence": "media", "review_due": "2027-05-01", "position_eur": 2000,
     }
     return raw | changes
 
@@ -81,3 +81,26 @@ def test_scenario_moves_are_relative_to_the_captured_price():
     assert moves == {"bear": pytest.approx(-0.2), "base": pytest.approx(0.1), "bull": pytest.approx(0.4)}
     assert card.scenario_returns(card.normalize(complete()), None) == {"bear": None, "base": None, "bull": None}
     assert "probabilidad de beneficio" in card.NOT_A_PROBABILITY
+
+
+def test_costs_concentration_and_the_passive_comparison_of_the_planned_position():
+    profile = {"commission_fixed_eur": 1.0, "commission_pct": 0.0, "fx_cost_pct": 0.006}
+    costs = card.position_costs(2000, profile)
+    assert costs == {"amount_eur": 2000, "buy_eur": pytest.approx(13.0), "round_trip_eur": pytest.approx(26.0),
+                     "round_trip_share": pytest.approx(0.013)}
+    assert card.position_costs(None, profile) is None and card.position_costs(2000, None) is None
+    exposure = {"total_eur": 18000, "issuers": [{"symbols": ["ACME"], "weight": 1000 / 18000}],
+                "sectors": [{"name": "Industrials", "weight": 5000 / 18000}]}
+    caps = {"max_issuer_weight": 0.10, "max_sector_weight": 0.30}
+    mix = card.concentration("ACME", "Industrials", 2000, exposure, caps)
+    assert mix["issuer_weight_after"] == pytest.approx(0.15) and mix["issuer_exceeds"]
+    assert mix["sector_weight_after"] == pytest.approx(0.35) and mix["sector_exceeds"]
+    assert card.concentration("ACME", None, 2000, None, caps) is None
+    content = card.normalize(complete())
+    passive = card.passive_comparison(content, 100.0, date(2026, 11, 1), 0.12, costs)
+    assert passive["horizon_days"] == 181 and passive["base_move"] == pytest.approx(0.10)
+    net = (1.10 * (1 - 0.013)) ** (365 / 181) - 1
+    assert passive["base_annualised_net"] == pytest.approx(net) and passive["margin_over_index"] == pytest.approx(net - 0.12)
+    assert "no es una previsión" in passive["note"].replace("ninguna cifra es una previsión", "no es una previsión")
+    assert card.passive_comparison(content, None, date(2026, 11, 1), 0.12, costs) is None
+    assert card.missing(card.normalize(complete(position_eur=None))) == ["el importe previsto de la posición"]

@@ -241,7 +241,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.investment_cards = InvestmentCards(
         SqliteInvestmentCards(settings.data_dir), ranking=lambda: repository.ranking(dict(policy.weights), today()).table,
         checklist=app.state.company_checklist.company, evidence=app.state.evidence.company, identity=card_issuer,
-        model_id=policy.model_id, today=today)
+        model_id=policy.model_id, today=today,
+        # Created further down; read when a card is published, never at start-up.
+        investor=lambda: app.state.investor.profile(), passive=lambda: app.state.investor.benchmark(),
+        risk=lambda: app.state.portfolio_risk.panel(), sector_multiples=app.state.company_checklist.sector_multiples)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)

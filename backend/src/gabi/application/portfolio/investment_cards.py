@@ -20,6 +20,8 @@ import pandas as pd
 from gabi.application.errors import QueryError
 from gabi.domain.portfolio import investment_card as rules
 
+Absent = list[str]  # Named before the class, whose ``list`` method would shadow the builtin.
+
 
 class CardStore(Protocol):
     def list(self, symbol: str | None, limit: int) -> list[dict]: ...
@@ -53,9 +55,14 @@ def digest(snapshot: dict) -> str:
 class InvestmentCards:
     def __init__(self, store: CardStore, *, ranking: Callable[[], pd.DataFrame], checklist: Callable[[str], dict],
                  evidence: Callable[[str], dict], identity: Callable[[str], dict], model_id: str | None,
-                 today: Callable[[], date] = date.today):
+                 today: Callable[[], date] = date.today, investor: Callable[[], dict | None] = lambda: None,
+                 passive: Callable[[], dict] | None = None, risk: Callable[[], dict] | None = None,
+                 sector_multiples: Callable[[str], dict] | None = None):
+        """``investor()`` is the saved profile revision; ``passive()`` the S&P 500 in EUR with its contributions
+        (#244); ``risk()`` the portfolio's exposure panel (#248); each absence is named in the snapshot."""
         self.store, self.ranking, self.checklist, self.evidence = store, ranking, checklist, evidence
         self.identity, self.model_id, self.today = identity, model_id, today
+        self.investor, self.passive, self.risk, self.sector_multiples = investor, passive, risk, sector_multiples
 
     def present(self, row: dict) -> dict:
         content = row["content"]
@@ -101,7 +108,7 @@ class InvestmentCards:
         if state == "descartada":
             self.store.discard(card_id, reason.strip()[:rules.MAX_TEXT], now)
         elif state == "publicada":
-            snapshot = self.capture(row["symbol"])
+            snapshot = self.capture(row["symbol"], row["content"])
             self.store.publish(card_id, row["content"], snapshot, digest(snapshot), now)
         else:
             self.store.update(card_id, row["content"], state, now)
@@ -114,7 +121,7 @@ class InvestmentCards:
         except rules.CardError as exc:
             raise QueryError("invalid_card", str(exc), 422) from exc
 
-    def capture(self, symbol: str) -> dict:
+    def capture(self, symbol: str, content: dict | None = None) -> dict:
         """The inputs at publication, from the local cache; each absence is named."""
         absent: list[str] = []
         snapshot: dict = {"captured_at": self.today().isoformat(), "model_id": self.model_id,
@@ -131,8 +138,11 @@ class InvestmentCards:
             table = self.ranking()
         except QueryError:
             table = None
+        sector = None
         if table is not None and symbol in table.index:
             source = table.attrs.get("sources", {}).get(symbol, {})
+            sector = table.at[symbol, "sector"] if "sector" in table else None
+            sector = sector if isinstance(sector, str) and sector else None
             price = {"value": _finite(table.at[symbol, "price"]) if "price" in table else None,
                      "date": source.get("price_date"),
                      "score": _finite(table.at[symbol, "composite_score"]) if "composite_score" in table else None}
@@ -168,5 +178,47 @@ class InvestmentCards:
             "confidence_level": evidence.get("confidence_level"), "rules_version": evidence.get("rules_version")}
         if not evidence:
             absent.append("evidencia del modelo")
+        snapshot["sector_comparables"] = self._optional(self.sector_multiples, symbol)
+        if snapshot["sector_comparables"] is None:
+            absent.append("comparables sectoriales")
+        if content is not None:
+            value = price["value"]
+            snapshot["decision"] = self._decision(symbol, sector, content,
+                                                  value if isinstance(value, float) else None, absent)
         snapshot["absent"] = absent
         return snapshot
+
+    @staticmethod
+    def _optional(port: Callable | None, *args) -> dict | None:
+        if port is None:
+            return None
+        try:
+            return port(*args)
+        except QueryError:
+            return None
+
+    def _decision(self, symbol: str, sector: str | None, content: dict, price: float | None,
+                  absent: Absent) -> dict:
+        """Costs, concentration and the passive alternative of the planned position; absences are named."""
+        saved = self.investor()
+        profile = (saved or {}).get("profile")
+        if not profile:
+            absent.append("perfil del inversor (costes y benchmark)")
+        costs = rules.position_costs(content.get("position_eur"), profile)
+        panel = self._optional(self.risk)
+        if panel is None:
+            absent.append("riesgo de cartera")
+        concentration = rules.concentration(symbol, sector, content.get("position_eur"),
+                                            (panel or {}).get("exposure"), (panel or {}).get("policy"))
+        passive = self._optional(self.passive)
+        performance = (passive or {}).get("performance") or {}
+        index_annual = _finite(performance.get("twr_annualised"))
+        if index_annual is None:
+            absent.append("rentabilidad del S&P 500 en EUR")
+        return {"position_eur": content.get("position_eur"), "costs": costs, "concentration": concentration,
+                "passive": rules.passive_comparison(content, price, self.today(), index_annual, costs),
+                "passive_source": None if passive is None else {
+                    "start": passive.get("start"), "as_of": passive.get("as_of"),
+                    "profile_revision": passive.get("profile_revision"), "source": passive.get("source")},
+                "profile_revision": (saved or {}).get("revision"),
+                "policy_revision": (panel or {}).get("policy_revision")}
