@@ -1,6 +1,6 @@
 # Puerta de datos de CBOP-v1 (#252)
 
-**Estado:** con la enmienda 1, la puerta pasa en 14 de 15 fechas. Falla en 2011 por poco (69,3 %), así que la regla da `close_unfeasible`. La decisión sobre 2011 está pendiente del propietario. No se ha leído ningún rendimiento.
+**Estado: CERRADA POR INVIABLE (2026-11-01).** Con la enmienda 1, la puerta pasa en 14 de 15 fechas, pero falla en 2011 (69,3 % frente al 70 %). El propietario decidió aplicar la regla acordada sin moverla otra vez. No se ha leído ningún rendimiento, y CBOP-v1 no entra en el ledger como configuración evaluada.
 No calcula ni lee rendimientos.
 
 Es la fase 1 del preregistro propuesto en
@@ -188,6 +188,26 @@ resultado anterior se conserva en `cbop-v1/cobertura-definicion-original.json`.
 de `FY` (Costco, por ejemplo, en el ejercicio 2019), y la lectura anual los
 ignora. Aceptarlos no cambia la cobertura de 2011 ni la de 2012: se comprobó en
 un borrador, sin modificar el código. Queda anotado como limitación conocida.
+
+## Decisión final (2026-11-01)
+
+Se aplica la regla tal como se acordó antes de la ejecución: **`close_unfeasible`**.
+
+- **Alternativas descartadas:**
+  - Excluir 2011, la entrada en XBRL, y empezar en 2012.
+  - Una segunda enmienda de etiquetas de ingresos.
+
+  Las dos suponían mover el listón por segunda vez después de ver la cobertura.
+- **Consecuencias:**
+  - No hay evaluación exploratoria ni preregistro definitivo de CBOP-v1.
+  - El intento queda anotado en #60 y #252 como cerrado en la puerta de datos.
+  - La siguiente candidata, según #268, es la reserva: emisión neta de acciones,
+    con su propia puerta sobre splits y clases de acciones.
+- **Lo reutilizable sin efecto sobre la decisión:**
+  - el código de la puerta;
+  - el almacén `data/cbop/facts.db`;
+  - la lección de que una fórmula pensada para Compustat necesita una
+    definición de datos validada antes de fijar umbrales.
 
 ## Tiempo
 
