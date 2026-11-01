@@ -292,6 +292,48 @@ def prospective_plan(settings: Settings, args: argparse.Namespace) -> None:
     print(json.dumps(json_value(payload), ensure_ascii=False, indent=2))
 
 
+def cbop_gate(settings: Settings, args: argparse.Namespace) -> None:
+    """CBOP-v1 data gate (#252): explicit SEC download into its own store, then coverage without returns."""
+    from datetime import UTC, datetime
+
+    from gabi.application.research import cbop_coverage
+    from gabi.domain.research.prospective_plan import json_value
+    from gabi.infrastructure.legacy.cbop_gate import july_signals, membership
+    from gabi.infrastructure.storage.cbop_facts import SqliteCbopFacts, identity_intervals
+
+    store = SqliteCbopFacts(settings.data_dir / "cbop" / "facts.db")
+    members = cbop_coverage.issuers(july_signals(args.first_year, args.last_year), membership,
+                                    identity_intervals(settings.data_dir / "gabi.db"))
+    if args.download:
+        from gabi.infrastructure.legacy.insiders import sec_user_agent
+        from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+        from gabi.infrastructure.providers.source_retry import retry
+
+        class Calls:
+            source, calls = "sec", 0
+
+        sec, calls = SecXbrl(sec_user_agent()), Calls()
+        ciks = {cik for day in members.values() for cik in day.values() if cik}
+        result = cbop_coverage.download(
+            ciks, done=set(store.downloaded()), save=store.save,
+            companyfacts=lambda cik: retry(lambda: sec.companyfacts(cik), calls),
+            submissions=lambda cik: retry(lambda: sec.submissions(cik), calls),
+            now=lambda: datetime.now(UTC).isoformat(timespec="seconds"),
+            progress=lambda done, total: print(f"{done}/{total}", file=sys.stderr) if done % 50 == 0 else None)
+        print(json.dumps({**result, "issuers": len(ciks), "requests": calls.calls}, ensure_ascii=False))
+        return
+    report = cbop_coverage.audit(members, facts=store.facts, sic=store.sic)
+    destination = args.output or settings.data_dir.parent / "docs" / "research" / "cbop-v1"
+    if (destination / "cobertura.json").exists():
+        raise SystemExit(f"Ya existe un resultado en {destination}; usar --output con una carpeta nueva.")
+    destination.mkdir(parents=True, exist_ok=True)
+    report["downloads"] = store.downloaded_summary()
+    text = json.dumps(json_value(report), ensure_ascii=False, indent=2)
+    (destination / "cobertura.json").write_text(text + chr(10), encoding="utf-8")
+    print(json.dumps({"decision": report["decision"], "failed_signals": report["failed_signals"]},
+                     ensure_ascii=False))
+
+
 def frozen(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure import frozen_research
 
@@ -495,6 +537,14 @@ def main(argv: list[str]) -> None:
     actions.add_argument("--verify", action="store_true", help="Solo integridad, cobertura y continuidad; sin retornos")
     command.add_argument("--directory", type=Path, help="Por defecto docs/ensemble-prospective")
     command.set_defaults(run=ensemble_record)
+    command = commands.add_parser("cbop-gate", help="Puerta de datos de CBOP-v1 (#252): descarga SEC explícita o cobertura sin retornos")
+    actions = command.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--download", action="store_true", help="Descarga companyfacts/submissions de los miembros históricos (reanudable)")
+    actions.add_argument("--audit", action="store_true", help="Cobertura por fecha de señal; nunca sobrescribe un resultado")
+    command.add_argument("--first-year", type=int, default=2011)
+    command.add_argument("--last-year", type=int, default=2025)
+    command.add_argument("--output", type=Path, help="Por defecto docs/research/cbop-v1")
+    command.set_defaults(run=cbop_gate)
     command = commands.add_parser("frozen", help="Motores congelados intactos y mypy sin diagnósticos nuevos (CI)")
     actions = command.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check-frozen", action="store_true")

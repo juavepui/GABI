@@ -1,6 +1,6 @@
 # Puerta de datos de CBOP-v1 (#252)
 
-**Estado:** código de la fase 1 preparado, sin ejecutar con datos reales.
+**Estado:** fase 1 en ejecución con datos reales (ver el resultado al final).
 No calcula ni lee rendimientos.
 
 Es la fase 1 del preregistro propuesto en
@@ -56,25 +56,40 @@ siguiente sincronización vuelve a procesar una vez el `companyfacts` de cada
 emisor. Ninguna lectura existente usa estas etiquetas, así que V1, la checklist y
 las métricas V2 no cambian.
 
-## Pendiente antes de la ejecución real
+## Descarga y ejecución
 
-1. **Sincronización ampliada.** La sincronización normal cubre el universo
-   operativo. La puerta necesita también a los miembros históricos de 2011–2025
-   que ya no cotizan; si no, su ausencia sesgaría la cobertura (supervivencia).
-   - Hace falta un adaptador que descargue el `companyfacts` de los CIK de la
-     identidad histórica acreditada (2010–2015 y 2016–2025).
-   - Es una descarga explícita a la SEC, de unas 1.000 peticiones a 10 por
-     segundo como máximo, que lanza el propietario.
-2. **Adaptador de lectura.**
-   - Composición: `universe.get_sp500_constituents_asof`.
-   - SIC: aproximación GICS de `sec_metrics_v2`, en la que Financials y Real
-     Estate se tratan como financieras, declarada.
-   - Hechos: los del emisor, por identidad, presentados antes de la señal.
-   - Se ejecuta como comando de investigación o como job F4, y escribe el
-     resultado en esta carpeta.
-3. **Preregistro definitivo** con el hash del commit. Solo si la puerta pasa en
-   todas las fechas, y antes de cualquier cálculo de rendimiento. Se registra en el
-   ledger de #60.
+```powershell
+uv run --project backend python -m gabi_cli research cbop-gate --download   # explícita, reanudable
+uv run --project backend python -m gabi_cli research cbop-gate --audit      # escribe docs/research/cbop-v1/cobertura.json
+```
+
+- **Emisores.** Cada miembro en cada fecha de señal se asigna a su CIK con los
+  intervalos de identidad histórica acreditada (`historical_identity_intervals`,
+  2010–2015 y 2016–2025), en los estados `confirmed_by_multiple_evidence`,
+  `confirmed_historical_ticker` y `corroborated_candidate`.
+  - Un miembro sin identidad aceptada (ambigua, no resuelta o sin intervalo)
+    sigue siendo elegible y cuenta como ausente (`identity_unresolved`). Así,
+    las empresas que dejaron el índice pesan igual que las supervivientes.
+  - No se usa el CIK por ticker actual de la sincronización operativa: un
+    ticker reciclado atribuiría los hechos a otro emisor.
+- **Descarga.** Se descarga el `companyfacts` y el `submissions` de cada CIK.
+  - Se guardan en un almacén aparte, `data/cbop/facts.db`. La sincronización
+    operativa, indexada por los tickers de hoy, no recibe símbolos deslistados.
+  - Solo se conservan las etiquetas de CbOP, el SIC declarado y la huella
+    SHA-256 de cada respuesta.
+  - Si la SEC no tiene XBRL de un CIK, queda registrado como `absent`.
+  - Se respeta el ritmo de la SEC (como máximo unas 6–7 peticiones por segundo,
+    con reintentos acotados), y la descarga se reanuda donde se quedó.
+- **SIC.** Es el que declara hoy el `submissions` del emisor. Un cambio de SIC
+  a lo largo del tiempo no se reconstruye, y se declara como aproximación.
+- **Resultado.**
+  - `cobertura.json` incluye la cobertura por fecha de señal, las causas de
+    ausencia, ejemplos y el resumen de la descarga, con un manifiesto SHA-256
+    de las respuestas.
+  - El comando nunca sobrescribe un resultado.
+- **Después de la puerta.** El preregistro definitivo, con el hash del commit,
+  solo se redacta si la puerta pasa en todas las fechas, y antes de cualquier
+  cálculo de rendimiento. Se registra en el ledger de #60.
 
 ## Tiempo
 
