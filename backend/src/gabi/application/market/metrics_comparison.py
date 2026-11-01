@@ -16,7 +16,7 @@ from gabi.domain.market import sec_metrics_v2 as v2
 VERSION = "metrics-comparison-v1"
 TOP_N = 20
 # GICS proxy for the SEC SIC codes V2 treats as financial: banks, insurers and REITs.
-FINANCIAL_SECTORS = {"Financials": 6000, "Real Estate": 6798}
+FINANCIAL_SECTORS = v2.FINANCIAL_GICS_SECTORS
 
 
 def _metric(metric: v2.Metric) -> dict:

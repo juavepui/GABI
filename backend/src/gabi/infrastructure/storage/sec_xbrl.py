@@ -29,9 +29,19 @@ CREATE TABLE IF NOT EXISTS edgar_metrics (
     latest_10k_date TEXT, latest_10k_url TEXT, latest_10q_date TEXT, latest_10q_url TEXT
 );
 """
+# SEC metrics V2 (#245): the latest annual snapshot of each issuer, computed from its stored facts.
+METRICS_V2_SCHEMA = """
+CREATE TABLE IF NOT EXISTS sec_metrics_v2 (
+    symbol TEXT PRIMARY KEY, cik TEXT, computed_at TEXT NOT NULL, metrics_version TEXT NOT NULL, anchor TEXT,
+    roic REAL, roic_state TEXT NOT NULL, roic_reason TEXT, roic_convention TEXT, roic_inputs TEXT NOT NULL,
+    total_debt REAL, total_debt_state TEXT NOT NULL, cash REAL, cash_state TEXT NOT NULL
+);
+"""
 SCHEMA = FACTS_SCHEMA + METRICS_SCHEMA
 METRICS = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url",
            "latest_10q_date", "latest_10q_url", "fetched_at"]
+METRICS_V2 = ["symbol", "cik", "computed_at", "metrics_version", "anchor", "roic", "roic_state", "roic_reason",
+              "roic_convention", "roic_inputs", "total_debt", "total_debt_state", "cash", "cash_state"]
 FACT_COLUMNS = ["tag", "unit", "start_date", "end_date", "val", "form", "fp", "fy", "filed_date", "accn"]
 
 
@@ -160,3 +170,30 @@ class SqliteXbrl:
                        "VALUES (?,?,?,?,?,?,?,?,?,?)",
                        (symbol, cik, self.now().isoformat(), *(metrics.get(k) for k in METRICS[:-1])))
             db.commit()
+
+    def save_metrics_v2(self, symbol: str, cik: str | None, row: dict) -> None:
+        """One issuer's SEC metrics V2 (#245) in their own table; V1 and the facts are not touched."""
+        values = {**{column: row.get(column) for column in METRICS_V2[3:]},
+                  "roic_inputs": json.dumps(row.get("roic_inputs") or [], sort_keys=True, allow_nan=False)}
+        with self._write(METRICS_V2_SCHEMA) as db:
+            db.execute(f"INSERT OR REPLACE INTO sec_metrics_v2 ({','.join(METRICS_V2)}) "
+                       f"VALUES ({','.join('?' * len(METRICS_V2))})",
+                       (symbol, cik, self.now().isoformat(), *(values[column] for column in METRICS_V2[3:])))
+            db.commit()
+
+    def metrics_v2_state(self, symbols: list[str]) -> dict[str, tuple[str | None, str | None]]:
+        """Stored CIK and V2 version of each symbol with V1 metrics: what a V2 fill needs, in one query."""
+        if not symbols:
+            return {}
+        with self._read() as db:
+            if db is None:
+                return {}
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")}
+            if "edgar_metrics" not in tables:
+                return {}
+            version = "v.metrics_version" if "sec_metrics_v2" in tables else "NULL"
+            join = " LEFT JOIN sec_metrics_v2 v USING(symbol)" if "sec_metrics_v2" in tables else ""
+            placeholders = ",".join("?" * len(symbols))
+            rows = db.execute(f"SELECT m.symbol, m.cik, {version} FROM edgar_metrics m{join} "
+                              f"WHERE m.symbol IN ({placeholders})", tuple(symbols)).fetchall()
+        return {symbol: (cik, stored) for symbol, cik, stored in rows}

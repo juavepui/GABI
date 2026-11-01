@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 import pandas as pd
 
 from gabi import config, identity
-from gabi.application.market import cached_data
+from gabi.application.market import cached_data, stored_metrics_v2
 from gabi.application.market import market_downloads as downloads
 from gabi.application.market.price_sync import run as run_price_sync
 from gabi.domain.market import sync_events as sync_rules
@@ -24,6 +24,7 @@ from gabi.domain.market.source_errors import classify
 from gabi.infrastructure.providers import source_retry, yahoo
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites, statement_json
+from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
 
 RETRYABLE_CATEGORIES = set(RETRYABLE)
@@ -253,9 +254,12 @@ def refresh_data(symbols: list, force: bool = False, progress_cb=None, edgar_pro
     from gabi import edgar
 
     result = ensure_universe_data(symbols, force=force, progress_cb=progress_cb, full_refresh=full_refresh)
-    edgar_result = (sec_sync or edgar.ensure_edgar_data)(symbols if sec_symbols is None else sec_symbols, force=force, progress_cb=edgar_progress_cb or progress_cb,
+    issuers = symbols if sec_symbols is None else sec_symbols
+    edgar_result = (sec_sync or edgar.ensure_edgar_data)(issuers, force=force, progress_cb=edgar_progress_cb or progress_cb,
                                                          full_refresh=full_refresh)
     for sym, reason in edgar_result["failed"].items():
         result["failed"].setdefault(sym, {})["edgar"] = reason
     result["edgar_refreshed"] = edgar_result["edgar_refreshed"]
+    # SEC metrics V2 (#245): rows missing or of another version, from local facts only.
+    result["metrics_v2"] = stored_metrics_v2.fill(list(issuers), store=SqliteXbrl(config.DB_PATH, lambda: datetime.now(UTC)))
     return result

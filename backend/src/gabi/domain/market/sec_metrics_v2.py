@@ -9,6 +9,7 @@ was not reported is ``absent``, never zero; only an explicit ``0`` is
 
 from dataclasses import dataclass
 from datetime import date
+from types import MappingProxyType
 
 VERSION = "sec-metrics-v2"
 ALIGNMENT_TOLERANCE_DAYS = 45
@@ -31,6 +32,8 @@ SHORT_TERM_INVESTMENT_TAGS = ("ShortTermInvestments", "MarketableSecuritiesCurre
 
 # Banks and credit institutions, insurers and REITs: debt is operating, not financing.
 FINANCIAL_SIC_RANGES = ((6000, 6199), (6300, 6411), (6798, 6798))
+# GICS proxy for those SIC codes when only the universe sector is known (declared in reports).
+FINANCIAL_GICS_SECTORS = MappingProxyType({"Financials": 6000, "Real Estate": 6798})
 
 
 @dataclass(frozen=True)
@@ -231,3 +234,36 @@ def latest_annual_end(facts: dict) -> str | None:
     """The last fiscal year end with an annual 10-K balance sheet: the anchor of the metrics."""
     ends = series(facts, EQUITY_TAGS, duration=False)
     return max(ends) if ends else None
+
+
+def _fact_record(fact: Fact) -> dict:
+    return {"state": fact.state, "value": fact.value, "tag": fact.tag, "unit": fact.unit, "start": fact.start,
+            "end": fact.end, "accession": fact.accession, "filed": fact.filed}
+
+
+def snapshot(facts: dict) -> dict:
+    """The stored V2 row of an issuer at its latest annual report, with the sector rule left to the reader.
+
+    ROIC is computed as for a non-financial issuer (``sic=None``): the stored facts
+    carry no SIC, so whoever reads the row applies :func:`stored_roic`. Debt and
+    cash keep their state so an EV can be built later with a market cap."""
+    anchor = latest_annual_end(facts)
+    if anchor is None:
+        metric, debt, cash = Metric(None, "absent", "no_annual_report", "nopat/average_invested_capital"), \
+            Fact("absent"), Fact("absent")
+    else:
+        metric = roic(facts, anchor, sic=None)
+        debt, _ = total_debt(facts, anchor)
+        cash, _ = cash_and_short_term_investments(facts, anchor)
+    return {"metrics_version": VERSION, "anchor": anchor, "roic": metric.value, "roic_state": metric.state,
+            "roic_reason": metric.reason, "roic_convention": metric.convention,
+            "roic_inputs": [_fact_record(fact) for fact in metric.inputs],
+            "total_debt": debt.value, "total_debt_state": debt.state,
+            "cash": cash.value, "cash_state": cash.state}
+
+
+def stored_roic(row: dict | None, *, sector: str | None) -> float | None:
+    """The ROIC a ranking may use from a stored row: computed, of this version and not a financial issuer."""
+    if (sector or "") in FINANCIAL_GICS_SECTORS or not row or row.get("metrics_version") != VERSION or row.get("roic_state") != "computed":
+        return None
+    return row.get("roic")

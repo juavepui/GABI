@@ -79,7 +79,35 @@ el informe. La sincronización SEC guarda también `CommercialPaper`, `InterestP
 e `InterestPaidNet`; las métricas V1 no los leen. Una corrección de definición no
 demuestra alfa: la calibración de selección es un estudio distinto.
 
+## Persistencia y versión de métricas del modelo
+
+La tabla `sec_metrics_v2` guarda una fila por emisor con la versión de métricas, el
+cierre anual de referencia, el ROIC V2 con su estado, motivo, convención e inputs
+(etiqueta, periodo, accession y presentación), y la deuda financiera y la caja con su
+estado, para construir el EV con una capitalización. La V1 (`edgar_metrics`) no cambia
+y la tabla nueva no entra en la huella de datos.
+
+- **Una sola ruta de cálculo**: la fila se calcula siempre desde los hechos guardados
+  del emisor (`application/market/stored_metrics_v2.py`), con la misma reconstrucción
+  que la comparación. Un test comprueba que coincide con el cálculo sobre el
+  companyfacts descargado.
+- **Cuándo se escribe**: la sincronización SEC la recalcula cuando cambian los hechos
+  de un emisor. Al terminar cada actualización de datos, `fill` escribe las filas que
+  faltan o son de otra versión, sin descargar; cuando todas están al día, solo hace una
+  consulta.
+- **Sector**: la fila se calcula como no financiera; quien la lee aplica la regla de
+  sector con el proxy GICS (Financials y Real Estate), igual que la comparación.
+
+`ModelVersion.metrics_version` declara con qué métricas SEC puntúa una versión:
+`sec-metrics-v1` (por defecto, y la única admitida para la hipótesis sellada
+GABI-MF-v1) o `sec-metrics-v2`. Con la V2, el ranking activo toma el ROIC de
+`sec_metrics_v2`. Una fila ausente, de otra versión, no calculada o de un emisor
+financiero deja el ROIC ausente, nunca el valor V1. El crecimiento y los enlaces siguen
+saliendo de `edgar_metrics`. La comparación V1/V2 usa siempre el ranking V1 como base.
+
 ## Pendiente
 
-Activación mediante una versión nueva del modelo que use estas métricas y fije las
-`Assumptions` de la valoración, sin cambiar los caminos de los estudios activos.
+Activación: declarar en `infrastructure/model_versions.py` una versión nueva con
+`metrics_version="sec-metrics-v2"` y las `Assumptions` de la valoración, y hacerla
+activa. Es decisión del propietario a la vista de `metrics_comparison` con sus datos.
+Los caminos de los estudios activos no cambian.
