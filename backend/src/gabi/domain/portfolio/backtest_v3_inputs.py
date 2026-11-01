@@ -114,3 +114,36 @@ def _within(day: pd.Timestamp, start: date | None, end: date | None, data: pd.Da
     if data.empty or not data.index[0] < day <= data.index[-1]:
         return False
     return (start is None or day >= pd.Timestamp(start)) and (end is None or day <= pd.Timestamp(end))
+
+
+def terminal(symbol: str, bars: dict[date, Bar], sessions: list[date], event: dict | None
+             ) -> tuple[Event | None, dict | None]:
+    """The exit of a series that ends before the last session, with V2's terminal semantics.
+
+    The event falls on the first session after the last bar, before its open:
+
+    - a confirmed one-for-one succession pays the last close (V2 liquidates it at that value);
+    - a confirmed cash consideration pays it per share; a confirmed liquidation is a
+      bankruptcy with that recovery, even when it is zero;
+    - anything else pays the last close and is not strict: the result declares it.
+    """
+    traded = [day for day, bar in bars.items() if not bar.suspended]
+    if not traded:
+        return None, None
+    last_day = max(bars)
+    later = [day for day in sessions if day > last_day]
+    if not later:
+        return None, None
+    day, last_close = later[0], bars[max(traded)].close
+    status = event.get("status") if event else "series_ended_without_event"
+    record = {"symbol": symbol, "last_bar": last_day.isoformat(), "day": day.isoformat(), "status": status,
+              "strict": False, "event_type": event.get("event_type") if event else None}
+    confirmed = status == "terminal_return_confirmed"
+    cash = _number(event.get("cash_per_share")) if event else None
+    if confirmed and event and event.get("event_type") == "succession" and event.get("exchange_ratio") == 1.0:
+        return (Event("cash_merger", symbol, day, cash=last_close),
+                record | {"status": "succession_one_for_one", "strict": True, "cash": last_close})
+    if confirmed and event and cash is not None and cash >= 0:
+        kind = "bankruptcy" if event.get("event_type") == "bankruptcy_liquidation" else "cash_merger"
+        return Event(kind, symbol, day, cash=cash), record | {"strict": True, "cash": cash}
+    return Event("delisting", symbol, day, cash=last_close), record | {"cash": last_close}

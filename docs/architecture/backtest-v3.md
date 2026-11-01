@@ -52,8 +52,16 @@ cierre positivos es ausente y una sin volumen es una suspensión. Si la base de 
 observación quedó desfasada por un split posterior, el nivel nominal se desplaza
 por un factor constante, pero los rendimientos y el volumen en dólares no cambian.
 
+Una serie que termina antes de la última sesión sale con un evento explícito en la
+sesión siguiente a su última barra (`backtest_v3_inputs.terminal`), con la misma
+semántica que V2 para que la comparación sea justa: un canje 1:1 confirmado paga el
+último cierre; una contraprestación confirmada en efectivo la paga por acción, y una
+liquidación confirmada es una quiebra con esa recuperación aunque sea cero (V2 la
+trataba como último precio). Sin evento confirmado se paga el último cierre y la
+salida queda como no estricta (`V3Data.strict`). Las fusiones solo en acciones con
+sucesor también quedan como no estrictas, como en V2.
+
 ## Pendiente
 
-Eventos terminales (fusiones y exclusiones) desde la evidencia histórica de
-salidas, job explícito con señales del ranking histórico, comparación V2/V3 sobre
+Job explícito con señales del ranking histórico, comparación V2/V3 sobre
 los mismos datos y validación económica de la política de #248.

@@ -7,9 +7,10 @@ splits are read once for every series that needs them. The result is what
 ``backtest_v3.run`` takes: nominal bars, corporate events and the anomalies left
 out of them.
 
-A series that ends before the window is not completed: V3 values the position at
-its last close and reports it as stale. Terminal events (mergers, delistings)
-enter as explicit events in a later step.
+A series that ends before the last session gets its exit as an explicit event
+(``backtest_v3_inputs.terminal``), with V2's terminal semantics: the confirmed
+consideration when the archive accredits one, and otherwise the last close,
+reported as not strict. No price after the last bar is invented.
 """
 
 from collections.abc import Callable
@@ -30,6 +31,11 @@ class V3Data:
     anomalies: list[dict]
     missing: list[str]  # Tickers without any usable series in the window.
     bases: dict[str, str]
+    exits: list[dict]  # One per series ending before the last session; ``strict`` False if unconfirmed.
+
+    @property
+    def strict(self) -> bool:
+        return all(exit_["strict"] for exit_ in self.exits)
 
 
 def basis(symbol: str, frame: pd.DataFrame) -> tuple[str, str | None]:
@@ -41,12 +47,14 @@ def basis(symbol: str, frame: pd.DataFrame) -> tuple[str, str | None]:
 
 
 def load(frames: dict[str, pd.DataFrame | None], splits: Callable[[list[str]], dict[str, pd.Series]], *,
-         start: date, end: date) -> V3Data:
+         start: date, end: date, sessions: list[date] | None = None,
+         terminal_event: Callable[[str, pd.DataFrame], dict | None] = lambda symbol, frame: None) -> V3Data:
+    """``sessions`` (the backtest calendar) enables exits; ``terminal_event`` reads the accredited event."""
     usable = {symbol: frame for symbol, frame in frames.items() if frame is not None and not frame.empty}
     kinds = {symbol: basis(symbol, frame) for symbol, frame in usable.items()}
     wanted = sorted({source for kind, source in kinds.values() if kind == inputs.TODAY_SPLITS and source})
     ratios = splits(wanted) if wanted else {}
-    bars, events, anomalies, missing = {}, [], [], []
+    bars, events, anomalies, missing, exits = {}, [], [], [], []
     for symbol in sorted(frames):
         if symbol not in usable:
             missing.append(symbol)
@@ -59,4 +67,9 @@ def load(frames: dict[str, pd.DataFrame | None], splits: Callable[[list[str]], d
         bars[symbol] = series.bars
         events += series.events
         anomalies += series.anomalies
-    return V3Data(bars, events, anomalies, missing, {symbol: kind for symbol, (kind, _) in kinds.items()})
+        if sessions and series.bars and max(series.bars) < max(sessions):
+            event, record = inputs.terminal(symbol, series.bars, sessions, terminal_event(symbol, usable[symbol]))
+            if event is not None and record is not None:
+                events.append(event)
+                exits.append(record)
+    return V3Data(bars, events, anomalies, missing, {symbol: kind for symbol, (kind, _) in kinds.items()}, exits)

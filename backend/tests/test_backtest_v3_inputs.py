@@ -132,3 +132,48 @@ def test_split_ratios_come_from_the_cache_in_one_bounded_read(tmp_path):
     found = SqliteTickerPrices(path).splits_many(["AAA", "CCC", "AAA"])
     assert list(found) == ["AAA", "CCC"] and found["CCC"].empty
     assert found["AAA"].to_dict() == {pd.Timestamp("2014-06-09"): 7.0, pd.Timestamp("2020-08-31"): 4.0}
+
+
+def ended(last=4):
+    """The archive series up to its ``last`` session; the calendar continues."""
+    frame = archive_frame().iloc[:last + 1]
+    frame.attrs.update(archive_frame().attrs)
+    return frame
+
+
+def test_an_ended_series_exits_with_v2_terminal_semantics():
+    sessions = [day.date() for day in DAYS]
+    after = DAYS[5].date()
+    cases = {
+        None: ("delisting", 53.0, "series_ended_without_event", False),
+        ("cash_acquisition", "terminal_return_confirmed", 60.0, None): ("cash_merger", 60.0, "terminal_return_confirmed", True),
+        ("bankruptcy_liquidation", "terminal_return_confirmed", 0.0, None): ("bankruptcy", 0.0, "terminal_return_confirmed", True),
+        ("succession", "terminal_return_confirmed", None, 1.0): ("cash_merger", 53.0, "succession_one_for_one", True),
+        ("stock_acquisition", "terminal_return_confirmed", None, 0.5): ("delisting", 53.0, "terminal_return_confirmed", False),
+        ("merger", "terminal_return_bounded", 70.0, None): ("delisting", 53.0, "terminal_return_bounded", False),
+    }
+    for key, (kind, cash, status, strict) in cases.items():
+        event = None if key is None else dict(zip(("event_type", "status", "cash_per_share", "exchange_ratio"), key,
+                                                 strict=True))
+        data = backtest_v3_data.load({"AAA": ended()}, lambda symbols: {}, start=sessions[0], end=sessions[-1],
+                                     sessions=sessions, terminal_event=lambda symbol, frame, event=event: event)
+        exit_event = data.events[-1]
+        assert (exit_event.kind, exit_event.day, exit_event.cash) == (kind, after, cash), key
+        (record,) = data.exits
+        assert (record["status"], record["strict"], data.strict) == (status, strict, strict), key
+
+
+def test_a_series_reaching_the_last_session_has_no_exit_and_v3_settles_an_ended_one():
+    sessions = [day.date() for day in DAYS]
+    full = backtest_v3_data.load({"AAA": archive_frame()}, lambda symbols: {}, start=sessions[0], end=sessions[-1],
+                                 sessions=sessions, terminal_event=lambda symbol, frame: pytest.fail("not asked"))
+    assert full.exits == [] and full.strict
+    event = {"event_type": "cash_acquisition", "status": "terminal_return_confirmed", "cash_per_share": 60.0}
+    data = backtest_v3_data.load({"AAA": ended()}, lambda symbols: {}, start=sessions[0], end=sessions[-1],
+                                 sessions=sessions, terminal_event=lambda symbol, frame: event)
+    result = v3.run(sessions, data.bars, rebalances=[v3.Rebalance(sessions[0], {"AAA": 1.0})],
+                    costs=v3.Costs(participation=1.0, cost_reserve=0.0), initial_cash=10_000.0, events=data.events)
+    # 100 shares, 200 after the split; the 03-08 dividend falls after the exit, the cash merger pays 60 $.
+    assert result["final_shares"] == {}
+    assert result["daily"][-1]["nav"] == pytest.approx(200 * 60.0)
+    assert result["identity_error"] < 1e-9
