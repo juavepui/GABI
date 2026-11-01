@@ -25,6 +25,7 @@ import {
   HoldingsPage,
   InvestorPage,
   JournalPage,
+  IdeasPage,
   LearnPage,
   PortfolioPage,
   RiskPage,
@@ -316,6 +317,7 @@ function Shell() {
           <Route path="/cartera/riesgo" element={<RiskPage />} />
           <Route path="/cartera/seguimiento" element={<TrackingPage />} />
           <Route path="/cartera/diario" element={<JournalPage />} />
+          <Route path="/cartera/ideas" element={<IdeasPage />} />
           <Route path="/cartera/simuladas" element={<SimulationsPage />} />
           <Route
             path="/investigacion"

@@ -5728,6 +5728,347 @@ export type HomeTarget = {
 };
 
 /**
+ * Idea
+ */
+export type Idea = {
+    /**
+     * Card Id
+     */
+    card_id: number;
+    /**
+     * Chain Ok
+     */
+    chain_ok: boolean;
+    evaluation: IdeaEvaluation;
+    /**
+     * Idea Id
+     */
+    idea_id: number;
+    /**
+     * Review Due
+     */
+    review_due: string | null;
+    state: IdeaState;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * IdeaDetail
+ */
+export type IdeaDetail = {
+    /**
+     * Card Id
+     */
+    card_id: number;
+    /**
+     * Chain Ok
+     */
+    chain_ok: boolean;
+    evaluation: IdeaEvaluation;
+    /**
+     * Events
+     */
+    events: Array<IdeaEvent>;
+    /**
+     * Idea Id
+     */
+    idea_id: number;
+    /**
+     * Notes
+     */
+    notes: Array<IdeaNote>;
+    /**
+     * Review Due
+     */
+    review_due: string | null;
+    state: IdeaState;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * IdeaEvaluation
+ */
+export type IdeaEvaluation = {
+    /**
+     * Costs Included
+     */
+    costs_included?: boolean | null;
+    /**
+     * Days
+     */
+    days?: number | null;
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Excess
+     */
+    excess?: number | null;
+    /**
+     * Index Max Drawdown
+     */
+    index_max_drawdown?: number | null;
+    /**
+     * Index Return
+     *
+     * S&P 500 en EUR en las mismas fechas
+     */
+    index_return?: number | null;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown?: number | null;
+    /**
+     * Missing
+     */
+    missing?: Array<string> | null;
+    /**
+     * Return Net
+     *
+     * Rentabilidad total en EUR neta de costes de ida y vuelta
+     */
+    return_net?: number | null;
+    /**
+     * Sessions
+     */
+    sessions?: number | null;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'insufficient_prices';
+};
+
+/**
+ * IdeaEvent
+ */
+export type IdeaEvent = {
+    /**
+     * Idea Id
+     */
+    idea_id: number;
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Payload
+     */
+    payload: {
+        [key: string]: unknown;
+    };
+    /**
+     * Previous Sha256
+     */
+    previous_sha256: string | null;
+    /**
+     * Recorded At
+     */
+    recorded_at: string;
+    /**
+     * Sequence
+     */
+    sequence: number;
+    /**
+     * Sha256
+     */
+    sha256: string;
+};
+
+/**
+ * IdeaEventCreate
+ */
+export type IdeaEventCreate = {
+    /**
+     * Cause
+     *
+     * Causa del resultado al cerrar
+     */
+    cause?: string;
+    /**
+     * Corrects
+     *
+     * Evento que se corrige
+     */
+    corrects?: number | null;
+    /**
+     * Executed
+     *
+     * Si llegó a invertirse
+     */
+    executed?: boolean;
+    /**
+     * Kind
+     */
+    kind: 'revisada' | 'retirada' | 'cerrada' | 'corregida';
+    /**
+     * Outcome
+     */
+    outcome?: 'acertada' | 'parcial' | 'fallida' | null;
+    /**
+     * Reason
+     *
+     * Por qué se retira
+     */
+    reason?: string;
+    /**
+     * Text
+     *
+     * Revisión o corrección
+     */
+    text?: string;
+};
+
+/**
+ * IdeaList
+ */
+export type IdeaList = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Benchmark
+     */
+    benchmark: string;
+    /**
+     * Items
+     */
+    items: Array<Idea>;
+    summary: IdeaSummary;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
+ * IdeaNote
+ */
+export type IdeaNote = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Idea Id
+     */
+    idea_id: number;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * IdeaNoteText
+ */
+export type IdeaNoteText = {
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
+ * IdeaState
+ */
+export type IdeaState = {
+    /**
+     * Corrections
+     */
+    corrections: number;
+    /**
+     * Ended On
+     */
+    ended_on: string | null;
+    /**
+     * Outcome
+     */
+    outcome: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Published On
+     */
+    published_on: string;
+    /**
+     * Reviews
+     */
+    reviews: number;
+    /**
+     * Status
+     */
+    status: 'abierta' | 'retirada' | 'cerrada';
+};
+
+/**
+ * IdeaSummary
+ */
+export type IdeaSummary = {
+    /**
+     * Beat Index
+     */
+    beat_index: number;
+    /**
+     * Closed
+     */
+    closed: number;
+    /**
+     * Evaluated
+     */
+    evaluated: number;
+    /**
+     * Ideas
+     */
+    ideas: number;
+    /**
+     * Mean Excess
+     */
+    mean_excess: number | null;
+    /**
+     * Median Excess
+     */
+    median_excess: number | null;
+    /**
+     * Note
+     */
+    note: string;
+    /**
+     * Open
+     */
+    open: number;
+    /**
+     * Retired
+     */
+    retired: number;
+    /**
+     * Thesis Hits
+     */
+    thesis_hits: {
+        [key: string]: number;
+    };
+};
+
+/**
  * Identity
  */
 export type Identity = {
@@ -13748,6 +14089,314 @@ export type DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses = {
 };
 
 export type DeleteApiV1PortfolioHoldingsLotIdDeletePostResponse = DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses[keyof DeleteApiV1PortfolioHoldingsLotIdDeletePostResponses];
+
+export type ListIdeasApiV1PortfolioIdeasGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/portfolio/ideas';
+};
+
+export type ListIdeasApiV1PortfolioIdeasGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type ListIdeasApiV1PortfolioIdeasGetError = ListIdeasApiV1PortfolioIdeasGetErrors[keyof ListIdeasApiV1PortfolioIdeasGetErrors];
+
+export type ListIdeasApiV1PortfolioIdeasGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: IdeaList;
+};
+
+export type ListIdeasApiV1PortfolioIdeasGetResponse = ListIdeasApiV1PortfolioIdeasGetResponses[keyof ListIdeasApiV1PortfolioIdeasGetResponses];
+
+export type GetIdeaApiV1PortfolioIdeasIdeaIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Idea Id
+         */
+        idea_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/ideas/{idea_id}';
+};
+
+export type GetIdeaApiV1PortfolioIdeasIdeaIdGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type GetIdeaApiV1PortfolioIdeasIdeaIdGetError = GetIdeaApiV1PortfolioIdeasIdeaIdGetErrors[keyof GetIdeaApiV1PortfolioIdeasIdeaIdGetErrors];
+
+export type GetIdeaApiV1PortfolioIdeasIdeaIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: IdeaDetail;
+};
+
+export type GetIdeaApiV1PortfolioIdeasIdeaIdGetResponse = GetIdeaApiV1PortfolioIdeasIdeaIdGetResponses[keyof GetIdeaApiV1PortfolioIdeasIdeaIdGetResponses];
+
+export type AddEventApiV1PortfolioIdeasIdeaIdEventsPostData = {
+    body: IdeaEventCreate;
+    path: {
+        /**
+         * Idea Id
+         */
+        idea_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/ideas/{idea_id}/events';
+};
+
+export type AddEventApiV1PortfolioIdeasIdeaIdEventsPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type AddEventApiV1PortfolioIdeasIdeaIdEventsPostError = AddEventApiV1PortfolioIdeasIdeaIdEventsPostErrors[keyof AddEventApiV1PortfolioIdeasIdeaIdEventsPostErrors];
+
+export type AddEventApiV1PortfolioIdeasIdeaIdEventsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: IdeaDetail;
+};
+
+export type AddEventApiV1PortfolioIdeasIdeaIdEventsPostResponse = AddEventApiV1PortfolioIdeasIdeaIdEventsPostResponses[keyof AddEventApiV1PortfolioIdeasIdeaIdEventsPostResponses];
+
+export type AddNoteApiV1PortfolioIdeasIdeaIdNotesPostData = {
+    body: IdeaNoteText;
+    path: {
+        /**
+         * Idea Id
+         */
+        idea_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/ideas/{idea_id}/notes';
+};
+
+export type AddNoteApiV1PortfolioIdeasIdeaIdNotesPostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type AddNoteApiV1PortfolioIdeasIdeaIdNotesPostError = AddNoteApiV1PortfolioIdeasIdeaIdNotesPostErrors[keyof AddNoteApiV1PortfolioIdeasIdeaIdNotesPostErrors];
+
+export type AddNoteApiV1PortfolioIdeasIdeaIdNotesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: IdeaDetail;
+};
+
+export type AddNoteApiV1PortfolioIdeasIdeaIdNotesPostResponse = AddNoteApiV1PortfolioIdeasIdeaIdNotesPostResponses[keyof AddNoteApiV1PortfolioIdeasIdeaIdNotesPostResponses];
+
+export type DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostData = {
+    body?: never;
+    path: {
+        /**
+         * Idea Id
+         */
+        idea_id: number;
+        /**
+         * Note Id
+         */
+        note_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/delete';
+};
+
+export type DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostError = DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostErrors[keyof DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostErrors];
+
+export type DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: IdeaDetail;
+};
+
+export type DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostResponse = DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostResponses[keyof DeleteNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdDeletePostResponses];
+
+export type SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostData = {
+    body: IdeaNoteText;
+    path: {
+        /**
+         * Idea Id
+         */
+        idea_id: number;
+        /**
+         * Note Id
+         */
+        note_id: number;
+    };
+    query?: never;
+    url: '/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/save';
+};
+
+export type SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostError = SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostErrors[keyof SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostErrors];
+
+export type SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: IdeaDetail;
+};
+
+export type SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostResponse = SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostResponses[keyof SaveNoteApiV1PortfolioIdeasIdeaIdNotesNoteIdSavePostResponses];
 
 export type BenchmarkApiV1PortfolioInvestorBenchmarkGetData = {
     body?: never;
