@@ -16,9 +16,12 @@ from gabi.domain.market.sec_reads import companyfacts
 from gabi.domain.market.sec_xbrl import normalize_cik
 
 
-class MetricsV2Store(Protocol):
+class MetricsV2Writer(Protocol):
     def facts(self, entity: str) -> pd.DataFrame: ...
     def save_metrics_v2(self, symbol: str, cik: str | None, row: dict) -> None: ...
+
+
+class MetricsV2Store(MetricsV2Writer, Protocol):
     def metrics_v2_state(self, symbols: list[str]) -> dict[str, tuple[str | None, str | None]]: ...
 
 
@@ -31,7 +34,7 @@ def from_facts(frame: pd.DataFrame) -> dict:
     return v2.snapshot(companyfacts(frame))
 
 
-def refresh(store: MetricsV2Store, symbol: str, cik: str) -> dict:
+def refresh(store: MetricsV2Writer, symbol: str, cik: str) -> dict:
     row = from_facts(store.facts(entity(cik)))
     store.save_metrics_v2(symbol, cik, row)
     return row
