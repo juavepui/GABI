@@ -50,19 +50,28 @@ def _sha256(payload: object) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def tags_sha256() -> str:
-    """Fingerprint of the stored tag set: a download made with another set is fetched again."""
-    return _sha256(list(cbop.USD_TAGS))
+CBOP_TAGS: dict[str, tuple[str, ...]] = {"USD": cbop.USD_TAGS}
+
+
+def tags_sha256(tags: dict[str, tuple[str, ...]] | None = None) -> str:
+    """Fingerprint of the stored tag set: a download made with another set is fetched again.
+
+    The CbOP set keeps its original fingerprint (a list of its USD tags)."""
+    if tags is None or tags == CBOP_TAGS:
+        return _sha256(list(cbop.USD_TAGS))
+    return _sha256({unit: list(names) for unit, names in sorted(tags.items())})
 
 
 def download(ciks: Iterable[str], *, done: set[str], companyfacts: Callable[[str], dict],
              submissions: Callable[[str], dict], save: Callable[..., None], now: Callable[[], str],
-             progress: Callable[[int, int], None] = lambda done, total: None) -> dict:
+             progress: Callable[[int, int], None] = lambda done, total: None,
+             tags: dict[str, tuple[str, ...]] | None = None) -> dict:
     """Downloads each CIK not in ``done`` (those stored with the current tags); no XBRL is stored as ``absent``.
 
-    Only the CbOP tags are kept. Transient failures propagate after the caller's
+    Only ``tags`` (unit → tag names; the CbOP ones by default) are kept. Transient failures propagate after the caller's
     retries; what was saved stays, so a new run resumes."""
-    tags = tags_sha256()
+    wanted = tags or CBOP_TAGS
+    fingerprint = tags_sha256(wanted)
     pending = sorted(set(ciks) - done)
     counts = {"pending": len(pending), "ok": 0, "absent": 0}
     for index, cik in enumerate(pending, 1):
@@ -73,12 +82,12 @@ def download(ciks: Iterable[str], *, done: set[str], companyfacts: Callable[[str
             facts = companyfacts(cik)
         except ValueError as exc:  # SEC answers 404: no structured data for this issuer.
             save(cik, rows=[], sic=sic, status="absent", reason=str(exc), fetched_at=now(), facts_sha256=None,
-                 submissions_sha256=_sha256(filings), tags_sha256=tags)
+                 submissions_sha256=_sha256(filings), tags_sha256=fingerprint)
             counts["absent"] += 1
         else:
-            rows = _extract_raw_facts(facts, list(cbop.USD_TAGS), unit="USD")
+            rows = [row for unit, names in wanted.items() for row in _extract_raw_facts(facts, list(names), unit=unit)]
             save(cik, rows=rows, sic=sic, status="ok", reason=None, fetched_at=now(), facts_sha256=_sha256(facts),
-                 submissions_sha256=_sha256(filings), tags_sha256=tags)
+                 submissions_sha256=_sha256(filings), tags_sha256=fingerprint)
             counts["ok"] += 1
         progress(index, len(pending))
     return counts
