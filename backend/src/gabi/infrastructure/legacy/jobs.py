@@ -93,6 +93,11 @@ class LegacyExecutor:
                     progress=lambda done, total: progress(done / total, "Comparando métricas") if progress else None)
             finally:
                 market.close()
+        if command.kind == "idea_alerts":
+            from gabi.infrastructure.legacy.idea_alerts import run_idea_alerts
+
+            return run_idea_alerts(self.settings, self.today,
+                                   (lambda share, message: progress(share, message)) if progress else None)
         if command.kind == "benchmark_prices":
             from gabi.application.portfolio.benchmark import refresh_prices as refresh_benchmark
             from gabi.infrastructure.legacy.sim_prices import fetch_max_history
