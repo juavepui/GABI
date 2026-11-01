@@ -32,9 +32,28 @@ Cada día se verifica que caja + posiciones = NAV (`identity_error`), y con
 precios constantes el valor perdido es exactamente comisiones más costes de
 ejecución.
 
+## Datos de entrada
+
+`domain/portfolio/backtest_v3_inputs.py` convierte una serie de la caché en barras
+nominales y eventos; `application/research/backtest_v3_data.py` lo aplica a las
+series que ya devuelve `BacktestMarket.prices` y elige la base por su procedencia:
+
+- **Caché Yahoo** (directa u observación de entidad): apertura y cierre están en
+  la base de splits de hoy y el volumen multiplicado por los splits posteriores.
+  Los splits de la tabla `splits` de su ticker de origen, leídos en una consulta
+  acotada, deshacen ambos; cada split es un evento en su fecha con su ratio.
+- **Archivo acreditado**: la serie ya es la negociada; sus splits son los ratios
+  limpios implícitos entre cierre y cierre ajustado.
+
+Los dividendos son el efectivo implícito en el cierre ajustado en cada fecha
+ex-dividendo (`issuer_evidence.implied_events`), por acción nominal. Un salto que
+las reglas no explican no se paga: queda como anomalía. Una sesión sin apertura y
+cierre positivos es ausente y una sin volumen es una suspensión. Si la base de una
+observación quedó desfasada por un split posterior, el nivel nominal se desplaza
+por un factor constante, pero los rendimientos y el volumen en dólares no cambian.
+
 ## Pendiente
 
-Adaptador de datos (precios nominales desde la caché deshaciendo los splits de
-Yahoo, volumen, dividendos y eventos), job explícito con señales del ranking
-histórico, comparación V2/V3 sobre los mismos datos y validación económica de la
-política de #248.
+Eventos terminales (fusiones y exclusiones) desde la evidencia histórica de
+salidas, job explícito con señales del ranking histórico, comparación V2/V3 sobre
+los mismos datos y validación económica de la política de #248.
