@@ -1,6 +1,6 @@
 # Puerta de datos de CBOP-v1 (#252)
 
-**Estado:** fase 1 en ejecución con datos reales (ver el resultado al final).
+**Estado:** la puerta **no pasa** con la definición fijada: la cobertura ronda el 40 % en todas las fechas. Hay que decidir entre cerrar CBOP-v1 por inviable o enmendar la definición de datos, antes de mirar ningún rendimiento.
 No calcula ni lee rendimientos.
 
 Es la fase 1 del preregistro propuesto en
@@ -90,6 +90,63 @@ uv run --project backend python -m gabi_cli research cbop-gate --audit      # es
 - **Después de la puerta.** El preregistro definitivo, con el hash del commit,
   solo se redacta si la puerta pasa en todas las fechas, y antes de cualquier
   cálculo de rendimiento. Se registra en el ledger de #60.
+
+## Resultado (2026-11-01)
+
+**Descarga.** Se descargaron los 767 CIK con identidad aceptada: 1.534 peticiones
+a la SEC, ninguna ausente.
+- El resumen de la descarga, con su manifiesto SHA-256, está en
+  [`cbop-v1/cobertura.json`](cbop-v1/cobertura.json).
+- Ningún rendimiento se ha leído.
+
+**Cobertura.** Por debajo del umbral del 70 % en las 15 fechas de señal:
+
+| Señal | Elegibles | Con CbOP | Cobertura |
+|---|---:|---:|---:|
+| 2011-07-01 | 410 | 160 | 39.0 % |
+| 2012-07-02 | 411 | 168 | 40.9 % |
+| 2013-07-01 | 413 | 169 | 40.9 % |
+| 2014-07-01 | 411 | 166 | 40.4 % |
+| 2015-07-01 | 410 | 165 | 40.2 % |
+| 2016-07-01 | 384 | 159 | 41.4 % |
+| 2017-07-03 | 389 | 157 | 40.4 % |
+| 2018-07-02 | 393 | 154 | 39.2 % |
+| 2019-07-01 | 395 | 179 | 45.3 % |
+| 2020-07-01 | 403 | 181 | 44.9 % |
+| 2021-07-01 | 406 | 180 | 44.3 % |
+| 2022-07-01 | 401 | 170 | 42.4 % |
+| 2023-07-03 | 408 | 166 | 40.7 % |
+| 2024-07-01 | 409 | 162 | 39.6 % |
+| 2025-07-01 | 406 | 158 | 38.9 % |
+
+**Causas principales**, con datos de 2020:
+- **Sin coste de ventas** (`cost_of_revenue_absent`, 71 emisores). Son
+  utilities, aerolíneas, cable y restauración, que presentan costes operativos
+  por naturaleza y no un coste de ventas.
+- **Sin SG&A** (`sga_absent`, 66). Software e internet suelen separar «ventas y
+  marketing» y «generales y administrativos» (ADBE, ADSK, AMZN, ANET), así que
+  no presentan la línea agregada.
+- **Partidas `…_stale`** (entre 50 y 80 según el año). Son emisores que
+  cambiaron de etiqueta o dejaron de presentar una partida en el año del ancla.
+- **Identidad no resuelta.** Pesa poco: 6–11 emisores en 2011–2015 y ninguno
+  después.
+
+**Lectura.** La cobertura no la limita la falta de datos, sino la definición:
+la fórmula de Ball et al. presupone la estructura de cuentas de Compustat, que
+normaliza esas diferencias. Con la regla fijada en #268, la decisión es
+`close_unfeasible`.
+
+Hay dos caminos, y los dos se deciden antes de cualquier rendimiento:
+1. **Cerrar CBOP-v1 por inviable** y pasar a la reserva (emisión neta) o
+   declarar el resultado negativo en #60.
+2. **Enmendar la definición de datos**, documentar la enmienda y repetir la
+   puerta. La enmienda cambiaría estas reglas:
+   - Sumar ventas y marketing más generales y administrativos cuando falte
+     SG&A.
+   - Añadir más etiquetas de coste de ventas.
+   - Tratar como cero la partida de circulante que el emisor deja de presentar.
+
+   Es una búsqueda sobre datos, no sobre retornos, pero queda registrada como tal.
 
 ## Tiempo
 
