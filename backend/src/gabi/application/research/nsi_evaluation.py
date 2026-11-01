@@ -212,6 +212,19 @@ def _public(measured: dict) -> dict:
     return {key: value for key, value in measured.items() if key not in {"index_eur", "index_usd"}}
 
 
+PRICE_BATCH = 50
+
+
+def _batched(prices: Callable[..., dict[str, pd.DataFrame]]) -> Callable[..., dict[str, pd.DataFrame]]:
+    """The whole universe is read in bounded batches: one read of ~500 histories exceeds the store's limit."""
+    def read(symbols: list[str], as_of: str, owners: dict | None = None) -> dict[str, pd.DataFrame]:
+        frames: dict[str, pd.DataFrame] = {}
+        for start in range(0, len(symbols), PRICE_BATCH):
+            frames.update(prices(symbols[start:start + PRICE_BATCH], as_of, owners))
+        return frames
+    return read
+
+
 def _equal_weight(signals: list[date], members: dict[date, dict[str, str | None]], rows: list[dict],
                   market: BacktestMarket, splits: Callable[[list[str]], dict[str, pd.Series]],
                   facts: Callable[[str], dict], euros_per_dollar: pd.Series) -> dict:
@@ -225,7 +238,8 @@ def _equal_weight(signals: list[date], members: dict[date, dict[str, str | None]
         universe_rows.append({"as_of": row["as_of"], "signal": signal, "end": row["end"],
                               "symbols": sorted(set(names) | held), "selected": names})
         held = set(names)
-    sessions, data = comparison.inputs(market, universe_rows, splits, BENCHMARK)
+    sessions, data = comparison.inputs(replace(market, prices=_batched(market.prices)), universe_rows, splits,
+                                       BENCHMARK)
     rates = _rates(sessions, euros_per_dollar)
     initial, dollars, flows_eur = _account(sessions, rates)
     costs = replace(v3.BASE, dividend_withholding=WITHHOLDING)

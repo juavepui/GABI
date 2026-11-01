@@ -100,6 +100,13 @@ def test_policy_weights_start_at_one_over_top_n_and_empty_slots_stay_in_cash():
     assert capped and sum(target.values()) == pytest.approx(0.30)  # Sector cap: the rest is cash.
 
 
+def test_universe_prices_are_read_in_bounded_batches():
+    calls = []
+    read = nsi_evaluation._batched(lambda symbols, as_of, owners=None: calls.append(len(symbols)) or
+                                   {symbol: pd.DataFrame() for symbol in symbols})
+    assert len(read([f"S{i}" for i in range(120)], "2020-07-01")) == 120 and calls == [50, 50, 20]
+
+
 def test_a_missing_exchange_rate_stops_the_evaluation_and_reserved_dates_are_refused():
     with pytest.raises(ValueError, match="USDEUR"):
         run(euros_per_dollar=pd.Series(0.9, index=SESSIONS[SESSIONS >= "2023-01-01"]))
