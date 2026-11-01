@@ -1,6 +1,12 @@
 import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { cancelJob, createJob, getBacktestPreview, getJob } from '@/shared/api/client';
+import {
+  cancelJob,
+  createJob,
+  getBacktestPreview,
+  getJob,
+  getJobResult,
+} from '@/shared/api/client';
 import type {
   BacktestDefaults,
   BacktestOptions,
@@ -14,6 +20,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { BacktestDiagnostics } from './backtest-diagnostics';
 import { BacktestFactors } from './backtest-factors';
 import { BacktestRegister } from './backtest-register';
+import { V3ComparisonResult, type V3Comparison } from './backtest-v3-comparison';
 import { PrepareData } from './prepare-data';
 import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
@@ -23,7 +30,7 @@ import { Hash } from '@/shared/ui/hash';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
-type Engine = 'backtest_v1' | 'backtest_v2';
+type Engine = 'backtest_v1' | 'backtest_v2' | 'backtest_v3_comparison';
 
 const selectClass = 'mt-1.5 w-full';
 const pct = (value: number | null | undefined, digits = 1) => formatPercent(value, { digits });
@@ -107,10 +114,16 @@ function Panel({
     refetchInterval: (query) =>
       ['queued', 'running'].includes(query.state.data?.status ?? '') ? 2000 : false,
   });
+  const comparing = job.data?.kind === 'backtest_v3_comparison';
   const preview = useQuery({
     queryKey: ['research', 'backtests', jobId],
     queryFn: ({ signal }) => getBacktestPreview(jobId!, signal),
-    enabled: job.data?.status === 'succeeded',
+    enabled: job.data?.status === 'succeeded' && !comparing,
+  });
+  const comparison = useQuery({
+    queryKey: ['job', jobId, 'result'],
+    queryFn: ({ signal }) => getJobResult(jobId!, signal) as Promise<V3Comparison>,
+    enabled: job.data?.status === 'succeeded' && comparing,
   });
   const cancel = useMutation({ mutationFn: () => cancelJob(jobId!) });
 
@@ -154,11 +167,21 @@ function Panel({
         >
           Motor V2 (contabilidad real)
         </Button>
+        <Button
+          type="button"
+          variant={engine === 'backtest_v3_comparison' ? 'default' : 'outline'}
+          aria-pressed={engine === 'backtest_v3_comparison'}
+          onClick={() => selectEngine('backtest_v3_comparison')}
+        >
+          Comparar V2 y V3
+        </Button>
       </div>
       <p className="max-w-3xl text-sm text-muted-foreground">
         {engine === 'backtest_v1'
           ? 'V1 cobra un coste plano de compra y venta sobre cada posición nueva y compara con el universo equiponderado y el SPY. Los universos de 50 o 100 empresas son pruebas parciales.'
-          : 'V2 opera con acciones y caja, comisión fija y spread sobre los ajustes reales, SPY comprado y mantenido y curva diaria. Solo el universo completo es citable; la muestra rápida sirve para iterar.'}
+          : engine === 'backtest_v3_comparison'
+            ? 'Ejecuta V2 con estas opciones y después V3 sobre las mismas selecciones y datos, con costes como V2, base y estrés, más la validación de la política de #248. Es un diagnóstico del motor; tarda algo más que V2.'
+            : 'V2 opera con acciones y caja, comisión fija y spread sobre los ajustes reales, SPY comprado y mantenido y curva diaria. Solo el universo completo es citable; la muestra rápida sirve para iterar.'}
       </p>
       {!researchAllowed && <ResearchModeNotice action="Ejecutar backtests" />}
       <form
@@ -379,7 +402,7 @@ function Panel({
           pending={run.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
           disabled={!researchAllowed}
         >
-          Ejecutar backtest
+          {engine === 'backtest_v3_comparison' ? 'Comparar motores' : 'Ejecutar backtest'}
         </Button>
       </form>
       <PrepareData
@@ -417,9 +440,14 @@ function Panel({
           )}
         </section>
       )}
-      {preview.isPending && job.data?.status === 'succeeded' && <LoadingState />}
+      {preview.isPending && job.data?.status === 'succeeded' && !comparing && <LoadingState />}
       {preview.isError && <ErrorState error={preview.error} retry={() => void preview.refetch()} />}
       {preview.data && <BacktestResult result={preview.data} />}
+      {comparison.isPending && job.data?.status === 'succeeded' && comparing && <LoadingState />}
+      {comparison.isError && (
+        <ErrorState error={comparison.error} retry={() => void comparison.refetch()} />
+      )}
+      {comparison.data && <V3ComparisonResult result={comparison.data} />}
     </section>
   );
 }

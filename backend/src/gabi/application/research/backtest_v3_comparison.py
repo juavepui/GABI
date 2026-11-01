@@ -17,8 +17,11 @@ from datetime import date
 
 import pandas as pd
 
+from gabi.application.errors import QueryError
 from gabi.application.research import backtest_v3_data
-from gabi.application.research.backtest_market import BacktestMarket
+from gabi.application.research.backtest_market import BacktestMarket, NoCoveredPeriods
+from gabi.application.research.backtests import normalize_backtest
+from gabi.application.research.historical import _json_value
 from gabi.domain.portfolio import backtest as v2_rules
 from gabi.domain.portfolio import backtest_v3 as v3
 
@@ -180,3 +183,30 @@ def compare(market: BacktestMarket, v2_result: dict, *, top_n: int, splits: Call
                  "bases": {basis: sum(value == basis for value in data.bases.values())
                            for basis in sorted(set(data.bases.values()))}},
     }
+
+
+KIND = "backtest_v3_comparison"
+MAX_ROWS = 500  # Each listed detail (missing series, anomalies, exits, allocation notes) is bounded.
+
+
+def build(start: str, end: str, options: dict, run: Callable[[str, str, dict], dict]) -> dict:
+    """The comparison job: V2's options and observed period, an engine diagnostic artifact.
+
+    The dates go through the same check as a V2 backtest, so no run reads a
+    reserved period, whatever calls it."""
+    options = normalize_backtest("backtest_v2", start, end, options)
+    try:
+        result = run(start, end, options)
+    except NoCoveredPeriods as exc:
+        raise QueryError("no_covered_periods", str(exc), 422) from exc
+    truncated = []
+    for section, key in (("data", "missing"), ("data", "anomalies"), ("data", "exits"),
+                         ("policy_248", "allocation_notes")):
+        rows = result.get(section, {}).get(key)
+        if isinstance(rows, list) and len(rows) > MAX_ROWS:
+            result[section][key] = rows[:MAX_ROWS]
+            truncated.append(f"{section}.{key}")
+    artifact = {"kind": KIND, "status": "ENGINE_DIAGNOSTIC", "independent_advantage_demonstrated": False,
+                "start": start, "end": end, "options": options, "truncated": truncated,
+                **{key: value for key, value in result.items() if key not in {"kind", "status"}}}
+    return _json_value(artifact)  # type: ignore[return-value]

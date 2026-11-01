@@ -20,8 +20,9 @@ from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 from gabi.domain.portfolio.simulation import listing
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison"]
-RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register",
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "backtest_v3_comparison"]
+RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_v3_comparison",
+                  "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
                   "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab"}
 BLIND_KINDS = {"blind_rebalance", "blind_performance", "blind_export"}
@@ -128,9 +129,11 @@ class JobCommand:
             if (self.factor_mode == "validation" and self.factor_max_symbols is not None or
                     self.factor_mode == "fast_dev" and self.factor_max_symbols not in (50, 100, 200)):
                 raise QueryError("invalid_job", "La muestra no corresponde al modo de Factor Lab.", 422)
-        elif self.kind in {"backtest_v1", "backtest_v2"}:
+        elif self.kind in {"backtest_v1", "backtest_v2", "backtest_v3_comparison"}:
+            # The V2/V3 comparison runs V2 with its own options and observed period.
+            engine = "backtest_v2" if self.kind == "backtest_v3_comparison" else self.kind
             object.__setattr__(self, "backtest_options",
-                               normalize_backtest(self.kind, self.start, self.end, self.backtest_options))
+                               normalize_backtest(engine, self.start, self.end, self.backtest_options))
         elif self.kind == "portfolio_lab":
             pass  # Its dates are validated with its options below.
         elif self.kind == "metrics_comparison":
@@ -143,7 +146,7 @@ class JobCommand:
             object.__setattr__(self, "preparation", normalize_preparation(self.start, self.end, self.preparation))
         elif self.start is not None or self.end is not None:
             raise QueryError("invalid_job", "Este trabajo no admite fechas.", 422)
-        if self.kind not in {"backtest_v1", "backtest_v2"} and self.backtest_options is not None:
+        if self.kind not in {"backtest_v1", "backtest_v2", "backtest_v3_comparison"} and self.backtest_options is not None:
             raise QueryError("invalid_job", "Este trabajo no admite parámetros de backtest.", 422)
         if self.kind == "backtest_register":
             object.__setattr__(self, "research_log", normalize_registration(self.research_log))
@@ -268,7 +271,7 @@ class Jobs:
         if job["kind"] in {"maintenance", "tiingo"}:
             raise QueryError("result_restricted", "Este resultado pertenece al seguimiento ciego.", 403)
         if job["kind"] in {"backtest", "historical_ranking", "factor_analysis", "backtest_v1", "backtest_v2",
-                           "prepare_history", "portfolio_lab"}:
+                           "backtest_v3_comparison", "prepare_history", "portfolio_lab"}:
             parameters = job["parameters"]
             if job["kind"] == "historical_ranking" and parameters.get("end") is not None:
                 raise QueryError("reserved_period", "Este resultado no corresponde a una sola fecha observada.", 403)

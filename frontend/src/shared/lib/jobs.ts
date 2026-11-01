@@ -19,6 +19,7 @@ export const JOB_NAMES: Record<string, string> = {
   estimate_analysis: 'Análisis de estimaciones',
   backtest_v1: 'Backtest V1',
   backtest_v2: 'Backtest V2',
+  backtest_v3_comparison: 'Comparación de motores V2 y V3',
   backtest_register: 'Registrar backtest en Research Lab',
   backtest_factors: 'Contraste Fama-French',
   prepare_history: 'Preparar datos históricos',
