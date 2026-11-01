@@ -5362,7 +5362,8 @@
               "sim_prices",
               "holdings_prices",
               "benchmark_prices",
-              "metrics_comparison"
+              "metrics_comparison",
+              "backtest_v3_comparison"
             ],
             "title": "Kind",
             "type": "string"

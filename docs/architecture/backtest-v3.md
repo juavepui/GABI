@@ -90,6 +90,11 @@ aportaciones, rentabilidad y drawdown son ponderados en el tiempo. El número de
 posiciones es el del modelo y no se optimiza. El sector es el del ranking a fecha
 (aproximado donde no hay foto histórica) y el emisor, la entidad dueña del ticker.
 
-## Pendiente
+## Job y pantalla
 
-Job F4 y pantalla para lanzar la comparación desde la aplicación.
+El job `backtest_v3_comparison` (modo Research) recibe las mismas opciones que un
+backtest V2 y solo el periodo observado (2010 a julio de 2025): la comprobación está
+en `backtest_v3_comparison.build`, de modo que ninguna ejecución, desde el job o
+desde un script, lee un periodo reservado. El resultado vuelve a comprobar las
+fechas al leerse y sus listas de detalle están acotadas. Se lanza desde
+Investigación › Histórico › Backtest, con «Comparar V2 y V3».
