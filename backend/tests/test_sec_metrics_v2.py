@@ -51,13 +51,49 @@ def test_loss_before_tax_falls_back_to_the_declared_statutory_rate():
     assert metric.value == pytest.approx(200 * 0.79 / 1260)
 
 
-def test_missing_debt_is_absent_never_zero():
-    facts = base(LongTermDebtNoncurrent=None, LongTermDebtCurrent=None)
+def test_missing_debt_is_absent_never_zero_when_the_issuer_has_reported_debt():
+    # DebtCurrent in an old report shows the issuer has debt lines: nothing is assumed.
+    facts = base(LongTermDebtNoncurrent=None, LongTermDebtCurrent=None, DebtCurrent=[stock(10.0, "2019-12-31")])
     assert v2.total_debt(facts, "2024-12-31")[0].state == "absent"
     roic = v2.roic(facts, "2024-12-31", sic=None)
     ev = v2.enterprise_value(facts, "2024-12-31", 5000.0, sic=None)
     assert (roic.value, roic.reason) == (None, "debt_absent")
     assert (ev.value, ev.reason) == (None, "debt_absent")
+
+
+def test_debt_is_assumed_zero_and_declared_only_if_never_reported_in_any_annual_report():
+    facts = base(LongTermDebtNoncurrent=None, LongTermDebtCurrent=None)
+    debt, parts = v2.total_debt(facts, "2024-12-31")
+    assert (debt.state, debt.value) == ("assumed_zero", 0.0) and parts[0].state == "assumed_zero"
+    roic = v2.roic(facts, "2024-12-31", sic=None)
+    # Capital = ((900 − 150) + (1100 − 200)) / 2 = 825.
+    assert roic.value == pytest.approx(200 * 0.75 / 825)
+    assert any(fact.state == "assumed_zero" for fact in roic.inputs)
+    paying = base(LongTermDebtNoncurrent=None, LongTermDebtCurrent=None, InterestExpense=[flow(12.0)])
+    assert v2.total_debt(paying, "2024-12-31")[0].state == "absent"  # It pays interest: it has debt.
+    stale = base(LongTermDebtNoncurrent=[stock(400.0, "2022-12-31")], LongTermDebtCurrent=None)
+    assert v2.total_debt(stale, "2024-12-31")[0].state == "stale"  # Reported other years: a gap, never zero.
+
+
+def test_each_component_takes_the_first_tag_reporting_the_anchor_year():
+    # The issuer moved from the noncurrent/current split to the LongTermDebt total in 2024.
+    facts = base(LongTermDebt=[stock(420.0)], LongTermDebtNoncurrent=[stock(400.0, "2023-12-31")],
+                 LongTermDebtCurrent=[stock(50.0, "2023-12-31")])
+    debt, parts = v2.total_debt(facts, "2024-12-31")
+    assert debt.value == 420.0 and [part.tag for part in parts] == ["LongTermDebt"]
+    # Equity reported under one tag for 2023 and another for 2024: each year finds its own.
+    renamed = base(StockholdersEquity=[stock(1100.0)],
+                   StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest=[stock(900.0, "2023-12-31")])
+    assert v2.roic(renamed, "2024-12-31", sic=None).state == "computed"
+
+
+def test_lease_inclusive_debt_tags_are_read_when_the_plain_ones_stopped():
+    facts = base(LongTermDebtNoncurrent=[stock(400.0, "2016-12-31")], LongTermDebtCurrent=None,
+                 LongTermDebtAndCapitalLeaseObligations=[stock(380.0, "2023-12-31"), stock(360.0)],
+                 LongTermDebtAndCapitalLeaseObligationsCurrent=[stock(30.0)])
+    debt, parts = v2.total_debt(facts, "2024-12-31")
+    assert debt.value == 390.0 and [part.tag for part in parts] == [
+        "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsCurrent"]
 
 
 def test_declared_zero_debt_and_cash_are_used():

@@ -5,6 +5,13 @@ prospective studies keep using it unchanged (ADR 0008, ``docs/studies``). Every
 input carries its tag, unit, period, accession and filing date. A component that
 was not reported is ``absent``, never zero; only an explicit ``0`` is
 ``reported_zero``.
+
+Each component takes, for the anchor fiscal year, the first candidate tag that
+reports that year (issuers change tags over time); it is ``stale`` only when no
+candidate has the year. The one declared assumption: an issuer that has never
+reported any debt line in any annual report has ``assumed_zero`` debt, decided by
+the owner on 2026-11-02; one that reported debt in other years and not now stays
+a gap.
 """
 
 from dataclasses import dataclass
@@ -23,10 +30,20 @@ PRETAX_INCOME_TAGS = (
 )
 EQUITY_TAGS = ("StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")
 # Total long-term debt (current portion included) or its two parts.
-LONG_TERM_DEBT_TOTAL_TAGS = ("LongTermDebt",)
-LONG_TERM_DEBT_NONCURRENT_TAGS = ("LongTermDebtNoncurrent",)
-LONG_TERM_DEBT_CURRENT_TAGS = ("LongTermDebtCurrent",)
+# Each list in order of preference; issuers moved to the lease-inclusive tags after ASC 842.
+LONG_TERM_DEBT_TOTAL_TAGS = ("LongTermDebt", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities")
+LONG_TERM_DEBT_NONCURRENT_TAGS = ("LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations",
+                                  "LongTermNotesPayable", "SeniorNotes")
+LONG_TERM_DEBT_CURRENT_TAGS = ("LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent")
 SHORT_TERM_DEBT_TAGS = ("ShortTermBorrowings", "CommercialPaper")
+# Any of these in any annual report means the issuer has reported debt: no zero is assumed.
+# Interest expense or interest paid also counts: an issuer that pays interest has debt.
+DEBT_EVIDENCE_TAGS = (*LONG_TERM_DEBT_TOTAL_TAGS, *LONG_TERM_DEBT_NONCURRENT_TAGS, *LONG_TERM_DEBT_CURRENT_TAGS,
+                      *SHORT_TERM_DEBT_TAGS, "DebtCurrent", "DebtLongtermAndShorttermCombinedAmount",
+                      "DebtInstrumentCarryingAmount", "ConvertibleNotesPayable", "ConvertibleDebtNoncurrent",
+                      "ConvertibleNotesPayableCurrent", "OtherLongTermDebtNoncurrent", "NotesPayable",
+                      "LongTermLineOfCredit", "LineOfCredit", "SecuredDebt", "UnsecuredDebt", "FinanceLeaseLiability",
+                      "InterestExpense", "InterestExpenseDebt", "InterestPaidNet", "InterestPaid")
 CASH_TAGS = ("CashAndCashEquivalentsAtCarryingValue",)
 SHORT_TERM_INVESTMENT_TAGS = ("ShortTermInvestments", "MarketableSecuritiesCurrent")
 
@@ -40,7 +57,7 @@ FINANCIAL_GICS_SECTORS = MappingProxyType({"Financials": 6000, "Real Estate": 67
 class Fact:
     """One reported value with its provenance, or the reason it is missing."""
 
-    state: str  # reported | reported_zero | absent | stale
+    state: str  # reported | reported_zero | assumed_zero | absent | stale
     value: float | None = None
     tag: str | None = None
     unit: str = "USD"
@@ -115,6 +132,19 @@ def at(values: dict[str, Fact], anchor: str, *, tolerance_days: int = ALIGNMENT_
     return values[close[0][1]] if close else Fact("stale")
 
 
+def value_at(facts: dict, tags: tuple[str, ...], anchor: str, *, duration: bool, unit: str = "USD") -> Fact:
+    """The anchor year's value from the first candidate tag that reports it; ``stale`` if some tag has other
+    years only, ``absent`` if none reports anything."""
+    seen = False
+    for tag in tags:
+        values = _latest_by_end(_entries(facts, tag, unit), tag, unit, duration)
+        seen = seen or bool(values)
+        fact = at(values, anchor)
+        if fact.value is not None:
+            return fact
+    return Fact("stale" if seen else "absent")
+
+
 def _missing(*parts: Fact) -> Fact | None:
     for state in ("stale", "absent"):
         if any(part.state == state for part in parts):
@@ -131,27 +161,31 @@ def total_debt(facts: dict, anchor: str) -> tuple[Fact, tuple[Fact, ...]]:
 
     Uses ``LongTermDebt`` (which already includes the current portion) or else
     noncurrent plus current. Short-term borrowings are added when reported. If no
-    long-term component is reported, debt is ``absent``/``stale``, not zero."""
-    total = at(series(facts, LONG_TERM_DEBT_TOTAL_TAGS, duration=False), anchor)
+    long-term component is reported, debt is ``absent``/``stale``, not zero, except when the issuer has never
+    reported any debt line in an annual report: then it is ``assumed_zero`` (declared)."""
+    if not any(_entries(facts, tag, "USD") for tag in DEBT_EVIDENCE_TAGS):
+        return Fact("assumed_zero", 0.0, "total_debt", end=anchor), (Fact("assumed_zero", 0.0, "total_debt",
+                                                                         end=anchor),)
+    total = value_at(facts, LONG_TERM_DEBT_TOTAL_TAGS, anchor, duration=False)
     if total.state in {"reported", "reported_zero"}:
         long_term = [total]
     else:
-        noncurrent = at(series(facts, LONG_TERM_DEBT_NONCURRENT_TAGS, duration=False), anchor)
+        noncurrent = value_at(facts, LONG_TERM_DEBT_NONCURRENT_TAGS, anchor, duration=False)
         if noncurrent.state not in {"reported", "reported_zero"}:
             return (Fact("stale") if "stale" in {total.state, noncurrent.state} else Fact("absent")), ()
-        current = at(series(facts, LONG_TERM_DEBT_CURRENT_TAGS, duration=False), anchor)
+        current = value_at(facts, LONG_TERM_DEBT_CURRENT_TAGS, anchor, duration=False)
         long_term = [noncurrent] + ([current] if current.value is not None else [])
-    short = at(series(facts, SHORT_TERM_DEBT_TAGS, duration=False), anchor)
+    short = value_at(facts, SHORT_TERM_DEBT_TAGS, anchor, duration=False)
     parts = tuple(long_term + ([short] if short.value is not None else []))
     value = _sum(list(parts))
     return Fact("reported_zero" if value == 0 else "reported", value, "total_debt", end=parts[0].end), parts
 
 
 def cash_and_short_term_investments(facts: dict, anchor: str) -> tuple[Fact, tuple[Fact, ...]]:
-    cash = at(series(facts, CASH_TAGS, duration=False), anchor)
+    cash = value_at(facts, CASH_TAGS, anchor, duration=False)
     if cash.value is None:
         return cash, ()
-    investments = at(series(facts, SHORT_TERM_INVESTMENT_TAGS, duration=False), anchor)
+    investments = value_at(facts, SHORT_TERM_INVESTMENT_TAGS, anchor, duration=False)
     parts = (cash,) + ((investments,) if investments.value is not None else ())
     value = _sum(list(parts))
     return Fact("reported_zero" if value == 0 else "reported", value, "cash_and_short_term_investments",
@@ -187,8 +221,8 @@ def _previous_year_end(values: dict[str, Fact], anchor: str) -> str | None:
 
 def tax_rate(facts: dict, anchor: str) -> tuple[float, str, tuple[Fact, ...]]:
     """Effective tax rate (tax expense / pretax income, bounded to [0, 1)) or the declared statutory 21 %."""
-    tax = at(series(facts, TAX_EXPENSE_TAGS, duration=True), anchor)
-    pretax = at(series(facts, PRETAX_INCOME_TAGS, duration=True), anchor)
+    tax = value_at(facts, TAX_EXPENSE_TAGS, anchor, duration=True)
+    pretax = value_at(facts, PRETAX_INCOME_TAGS, anchor, duration=True)
     if tax.value is not None and pretax.value is not None and pretax.value > 0:
         return min(max(tax.value / pretax.value, 0.0), 0.99), "effective_tax", (tax, pretax)
     return STATUTORY_TAX_RATE, "statutory_tax_21", ()
@@ -204,18 +238,20 @@ def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     between the opening and closing balance sheets."""
     if financial_sector(sic):
         return Metric(None, "not_applicable", "financial_sector", "nopat/average_invested_capital")
-    operating = at(series(facts, OPERATING_INCOME_TAGS, duration=True), anchor)
+    operating = value_at(facts, OPERATING_INCOME_TAGS, anchor, duration=True)
     if operating.value is None:
         return Metric(None, operating.state, f"operating_income_{operating.state}", "nopat/average_invested_capital")
     rate, tax_convention, tax_inputs = tax_rate(facts, anchor)
     convention = f"nopat({tax_convention})/average_invested_capital"
-    equity_series = series(facts, EQUITY_TAGS, duration=False)
+    # Year ends of any equity tag: an issuer may report the opening and closing years under different tags.
+    equity_series = {end: fact for tag in reversed(EQUITY_TAGS)
+                     for end, fact in _latest_by_end(_entries(facts, tag, "USD"), tag, "USD", False).items()}
     opening = _previous_year_end(equity_series, anchor) if equity_series else None
     if opening is None:
         return Metric(None, "absent", "no_opening_balance_sheet", convention)
     capitals, inputs = [], [operating, *tax_inputs]
     for end in (opening, anchor):
-        equity = at(equity_series, end)
+        equity = value_at(facts, EQUITY_TAGS, end, duration=False)
         debt, debt_parts = total_debt(facts, end)
         cash, cash_parts = cash_and_short_term_investments(facts, end)
         missing = _missing(equity, debt, cash)
@@ -232,7 +268,7 @@ def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
 
 def latest_annual_end(facts: dict) -> str | None:
     """The last fiscal year end with an annual 10-K balance sheet: the anchor of the metrics."""
-    ends = series(facts, EQUITY_TAGS, duration=False)
+    ends = {end for tag in EQUITY_TAGS for end in _latest_by_end(_entries(facts, tag, "USD"), tag, "USD", False)}
     return max(ends) if ends else None
 
 

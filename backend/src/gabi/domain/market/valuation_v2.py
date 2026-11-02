@@ -47,7 +47,7 @@ class Valuation:
 
 
 def _reported(fact: Fact) -> bool:
-    return fact.state in {"reported", "reported_zero"}
+    return fact.state in {"reported", "reported_zero", "assumed_zero"}
 
 
 def _failed(convention: str, reason: str, state: str, inputs: tuple[Fact, ...] = ()) -> Metric:
@@ -64,18 +64,18 @@ def fcff(facts: dict, anchor: str, *, sic: int | None) -> Metric:
         return _failed("cfo+interest_paid*(1-t)-capex", "financial_sector", "not_applicable")
     rate, tax_convention, tax_inputs = v2.tax_rate(facts, anchor)
     convention = f"cfo+interest_paid*(1-t)-capex({tax_convention})"
-    cfo = v2.at(v2.series(facts, OPERATING_CASH_FLOW_TAGS, duration=True), anchor)
-    capex = v2.at(v2.series(facts, CAPEX_TAGS, duration=True), anchor)
+    cfo = v2.value_at(facts, OPERATING_CASH_FLOW_TAGS, anchor, duration=True)
+    capex = v2.value_at(facts, CAPEX_TAGS, anchor, duration=True)
     for name, fact in (("operating_cash_flow", cfo), ("capex", capex)):
         if not _reported(fact):
             return _failed(convention, f"{name}_{fact.state}", fact.state)
-    interest = v2.at(v2.series(facts, INTEREST_PAID_TAGS, duration=True), anchor)
+    interest = v2.value_at(facts, INTEREST_PAID_TAGS, anchor, duration=True)
     inputs: tuple[Fact, ...] = (cfo, capex, *tax_inputs)
     if _reported(interest):
         interest_paid, inputs = interest.value or 0.0, inputs + (interest,)
     else:
         debt, debt_parts = v2.total_debt(facts, anchor)
-        if debt.state != "reported_zero":
+        if debt.state not in {"reported_zero", "assumed_zero"}:
             return _failed(convention, f"interest_paid_{interest.state}", interest.state)
         interest_paid, inputs = 0.0, inputs + debt_parts
     value = (cfo.value or 0.0) + interest_paid * (1 - rate) - (capex.value or 0.0)
@@ -99,7 +99,7 @@ def wacc(facts: dict, anchor: str, market_cap: float | None, assumptions: Assump
         return _failed(base, f"debt_{debt.state}", debt.state)
     rate, tax_convention, tax_inputs = v2.tax_rate(facts, anchor)
     debt_value = debt.value or 0.0
-    interest = v2.at(v2.series(facts, INTEREST_EXPENSE_TAGS, duration=True), anchor)
+    interest = v2.value_at(facts, INTEREST_EXPENSE_TAGS, anchor, duration=True)
     observed = (interest.value / debt_value
                 if interest.value is not None and _reported(interest) and debt_value > 0 else None)
     inputs: tuple[Fact, ...]
@@ -158,7 +158,7 @@ def valuation(facts: dict, anchor: str, market_cap: float | None, growth: float,
         return Valuation(flow, rate, enterprise, failed, _failed(per_share_convention, failed.reason or "", cash.state))
     equity_value = value - (debt.value or 0.0) + (cash.value or 0.0)
     equity = Metric(equity_value, "computed", None, bridge, (Fact("reported", value, "dcf_enterprise_value"), *debt_parts, *cash_parts))
-    shares = v2.at(v2.series(facts, DILUTED_SHARES_TAGS, duration=True, unit="shares"), anchor)
+    shares = v2.value_at(facts, DILUTED_SHARES_TAGS, anchor, duration=True, unit="shares")
     if not _reported(shares) or (shares.value or 0.0) <= 0:
         state = shares.state if not _reported(shares) else "not_meaningful"
         return Valuation(flow, rate, enterprise, equity, _failed(per_share_convention, f"diluted_shares_{state}", state))
@@ -211,4 +211,4 @@ USD_TAGS = tuple(dict.fromkeys(
     v2.OPERATING_INCOME_TAGS + v2.TAX_EXPENSE_TAGS + v2.PRETAX_INCOME_TAGS + v2.EQUITY_TAGS
     + v2.LONG_TERM_DEBT_TOTAL_TAGS + v2.LONG_TERM_DEBT_NONCURRENT_TAGS + v2.LONG_TERM_DEBT_CURRENT_TAGS
     + v2.SHORT_TERM_DEBT_TAGS + v2.CASH_TAGS + v2.SHORT_TERM_INVESTMENT_TAGS + OPERATING_CASH_FLOW_TAGS
-    + CAPEX_TAGS + INTEREST_PAID_TAGS + INTEREST_EXPENSE_TAGS))
+    + CAPEX_TAGS + INTEREST_PAID_TAGS + INTEREST_EXPENSE_TAGS + v2.DEBT_EVIDENCE_TAGS))
