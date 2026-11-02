@@ -28,7 +28,21 @@ def test_v1_declares_the_values_of_the_sealed_snapshot():
         "momentum_short_days": config.MOMENTUM_SHORT_DAYS, "momentum_long_days": config.MOMENTUM_LONG_DAYS}
     assert (GABI_MF_V1.benchmark_symbol, GABI_MF_V1.risk_free_rate) == (config.BENCHMARK_SYMBOL, config.RISK_FREE_RATE)
     assert (GABI_MF_V1.model_id, GABI_MF_V1.label) == (model_policy.FROZEN_MODEL_ID, model_policy.FROZEN_LABEL)
-    assert GABI_MF_V1.sealed_hypothesis and active_model() is GABI_MF_V1
+    assert GABI_MF_V1.sealed_hypothesis and active_model("GABI-MF-v1") is GABI_MF_V1
+
+
+def test_v2_is_active_with_the_v1_parameters_and_the_sec_metrics_v2():
+    from dataclasses import replace
+
+    from gabi.domain.market import model_version, sec_metrics_v2
+
+    active = active_model()
+    assert active.model_id == "GABI-MF-v2" and not active.sealed_hypothesis
+    assert active.metrics_version == sec_metrics_v2.VERSION == "sec-metrics-v2.1"
+    # Only the SEC metrics change; everything else is v1's, and no evidence is inherited.
+    assert replace(active, model_id=GABI_MF_V1.model_id, label=GABI_MF_V1.label, sealed_hypothesis=True,
+                   metrics_version=GABI_MF_V1.metrics_version) == GABI_MF_V1
+    assert model_version.status(active, dict(active.weights)) == "EXPERIMENTAL"
 
 
 @pytest.mark.parametrize("case", REFERENCE["cases"])

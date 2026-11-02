@@ -5,13 +5,14 @@ from market_fixture import TODAY, seed_fixture
 
 from gabi.domain.market import model_policy
 from gabi.domain.portfolio import selection
+from gabi.infrastructure.model_versions import GABI_MF_V1
 from gabi.infrastructure.settings import Settings
 from gabi_api.bootstrap import create_app
 
 
 def test_plan_matches_legacy_selection_and_allocation_without_writing(tmp_path):
     seed_fixture(tmp_path)
-    app = create_app(Settings(tmp_path), today=lambda: TODAY)
+    app = create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)
     original_stamp = (tmp_path / "gabi.db").stat().st_mtime_ns
     with TestClient(app) as api:
         response = api.post("/api/v1/portfolio/plan", json={
@@ -39,7 +40,7 @@ def test_plan_matches_legacy_selection_and_allocation_without_writing(tmp_path):
 
 
 def test_plan_rejects_invalid_holdings_before_market_read(tmp_path):
-    app = create_app(Settings(tmp_path), today=lambda: TODAY)
+    app = create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)
     with TestClient(app) as api:
         for holdings in ("AAPL,-1", "AAPL,nan", "AAPL,Infinity", "../../key,2"):
             response = api.post("/api/v1/portfolio/plan", json={"holdings_text": holdings})
@@ -50,7 +51,7 @@ def test_plan_rejects_invalid_holdings_before_market_read(tmp_path):
 
 def test_comparison_reuses_ranking_metrics_and_units(tmp_path):
     seed_fixture(tmp_path)
-    app = create_app(Settings(tmp_path), today=lambda: TODAY)
+    app = create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)
     with TestClient(app) as api:
         ranking = api.get("/api/v1/ranking?limit=50&hide_no_data=false").json()
         symbols = [ranking["items"][1]["symbol"], ranking["items"][0]["symbol"]]

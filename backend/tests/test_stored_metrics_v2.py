@@ -76,7 +76,7 @@ def seed(path, symbol, cik, facts):
 
 def test_snapshot_states_absences_and_leaves_the_sector_rule_to_the_reader():
     row = v2.snapshot(companyfacts())
-    assert (row["metrics_version"], row["anchor"], row["roic_state"]) == ("sec-metrics-v2", "2024-12-31", "computed")
+    assert (row["metrics_version"], row["anchor"], row["roic_state"]) == ("sec-metrics-v2.1", "2024-12-31", "computed")
     # NOPAT = 200 × (1 − 45/180); capital = ((900+450−150) + (1100+420−200)) / 2.
     assert row["roic"] == pytest.approx(150 / 1260)
     assert {item["accession"] for item in row["roic_inputs"]} == {"0001-23", "0001-24"}
@@ -129,13 +129,13 @@ def test_fill_writes_missing_or_outdated_rows_from_local_facts_only(tmp_path):
     progress = []
     first = stored_metrics_v2.fill(["AAA", "BBB", "NOCIK", "NOSEC", "AAA"], store=store,
                                    progress=lambda done, total: progress.append((done, total)))
-    assert first == {"metrics_version": "sec-metrics-v2", "computed": 2, "current": 0, "without_issuer": 2}
+    assert first == {"metrics_version": "sec-metrics-v2.1", "computed": 2, "current": 0, "without_issuer": 2}
     assert progress == [(2, 2)] and stored(path, "BBB")["roic_reason"] == "debt_absent"
     assert stored_metrics_v2.fill(["AAA", "BBB"], store=store)["computed"] == 0
     with closing(sqlite3.connect(path)) as db, db:
         db.execute("UPDATE sec_metrics_v2 SET metrics_version='sec-metrics-v0' WHERE symbol='AAA'")
     assert stored_metrics_v2.fill(["AAA", "BBB"], store=store) == {
-        "metrics_version": "sec-metrics-v2", "computed": 1, "current": 1, "without_issuer": 0}
+        "metrics_version": "sec-metrics-v2.1", "computed": 1, "current": 1, "without_issuer": 0}
 
 
 def test_fill_on_a_database_without_sec_tables_writes_nothing(tmp_path):
@@ -147,7 +147,7 @@ def test_model_versions_declare_their_sec_metrics():
     assert GABI_MF_V1.metrics_version == SEC_METRICS_V1
     new = replace(GABI_MF_V1, model_id="GABI-MF-v2", label="V2", sealed_hypothesis=False,
                   metrics_version=v2.VERSION)
-    assert new.metrics_version == "sec-metrics-v2"
+    assert new.metrics_version == "sec-metrics-v2.1"
     with pytest.raises(ValueError, match="Unknown SEC metrics"):
         replace(new, metrics_version="sec-metrics-v9")
     with pytest.raises(ValueError, match="sealed hypothesis"):

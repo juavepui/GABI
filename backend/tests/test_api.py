@@ -16,6 +16,7 @@ from market_fixture import TODAY, seed_fixture
 from gabi import config, identity, screener, storage
 from gabi.domain.market import model_policy
 from gabi.domain.market.selection import RankingFilter, filter_ranking
+from gabi.infrastructure.model_versions import GABI_MF_V1
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.mode import FileMode
 from gabi_api.bootstrap import create_app
@@ -24,7 +25,7 @@ from gabi_api.bootstrap import create_app
 @pytest.fixture
 def api(tmp_path):
     seed_fixture(tmp_path)
-    app = create_app(Settings(tmp_path), today=lambda: TODAY)
+    app = create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)
     with TestClient(app, raise_server_exceptions=False) as client:
         yield client, app.state.market.repository, tmp_path
 
@@ -35,7 +36,7 @@ def hashes(root):
 
 def test_health_and_openapi_without_creating_data(tmp_path):
     absent = tmp_path / "absent"
-    with TestClient(create_app(Settings(absent), today=lambda: TODAY)) as client:
+    with TestClient(create_app(Settings(absent), today=lambda: TODAY, model=GABI_MF_V1)) as client:
         assert client.get("/api/v1/health").json()["status"] == "ok"
         contract = client.get("/openapi.json").json()
         assert set(contract["paths"]) == {"/api/v1/health", "/api/v1/model", "/api/v1/learn/metrics",
@@ -359,7 +360,7 @@ def test_deep_histories_make_smaller_batches_with_identical_rankings(api):
 def test_stale_empty_and_corrupt_are_distinct(api):
     client, repository, root = api
     repository.close()
-    stale_app = create_app(Settings(root), today=lambda: TODAY + timedelta(days=30))
+    stale_app = create_app(Settings(root), today=lambda: TODAY + timedelta(days=30), model=GABI_MF_V1)
     with TestClient(stale_app) as stale:
         assert stale.get("/api/v1/data/status").json()["status"] == "stale"
     with sqlite3.connect(root / "gabi.db") as writer:
@@ -430,7 +431,7 @@ def test_unexpected_error_does_not_expose_secrets(api, monkeypatch):
 
 def test_missing_database_preserves_universe_with_null_metrics(tmp_path):
     (tmp_path / "sp500_constituents.csv").write_text("symbol,name,sector\nTEST,Test,Financials\n")
-    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as client:
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)) as client:
         payload = client.get("/api/v1/ranking?hide_no_data=false").json()
     assert payload["data"]["status"] == "empty"
     assert payload["items"][0]["metrics"]["price"]["value"] is None

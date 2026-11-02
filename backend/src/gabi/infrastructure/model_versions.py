@@ -6,6 +6,7 @@ sealed snapshot of the studies. Changing the active model is a commit that chang
 
 from types import MappingProxyType
 
+from gabi.domain.market import sec_metrics_v2
 from gabi.domain.market.model_policy import FROZEN_LABEL, FROZEN_MODEL_ID, FROZEN_WEIGHTS
 from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.technicals import TechnicalParameters
@@ -15,8 +16,15 @@ GABI_MF_V1 = ModelVersion(FROZEN_MODEL_ID, FROZEN_LABEL, FROZEN_WEIGHTS,
                                               momentum_short_days=126, momentum_long_days=252),
                           benchmark_symbol="SPY", risk_free_rate=0.04, sealed_hypothesis=True)
 
-VERSIONS = MappingProxyType({version.model_id: version for version in (GABI_MF_V1,)})
-ACTIVE_MODEL_ID = GABI_MF_V1.model_id
+# #245: the same weights, technical parameters, benchmark and risk-free rate, scored with the SEC metrics V2.1.
+# Activated by the owner on 2026-11-02 after the comparison with real data; it starts without evidence and
+# inherits none from GABI-MF-v1, which stays sealed for the running studies.
+GABI_MF_V2 = ModelVersion("GABI-MF-v2", "GABI multifactor v2 · métricas SEC V2.1", FROZEN_WEIGHTS,
+                          GABI_MF_V1.technical, benchmark_symbol="SPY", risk_free_rate=0.04,
+                          metrics_version=sec_metrics_v2.VERSION)
+
+VERSIONS = MappingProxyType({version.model_id: version for version in (GABI_MF_V1, GABI_MF_V2)})
+ACTIVE_MODEL_ID = GABI_MF_V2.model_id
 
 
 def active_model(model_id: str = ACTIVE_MODEL_ID) -> ModelVersion:

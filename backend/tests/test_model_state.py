@@ -14,6 +14,7 @@ from market_fixture import TODAY
 from gabi import config, research_lab, screener_asof, storage
 from gabi.domain.market import model_policy as policy
 from gabi.infrastructure.legacy import blind_validation
+from gabi.infrastructure.model_versions import GABI_MF_V1
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.mode import FileMode
 from gabi_api.bootstrap import create_app
@@ -27,7 +28,7 @@ def api(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "gabi.db")
     storage.init_db()  # the model state needs no market data, only the ledgers' metadata
-    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY), raise_server_exceptions=False) as client:
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1), raise_server_exceptions=False) as client:
         yield client, tmp_path
 
 

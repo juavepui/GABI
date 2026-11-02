@@ -11,6 +11,7 @@ from market_fixture import TODAY, seed_fixture
 from gabi.domain.market import model_policy
 from gabi.domain.portfolio import alerts
 from gabi.domain.portfolio.journal import changes
+from gabi.infrastructure.model_versions import GABI_MF_V1
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.journal import ADDED_COLUMNS, SCHEMA, SqliteJournal
 from gabi_api.bootstrap import create_app
@@ -58,7 +59,7 @@ def test_an_older_table_gains_the_new_columns_only_on_a_write(tmp_path):
 
 def test_a_thesis_from_the_company_page_captures_price_score_and_checklist(tmp_path):
     seed_fixture(tmp_path)
-    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)) as api:
         assert api.get("/api/v1/portfolio/journal/symbols").json() == {"items": {}}
         due = (TODAY + timedelta(days=90)).isoformat()
         created = api.post("/api/v1/portfolio/journal", json={
