@@ -20,7 +20,7 @@ from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 from gabi.domain.portfolio.simulation import listing
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "backtest_v3_comparison"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "backtest_v3_comparison", "idea_alerts"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_v3_comparison",
                   "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",

@@ -5710,7 +5710,8 @@
               "holdings_prices",
               "benchmark_prices",
               "metrics_comparison",
-              "backtest_v3_comparison"
+              "backtest_v3_comparison",
+              "idea_alerts"
             ],
             "title": "Kind",
             "type": "string"
@@ -11006,6 +11007,686 @@
           "weight_pct"
         ],
         "title": "HomeTarget",
+        "type": "object"
+      },
+      "Idea": {
+        "additionalProperties": false,
+        "properties": {
+          "card_id": {
+            "title": "Card Id",
+            "type": "integer"
+          },
+          "chain_ok": {
+            "title": "Chain Ok",
+            "type": "boolean"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/IdeaEvaluation"
+          },
+          "idea_id": {
+            "title": "Idea Id",
+            "type": "integer"
+          },
+          "pending_alerts": {
+            "description": "Alertas posteriores a la última revisión; piden revisar",
+            "items": {
+              "$ref": "#/components/schemas/IdeaAlert"
+            },
+            "title": "Pending Alerts",
+            "type": "array"
+          },
+          "review_due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Due"
+          },
+          "state": {
+            "$ref": "#/components/schemas/IdeaState"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idea_id",
+          "pending_alerts",
+          "symbol",
+          "card_id",
+          "review_due",
+          "state",
+          "evaluation",
+          "chain_ok"
+        ],
+        "title": "Idea",
+        "type": "object"
+      },
+      "IdeaAlert": {
+        "additionalProperties": false,
+        "properties": {
+          "detected_at": {
+            "title": "Detected At",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalidacion",
+              "revision_dato",
+              "ausencia",
+              "no_evaluable",
+              "revision_vencida",
+              "filing",
+              "resultados",
+              "estimaciones",
+              "insiders",
+              "tendencia"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "detected_at",
+          "message",
+          "evidence"
+        ],
+        "title": "IdeaAlert",
+        "type": "object"
+      },
+      "IdeaDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/IdeaAlert"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "card_id": {
+            "title": "Card Id",
+            "type": "integer"
+          },
+          "chain_ok": {
+            "title": "Chain Ok",
+            "type": "boolean"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/IdeaEvaluation"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/IdeaEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "idea_id": {
+            "title": "Idea Id",
+            "type": "integer"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/IdeaNote"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "pending_alerts": {
+            "description": "Alertas posteriores a la última revisión; piden revisar",
+            "items": {
+              "$ref": "#/components/schemas/IdeaAlert"
+            },
+            "title": "Pending Alerts",
+            "type": "array"
+          },
+          "review_due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Due"
+          },
+          "state": {
+            "$ref": "#/components/schemas/IdeaState"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idea_id",
+          "pending_alerts",
+          "symbol",
+          "card_id",
+          "review_due",
+          "state",
+          "evaluation",
+          "chain_ok",
+          "events",
+          "notes",
+          "alerts"
+        ],
+        "title": "IdeaDetail",
+        "type": "object"
+      },
+      "IdeaEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "costs_included": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Costs Included"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "excess": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excess"
+          },
+          "index_max_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index Max Drawdown"
+          },
+          "index_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "S&P 500 en EUR en las mismas fechas",
+            "title": "Index Return"
+          },
+          "max_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown"
+          },
+          "missing": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing"
+          },
+          "return_net": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rentabilidad total en EUR neta de costes de ida y vuelta",
+            "title": "Return Net"
+          },
+          "sessions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessions"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "insufficient_prices"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "IdeaEvaluation",
+        "type": "object"
+      },
+      "IdeaEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "idea_id": {
+            "title": "Idea Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "previous_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Sha256"
+          },
+          "recorded_at": {
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idea_id",
+          "sequence",
+          "kind",
+          "recorded_at",
+          "payload",
+          "previous_sha256",
+          "sha256"
+        ],
+        "title": "IdeaEvent",
+        "type": "object"
+      },
+      "IdeaEventCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "cause": {
+            "default": "",
+            "description": "Causa del resultado al cerrar",
+            "maxLength": 2000,
+            "title": "Cause",
+            "type": "string"
+          },
+          "corrects": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Evento que se corrige",
+            "title": "Corrects"
+          },
+          "executed": {
+            "default": false,
+            "description": "Si llegó a invertirse",
+            "title": "Executed",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "revisada",
+              "retirada",
+              "cerrada",
+              "corregida"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "enum": [
+                  "acertada",
+                  "parcial",
+                  "fallida"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "reason": {
+            "default": "",
+            "description": "Por qué se retira",
+            "maxLength": 2000,
+            "title": "Reason",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "description": "Revisión o corrección",
+            "maxLength": 2000,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "IdeaEventCreate",
+        "type": "object"
+      },
+      "IdeaList": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Idea"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/IdeaSummary"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "as_of",
+          "items",
+          "summary",
+          "benchmark"
+        ],
+        "title": "IdeaList",
+        "type": "object"
+      },
+      "IdeaNote": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "idea_id": {
+            "title": "Idea Id",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "idea_id",
+          "created_at",
+          "updated_at",
+          "text"
+        ],
+        "title": "IdeaNote",
+        "type": "object"
+      },
+      "IdeaNoteText": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "IdeaNoteText",
+        "type": "object"
+      },
+      "IdeaState": {
+        "additionalProperties": false,
+        "properties": {
+          "corrections": {
+            "title": "Corrections",
+            "type": "integer"
+          },
+          "ended_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended On"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "published_on": {
+            "title": "Published On",
+            "type": "string"
+          },
+          "reviews": {
+            "title": "Reviews",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "abierta",
+              "retirada",
+              "cerrada"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "published_on",
+          "ended_on",
+          "outcome",
+          "reviews",
+          "corrections"
+        ],
+        "title": "IdeaState",
+        "type": "object"
+      },
+      "IdeaSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "beat_index": {
+            "title": "Beat Index",
+            "type": "integer"
+          },
+          "closed": {
+            "title": "Closed",
+            "type": "integer"
+          },
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "integer"
+          },
+          "ideas": {
+            "title": "Ideas",
+            "type": "integer"
+          },
+          "mean_excess": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Excess"
+          },
+          "median_excess": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Excess"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "open": {
+            "title": "Open",
+            "type": "integer"
+          },
+          "retired": {
+            "title": "Retired",
+            "type": "integer"
+          },
+          "thesis_hits": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Thesis Hits",
+            "type": "object"
+          }
+        },
+        "required": [
+          "ideas",
+          "open",
+          "closed",
+          "retired",
+          "evaluated",
+          "beat_index",
+          "median_excess",
+          "mean_excess",
+          "thesis_hits",
+          "note"
+        ],
+        "title": "IdeaSummary",
         "type": "object"
       },
       "Identity": {
@@ -26127,6 +26808,619 @@
           }
         },
         "summary": "Delete",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/ideas": {
+      "get": {
+        "description": "Every published idea, whatever its status, against the S&P 500 in EUR; reads only the local cache.",
+        "operationId": "list_ideas_api_v1_portfolio_ideas_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "List Ideas",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/ideas/{idea_id}": {
+      "get": {
+        "operationId": "get_idea_api_v1_portfolio_ideas__idea_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Idea Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Get Idea",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/ideas/{idea_id}/events": {
+      "post": {
+        "description": "Review, retire, close or correct: always a new event, never an edit.",
+        "operationId": "add_event_api_v1_portfolio_ideas__idea_id__events_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Idea Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeaEventCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Add Event",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/ideas/{idea_id}/notes": {
+      "post": {
+        "operationId": "add_note_api_v1_portfolio_ideas__idea_id__notes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Idea Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeaNoteText"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Add Note",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/delete": {
+      "post": {
+        "description": "Deletes a private note; the published events stay.",
+        "operationId": "delete_note_api_v1_portfolio_ideas__idea_id__notes__note_id__delete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Idea Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Note Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Delete Note",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/save": {
+      "post": {
+        "operationId": "save_note_api_v1_portfolio_ideas__idea_id__notes__note_id__save_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Idea Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Note Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeaNoteText"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Save Note",
         "tags": [
           "portfolio"
         ]

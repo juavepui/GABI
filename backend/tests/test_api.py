@@ -66,7 +66,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/jobs",
                                          "/api/v1/jobs/{job_id}", "/api/v1/jobs/{job_id}/cancel",
                                          "/api/v1/jobs/{job_id}/result", "/api/v1/jobs/{job_id}/retry",
-                                         "/api/v1/portfolio/journal", "/api/v1/portfolio/cards", "/api/v1/portfolio/cards/{card_id}", "/api/v1/portfolio/cards/{card_id}/save", "/api/v1/portfolio/cards/{card_id}/state",
+                                         "/api/v1/portfolio/journal", "/api/v1/portfolio/cards", "/api/v1/portfolio/ideas", "/api/v1/portfolio/ideas/{idea_id}", "/api/v1/portfolio/ideas/{idea_id}/events", "/api/v1/portfolio/ideas/{idea_id}/notes", "/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/save", "/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/delete", "/api/v1/portfolio/cards/{card_id}", "/api/v1/portfolio/cards/{card_id}/save", "/api/v1/portfolio/cards/{card_id}/state",
                                          "/api/v1/portfolio/journal/{entry_id}/review",
                                          "/api/v1/portfolio/journal/{entry_id}/delete", "/api/v1/portfolio/journal/symbols", "/api/v1/portfolio/journal/{entry_id}/changes",
                                          "/api/v1/market/macro", "/api/v1/market/snapshots",

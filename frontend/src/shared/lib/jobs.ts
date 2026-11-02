@@ -11,6 +11,7 @@ export const JOB_NAMES: Record<string, string> = {
   sim_prices: 'Precios de cartera simulada',
   holdings_prices: 'Precios de mi cartera',
   benchmark_prices: 'Precios del benchmark S&P 500 en EUR',
+  idea_alerts: 'Alertas del historial de ideas',
   metrics_comparison: 'Comparar métricas V1 y SEC V2',
   decision_plan: 'Generar decisiones de cartera',
   filing_check: 'Comprobar filings SEC',

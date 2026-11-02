@@ -52,6 +52,7 @@ export const sections: Section[] = [
       { path: '/cartera/riesgo', label: 'Riesgo y política' },
       { path: '/cartera/seguimiento', label: 'Seguimiento' },
       { path: '/cartera/diario', label: 'Diario de inversión' },
+      { path: '/cartera/ideas', label: 'Historial de ideas' },
       { path: '/cartera/simuladas', label: 'Carteras simuladas' },
     ],
   },
