@@ -144,7 +144,7 @@ export function CompanyTheses({ symbol }: { symbol: string }) {
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
-            Al guardarla se anotan el último precio de la caché, el score del modelo congelado y el
+            Al guardarla se anotan el último precio de la caché, el score del modelo activo y el
             resultado del checklist de hoy, para ver al revisarla qué ha cambiado. Sin fecha, se
             revisa al terminar el horizonte. Antes de escribirla, repasa los{' '}
             <a

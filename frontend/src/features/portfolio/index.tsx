@@ -344,7 +344,11 @@ export function PortfolioPage() {
                     Objetivo · {data.target.length} posiciones
                   </h2>
                   <Badge variant={data.status === 'FROZEN' ? 'secondary' : 'outline'}>
-                    {data.status === 'FROZEN' ? 'Top-20 congelado' : 'Variante experimental'}
+                    {data.status === 'FROZEN'
+                      ? 'Top-20 congelado'
+                      : data.model_id.startsWith('GABI-MF-')
+                        ? `Top-20 de ${data.model_id} · sin evidencia propia`
+                        : 'Variante experimental'}
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{data.evidence_note}</p>

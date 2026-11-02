@@ -4,7 +4,7 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.goto('/cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
   await expect(page).toHaveTitle('Cartera objetivo · GABI');
-  await expect(page.getByText('Top-20 congelado')).toBeVisible();
+  await expect(page.getByText('Top-20 de GABI-MF-v2 · sin evidencia propia')).toBeVisible();
   await page
     .getByLabel('¿Y si…? Posiciones hipotéticas (SÍMBOLO,euros; una por línea)')
     .fill('T000,100');

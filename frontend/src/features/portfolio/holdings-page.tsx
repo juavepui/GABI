@@ -348,8 +348,8 @@ function Deviations({ summary }: { summary: HoldingsSummary }) {
     <section aria-label="Frente a la cartera objetivo" className="rounded-xl border bg-card p-5">
       <h2 className="text-xl font-semibold">Frente a la cartera objetivo</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Peso actual de cada empresa frente a su peso en el Top-20 congelado de hoy. Una desviación
-        no es una orden: el plan de aportación de{' '}
+        Peso actual de cada empresa frente a su peso en el Top-20 del modelo activo de hoy. Una
+        desviación no es una orden: el plan de aportación de{' '}
         <Link className="text-primary underline" to="/cartera">
           Cartera objetivo
         </Link>{' '}

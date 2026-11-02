@@ -147,7 +147,9 @@ test('loading, sanitized errors and retry; a newer request wins over a delayed o
   });
   await page.getByRole('textbox', { name: 'Buscar empresa o símbolo' }).fill('T000');
   await page.getByRole('button', { name: 'Aplicar filtros' }).click();
-  await expect(page.getByRole('status')).toContainText('Consultando la caché local');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Consultando la caché local' }),
+  ).toBeVisible();
   await page.getByRole('textbox', { name: 'Buscar empresa o símbolo' }).fill('BRK');
   await page.getByRole('button', { name: 'Aplicar filtros' }).click();
   await expect(page.locator('tbody tr')).toHaveCount(2);
