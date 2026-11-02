@@ -143,5 +143,7 @@ def test_implied_growth_reproduces_the_observed_enterprise_value_and_rises_with_
 
 
 def test_implied_growth_propagates_absent_debt():
-    metric = val.implied_growth(company(LongTermDebt=None), ANCHOR, 1500.0, ASSUMPTIONS, sic=None)
+    metric = val.implied_growth(company(LongTermDebt=None, DebtCurrent=[
+        {"end": "2019-12-31", "val": 10.0, "form": "10-K", "fp": "FY", "accn": "0001-20", "filed": "2020-02-15"}]), ANCHOR, 1500.0,
+                                ASSUMPTIONS, sic=None)
     assert (metric.value, metric.reason) == (None, "debt_absent")

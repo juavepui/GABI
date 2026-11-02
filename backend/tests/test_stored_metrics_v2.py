@@ -43,6 +43,8 @@ def companyfacts(cik=1, debt=True, operating=200.0):
     }
     if debt:
         tags["LongTermDebt"] = [stock(450.0, "2023-12-31", "0001-23", "2024-02-15"), stock(420.0)]
+    else:  # Debt reported in an old filing only: a gap, not an assumed zero.
+        tags["DebtCurrent"] = [stock(10.0, "2019-12-31")]
     return {"cik": cik, "facts": {"us-gaap": {tag: {"units": {"USD": rows}} for tag, rows in tags.items()}}}
 
 

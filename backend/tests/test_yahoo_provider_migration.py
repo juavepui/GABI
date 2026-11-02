@@ -95,7 +95,8 @@ def test_fundamentals_capture_checklist_info_fields(monkeypatch):
     fake = FakeYahoo()
     monkeypatch.setattr(yfinance, "Ticker", fake.Ticker)
     info, _, _ = data_fetch._fetch_fundamentals_attempt("BRK.B")
-    assert set(info) == set(config.INFO_KEYS) | {"heldPercentInsiders"}
+    assert set(info) == set(operational_settings.current().info_keys)
+    assert {"heldPercentInsiders", "enterpriseValue"} <= set(info) and set(config.INFO_KEYS) <= set(info)
     assert info["heldPercentInsiders"] is None and info["marketCap"] == 1e9
 
 

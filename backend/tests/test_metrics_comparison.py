@@ -31,6 +31,8 @@ def facts(debt=True):
     }
     if debt:
         tags["LongTermDebt"] = [stock(450.0, "2023-12-31"), stock(420.0)]
+    else:  # Debt reported in an old filing only: a gap, not an assumed zero.
+        tags["DebtCurrent"] = [stock(10.0, "2019-12-31")]
     return {"facts": {"us-gaap": {tag: {"units": {"USD": rows}} for tag, rows in tags.items()}}}
 
 
