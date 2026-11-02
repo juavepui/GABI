@@ -96,6 +96,30 @@ def test_lease_inclusive_debt_tags_are_read_when_the_plain_ones_stopped():
         "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsCurrent"]
 
 
+def test_without_an_operating_income_line_the_declared_ebit_proxy_is_used():
+    facts = base(OperatingIncomeLoss=None, InterestExpense=[flow(20.0)])
+    metric = v2.roic(facts, "2024-12-31", sic=None)
+    # EBIT proxy = pretax 180 + interest 20 = 200, the same NOPAT as the operating line.
+    assert metric.value == pytest.approx(200 * 0.75 / 1260)
+    assert "ebit_proxy=pretax+interest" in metric.convention
+    assert [fact.tag for fact in metric.inputs[:3]] == [
+        "ebit_proxy", "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "InterestExpense"]
+    no_interest = v2.roic(base(OperatingIncomeLoss=None), "2024-12-31", sic=None)
+    assert (no_interest.value, no_interest.reason) == (None, "operating_income_absent")  # Has debt: no zero.
+    debt_free = base(OperatingIncomeLoss=None, LongTermDebtNoncurrent=None, LongTermDebtCurrent=None)
+    proxy = v2.roic(debt_free, "2024-12-31", sic=None)
+    assert proxy.state == "computed" and any(fact.tag == "interest_expense" and fact.state == "assumed_zero"
+                                             for fact in proxy.inputs)
+
+
+def test_cash_falls_back_to_the_line_with_restricted_cash_when_the_plain_one_stopped():
+    facts = base(CashAndCashEquivalentsAtCarryingValue=[stock(150.0, "2023-12-31")],
+                 CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents=[stock(210.0)])
+    cash, parts = v2.cash_and_short_term_investments(facts, "2024-12-31")
+    assert cash.value == 210.0 and parts[0].tag == "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"
+
+
 def test_declared_zero_debt_and_cash_are_used():
     facts = base(LongTermDebtNoncurrent=[stock(0.0, "2023-12-31"), stock(0.0)], LongTermDebtCurrent=None,
                  CashAndCashEquivalentsAtCarryingValue=[stock(0.0, "2023-12-31"), stock(0.0)])

@@ -28,6 +28,8 @@ PRETAX_INCOME_TAGS = (
     "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
     "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
 )
+# Interest expense: the EBIT proxy of issuers without an operating income line.
+INTEREST_EXPENSE_TAGS = ("InterestExpense", "InterestExpenseDebt", "InterestExpenseNonoperating")
 EQUITY_TAGS = ("StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")
 # Total long-term debt (current portion included) or its two parts.
 # Each list in order of preference; issuers moved to the lease-inclusive tags after ASC 842.
@@ -44,7 +46,9 @@ DEBT_EVIDENCE_TAGS = (*LONG_TERM_DEBT_TOTAL_TAGS, *LONG_TERM_DEBT_NONCURRENT_TAG
                       "ConvertibleNotesPayableCurrent", "OtherLongTermDebtNoncurrent", "NotesPayable",
                       "LongTermLineOfCredit", "LineOfCredit", "SecuredDebt", "UnsecuredDebt", "FinanceLeaseLiability",
                       "InterestExpense", "InterestExpenseDebt", "InterestPaidNet", "InterestPaid")
-CASH_TAGS = ("CashAndCashEquivalentsAtCarryingValue",)
+# The second one (after ASU 2016-18) also includes restricted cash: a small declared overstatement, used only when
+# the issuer no longer reports the first for the anchor year.
+CASH_TAGS = ("CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents")
 SHORT_TERM_INVESTMENT_TAGS = ("ShortTermInvestments", "MarketableSecuritiesCurrent")
 
 # Banks and credit institutions, insurers and REITs: debt is operating, not financing.
@@ -228,6 +232,23 @@ def tax_rate(facts: dict, anchor: str) -> tuple[float, str, tuple[Fact, ...]]:
     return STATUTORY_TAX_RATE, "statutory_tax_21", ()
 
 
+def ebit_proxy(facts: dict, anchor: str) -> tuple[Fact, tuple[Fact, ...]] | None:
+    """Pretax income + interest expense for the anchor year, or ``None`` if either is missing."""
+    pretax = value_at(facts, PRETAX_INCOME_TAGS, anchor, duration=True)
+    if pretax.value is None:
+        return None
+    interest = value_at(facts, INTEREST_EXPENSE_TAGS, anchor, duration=True)
+    if interest.value is None:
+        debt, debt_parts = total_debt(facts, anchor)
+        if debt.state != "assumed_zero":
+            return None
+        interest, extra = Fact("assumed_zero", 0.0, "interest_expense", end=anchor), debt_parts
+    else:
+        extra = ()
+    value = (pretax.value or 0.0) + (interest.value or 0.0)
+    return Fact("reported", value, "ebit_proxy", end=pretax.end), (pretax, interest, *extra)
+
+
 def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     """NOPAT / average invested capital over the anchor year.
 
@@ -235,21 +256,33 @@ def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     tax expense / pretax income, bounded to [0, 1); with no positive pretax
     income or no tax figure the statutory 21 % is used and declared. Invested
     capital = equity + financial debt − cash and short-term investments, averaged
-    between the opening and closing balance sheets."""
+    between the opening and closing balance sheets.
+
+    Without an operating income line for the anchor year, the declared EBIT proxy
+    is used: pretax income + interest expense (``ebit_proxy`` in the convention).
+    Interest counts as zero only if the issuer's debt is a declared zero."""
     if financial_sector(sic):
         return Metric(None, "not_applicable", "financial_sector", "nopat/average_invested_capital")
     operating = value_at(facts, OPERATING_INCOME_TAGS, anchor, duration=True)
+    proxy_inputs: tuple[Fact, ...] = ()
+    income = "operating_income"
     if operating.value is None:
-        return Metric(None, operating.state, f"operating_income_{operating.state}", "nopat/average_invested_capital")
+        proxy = ebit_proxy(facts, anchor)
+        if proxy is None:
+            return Metric(None, operating.state, f"operating_income_{operating.state}",
+                          "nopat/average_invested_capital")
+        operating, proxy_inputs = proxy
+        income = "ebit_proxy"
     rate, tax_convention, tax_inputs = tax_rate(facts, anchor)
-    convention = f"nopat({tax_convention})/average_invested_capital"
+    convention = (f"nopat({tax_convention})/average_invested_capital" if income == "operating_income"
+                  else f"nopat({tax_convention},ebit_proxy=pretax+interest)/average_invested_capital")
     # Year ends of any equity tag: an issuer may report the opening and closing years under different tags.
     equity_series = {end: fact for tag in reversed(EQUITY_TAGS)
                      for end, fact in _latest_by_end(_entries(facts, tag, "USD"), tag, "USD", False).items()}
     opening = _previous_year_end(equity_series, anchor) if equity_series else None
     if opening is None:
         return Metric(None, "absent", "no_opening_balance_sheet", convention)
-    capitals, inputs = [], [operating, *tax_inputs]
+    capitals, inputs = [], [operating, *proxy_inputs, *tax_inputs]
     for end in (opening, anchor):
         equity = value_at(facts, EQUITY_TAGS, end, duration=False)
         debt, debt_parts = total_debt(facts, end)
@@ -263,7 +296,7 @@ def roic(facts: dict, anchor: str, *, sic: int | None) -> Metric:
     average = sum(capitals) / 2
     if average <= 0:
         return Metric(None, "not_meaningful", "non_positive_invested_capital", convention, tuple(inputs))
-    return Metric(operating.value * (1 - rate) / average, "computed", None, convention, tuple(inputs))
+    return Metric((operating.value or 0.0) * (1 - rate) / average, "computed", None, convention, tuple(inputs))
 
 
 def latest_annual_end(facts: dict) -> str | None:
