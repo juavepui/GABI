@@ -35,6 +35,7 @@ from gabi.application.market.sec_selection import refresh as refresh_selection
 from gabi.application.market.sec_xbrl import fetch_complete, synchronize
 from gabi.domain.market import sync_events as sync_rules
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.providers import source_retry
 from gabi.infrastructure.providers.sec_cik import SecTickerMap
 from gabi.infrastructure.providers.sec_xbrl import SecXbrl
@@ -447,6 +448,6 @@ def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = N
     return refresh_selection(symbols, store=_SelectionStore(), mapping=get_cik_map,
                              resolutions=_resolutions(), download_batch=download,
                              classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
-                             now=_now, default_max_age_hours=config.EDGAR_CACHE_MAX_AGE_HOURS,
+                             now=_now, default_max_age_hours=operational_settings.current().edgar_cache_max_age_hours,
                              force=force, max_age_hours=max_age_hours, progress_cb=progress_cb,
                              as_of=as_of, full_refresh=full_refresh)

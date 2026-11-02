@@ -3,6 +3,7 @@
 import ast
 import json
 import time
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,6 +12,7 @@ import pytest
 import yfinance
 
 from gabi import config
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.providers import yahoo
 
@@ -69,7 +71,9 @@ def test_data_fetch_calls_match_capture(monkeypatch, call):
                                                                         splits=lambda *a, **k: None))
     monkeypatch.setattr(data_fetch.identity, "resolve", lambda *a: {"entity_id": None})
     # Parity with the capture; the extra checklist fields are tested separately.
-    monkeypatch.setattr(data_fetch, "EXTRA_INFO_KEYS", [])
+    monkeypatch.setattr(operational_settings, "current", lambda: replace(
+        operational_settings.V1, info_keys=tuple(key for key in operational_settings.V1.info_keys
+                                                 if key != "heldPercentInsiders")))
     results = []
     for label in ("old", "new"):
         fake = FakeYahoo()

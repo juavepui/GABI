@@ -68,7 +68,6 @@
     "gabi.factor_sector_stability"
   ],
   "backend/src/gabi/evidence_confidence.py": [
-    "gabi.config",
     "gabi.evidence_catalog",
     "gabi.live_ledger",
     "gabi.rank_stability",

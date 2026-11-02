@@ -12,6 +12,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYERS = {"domain", "application", "infrastructure"}
+# ADR 0009: the only infrastructure module, besides storage/providers, a permanent flat module may read:
+# declared, versioned operational settings without I/O (#270).
+DECLARED_SETTINGS = frozenset({"gabi.infrastructure.operational_settings"})
 PURE_LIBRARIES = {"numpy", "pandas", "scipy", "quantstats", "pypfopt", "backtesting", "exchange_calendars"}
 IO_MODULES = {"os", "pathlib", "sqlite3", "subprocess", "socket", "http", "urllib", "shutil", "tempfile",
               "multiprocessing", "concurrent", "importlib", "builtins", "io", "sys"}
@@ -179,7 +182,8 @@ def check(root: Path) -> list[str]:
             # Neither imports legacy; mixed cycles are still rejected.
             tracked = {target for target, _ in dependencies if legacy_dependency(target)
                        and layer(target) not in {"domain", "application"}
-                       and not target.startswith(("gabi.infrastructure.storage.", "gabi.infrastructure.providers."))}
+                       and not target.startswith(("gabi.infrastructure.storage.", "gabi.infrastructure.providers."))
+                       and target not in DECLARED_SETTINGS}
             expected = set(baseline[relative])
             for target in sorted(tracked - expected):
                 errors.append(f"{relative}: new legacy dependency {target}; extract into the correct layer")
