@@ -16,6 +16,7 @@ from gabi.application.market import cached_data
 from gabi.application.research.history_refresh import RefreshPorts, refresh
 from gabi.domain.market import fred, freshness
 from gabi.domain.research import history_refresh as rules
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.providers import yahoo
 from gabi.infrastructure.providers.fred import FredSource
 from gabi.infrastructure.providers.sp500_sources import SP500Sources
@@ -147,5 +148,5 @@ def run() -> dict:
         fetch_fundamentals=lambda symbols: data_fetch.fetch_fundamentals_batch(symbols, max_workers=2),
         fred_key=config.load_fred_key, fred_series=fred.SERIES,
         fetch_fred=lambda sid, key, units: FredSource().fetch(sid, key, units, 10000, require_complete=False),
-        store_fred=series.upsert, benchmark=config.BENCHMARK_SYMBOL,
+        store_fred=series.upsert, benchmark=operational_settings.benchmark_symbol(),
         log=lambda message: print(message, flush=True)))

@@ -21,6 +21,7 @@ from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.price_sync import yahoo_symbol
 from gabi.domain.market.source_errors import RETRYABLE_CATEGORIES as RETRYABLE
 from gabi.domain.market.source_errors import classify
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.providers import source_retry, yahoo
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites, statement_json
@@ -29,8 +30,6 @@ from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measure
 
 RETRYABLE_CATEGORIES = set(RETRYABLE)
 RETRY_BACKOFF_SECONDS = 1.5
-# Yahoo info fields beyond the frozen config.INFO_KEYS; the checklist (#167) reads them.
-EXTRA_INFO_KEYS = ["heldPercentInsiders"]
 
 
 def _reads() -> SqliteCacheReads:
@@ -140,10 +139,10 @@ def fetch_splits_batch(symbols: list, max_workers: int = 6) -> dict:
 def ensure_price_history_asof(symbols: list, as_of_date: str, progress_cb=None) -> dict:
     """Price history reaching ``as_of_date``; 'max' downloads only for symbols that lack it."""
     return downloads.price_history_asof(
-        symbols, as_of_date, benchmark=config.BENCHMARK_SYMBOL,
-        benchmark_verified=lambda day: cached_data.has_verified_price_as_of(_reads(), config.BENCHMARK_SYMBOL, day),
+        symbols, as_of_date, benchmark=operational_settings.benchmark_symbol(),
+        benchmark_verified=lambda day: cached_data.has_verified_price_as_of(_reads(), operational_settings.benchmark_symbol(), day),
         history=lambda symbol, day: identity.price_history(symbol, day),
-        benchmark_prices=lambda: cached_data.prices(_reads(), config.BENCHMARK_SYMBOL),
+        benchmark_prices=lambda: cached_data.prices(_reads(), operational_settings.benchmark_symbol()),
         download_symbol=lambda symbol, day: identity.price_download_symbol(symbol, day),
         fetch_prices=lambda batch: fetch_prices_batch(batch, period="max"),
         fetch_splits=lambda batch: fetch_splits_batch(batch), progress_cb=progress_cb)
@@ -159,7 +158,7 @@ def ensure_decision_prices(symbols: list, progress_cb=None) -> dict:
 
 def _fetch_fundamentals_attempt(symbol: str):
     t = yahoo.ticker(normalize_symbol(symbol))
-    filtered_info = rules.fundamentals_info(t.info, config.INFO_KEYS + EXTRA_INFO_KEYS)
+    filtered_info = rules.fundamentals_info(t.info, list(operational_settings.current().info_keys))
     qi = getattr(t, "quarterly_income_stmt", None)
     if qi is None or qi.empty:
         qi = getattr(t, "quarterly_financials", pd.DataFrame())
@@ -233,7 +232,7 @@ def ensure_universe_data(symbols: list, force: bool = False, max_age_hours: int 
     can be explained."""
     writes = _writes()
     return downloads.universe_data(
-        symbols, benchmark=config.BENCHMARK_SYMBOL, max_age_hours=max_age_hours or config.CACHE_MAX_AGE_HOURS,
+        symbols, benchmark=operational_settings.benchmark_symbol(), max_age_hours=max_age_hours or operational_settings.current().cache_max_age_hours,
         force=force, full_refresh=full_refresh,
         sync_prices=lambda batch: sync_prices(batch, force=force, full_refresh=full_refresh),
         fundamentals_fetched_at=lambda batch: cached_data.fundamentals_fetched_at(_reads(), batch),

@@ -8,6 +8,7 @@ from gabi.application.market.ranking import Calculators, MarketBatch, MemoryInpu
 from gabi.application.market.sec_reads import cached_metrics
 from gabi.domain.market import events as events_calendar
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
@@ -59,7 +60,7 @@ def build_screener_table(universe_df: pd.DataFrame, weights: dict = None, progre
     inputs = MemoryInputs(
         MarketBatch(universe_df, cached_data.fundamentals(cache, symbols), cached_data.prices_multi(cache, symbols),
                     cached_metrics(SqliteSecReads(config.DB_PATH), symbols)),
-        cached_data.prices(cache, config.BENCHMARK_SYMBOL), config.BENCHMARK_SYMBOL, _get_risk_free_rate(),
+        cached_data.prices(cache, operational_settings.benchmark_symbol()), operational_settings.benchmark_symbol(), _get_risk_free_rate(),
     )
     calculators = Calculators(compute_fundamental_metrics, technicals.compute_technicals,
                               risk.compute_risk_metrics, events_calendar.parse_corporate_events,

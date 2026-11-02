@@ -5,13 +5,14 @@ from pathlib import Path
 from gabi.application.errors import QueryError
 from gabi.domain.research import live_performance
 from gabi.domain.research.live_ledger import safe
+from gabi.infrastructure import operational_settings
 
 
 def live_report(*, model_version: str | None = None, as_of: str | None = None) -> dict:
     """The LIVE_FORWARD paper portfolio over the ledger's events and the cached, issuer-attributed prices."""
     import pandas as pd
 
-    from gabi import config, identity, live_ledger, storage
+    from gabi import identity, live_ledger, storage
     from gabi.domain.market.freshness import market_date as last_completed_session
 
     def history(symbol: str, payload: dict) -> pd.DataFrame:
@@ -24,8 +25,8 @@ def live_report(*, model_version: str | None = None, as_of: str | None = None) -
 
     now = live_ledger._now()
     return live_performance.report(live_ledger.events(), now, last_completed_session(now),
-                                   storage.get_prices(config.BENCHMARK_SYMBOL), history,
-                                   benchmark_symbol=config.BENCHMARK_SYMBOL, model_version=model_version, as_of=as_of)
+                                   storage.get_prices(operational_settings.benchmark_symbol()), history,
+                                   benchmark_symbol=operational_settings.benchmark_symbol(), model_version=model_version, as_of=as_of)
 
 
 def run_live_report(model_version: str) -> dict:

@@ -5,6 +5,7 @@ import json
 import sqlite3
 import time
 from contextlib import closing
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -15,6 +16,7 @@ import yfinance
 from test_operational_sources_migration import FakeTicker, yahoo_panel
 
 from gabi import config, identity, storage
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.storage import sync_events as event_store
 
@@ -72,7 +74,9 @@ def market(monkeypatch):
     monkeypatch.setattr(event_store, "datetime", FixedDatetime)
     monkeypatch.setattr(data_fetch, "datetime", FixedDatetime)
     # Parity with the capture; the extra checklist fields (#167) are tested separately.
-    monkeypatch.setattr(data_fetch, "EXTRA_INFO_KEYS", [])
+    monkeypatch.setattr(operational_settings, "current", lambda: replace(
+        operational_settings.V1, info_keys=tuple(key for key in operational_settings.V1.info_keys
+                                                 if key != "heldPercentInsiders")))
     monkeypatch.setattr(time, "perf_counter", lambda: 2.)
     monkeypatch.setattr(time, "thread_time", lambda: 1.)
     monkeypatch.setattr(time, "sleep", lambda seconds: None)

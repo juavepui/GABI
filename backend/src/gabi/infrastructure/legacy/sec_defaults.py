@@ -1,7 +1,7 @@
-"""Read-only compatibility setting; never mutates the frozen configuration."""
+"""Read-only compatibility setting from the versioned operational settings (#270); never mutates `config`."""
 
-from gabi import config
+from gabi.infrastructure import operational_settings
 
 
 def cache_max_age_hours() -> int:
-    return config.EDGAR_CACHE_MAX_AGE_HOURS
+    return operational_settings.current().edgar_cache_max_age_hours

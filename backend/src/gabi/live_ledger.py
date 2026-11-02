@@ -13,6 +13,7 @@ from gabi.application.market.sec_reads import fetched_at as sec_fetched_at
 from gabi.domain.market import model_policy
 from gabi.domain.market.freshness import market_date as last_completed_session
 from gabi.domain.research.live_ledger import UNREADABLE, canonical, fingerprint, replay_decision, safe, verify_chain
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.providers import research_environment
 from gabi.infrastructure.storage import live_ledger_files
 from gabi.infrastructure.storage import live_ledger_writes as ledger_sql
@@ -157,7 +158,7 @@ def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") 
              "application/market/evidence_assessment.py", "evidence_catalog.py", "domain/research/evidence_catalog.py",
              "application/research/evidence_catalog.py",
              "infrastructure/storage/evidence_catalog.py", "infrastructure/storage/published_factors.py",
-             "workspace.py", "__init__.py")
+             "workspace.py", "__init__.py", "infrastructure/operational_settings.py")
     hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
     specification = {"weights": weights if weights is not None else dict(model_policy.FROZEN_WEIGHTS),
                      "universe_id": universe_id, "top_n": 20, "coverage": .70,
@@ -187,7 +188,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
             table = table.reindex(columns=["composite_score", "score_coverage"])
         if table.index.has_duplicates:
             raise ValueError("Universo con tickers duplicados.")
-        sources = _safe(table.attrs.get("sources") or provenance([*symbols, config.BENCHMARK_SYMBOL]))
+        sources = _safe(table.attrs.get("sources") or provenance([*symbols, operational_settings.benchmark_symbol()]))
         for symbol in symbols:
             sources.setdefault(symbol, {})["entity_id"] = identity.resolve(symbol, market)["entity_id"]
         excluded = {}
@@ -202,15 +203,15 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
         eligible = table.drop(index=list(excluded))
         eligible = eligible.assign(_symbol=eligible.index).sort_values(["composite_score", "_symbol"], ascending=[False, True]).drop(columns="_symbol")
         picks = eligible.head(20).index.tolist()
-        stale = [s for s in [*picks, config.BENCHMARK_SYMBOL]
+        stale = [s for s in [*picks, operational_settings.benchmark_symbol()]
                  if sources.get(s, {}).get("price_date") != market
                  or any(not isinstance(sources.get(s, {}).get(k), (int, float)) or sources[s][k] <= 0
                         for k in ("close", "adj_close"))]
         future = [s for s, source in sources.items() if source.get("price_date") and source["price_date"] > market]
         stale_inputs = []
         for symbol in picks:
-            for field, hours in (("fundamentals_fetched_at", config.CACHE_MAX_AGE_HOURS),
-                                 ("sec_fetched_at", config.EDGAR_CACHE_MAX_AGE_HOURS)):
+            for field, hours in (("fundamentals_fetched_at", operational_settings.current().cache_max_age_hours),
+                                 ("sec_fetched_at", operational_settings.current().edgar_cache_max_age_hours)):
                 value = sources.get(symbol, {}).get(field)
                 try:
                     age = (now - datetime.fromisoformat(value)).total_seconds() / 3600 if value else None
@@ -222,7 +223,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
         source_failures = maintenance.get("failed", {})
         failed_events = maintenance.get("failed_events", [])
         failed_inputs = [f"{s}:{field}" for s, failures in source_failures.items() for field in failures
-                         if s in picks or (s == config.BENCHMARK_SYMBOL and field == "precio")]
+                         if s in picks or (s == operational_settings.benchmark_symbol() and field == "precio")]
         failed_inputs.extend("universo" for e in failed_events if e.get("source") == "universe")
         failed_count = max(maintenance.get("fallos", 0), maintenance.get("sync", {}).get("statuses", {}).get("failed", 0))
         if failed_count and not source_failures and not failed_events:

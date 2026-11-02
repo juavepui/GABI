@@ -8,6 +8,7 @@ import sqlite3
 import sys
 import time
 from contextlib import closing, contextmanager
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -17,6 +18,7 @@ import pytest
 import yfinance
 
 from gabi import config, identity, storage
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.legacy import data_fetch
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.insiders import SqliteInsiders
@@ -159,7 +161,9 @@ def test_data_fetch_batches_match_capture(tmp_path, monkeypatch, clock):
     monkeypatch.setattr(yfinance, "Ticker", FakeTicker)
     monkeypatch.setattr(identity, "resolve", lambda symbol, day: {"entity_id": None})
     # Parity with the capture; the extra checklist fields (#167) are tested separately.
-    monkeypatch.setattr(data_fetch, "EXTRA_INFO_KEYS", [])
+    monkeypatch.setattr(operational_settings, "current", lambda: replace(
+        operational_settings.V1, info_keys=tuple(key for key in operational_settings.V1.info_keys
+                                                 if key != "heldPercentInsiders")))
     results = []
     for label in ("old", "new"):
         path = tmp_path / label / "gabi.db"

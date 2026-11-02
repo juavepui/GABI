@@ -170,6 +170,10 @@ y su HTTP por un proveedor concreto de `infrastructure/providers` según
 ajustes o puentes legacy. Al retirar `storage`, una fachada puede leer la ruta
 de la base desde `config` en su lugar ([ADR 0005](adr/0005-legacy-config-path.md)), y lo mismo al retirar
 otro módulo plano del que solo tomaba rutas o el User-Agent SEC ([ADR 0007](adr/0007-config-for-retired-flat-dependency.md)).
+Los ajustes operativos que antes salían de `config.py` sellado (benchmark, edades de caché y
+campos de Yahoo) tienen una única fuente versionada, `infrastructure/operational_settings.py`.
+Los módulos planos permanentes pueden importar ese módulo declarativo y ningún otro de
+`infrastructure` fuera de `storage`/`providers` ([ADR 0009](adr/0009-versioned-operational-settings.md)).
 Ni almacenamiento ni proveedores importan módulos planos; siguen prohibidos los ciclos con capas nuevas.
 Los módulos planos que no se pueden retirar forman una lista cerrada
 ([inventario de compatibilidad](architecture/compatibility-inventory.md),

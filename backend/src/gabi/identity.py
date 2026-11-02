@@ -12,6 +12,7 @@ from gabi.application.research.historical_pit import AccreditedHistory
 from gabi.domain.market import identity as identity_rules
 from gabi.domain.research.periods import P2010, Period
 from gabi.domain.research.periods import get as get_period
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.storage import identity_writes
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.entity_snapshots import SqliteEntitySnapshots
@@ -122,7 +123,7 @@ def backtest_prices(symbols: list[str], as_of: str, owners: dict | None = None) 
     """
     ticker_prices = SqliteTickerPrices(config.DB_PATH)
     return identity_queries.backtest_prices(_reader(), symbols, as_of, owners,
-        benchmark=config.BENCHMARK_SYMBOL, history=accredited_history(),
+        benchmark=operational_settings.benchmark_symbol(), history=accredited_history(),
         ticker_prices=ticker_prices.get,
         # Only sessions from the entry on are valued; whole histories exceeded the read budget.
         ticker_prices_many=lambda symbols: ticker_prices.for_backtest(symbols, since=as_of))

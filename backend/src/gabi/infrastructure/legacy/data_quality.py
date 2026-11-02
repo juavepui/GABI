@@ -24,6 +24,7 @@ from gabi.application.administration import data_quality as quality_queries
 from gabi.application.market import cached_data
 from gabi.domain.market import data_quality as quality
 from gabi.domain.market import fred
+from gabi.infrastructure import operational_settings
 from gabi.infrastructure.storage import data_fingerprint
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.fred import SqliteFred
@@ -77,7 +78,7 @@ def _readers():
 
 
 def _rules():
-    return quality.QualityRules(config.CACHE_MAX_AGE_HOURS, config.EDGAR_CACHE_MAX_AGE_HOURS,
+    return quality.QualityRules(operational_settings.current().cache_max_age_hours, operational_settings.current().edgar_cache_max_age_hours,
                                 PRICE_STALE_DAYS, tuple(STRUCTURAL_LIMITATIONS))
 
 
@@ -107,7 +108,7 @@ def compute_data_fingerprint(symbols: list | None = None, *, inputs: dict | None
     El llamador debe capturarlo al ejecutar, y conservarlo con el resultado.
     Identifica una caché: no conserva por sí solo una copia recuperable de ella.
     """
-    selected = None if symbols is None else sorted(set(symbols) | {config.BENCHMARK_SYMBOL})
+    selected = None if symbols is None else sorted(set(symbols) | {operational_settings.benchmark_symbol()})
     return data_fingerprint.fingerprint(config.DB_PATH, config.DATA_DIR, selected, inputs or {})
 
 
