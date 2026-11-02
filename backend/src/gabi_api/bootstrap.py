@@ -35,6 +35,7 @@ from gabi.application.market.watchlist import Watchlist
 from gabi.application.portfolio.benchmark import InvestorBenchmark
 from gabi.application.portfolio.decisions import Decisions
 from gabi.application.portfolio.holdings import Holdings
+from gabi.application.portfolio.ideas import Ideas
 from gabi.application.portfolio.investment_cards import InvestmentCards
 from gabi.application.portfolio.journal import Journal
 from gabi.application.portfolio.planning import PortfolioQueries
@@ -84,6 +85,7 @@ from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
 from gabi.infrastructure.storage.experiments import SqliteExperiments
 from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.ideas import SqliteIdeas
 from gabi.infrastructure.storage.identity import SqliteIdentityReads
 from gabi.infrastructure.storage.investment_cards import SqliteInvestmentCards
 from gabi.infrastructure.storage.investor_profile import SqliteInvestorProfile
@@ -107,6 +109,7 @@ from gabi.infrastructure.storage.weights import FileWeights
 from gabi_api.routes.decisions import router as decisions_router
 from gabi_api.routes.forms import router as forms_router
 from gabi_api.routes.holdings import router as holdings_router
+from gabi_api.routes.ideas import router as ideas_router
 from gabi_api.routes.investment_cards import router as investment_cards_router
 from gabi_api.routes.investor import router as investor_router
 from gabi_api.routes.jobs import router as jobs_router
@@ -238,13 +241,15 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         return {"entity_id": resolved.get("entity_id"), "source": resolved.get("source"),
                 "cik": resolved.get("cik") or cik}
 
+    app.state.ideas = Ideas(SqliteIdeas(settings.data_dir), SqliteSimulations(settings.data_dir).prices, today)
     app.state.investment_cards = InvestmentCards(
         SqliteInvestmentCards(settings.data_dir), ranking=lambda: repository.ranking(dict(policy.weights), today()).table,
         checklist=app.state.company_checklist.company, evidence=app.state.evidence.company, identity=card_issuer,
         model_id=policy.model_id, today=today,
         # Created further down; read when a card is published, never at start-up.
         investor=lambda: app.state.investor.profile(), passive=lambda: app.state.investor.benchmark(),
-        risk=lambda: app.state.portfolio_risk.panel(), sector_multiples=app.state.company_checklist.sector_multiples)
+        risk=lambda: app.state.portfolio_risk.panel(), sector_multiples=app.state.company_checklist.sector_multiples,
+        on_published=app.state.ideas.record_publication, on_withdrawn=app.state.ideas.record_withdrawal)
     app.state.snapshot_tracking = SnapshotTracking(
         SqliteSignals(settings.data_dir), lambda day: SqliteSnapshotPrices(settings.data_dir, day),
         SnapshotCalculations(), today)
@@ -350,6 +355,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.include_router(portfolio_router)
     app.include_router(journal_router)
     app.include_router(investment_cards_router)
+    app.include_router(ideas_router)
     app.include_router(macro_router)
     app.include_router(signals_router)
     app.include_router(simulations_router)

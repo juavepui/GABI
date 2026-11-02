@@ -57,12 +57,16 @@ class InvestmentCards:
                  evidence: Callable[[str], dict], identity: Callable[[str], dict], model_id: str | None,
                  today: Callable[[], date] = date.today, investor: Callable[[], dict | None] = lambda: None,
                  passive: Callable[[], dict] | None = None, risk: Callable[[], dict] | None = None,
-                 sector_multiples: Callable[[str], dict] | None = None):
+                 sector_multiples: Callable[[str], dict] | None = None,
+                 on_published: Callable[[dict], None] | None = None,
+                 on_withdrawn: Callable[[dict, str], None] | None = None):
         """``investor()`` is the saved profile revision; ``passive()`` the S&P 500 in EUR with its contributions
         (#244); ``risk()`` the portfolio's exposure panel (#248); each absence is named in the snapshot."""
         self.store, self.ranking, self.checklist, self.evidence = store, ranking, checklist, evidence
         self.identity, self.model_id, self.today = identity, model_id, today
         self.investor, self.passive, self.risk, self.sector_multiples = investor, passive, risk, sector_multiples
+        # The idea history (#247): a publication records an idea; discarding a published card retires it.
+        self.on_published, self.on_withdrawn = on_published, on_withdrawn
 
     def present(self, row: dict) -> dict:
         content = row["content"]
@@ -107,9 +111,13 @@ class InvestmentCards:
         now = self.today().isoformat()
         if state == "descartada":
             self.store.discard(card_id, reason.strip()[:rules.MAX_TEXT], now)
+            if row["state"] == "publicada" and self.on_withdrawn is not None:
+                self.on_withdrawn(row, reason.strip()[:rules.MAX_TEXT])
         elif state == "publicada":
             snapshot = self.capture(row["symbol"], row["content"])
             self.store.publish(card_id, row["content"], snapshot, digest(snapshot), now)
+            if self.on_published is not None:
+                self.on_published(self.get(card_id))
         else:
             self.store.update(card_id, row["content"], state, now)
         return self.get(card_id)

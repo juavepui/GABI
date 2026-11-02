@@ -27,6 +27,7 @@ import { SectorBreakdown } from './sector-breakdown';
 import { ThesisMark } from './thesis-mark';
 import { ExperimentalPlan } from './decisions-page';
 export { JournalPage } from './journal-page';
+export { IdeasPage } from './ideas-page';
 export { LearnPage } from './learn-page';
 export { SimulationsPage } from './simulations-page';
 export { HoldingsPage } from './holdings-page';
@@ -188,6 +189,12 @@ export function PortfolioPage() {
               to: '/cartera/diario',
               label: 'Diario de inversión',
               description: 'Tesis antes de comprar y revisión',
+              icon: NotebookPen,
+            },
+            {
+              to: '/cartera/ideas',
+              label: 'Historial de ideas',
+              description: 'Fichas publicadas y su resultado frente al S&P 500',
               icon: NotebookPen,
             },
             {

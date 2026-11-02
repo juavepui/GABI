@@ -17,6 +17,9 @@ import type {
   PlanRequest,
   PlanResponse,
   CardContent,
+  IdeaDetail,
+  IdeaEventCreate,
+  IdeaList,
   CardMove,
   InvestmentCard,
   InvestmentCardList,
@@ -616,6 +619,28 @@ export function saveCard(id: number, content: CardContent): Promise<InvestmentCa
 }
 export function moveCard(id: number, body: CardMove): Promise<InvestmentCard> {
   return postCard('/' + id + '/state', body);
+}
+export function getIdeas(signal?: AbortSignal): Promise<IdeaList> {
+  return get('/api/v1/portfolio/ideas', signal);
+}
+export function getIdea(id: number, signal?: AbortSignal): Promise<IdeaDetail> {
+  return get('/api/v1/portfolio/ideas/' + id, signal);
+}
+function postIdea(path: string, body: unknown): Promise<IdeaDetail> {
+  return request('/api/v1/portfolio/ideas/' + path, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function addIdeaEvent(id: number, body: IdeaEventCreate): Promise<IdeaDetail> {
+  return postIdea(id + '/events', body);
+}
+export function addIdeaNote(id: number, text: string): Promise<IdeaDetail> {
+  return postIdea(id + '/notes', { text });
+}
+export function deleteIdeaNote(id: number, noteId: number): Promise<IdeaDetail> {
+  return postIdea(id + '/notes/' + noteId + '/delete', {});
 }
 export function createJournal(body: JournalCreate): Promise<JournalEntry> {
   return request('/api/v1/portfolio/journal', {

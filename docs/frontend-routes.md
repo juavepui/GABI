@@ -23,6 +23,7 @@ navegación ni se importan entre sí.
 | | `/cartera/riesgo` | Riesgo por emisor, política de cartera y órdenes propuestas para una aportación (#248) | `portfolio` |
 | | `/cartera/seguimiento` | Seguimiento de cestas guardadas frente a SPY (#193) | `market` |
 | | `/cartera/diario` | Diario de inversión | `portfolio` |
+| | `/cartera/ideas` | Historial de ideas: fichas publicadas, sus eventos y su resultado frente al S&P 500 en EUR (#247) | `portfolio` |
 | | `/cartera/simuladas` | Carteras simuladas | `portfolio` |
 | **Investigación** | `/investigacion/*` | Ensayos, ranking histórico, validaciones ciegas y laboratorios de factores, experimentos y carteras; solo en modo Research (#189) | `research` |
 | **Administración** | `/administracion`, `/administracion/calidad` | Datos, claves, modo, trabajos y calidad | `administration` |
