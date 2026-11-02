@@ -56,6 +56,7 @@ from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.macro_series import macro_metadata
+from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.selection import RankingFilter
 from gabi.domain.market.signals import compare_snapshots
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -144,10 +145,12 @@ class HealthResponse(BaseModel):
 def create_app(settings: Settings | None = None, *, today: Callable[[], date] = date.today,
                published_ledger: Path | None = None, published_factors_root: Path | None = None,
                frontend_dist: Path | None = None, saved_audits_root: Path | None = None,
-               blind_plans_root: Path | None = None, session: Callable[[], date] | None = None) -> FastAPI:
+               blind_plans_root: Path | None = None, session: Callable[[], date] | None = None,
+               model: ModelVersion | None = None) -> FastAPI:
+    """``model`` defaults to the active version; tests of the sealed hypothesis pass GABI-MF-v1 explicitly."""
     settings = settings or Settings.from_environment()
     session = session or (lambda: last_completed_session(datetime.now(UTC)))
-    model = active_model()
+    model = model or active_model()
     policy = model_policy(model)
     repository = ReadOnlyMarket(settings, calculators(model.technical), policy, model.benchmark_symbol,
                                 model.risk_free_rate, metrics_version=model.metrics_version)

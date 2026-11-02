@@ -142,7 +142,7 @@ export function WatchlistPage() {
         description={
           <>
             Las empresas que marcaste con «Seguir» en el Ranking, la ficha o Comparar: su score y
-            posición de hoy en el modelo congelado y cuánto han cambiado desde que las añadiste.
+            posición de hoy en el modelo activo y cuánto han cambiado desde que las añadiste.
           </>
         }
       />

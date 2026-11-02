@@ -1,6 +1,8 @@
 """SEC metrics V2 (#245): explicit absence, provenance per input and declared conventions.
 
-Version ``sec-metrics-v2``. It does not replace ``sec_facts``: the live paths of the
+Version ``sec-metrics-v2.1``: the V2 of #245 with the tag choice per year, the
+declared zero debt, the EBIT proxy and the cash fallback of #281/#282 (rows stored
+as ``sec-metrics-v2`` are recomputed). It does not replace ``sec_facts``: the live paths of the
 prospective studies keep using it unchanged (ADR 0008, ``docs/studies``). Every
 input carries its tag, unit, period, accession and filing date. A component that
 was not reported is ``absent``, never zero; only an explicit ``0`` is
@@ -18,7 +20,7 @@ from dataclasses import dataclass
 from datetime import date
 from types import MappingProxyType
 
-VERSION = "sec-metrics-v2"
+VERSION = "sec-metrics-v2.1"
 ALIGNMENT_TOLERANCE_DAYS = 45
 STATUTORY_TAX_RATE = 0.21
 

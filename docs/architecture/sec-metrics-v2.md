@@ -100,14 +100,42 @@ y la tabla nueva no entra en la huella de datos.
 
 `ModelVersion.metrics_version` declara con qué métricas SEC puntúa una versión:
 `sec-metrics-v1` (por defecto, y la única admitida para la hipótesis sellada
-GABI-MF-v1) o `sec-metrics-v2`. Con la V2, el ranking activo toma el ROIC de
+GABI-MF-v1) o `sec-metrics-v2.1`. Con la V2, el ranking activo toma el ROIC de
 `sec_metrics_v2`. Una fila ausente, de otra versión, no calculada o de un emisor
 financiero deja el ROIC ausente, nunca el valor V1. El crecimiento y los enlaces siguen
 saliendo de `edgar_metrics`. La comparación V1/V2 usa siempre el ranking V1 como base.
 
-## Pendiente
+## Versión 2.1 y activación (2026-11-02)
 
-Activación: declarar en `infrastructure/model_versions.py` una versión nueva con
-`metrics_version="sec-metrics-v2"` y las `Assumptions` de la valoración, y hacerla
-activa. Es decisión del propietario a la vista de `metrics_comparison` con sus datos.
-Los caminos de los estudios activos no cambian.
+La comparación con datos reales mostró que V2 solo calculaba el ROIC de 217 empresas,
+frente a 428 con V1. Antes de activarla se mejoró, y la definición resultante es
+**`sec-metrics-v2.1`**:
+
+- **#281:**
+  - Cada componente toma, para el ejercicio ancla, la primera etiqueta candidata que
+    presenta ese año. El año de apertura y el ancla buscan en todas las etiquetas de
+    patrimonio.
+  - Se añaden las etiquetas de deuda con arrendamientos tras ASC 842.
+  - Una empresa que **nunca** ha presentado deuda ni intereses en un informe anual
+    tiene deuda `assumed_zero`, declarada en los insumos (decisión del propietario).
+- **#282:**
+  - Sin línea de beneficio operativo se usa el EBIT aproximado, declarado en la
+    convención (`ebit_proxy=pretax+interest`).
+  - Si la caja simple dejó de presentarse, se usa la que incluye la restringida.
+
+Las filas guardadas como `sec-metrics-v2` se recalculan con la versión 2.1.
+
+**Cobertura del ROIC V2.1:** 334 empresas no financieras, frente a unas 338 con V1.
+- El EV V2 coincide con el de Yahoo: diferencia mediana de −1,6 % en 358 empresas.
+- Puntuar con ella cambia 4 de las 20 primeras del ranking.
+
+**Activación.** El propietario activó **`GABI-MF-v2`** (`infrastructure/model_versions.py`):
+- mismos pesos, parámetros técnicos, benchmark y tipo libre de riesgo que v1, con
+  `metrics_version="sec-metrics-v2.1"`;
+- empieza **sin evidencia propia** y se muestra EXPERIMENTAL (ADR 0008);
+- GABI-MF-v1 sigue sellada, y los caminos de los estudios activos (ENS, #43 y #44)
+  no cambian.
+
+`create_app(model=...)` permite fijar la versión. Los tests de la hipótesis sellada
+pasan GABI-MF-v1 explícitamente. La valoración V2 (FCFF-WACC) no forma parte del
+score y no necesita supuestos en la versión del modelo.

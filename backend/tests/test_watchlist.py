@@ -8,6 +8,7 @@ from market_fixture import TODAY, seed_fixture
 from gabi.application.errors import QueryError
 from gabi.domain.market import model_policy
 from gabi.domain.market import watchlist as rules
+from gabi.infrastructure.model_versions import GABI_MF_V1
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.journal import SqliteJournal
 from gabi.infrastructure.storage.watchlist import SqliteWatchlist
@@ -65,7 +66,7 @@ def test_following_from_the_api_writes_only_on_explicit_actions(tmp_path):
     seed_fixture(tmp_path)
     SqliteJournal(tmp_path).create({"symbol": "T001", "created_at": "2026-09-01T10:00:00", "thesis": "Margen"})
     stamp = (tmp_path / "gabi.db").stat().st_mtime_ns
-    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)) as api:
         assert api.get("/api/v1/watchlist").json()["items"] == []
         assert api.get("/api/v1/watchlist/symbols").json() == {"symbols": []}
         assert api.get("/api/v1/watchlist/checklist").json() == {"items": {}}
@@ -82,7 +83,7 @@ def test_following_from_the_api_writes_only_on_explicit_actions(tmp_path):
         assert api.post("/api/v1/watchlist", json={"symbol": "NOPE"}).json()["error"]["code"] == "company_not_found"
         assert api.post("/api/v1/watchlist", json={"symbol": "T002", "note": "x" * 501}).status_code == 422
         assert api.post("/api/v1/watchlist", json={"symbol": "T002"}).status_code == 201
-    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:  # A restart keeps them.
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY, model=GABI_MF_V1)) as api:  # A restart keeps them.
         assert api.get("/api/v1/watchlist/symbols").json() == {"symbols": ["T001", "T002"]}
         body = api.get("/api/v1/watchlist").json()
         assert body["ranking_ready"] and body["model_id"] == model_policy.FROZEN_MODEL_ID
