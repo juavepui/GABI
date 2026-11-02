@@ -13,13 +13,19 @@ MOVED = {"BENCHMARK_SYMBOL", "CACHE_MAX_AGE_HOURS", "EDGAR_CACHE_MAX_AGE_HOURS",
 
 
 def test_the_versioned_source_reproduces_the_sealed_values_exactly():
-    settings = operational_settings.current()
+    settings = operational_settings.V1
     assert settings.version == "operational-settings-v1"
     assert operational_settings.benchmark_symbol() == config.BENCHMARK_SYMBOL == active_model().benchmark_symbol
     assert settings.cache_max_age_hours == config.CACHE_MAX_AGE_HOURS
     assert settings.edgar_cache_max_age_hours == config.EDGAR_CACHE_MAX_AGE_HOURS
     # The sealed list plus the field the checklist (#167) added outside it, in the same order as before.
     assert settings.info_keys == (*config.INFO_KEYS, "heldPercentInsiders")
+
+
+def test_version_two_only_adds_yahoo_enterprise_value():
+    assert operational_settings.current().version == "operational-settings-v2"
+    assert operational_settings.current().info_keys == (*operational_settings.V1.info_keys, "enterpriseValue")
+    assert operational_settings.current().cache_max_age_hours == operational_settings.V1.cache_max_age_hours
 
 
 def _frozen() -> set[str]:

@@ -12,11 +12,9 @@ Declarative only: no I/O, read per operation. Changing a value is a commit that
 declares a new version. ADR 0009 lets permanent flat modules import this module.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from gabi.infrastructure.model_versions import active_model
-
-VERSION = "operational-settings-v1"
 
 
 @dataclass(frozen=True)
@@ -28,7 +26,7 @@ class OperationalSettings:
 
 
 V1 = OperationalSettings(
-    version=VERSION,
+    version="operational-settings-v1",
     cache_max_age_hours=24,
     # SEC annual and quarterly reports change far less often than prices or Yahoo's info.
     edgar_cache_max_age_hours=24 * 7,
@@ -51,8 +49,12 @@ V1 = OperationalSettings(
 )
 
 
+# v2 (#245): Yahoo's enterpriseValue, to compare it with the SEC enterprise value of metrics V2.
+V2 = replace(V1, version="operational-settings-v2", info_keys=(*V1.info_keys, "enterpriseValue"))
+
+
 def current() -> OperationalSettings:
-    return V1
+    return V2
 
 
 def benchmark_symbol() -> str:
