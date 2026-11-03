@@ -88,7 +88,7 @@ test.describe('calidad de los datos', () => {
 
   test('procedencia de una empresa', async ({ page }) => {
     await page.goto('/administracion/calidad');
-    const company = page.getByRole('region', { name: 'Procedencia de una empresa' });
+    const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });
     await company.getByRole('combobox', { name: 'Empresa' }).fill('T000');
     await company.getByLabel('Fecha de referencia del sector point-in-time').fill('2026-09-28');
     await company.getByRole('button', { name: 'Ver procedencia' }).click();
@@ -111,7 +111,7 @@ test.describe('calidad de los datos', () => {
 
   test('identidades del universo', async ({ page }) => {
     await page.goto('/administracion/calidad');
-    const company = page.getByRole('region', { name: 'Procedencia de una empresa' });
+    const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });
     await company.getByLabel('Fecha de referencia del sector point-in-time').fill('2026-09-28');
     await company.getByText('Diagnóstico de identidad del universo').click();
     await company.getByRole('button', { name: /Comprobar identidades/ }).click();

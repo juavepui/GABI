@@ -37,8 +37,8 @@ export function ModeSelector({ model }: { model: ModelResponse }) {
       </h3>
       <p className="text-xs text-muted-foreground">
         {research
-          ? 'Research permite experimentar; sus resultados no se convierten en evidencia validada.'
-          : 'Investor utiliza los pesos congelados y bloquea los trabajos de investigación.'}
+          ? 'Research: para investigar y experimentar con el modelo. Lo que pruebes aquí no cuenta como resultado demostrado.'
+          : 'Investor: lo necesario para invertir, con la regla fija de GABI. Las herramientas de investigación quedan ocultas.'}
       </p>
       <Button
         type="button"

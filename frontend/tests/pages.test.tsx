@@ -91,10 +91,10 @@ describe('estados vacío y de error de las páginas grandes', () => {
       new ApiError(500, 'internal', 'No se puede leer la cobertura.'),
     );
     screen = renderScreen(<DataHealthPage />, '/administracion/calidad');
-    await screen.findText('Calcular cobertura');
+    await screen.findText('Calcular datos completos');
     expect(api.getRankingCoverage).not.toHaveBeenCalled(); // A long calculation waits for a click.
     const button = [...screen.container.querySelectorAll('button')].find(
-      (element) => element.textContent === 'Calcular cobertura',
+      (element) => element.textContent === 'Calcular datos completos',
     )!;
     act(() => button.click());
     await screen.findText('No se puede leer la cobertura.');
