@@ -43,10 +43,14 @@ def http_error(status: int | None) -> requests.HTTPError:
 
 
 class Sec:
-    """Scripted SEC answers per URL fragment; records every attempt and wait."""
+    """Scripted SEC answers per URL fragment; records every attempt and wait.
+
+    Each URL gets its own copy of its fragment's answers: with concurrent downloads, a
+    shared queue would hand the first answer to whichever filing of an issuer came first."""
 
     def __init__(self, script: dict[str, list]):
         self.script = {key: list(values) for key, values in script.items()}
+        self.queues: dict[str, list] = {}
         self.lock = threading.Lock()
         self.attempts: Counter = Counter()
         self.sleeps: list[float] = []
@@ -55,7 +59,8 @@ class Sec:
         with self.lock:
             self.attempts[url] += 1
             key = next((key for key in self.script if key in url), None)
-            outcome = self.script[key].pop(0) if key and self.script[key] else None
+            queue = self.queues.setdefault(url, list(self.script[key]) if key else [])
+            outcome = queue.pop(0) if queue else None
         if isinstance(outcome, BaseException):
             raise outcome
         Path(path).parent.mkdir(parents=True, exist_ok=True)
