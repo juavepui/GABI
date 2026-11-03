@@ -185,8 +185,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
       )}
       <p className="mt-4 text-xs text-muted-foreground">
         {home.last_update?.finished_at
-          ? 'Última actualización de datos: ' +
-            dateLabel(home.last_update.finished_at.slice(0, 10))
+          ? 'Última actualización de datos: ' + dateLabel(home.last_update.finished_at.slice(0, 10))
           : 'Todavía no se han actualizado los datos desde GABI.'}
       </p>
       <Button asChild size="sm" variant="outline" className="mt-3">
@@ -202,9 +201,8 @@ function TargetCard({ home }: { home: HomeResponse }) {
     <section className="min-w-0 rounded-xl border bg-card p-5" aria-label="Cartera objetivo de hoy">
       <h2 className="text-lg font-semibold">Cartera objetivo de hoy</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Las {home.target_positions} empresas con más puntuación, con el mismo dinero en cada una.
-        Es la regla fija de GABI ({home.model_id}); todavía no está demostrado que gane al
-        S&amp;P 500.
+        Las {home.target_positions} empresas con más puntuación, con el mismo dinero en cada una. Es
+        la regla fija de GABI ({home.model_id}); todavía no está demostrado que gane al S&amp;P 500.
       </p>
       {home.data && home.target.length === 0 && (
         <p className="mt-3 text-sm text-muted-foreground">
@@ -248,7 +246,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
         </p>
       )}
       <Button asChild size="sm" className="mt-4">
-        <Link to="/cartera">Ver la cartera y cuánto poner en cada una</Link>
+        <Link to="/cartera">Ver la cartera propuesta</Link>
       </Button>
     </section>
   );
@@ -278,9 +276,7 @@ export function HomePage() {
         eyebrow="Inicio"
         title="Tu GABI hoy"
         description={
-          <>
-            Lo que tienes pendiente, cómo están tus datos y la cartera que GABI propone hoy.
-          </>
+          <>Lo que tienes pendiente, cómo están tus datos y la cartera que GABI propone hoy.</>
         }
         guide={
           <>

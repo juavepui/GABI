@@ -102,7 +102,9 @@ function PolicyForm({
     >
       <h2 className="text-xl font-semibold">Tus límites</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {revision ? `Versión ${revision} de tus límites.` : 'Son valores de ejemplo: guárdalos para fijarlos.'}{' '}
+        {revision
+          ? `Versión ${revision} de tus límites.`
+          : 'Son valores de ejemplo: guárdalos para fijarlos.'}{' '}
         Nunca se invierte dinero prestado: lo invertido más lo que queda sin invertir suma siempre
         el 100 %. Estos límites no cambian aunque cambie la versión del modelo.
       </p>
@@ -477,8 +479,8 @@ export function RiskPage() {
         title="Riesgo y límites"
         description={
           <>
-            Cuánto depende tu cartera de cada empresa, sector y moneda, y unos límites para no
-            poner demasiados huevos en la misma cesta. GABI nunca compra ni vende por ti.
+            Cuánto depende tu cartera de cada empresa, sector y moneda, y unos límites para no poner
+            demasiados huevos en la misma cesta. GABI nunca compra ni vende por ti.
           </>
         }
         guide={

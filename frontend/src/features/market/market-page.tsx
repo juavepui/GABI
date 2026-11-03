@@ -302,8 +302,7 @@ export function MarketPage() {
                 defaultChecked={query.golden_cross_only}
                 className="size-4 accent-primary"
               />
-              Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de
-              subida)
+              Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de subida)
             </label>
             <details className="relative">
               <summary className="flex cursor-pointer items-center gap-1">
@@ -607,8 +606,8 @@ export function MarketPage() {
                   <RankLegend>
                     <Term k="composite_score">Puntuación</Term> y{' '}
                     <Term k="confidence">datos disponibles</Term> de 0 (rojo) a 100 (verde). El{' '}
-                    <Term k="pe">PER</Term> se colorea comparándolo con empresas de su mismo sector (
-                    <Term k="percentile">percentil</Term>): verde es un PER bajo frente a sus
+                    <Term k="pe">PER</Term> se colorea comparándolo con empresas de su mismo sector
+                    (<Term k="percentile">percentil</Term>): verde es un PER bajo frente a sus
                     parecidas, no necesariamente bajo en general.
                   </RankLegend>
                   {evidence.data && (

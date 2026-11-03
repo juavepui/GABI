@@ -572,8 +572,8 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
       <HowToRead>
         Una lista de preguntas sencillas sobre la empresa (¿crece?, ¿gana dinero?, ¿debe poco?),
         cada una con un mínimo que debería cumplir. Los criterios vienen de divulgadores de
-        inversión (Javier DV, Memorias de Tiburón, Pedro Gutiérrez y La Pizarra de Andrés) y usan
-        el último informe anual oficial (10-K de la SEC), el último precio guardado y, cuando se
+        inversión (Javier DV, Memorias de Tiburón, Pedro Gutiérrez y La Pizarra de Andrés) y usan el
+        último informe anual oficial (10-K de la SEC), el último precio guardado y, cuando se
         indica, datos de Yahoo. Si falta un dato pone «Sin dato», nunca cero. Los mínimos son
         orientativos y cambian según el sector. Es solo informativo: no cuenta para la puntuación
         GABI ni es una recomendación.

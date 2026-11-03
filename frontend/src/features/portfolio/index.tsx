@@ -119,7 +119,7 @@ function TrackTarget({ positions }: { positions: number }) {
 
 /** The two answers to «what do I buy and how much?», chosen in the URL so either can be shared. */
 const PLANS = [
-  { id: 'regla', label: 'Regla fija · las mejores, a partes iguales' },
+  { id: 'regla', label: 'Regla fija de GABI' },
   { id: 'experimental', label: 'Plan de prueba con límites' },
 ] as const;
 
@@ -357,7 +357,7 @@ export function PortfolioPage() {
                     {data.status === 'FROZEN'
                       ? 'Regla fija'
                       : data.model_id.startsWith('GABI-MF-')
-                        ? `Las mejores según ${data.model_id} · aún sin pruebas propias`
+                        ? `${data.model_id} · sin pruebas aún`
                         : 'Versión de prueba'}
                   </Badge>
                 </div>
@@ -384,10 +384,10 @@ export function PortfolioPage() {
                           <th className="hidden pb-3 sm:table-cell">Sector</th>
                           <th className="hidden pb-3 sm:table-cell">Puntuación</th>
                           <th className="hidden pb-3 sm:table-cell">
-                            <Term k="score_coverage">Datos disponibles</Term>
+                            <Term k="score_coverage">Métricas con dato</Term>
                           </th>
                           <th className="hidden pb-3 sm:table-cell">Precio USD</th>
-                          <th className="pb-3">% de la cartera</th>
+                          <th className="pb-3">% del total</th>
                           <th className="pb-3">Dinero</th>
                         </tr>
                       </thead>
@@ -415,7 +415,7 @@ export function PortfolioPage() {
                                   <dd className="text-right">{row.sector ?? '—'}</dd>
                                   <dt>Puntuación</dt>
                                   <dd className="text-right">{decimal(row.score_points)}</dd>
-                                  <dt>Datos disponibles</dt>
+                                  <dt>Métricas con dato</dt>
                                   <dd className="text-right">
                                     {row.score_coverage_fraction == null
                                       ? '—'

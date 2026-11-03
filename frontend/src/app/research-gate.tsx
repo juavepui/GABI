@@ -16,9 +16,9 @@ export function ResearchGate({ children }: { children: ReactNode }) {
           title="Investigación está en el modo Research"
           description={
             <>
-              Aquí están las pruebas con datos del pasado (backtests) y los laboratorios: herramientas
-              avanzadas para investigar el modelo. En modo Investor GABI muestra solo lo necesario
-              para decidir: Descubrir, Cartera y Administración.
+              Aquí están las pruebas con datos del pasado (backtests) y los laboratorios:
+              herramientas avanzadas para investigar el modelo. En modo Investor GABI muestra solo
+              lo necesario para decidir: Descubrir, Cartera y Administración.
             </>
           }
         />

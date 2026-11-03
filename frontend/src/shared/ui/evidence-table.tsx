@@ -44,7 +44,11 @@ export function EvidenceTable({
               <td>{points(row.score)}</td>
               <td>{points(row.weighted_data_coverage)}</td>
               <td>{row.confidence_level}</td>
-              <td>{row.top20_persistence == null ? 'No se puede calcular' : pct(row.top20_persistence)}</td>
+              <td>
+                {row.top20_persistence == null
+                  ? 'No se puede calcular'
+                  : pct(row.top20_persistence)}
+              </td>
               <td>
                 {row.validated_score_fraction == null
                   ? 'No se puede calcular'

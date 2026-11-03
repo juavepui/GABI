@@ -56,7 +56,8 @@ const REASONS: Record<string, string> = {
   no_historical_growth: 'No se conoce cuánto ha crecido su caja de las operaciones (CFO)',
   below_search_range: 'El precio descuenta un crecimiento inferior al −50 %',
   above_search_range: 'El precio descuenta un crecimiento superior al 100 %',
-  gaap_ebitda: 'GABI calcula el EBITDA con las cifras oficiales de las cuentas; el EV/EBITDA del ranking es el de Yahoo y puede no coincidir',
+  gaap_ebitda:
+    'GABI calcula el EBITDA con las cifras oficiales de las cuentas; el EV/EBITDA del ranking es el de Yahoo y puede no coincidir',
   invalid_saved_thresholds: 'Los umbrales guardados no son válidos; se usan los de por defecto',
   not_in_universe: 'La empresa no está en la lista actual del S&P 500',
   share_basis_mismatch:

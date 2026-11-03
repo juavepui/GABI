@@ -292,19 +292,19 @@ function HowGabiThinks() {
         lo que corrige el motor V2 (ver más abajo).
       </Note>
 
-      <Heading>4. Score, cobertura y confianza de evidencia</Heading>
+      <Heading>4. Puntuación, datos disponibles y confianza</Heading>
       <p>
-        <strong>Score</strong> resume la posición relativa según las métricas.{' '}
-        <strong>Métricas disponibles</strong> cuenta cuántas de las 13 métricas puntuables tienen
-        dato (10 de 13 = 76,9 %); la cartera objetivo exige al menos un 70 %.{' '}
-        <strong>Cobertura ponderada</strong> (antes Confidence) mide lo mismo pesando cada métrica
-        según su bloque, en puntos de 0 a 100, por eso las dos cifras no coinciden.{' '}
-        <strong>Cobertura del universo por bloque</strong> no habla de una empresa: dice qué parte
-        del ranking tiene todas las métricas de cada bloque. <strong>Confianza de evidencia</strong>{' '}
-        (BAJA/MEDIA/ALTA) evalúa el respaldo estadístico, la estabilidad y la calidad con reglas
-        conservadoras. Una empresa puede tener score alto, datos completos y confianza BAJA si sus
-        factores no están confirmados. Ninguno de estos valores es una probabilidad de subir en el
-        futuro.
+        <strong>Puntuación</strong> (score): dónde queda la empresa frente a las demás según sus
+        métricas. <strong>Métricas con dato</strong>: cuántas de las 13 métricas que puntúan tiene
+        (10 de 13 = 76,9 %); para entrar en la cartera propuesta hace falta al menos un 70 %.{' '}
+        <strong>Datos disponibles</strong> (antes «cobertura ponderada»): lo mismo, pero dando más
+        importancia a las métricas de los apartados que más pesan, de 0 a 100; por eso las dos
+        cifras no coinciden. <strong>Cobertura por apartado</strong>: no habla de una empresa, sino
+        de qué parte de todo el ranking tiene todos los datos de cada apartado.{' '}
+        <strong>Confianza</strong> (BAJA/MEDIA/ALTA): cuánto respaldan las pruebas estadísticas a
+        esa empresa, con reglas prudentes. Una empresa puede tener buena puntuación, todos sus datos
+        y confianza BAJA si sus métricas no están comprobadas. Ninguno de estos valores es la
+        probabilidad de que suba.
       </p>
       <Note>
         En Mercado, Cartera y la ficha de cada empresa puedes consultar la confianza, la
@@ -467,8 +467,8 @@ export function LearnPage() {
         title="Aprender a usar GABI"
         description={
           <>
-            Qué significa cada término, estrategias para invertir, los errores mentales más
-            comunes y cómo decide GABI. Si empiezas de cero, lee «Primeros pasos».
+            Qué significa cada término, estrategias para invertir, los errores mentales más comunes
+            y cómo decide GABI. Si empiezas de cero, lee «Primeros pasos».
           </>
         }
         guide={

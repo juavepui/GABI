@@ -10,10 +10,10 @@ test('un job local sigue después de recargar y publica un resultado verificable
   const mobile = testInfo.project.name === 'mobile';
   const name = mobile ? 'Descargar símbolos indicados' : 'Auditar cobertura local';
   if (mobile) {
-    await page.getByLabel('Descargar símbolos concretos').fill('SPY');
-    await page.getByRole('button', { name: 'Solicitar' }).click();
+    await page.getByLabel('Descargar solo algunas empresas o fondos').fill('SPY');
+    await page.getByRole('button', { name: 'Descargar', exact: true }).click();
   } else {
-    await page.getByRole('button', { name: 'Auditar cobertura' }).click();
+    await page.getByRole('button', { name: 'Comprobar qué datos faltan' }).click();
   }
   await expect(page.getByRole('listitem', { name })).toBeVisible();
   await page.reload();
@@ -35,7 +35,7 @@ test('actualizar datos resume los fallos, reintenta los fallidos y guarda claves
 }) => {
   await page.goto('/administracion');
   const update = page.getByRole('region', { name: 'Actualizar datos' });
-  await update.getByRole('combobox', { name: 'Tamaño del universo' }).selectOption('150');
+  await update.getByRole('combobox', { name: '¿Cuántas empresas?' }).selectOption('150');
   await update.getByRole('button', { name: 'Actualizar datos' }).click();
   const result = update.getByRole('region', { name: 'Resultado de la actualización' });
   await expect(result.getByText(/Actualización de 3 empresas/)).toBeVisible({ timeout: 15_000 });
@@ -46,8 +46,8 @@ test('actualizar datos resume los fallos, reintenta los fallidos y guarda claves
   await expect(result.getByText(/Reintento de 1 empresas/)).toBeVisible({ timeout: 15_000 });
   await expect(result.getByText('Ninguna empresa ha fallado en esta actualización.')).toBeVisible();
 
-  const fred = page.getByRole('form', { name: 'Clave FRED (panel macro)' });
-  await fred.getByLabel('Nueva clave FRED (panel macro)').fill('clave-e2e');
+  const fred = page.getByRole('form', { name: 'Clave FRED (datos de la economía)' });
+  await fred.getByLabel('Nueva clave FRED (datos de la economía)').fill('clave-e2e');
   await fred.getByRole('button', { name: 'Guardar' }).click();
   await expect(fred.getByText('Clave guardada.')).toBeVisible();
   await expect(fred.getByText('Configurada')).toBeVisible();
@@ -69,8 +69,8 @@ test.describe('calidad de los datos', () => {
       page.getByRole('heading', { name: 'Calidad de los datos', level: 1 }),
     ).toBeVisible();
 
-    const universe = page.getByRole('region', { name: 'Resumen del universo' });
-    await universe.getByRole('button', { name: 'Comprobar calidad del universo' }).click();
+    const universe = page.getByRole('region', { name: 'Resumen de todas las empresas' });
+    await universe.getByRole('button', { name: 'Comprobar los datos' }).click();
     const sources = universe.getByRole('table', { name: 'Cobertura y frescura por fuente' });
     await expect(sources.getByText('Precios (Yahoo)')).toBeVisible({ timeout: 15_000 });
     await expect(sources.getByText('100 % (2/2)').first()).toBeVisible();
@@ -90,8 +90,10 @@ test.describe('calidad de los datos', () => {
     await page.goto('/administracion/calidad');
     const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });
     await company.getByRole('combobox', { name: 'Empresa' }).fill('T000');
-    await company.getByLabel('Fecha de referencia del sector point-in-time').fill('2026-09-28');
-    await company.getByRole('button', { name: 'Ver procedencia' }).click();
+    await company
+      .getByLabel('Fecha (opcional): ver el sector que tenía entonces')
+      .fill('2026-09-28');
+    await company.getByRole('button', { name: 'Ver de dónde salen sus datos' }).click();
     const provenance = company.getByRole('table', { name: 'Procedencia por fuente' });
     await expect(provenance.getByText('250 sesiones, última: 28 sept 2026')).toBeVisible({
       timeout: 15_000,
@@ -112,7 +114,9 @@ test.describe('calidad de los datos', () => {
   test('identidades del universo', async ({ page }) => {
     await page.goto('/administracion/calidad');
     const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });
-    await company.getByLabel('Fecha de referencia del sector point-in-time').fill('2026-09-28');
+    await company
+      .getByLabel('Fecha (opcional): ver el sector que tenía entonces')
+      .fill('2026-09-28');
     await company.getByText('Diagnóstico de identidad del universo').click();
     await company.getByRole('button', { name: /Comprobar identidades/ }).click();
     await expect(company.getByText(/1 símbolos sin CIK acreditado/)).toBeVisible({

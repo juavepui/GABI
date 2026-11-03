@@ -128,7 +128,7 @@ const essential: PolicyField[] = [
 const advanced: PolicyField[] = [
   {
     key: 'min_coverage',
-    label: 'Datos disponibles mínimos (%)',
+    label: 'Métricas con dato, mínimo (%)',
     step: '1',
     percent: true,
     help: 'Qué parte de los datos de la puntuación debe tener la empresa. Más alto deja fuera a las que tienen datos incompletos.',
@@ -427,8 +427,8 @@ export function ExperimentalPlan() {
           </p>
           {job.data?.status === 'failed' && (
             <p className="text-sm text-destructive">
-              No se pudo terminar el cálculo. Puedes ver el error en Administración → Trabajos;
-              a menudo es porque faltan datos.
+              No se pudo terminar el cálculo. Puedes ver el error en Administración → Trabajos; a
+              menudo es porque faltan datos.
             </p>
           )}
           {result.isError && (

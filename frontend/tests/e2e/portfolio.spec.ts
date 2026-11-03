@@ -4,12 +4,12 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.goto('/cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
   await expect(page).toHaveTitle('Cartera objetivo · GABI');
-  await expect(page.getByText('Top-20 de GABI-MF-v2 · sin evidencia propia')).toBeVisible();
+  await expect(page.getByText('GABI-MF-v2 · sin pruebas aún')).toBeVisible();
   await page
-    .getByLabel('¿Y si…? Posiciones hipotéticas (SÍMBOLO,euros; una por línea)')
+    .getByLabel('¿Y si ya tuviera…? Escribe acciones imaginarias (SÍMBOLO,euros; una por línea)')
     .fill('T000,100');
-  await page.getByRole('button', { name: 'Calcular plan' }).click();
-  await expect(page.getByRole('heading', { name: 'Dónde aportar capital nuevo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Calcular', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Dónde poner el dinero nuevo' })).toBeVisible();
   // The test universe is almost all Information Technology: the descriptive warning must show.
   const breakdown = page.getByRole('region', { name: 'Reparto por sector' });
   await expect(breakdown.getByRole('status')).toContainText('Sector Information Technology');
@@ -19,17 +19,19 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
     .getByRole('main')
     .getByRole('link', { name: /^Diario de inversión/ })
     .click();
-  await page.getByText('Nueva tesis').click();
+  await page.getByText('Escribir una tesis nueva').click();
   await page.getByLabel('Símbolo').fill('T000');
-  await page.getByLabel('Precio entrada (USD)').fill('100');
-  await page.getByLabel('Tesis', { exact: true }).fill('Prueba local de tesis');
-  await page.getByRole('button', { name: 'Guardar tesis' }).click();
+  await page.getByLabel('Precio al que compras (USD)').fill('100');
+  await page
+    .getByLabel('¿Por qué la comprarías? (tu tesis)', { exact: true })
+    .fill('Prueba local de tesis');
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(page.getByText('Prueba local de tesis')).toBeVisible();
   await page.reload();
   await expect(page.getByText('Prueba local de tesis')).toBeVisible();
   await page.getByRole('button', { name: 'Marcar revisada' }).click();
   await expect(page.getByText('Revisada el')).toBeVisible();
-  await page.getByLabel('Mostrar solo entradas abiertas (sin revisar)').check();
+  await page.getByLabel('Mostrar solo las que aún no has revisado').check();
   await expect(page.getByText('Prueba local de tesis')).toHaveCount(0);
 });
 
@@ -43,18 +45,18 @@ test('comparación y macro leen los contratos de Mercado', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Métricas comparables' })).toBeVisible();
   // The tab follows the choice, so several comparisons open at once can be told apart.
   await expect(page).toHaveTitle('Comparar T000, T001 · GABI');
-  const composite = page.getByRole('row', { name: /Composite Score/ });
+  const composite = page.getByRole('row', { name: /Puntuación GABI/ });
   await expect(composite).toBeVisible();
   // The better company on the score is green and marked as the best of the compared ones.
   const best = composite.locator('td[title="El mejor de los comparados"]');
   await expect(best).toHaveCount(1);
   await expect(best).toHaveCSS('background-color', 'rgb(199, 245, 199)');
   await page.goto('/macro');
-  await expect(page.getByRole('heading', { name: 'Panel macro' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Economía (macro)' })).toBeVisible();
   await expect(page.getByText('Treasury 10 años')).toBeVisible();
   // One line stays visible; the full explanation is folded under «Cómo leer esta página».
-  await expect(page.getByText('no interviene en el score')).toBeVisible();
-  const guide = page.getByText(/Estas series FRED no intervienen/);
+  await expect(page.getByText('no cambia la puntuación de las empresas')).toBeVisible();
+  const guide = page.getByText(/Los datos son de FRED/);
   await expect(guide).toBeHidden();
   await page.getByText('Cómo leer esta página').click();
   await expect(guide).toBeVisible();
@@ -65,12 +67,10 @@ test('la cartera objetivo se guarda para seguirla y sus eventos están en Evento
 }) => {
   await page.goto('/cartera');
   await page.getByRole('button', { name: 'Guardar esta cartera para seguirla' }).click();
-  await page.getByRole('status').getByRole('link', { name: 'Seguimiento' }).click();
+  await page.getByRole('status').getByRole('link', { name: 'Carteras guardadas' }).click();
   await expect(page).toHaveURL(/\/cartera\/seguimiento$/);
-  await expect(
-    page.getByRole('heading', { name: 'Seguimiento de cestas', level: 1 }),
-  ).toBeVisible();
-  await expect(page.getByLabel('Cesta guardada')).toContainText('Cartera objetivo · Top-20');
+  await expect(page.getByRole('heading', { name: 'Carteras guardadas', level: 1 })).toBeVisible();
+  await expect(page.getByLabel('Cartera guardada')).toContainText('Cartera objetivo · Top-20');
   const tracking = page.getByRole('region', { name: 'Seguimiento del ranking guardado' });
   await expect(tracking).toContainText('Progreso desde');
   await expect(tracking.getByText(/6 meses: pendiente hasta/)).toBeAttached();
@@ -81,8 +81,10 @@ test('la cartera objetivo se guarda para seguirla y sus eventos están en Evento
   await expect(page.getByRole('heading', { name: 'Eventos', level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'Comparar ahora' }).click();
   await expect(page.getByText('cambios detectados')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Próximos earnings' })).toBeVisible();
-  await page.getByRole('button', { name: 'Comprobar filings' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Próximas presentaciones de resultados' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Comprobar informes' }).click();
   // The basket is today's whole target (20 companies): reading the SEC result takes longer.
   await expect(page.getByText(/pares con datos comparables/)).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Guardar comparación y eventos' }).click();
@@ -91,8 +93,8 @@ test('la cartera objetivo se guarda para seguirla y sus eventos están en Evento
     (request) =>
       request.url().includes('severity=MATERIAL') && request.url().includes('since_hours=24'),
   );
-  await page.getByRole('combobox', { name: 'Severidad' }).selectOption({ label: 'Material' });
-  await page.getByLabel('Últimas N horas').fill('24');
+  await page.getByRole('combobox', { name: 'Importancia' }).selectOption({ label: 'Importante' });
+  await page.getByLabel('En las últimas (horas)').fill('24');
   await filtered;
 });
 
@@ -105,8 +107,8 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
   await expect(page.getByRole('heading', { name: /Prueba de simulación/ })).toBeVisible();
   await page.getByLabel('Símbolo').fill('T000');
   await page.getByLabel('Fecha').fill('2026-09-28');
-  await page.getByLabel('Importe cotizado').fill('100');
-  await page.getByRole('button', { name: 'Registrar operación' }).click();
+  await page.getByLabel('Importe (en la moneda de la acción)').fill('100');
+  await page.getByRole('button', { name: 'Apuntar operación' }).click();
   await expect(page.getByText('Operación registrada.')).toBeVisible();
   const prices = page.getByRole('region', { name: 'Precios públicos' });
   await expect(
@@ -127,8 +129,8 @@ test('cartera simulada conserva operaciones y calcula costes con caché local', 
   // A ticker without prices offers its download in the same step, then registers the trade.
   await page.getByLabel('Símbolo').fill('NUEVA');
   await page.getByLabel('Fecha').fill('2026-09-28');
-  await page.getByLabel('Importe cotizado').fill('50');
-  await page.getByRole('button', { name: 'Registrar operación' }).click();
+  await page.getByLabel('Importe (en la moneda de la acción)').fill('50');
+  await page.getByRole('button', { name: 'Apuntar operación' }).click();
   await expect(page.getByRole('alert')).toContainText('No hay precios de NUEVA');
   await page.getByRole('button', { name: 'Descargar precios de NUEVA y registrar' }).click();
   await expect(page.getByText('28 sept 2026 · BUY · NUEVA')).toBeVisible({ timeout: 15_000 });
@@ -143,12 +145,12 @@ test('decisiones experimentales se calculan en job y persisten con su política'
 }) => {
   // One plan page for both plans (#191): the experimental one is chosen on it.
   await page.goto('/cartera');
-  await page.getByRole('radio', { name: 'Plan experimental con límites' }).click();
+  await page.getByRole('radio', { name: 'Plan de prueba con límites' }).click();
   await expect(page).toHaveURL(/\/cartera\?plan=experimental$/);
   await expect(page.getByRole('heading', { name: 'Nuevo plan' })).toBeVisible();
-  await page.getByRole('button', { name: 'Generar decisiones' }).click();
+  await page.getByRole('button', { name: 'Calcular el plan' }).click();
   await expect(page.getByText(/Método:/)).toBeVisible();
-  const previewCsv = page.getByRole('link', { name: 'Descargar decisiones CSV' });
+  const previewCsv = page.getByRole('link', { name: 'Descargar el plan (CSV)' });
   const csv = await page.request.get((await previewCsv.getAttribute('href'))!);
   expect(csv.ok()).toBe(true);
   const header = (await csv.text()).replace(/^\uFEFF/, '').split('\n')[0];
@@ -159,7 +161,7 @@ test('decisiones experimentales se calculan en job y persisten con su política'
   await expect(page.getByRole('heading', { name: 'Planes anteriores' })).toBeVisible();
   await expect(page.getByText('Progreso desde el plan')).toBeVisible();
   await expect(page.getByText(/^Guardado hoy\./)).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Descargar decisiones CSV' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Descargar el plan (CSV)' })).toHaveAttribute(
     'href',
     /\/api\/v1\/portfolio\/decisions\/\d+\/decisions\.csv$/,
   );
@@ -173,7 +175,7 @@ test('aprender: tutorial completo con definiciones de métricas del backend', as
   await valuation.getByText('PER', { exact: true }).click();
   await expect(valuation.getByText(/Precio\/Beneficio: veces que el precio/)).toBeVisible();
   const metrics = page.getByRole('region', { name: 'Métricas que usa GABI' });
-  await metrics.getByText('Value', { exact: true }).click();
+  await metrics.getByText('Valoración', { exact: true }).click();
   await expect(metrics.getByText('(puntúa)')).toHaveCount(13); // The 13 metrics that score, across the 4 blocks.
   await page.getByRole('tab', { name: 'Psicología de la inversión' }).click();
   await expect(page.getByText('Tres hábitos prácticos')).toBeVisible();
@@ -185,7 +187,7 @@ test('aprender: tutorial completo con definiciones de métricas del backend', as
 
 test('el icono ⓘ explica un término y lleva al glosario de la Ayuda', async ({ page }) => {
   await page.goto('/descubrir');
-  const hint = page.getByRole('button', { name: 'Qué es percentil dentro del sector' });
+  const hint = page.getByRole('button', { name: 'Qué es percentil', exact: true });
   await hint.scrollIntoViewIfNeeded();
   await hint.click();
   const tip = page.locator('[data-term-tip]');
@@ -214,7 +216,7 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
   await form.getByLabel('Acciones').fill('10');
   await form.getByLabel('Precio por acción').fill('100');
   await form.getByLabel('Fecha de compra').fill('2026-06-01');
-  await form.getByLabel('Euros por unidad (opcional)').fill('0.9');
+  await form.getByLabel('Cambio aplicado: euros por cada dólar/libra (opcional)').fill('0.9');
   await form.getByRole('button', { name: 'Guardar compra' }).click();
   const lots = page.getByRole('region', { name: 'Compras registradas' });
   await expect(lots).toContainText('T000');
@@ -227,14 +229,14 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
     prices.getByRole('button', { name: 'Actualizar precios de mi cartera' }),
   ).toBeVisible();
   await expect(
-    page.getByRole('region', { name: 'Posiciones' }).getByText('Sin tipo de cambio en caché'),
+    page.getByRole('region', { name: 'Posiciones' }).getByText('No hay cambio de moneda guardado'),
   ).toBeVisible();
   await lots.getByRole('button', { name: 'Editar compra de T000' }).click();
   await lots.getByLabel('Acciones').fill('12');
   await lots.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(lots).toContainText('12 acciones');
 
-  await page.getByText('Importar CSV de un bróker').click();
+  await page.getByText('Importar tus compras desde un fichero de tu bróker (CSV)').click();
   await page
     .getByLabel('Contenido del CSV')
     .fill('symbol,shares,price,date\nT001,1,50,2026-07-01\nT002,-1,50,2026-07-01');
@@ -246,12 +248,12 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
   await expect(lots).toContainText('T001');
 
   await page.goto('/cartera');
-  await expect(page.getByText('Calculado sobre Mi cartera')).toBeVisible();
+  await expect(page.getByText('Tiene en cuenta lo que ya tienes en Mi cartera')).toBeVisible();
   // The form still holds the values the page loaded with: the click recalculates anyway.
   const recalculated = page.waitForRequest('**/api/v1/portfolio/plan');
-  await page.getByRole('button', { name: 'Calcular plan' }).click();
+  await page.getByRole('button', { name: 'Calcular', exact: true }).click();
   await recalculated;
-  await expect(page.getByText('Calculado sobre Mi cartera')).toBeVisible();
+  await expect(page.getByText('Tiene en cuenta lo que ya tienes en Mi cartera')).toBeVisible();
 
   await page.goto('/cartera/mi-cartera');
   for (const symbol of ['T000', 'T001'])
@@ -286,15 +288,17 @@ test('Inicio muestra la franja macro de la caché y el panel declara frecuencia 
   page,
 }) => {
   await page.goto('/');
-  const strip = page.getByRole('region', { name: 'Contexto macro' });
+  const strip = page.getByRole('region', { name: 'Cómo está la economía' });
   await expect(strip).toContainText('Treasury 10 años');
   await expect(strip).toContainText('Curva de tipos (10A-2A)');
   await expect(strip).toContainText('Diaria · último valor publicado');
   await expect(strip).not.toContainText('Fed Funds');
-  await strip.getByRole('link', { name: 'Ver panel macro' }).click();
-  await expect(page.getByRole('heading', { name: 'Panel macro' })).toBeVisible();
-  await expect(page.getByText('FRED FEDFUNDS · Mensual · media del mes')).toBeVisible();
-  await expect(page.getByText('FRED WALCL · Semanal · saldo de cada miércoles')).toBeVisible();
+  await strip.getByRole('link', { name: 'Ver más datos de la economía' }).click();
+  await expect(page.getByRole('heading', { name: 'Economía (macro)' })).toBeVisible();
+  await expect(page.getByText('Fuente: FRED (FEDFUNDS) · Mensual · media del mes')).toBeVisible();
+  await expect(
+    page.getByText('Fuente: FRED (WALCL) · Semanal · saldo de cada miércoles'),
+  ).toBeVisible();
   await expect(page.getByText(/no es alcista por sí mismo/)).toBeVisible();
 });
 
@@ -302,8 +306,8 @@ test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', 
   page,
 }) => {
   await page.goto('/cartera/perfil');
-  await expect(page.getByRole('heading', { name: 'Perfil y benchmark', level: 1 })).toBeVisible();
-  await expect(page.getByText('Guarda tu perfil para ver tu plan')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mi perfil', level: 1 })).toBeVisible();
+  await expect(page.getByText('Guarda tu perfil para ver qué habría pasado')).toBeVisible();
   const form = page.getByRole('form', { name: 'Perfil de inversor' });
   await form.getByLabel('Aportación mensual (€)').fill('500');
   await form.getByRole('button', { name: 'Guardar perfil' }).click();
@@ -311,7 +315,7 @@ test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', 
   // The test cache has SPY but no EUR rate: the page says so instead of downloading it.
   const plan = page.getByRole('region', { name: 'Tu plan en el S&P 500' });
   await expect(plan).toContainText('USDEUR=X');
-  await expect(plan.getByRole('button', { name: 'Actualizar benchmark' })).toBeVisible();
+  await expect(plan.getByRole('button', { name: 'Actualizar precios del índice' })).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole('form', { name: 'Perfil de inversor' }).getByLabel('Aportación mensual (€)'),
@@ -320,16 +324,16 @@ test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', 
 
 test('Riesgo y política guarda la política y propone órdenes sin enviarlas', async ({ page }) => {
   await page.goto('/cartera/riesgo');
-  await expect(page.getByRole('heading', { name: 'Riesgo y política', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Riesgo y límites', level: 1 })).toBeVisible();
   const form = page.getByRole('form', { name: 'Política de cartera' });
-  await form.getByLabel('Peso máximo por emisor (%)').fill('8');
-  await form.getByRole('button', { name: 'Guardar política' }).click();
+  await form.getByLabel('Máximo en una sola empresa (%)').fill('8');
+  await form.getByRole('button', { name: 'Guardar límites' }).click();
   await expect(form.getByRole('status')).toContainText('revisión');
   await page.reload();
   await expect(
     page
       .getByRole('form', { name: 'Política de cartera' })
-      .getByLabel('Peso máximo por emisor (%)'),
+      .getByLabel('Máximo en una sola empresa (%)'),
   ).toHaveValue('8');
   // The test cache has no EUR rate: the proposal points to the explicit download instead of guessing.
   await expect(page.getByRole('region', { name: 'Equiponderada frente a política' })).toContainText(

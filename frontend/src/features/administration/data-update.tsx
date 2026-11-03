@@ -58,7 +58,9 @@ export function DataUpdate() {
           >
             <NativeSelectOption value="50">Prueba rápida (50 empresas)</NativeSelectOption>
             <NativeSelectOption value="150">150 empresas</NativeSelectOption>
-            <NativeSelectOption value="all">Todo el S&amp;P 500 (unas 500, tarda más)</NativeSelectOption>
+            <NativeSelectOption value="all">
+              Todo el S&amp;P 500 (unas 500, tarda más)
+            </NativeSelectOption>
           </NativeSelect>
         </label>
         <label className="flex items-center gap-2">

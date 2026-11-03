@@ -233,7 +233,8 @@ export function EventsPage() {
             )}
             {filingJob.data?.status === 'failed' && (
               <p className="text-sm text-destructive">
-                No se pudo terminar la comparación. Puedes ver el error en Administración → Trabajos.
+                No se pudo terminar la comparación. Puedes ver el error en Administración →
+                Trabajos.
               </p>
             )}
             {filingResult.isError && (

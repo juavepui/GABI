@@ -172,7 +172,8 @@ export function WatchlistPage() {
           <DataTable label="Empresas seguidas">
             <table className="w-full min-w-[900px] text-left text-sm">
               <caption className="sr-only">
-                Empresas seguidas, en el orden en que las añadiste. Los cambios cuentan desde ese día.
+                Empresas seguidas, en el orden en que las añadiste. Los cambios cuentan desde ese
+                día.
               </caption>
               <thead className="bg-muted/60 text-xs text-muted-foreground">
                 <tr>

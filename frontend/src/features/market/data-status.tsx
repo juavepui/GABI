@@ -3,7 +3,8 @@ import type { DataResponse } from '@/shared/api/generated/types.gen';
 import { dateLabel } from '@/shared/lib/format';
 
 const warnings: Record<string, string> = {
-  incomplete_coverage: 'A algunas empresas les faltan datos, así que su puntuación es menos completa.',
+  incomplete_coverage:
+    'A algunas empresas les faltan datos, así que su puntuación es menos completa.',
   prices_stale: 'Hay precios con más de una semana: actualiza los datos para ver los de hoy.',
   fundamentals_stale:
     'Hay datos de las cuentas (Yahoo) con más de una semana: actualízalos cuando puedas.',
@@ -46,7 +47,9 @@ export function DataStatus({ data }: { data: DataResponse }) {
       </dl>
       {data.warnings.length > 0 && (
         <details className="mt-3 text-xs" open={data.status !== 'ready'}>
-          <summary className="cursor-pointer">Avisos sobre los datos ({data.warnings.length})</summary>
+          <summary className="cursor-pointer">
+            Avisos sobre los datos ({data.warnings.length})
+          </summary>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {data.warnings.map((code) => (
               <li key={code}>{warnings[code] ?? code}</li>

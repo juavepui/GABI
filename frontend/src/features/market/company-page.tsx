@@ -257,7 +257,8 @@ export function CompanyPage() {
                             <div key={window} className="flex justify-between gap-2 text-sm">
                               <dt className="text-muted-foreground">
                                 <Term k="max_drawdown">
-                                  {'Mayor caída · últimos ' + (window === '5y' ? '5 años' : '3 años')}
+                                  {'Mayor caída · últimos ' +
+                                    (window === '5y' ? '5 años' : '3 años')}
                                 </Term>
                                 <span className="block text-xs">
                                   No cuenta para la puntuación
@@ -344,8 +345,8 @@ export function CompanyPage() {
                   </dl>
                   <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
                     Datos guardados en tu equipo. Se calculan con la información de hoy, no con lo
-                    que se sabía en cada fecha pasada; por eso no sirven para juzgar cómo habría
-                    ido elegirla antes.
+                    que se sabía en cada fecha pasada; por eso no sirven para juzgar cómo habría ido
+                    elegirla antes.
                   </p>
                   {evidence.data ? (
                     <p className="mt-2 text-xs leading-relaxed text-muted-foreground">

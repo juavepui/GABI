@@ -11,7 +11,7 @@ test('home summarizes local data and portfolio without horizontal scrolling on m
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Tu GABI hoy' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Avisos' })).toContainText(
-    'No es asesoramiento financiero.',
+    'No es asesoramiento financiero',
   );
   const data = page.getByRole('region', { name: 'Estado de los datos' });
   await expect(data.getByText('Empresas puntuadas')).toBeVisible({ timeout: 30_000 });
@@ -37,7 +37,7 @@ test('home summarizes local data and portfolio without horizontal scrolling on m
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
-  await target.getByRole('link', { name: 'Ver la cartera y repartir capital' }).click();
+  await target.getByRole('link', { name: 'Ver la cartera propuesta' }).click();
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
 });
 
@@ -98,7 +98,7 @@ test('comparison shows one company per mobile card with its full metric detail',
   await page.goto('/descubrir/comparar?symbols=T000&symbols=T001');
   const cards = page.locator('[aria-label="Comparación por empresa"]');
   await expect(cards.getByRole('article')).toHaveCount(2);
-  await expect(cards.getByText('Composite Score')).toHaveCount(2);
+  await expect(cards.getByText('Puntuación GABI')).toHaveCount(2);
   await cards.getByText('Todas las métricas de T000').click();
   await expect(
     cards
@@ -148,8 +148,8 @@ test('portfolio target keeps weights visible and expands secondary metrics on mo
   await expect(detail).toBeVisible();
   await detail.click();
   await expect(target.locator('details[open] dt').filter({ hasText: 'Precio USD' })).toBeVisible();
-  await expect(target.getByRole('columnheader', { name: 'Peso' })).toBeVisible();
-  await expect(target.getByRole('columnheader', { name: 'Importe' })).toBeVisible();
+  await expect(target.getByRole('columnheader', { name: '% del total' })).toBeVisible();
+  await expect(target.getByRole('columnheader', { name: 'Dinero' })).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();

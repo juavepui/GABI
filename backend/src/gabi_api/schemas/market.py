@@ -121,7 +121,8 @@ class ModelResponse(WireModel):
     live_forward_source: Literal["blind_validation", "research_lab"] | None
     blind_validation_id: int | None
     independent_advantage_demonstrated: Literal[False] = False
-    evidence_note: str = "Congelar pesos o iniciar seguimiento no acredita una ventaja independiente sobre SPY."
+    evidence_note: str = ("Fijar los criterios o empezar a seguirlos con datos nuevos no demuestra por sí solo que GABI "
+                          "gane al S&P 500.")
 
 
 class DataResponse(WireModel):

@@ -46,9 +46,7 @@ export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
   return (
     <div className="space-y-3 text-sm" role="region" aria-label={`Evidencia de ${e.symbol}`}>
       <p>
-        <span className="text-muted-foreground">
-          Confianza en las pruebas que la respaldan:{' '}
-        </span>
+        <span className="text-muted-foreground">Confianza en las pruebas que la respaldan: </span>
         <strong>{e.confidence_level}</strong>
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -284,8 +282,7 @@ function StabilityContent() {
             </p>
           ) : (
             <p className="text-xl font-semibold">
-              De media, siguen entre las 20 primeras:{' '}
-              {num(query.data.summary.stability_score)} %
+              De media, siguen entre las 20 primeras: {num(query.data.summary.stability_score)} %
             </p>
           )}
           <p className="text-xs text-muted-foreground">
@@ -297,7 +294,8 @@ function StabilityContent() {
           </p>
           {!query.data.summary.sectors_complete && (
             <p className="text-xs text-muted-foreground">
-              A algunas empresas les falta el sector, así que el reparto por sectores está incompleto.
+              A algunas empresas les falta el sector, así que el reparto por sectores está
+              incompleto.
             </p>
           )}
           <div className="max-h-96 overflow-auto">

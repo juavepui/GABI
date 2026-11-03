@@ -300,14 +300,22 @@ function Cards({ items }: { items: [string, string, string][] }) {
 function performanceCards(performance: BenchmarkPerformance): [string, string, string][] {
   return [
     ['Aportado', eur(performance.contributed_eur), 'Costes: ' + eur(performance.costs_eur)],
-    ['Valor al final', eur(performance.final_value_eur), 'Al cierre del ' + (performance.end ?? '—')],
-    ['Rentabilidad de la inversión (TWR)', pct(performance.twr), 'Cuánto rindió, sin importar cuándo metiste dinero'],
-    ['Tu rentabilidad anual (XIRR)', pct(performance.xirr), 'Lo que ganaste tú al año, contando cuándo aportaste'],
     [
-      'Mayor caída',
-      pct(performance.max_drawdown),
-      'Medida sin que el dinero nuevo la disimule',
+      'Valor al final',
+      eur(performance.final_value_eur),
+      'Al cierre del ' + (performance.end ?? '—'),
     ],
+    [
+      'Rentabilidad de la inversión (TWR)',
+      pct(performance.twr),
+      'Cuánto rindió, sin importar cuándo metiste dinero',
+    ],
+    [
+      'Tu rentabilidad anual (XIRR)',
+      pct(performance.xirr),
+      'Lo que ganaste tú al año, contando cuándo aportaste',
+    ],
+    ['Mayor caída', pct(performance.max_drawdown), 'Medida sin que el dinero nuevo la disimule'],
     [
       'Peor momento sobre lo aportado',
       pct(performance.max_loss_on_contributions),
@@ -426,13 +434,17 @@ function Vehicles({
     ['SPY (el de arriba)', 'Con los dividendos reinvertidos, antes de impuestos', reference],
     ...vehicles.map((row): [string, string, BenchmarkPerformance | null | undefined] => [
       row.symbol + (row.theoretical ? ' · teórico' : ' · lo puedes comprar'),
-      row.status === 'ok' ? row.label : 'Sin precios guardados: pulsa «Actualizar precios del índice».',
+      row.status === 'ok'
+        ? row.label
+        : 'Sin precios guardados: pulsa «Actualizar precios del índice».',
       row.performance,
     ]),
   ];
   return (
     <div className="mt-5 overflow-x-auto">
-      <h3 className="font-semibold">El índice frente a los fondos que puedes comprar desde Europa</h3>
+      <h3 className="font-semibold">
+        El índice frente a los fondos que puedes comprar desde Europa
+      </h3>
       <table className="mt-2 w-full text-left text-xs sm:text-sm">
         <thead className="border-b text-xs text-muted-foreground">
           <tr>
@@ -543,7 +555,9 @@ function HoldingsComparison() {
     comparison.error instanceof ApiError && comparison.error.code === 'no_holdings';
   return (
     <section aria-label="Mi cartera frente a SPY" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Mi cartera frente al S&amp;P 500 con el mismo dinero</h2>
+      <h2 className="text-xl font-semibold">
+        Mi cartera frente al S&amp;P 500 con el mismo dinero
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Cada compra de{' '}
         <Link className="text-primary underline" to="/cartera/mi-cartera">
@@ -566,8 +580,16 @@ function HoldingsComparison() {
                 eur(data.comparison.wealth_difference_eur),
                 'Mi cartera menos el S&P 500',
               ],
-              ['Diferencia de rentabilidad (TWR)', pct(data.comparison.twr_difference), 'Sin importar cuándo aportaste'],
-              ['Diferencia de tu rentabilidad anual (XIRR)', pct(data.comparison.xirr_difference), 'Contando cuándo aportaste'],
+              [
+                'Diferencia de rentabilidad (TWR)',
+                pct(data.comparison.twr_difference),
+                'Sin importar cuándo aportaste',
+              ],
+              [
+                'Diferencia de tu rentabilidad anual (XIRR)',
+                pct(data.comparison.xirr_difference),
+                'Contando cuándo aportaste',
+              ],
               [
                 'Diferencia en la mayor caída',
                 pct(data.comparison.max_drawdown_difference),
@@ -630,8 +652,8 @@ export function InvestorPage() {
         title="Mi perfil"
         description={
           <>
-            Cuánto dinero tienes, cuánto aportas, cuánta caída aguantarías y qué habría pasado si
-            lo hubieras invertido en el S&amp;P 500. Es la referencia con la que comparar a GABI.
+            Cuánto dinero tienes, cuánto aportas, cuánta caída aguantarías y qué habría pasado si lo
+            hubieras invertido en el S&amp;P 500. Es la referencia con la que comparar a GABI.
           </>
         }
         guide={

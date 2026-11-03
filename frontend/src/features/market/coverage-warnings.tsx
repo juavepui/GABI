@@ -43,14 +43,16 @@ export function CoverageWarnings() {
       ) : (
         coverage.data && (
           <p className="text-muted-foreground">
-            Datos completos: en cada apartado de la puntuación, al menos el {threshold_pct} % de
-            las {coverage.data.universe} empresas tienen todos sus datos (
+            Datos completos: en cada apartado de la puntuación, al menos el {threshold_pct} % de las{' '}
+            {coverage.data.universe} empresas tienen todos sus datos (
             <Term k="block_coverage">cobertura por apartado</Term>).
           </p>
         )
       )}
       <details className="mt-2 text-xs">
-        <summary className="cursor-pointer text-muted-foreground">Cambiar el mínimo exigido</summary>
+        <summary className="cursor-pointer text-muted-foreground">
+          Cambiar el mínimo exigido
+        </summary>
         <div className="mt-2">
           <CoverageThreshold value={threshold} onChange={setThreshold} />
         </div>

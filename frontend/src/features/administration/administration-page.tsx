@@ -371,8 +371,8 @@ export function AdministrationPage() {
             <DataUpdate />
             <p className="text-xs text-muted-foreground">
               «Actualización completa» hace todo: revisa qué empresas forman hoy el S&amp;P 500,
-              descarga sus precios, sus cuentas y sus informes oficiales, los del propio índice y los
-              datos de la economía. Es la que GABI lanza solo cada día si las tareas automáticas
+              descarga sus precios, sus cuentas y sus informes oficiales, los del propio índice y
+              los datos de la economía. Es la que GABI lanza solo cada día si las tareas automáticas
               están instaladas.
             </p>
             <div className="flex flex-wrap gap-2">

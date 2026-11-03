@@ -85,7 +85,7 @@ export function CompanyTheses({ symbol }: { symbol: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="tesis-titulo" className="flex items-center gap-2 text-base font-semibold">
           <NotebookPen size={18} aria-hidden="true" />
-          Tus tesis sobre {symbol}
+          Tus notas sobre {symbol} (por qué la comprarías)
         </h2>
         {!writing && (
           <Button size="sm" variant="outline" onClick={() => setWriting(true)}>

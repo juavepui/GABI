@@ -45,7 +45,9 @@ describe('avisos de evidencia y datos (#187)', () => {
   it('la situación habitual se pliega en un chip con el mismo detalle', () => {
     screen = renderScreen(<Evidence model={model} data={data} />);
     const summary = screen.container.querySelector('summary')!;
-    expect(summary.textContent).toContain('Aún sin pruebas de que gane al mercado · Datos al día: 21 oct 2026');
+    expect(summary.textContent).toContain(
+      'Aún sin pruebas de que gane al mercado · Datos al día: 21 oct 2026',
+    );
     expect(shown('Estado de la evidencia')).toBe(false);
     expect(shown('Estado de los datos')).toBe(false);
     expect(screen.text()).toContain('Aún no está demostrado que GABI gane al mercado');

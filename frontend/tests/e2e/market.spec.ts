@@ -51,16 +51,16 @@ test('real API: filters, full-universe sorting, pagination, company and reload p
   await expect(
     page.getByText(metric(company.company.metrics.price), { exact: true }).first(),
   ).toBeVisible();
-  await expect(page.getByText(/Evidencia: no demostrada/)).toBeVisible();
+  await expect(page.getByText(/Aún sin pruebas de que gane al mercado/)).toBeVisible();
   await expect(page.getByRole('img', { name: /Histórico de cierre ajustado/ })).toBeVisible();
   await expect(page.getByRole('main')).toBeFocused();
-  await page.getByRole('button', { name: '63 sesiones', exact: true }).click();
+  await page.getByRole('button', { name: '3 meses', exact: true }).click();
   await expect(page).toHaveURL(/bars=63/);
   await expect(
     page.getByText('Ver datos del gráfico (63 sesiones)', { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('button', { name: '63 sesiones', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: '3 meses', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -102,8 +102,8 @@ test('empty filters, missing values, stale data and empty cache have distinct st
     }),
   );
   await page.goto('/descubrir');
-  await expect(page.getByText(/Datos obsoletos/)).toBeVisible();
-  await expect(page.getByText(/Evidencia: no demostrada/)).toBeVisible();
+  await expect(page.getByText(/Datos antiguos/)).toBeVisible();
+  await expect(page.getByText(/Aún sin pruebas de que gane al mercado/)).toBeVisible();
   await page.unroute('**/api/v1/ranking?*');
   await page.route('**/api/v1/ranking?*', (route) =>
     route.fulfill({
@@ -218,26 +218,29 @@ test('evidencia del ranking, estabilidad y evidencia de una empresa se calculan 
   const top = await (await request.get('http://127.0.0.1:8001/api/v1/evidence')).json();
   await page.goto('/descubrir');
   await expect(page.getByRole('heading', { name: 'Ranking de empresas' })).toBeVisible();
-  const coverage = page.getByRole('region', { name: 'Cobertura del universo por bloque' });
-  await coverage.getByLabel('Universo con el bloque completo, mínimo (%)').fill('100');
+  const coverage = page.getByRole('region', { name: 'Datos que faltan por apartado' });
+  await coverage.getByText('Cambiar el mínimo exigido').click();
+  await coverage
+    .getByLabel('Mínimo de empresas con todos los datos de cada apartado (%)')
+    .fill('100');
   await expect(coverage.getByRole('status')).toContainText(
-    'Cobertura del universo por bloque degradada',
+    'Ojo: en algún apartado de la puntuación faltan muchos datos',
   );
-  await expect(coverage.getByRole('status')).toContainText('umbral configurado: 100%');
-  await page.getByText('Evidencia del ranking · confianza de las candidatas del Top-20').click();
+  await expect(coverage.getByRole('status')).toContainText('mínimo pedido: 100 %');
+  await page.getByText('¿Cuánto fiarse de las 20 primeras? · pruebas que las respaldan').click();
   const table = page.getByRole('table', { name: 'Evidencia del ranking' });
   await expect(table.getByRole('row')).toHaveCount(top.rows.length + 1);
   const first = top.rows[0].symbol;
   await table.getByRole('button', { name: first }).click();
   const detail = page.getByRole('region', { name: `Evidencia de ${first}` });
-  await expect(detail).toContainText('Confianza de evidencia');
+  await expect(detail).toContainText('Confianza en las pruebas');
   await expect(detail.getByRole('table', { name: 'Factores del score' })).toBeVisible();
-  await page.getByText('Estabilidad del ranking · cambios de 1–2 puntos en los pesos').click();
+  await page.getByText('¿Es estable el ranking? · qué pasa si cambian un poco los pesos').click();
   await expect(
-    page.getByRole('region', { name: 'Estabilidad del ranking' }).getByText(/perturbaciones/),
+    page.getByRole('region', { name: 'Estabilidad del ranking' }).getByText(/variantes sobre/),
   ).toBeVisible();
   await page.goto('/empresas/' + first);
-  await page.getByText('Evidencia de la candidatura').click();
+  await page.getByText('¿Cuánto fiarse de su puntuación?').click();
   await expect(
     page.getByRole('link', { name: 'Descargar evidencia de la candidata' }),
   ).toBeVisible();
@@ -248,7 +251,7 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
 }) => {
   await page.goto('/empresas/T001');
   await expect(page).toHaveTitle('T001 · Ficha · GABI');
-  await expect(page.getByText('Otras métricas (informativas, no puntuadas)')).toBeVisible();
+  await expect(page.getByText('Otros datos (no cuentan para la puntuación)')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Próximos catalizadores' })).toBeVisible();
   await page.getByText('Qué cambió respecto al filing anterior').click();
   const changes = page.locator('details', { hasText: 'Qué cambió respecto al filing anterior' });
@@ -273,7 +276,7 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
 }) => {
   await page.goto('/empresas/T001');
   const checklist = page.getByRole('table', { name: 'Criterios del checklist' });
-  await expect(page.getByText('Checklist fundamental')).toBeVisible();
+  await expect(page.getByText('Lista de comprobación de la empresa')).toBeVisible();
   await expect(page.getByText('Criterios cumplidos')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Evaluables' })).toBeVisible();
   await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
@@ -285,14 +288,14 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   await expect(page.getByRole('tooltip')).toContainText('Los dos valores no se mezclan');
   await page.mouse.move(0, 0);
   await expect(checklist.getByRole('row', { name: /^Beta/ })).toContainText(
-    'GABI con precios en caché · todo el histórico',
+    'Calculado por GABI con los precios · todos los precios guardados',
   );
   const card = (title: string) =>
     page
       .locator('[data-slot="card"]')
       .filter({ has: page.locator('[data-slot="card-title"]').getByText(title, { exact: true }) });
   await expect(card('Valoración')).toContainText('Yahoo · 12 meses');
-  await expect(card('Calidad')).toContainText('SEC 10-K · último ejercicio');
+  await expect(card('Calidad')).toContainText('Informe anual SEC (10-K) · último ejercicio');
   // Each metric explains itself on hover and on keyboard focus; Escape closes it.
   const peLabel = checklist
     .getByRole('row', { name: /^PER(?! forward)/ })
@@ -313,9 +316,11 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   await page.getByText('Múltiplos frente a su historia y su sector').click();
   const multiples = page.getByRole('table', { name: 'Múltiplos frente a su historia y su sector' });
   // The e2e fixture has no SEC facts: medians are explained, never shown as zero.
-  await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText('Pocos pares con dato');
   await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
-    'Histórico insuficiente',
+    'Pocas empresas parecidas con dato',
+  );
+  await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
+    'No hay suficientes años de datos',
   );
   await expect(page.getByText('Sector: Information Technology')).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -337,7 +342,7 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
 test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async ({ page }) => {
   await page.goto('/');
   const notices = page.getByRole('region', { name: 'Avisos' });
-  await expect(notices.getByText('No es asesoramiento financiero.')).toBeVisible();
+  await expect(notices.getByText('No es asesoramiento financiero')).toBeVisible();
   await expect(
     notices.getByText(
       /Rebalanceo de la prueba ciega #1 \(Fixture ciega\) en 2 días, el 2026-10-01/,
@@ -376,7 +381,7 @@ test('la portada resume datos, cartera objetivo y primeros pasos sin descargar n
   await expect(alerts.getByRole('heading', { name: 'Qué requiere tu atención' })).toBeVisible();
   // The home page itself only reads: no POST (no job, no download).
   expect(requests.filter((line) => line.startsWith('POST'))).toEqual([]);
-  await target.getByRole('link', { name: 'Ver la cartera y repartir capital' }).click();
+  await target.getByRole('link', { name: 'Ver la cartera propuesta' }).click();
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
 });
 
@@ -393,7 +398,7 @@ test('la tabla de Mercado colorea por percentil, fija la cabecera y alinea núme
   expect(await scoreCell.evaluate((cell) => getComputedStyle(cell).backgroundColor)).toMatch(
     /^rgb\(/,
   );
-  await expect(page.getByText(/percentil dentro del sector/)).toBeVisible();
+  await expect(page.getByText(/comparándolo con empresas de su mismo sector/)).toBeVisible();
   // Scrolling the table keeps its header row in view.
   await scroll.evaluate((element) => element.scrollTo(0, element.scrollHeight));
   const header = scroll.locator('thead th').first();
@@ -404,11 +409,11 @@ test('la tabla de Mercado colorea por percentil, fija la cabecera y alinea núme
 test('la ruta muestra el apartado y el menú resalta solo el apartado activo', async ({ page }) => {
   await page.goto('/macro');
   await expect(page.getByRole('navigation', { name: 'Ruta' })).toHaveText(
-    /GABI\s*\/\s*Hoy\s*\/\s*Panel macro/,
+    /GABI\s*\/\s*Hoy\s*\/\s*Economía \(macro\)/,
   );
   const menu = page.getByRole('navigation', { name: 'Navegación principal' });
   const section = menu.getByRole('link', { name: 'Hoy', exact: true });
-  const sub = menu.getByRole('link', { name: 'Panel macro' });
+  const sub = menu.getByRole('link', { name: 'Economía (macro)' });
   const background = (element: Element) => getComputedStyle(element).backgroundColor;
   expect(await section.evaluate(background)).toBe('rgba(0, 0, 0, 0)');
   expect(await sub.evaluate(background)).not.toBe('rgba(0, 0, 0, 0)');
@@ -420,8 +425,8 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   test.skip(testInfo.project.name !== 'desktop', 'Criterio de escritorio');
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto('/empresas/T000');
-  await expect(page.getByText('Score del modelo', { exact: true })).toBeInViewport();
-  await expect(page.getByText(/Último cierre ·/)).toBeInViewport();
+  await expect(page.getByText('Puntuación GABI', { exact: true })).toBeInViewport();
+  await expect(page.getByText(/Precio al cierre del/)).toBeInViewport();
 });
 
 test('Seguir desde el Ranking, la ficha y Comparar, y la lista con nota (#182)', async ({
@@ -472,7 +477,7 @@ test('«Por qué está aquí»: frase y bloques en Ranking, ficha y Cartera obje
   await page.goto('/descubrir?limit=5');
   const row = page.locator('tbody tr').first();
   await expect(row).toContainText(first.summary.text);
-  await expect(row).toContainText('Bloques del score: Valoración');
+  await expect(row).toContainText('Apartados de la puntuación: Valoración');
   await page.goto('/empresas/' + first.symbol);
   const why = page.getByRole('region', { name: 'Por qué está aquí' });
   await expect(why).toContainText(first.summary.text);
@@ -496,18 +501,18 @@ test('evidencia publicada de cada bloque en la ficha, el Ranking y la Cartera ob
     .getByRole('definition')
     .filter({ hasText: momentum.classification_label });
   await expect(provenance.first()).toBeVisible();
-  await expect(page.getByText('· peso 25 %')).toBeVisible();
+  await expect(page.getByText('· cuenta un 25 %')).toBeVisible();
   await expect(page.getByText(evidence.catalog_sha256.slice(0, 8) + '…')).toBeVisible();
   await page.goto('/descubrir');
-  const note = page.getByText('El score combina bloques con evidencia retrospectiva desigual');
-  await expect(note).toContainText('ninguna métrica supera la corrección Holm');
-  await expect(note.getByRole('link', { name: 'Ver Factor Lab' })).toHaveAttribute(
+  const note = page.getByText('Cuánto se ha comprobado cada apartado con datos del pasado');
+  await expect(note).toContainText('ninguna métrica ha pasado la prueba estadística más exigente');
+  await expect(note.getByRole('link', { name: 'Ver el detalle' })).toHaveAttribute(
     'href',
     '/investigacion/factores',
   );
   await page.goto('/cartera');
   await expect(
-    page.getByText('El score combina bloques con evidencia retrospectiva desigual'),
+    page.getByText('Cuánto se ha comprobado cada apartado con datos del pasado'),
   ).toBeVisible();
 });
 
@@ -515,7 +520,7 @@ test('tesis desde la ficha con precio y score anotados, qué ha cambiado y posic
   page,
 }) => {
   await page.goto('/empresas/T001');
-  const theses = page.getByRole('region', { name: 'Tus tesis sobre T001' });
+  const theses = page.getByRole('region', { name: 'Tus notas sobre T001' });
   await expect(theses).toContainText('Aún no has escrito ninguna');
   await theses.getByRole('button', { name: 'Escribir una tesis' }).click();
   await theses.getByLabel('Por qué merece su precio').fill('Barata y rentable');
@@ -552,15 +557,17 @@ test('Comparar desde el Ranking: secciones, checklist de cada ficha y precio en 
   await picks.getByRole('link', { name: 'Comparar 2' }).click();
   await expect(page).toHaveURL(/\/descubrir\/comparar\?symbols=T001&symbols=T002$/);
   for (const section of [
-    'Score y bloques',
+    'Puntuación y apartados',
     'Valoración',
     'Calidad y salud',
     'Riesgo',
-    'Catalizadores',
+    'Próximas fechas clave',
   ])
     await expect(page.getByRole('columnheader', { name: section })).toBeVisible();
   const checklist = page.getByRole('region', { name: 'Checklist comparado' });
-  await expect(checklist.getByRole('row', { name: /^Checklist/ })).toBeVisible({ timeout: 30_000 });
+  await expect(checklist.getByRole('row', { name: /^Lista de comprobación/ })).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(checklist.getByRole('row', { name: /^FCF yield/ })).toBeVisible();
   const prices = page.getByRole('list', { name: /^Valor el / });
   await expect(prices).toContainText('SPY:');
@@ -641,18 +648,24 @@ test('drawdown y volatilidad declaran su ventana y las fechas de pico y valle (#
   await page.goto('/empresas/T001');
   const risk = page
     .locator('[data-slot="card"]')
-    .filter({ has: page.locator('[data-slot="card-title"]').getByText('Momentum y riesgo') });
-  await expect(risk).toContainText(/todo el histórico desde \w+\.? \d{4} \(\d+ sesiones\)/);
+    .filter({ has: page.locator('[data-slot="card-title"]').getByText('Tendencia y riesgo') });
+  await expect(risk).toContainText(
+    /todos los precios guardados desde \w+\.? \d{4} \(\d+ sesiones\)/,
+  );
   await expect(risk).toContainText(/pico \w+\.? \d{4} → valle \w+\.? \d{4}/);
-  await expect(risk).toContainText('Caída máxima · 5 años');
-  await expect(risk).toContainText('Caída máxima · 3 años');
+  await expect(risk).toContainText('Mayor caída · últimos 5 años');
+  await expect(risk).toContainText('Mayor caída · últimos 3 años');
   await page.goto('/descubrir/comparar?symbols=T001&symbols=T002');
   const table = page.locator('table').first();
-  await expect(
-    table.getByRole('row', { name: /^Caída máxima \(todo el histórico\)/ }),
-  ).toContainText(/pico .* → valle/);
-  await expect(table.getByRole('row', { name: /^Caída máxima · 5 años/ })).toContainText('%');
-  await expect(table.getByRole('row', { name: /^Volatilidad/ })).toContainText(/desde .* sesiones/);
+  await expect(table.getByRole('row', { name: /^Mayor caída \(todos los datos\)/ })).toContainText(
+    /pico .* → valle/,
+  );
+  await expect(table.getByRole('row', { name: /^Mayor caída · últimos 5 años/ })).toContainText(
+    '%',
+  );
+  await expect(table.getByRole('row', { name: /^Cuánto se mueve \(volatilidad\)/ })).toContainText(
+    /desde .* sesiones/,
+  );
 });
 
 test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la busca (#197)', async ({
@@ -660,7 +673,7 @@ test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la b
 }) => {
   await page.goto('/descubrir?limit=10');
   const table = page.getByRole('region', { name: 'Tabla desplazable' });
-  for (const label of ['Score', 'Cobertura ponderada', 'Capitalización', 'PER'])
+  for (const label of ['Puntuación', 'Datos disponibles', 'Capitalización', 'PER'])
     await expect(table.getByRole('button', { name: 'Qué es ' + label, exact: true })).toBeVisible();
   const hint = table.getByRole('button', { name: 'Qué es PER', exact: true });
   await hint.scrollIntoViewIfNeeded();
@@ -670,9 +683,9 @@ test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la b
   await page.goto('/empresas/T001');
   for (const label of [
     'ROIC',
-    'Volatilidad',
-    'Caída máxima · 5 años',
-    'Beta calculada frente al SPY',
+    'Cuánto se mueve el precio (volatilidad)',
+    'Mayor caída · últimos 5 años',
+    'Beta: cuánto se mueve con el mercado',
   ])
     await expect(page.getByRole('button', { name: 'Qué es ' + label, exact: true })).toBeVisible();
   await page.goto('/descubrir/comparar?symbols=T001&symbols=T002');

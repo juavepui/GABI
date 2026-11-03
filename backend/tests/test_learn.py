@@ -14,7 +14,7 @@ def test_glossary_lists_every_block_metric_and_marks_the_13_that_score():
     assert response.status_code == 200
     body = response.json()
     blocks = {block["block"]: block["metrics"] for block in body["blocks"]}
-    assert [block["label"] for block in body["blocks"]] == ["Value", "Quality", "Momentum", "Risk"]
+    assert [block["label"] for block in body["blocks"]] == ["Valoración", "Calidad", "Momentum (tendencia)", "Riesgo"]
     assert [metric["key"] for metric in blocks["value"]] == scoring.VALUE_METRICS_LOWER_BETTER
     scored = {metric["key"] for metrics in blocks.values() for metric in metrics if metric["scored"]}
     assert scored == {key for keys in scoring.SCORE_METRICS.values() for key in keys} and len(scored) == 13
@@ -35,8 +35,8 @@ def test_each_coverage_concept_has_one_distinct_name_and_definition():
     with TestClient(create_app(Settings(config.DATA_DIR))) as client:
         glossary = {entry["key"]: entry for entry in client.get("/api/v1/learn/metrics").json()["glossary"]}
     names = {key: glossary[key]["term"] for key in ("score_coverage", "confidence", "block_coverage")}
-    assert names == {"score_coverage": "Métricas disponibles", "confidence": "Cobertura ponderada",
-                     "block_coverage": "Cobertura del universo por bloque"}
+    assert names == {"score_coverage": "Métricas con dato", "confidence": "Datos disponibles",
+                     "block_coverage": "Cobertura por apartado"}
     assert glossary["score_coverage"]["definition"] == METRIC_INFO["score_coverage"]["help"]
     assert all(name.lower() != "cobertura" for name in names.values())
 

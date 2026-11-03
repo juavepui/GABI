@@ -235,8 +235,8 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
         <form onSubmit={submit} className="rounded-xl border bg-card p-5">
           <h2 className="text-lg font-semibold">Registrar operación simulada</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Se usa el precio de cierre del primer día de bolsa a partir de esa fecha. El mercado y la
-            moneda salen del símbolo (AAPL o BRK.B en EE. UU.; SAP.DE, BP.L, SAN.MC o MC.PA en
+            Se usa el precio de cierre del primer día de bolsa a partir de esa fecha. El mercado y
+            la moneda salen del símbolo (AAPL o BRK.B en EE. UU.; SAP.DE, BP.L, SAN.MC o MC.PA en
             Europa) y las comisiones, de la cartera. Si faltan precios, podrás descargarlos desde
             aquí.
           </p>
@@ -533,8 +533,8 @@ export function SimulationsPage() {
         title="Carteras simuladas"
         description={
           <>
-            Practica sin arriesgar dinero: apunta compras y ventas imaginarias, con sus comisiones
-            y cambios de moneda, y mira cómo habrían ido frente al S&amp;P 500. Nada se compra de
+            Practica sin arriesgar dinero: apunta compras y ventas imaginarias, con sus comisiones y
+            cambios de moneda, y mira cómo habrían ido frente al S&amp;P 500. Nada se compra de
             verdad.
           </>
         }

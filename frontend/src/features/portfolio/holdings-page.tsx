@@ -252,11 +252,17 @@ function Totals({ summary }: { summary: HoldingsSummary }) {
   const cards: [string, string, string][] = [
     ['Valor actual', eur(totals.value_eur), `${totals.valued} de ${totals.positions} empresas`],
     ['Lo que pagaste', eur(totals.cost_eur), 'Con comisiones, en euros del día de cada compra'],
-    ['Cuánto has ganado o perdido', pct(totals.return_eur), 'Solo por el precio, sin contar dividendos'],
+    [
+      'Cuánto has ganado o perdido',
+      pct(totals.return_eur),
+      'Solo por el precio, sin contar dividendos',
+    ],
     [
       'El S&P 500 (SPY) en el mismo tiempo',
       pct(totals.spy_return_eur),
-      summary.benchmark_as_of ? 'Al cierre del ' + summary.benchmark_as_of : 'No hay precio del SPY',
+      summary.benchmark_as_of
+        ? 'Al cierre del ' + summary.benchmark_as_of
+        : 'No hay precio del SPY',
     ],
   ];
   return (
@@ -478,9 +484,9 @@ export function HoldingsPage() {
         title="Mi cartera"
         description={
           <>
-            Apunta aquí lo que compras de verdad para ver cuánto vale, cuánto ganas o pierdes y
-            cómo va frente al S&amp;P 500. Se guarda solo en tu equipo y GABI nunca compra ni vende
-            por ti.
+            Apunta aquí lo que compras de verdad para ver cuánto vale, cuánto ganas o pierdes y cómo
+            va frente al S&amp;P 500. Se guarda solo en tu equipo y GABI nunca compra ni vende por
+            ti.
           </>
         }
       />

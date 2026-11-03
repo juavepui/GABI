@@ -134,8 +134,8 @@ function PriceSection({ symbols }: { symbols: string[] }) {
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
         Todas empiezan en 100 el primer día en que hay precio de todas ellas y del S&P 500 (SPY)
-        {prices.data?.base_date ? ` (${dateLabel(prices.data.base_date)})` : ''}: si una línea
-        llega a 130, esa acción ha subido un 30 % desde entonces. Es lo que pasó, no lo que pasará.
+        {prices.data?.base_date ? ` (${dateLabel(prices.data.base_date)})` : ''}: si una línea llega
+        a 130, esa acción ha subido un 30 % desde entonces. Es lo que pasó, no lo que pasará.
       </p>
       {prices.isPending && <LoadingState />}
       {prices.isError && <ErrorState error={prices.error} retry={() => void prices.refetch()} />}
@@ -177,8 +177,8 @@ export function ComparisonPage() {
         title="Comparar empresas"
         description={
           <>
-            Pon de dos a cinco empresas lado a lado. Búscalas por nombre o símbolo, o márcalas en
-            el Ranking. Los datos son los mismos que ves en el Ranking y en cada ficha.
+            Pon de dos a cinco empresas lado a lado. Búscalas por nombre o símbolo, o márcalas en el
+            Ranking. Los datos son los mismos que ves en el Ranking y en cada ficha.
           </>
         }
       />
@@ -354,7 +354,10 @@ export function ComparisonPage() {
                   ))}
                 </tbody>
                 <tbody>
-                  <SectionRow title="Próximas fechas clave" span={comparison.data.items.length + 1} />
+                  <SectionRow
+                    title="Próximas fechas clave"
+                    span={comparison.data.items.length + 1}
+                  />
                   <tr>
                     <th scope="row" className="py-3 pr-3 font-medium">
                       <Term k="next_earnings_days">Próximos resultados</Term>

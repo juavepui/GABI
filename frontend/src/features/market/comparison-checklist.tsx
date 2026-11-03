@@ -83,7 +83,11 @@ export function ComparisonChecklist({ symbols }: { symbols: string[] }) {
   const items = query.data.items;
   const criteria = items[0]?.criteria ?? [];
   const rows: [string, string, (company: ComparedChecklist) => ReactNode][] = [
-    ['Lista de comprobación', 'Criterios que cumple, de los que se pueden comprobar', (c) => <Summary company={c} />],
+    [
+      'Lista de comprobación',
+      'Criterios que cumple, de los que se pueden comprobar',
+      (c) => <Summary company={c} />,
+    ],
     ['Alarmas', 'Señales de alerta encendidas', (c) => <Alarms company={c} />],
     ...criteria.map((criterion): [string, string, (company: ComparedChecklist) => ReactNode] => [
       criterion.label,
