@@ -83,3 +83,9 @@ la arquitectura y sus pruebas en el mismo cambio. No añadir excepciones general
 ni desactivar una guarda. Refactorización estructural y cambio de estrategia se
 entregan con validaciones separadas. La #60 sigue pendiente de evidencia; un
 cambio de producto no la acredita ni la bloquea.
+
+## Lenguaje
+
+El usuario es un inversor novato. Las respuestas y los textos de la aplicación
+siguen las reglas de lenguaje llano de [CLAUDE.md](CLAUDE.md): primero qué
+significa, después el detalle técnico; cada término con su explicación.
