@@ -68,7 +68,7 @@ function PlanEvidenceContent() {
 
 function PlanEvidence() {
   return (
-    <Folded title="Evidencia de las candidatas (pesos congelados)">
+    <Folded title="¿Cuánto fiarse de estas empresas? · pruebas que las respaldan">
       <PlanEvidenceContent />
     </Folded>
   );
@@ -101,9 +101,9 @@ function TrackTarget({ positions }: { positions: number }) {
       </Button>
       {save.isSuccess && (
         <p role="status">
-          Guardada. Su evolución frente a SPY está en{' '}
+          Guardada. Verás cómo le va frente al S&amp;P 500 en{' '}
           <Link className="text-primary underline" to="/cartera/seguimiento">
-            Seguimiento
+            Carteras guardadas
           </Link>
           .
         </p>
@@ -119,8 +119,8 @@ function TrackTarget({ positions }: { positions: number }) {
 
 /** The two answers to «what do I buy and how much?», chosen in the URL so either can be shared. */
 const PLANS = [
-  { id: 'regla', label: 'Regla congelada · Top-N equiponderado' },
-  { id: 'experimental', label: 'Plan experimental con límites' },
+  { id: 'regla', label: 'Regla fija · las mejores, a partes iguales' },
+  { id: 'experimental', label: 'Plan de prueba con límites' },
 ] as const;
 
 export function PortfolioPage() {
@@ -158,55 +158,65 @@ export function PortfolioPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Cartera / Plan"
+        eyebrow="Cartera"
         title="Mi cartera objetivo"
         description={
           <>
-            Las candidatas de la hipótesis congelada y cómo repartir tu capital. No se envían
-            órdenes.
+            Las empresas que GABI propone hoy y cuánto dinero poner en cada una. Es una propuesta:
+            GABI nunca compra ni vende por ti.
           </>
         }
         guide={
           <>
             <p>
-              Selección Top-N con los pesos congelados y al menos un 70 % de métricas disponibles.
-              El cálculo y reparto de capital se hacen en Python sobre la caché local. No se envían
-              órdenes.
+              <strong>Cómo se elige.</strong> GABI toma las empresas con más puntuación (20 por
+              defecto) que tengan al menos el 70 % de sus datos, y pone la misma cantidad de dinero
+              en cada una. Es una regla fija: no se retoca para que el pasado parezca mejor.
+            </p>
+            <p>
+              <strong>Cómo usarla.</strong> Escribe cuánto dinero tienes y cuánto vas a aportar. La
+              tabla te dice cuánto correspondería a cada empresa y, abajo, dónde poner el dinero
+              nuevo para acercarte a ese reparto sin vender nada.
+            </p>
+            <p>
+              <strong>Ten en cuenta.</strong> Todavía no está demostrado que esta cartera gane al
+              S&amp;P 500. Repartir entre 20 empresas reduce el riesgo de que una sola te hunda,
+              pero no lo elimina.
             </p>
           </>
         }
       >
         <SectionLinks
-          label="Apartados de Cartera"
+          label="Otras páginas de Cartera"
           links={[
             {
               to: '/cartera/mi-cartera',
               label: 'Mi cartera',
-              description: 'Tus compras reales frente al objetivo y SPY',
+              description: 'Lo que has comprado de verdad y cómo va frente al S&P 500',
               icon: Wallet,
             },
             {
               to: '/cartera/diario',
               label: 'Diario de inversión',
-              description: 'Tesis antes de comprar y revisión',
+              description: 'Apunta por qué compras antes de hacerlo y revísalo después',
               icon: NotebookPen,
             },
             {
               to: '/cartera/ideas',
               label: 'Historial de ideas',
-              description: 'Fichas publicadas y su resultado frente al S&P 500',
+              description: 'Tus ideas de inversión y cómo salieron frente al S&P 500',
               icon: NotebookPen,
             },
             {
               to: '/cartera/seguimiento',
-              label: 'Seguimiento',
-              description: 'Cestas guardadas frente a SPY',
+              label: 'Carteras guardadas',
+              description: 'Cómo han ido las carteras que guardaste frente al S&P 500',
               icon: Radar,
             },
             {
               to: '/cartera/simuladas',
               label: 'Carteras simuladas',
-              description: 'Operaciones hipotéticas frente a SPY',
+              description: 'Practica comprando y vendiendo sin dinero real',
               icon: FlaskRound,
             },
           ]}
@@ -239,7 +249,7 @@ export function PortfolioPage() {
           <form onSubmit={submit} className="rounded-xl border bg-card p-5">
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="text-sm font-medium">
-                Posiciones objetivo
+                Número de empresas
                 <Input
                   className="mt-1.5"
                   name="n_positions"
@@ -251,7 +261,7 @@ export function PortfolioPage() {
                 />
               </label>
               <label className="text-sm font-medium">
-                Capital ilustrativo (€)
+                Dinero total de ejemplo (€)
                 <Input
                   className="mt-1.5"
                   name="capital_eur"
@@ -263,11 +273,11 @@ export function PortfolioPage() {
                   required
                 />
                 <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                  Solo traduce los pesos objetivo a importes en la tabla.
+                  Solo sirve para ver en la tabla cuánto iría a cada empresa.
                 </span>
               </label>
               <label className="text-sm font-medium">
-                Capital nuevo (€)
+                Dinero que vas a aportar ahora (€)
                 <Input
                   className="mt-1.5"
                   name="new_capital_eur"
@@ -279,13 +289,13 @@ export function PortfolioPage() {
                   required
                 />
                 <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                  Dinero que vas a aportar ahora; se reparte en «Dónde aportar capital nuevo».
+                  Se reparte abajo, en «Dónde poner el dinero nuevo».
                 </span>
               </label>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
               <label className="text-sm font-medium">
-                Aviso si un sector supera (%)
+                Avisarme si un sector pasa del (%)
                 <Input
                   className="mt-1.5"
                   name="sector_limit_percent"
@@ -298,7 +308,7 @@ export function PortfolioPage() {
                 />
               </label>
               <label className="text-sm font-medium">
-                Aviso si una industria supera (%)
+                Avisarme si una industria pasa del (%)
                 <Input
                   className="mt-1.5"
                   name="industry_limit_percent"
@@ -312,10 +322,10 @@ export function PortfolioPage() {
               </label>
             </div>
             <label className="mt-4 block text-sm font-medium" htmlFor="holdings">
-              ¿Y si…? Posiciones hipotéticas (SÍMBOLO,euros; una por línea)
+              ¿Y si ya tuviera…? Escribe acciones imaginarias (SÍMBOLO,euros; una por línea)
             </label>
             <p className="mt-1 text-xs text-muted-foreground">
-              Vacío: el plan de aportación parte de las compras guardadas en{' '}
+              Si lo dejas vacío, se usan tus compras reales guardadas en{' '}
               <Link className="text-primary underline" to="/cartera/mi-cartera">
                 Mi cartera
               </Link>
@@ -330,7 +340,7 @@ export function PortfolioPage() {
               className="mt-1.5 w-full"
             />
             <Button className="mt-4" type="submit" pending={plan.isFetching}>
-              Calcular plan
+              Calcular
             </Button>
           </form>
           {plan.isPending && <LoadingState />}
@@ -341,14 +351,14 @@ export function PortfolioPage() {
               <section aria-label="Cartera objetivo" className="rounded-xl border bg-card p-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold">
-                    Objetivo · {data.target.length} posiciones
+                    Cartera propuesta · {data.target.length} empresas
                   </h2>
                   <Badge variant={data.status === 'FROZEN' ? 'secondary' : 'outline'}>
                     {data.status === 'FROZEN'
-                      ? 'Top-20 congelado'
+                      ? 'Regla fija'
                       : data.model_id.startsWith('GABI-MF-')
-                        ? `Top-20 de ${data.model_id} · sin evidencia propia`
-                        : 'Variante experimental'}
+                        ? `Las mejores según ${data.model_id} · aún sin pruebas propias`
+                        : 'Versión de prueba'}
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{data.evidence_note}</p>
@@ -357,13 +367,13 @@ export function PortfolioPage() {
                 )}
                 {data.target.length > 0 && <TrackTarget positions={data.n_positions} />}
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Empresas con score en la caché local: {data.data.scored_count} de{' '}
-                  {data.data.universe_count}. Precio de referencia en USD; importes del plan en EUR.
-                  No se calculan acciones sin un tipo de cambio explícito.
+                  Empresas con puntuación: {data.data.scored_count} de {data.data.universe_count}.
+                  Los precios están en dólares y los importes en euros; como no hay un tipo de
+                  cambio fijado, no se calcula cuántas acciones comprar.
                 </p>
                 {data.target.length === 0 ? (
                   <p className="mt-5 text-sm">
-                    Ninguna empresa llega hoy al mínimo de métricas disponibles.
+                    Ninguna empresa tiene hoy datos suficientes para entrar.
                   </p>
                 ) : (
                   <div className="mt-5 overflow-x-auto">
@@ -372,13 +382,13 @@ export function PortfolioPage() {
                         <tr>
                           <th className="pb-3">Empresa</th>
                           <th className="hidden pb-3 sm:table-cell">Sector</th>
-                          <th className="hidden pb-3 sm:table-cell">Score</th>
+                          <th className="hidden pb-3 sm:table-cell">Puntuación</th>
                           <th className="hidden pb-3 sm:table-cell">
-                            <Term k="score_coverage">Métricas disponibles</Term>
+                            <Term k="score_coverage">Datos disponibles</Term>
                           </th>
                           <th className="hidden pb-3 sm:table-cell">Precio USD</th>
-                          <th className="pb-3">Peso</th>
-                          <th className="pb-3">Importe</th>
+                          <th className="pb-3">% de la cartera</th>
+                          <th className="pb-3">Dinero</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -403,9 +413,9 @@ export function PortfolioPage() {
                                 <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
                                   <dt>Sector</dt>
                                   <dd className="text-right">{row.sector ?? '—'}</dd>
-                                  <dt>Score</dt>
+                                  <dt>Puntuación</dt>
                                   <dd className="text-right">{decimal(row.score_points)}</dd>
-                                  <dt>Métricas disponibles</dt>
+                                  <dt>Datos disponibles</dt>
                                   <dd className="text-right">
                                     {row.score_coverage_fraction == null
                                       ? '—'
@@ -442,15 +452,16 @@ export function PortfolioPage() {
               </section>
               {data.target.length > 0 && <SectorBreakdown data={data} />}
               <section className="rounded-xl border bg-card p-5">
-                <h2 className="text-xl font-semibold">Dónde aportar capital nuevo</h2>
+                <h2 className="text-xl font-semibold">Dónde poner el dinero nuevo</h2>
                 <p className="mt-2 text-sm">
                   {data.holdings_source === 'saved' &&
-                    'Calculado sobre Mi cartera, con su valor en euros en caché.'}
+                    'Tiene en cuenta lo que ya tienes en Mi cartera.'}
                   {data.holdings_source === 'text' &&
-                    'Calculado sobre las posiciones hipotéticas escritas, no sobre Mi cartera.'}
+                    'Tiene en cuenta las acciones imaginarias que escribiste, no Mi cartera.'}
                   {data.holdings_source === 'none' && (
                     <>
-                      Sin posiciones: se reparte como si empezaras de cero.{' '}
+                      Todavía no tienes compras guardadas, así que se reparte como si empezaras de
+                      cero.{' '}
                       <Link className="text-primary underline" to="/cartera/mi-cartera">
                         Registra tus compras en Mi cartera
                       </Link>
@@ -458,13 +469,13 @@ export function PortfolioPage() {
                     </>
                   )}
                   {data.holdings_unvalued.length > 0 &&
-                    ' Sin valorar (falta precio o tipo de cambio): ' +
+                    ' No se han podido valorar (falta su precio o el cambio de moneda): ' +
                       data.holdings_unvalued.join(', ') +
                       '.'}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Solo aproxima los pesos objetivo con aportaciones. No propone ventas ni considera
-                  impuestos o costes de ejecución.
+                  Reparte el dinero nuevo para acercarte al reparto propuesto sin vender nada. No
+                  tiene en cuenta impuestos ni comisiones.
                 </p>
                 {data.allocations.length ? (
                   <ul className="mt-4 divide-y">
@@ -481,7 +492,7 @@ export function PortfolioPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-4 text-sm">No hay aportaciones asignables con estos datos.</p>
+                  <p className="mt-4 text-sm">Con estos datos no hay nada que repartir.</p>
                 )}
                 {data.remaining_eur > 0.01 && (
                   <p className="mt-3 text-sm">Capital sin asignar: {euro(data.remaining_eur)}.</p>

@@ -104,9 +104,10 @@ function AlertJob() {
         Buscar alertas
       </Button>
       <p className="text-xs text-muted-foreground">
-        Comprueba las condiciones de invalidación de cada idea abierta y los datos locales de
-        informes, resultados, estimaciones, insiders y precio. Repetirlo no duplica alertas; solo
-        piden revisar la idea, nunca se opera.
+        Revisa cada idea abierta: si se ha cumplido lo que te haría cambiar de idea, o si hay
+        novedades en sus informes, resultados, previsiones de analistas, compras y ventas de sus
+        directivos o en el precio. Puedes repetirlo sin que se dupliquen avisos. Los avisos solo te
+        piden revisar la idea; nunca se compra ni se vende.
       </p>
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {job.data && job.data.status !== 'succeeded' && (
@@ -299,7 +300,7 @@ function IdeaRow({ idea }: { idea: Idea }) {
       </p>
       <Alerts
         alerts={idea.pending_alerts}
-        title="Pendientes de revisar (añade una revisión al atenderlas)"
+        title="Pendientes de revisar (añade una nota al atenderlas)"
       />
       <Button size="sm" variant="ghost" onClick={() => setOpen(!open)}>
         {open ? 'Ocultar historial' : 'Ver historial y notas'}
@@ -342,7 +343,7 @@ export function IdeasPage() {
       <PageHeader
         back={{ to: '/cartera', label: 'Cartera objetivo' }}
         title="Historial de ideas"
-        description="Cada ficha de inversión publicada, lo que pasó después y su resultado frente al S&P 500 en euros."
+        description="Cada idea de inversión que has publicado desde la ficha de una empresa, qué pasó después y si lo hizo mejor o peor que el S&P 500, en euros."
       />
       <HowToRead>
         Las revisiones, retiradas, cierres y correcciones se añaden al historial; nada se reescribe
@@ -364,7 +365,7 @@ export function IdeasPage() {
       )}
       {ideas.data && ideas.data.items.length === 0 && (
         <p className="text-muted-foreground">
-          Aún no hay ideas: se crean al publicar una ficha de inversión en la página de una empresa.
+          Aún no hay ideas. Se crean desde la ficha de una empresa, en «Ficha de inversión».
         </p>
       )}
       {ideas.data && ideas.data.items.length > 0 && (

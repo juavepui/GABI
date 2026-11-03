@@ -4,8 +4,8 @@ import { pageTitle, REDIRECTS, sectionOf, sections } from '../src/app/navigation
 describe('título de la pestaña por ruta (#177)', () => {
   it('va del apartado más específico al general', () => {
     expect(pageTitle('/')).toBe('Resumen · GABI');
-    expect(pageTitle('/macro')).toBe('Panel macro · GABI');
-    expect(pageTitle('/cartera/seguimiento')).toBe('Seguimiento · GABI');
+    expect(pageTitle('/macro')).toBe('Economía (macro) · GABI');
+    expect(pageTitle('/cartera/seguimiento')).toBe('Carteras guardadas · GABI');
     expect(pageTitle('/eventos')).toBe('Eventos · GABI');
     expect(pageTitle('/ayuda')).toBe('Ayuda · GABI');
     expect(pageTitle('/cartera', '?plan=experimental')).toBe('Plan experimental · GABI');

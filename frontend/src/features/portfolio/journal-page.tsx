@@ -196,11 +196,11 @@ function Entry({ entry, changed }: { entry: JournalEntry; changed: () => void })
           className="mt-5 grid gap-3 border-t pt-4 sm:grid-cols-[160px_1fr_auto]"
         >
           <label className="text-xs font-medium">
-            Precio revisión (USD)
+            Precio al revisarla (USD)
             <Input className="mt-1" name="review_price" type="number" min={0} step="0.01" />
           </label>
           <label className="text-xs font-medium">
-            Aprendizaje
+            ¿Qué has aprendido?
             <Input className="mt-1" name="review_notes" maxLength={5000} />
           </label>
           <Button className="self-end" type="submit" pending={review.isPending}>
@@ -290,13 +290,14 @@ export function JournalPage() {
         title="Diario de inversión"
         description={
           <>
-            Escribe la tesis antes de invertir y revísala después. Las entradas permanecen en la
-            base local de este equipo.
+            Antes de comprar, apunta por qué lo haces (tu «tesis»), qué te haría cambiar de idea y
+            cuándo lo revisarás. Después compara lo que pensabas con lo que pasó: así se aprende de
+            los aciertos y de los errores. Se guarda solo en tu equipo.
           </>
         }
       />
       <details className="rounded-xl border bg-card p-5" open={Boolean(prefill)}>
-        <summary className="cursor-pointer font-semibold">Nueva tesis</summary>
+        <summary className="cursor-pointer font-semibold">Escribir una tesis nueva</summary>
         <form onSubmit={submit} className="mt-5 space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="text-sm">
@@ -310,7 +311,7 @@ export function JournalPage() {
               />
             </label>
             <label className="text-sm">
-              Horizonte
+              ¿Cuánto tiempo piensas mantenerla?
               <NativeSelect name="horizon" className="mt-1 w-full">
                 <option>Medio (6-12 meses)</option>
                 <option>Corto (&lt;6 meses)</option>
@@ -318,21 +319,21 @@ export function JournalPage() {
               </NativeSelect>
             </label>
             <label className="text-sm">
-              Precio entrada (USD)
+              Precio al que compras (USD)
               <Input className="mt-1" name="entry_price" type="number" min={0} step="0.01" />
             </label>
           </div>
           <label className="block text-sm">
-            Tesis
+            ¿Por qué la comprarías? (tu tesis)
             <Textarea name="thesis" maxLength={5000} rows={3} className="mt-1 w-full" />
           </label>
           <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
             <label className="block text-sm">
-              Qué la invalidaría
+              ¿Qué te haría cambiar de idea?
               <Input className="mt-1" name="invalidation" maxLength={5000} />
             </label>
             <label className="block text-sm">
-              Fecha de revisión
+              ¿Cuándo la revisarás?
               <Input className="mt-1" name="review_due" type="date" />
             </label>
           </div>
@@ -350,7 +351,7 @@ export function JournalPage() {
                   <Input className="mt-1" name={key + '_price'} type="number" min={0} step="0.01" />
                 </label>
                 <label className="block text-xs">
-                  Probabilidad %
+                  ¿Qué probabilidad le das? (%)
                   <Input
                     className="mt-1"
                     name={key + '_prob'}
@@ -365,15 +366,15 @@ export function JournalPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-sm">
-              Catalizadores
+              ¿Qué podría hacerla subir? (catalizadores)
               <Input className="mt-1" name="catalysts" maxLength={5000} />
             </label>
             <label className="text-sm">
-              Riesgos
+              ¿Qué podría salir mal? (riesgos)
               <Input className="mt-1" name="risks" maxLength={5000} />
             </label>
             <label className="text-sm">
-              Tamaño posición %
+              Qué parte de tu dinero pondrías (%)
               <Input
                 className="mt-1"
                 name="position_size_pct"
@@ -389,7 +390,7 @@ export function JournalPage() {
             </label>
           </div>
           <Button type="submit" pending={create.isPending}>
-            Guardar tesis
+            Guardar
           </Button>
           {create.isError && (
             <p role="alert" className="text-sm text-destructive">
@@ -398,7 +399,7 @@ export function JournalPage() {
           )}
           {create.isSuccess && (
             <p role="status" className="text-sm">
-              Tesis guardada en el diario local.
+              Guardada en tu diario.
             </p>
           )}
         </form>
@@ -414,7 +415,7 @@ export function JournalPage() {
               setOffset(0);
             }}
           />
-          Mostrar solo entradas abiertas (sin revisar)
+          Mostrar solo las que aún no has revisado
         </label>
         {entries.isPending && <LoadingState />}
         {entries.isError && (

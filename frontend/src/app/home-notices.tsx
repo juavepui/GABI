@@ -1,23 +1,28 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getNotices } from '@/shared/api/client';
+import { useResearchMode } from '@/shared/api/use-model';
 
 const COMMAND = 'python -m gabi.periodic_tasks --run';
 
 /** Notices shown on the landing page: legal notice, blind rebalances due soon and the #44 state. */
 export function HomeNotices() {
+  // The study notices are research chores with shell commands: shown in Research mode only.
+  const research = useResearchMode();
   const notices = useQuery({
     queryKey: ['notices'],
     queryFn: ({ signal }) => getNotices(signal),
     staleTime: 300_000,
+    enabled: research,
   });
-  const data = notices.data;
+  const data = research ? notices.data : undefined;
   return (
     <div className="mb-6 space-y-2 text-sm" aria-label="Avisos" role="region">
       <p className="rounded-lg border border-amber-500/40 bg-amber-50/60 p-3 dark:bg-amber-950/20">
-        Herramienta de uso personal y educativo. <strong>No es asesoramiento financiero.</strong>{' '}
-        Los datos vienen de fuentes gratuitas (Yahoo Finance, SEC EDGAR, FRED) y pueden tener
-        retraso o errores. Verifica siempre antes de invertir.
+        Herramienta para uso personal y para aprender. <strong>No es asesoramiento
+        financiero</strong> ni te dice qué comprar. Los datos vienen de fuentes gratuitas (Yahoo
+        Finance, la SEC y la Reserva Federal) y pueden llegar con retraso o tener errores.
+        Compruébalos siempre antes de invertir.
       </p>
       {data?.smallmid?.analyzed && (
         <p className="rounded-lg border p-3">

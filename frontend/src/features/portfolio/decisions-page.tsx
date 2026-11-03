@@ -62,7 +62,7 @@ const decimal = (value: number | null | undefined) => formatNumber(value, { digi
 
 function DecisionTable({ decisions }: { decisions: Preview['decisions'] }) {
   if (!decisions.length)
-    return <p className="mt-4 text-sm">El plan no tiene decisiones ejecutables.</p>;
+    return <p className="mt-4 text-sm">Con este plan no hay nada que comprar ni vender.</p>;
   return (
     <div className="mt-4 overflow-x-auto">
       <table className="w-full min-w-[680px] text-left text-sm">
@@ -70,10 +70,10 @@ function DecisionTable({ decisions }: { decisions: Preview['decisions'] }) {
           <tr>
             <th className="py-2">Empresa</th>
             <th>Acción</th>
-            <th>Actual %</th>
-            <th>Objetivo %</th>
-            <th>Cambio %</th>
-            <th>Score</th>
+            <th>Ahora (%)</th>
+            <th>Propuesto (%)</th>
+            <th>Cambio (%)</th>
+            <th>Puntuación</th>
             <th>Motivo</th>
           </tr>
         </thead>
@@ -114,36 +114,36 @@ type PolicyField = {
 const essential: PolicyField[] = [
   {
     key: 'max_positions',
-    label: 'Máximo de posiciones',
+    label: 'Máximo de empresas',
     step: '1',
-    help: 'Número de empresas. Más posiciones reparten el riesgo, pero bajan el score medio.',
+    help: 'Cuántas empresas como mucho. Más empresas reparten el riesgo, pero entran algunas con menos puntuación.',
   },
   {
     key: 'min_score',
-    label: 'Score mínimo',
+    label: 'Puntuación mínima',
     step: '1',
-    help: 'Puntos de 0 a 100. Solo entran empresas con un score igual o superior.',
+    help: 'De 0 a 100. Solo entran empresas con esta puntuación o más.',
   },
 ];
 const advanced: PolicyField[] = [
   {
     key: 'min_coverage',
-    label: 'Métricas disponibles mínimas (%)',
+    label: 'Datos disponibles mínimos (%)',
     step: '1',
     percent: true,
-    help: 'Porcentaje de las métricas del score con dato, como en el Ranking. Más alto descarta empresas con datos incompletos.',
+    help: 'Qué parte de los datos de la puntuación debe tener la empresa. Más alto deja fuera a las que tienen datos incompletos.',
   },
   {
     key: 'max_position_pct',
-    label: 'Máximo por posición (%)',
+    label: 'Máximo en una sola empresa (%)',
     step: '0.1',
-    help: '% del patrimonio total en una sola empresa. Limita el daño de un error.',
+    help: 'Qué parte de todo tu dinero puede ir a una sola empresa. Limita el daño si te equivocas con ella.',
   },
   {
     key: 'max_sector_pct',
     label: 'Máximo por sector (%)',
     step: '0.1',
-    help: '% del patrimonio total en un sector. Evita concentrar el riesgo en una industria.',
+    help: 'Qué parte de todo tu dinero puede ir a un mismo sector. Evita depender de que a un sector le vaya bien.',
   },
   {
     key: 'max_invested_pct',
@@ -155,31 +155,31 @@ const advanced: PolicyField[] = [
     key: 'max_volatility',
     label: 'Volatilidad máxima',
     step: '0.01',
-    help: 'Volatilidad anualizada en fracción (0,60 = 60 %). Descarta las empresas más volátiles.',
+    help: 'Cuánto puede moverse el precio en un año, en tanto por uno (0,60 = 60 %). Deja fuera las empresas más inestables.',
   },
   {
     key: 'min_drawdown',
-    label: 'Drawdown mínimo',
+    label: 'Mayor caída aceptada',
     step: '0.01',
-    help: 'Caída máxima tolerada en fracción negativa (−0,50 = −50 %). Descarta caídas mayores.',
+    help: 'La mayor caída desde un máximo que aceptas, en tanto por uno negativo (−0,50 = −50 %). Deja fuera las que han caído más.',
   },
   {
     key: 'max_price_age_days',
-    label: 'Edad máxima del precio (días)',
+    label: 'Antigüedad máxima del precio (días)',
     step: '1',
-    help: 'Días desde el último cierre en caché. Con precios más antiguos no se propone operar.',
+    help: 'Si el último precio guardado es más antiguo, no se propone comprar ni vender.',
   },
   {
     key: 'trade_threshold_pct',
-    label: 'Umbral de cambio (%)',
+    label: 'Cambio mínimo para operar (%)',
     step: '0.1',
-    help: 'Puntos de peso que debe cambiar una posición para proponer comprar o vender. Evita operaciones pequeñas.',
+    help: 'Cuánto tiene que cambiar el peso de una empresa para proponer comprar o vender. Evita operaciones pequeñas que solo generan comisiones.',
   },
   {
     key: 'turnover_penalty',
-    label: 'Penalización por rotación',
+    label: 'Freno a los cambios',
     step: '0.01',
-    help: 'De 0 a 0,20. Con el optimizador, penaliza cambiar mucho la cartera actual.',
+    help: 'De 0 a 0,20. Con la opción «Optimizar», cuanto más alto, menos cambia tu cartera actual.',
   },
 ];
 const shown = (field: PolicyField, policy: DecisionPolicy) => {
@@ -229,7 +229,7 @@ export function PlanFreshness({ data }: { data: DecisionFreshness }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs">Genera un plan nuevo antes de actuar sobre este.</p>
+      <p className="mt-2 text-xs">Calcula un plan nuevo antes de hacer caso a este.</p>
     </div>
   );
 }
@@ -328,15 +328,16 @@ export function ExperimentalPlan() {
   return (
     <div className="space-y-6">
       <p className="flex flex-wrap items-center gap-2 rounded-xl border bg-secondary/40 p-4 text-sm">
-        <Badge variant="outline">Experimental</Badge>
-        Plan de compra y venta con límites de riesgo propios sobre los scores congelados. No es la
-        regla validada ni demuestra ventaja frente al S&amp;P 500. Nunca envía órdenes.
+        <Badge variant="outline">De prueba</Badge>
+        Un plan de compras y ventas con tus propios límites de riesgo, usando la misma puntuación.
+        No es la regla fija de GABI ni está demostrado que gane al S&amp;P 500. Nunca compra ni
+        vende por ti.
       </p>
       <form onSubmit={submit} className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Nuevo plan</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Se calcula en el worker local con precios ya cacheados. Los porcentajes se refieren al
-          patrimonio total.
+          Se calcula en tu equipo con los precios guardados. Los porcentajes son sobre todo tu
+          dinero invertido más el que tienes sin invertir.
         </p>
         {!defaults &&
           (formDefaults.isError ? (
@@ -405,12 +406,12 @@ export function ExperimentalPlan() {
                 name="constrained_optimizer"
                 defaultChecked={defaults.constrained_optimizer}
               />
-              Optimizar con límites de posición y sector
+              Optimizar respetando los límites por empresa y sector
             </label>
           </AdvancedOptions>
         )}
         <Button className="mt-4" type="submit" pending={generate.isPending} disabled={!defaults}>
-          Generar decisiones
+          Calcular el plan
         </Button>
         {generate.isError && (
           <p role="alert" className="mt-2 text-sm text-destructive">
@@ -420,14 +421,14 @@ export function ExperimentalPlan() {
       </form>
       {jobId && (
         <section className="rounded-xl border bg-card p-5">
-          <h2 className="font-semibold">Cálculo local</h2>
+          <h2 className="font-semibold">Calculando</h2>
           <p role="status" className="mt-2 text-sm">
-            {job.data?.phase ?? 'En espera'} ({job.data?.status ?? 'queued'})
+            {job.data?.phase ?? 'En espera'}
           </p>
           {job.data?.status === 'failed' && (
             <p className="text-sm text-destructive">
-              El cálculo no se completó. Revisa la actividad en Administración y la cobertura de
-              datos.
+              No se pudo terminar el cálculo. Puedes ver el error en Administración → Trabajos;
+              a menudo es porque faltan datos.
             </p>
           )}
           {result.isError && (
@@ -448,7 +449,7 @@ export function ExperimentalPlan() {
                 href={decisionsCsvUrl({ jobId: jobId! })}
                 download
               >
-                Descargar decisiones CSV
+                Descargar el plan (CSV)
               </a>
               <Button
                 type="button"
@@ -502,7 +503,7 @@ export function ExperimentalPlan() {
               <>
                 <p className="mt-3 text-sm text-muted-foreground">
                   {selectedPlan.created_at.slice(0, 10)} · {selectedPlan.method}{' '}
-                  <Badge variant="outline">Experimental</Badge>
+                  <Badge variant="outline">De prueba</Badge>
                 </p>
                 {freshness.isError && (
                   <ErrorState error={freshness.error} retry={() => void freshness.refetch()} />
@@ -514,7 +515,7 @@ export function ExperimentalPlan() {
                   href={decisionsCsvUrl({ planId: selectedPlan.id })}
                   download
                 >
-                  Descargar decisiones CSV
+                  Descargar el plan (CSV)
                 </a>
                 <div className="mt-6 border-t pt-5">
                   <h3 className="font-semibold">Progreso desde el plan</h3>
@@ -531,7 +532,7 @@ export function ExperimentalPlan() {
                       </p>
                       {progress.data.stale && (
                         <p className="mt-2 text-sm">
-                          Aún no hay precios posteriores al plan. Actualiza los datos desde
+                          Aún no hay precios posteriores al plan. Actualiza los datos en
                           Administración.
                         </p>
                       )}

@@ -13,21 +13,22 @@ export function SectorBreakdown({ data }: { data: PlanResponse }) {
     <section aria-label="Reparto por sector" className="rounded-xl border bg-card p-5">
       <h2 className="text-xl font-semibold">Reparto por sector</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Peso de cada sector en la cartera objetivo frente a su peso en el S&amp;P 500. Es
-        descriptivo: la selección congelada no limita sectores. {data.index_weight_basis}
+        Qué parte de la cartera propuesta va a cada sector, comparado con el S&amp;P 500. Si un
+        sector pesa mucho más que en el índice, la cartera depende más de que a ese sector le vaya
+        bien. La regla fija no limita sectores; solo te avisa. {data.index_weight_basis}
       </p>
       {data.concentration.length > 0 ? (
         <div
           role="status"
           className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
         >
-          <p className="font-medium">Concentración por encima del umbral</p>
+          <p className="font-medium">Demasiado dinero en un mismo sector</p>
           <ul className="mt-1 list-disc pl-5">
             {data.concentration.map((warning) => (
               <li key={warning.kind + warning.name}>
                 {warning.kind === 'sector' ? 'Sector' : 'Industria'} {warning.name}:{' '}
                 {pct(warning.weight_percent)} con {warning.positions}{' '}
-                {warning.positions === 1 ? 'posición' : 'posiciones'} (umbral{' '}
+                {warning.positions === 1 ? 'empresa' : 'empresas'} (tu límite de aviso es el{' '}
                 {pct(warning.limit_percent)}).
               </li>
             ))}
@@ -45,10 +46,10 @@ export function SectorBreakdown({ data }: { data: PlanResponse }) {
           <thead className="border-b text-xs text-muted-foreground">
             <tr>
               <th className="pb-2">Sector</th>
-              <th className="pb-2 text-right">Posiciones</th>
+              <th className="pb-2 text-right">Empresas</th>
               <th className="pb-2 text-right">Cartera</th>
               <th className="pb-2 text-right">S&amp;P 500</th>
-              <th className="pb-2 text-right">Diferencia (pp)</th>
+              <th className="pb-2 text-right">Diferencia (puntos %)</th>
             </tr>
           </thead>
           <tbody className="tabular-nums">

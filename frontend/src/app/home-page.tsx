@@ -24,11 +24,11 @@ import { HomeAlerts } from './home-alerts';
 import { PageHeader } from '@/shared/ui/page-header';
 
 const WARNINGS: Record<string, string> = {
-  incomplete_coverage: 'faltan precios, fundamentales o datos SEC de algunas empresas',
-  prices_stale: 'hay precios de hace más de 7 días',
-  fundamentals_stale: 'hay fundamentales de hace más de 7 días',
-  sec_stale: 'hay datos SEC de hace más de 14 días',
-  universe_stale: 'la lista del S&P 500 tiene más de 7 días',
+  incomplete_coverage: 'a algunas empresas les faltan precios o datos de sus cuentas',
+  prices_stale: 'hay precios de hace más de una semana',
+  fundamentals_stale: 'hay datos de las cuentas de hace más de una semana',
+  sec_stale: 'hay informes oficiales (SEC) sin revisar desde hace más de dos semanas',
+  universe_stale: 'la lista de empresas del S&P 500 tiene más de una semana',
 };
 
 function Step({
@@ -77,19 +77,19 @@ function FirstSteps({ home }: { home: HomeResponse }) {
     <section className="rounded-xl border bg-card p-5" aria-label="Primeros pasos">
       <h2 className="text-lg font-semibold">Primeros pasos</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Lo que falta para que GABI tenga datos con los que trabajar.
+        Lo que falta para que GABI tenga datos con los que trabajar. Solo hay que hacerlo una vez.
       </p>
       <ol className="mt-2 divide-y">
         <Step
           done={steps.fred_key}
-          title="Guardar la clave de FRED"
-          detail="Gratuita; activa el panel macro y el tipo libre de riesgo en vivo."
+          title="Guardar la clave de FRED (opcional)"
+          detail="Una contraseña gratuita de la Reserva Federal de EE. UU. que permite ver los datos de la economía (tipos de interés, inflación)."
           action={{ to: '/administracion', label: 'Ir a Administración' }}
         />
         <Step
           done={steps.universe && steps.updated}
           title="Actualizar los datos"
-          detail="Empieza con 50 empresas para probar; el universo completo tarda varios minutos."
+          detail="Descarga precios y cuentas de las empresas. Empieza con 50 para probar; las 500 del S&P 500 tardan varios minutos."
           action={{ to: '/administracion', label: 'Actualizar datos' }}
         />
         <Step
@@ -98,14 +98,14 @@ function FirstSteps({ home }: { home: HomeResponse }) {
           detail={
             steps.data_loaded === null
               ? 'Se comprobará en cuanto termine el cálculo del ranking.'
-              : 'Empresas puntuadas con los datos de tu caché.'
+              : 'Las empresas ordenadas por su puntuación GABI.'
           }
           action={{ to: '/descubrir', label: 'Abrir el Ranking' }}
         />
         <Step
           done={false}
           title="Leer la Ayuda (opcional)"
-          detail="Términos, estrategias y cómo piensa GABI."
+          detail="Qué significa cada término, estrategias y cómo decide GABI."
           action={{ to: '/ayuda', label: 'Abrir la Ayuda' }}
         />
       </ol>
@@ -132,7 +132,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
               </span>
             )}
             {data.status === 'ready' && data.prices_current == null && (
-              <span className="rounded-full bg-muted px-2 py-0.5">Listos para el ranking</span>
+              <span className="rounded-full bg-muted px-2 py-0.5">Listos para usar</span>
             )}
             {data.status === 'stale' && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900">
@@ -151,14 +151,14 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Último precio</dt>
+              <dt className="text-xs text-muted-foreground">Precios hasta el</dt>
               <dd className="font-semibold">{dateLabel(data.latest_price_date)}</dd>
             </div>
           </dl>
           {data.prices_current === false && data.last_session && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Última sesión cerrada en NYSE: {dateLabel(data.last_session)}. Actualiza los datos
-              para incluir su cierre.
+              El último día de bolsa fue el {dateLabel(data.last_session)}. Actualiza los datos para
+              tener sus precios.
             </p>
           )}
           {data.warnings.length > 0 && (
@@ -173,7 +173,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
         <div className="mt-3 space-y-2" role="status">
           <p className="text-sm text-muted-foreground">
             {computing
-              ? 'Calculando el ranking con tu caché local. Tras arrancar o actualizar los datos tarda entre unos 20 s y un minuto, según tenga el disco los datos a mano; después es inmediato.'
+              ? 'Calculando el ranking con los datos de tu equipo. Tras arrancar o actualizar los datos tarda entre 20 segundos y un minuto; después es inmediato.'
               : 'El ranking aún no está calculado.'}
           </p>
           {computing && (
@@ -185,9 +185,9 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
       )}
       <p className="mt-4 text-xs text-muted-foreground">
         {home.last_update?.finished_at
-          ? 'Última actualización registrada: ' +
+          ? 'Última actualización de datos: ' +
             dateLabel(home.last_update.finished_at.slice(0, 10))
-          : 'No hay ninguna actualización de datos registrada como trabajo.'}
+          : 'Todavía no se han actualizado los datos desde GABI.'}
       </p>
       <Button asChild size="sm" variant="outline" className="mt-3">
         <Link to="/administracion">Actualizar datos</Link>
@@ -202,12 +202,13 @@ function TargetCard({ home }: { home: HomeResponse }) {
     <section className="min-w-0 rounded-xl border bg-card p-5" aria-label="Cartera objetivo de hoy">
       <h2 className="text-lg font-semibold">Cartera objetivo de hoy</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Hipótesis congelada {home.model_id}: las {home.target_positions} candidatas elegibles con
-        más score, a partes iguales. No demuestra una ventaja frente al S&amp;P 500.
+        Las {home.target_positions} empresas con más puntuación, con el mismo dinero en cada una.
+        Es la regla fija de GABI ({home.model_id}); todavía no está demostrado que gane al
+        S&amp;P 500.
       </p>
       {home.data && home.target.length === 0 && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Ninguna empresa llega todavía al mínimo de métricas disponibles para entrar en la cartera.
+          Ninguna empresa tiene todavía datos suficientes para entrar en la cartera.
         </p>
       )}
       {shown.length > 0 && (
@@ -247,7 +248,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
         </p>
       )}
       <Button asChild size="sm" className="mt-4">
-        <Link to="/cartera">Ver la cartera y repartir capital</Link>
+        <Link to="/cartera">Ver la cartera y cuánto poner en cada una</Link>
       </Button>
     </section>
   );
@@ -276,12 +277,26 @@ export function HomePage() {
       <PageHeader
         eyebrow="Inicio"
         title="Tu GABI hoy"
-        description={<>Estado de tus datos, la cartera objetivo y lo que tienes pendiente.</>}
+        description={
+          <>
+            Lo que tienes pendiente, cómo están tus datos y la cartera que GABI propone hoy.
+          </>
+        }
         guide={
           <>
             <p>
-              Estado de tus datos, la cartera objetivo y lo que tienes pendiente. Todo se calcula
-              con la caché local; nada se descarga sin que lo pidas.
+              <strong>Qué es GABI.</strong> Una herramienta que puntúa de 0 a 100 las empresas del
+              S&amp;P 500 (las 500 mayores de EE. UU.) según cuatro apartados: si su precio es
+              razonable, si es una buena empresa, si su cotización viene subiendo y cuánto riesgo
+              tiene. Con las mejor puntuadas propone una cartera.
+            </p>
+            <p>
+              <strong>Por dónde empezar.</strong> Mira el Ranking en Descubrir, abre la ficha de las
+              empresas que te interesen y, antes de comprar, escribe en el Diario por qué lo harías.
+            </p>
+            <p>
+              Todo se calcula con los datos guardados en tu equipo; nada se descarga sin que lo
+              pidas.
             </p>
           </>
         }
@@ -309,13 +324,13 @@ export function HomePage() {
             {
               to: '/descubrir',
               label: 'Descubrir',
-              description: 'Ranking, fichas y comparación de empresas',
+              description: 'Ranking de empresas, fichas y comparaciones',
               icon: ChartNoAxesCombined,
             },
             {
               to: '/cartera',
               label: 'Cartera',
-              description: 'Cartera objetivo, Mi cartera, seguimiento, diario y decisiones',
+              description: 'La cartera propuesta, tus compras y tu diario de inversión',
               icon: BriefcaseBusiness,
             },
             {
@@ -327,13 +342,13 @@ export function HomePage() {
             {
               to: '/ayuda',
               label: 'Ayuda',
-              description: 'Términos, glosario y cómo piensa GABI',
+              description: 'Qué significa cada término y cómo decide GABI',
               icon: GraduationCap,
             },
             {
               to: '/administracion',
               label: 'Administración',
-              description: 'Datos, claves, modo y calidad',
+              description: 'Actualizar datos y ajustes',
               icon: Settings2,
             },
           ].filter((link) => research || link.to !== '/investigacion')}
