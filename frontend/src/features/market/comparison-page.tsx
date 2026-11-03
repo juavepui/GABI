@@ -27,26 +27,26 @@ const ComparisonChart = lazy(() => import('./comparison-chart'));
 
 const sections: { title: string; fields: [string, string][] }[] = [
   {
-    title: 'Score y bloques',
+    title: 'Puntuación y apartados',
     fields: [
-      ['composite_score', 'Composite Score'],
-      ['value_score', 'Bloque valor'],
-      ['quality_score', 'Bloque calidad'],
-      ['momentum_score', 'Bloque momentum'],
-      ['risk_score', 'Bloque riesgo'],
-      ['score_coverage', 'Métricas disponibles'],
-      ['confidence', 'Cobertura ponderada'],
+      ['composite_score', 'Puntuación GABI'],
+      ['value_score', 'Valoración'],
+      ['quality_score', 'Calidad'],
+      ['momentum_score', 'Momentum (tendencia)'],
+      ['risk_score', 'Riesgo (más = menos riesgo)'],
+      ['score_coverage', 'Métricas con dato'],
+      ['confidence', 'Datos disponibles'],
     ],
   },
   {
     title: 'Valoración',
     fields: [
       ['price', 'Precio'],
-      ['market_cap', 'Capitalización'],
+      ['market_cap', 'Tamaño en bolsa (capitalización)'],
       ['pe', 'PER'],
       ['ev_ebitda', 'EV/EBITDA'],
       ['pb', 'Precio / valor contable'],
-      ['dividend_yield', 'Rentabilidad por dividendo'],
+      ['dividend_yield', 'Dividendo (% anual)'],
     ],
   },
   {
@@ -55,16 +55,16 @@ const sections: { title: string; fields: [string, string][] }[] = [
       ['roe', 'ROE'],
       ['roic', 'ROIC'],
       ['operating_margin', 'Margen operativo'],
-      ['revenue_growth_yoy', 'Crecimiento ingresos'],
-      ['debt_to_equity', 'Deuda / patrimonio'],
+      ['revenue_growth_yoy', 'Crecimiento de ventas'],
+      ['debt_to_equity', 'Deuda frente a fondos propios'],
     ],
   },
   {
     title: 'Riesgo',
     fields: [
-      ['volatility', 'Volatilidad'],
-      ['max_drawdown', 'Caída máxima (todo el histórico)'],
-      ['beta_calc', 'Beta frente al SPY'],
+      ['volatility', 'Cuánto se mueve (volatilidad)'],
+      ['max_drawdown', 'Mayor caída (todos los datos)'],
+      ['beta_calc', 'Cuánto se mueve con el mercado (beta)'],
     ],
   },
 ];
@@ -133,10 +133,9 @@ function PriceSection({ symbols }: { symbols: string[] }) {
         </div>
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
-        Cierre ajustado de la caché local (Yahoo) en base 100 desde la primera sesión en la que
-        todas las empresas y el SPY tienen precio
-        {prices.data?.base_date ? ` (${dateLabel(prices.data.base_date)})` : ''}. Es rentabilidad
-        pasada y no anticipa la futura.
+        Todas empiezan en 100 el primer día en que hay precio de todas ellas y del S&P 500 (SPY)
+        {prices.data?.base_date ? ` (${dateLabel(prices.data.base_date)})` : ''}: si una línea
+        llega a 130, esa acción ha subido un 30 % desde entonces. Es lo que pasó, no lo que pasará.
       </p>
       {prices.isPending && <LoadingState />}
       {prices.isError && <ErrorState error={prices.error} retry={() => void prices.refetch()} />}
@@ -178,8 +177,8 @@ export function ComparisonPage() {
         title="Comparar empresas"
         description={
           <>
-            Busca entre dos y cinco empresas por símbolo o nombre, o márcalas en el Ranking. Las
-            métricas proceden del mismo ranking que el Screener y el checklist es el de cada ficha.
+            Pon de dos a cinco empresas lado a lado. Búscalas por nombre o símbolo, o márcalas en
+            el Ranking. Los datos son los mismos que ves en el Ranking y en cada ficha.
           </>
         }
       />
@@ -229,7 +228,7 @@ export function ComparisonPage() {
                     <FollowButton symbol={item.symbol} compact />
                   </span>
                   <p className="mt-2 flex justify-between gap-2">
-                    <span>Composite Score</span>
+                    <span>Puntuación GABI</span>
                     <RankValue
                       position={comparison.data.positions.composite_score?.[item.symbol]}
                       scope="de los comparados"
@@ -334,10 +333,10 @@ export function ComparisonPage() {
                     <tr key={window} className="border-b">
                       <th scope="row" className="py-3 pr-3 font-medium">
                         <Term k="max_drawdown">
-                          {'Caída máxima · ' + (window === '5y' ? '5 años' : '3 años')}
+                          {'Mayor caída · últimos ' + (window === '5y' ? '5 años' : '3 años')}
                         </Term>
                         <span className="block text-xs font-normal text-muted-foreground">
-                          GABI con precios en caché · informativa, no puntúa
+                          Calculado por GABI con los precios · no cuenta para la puntuación
                         </span>
                       </th>
                       {comparison.data.items.map((item) => {
@@ -355,7 +354,7 @@ export function ComparisonPage() {
                   ))}
                 </tbody>
                 <tbody>
-                  <SectionRow title="Catalizadores" span={comparison.data.items.length + 1} />
+                  <SectionRow title="Próximas fechas clave" span={comparison.data.items.length + 1} />
                   <tr>
                     <th scope="row" className="py-3 pr-3 font-medium">
                       <Term k="next_earnings_days">Próximos resultados</Term>
@@ -373,21 +372,21 @@ export function ComparisonPage() {
               </table>
             </div>
             <RankLegend>
-              Rojo peor, verde mejor entre las empresas comparadas, según si la métrica es mejor
-              alta o baja en el score (un PER bajo o una volatilidad baja son mejores). Precio y
-              capitalización no tienen mejor ni peor y quedan sin color. Un asterisco (*) indica que
-              el histórico en caché es más corto que la ventana.
+              Verde, la mejor de las comparadas en esa fila; rojo, la peor. En unas filas es mejor
+              un número alto y en otras uno bajo (un PER bajo o una volatilidad baja son mejores).
+              Precio y tamaño no son ni mejores ni peores, así que no llevan color. Un asterisco (*)
+              indica que hay menos años de datos de los que pide la fila.
             </RankLegend>
           </section>
           <section className="rounded-xl border bg-card p-5" aria-labelledby="comparison-checklist">
             <h2 id="comparison-checklist" className="mb-4 text-xl font-semibold">
-              Checklist y múltiplos frente a su historia y su sector
+              Lista de comprobación y ¿cara o barata frente a su historia y su sector?
             </h2>
             <ComparisonChecklist symbols={compared} />
           </section>
           <PriceSection symbols={compared} />
           <Button asChild variant="outline">
-            <Link to="/descubrir">Volver al Screener</Link>
+            <Link to="/descubrir">Volver al Ranking</Link>
           </Button>
         </>
       )}

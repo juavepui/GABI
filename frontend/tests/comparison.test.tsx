@@ -131,16 +131,16 @@ describe('Comparar por secciones (#194)', () => {
     await screen.findText('7 de 10 cumplidos');
     const text = screen.text();
     for (const title of [
-      'Score y bloques',
+      'Puntuación y apartados',
       'Valoración',
       'Calidad y salud',
       'Riesgo',
-      'Catalizadores',
+      'Próximas fechas clave',
     ])
       expect(text).toContain(title);
     expect(text).toContain('4 de 10 cumplidos');
     expect(text).toContain('Goodwill elevado');
-    expect(text).toContain('Propia: 11x (5 años) · Sector: 14,5x (30 pares)');
+    expect(text).toContain('Propia: 11x (5 años) · Sector: 14,5x (30 empresas)');
     await screen.findText('ALL: 104,3');
     expect(screen.text()).toContain('SPY: —');
     expect(api.getComparisonPrices).toHaveBeenCalledWith(['ALL', 'TRV'], 252, expect.anything());

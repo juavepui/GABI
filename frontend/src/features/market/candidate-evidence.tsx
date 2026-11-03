@@ -15,15 +15,15 @@ import { formatNumber, formatPercent } from '@/shared/lib/format';
 // The 13 scored metrics (scoring.SCORE_METRICS), with the labels of the old pages.
 const METRIC_LABELS: Record<string, string> = {
   pe: 'PER',
-  pb: 'P/VC',
+  pb: 'Precio / valor contable',
   ev_ebitda: 'EV/EBITDA',
   roic: 'ROIC',
   operating_margin: 'Margen operativo',
-  revenue_cagr_3y: 'Crec. ingresos 3A CAGR',
-  fcf_cagr_3y: 'Crec. FCF 3A CAGR',
-  momentum_12m: 'Momentum 12M',
-  rel_strength_6m: 'Fuerza relativa 6M',
-  price_vs_sma200: 'vs SMA200',
+  revenue_cagr_3y: 'Crecimiento de ventas (3 años)',
+  fcf_cagr_3y: 'Crecimiento de la caja libre (3 años)',
+  momentum_12m: 'Subida en 12 meses',
+  rel_strength_6m: 'Subida frente al mercado (6 meses)',
+  price_vs_sma200: 'Precio frente a su media de 200 días',
   debt_to_equity: 'Deuda/Patrimonio',
   volatility: 'Volatilidad anualizada (todo el histórico)',
   max_drawdown: 'Caída máxima (todo el histórico)',
@@ -46,7 +46,9 @@ export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
   return (
     <div className="space-y-3 text-sm" role="region" aria-label={`Evidencia de ${e.symbol}`}>
       <p>
-        <span className="text-muted-foreground">Confianza de evidencia: </span>
+        <span className="text-muted-foreground">
+          Confianza en las pruebas que la respaldan:{' '}
+        </span>
         <strong>{e.confidence_level}</strong>
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -59,7 +61,7 @@ export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
           </ul>
         </div>
         <div>
-          <p className="font-medium">En contra y límites</p>
+          <p className="font-medium">En contra y limitaciones</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {e.reasons_against.map((reason) => (
               <li key={reason}>{reason}</li>
@@ -72,15 +74,15 @@ export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
           <table className="w-full min-w-[760px] text-left text-xs" aria-label="Factores del score">
             <thead>
               <tr className="border-b text-muted-foreground">
-                <th className="py-2">Factor</th>
-                <th>Familia</th>
-                <th>Percentil</th>
-                <th>Apoya candidatura</th>
-                <th>Peso efectivo</th>
-                <th>Puntos de score</th>
-                <th>Apoyo tras Holm</th>
-                <th>IC medio</th>
-                <th>p Holm</th>
+                <th className="py-2">Métrica</th>
+                <th>Apartado</th>
+                <th>Posición frente al resto (0–100)</th>
+                <th>¿Juega a favor?</th>
+                <th>Peso en la puntuación</th>
+                <th>Puntos que aporta</th>
+                <th>¿Comprobada con datos del pasado?</th>
+                <th>IC medio (técnico)</th>
+                <th>p Holm (técnico)</th>
               </tr>
             </thead>
             <tbody>
@@ -102,14 +104,16 @@ export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Un percentil alto apoya la puntuación descriptiva; la columna de Holm muestra su evidencia
-        estadística. La falta de confirmación no demuestra ausencia de efecto. La confianza no
-        cambia el ranking ni sus pesos.
+        Una posición alta (cerca de 100) significa que la empresa sale mejor que la mayoría en esa
+        métrica. La columna «¿Comprobada…?» dice si esa métrica ha demostrado, con una prueba
+        estadística exigente, que ayudaba a elegir mejores acciones en el pasado. Que no esté
+        comprobada no quiere decir que no sirva, solo que aún no hay pruebas. Nada de esto cambia el
+        ranking.
       </p>
       {sic && (
         <details className="rounded-lg border p-3">
           <summary className="cursor-pointer font-medium">
-            Estabilidad descriptiva de los factores por industria
+            ¿Funciona igual en todas las industrias? (técnico)
           </summary>
           <label className="mt-2 grid w-fit gap-1">
             Factor · diagnóstico SIC
@@ -144,8 +148,8 @@ export function CompanyEvidenceDetail({ symbol }: { symbol: string }) {
             </tbody>
           </table>
           <p className="mt-2 text-xs text-muted-foreground">
-            SIC fechado es una clasificación distinta de GICS. Este diagnóstico retrospectivo no
-            aporta confirmación independiente ni eleva la confianza de evidencia.
+            Usa la clasificación de industrias SIC de la SEC, distinta de los sectores que ves en el
+            ranking. Es un análisis del pasado: no confirma nada por sí solo ni sube la confianza.
           </p>
         </details>
       )}
@@ -177,20 +181,21 @@ function EvidenceContent() {
   return (
     <section className="space-y-3" aria-label="Evidencia">
       <p className="text-xs text-muted-foreground">
-        Score = posición según las métricas. Cobertura ponderada = datos disponibles. Confianza de
-        evidencia = BAJA/MEDIA/ALTA según reglas publicadas; no es probabilidad de subida.
+        Para cada una de las 20 primeras: su puntuación (cómo sale según las métricas), cuántos
+        datos tiene y la confianza en las pruebas que la respaldan (BAJA, MEDIA o ALTA, según unas
+        reglas fijas). La confianza no es la probabilidad de que suba.
       </p>
       {top.isPending && <LoadingState />}
       {top.isError && <ErrorState error={top.error} retry={() => void top.refetch()} />}
       {top.data && !top.data.available && (
         <p className="text-sm text-muted-foreground">
-          Evidencia no disponible: aún no hay candidatas con datos.
+          Todavía no hay empresas con datos suficientes para mostrar esto.
         </p>
       )}
       {top.data?.available && top.data.rows.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No hay empresas elegibles para el Top-20. El diagnóstico sigue disponible en la ficha de
-          cada empresa.
+          Ninguna empresa cumple aún los requisitos para entrar entre las 20 primeras. Puedes ver el
+          análisis de cada una en su ficha.
         </p>
       )}
       {top.data && top.data.rows.length > 0 && (
@@ -198,10 +203,10 @@ function EvidenceContent() {
           <EvidenceTable rows={top.data.rows} onSelect={setSelected} />
           <details className="rounded-lg border p-3" open={selected != null}>
             <summary className="cursor-pointer font-medium">
-              Por qué se asigna este nivel de confianza
+              Por qué tiene este nivel de confianza
             </summary>
             <label className="mt-2 grid w-fit gap-1 text-sm">
-              Candidata · evidencia
+              Empresa
               <NativeSelect
                 value={selected ?? top.data.rows[0].symbol}
                 onChange={(event) => setSelected(event.target.value)}
@@ -275,24 +280,24 @@ function StabilityContent() {
         <>
           {query.data.summary.stability_score == null ? (
             <p className="text-muted-foreground">
-              El universo elegible es demasiado pequeño para evaluar cambios del Top-20.
+              Hay muy pocas empresas para medir si las 20 primeras cambian mucho.
             </p>
           ) : (
             <p className="text-xl font-semibold">
-              Integrantes del Top-20 que permanecen (media):{' '}
+              De media, siguen entre las 20 primeras:{' '}
               {num(query.data.summary.stability_score)} %
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            {query.data.summary.eligible} empresas elegibles antes de filtros ·{' '}
-            {query.data.summary.perturbations} perturbaciones ·{' '}
-            {query.data.summary.omitted_infeasible} omitidas por pesos en el límite. Persistencia =
-            fracción de estos cambios que conserva la empresa en el Top-20. Describe fragilidad del
-            ranking; no es probabilidad de ganar ni evidencia de rentabilidad futura.
+            Hemos recalculado el ranking cambiando un poco los pesos de cada apartado (
+            {query.data.summary.perturbations} variantes sobre {query.data.summary.eligible}{' '}
+            empresas; {query.data.summary.omitted_infeasible} variantes descartadas por salirse de
+            los límites). Si una empresa sigue entre las 20 primeras en casi todas, su posición es
+            sólida; si entra y sale, depende mucho de detalles. No dice nada de cuánto subirá.
           </p>
           {!query.data.summary.sectors_complete && (
             <p className="text-xs text-muted-foreground">
-              Concentración sectorial incompleta: no se rellenan sectores desconocidos.
+              A algunas empresas les falta el sector, así que el reparto por sectores está incompleto.
             </p>
           )}
           <div className="max-h-96 overflow-auto">
@@ -303,7 +308,7 @@ function StabilityContent() {
                   <th>Posición</th>
                   <th>Mejor posición</th>
                   <th>Peor posición</th>
-                  <th>Persistencia Top-20</th>
+                  <th>Veces entre las 20 primeras</th>
                   <th>Diagnóstico</th>
                 </tr>
               </thead>
@@ -340,7 +345,7 @@ function StabilityContent() {
 export function RankingEvidence() {
   return (
     <Folded
-      title="Evidencia del ranking · confianza de las candidatas del Top-20"
+      title="¿Cuánto fiarse de las 20 primeras? · pruebas que las respaldan"
       className="mt-6 rounded-xl border bg-card p-5 text-sm"
     >
       <EvidenceContent />
@@ -351,7 +356,7 @@ export function RankingEvidence() {
 export function RankingStabilityPanel() {
   return (
     <Folded
-      title="Estabilidad del ranking · cambios de 1–2 puntos en los pesos"
+      title="¿Es estable el ranking? · qué pasa si cambian un poco los pesos"
       className="mt-6 rounded-xl border bg-card p-5 text-sm"
     >
       <StabilityContent />

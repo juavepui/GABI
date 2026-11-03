@@ -2,20 +2,20 @@ import type { RankingQuery } from '@/shared/api/client';
 
 export type SortKey = NonNullable<RankingQuery['order_by']>;
 export const sortOptions: ReadonlyArray<{ key: SortKey; label: string }> = [
-  { key: 'composite_score', label: 'Score' },
-  { key: 'confidence', label: 'Cobertura ponderada' },
+  { key: 'composite_score', label: 'Puntuación' },
+  { key: 'confidence', label: 'Datos disponibles' },
   { key: 'market_cap', label: 'Capitalización' },
   { key: 'pe', label: 'PER' },
   { key: 'price', label: 'Precio' },
   { key: 'name', label: 'Empresa' },
-  { key: 'value_score', label: 'Bloque valor' },
-  { key: 'quality_score', label: 'Bloque calidad' },
-  { key: 'momentum_score', label: 'Bloque momentum' },
-  { key: 'risk_score', label: 'Bloque riesgo' },
+  { key: 'value_score', label: 'Valoración' },
+  { key: 'quality_score', label: 'Calidad' },
+  { key: 'momentum_score', label: 'Momentum' },
+  { key: 'risk_score', label: 'Riesgo' },
   { key: 'roe', label: 'ROE' },
   { key: 'debt_to_equity', label: 'Deuda / patrimonio' },
-  { key: 'dividend_yield', label: 'Rentabilidad por dividendo' },
-  { key: 'momentum_12m', label: 'Momentum 12 m' },
+  { key: 'dividend_yield', label: 'Dividendo (% anual)' },
+  { key: 'momentum_12m', label: 'Subida en 12 meses' },
   { key: 'volatility', label: 'Volatilidad' },
   { key: 'next_earnings_days', label: 'Próximos resultados' },
 ];

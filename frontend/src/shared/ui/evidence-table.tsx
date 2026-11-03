@@ -18,11 +18,11 @@ export function EvidenceTable({
         <thead>
           <tr className="border-b text-muted-foreground">
             <th className="py-2">Empresa</th>
-            <th>Score</th>
-            <th>Cobertura ponderada</th>
-            <th>Confianza de evidencia</th>
-            <th>Persistencia Top-20</th>
-            <th>Score con apoyo tras Holm</th>
+            <th>Puntuación</th>
+            <th>Datos disponibles</th>
+            <th>Confianza</th>
+            <th>Veces entre las 20 primeras</th>
+            <th>Parte de la puntuación ya comprobada</th>
           </tr>
         </thead>
         <tbody>
@@ -44,10 +44,10 @@ export function EvidenceTable({
               <td>{points(row.score)}</td>
               <td>{points(row.weighted_data_coverage)}</td>
               <td>{row.confidence_level}</td>
-              <td>{row.top20_persistence == null ? 'No estimable' : pct(row.top20_persistence)}</td>
+              <td>{row.top20_persistence == null ? 'No se puede calcular' : pct(row.top20_persistence)}</td>
               <td>
                 {row.validated_score_fraction == null
-                  ? 'No atribuible'
+                  ? 'No se puede calcular'
                   : pct(row.validated_score_fraction, 1)}
               </td>
             </tr>

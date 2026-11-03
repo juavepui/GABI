@@ -287,11 +287,11 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Compara los múltiplos actuales con la mediana de la propia empresa en sus últimos{' '}
-        {history.years} ejercicios (precio al cierre de cada ejercicio y cifras de ese 10-K) y con
-        la mediana de las demás empresas de su sector en el universo actual, con las mismas fórmulas
-        SEC. Que un múltiplo esté por debajo de su referencia no implica que la empresa esté barata:
-        también puede reflejar peores perspectivas.
+        ¿Está cara o barata? Compara sus múltiplos de hoy (cuántas veces paga el precio sus
+        beneficios o su caja) con lo habitual en la propia empresa en sus últimos {history.years}{' '}
+        años y con lo habitual en las demás empresas de su sector. Que hoy esté por debajo no
+        significa que sea una ganga: a veces es más barata porque el mercado espera que le vaya
+        peor.
       </p>
       <div className="overflow-x-auto" role="region" aria-label="Tabla de múltiplos" tabIndex={0}>
         <table
@@ -322,7 +322,7 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
                     ? 'Calculando…'
                     : sector.isError
                       ? 'No disponible'
-                      : median(sector.data.medians[key], 'pares')}
+                      : median(sector.data.medians[key], 'empresas')}
                 </td>
               </tr>
             ))}
@@ -335,7 +335,7 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
           Sector: {sector.data.sector ?? '—'}
           {sector.data.reason
             ? ` · ${reasonText(sector.data.reason)}`
-            : ` · ${sector.data.peers} pares`}
+            : ` · ${sector.data.peers} empresas del sector`}
         </p>
       )}
       <ul className="space-y-1 text-xs" aria-label="Múltiplos por ejercicio">
@@ -356,10 +356,13 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
 }
 
 const DCF_VERDICTS: Record<CompanyChecklistResponse['dcf']['verdict'], string> = {
-  reasonable: 'Razonable: el precio descuenta un crecimiento no superior al histórico del CFO.',
-  demanding: 'Exigente: el precio descuenta más crecimiento que el histórico del CFO.',
-  discard: 'Descartable según el vídeo: el crecimiento implícito supera el máximo fijado.',
-  missing: 'Sin dato suficiente para el DCF inverso.',
+  reasonable:
+    'Razonable: para justificar su precio basta con que siga creciendo como hasta ahora (o menos).',
+  demanding:
+    'Exigente: para justificar su precio tendría que crecer más rápido de lo que ha crecido hasta ahora.',
+  discard:
+    'Muy exigente: el crecimiento que necesitaría para justificar su precio supera el máximo que te fijaste.',
+  missing: 'No hay datos suficientes para hacer este cálculo.',
   not_applicable: 'No aplica a bancos y aseguradoras.',
 };
 
@@ -543,7 +546,7 @@ export function CompanyChecklist({ symbol }: { symbol: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <ListChecks size={18} aria-hidden="true" />
-          Checklist fundamental
+          Lista de comprobación de la empresa
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
@@ -567,12 +570,13 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
   return (
     <>
       <HowToRead>
-        Compara la empresa con los criterios y umbrales de tu checklist (vídeos de Javier DV,
-        Memorias de Tiburón, Pedro Gutiérrez y La Pizarra de Andrés), usando un único ejercicio de
-        los 10-K presentados a la SEC, el último precio de la caché y, cuando se indica, datos de
-        Yahoo. Un dato ausente se muestra como «Sin dato», nunca como cero. Los umbrales son reglas
-        generales que dependen del sector. Es informativo: no entra en el Composite Score, no es una
-        señal validada ni una recomendación de inversión.
+        Una lista de preguntas sencillas sobre la empresa (¿crece?, ¿gana dinero?, ¿debe poco?),
+        cada una con un mínimo que debería cumplir. Los criterios vienen de divulgadores de
+        inversión (Javier DV, Memorias de Tiburón, Pedro Gutiérrez y La Pizarra de Andrés) y usan
+        el último informe anual oficial (10-K de la SEC), el último precio guardado y, cuando se
+        indica, datos de Yahoo. Si falta un dato pone «Sin dato», nunca cero. Los mínimos son
+        orientativos y cambian según el sector. Es solo informativo: no cuenta para la puntuación
+        GABI ni es una recomendación.
       </HowToRead>
       {data.thresholds_warning && (
         <p className="text-xs" role="alert">
@@ -642,7 +646,7 @@ function ChecklistContent({ data }: { data: CompanyChecklistResponse }) {
         <Multiples data={data} />
       </Folded>
       <Folded
-        title="DCF inverso: ¿qué crecimiento descuenta el precio?"
+        title="¿Cuánto tendría que crecer para merecer su precio? (DCF inverso)"
         className="rounded-md border p-3 text-sm"
       >
         <Dcf dcf={data.dcf} />

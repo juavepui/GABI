@@ -41,7 +41,7 @@ const groups = [
       ['pe', 'PER'],
       ['pb', 'Precio / valor contable'],
       ['ev_ebitda', 'EV / EBITDA'],
-      ['free_cashflow', 'Flujo de caja libre'],
+      ['free_cashflow', 'Caja libre que genera (FCF)'],
     ],
   },
   {
@@ -50,27 +50,27 @@ const groups = [
       ['roe', 'ROE'],
       ['roic', 'ROIC'],
       ['operating_margin', 'Margen operativo'],
-      ['debt_to_equity', 'Deuda / patrimonio'],
+      ['debt_to_equity', 'Deuda frente a fondos propios'],
     ],
   },
   {
-    name: 'Momentum y riesgo',
+    name: 'Tendencia y riesgo',
     keys: [
-      ['momentum_6m', 'Momentum · 6 meses'],
-      ['momentum_12m', 'Momentum · 12 meses'],
-      ['volatility', 'Volatilidad'],
-      ['max_drawdown', 'Caída máxima (drawdown)'],
+      ['momentum_6m', 'Subida en 6 meses (momentum)'],
+      ['momentum_12m', 'Subida en 12 meses (momentum)'],
+      ['volatility', 'Cuánto se mueve el precio (volatilidad)'],
+      ['max_drawdown', 'Mayor caída desde un máximo'],
     ],
   },
   {
-    name: 'Otras métricas (informativas, no puntuadas)',
+    name: 'Otros datos (no cuentan para la puntuación)',
     keys: [
-      ['beta_calc', 'Beta calculada frente al SPY'],
-      ['alpha', 'Alfa (CAPM)'],
-      ['win_rate_monthly', 'Meses positivos'],
+      ['beta_calc', 'Beta: cuánto se mueve con el mercado'],
+      ['alpha', 'Alfa: rentabilidad extra frente al mercado'],
+      ['win_rate_monthly', 'Meses en los que subió'],
       ['beta', 'Beta (Yahoo)'],
-      ['dividend_yield', 'Rentabilidad por dividendo'],
-      ['avg_volume', 'Volumen medio'],
+      ['dividend_yield', 'Dividendo (% anual)'],
+      ['avg_volume', 'Acciones negociadas al día (media)'],
     ],
   },
 ] as const;
@@ -102,7 +102,7 @@ export function CompanyPage() {
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Mercado / Ficha de empresa
+                  Ficha de empresa
                 </p>
                 <h1 className="text-3xl font-semibold tracking-tight">
                   {company.name ?? company.symbol}
@@ -111,14 +111,14 @@ export function CompanyPage() {
                   <Badge>{company.symbol}</Badge>
                   <Badge variant="outline">{company.sector ?? 'Sector no disponible'}</Badge>
                   <span className="self-center text-xs text-muted-foreground">
-                    Posición global #{company.rank}
+                    Puesto {company.rank} del ranking
                   </span>
                   <FollowButton symbol={company.symbol} />
                 </div>
                 <section
                   aria-label="Por qué está aquí"
                   className="mt-3 max-w-xl"
-                  title="Resumen descriptivo del score con reglas fijas; no es una recomendación."
+                  title="Resumen de en qué destaca según la puntuación; no es una recomendación."
                 >
                   <p className="mb-2 text-sm font-medium">{company.summary.text}</p>
                   <BlockBars summary={company.summary} />
@@ -127,7 +127,7 @@ export function CompanyPage() {
                   className="mt-3 inline-block text-sm font-medium text-primary underline"
                   href="#tesis"
                 >
-                  Tus tesis sobre {company.symbol} ↓
+                  Tus notas sobre {company.symbol} ↓
                 </a>
               </div>
               <div className="text-right">
@@ -135,26 +135,34 @@ export function CompanyPage() {
                   {metric(company.metrics.price)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Último cierre · {dateLabel(company.provenance.price_date)}
+                  Precio al cierre del {dateLabel(company.provenance.price_date)}
                 </p>
               </div>
             </div>
             <Evidence model={data.model} data={data.data} />
             <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
-                ['Score del modelo', metric(company.metrics.composite_score), 'Puntos · 0 a 100'],
-                ['Cobertura ponderada', metric(company.metrics.confidence), 'Puntos · 0 a 100'],
                 [
-                  'Métricas disponibles',
-                  metric(company.metrics.metrics_available) +
-                    ' / ' +
-                    metric(company.metrics.metrics_possible),
-                  metric(company.metrics.score_coverage) + ' de las métricas puntuables',
+                  'Puntuación GABI',
+                  metric(company.metrics.composite_score),
+                  'De 0 a 100; más alto es mejor según el modelo',
                 ],
                 [
-                  'Capitalización',
+                  'Datos disponibles',
+                  metric(company.metrics.confidence),
+                  'De 0 a 100; cuanto más bajo, menos fiable la puntuación',
+                ],
+                [
+                  'Métricas con dato',
+                  metric(company.metrics.metrics_available) +
+                    ' de ' +
+                    metric(company.metrics.metrics_possible),
+                  metric(company.metrics.score_coverage) + ' de las que cuentan para la puntuación',
+                ],
+                [
+                  'Tamaño en bolsa',
                   metric(company.metrics.market_cap, true),
-                  'USD · ' + sourceLabel(data.metric_sources.market_cap),
+                  'Capitalización en USD · ' + sourceLabel(data.metric_sources.market_cap),
                 ],
               ].map(([label, value, detail]) => (
                 <Card key={label} className="gap-3 py-5 shadow-none">
@@ -167,7 +175,7 @@ export function CompanyPage() {
               ))}
             </div>
             <Folded
-              title="Evidencia de la candidatura · por qué se asigna su nivel de confianza"
+              title="¿Cuánto fiarse de su puntuación? · las pruebas a favor y en contra"
               className="mb-6 rounded-xl border bg-card p-5"
             >
               <CompanyEvidenceDetail symbol={company.symbol} />
@@ -175,16 +183,17 @@ export function CompanyPage() {
             <Card className="mb-6 gap-4 shadow-none">
               <CardHeader className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <CardTitle>Histórico de precios</CardTitle>
+                  <CardTitle>Evolución del precio</CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Cierre ajustado · USD · sesiones disponibles en la caché.
+                    Precio de cierre de cada día de bolsa, en USD, ajustado por dividendos y
+                    divisiones de acciones.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1" aria-label="Ventana del gráfico">
                   {[
-                    [63, '63 sesiones'],
-                    [252, '252 sesiones'],
-                    [1000, '1.000 sesiones'],
+                    [63, '3 meses'],
+                    [252, '1 año'],
+                    [1000, '4 años'],
                   ].map(([count, label]) => (
                     <Button
                       key={count}
@@ -241,18 +250,18 @@ export function CompanyPage() {
                           </dd>
                         </div>
                       ))}
-                      {group.name === 'Momentum y riesgo' &&
+                      {group.name === 'Tendencia y riesgo' &&
                         (['5y', '3y'] as const).map((window) => {
                           const row = drawdownOf(risk, window);
                           return (
                             <div key={window} className="flex justify-between gap-2 text-sm">
                               <dt className="text-muted-foreground">
                                 <Term k="max_drawdown">
-                                  {'Caída máxima · ' + (window === '5y' ? '5 años' : '3 años')}
+                                  {'Mayor caída · últimos ' + (window === '5y' ? '5 años' : '3 años')}
                                 </Term>
                                 <span className="block text-xs">
-                                  Informativa, no puntúa
-                                  {row && !row.complete ? ' · * histórico más corto' : ''}
+                                  No cuenta para la puntuación
+                                  {row && !row.complete ? ' · * hay menos años de datos' : ''}
                                 </span>
                               </dt>
                               <dd className="whitespace-nowrap text-right font-medium tabular-nums">
@@ -274,13 +283,13 @@ export function CompanyPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <ShieldCheck size={18} aria-hidden="true" />
-                    Modelo y procedencia
+                    Cómo se calcula y de dónde salen los datos
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm">
                   <dl className="space-y-3">
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Modelo</dt>
+                      <dt className="text-muted-foreground">Versión del modelo</dt>
                       <dd className="break-all text-right">{data.model.model_id}</dd>
                     </div>
                     {(
@@ -299,7 +308,7 @@ export function CompanyPage() {
                             {label}
                             {weight != null && (
                               <span className="ml-1 text-xs">
-                                · peso {formatNumber(weight * 100, { digits: 0 })} %
+                                · cuenta un {formatNumber(weight * 100, { digits: 0 })} %
                               </span>
                             )}
                           </dt>
@@ -311,45 +320,48 @@ export function CompanyPage() {
                       );
                     })}
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Fundamentales · Yahoo</dt>
+                      <dt className="text-muted-foreground">Datos de sus cuentas (Yahoo)</dt>
                       <dd>{dateLabel(company.provenance.fundamentals_fetched_at)}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Información · SEC</dt>
+                      <dt className="text-muted-foreground">Informes oficiales (SEC)</dt>
                       <dd>{dateLabel(company.provenance.sec_fetched_at)}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Identidad del emisor</dt>
+                      <dt className="text-muted-foreground">
+                        Historia de la empresa verificada (fusiones, cambios de nombre)
+                      </dt>
                       <dd>
                         {
                           {
-                            resolved: 'Resuelta',
-                            ambiguous: 'Ambigua',
-                            unresolved: 'Sin resolver',
+                            resolved: 'Sí',
+                            ambiguous: 'Dudosa',
+                            unresolved: 'Sin verificar',
                           }[company.identity.status]
                         }
                       </dd>
                     </div>
                   </dl>
                   <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                    Datos de la caché local. Estas métricas utilizan el histórico disponible y no
-                    constituyen un análisis histórico point-in-time.
+                    Datos guardados en tu equipo. Se calculan con la información de hoy, no con lo
+                    que se sabía en cada fecha pasada; por eso no sirven para juzgar cómo habría
+                    ido elegirla antes.
                   </p>
                   {evidence.data ? (
                     <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                      Evidencia de cada bloque: la mejor clasificación retrospectiva de sus métricas
-                      en Factor Lab; no cambia los pesos.{' '}
+                      La etiqueta de cada apartado dice cuánto se ha comprobado con datos del pasado
+                      que sirve para elegir acciones. No cambia la puntuación.{' '}
                       <Link className="text-primary underline" to={FACTOR_LAB}>
                         Ver el detalle
                       </Link>
                       <span className="mt-1 block">
-                        Catálogo publicado <Hash value={evidence.data.catalog_sha256} />
+                        Versión de esas pruebas <Hash value={evidence.data.catalog_sha256} />
                       </span>
                     </p>
                   ) : (
                     evidence.isError && (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        La evidencia publicada de los bloques no está disponible.
+                        No se han podido cargar las pruebas de cada apartado.
                       </p>
                     )
                   )}
@@ -359,7 +371,7 @@ export function CompanyPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <CalendarDays size={18} aria-hidden="true" />
-                    Documentos y próximas cuentas
+                    Informes oficiales y próximos resultados
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -393,7 +405,9 @@ export function CompanyPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Sin documentos SEC en la caché.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No hay informes de la SEC guardados para esta empresa.
+                    </p>
                   )}
                   <p className="mt-5 text-xs text-muted-foreground">
                     Próxima publicación de resultados
@@ -401,7 +415,7 @@ export function CompanyPage() {
                   <p className="mt-1 text-sm font-medium">
                     {company.next_earnings
                       ? dateLabel(company.next_earnings.event_date) +
-                        (company.next_earnings.is_estimate ? ' · Estimada' : '')
+                        (company.next_earnings.is_estimate ? ' · fecha aproximada' : '')
                       : 'Fecha no disponible'}
                   </p>
                 </CardContent>
@@ -421,8 +435,7 @@ export function CompanyPage() {
               <AnalysisPrompt symbol={company.symbol} />
             </div>
             <p className="text-xs text-muted-foreground">
-              Consulta generada el {dateLabel(data.generated_at)}. La lectura no inicia descargas ni
-              actualizaciones.
+              Calculado el {dateLabel(data.generated_at)}. Abrir esta ficha no descarga nada.
             </p>
           </>
         )

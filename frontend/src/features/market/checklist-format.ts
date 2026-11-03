@@ -36,29 +36,29 @@ const REASONS: Record<string, string> = {
   no_debt_reported: 'La SEC no tiene deuda declarada; no se asume cero',
   no_debt: 'Sin deuda: cumple',
   financial_sector: 'No aplica a bancos y aseguradoras',
-  no_price: 'Sin precio en la caché',
-  no_shares: 'Sin número de acciones SEC',
-  no_forward_eps: 'Sin BPA estimado (consenso)',
-  non_positive_net_income: 'Beneficio neto ≤ 0',
-  non_positive_start_or_end_value: 'Valor inicial o final ≤ 0',
-  non_positive_invested_capital: 'Capital invertido ≤ 0',
-  non_positive_fcf: 'FCF ≤ 0',
-  no_effective_tax_rate: 'Sin tipo impositivo efectivo',
-  no_ebitda: 'Sin EBITDA positivo',
-  no_ebit: 'Sin EBIT positivo',
-  no_fcf: 'Sin FCF positivo',
+  no_price: 'No hay precio guardado',
+  no_shares: 'La SEC no da el número de acciones',
+  no_forward_eps: 'Sin previsión de beneficio por acción de los analistas',
+  non_positive_net_income: 'La empresa no tiene beneficios (pierde dinero o gana cero)',
+  non_positive_start_or_end_value: 'El valor inicial o final es cero o negativo',
+  non_positive_invested_capital: 'El capital invertido es cero o negativo',
+  non_positive_fcf: 'No genera caja libre (FCF cero o negativo)',
+  no_effective_tax_rate: 'No se conoce el porcentaje de impuestos que paga',
+  no_ebitda: 'Su beneficio antes de intereses, impuestos y amortizaciones (EBITDA) no es positivo',
+  no_ebit: 'Su beneficio de explotación (EBIT) no es positivo',
+  no_fcf: 'No genera caja libre (FCF) positiva',
   no_gross_profit: 'Sin beneficio bruto ni coste de ventas',
-  no_beta: 'Sin beta calculada frente al SPY',
-  missing_component: 'Falta algún componente del mismo ejercicio',
-  too_few_years: 'Pocos ejercicios consecutivos',
-  no_insider_data: 'Sin operaciones Form 4 en la caché',
+  no_beta: 'No se ha podido calcular cuánto se mueve con el mercado (beta)',
+  missing_component: 'Falta alguno de los datos necesarios del mismo año',
+  too_few_years: 'Hay pocos años seguidos de datos',
+  no_insider_data: 'No hay guardadas compras o ventas de sus directivos (formulario 4 de la SEC)',
   no_buybacks_reported: 'Sin recompras declaradas',
-  no_historical_growth: 'Sin crecimiento histórico del CFO',
+  no_historical_growth: 'No se conoce cuánto ha crecido su caja de las operaciones (CFO)',
   below_search_range: 'El precio descuenta un crecimiento inferior al −50 %',
   above_search_range: 'El precio descuenta un crecimiento superior al 100 %',
-  gaap_ebitda: 'GABI calcula el EBITDA con cifras GAAP; el EV/EBITDA del ranking es el de Yahoo',
-  invalid_saved_thresholds: 'Los umbrales guardados no son válidos; se usan los del Excel',
-  not_in_universe: 'La empresa no está en el universo actual',
+  gaap_ebitda: 'GABI calcula el EBITDA con las cifras oficiales de las cuentas; el EV/EBITDA del ranking es el de Yahoo y puede no coincidir',
+  invalid_saved_thresholds: 'Los umbrales guardados no son válidos; se usan los de por defecto',
+  not_in_universe: 'La empresa no está en la lista actual del S&P 500',
   share_basis_mismatch:
     'Las acciones SEC no cuadran con el precio (varias clases de acciones, split sin registrar o emisión reciente)',
 };
@@ -70,8 +70,8 @@ export function reasonText(reason: string | null | undefined): string {
   if (stale) return `Dato de ${CONCEPTS[stale[1]] ?? stale[1]} de otro ejercicio`;
   const absent = /^no_(.+)$/.exec(reason);
   if (absent) return `Sin dato SEC de ${CONCEPTS[absent[1]] ?? absent[1]}`;
-  if (/^fewer_than_\d+_peers$/.test(reason)) return 'Pocos pares con dato';
-  if (/^(fewer_than|no_shares|no_margin)/.test(reason)) return 'Histórico insuficiente';
+  if (/^fewer_than_\d+_peers$/.test(reason)) return 'Pocas empresas parecidas con dato';
+  if (/^(fewer_than|no_shares|no_margin)/.test(reason)) return 'No hay suficientes años de datos';
   return reason;
 }
 
