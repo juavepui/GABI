@@ -51,20 +51,33 @@ export function ResearchPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Evidencia publicada"
+        eyebrow="Pruebas de GABI"
         title="Investigación"
         description={
           <>
-            Ensayos registrados y sus resultados, incluidos los fallidos. GABI todavía no ha
-            demostrado una estrategia neta claramente superior al S&amp;P 500.
+            Aquí se comprueba si GABI funciona de verdad: cada prueba que se ha hecho, con su
+            resultado, también las que salieron mal. Hasta hoy, GABI no ha demostrado ganar con
+            claridad al S&amp;P 500 después de costes.
           </>
         }
         guide={
           <>
             <p>
-              Registro de búsquedas y resultados publicados. Los ensayos retrospectivos no son una
-              validación independiente. GABI todavía no ha demostrado una estrategia neta claramente
-              superior al S&P 500.
+              <strong>Por qué se apuntan también los fracasos.</strong> Si solo se enseñaran las
+              pruebas que salen bien, cualquier estrategia parecería buena: basta con probar muchas
+              hasta que una acierte por casualidad. Por eso cada ensayo queda registrado.
+            </p>
+            <p>
+              <strong>Dos tipos de prueba.</strong> Las <em>retrospectivas</em> usan datos del
+              pasado (backtests): sirven para descartar ideas, pero no confirman nada por sí solas.
+              Las <em>prospectivas</em> fijan las reglas antes y esperan a que lleguen datos nuevos:
+              son las que de verdad pueden confirmar una ventaja.
+            </p>
+            <p>
+              <strong>Las herramientas.</strong> Ranking histórico (ver el ranking de una fecha
+              pasada y simularlo), Validaciones ciegas (pruebas con el resultado oculto hasta una
+              fecha), y tres laboratorios para estudiar métricas, experimentos y formas de repartir
+              el dinero.
             </p>
           </>
         }
@@ -75,31 +88,31 @@ export function ResearchPage() {
             {
               to: '/investigacion/historico',
               label: 'Ranking histórico',
-              description: 'Rankings pasados y backtests V1/V2',
+              description: 'El ranking de una fecha pasada y cómo habría ido',
               icon: History,
             },
             {
               to: '/investigacion/validaciones',
               label: 'Validaciones ciegas',
-              description: 'Seguimiento sellado hacia delante',
+              description: 'Pruebas con datos nuevos y el resultado oculto',
               icon: Lock,
             },
             {
               to: '/investigacion/factores',
               label: 'Laboratorio de factores',
-              description: '¿El score ordena el retorno futuro?',
+              description: '¿Cada métrica ayuda a elegir mejores acciones?',
               icon: Ruler,
             },
             {
               to: '/investigacion/laboratorio',
               label: 'Laboratorio de experimentos',
-              description: 'Experimentos, PSR/DSR y PBO',
+              description: 'Experimentos y si su resultado puede ser suerte',
               icon: FlaskConical,
             },
             {
               to: '/investigacion/carteras',
               label: 'Laboratorio de carteras',
-              description: 'Esquemas de ponderación y estrés',
+              description: 'Formas de repartir el dinero entre las empresas',
               icon: ChartPie,
             },
           ]}
@@ -116,29 +129,29 @@ export function ResearchPage() {
         <section className="grid gap-4 sm:grid-cols-3" aria-label="Estado del registro">
           <div className="rounded-xl border bg-card p-5">
             <p className="text-xs text-muted-foreground">
-              Estrategias que cuenta la corrección por búsqueda
+              Estrategias probadas que se descuentan por «buscar mucho»
             </p>
             <p className="mt-2 text-2xl font-semibold tabular-nums">
               {overview.data.counts.legacy_guard_entries ?? '—'}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Convención heredada: no incluye todas las búsquedas observadas
+              Cifra heredada: no incluye todas las pruebas que se han hecho
             </p>
           </div>
           <div className="rounded-xl border bg-card p-5">
-            <p className="text-xs text-muted-foreground">Confirmación independiente</p>
-            <p className="mt-2 text-lg font-semibold">No acreditada</p>
+            <p className="text-xs text-muted-foreground">¿Confirmado con datos nuevos?</p>
+            <p className="mt-2 text-lg font-semibold">Todavía no</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              La ventaja frente al índice sigue pendiente
+              Falta demostrar que gana al índice
             </p>
           </div>
           <div className="rounded-xl border bg-card p-5">
-            <p className="text-xs text-muted-foreground">Estado del catálogo</p>
+            <p className="text-xs text-muted-foreground">Registro de pruebas</p>
             <p className="mt-2 text-lg font-semibold">
               Publicado · {dateText(overview.data.as_of)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {overview.data.diagnostics.length} grupos diagnósticos separados
+              {overview.data.diagnostics.length} grupos de diagnóstico aparte
             </p>
           </div>
         </section>
@@ -150,7 +163,7 @@ export function ResearchPage() {
             <div>
               <h2 className="text-xl font-semibold">Ensayos registrados</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {trials.data.total} registros para este filtro; se muestran también los fallidos.
+                {trials.data.total} pruebas con este filtro, incluidas las que no salieron bien.
               </p>
             </div>
             <label className="text-xs font-medium">
@@ -173,10 +186,10 @@ export function ResearchPage() {
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
                 <tr className="border-b text-xs text-muted-foreground">
-                  <th className="py-2 pr-3">Ensayo</th>
-                  <th className="py-2 pr-3">Muestra</th>
-                  <th className="py-2 pr-3">Decisión</th>
-                  <th className="py-2 pr-3">Procedencia</th>
+                  <th className="py-2 pr-3">Prueba</th>
+                  <th className="py-2 pr-3">Tipo</th>
+                  <th className="py-2 pr-3">Resultado</th>
+                  <th className="py-2 pr-3">Documentos (reglas y resultado)</th>
                   <th className="py-2">
                     <span className="sr-only">Detalle</span>
                   </th>
@@ -194,8 +207,8 @@ export function ResearchPage() {
                       </td>
                       <td className="py-3 pr-3">
                         {item.state === 'observed'
-                          ? 'Retrospectiva observada'
-                          : 'Prospectiva pendiente'}
+                          ? 'Con datos del pasado'
+                          : 'Con datos nuevos (pendiente)'}
                       </td>
                       <td className="py-3 pr-3">
                         {decisionLabel[item.decision] ?? item.decision}
@@ -259,15 +272,15 @@ export function ResearchPage() {
 
       {overview.data && (
         <section className="rounded-xl border bg-card p-5">
-          <h2 className="text-lg font-semibold">Límites de la evidencia</h2>
+          <h2 className="text-lg font-semibold">Hasta dónde llegan estas pruebas</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
             {overview.data.limitations.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
           <p className="mt-4 text-xs text-muted-foreground">
-            Las reservas ciegas y los resultados aún no publicados no se consultan desde este
-            catálogo.
+            Los datos guardados sin mirar para la prueba final y los resultados aún no publicados
+            no se consultan desde aquí.
           </p>
         </section>
       )}

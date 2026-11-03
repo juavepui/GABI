@@ -13,6 +13,7 @@ import { Term } from '@/shared/ui/term';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Hash } from '@/shared/ui/hash';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 const format = (value: number | null | undefined, digits = 3) => formatNumber(value, { digits });
 
@@ -63,20 +64,30 @@ export function FactorPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
-        eyebrow="¿El score ordena los retornos futuros?"
+        eyebrow="¿Ayuda cada métrica a elegir mejores acciones?"
         title="Laboratorio de factores"
         description={
           <>
-            ¿Ordena cada score los retornos futuros? Resultados exploratorios, sin ventaja
-            demostrada.
+            Comprueba, con datos del pasado, si las empresas con mejor nota en cada métrica (PER,
+            ROIC, momentum…) subieron después más que las demás. Son resultados exploratorios: no
+            demuestran una ventaja.
           </>
         }
         guide={
           <>
             <p>
-              Estudia si cada score ordena los retornos futuros mediante Rank IC, quintiles y
-              rotación. Son resultados retrospectivos exploratorios; no prueban una ventaja neta
-              frente al S&amp;P 500.
+              <strong>La idea.</strong> Si una métrica sirve, las empresas que puntúan mejor en ella
+              deberían subir más en los meses siguientes. Se mide de tres formas: el{' '}
+              <em>Rank IC</em> (si el orden por puntuación coincide con el orden por subida), la
+              diferencia entre el mejor y el peor quinto de empresas (Q5−Q1) y cuánto cambia la
+              selección de un periodo a otro (rotación).
+            </p>
+            <p>
+              <strong>Cómo leer el mapa.</strong> «Sin evidencia» = no ordena; «Indicio no
+              significativo» = ordena un poco, pero podría ser casualidad; «Robusta en
+              retrospectiva» = pasa la prueba estadística exigente en el pasado, pero aún hay que
+              confirmarla con datos nuevos. Ninguno de estos resultados prueba que GABI gane al
+              S&amp;P 500.
             </p>
           </>
         }
@@ -174,7 +185,7 @@ export function FactorPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="font-semibold">Trabajo #{job.data.id.slice(0, 8)}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {job.data.phase} · {job.data.progress} % · {job.data.status}
+            {job.data.phase} · {job.data.progress} % · {JOB_STATES[job.data.status] ?? job.data.status}
           </p>
           {['queued', 'running'].includes(job.data.status) && (
             <Button
@@ -227,8 +238,12 @@ export function FactorPage() {
                     <th>
                       <Term k="rank_ic">IC medio</Term>
                     </th>
-                    <th>ICIR</th>
-                    <th>Q máximo − Q1</th>
+                    <th>
+                      <Term k="icir">ICIR</Term>
+                    </th>
+                    <th>
+                      <Term k="quintile_spread">Q máximo − Q1</Term>
+                    </th>
                     <th>Periodos</th>
                   </tr>
                 </thead>

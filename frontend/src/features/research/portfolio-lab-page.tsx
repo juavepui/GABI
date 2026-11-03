@@ -82,7 +82,7 @@ function Result({ data }: { data: PortfolioLabPreview }) {
         </details>
       )}
       <div>
-        <h2 className="text-lg font-semibold">Comparativa por esquema</h2>
+        <h2 className="text-lg font-semibold">Comparación de las formas de repartir</h2>
         <div className="mt-2 overflow-x-auto">
           <table
             className="w-full min-w-[900px] text-left text-xs"
@@ -130,7 +130,7 @@ function Result({ data }: { data: PortfolioLabPreview }) {
         </HowToRead>
       </div>
       <div>
-        <h2 className="text-lg font-semibold">Curvas de capital</h2>
+        <h2 className="text-lg font-semibold">Cómo habría crecido el dinero</h2>
         <Suspense fallback={<p>Preparando gráfico…</p>}>
           <WealthChart points={points} series={series} labels={labels} />
         </Suspense>
@@ -153,7 +153,9 @@ function Result({ data }: { data: PortfolioLabPreview }) {
         </a>
       </div>
       <div>
-        <h2 className="text-lg font-semibold">Concentración del riesgo (último rebalanceo)</h2>
+        <h2 className="text-lg font-semibold">
+          ¿De cuántas empresas depende el riesgo? (última revisión)
+        </h2>
         <label className="mt-2 grid w-fit gap-1 text-sm">
           Esquema
           <NativeSelect value={riskScheme} onChange={(event) => setRiskScheme(event.target.value)}>
@@ -198,7 +200,9 @@ function Result({ data }: { data: PortfolioLabPreview }) {
         )}
       </div>
       <div>
-        <h2 className="text-lg font-semibold">Stress tests</h2>
+        <h2 className="text-lg font-semibold">
+          ¿Qué habría pasado en crisis pasadas? (stress tests)
+        </h2>
         <HowToRead className="mt-2">
           No son pronósticos: son shocks arbitrarios con supuestos simples, aplicados a los pesos
           del último rebalanceo de cada esquema. Los escenarios con base real usan beta y sector de
@@ -452,14 +456,23 @@ export function PortfolioLabPage() {
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="Comparar formas de repartir el capital"
         title="Laboratorio de carteras"
-        description={<>Compara seis formas de repartir el capital entre las mismas candidatas.</>}
+        description={
+          <>
+            Con las mismas empresas elegidas, compara seis formas de repartir el dinero entre ellas
+            (a partes iguales, según su riesgo, etc.) y cómo habría ido cada una.
+          </>
+        }
         guide={
           <>
             <p>
-              Con las mismas candidatas de cada rebalanceo, compara seis formas de repartir el
-              capital, sin declarar ganador de antemano. Fíjate en el HHI y en la contribución al
-              riesgo de las 3 mayores posiciones, no solo en el número de posiciones: 20 empresas no
-              significan 20 fuentes de riesgo.
+              Elegir empresas es solo la mitad; la otra es cuánto poner en cada una. Aquí se
+              comparan seis formas de hacerlo con las mismas empresas en cada revisión, sin decidir
+              antes cuál gana.
+            </p>
+            <p>
+              No te fijes solo en cuántas empresas hay: mira el HHI (lo concentrada que está) y
+              cuánto riesgo aportan las 3 mayores. Veinte empresas no son veinte riesgos distintos
+              si unas pocas pesan mucho o se mueven igual.
             </p>
           </>
         }

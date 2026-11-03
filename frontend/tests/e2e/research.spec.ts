@@ -13,7 +13,7 @@ test('Investigación distingue ensayos fallidos de reservas pendientes', async (
   await expect(page.getByRole('heading', { name: 'Investigación' })).toBeVisible();
   await expect(page.getByText('trial/failed')).toBeVisible();
   await expect(page.getByText('negative_excess')).toBeVisible();
-  await expect(page.getByText('Prospectiva pendiente')).toBeVisible();
+  await expect(page.getByText('Con datos nuevos (pendiente)')).toBeVisible();
   await page.getByRole('button', { name: 'Ver detalle de trial/failed' }).click();
   const detail = page.getByRole('region', { name: 'Detalle de trial/failed' });
   await expect(detail).toContainText('docs/test/protocol.json');
@@ -45,7 +45,7 @@ test('ranking histórico se calcula en un job y muestra identidad y cobertura', 
     coverage.getByText(/1\/2 empresas sin identidad histórica acreditada/),
   ).toBeVisible();
   await expect(
-    coverage.getByText('Cobertura del universo por bloque degradada', { exact: false }),
+    coverage.getByText('En algún apartado de la puntuación faltan muchos datos', { exact: false }),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Descargar resultado completo' })).toBeVisible();
 });
@@ -163,7 +163,7 @@ test('backtest V1 se ejecuta como job Research y conserva el resultado completo'
     const result = page.getByRole('region', { name: 'Resultado del backtest' });
     await expect(result.getByRole('heading', { name: /Resultado V1/ })).toBeVisible();
     await expect(result.getByRole('row', { name: /^Estrategia/ })).toContainText('12 %');
-    await expect(result.getByRole('row', { name: /^SPY/ })).toContainText('0,45');
+    await expect(result.getByRole('row', { name: /^S&P 500 \(SPY\)/ })).toContainText('0,45');
     await result.getByText('1 periodo(s) saltado(s)').click();
     await expect(result.getByText('2019-07-02: cobertura insuficiente')).toBeVisible();
     await expect(result.getByRole('link', { name: /Descargar backtest completo/ })).toBeVisible();
@@ -365,14 +365,26 @@ test('Research Lab muestra las auditorías guardadas verificadas', async ({ page
     await expect(overfitting.getByRole('table', { name: 'Ensayos retrospectivos' })).toContainText(
       'top10_q',
     );
-    await page.getByText('Estabilidad temporal FF5 + Momentum · auditoría guardada').click();
+    await page
+      .getByText(
+        '¿Cambia su estilo con el tiempo? (modelo de factores FF5 + Momentum) · revisión guardada',
+      )
+      .click();
     await expect(page.getByText('Estabilidad temporal de alfa y betas')).toBeVisible();
-    await page.getByText('Benchmark ajustado por beta/factores · auditoría guardada').click();
+    await page
+      .getByText('¿Gana al mercado una vez descontado su riesgo y su estilo? · revisión guardada')
+      .click();
     await expect(page.getByText('Benchmark ajustado por beta y factores')).toBeVisible();
-    await page.getByText('Incertidumbre por bloques · diagnóstico guardado').click();
+    await page
+      .getByText(
+        '¿Qué margen de error tienen los resultados? (bootstrap por bloques) · revisión guardada',
+      )
+      .click();
     await expect(page.getByLabel('Series del diagnóstico')).toBeVisible();
     await expect(page.getByRole('table', { name: 'Intervalos bootstrap' })).toBeVisible();
-    await page.getByText('Estabilidad histórica · vecindad preregistrada de pesos').click();
+    await page
+      .getByText('¿Aguanta si se cambian un poco los pesos? · prueba fijada de antemano')
+      .click();
     const ranks = page.getByRole('region', { name: 'Estabilidad histórica del ranking' });
     await expect(ranks).toContainText('Persistencia media del Top-20');
     const dates = ranks.getByLabel('Fecha del ranking');

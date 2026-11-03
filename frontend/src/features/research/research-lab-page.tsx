@@ -141,6 +141,9 @@ const COLUMN_TERMS: Record<string, string> = {
   Sharpe: 'sharpe_ratio',
   Sortino: 'sortino_ratio',
   'Máx. drawdown': 'max_drawdown',
+  'Hipótesis previa': 'preregistration',
+  Commit: 'commit',
+  Rebalanceo: 'rebalance',
 };
 
 const LONG_NOTES = 120;
@@ -193,14 +196,25 @@ export function ResearchLabPage() {
         back={{ to: '/investigacion', label: 'Investigación' }}
         eyebrow="Registro de experimentos"
         title="Laboratorio de experimentos"
-        description={<>Experimentos de backtesting con su metodología, commit y resultado.</>}
+        description={
+          <>
+            Cada experimento con datos del pasado, con sus reglas, la versión exacta del código y
+            su resultado, y herramientas para saber si un buen resultado puede ser suerte.
+          </>
+        }
         guide={
           <>
             <p>
-              Registro de experimentos de backtesting con su metodología, el commit exacto y el
-              resultado. Un resultado en fase Research que parece bueno no es evidencia: es un
-              candidato. Solo datos no usados para elegirlo (out-of-sample) o el seguimiento real
-              (live forward) pueden confirmarlo.
+              Un experimento que sale bien en la fase de investigación no es una prueba: es un
+              candidato. Solo puede confirmarse con datos que no se usaron para elegirlo (fuera de
+              muestra) o con el seguimiento real con datos nuevos (en vivo).
+            </p>
+            <p>
+              Las herramientas de abajo responden a una pregunta: <em>¿este resultado puede ser
+              suerte?</em> El PSR y el DSR miden si la rentabilidad por riesgo resiste el poco
+              historial y las muchas variantes probadas; el PBO, si elegir «la mejor» variante es
+              sobre todo ruido; la incertidumbre por bloques da un rango en vez de un único
+              número.
             </p>
           </>
         }

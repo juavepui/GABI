@@ -11,6 +11,7 @@ import { ProgressBar } from '@/shared/ui/progress-bar';
 import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { Term } from '@/shared/ui/term';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 const OPTIONS_LIMIT = 200;
 
@@ -31,7 +32,7 @@ export function JobStatus({ state }: { state: ReturnType<typeof useJob> }) {
               status={job.data.status}
             />
           )}
-          Trabajo #{job.data.id.slice(0, 8)} · {job.data.status}
+          Trabajo #{job.data.id.slice(0, 8)} · {JOB_STATES[job.data.status] ?? job.data.status}
           {['queued', 'running'].includes(job.data.status) && (
             <Button
               className="ml-3"
