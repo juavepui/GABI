@@ -26,15 +26,21 @@ function skips(list: { level: number; name: string }[]) {
 const pages: { path: string; sections: string[] }[] = [
   {
     path: '/administracion',
-    sections: ['Datos', 'Actualizar datos', 'Configuración local', 'Modo de trabajo', 'Trabajos'],
+    sections: [
+      'Datos',
+      'Actualizar datos',
+      'Claves de acceso a las fuentes',
+      'Modo de trabajo',
+      'Tareas en marcha y terminadas',
+    ],
   },
   {
     path: '/empresas/T001',
     sections: [
-      'Histórico de precios',
-      'Checklist fundamental',
-      'Modelo y procedencia',
-      'Documentos y próximas cuentas',
+      'Evolución del precio',
+      'Lista de comprobación de la empresa',
+      'Cómo se calcula y de dónde salen los datos',
+      'Informes oficiales y próximos resultados',
       'Próximos catalizadores',
     ],
   },

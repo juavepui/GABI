@@ -11,10 +11,10 @@ export function MacroStrip() {
     <section aria-labelledby="macro-strip" className="rounded-xl border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="macro-strip" className="text-sm font-semibold">
-          Contexto macro
+          Cómo está la economía
         </h2>
         <Link className="text-xs text-primary underline" to="/macro">
-          Ver panel macro
+          Ver más datos de la economía
         </Link>
       </div>
       {query.isPending ? (
@@ -40,7 +40,7 @@ export function MacroStrip() {
                 )}
               </p>
               <p className="text-xs text-muted-foreground">
-                {item.latest_value == null ? 'Sin dato local' : dateLabel(item.latest_date)} ·{' '}
+                {item.latest_value == null ? 'Sin datos guardados' : dateLabel(item.latest_date)} ·{' '}
                 {cadence(item)}
               </p>
             </li>
@@ -48,7 +48,8 @@ export function MacroStrip() {
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        Series FRED guardadas en este equipo; no intervienen en el score.
+        Datos de la Reserva Federal (FRED) guardados en tu equipo. Son contexto: no cambian la
+        puntuación de las empresas.
       </p>
     </section>
   );

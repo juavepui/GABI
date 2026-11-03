@@ -46,7 +46,7 @@ export function BlockBars({
         title={blocks.map((block) => `${block.label} ${text(block.value)}`).join(' · ')}
       >
         <span className="sr-only">
-          Bloques del score:{' '}
+          Apartados de la puntuación:{' '}
           {blocks.map((block) => `${block.label} ${text(block.value)}`).join(', ')}
         </span>
         {blocks.map((block) => (

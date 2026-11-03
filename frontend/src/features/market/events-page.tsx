@@ -21,17 +21,17 @@ import { dateLabel, dateText } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
 
 const labels: Record<string, string> = {
-  top_n_entry: 'Entra en el Top',
-  top_n_exit: 'Sale del Top',
-  score_change: 'Cambio de score',
-  rank_change: 'Cambio de posición',
-  confidence_drop: 'Caída de cobertura ponderada',
+  top_n_entry: 'Entra entre las primeras',
+  top_n_exit: 'Sale de las primeras',
+  score_change: 'Cambio de puntuación',
+  rank_change: 'Cambio de puesto',
+  confidence_drop: 'Le faltan más datos que antes',
   sector_change: 'Cambio de sector',
-  eligibility_change: 'Sin score calculable',
+  eligibility_change: 'Ya no se puede puntuar',
 };
 const severities: Record<string, string> = {
-  MATERIAL: 'Material',
-  WATCH: 'Vigilar',
+  MATERIAL: 'Importante',
+  WATCH: 'A vigilar',
   INFO: 'Informativo',
 };
 
@@ -121,8 +121,9 @@ export function EventsPage() {
         title="Eventos"
         description={
           <>
-            Qué ha cambiado desde una cesta guardada: su ranking, sus filings SEC y sus próximos
-            resultados. Son cambios de datos, nunca órdenes de compra o venta.
+            Qué ha cambiado en una cartera que guardaste: puestos en el ranking, informes nuevos
+            presentados a la SEC y próximas presentaciones de resultados. Son avisos para que
+            revises, nunca órdenes de compra o venta.
           </>
         }
       />
@@ -144,7 +145,7 @@ export function EventsPage() {
               }}
             />
             <label className="text-sm">
-              Cambio mínimo de rank
+              Avisar si cambia de puesto en al menos
               <Input
                 className="mt-1"
                 name="rank_change"
@@ -155,7 +156,7 @@ export function EventsPage() {
               />
             </label>
             <label className="text-sm">
-              Cambio mínimo de score
+              Avisar si la puntuación cambia al menos
               <Input
                 className="mt-1"
                 name="score_change"
@@ -168,7 +169,7 @@ export function EventsPage() {
               />
             </label>
             <label className="text-sm">
-              Caída mínima de cobertura ponderada
+              Avisar si los datos disponibles bajan al menos
               <Input
                 className="mt-1"
                 name="confidence_drop"
@@ -199,17 +200,17 @@ export function EventsPage() {
       )}
       {options.length === 0 && snapshots.isSuccess && (
         <p className="text-sm text-muted-foreground">
-          Todavía no hay cestas guardadas. Guarda la de hoy desde Cartera objetivo («Guardar esta
-          cartera para seguirla») para compararla después.
+          Todavía no has guardado ninguna cartera. En Cartera objetivo, pulsa «Guardar esta cartera
+          para seguirla» y aquí verás después qué ha cambiado.
         </p>
       )}
       {activeSnapshot != null && (
         <>
           <section className="rounded-xl border bg-card p-5">
-            <h2 className="text-lg font-semibold">Cambios en filings SEC</h2>
+            <h2 className="text-lg font-semibold">Cambios en sus informes oficiales (SEC)</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Compara 10-K y 10-Q de las empresas de la cesta elegida, con hechos SEC ya cacheados.
-              Los umbrales de materialidad siguen en el motor Python.
+              Compara el último informe anual (10-K) o trimestral (10-Q) de cada empresa con el
+              anterior y señala los cambios grandes. Usa los informes ya guardados en tu equipo.
             </p>
             <Button
               className="mt-4"
@@ -218,7 +219,7 @@ export function EventsPage() {
               pending={checkFilings.isPending}
               onClick={() => checkFilings.mutate(activeSnapshot)}
             >
-              Comprobar filings
+              Comprobar informes
             </Button>
             {checkFilings.isError && (
               <p role="alert" className="mt-2 text-sm text-destructive">
@@ -227,13 +228,13 @@ export function EventsPage() {
             )}
             {filingJobId && (
               <p role="status" className="mt-3 text-sm">
-                Job SEC: {filingJob.data?.phase ?? 'En espera'} (
-                {filingJob.data?.status ?? 'queued'}).
+                Comprobando informes: {filingJob.data?.phase ?? 'en espera'}.
               </p>
             )}
             {filingJob.data?.status === 'failed' && (
               <p className="text-sm text-destructive">
-                No se completó la comparación; revisa el job en Administración.
+                No se pudo terminar la comparación. Puedes ver el error en Administración →
+                Trabajos.
               </p>
             )}
             {filingResult.isError && (
@@ -275,7 +276,7 @@ export function EventsPage() {
             )}
           </section>
           <section className="rounded-xl border bg-card p-5">
-            <h2 className="text-lg font-semibold">Próximos earnings</h2>
+            <h2 className="text-lg font-semibold">Próximas presentaciones de resultados</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Fechas conocidas de las empresas de la cesta; contexto, no señal de compra.
             </p>
@@ -300,7 +301,7 @@ export function EventsPage() {
                   </Link>
                   <span>
                     {dateText(event.event_date)} · {event.days_until} días ·{' '}
-                    {event.is_estimate ? 'Estimada' : 'Confirmada'}
+                    {event.is_estimate ? 'Fecha aproximada' : 'Confirmada'}
                   </span>
                 </li>
               ))}
@@ -312,7 +313,7 @@ export function EventsPage() {
         <h2 className="text-lg font-semibold">Eventos recientes</h2>
         <div className="mt-3 flex flex-wrap items-end gap-3 text-sm">
           <label className="grid gap-1">
-            Severidad
+            Importancia
             <NativeSelect value={severity} onChange={(event) => setSeverity(event.target.value)}>
               <NativeSelectOption value="">Todas</NativeSelectOption>
               {Object.entries(severities).map(([value, label]) => (
@@ -323,7 +324,7 @@ export function EventsPage() {
             </NativeSelect>
           </label>
           <label className="grid gap-1">
-            Últimas N horas
+            En las últimas (horas)
             <Input
               className="w-28"
               type="number"
@@ -342,7 +343,7 @@ export function EventsPage() {
         )}
         {signals.data?.items.length === 0 && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Sin eventos registrados en esta ventana.
+            No ha habido cambios en este periodo.
           </p>
         )}
         <ul className="mt-4 divide-y">

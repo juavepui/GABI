@@ -141,8 +141,8 @@ export function WatchlistPage() {
         title="Empresas seguidas"
         description={
           <>
-            Las empresas que marcaste con «Seguir» en el Ranking, la ficha o Comparar: su score y
-            posición de hoy en el modelo activo y cuánto han cambiado desde que las añadiste.
+            Las empresas que marcaste con la estrella «Seguir»: su puntuación y su puesto de hoy, y
+            cuánto han cambiado desde que empezaste a seguirlas.
           </>
         }
       />
@@ -161,7 +161,7 @@ export function WatchlistPage() {
         <section className="rounded-xl border bg-card">
           {!list.data.ranking_ready && (
             <p role="status" className="border-b p-4 text-sm text-muted-foreground">
-              Todavía no hay ranking con los datos locales: se muestran la lista y sus notas.
+              Todavía no se ha calculado el ranking, así que solo se ven la lista y tus notas.
             </p>
           )}
           {checklists.isError && (
@@ -172,7 +172,8 @@ export function WatchlistPage() {
           <DataTable label="Empresas seguidas">
             <table className="w-full min-w-[900px] text-left text-sm">
               <caption className="sr-only">
-                Empresas seguidas, en el orden en que se añadieron. Cambios desde la fecha de alta.
+                Empresas seguidas, en el orden en que las añadiste. Los cambios cuentan desde ese
+                día.
               </caption>
               <thead className="bg-muted/60 text-xs text-muted-foreground">
                 <tr>
@@ -180,19 +181,19 @@ export function WatchlistPage() {
                     Empresa
                   </th>
                   <th scope="col" className="num p-3">
-                    Score
+                    Puntuación
                   </th>
                   <th scope="col" className="num p-3">
-                    Posición
+                    Puesto
                   </th>
                   <th scope="col" className="num p-3">
-                    Checklist
+                    Lista de comprobación
                   </th>
                   <th scope="col" className="p-3">
                     Próximos resultados
                   </th>
                   <th scope="col" className="p-3">
-                    Diario
+                    Tus notas
                   </th>
                   <th scope="col" className="p-3">
                     Nota
@@ -230,7 +231,7 @@ export function WatchlistPage() {
                       />
                       {!row.same_model && row.score_at_add != null && (
                         <span className="block text-xs text-muted-foreground">
-                          Añadida con otro modelo
+                          Añadida con otra versión del modelo
                         </span>
                       )}
                     </td>
@@ -245,7 +246,7 @@ export function WatchlistPage() {
                         <>
                           {dateText(row.next_earnings_date)}
                           {row.next_earnings_is_estimate && (
-                            <span className="block text-xs text-muted-foreground">Estimada</span>
+                            <span className="block text-xs text-muted-foreground">Aproximada</span>
                           )}
                         </>
                       ) : (
@@ -262,8 +263,8 @@ export function WatchlistPage() {
                             ? '1 tesis abierta'
                             : `${row.open_theses} tesis abiertas`
                           : row.theses
-                            ? 'Tesis cerradas'
-                            : 'Escribir tesis'}
+                            ? 'Notas cerradas'
+                            : 'Escribir por qué la compraría'}
                       </Link>
                     </td>
                     <td className="max-w-72 p-3">
@@ -278,8 +279,9 @@ export function WatchlistPage() {
             </table>
           </DataTable>
           <p className="border-t px-5 py-3 text-xs text-muted-foreground">
-            Checklist: criterios cumplidos frente a los evaluables con los datos locales. El cambio
-            de score y posición solo se muestra si la empresa se añadió con el mismo modelo.
+            Lista de comprobación: cuántos criterios cumple de los que se pueden comprobar con los
+            datos guardados. El cambio de puntuación y de puesto solo aparece si la empresa se
+            añadió con la misma versión del modelo (si no, no serían comparables).
           </p>
         </section>
       )}

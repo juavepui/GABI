@@ -26,8 +26,8 @@ export function BlockEvidenceBadge({ block }: { block: ScoreBlockEvidence }) {
     );
   const title =
     `${block.metrics_at_classification} de ${block.metrics.length} métricas con «${block.classification_label}». ` +
-    `IC medio de sus métricas: ${formatNumber(block.ic_mean, { digits: 3, fixed: true })}. ` +
-    `Superan Holm al 5 %: ${block.holm_significant}.`;
+    `Relación media con la rentabilidad posterior (IC): ${formatNumber(block.ic_mean, { digits: 3, fixed: true })}. ` +
+    `Pasan la prueba estadística exigente (Holm al 5 %): ${block.holm_significant}.`;
   return (
     <Badge
       variant="outline"
@@ -55,15 +55,17 @@ export function UnevenEvidenceNote({
   }
   const holm =
     evidence.holm_significant_count === 0
-      ? 'ninguna métrica supera la corrección Holm al 5 %'
-      : `${evidence.holm_significant_count} métricas superan la corrección Holm al 5 %`;
+      ? 'ninguna métrica ha pasado la prueba estadística más exigente (Holm al 5 %)'
+      : `${evidence.holm_significant_count} métricas pasan la prueba estadística más exigente (Holm al 5 %)`;
   return (
     <p className={'text-xs leading-relaxed text-muted-foreground ' + className}>
-      El score combina bloques con evidencia retrospectiva desigual: {holm};{' '}
-      {[...groups].map(([label, names]) => `${label} en ${list(names)}`).join('; ')}. Es una
-      descripción del pasado, no cambia los pesos.{' '}
+      Cuánto se ha comprobado cada apartado con datos del pasado: {holm};{' '}
+      {[...groups].map(([label, names]) => `${label} en ${list(names)}`).join('; ')}.
+      {evidence.holm_significant_count === 0 &&
+        ' En pocas palabras: ningún apartado ha demostrado todavía con claridad que sirva para elegir mejores acciones.'}{' '}
+      Es solo información; no cambia la puntuación.{' '}
       <Link className="text-primary underline" to={FACTOR_LAB}>
-        Ver Factor Lab
+        Ver el detalle
       </Link>
     </p>
   );

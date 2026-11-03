@@ -27,7 +27,7 @@ import { Input } from '@/shared/ui/input';
 
 const sourceNames: Record<string, string> = {
   prices: 'Precios',
-  fundamentals: 'Fundamentales',
+  fundamentals: 'Datos de las cuentas',
   edgar_metrics: 'SEC EDGAR',
 };
 
@@ -104,7 +104,7 @@ function JobRow({
           <p className="font-medium">{jobName(job.kind)}</p>
           <p className="text-xs text-muted-foreground">
             {new Date(job.created_at).toLocaleString('es-ES')} ·{' '}
-            {job.origin === 'scheduler' ? 'Programador' : 'Manual'}
+            {job.origin === 'scheduler' ? 'Automático' : 'Pedido por ti'}
             {' · #'}
             {job.id.slice(0, 8)}
           </p>
@@ -144,12 +144,12 @@ function JobRow({
       )}
       {job.status === 'cancelled' && (
         <p className="mt-2 text-sm text-muted-foreground">
-          Cancelación completada. No se publicó un resultado.
+          Cancelado. No se ha guardado ningún resultado.
         </p>
       )}
       {job.status === 'running' && job.cancel_requested && (
         <p className="mt-2 text-sm text-muted-foreground">
-          La cancelación está solicitada. El trabajo sigue en curso hasta alcanzar un punto seguro.
+          Cancelación pedida. Se parará en cuanto pueda hacerlo sin dejar nada a medias.
         </p>
       )}
       {job.status === 'failed' && job.failures && job.failures.length > 0 && (
@@ -178,13 +178,13 @@ function JobRow({
               onClick={() => onRetry(job.id)}
               title={
                 job.failure?.retry === 'no'
-                  ? 'Un error interno probablemente se repetirá'
+                  ? 'Es un fallo interno: probablemente volverá a fallar'
                   : job.failure?.retry === 'after_fix'
-                    ? 'Corrige antes la causa indicada'
+                    ? 'Arregla antes lo que indica el error'
                     : undefined
               }
             >
-              Solicitar nuevo intento
+              Volver a intentarlo
             </Button>
           )}
         {job.status === 'succeeded' &&
@@ -333,9 +333,9 @@ export function AdministrationPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Operación local"
+        eyebrow="Ajustes"
         title="Administración"
-        description="Solicita actualizaciones y auditorías. El worker continúa aunque cierres el navegador."
+        description="Aquí descargas datos nuevos (precios y cuentas de las empresas) y cambias los ajustes. Las descargas siguen aunque cierres el navegador."
       >
         <SectionLinks
           label="Apartados de Administración"
@@ -343,7 +343,7 @@ export function AdministrationPage() {
             {
               to: '/administracion/calidad',
               label: 'Calidad de los datos',
-              description: 'Cobertura, frescura, procedencia y archivo histórico',
+              description: 'Qué datos faltan, cuándo se actualizaron y de dónde salen',
               icon: ShieldCheck,
             },
           ]}
@@ -365,14 +365,15 @@ export function AdministrationPage() {
               <DatabaseZap size={19} />
               Datos
             </CardTitle>
-            <CardDescription>Las consultas a esta página no descargan datos.</CardDescription>
+            <CardDescription>Abrir esta página no descarga nada; solo los botones.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <DataUpdate />
             <p className="text-xs text-muted-foreground">
-              «Actualización completa» revisa la composición del S&amp;P 500 y actualiza precios,
-              fundamentales y SEC de todo el universo y de los índices de referencia, además de las
-              series macro de FRED. Es la que el Programador lanza cada día.
+              «Actualización completa» hace todo: revisa qué empresas forman hoy el S&amp;P 500,
+              descarga sus precios, sus cuentas y sus informes oficiales, los del propio índice y
+              los datos de la economía. Es la que GABI lanza solo cada día si las tareas automáticas
+              están instaladas.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => submit.mutate({ kind: 'refresh' })} pending={submit.isPending}>
@@ -383,7 +384,7 @@ export function AdministrationPage() {
                 onClick={() => submit.mutate({ kind: 'quality' })}
                 pending={submit.isPending}
               >
-                Auditar cobertura
+                Comprobar qué datos faltan
               </Button>
             </div>
             <form
@@ -398,7 +399,7 @@ export function AdministrationPage() {
               className="space-y-2"
             >
               <label htmlFor="symbols" className="block text-sm font-medium">
-                Descargar símbolos concretos
+                Descargar solo algunas empresas o fondos
               </label>
               <div className="flex gap-2">
                 <Input
@@ -409,11 +410,11 @@ export function AdministrationPage() {
                   placeholder="SPY, RSP"
                 />
                 <Button type="submit" variant="outline" pending={submit.isPending}>
-                  Solicitar
+                  Descargar
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Hasta diez símbolos. Usa la caché incremental y los límites de las fuentes.
+                Hasta diez símbolos separados por comas. Solo descarga lo que falte.
               </p>
             </form>
           </CardContent>
@@ -422,11 +423,12 @@ export function AdministrationPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShieldCheck size={19} />
-              Configuración local
+              Claves de acceso a las fuentes
             </CardTitle>
             <CardDescription>
-              Solo se indica si existe una clave; nunca se muestran valores o rutas. Guardar una
-              clave la escribe en un fichero local.
+              Algunas fuentes gratuitas piden una clave (como una contraseña) para descargar sus
+              datos. Aquí solo se ve si ya la tienes; la clave nunca se muestra y se guarda en un
+              fichero de tu equipo.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -434,7 +436,7 @@ export function AdministrationPage() {
               <p className="text-sm text-muted-foreground">Comprobando configuración…</p>
             ) : settings.isError ? (
               <p role="alert" className="text-sm text-destructive">
-                No se puede consultar la configuración.
+                No se han podido leer los ajustes.
               </p>
             ) : (
               <KeyEditor keys={settings.data?.keys ?? {}} />
@@ -512,10 +514,11 @@ export function AdministrationPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <RefreshCw size={19} />
-            Trabajos
+            Tareas en marcha y terminadas
           </CardTitle>
           <CardDescription>
-            Estado persistente compartido con el programador. Se actualiza cada tres segundos.
+            Descargas y cálculos que has pedido o que GABI lanza solo. Se actualiza cada tres
+            segundos.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -531,7 +534,7 @@ export function AdministrationPage() {
             <p className="text-sm text-muted-foreground">Cargando trabajos…</p>
           ) : jobs.isError ? (
             <p role="alert" className="text-sm text-destructive">
-              No se pueden consultar los trabajos.
+              No se han podido leer las tareas.
             </p>
           ) : jobs.data?.jobs.length ? (
             <ul className="space-y-3">
@@ -562,7 +565,8 @@ export function AdministrationPage() {
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Aún no hay trabajos. Arranca el worker local para procesar las solicitudes.
+              Aún no hay tareas. Si pides una y no avanza, arranca GABI con su servicio de tareas
+              (el «worker»).
             </p>
           )}
         </CardContent>

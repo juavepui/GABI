@@ -41,8 +41,8 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
             ? 'Una empresa que sigues presenta'
             : `${count} empresas que sigues presentan`
           : count === 1
-            ? 'Una de tus candidatas presenta'
-            : `${count} de tus candidatas presentan`;
+            ? 'Una empresa de la cartera propuesta presenta'
+            : `${count} empresas de la cartera propuesta presentan`;
       return {
         text: `${who} resultados esta semana: ${list(alert.symbols)} (desde el ${day(alert.date)}).`,
         action: holdings ? 'Ver Mi cartera' : watched ? 'Ver empresas seguidas' : 'Ver eventos',
@@ -51,7 +51,7 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
     case 'ex_dividend':
     case 'dividend_payment':
       return {
-        text: `${alert.kind === 'ex_dividend' ? 'Fecha ex-dividendo' : 'Pago de dividendo'} el ${day(alert.date)}: ${list(alert.symbols)}.`,
+        text: `${alert.kind === 'ex_dividend' ? 'Último día para cobrar el próximo dividendo (fecha ex-dividendo)' : 'Pago de dividendo'} el ${day(alert.date)}: ${list(alert.symbols)}.`,
         action: 'Ver la ficha de ' + alert.symbols[0],
       };
     case 'top_changes': {
@@ -59,7 +59,7 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
       const exited = (detail.exited as string[] | undefined) ?? [];
       const parts = [
         entered.length > 0 &&
-          `${list(entered)} ${entered.length === 1 ? 'ha entrado' : 'han entrado'} en el Top-20`,
+          `${list(entered)} ${entered.length === 1 ? 'ha entrado' : 'han entrado'} entre las 20 primeras`,
         exited.length > 0 && `${list(exited)} ${exited.length === 1 ? 'ha salido' : 'han salido'}`,
       ].filter(Boolean);
       return {
@@ -69,7 +69,7 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
     }
     case 'filings':
       return {
-        text: `Cambios materiales en los últimos informes SEC de ${list(alert.symbols)}.`,
+        text: `Cambios importantes en los últimos informes oficiales (SEC) de ${list(alert.symbols)}.`,
         action: 'Ver eventos',
       };
     case 'job_failed': {
@@ -78,14 +78,14 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
         text:
           `«${jobName(String(detail.job_kind))}» falló el ${day(alert.date)}` +
           (detail.failure ? `: ${String(detail.failure).toLowerCase()}` : '') +
-          (failures > 0 ? `, con ${failures} fallos de fuente` : '') +
+          (failures > 0 ? `; ${failures} descargas no se pudieron hacer` : '') +
           '.',
         action: 'Ver Administración',
       };
     }
     case 'thesis_review':
       return {
-        text: `Tu tesis de ${alert.symbols[0]} tenía revisión el ${day(alert.date)}.`,
+        text: `Te apuntaste revisar tus notas sobre ${alert.symbols[0]} el ${day(alert.date)}.`,
         action: 'Abrir el diario',
       };
   }
@@ -98,8 +98,8 @@ export function HomeAlerts({ alerts }: { alerts: HomeAlert[] }) {
       <h2 className="text-lg font-semibold">Qué requiere tu atención</h2>
       {alerts.length === 0 ? (
         <p className="mt-2 text-sm text-muted-foreground">
-          Nada pendiente: sin resultados ni dividendos esta semana, sin cambios en el Top-20, sin
-          trabajos fallidos ni tesis por revisar.
+          Nada pendiente: esta semana no hay resultados ni dividendos de tus empresas, no ha
+          cambiado ninguna de las 20 primeras y no tienes notas por revisar.
         </p>
       ) : (
         <ul className="mt-3 space-y-2">

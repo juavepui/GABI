@@ -100,16 +100,18 @@ function PolicyForm({
       aria-label="Política de cartera"
       className="rounded-xl border bg-card p-5"
     >
-      <h2 className="text-xl font-semibold">Política de cartera</h2>
+      <h2 className="text-xl font-semibold">Tus límites</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {revision ? `Revisión ${revision}.` : 'Valores por defecto: guarda para fijarlos.'} Sin
-        apalancamiento: los pesos y la caja suman siempre el 100 %. Independiente de las versiones
-        del modelo.
+        {revision
+          ? `Versión ${revision} de tus límites.`
+          : 'Son valores de ejemplo: guárdalos para fijarlos.'}{' '}
+        Nunca se invierte dinero prestado: lo invertido más lo que queda sin invertir suma siempre
+        el 100 %. Estos límites no cambian aunque cambie la versión del modelo.
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Field
-          label="Peso máximo por emisor (%)"
-          hint="Las clases de un mismo emisor suman juntas."
+          label="Máximo en una sola empresa (%)"
+          hint="Si una empresa tiene varios tipos de acciones (p. ej. GOOG y GOOGL), cuentan juntas."
         >
           <Input
             className="mt-1.5"
@@ -122,7 +124,7 @@ function PolicyForm({
             required
           />
         </Field>
-        <Field label="Peso máximo por sector (%)">
+        <Field label="Máximo en un mismo sector (%)">
           <Input
             className="mt-1.5"
             name="max_sector_weight"
@@ -134,7 +136,7 @@ function PolicyForm({
             required
           />
         </Field>
-        <Field label="Reserva de caja (%)">
+        <Field label="Dinero que dejas sin invertir (%)">
           <Input
             className="mt-1.5"
             name="cash_weight"
@@ -145,7 +147,10 @@ function PolicyForm({
             defaultValue={percent(policy.cash_weight)}
           />
         </Field>
-        <Field label="Volumen diario mínimo (millones USD)" hint="Elegibilidad por liquidez.">
+        <Field
+          label="Negociación diaria mínima (millones USD)"
+          hint="Deja fuera acciones que se compran y venden poco, porque pueden ser difíciles de vender."
+        >
           <Input
             className="mt-1.5"
             name="min_daily_dollar_volume"
@@ -156,8 +161,8 @@ function PolicyForm({
           />
         </Field>
         <Field
-          label="Parte negociable del volumen (%)"
-          hint="Para estimar los días que tardaría en venderse."
+          label="Qué parte de lo negociado al día podrías vender tú (%)"
+          hint="Sirve para estimar cuántos días tardarías en vender sin mover el precio."
         >
           <Input
             className="mt-1.5"
@@ -169,7 +174,10 @@ function PolicyForm({
             defaultValue={percent(policy.participation)}
           />
         </Field>
-        <Field label="Coste máximo por orden (%)" hint="Una orden más cara se agrupa con otras.">
+        <Field
+          label="Comisión máxima por compra (%)"
+          hint="Si una compra pequeña sale cara en comisiones, se espera a juntarla con otras."
+        >
           <Input
             className="mt-1.5"
             name="max_cost_share"
@@ -182,7 +190,7 @@ function PolicyForm({
         </Field>
       </div>
       <Button className="mt-4" type="submit" pending={save.isPending}>
-        Guardar política
+        Guardar límites
       </Button>
       {save.isSuccess && (
         <p role="status" className="mt-2 text-sm">
@@ -199,7 +207,7 @@ function Panel({ data }: { data: RiskPanel }) {
   if (data.positions === 0) {
     return (
       <section aria-label="Exposición de Mi cartera" className="rounded-xl border bg-card p-5">
-        <h2 className="text-xl font-semibold">Exposición de Mi cartera</h2>
+        <h2 className="text-xl font-semibold">De qué depende Mi cartera</h2>
         <p className="mt-2 text-sm">
           Sin posiciones valoradas.{' '}
           <Link className="text-primary underline" to="/cartera/mi-cartera">
@@ -212,7 +220,7 @@ function Panel({ data }: { data: RiskPanel }) {
   }
   return (
     <section aria-label="Exposición de Mi cartera" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Exposición de Mi cartera</h2>
+      <h2 className="text-xl font-semibold">De qué depende Mi cartera</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         {data.positions} posiciones valoradas por {eur(exposure.total_eur)}.
         {data.unvalued.length > 0 && ' Sin valorar: ' + data.unvalued.join(', ') + '.'}
@@ -225,13 +233,13 @@ function Panel({ data }: { data: RiskPanel }) {
         </ul>
       )}
       <div className="mt-4 overflow-x-auto">
-        <h3 className="text-sm font-semibold">Por emisor</h3>
+        <h3 className="text-sm font-semibold">Por empresa</h3>
         <table className="mt-1 w-full text-left text-xs sm:text-sm">
           <thead className="border-b text-xs text-muted-foreground">
             <tr>
-              <th className="pb-2">Emisor</th>
-              <th className="pb-2">Valores</th>
-              <th className="pb-2">Peso</th>
+              <th className="pb-2">Empresa</th>
+              <th className="pb-2">Acciones</th>
+              <th className="pb-2">% de tu cartera</th>
             </tr>
           </thead>
           <tbody>
@@ -249,11 +257,13 @@ function Panel({ data }: { data: RiskPanel }) {
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Weights title="Sector" rows={exposure.sectors} />
-        <Weights title="Moneda de cotización" rows={exposure.listing_currency} />
-        <Weights title="Exposición económica" rows={exposure.economic_currency} />
+        <Weights title="Moneda en la que cotiza" rows={exposure.listing_currency} />
+        <Weights title="Moneda de sus negocios" rows={exposure.economic_currency} />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{data.economic_currency_note}</p>
-      <h3 className="mt-4 text-sm font-semibold">Factores (media ponderada, 0–100)</h3>
+      <h3 className="mt-4 text-sm font-semibold">
+        Puntuación media de tu cartera en cada apartado (0–100)
+      </h3>
       <p className="text-sm">
         {Object.entries(exposure.factors)
           .map(
@@ -262,19 +272,19 @@ function Panel({ data }: { data: RiskPanel }) {
           )
           .join(' · ')}
       </p>
-      <h3 className="mt-4 text-sm font-semibold">Liquidez</h3>
+      <h3 className="mt-4 text-sm font-semibold">¿Cuánto tardarías en vender? (liquidez)</h3>
       <ul className="mt-1 text-sm">
         {exposure.liquidity.map((row) => (
           <li key={row.symbol}>
             {row.symbol}:{' '}
             {row.days_to_trade == null
-              ? 'sin volumen en caché'
-              : formatNumber(row.days_to_trade, { digits: 2 }) + ' sesiones para venderla'}
-            {row.illiquid && row.days_to_trade != null && ' · más de una sesión'}
+              ? 'no se sabe cuánto se negocia'
+              : formatNumber(row.days_to_trade, { digits: 2 }) + ' días de bolsa para venderla'}
+            {row.illiquid && row.days_to_trade != null && ' · más de un día'}
           </li>
         ))}
       </ul>
-      <h3 className="mt-4 text-sm font-semibold">Estrés</h3>
+      <h3 className="mt-4 text-sm font-semibold">¿Qué pasaría en una crisis?</h3>
       <table className="mt-1 w-full text-left text-xs sm:text-sm">
         <tbody>
           {stress.scenarios.map((row) => (
@@ -282,7 +292,9 @@ function Panel({ data }: { data: RiskPanel }) {
               <td className="py-1.5">{row.label}</td>
               <td className="py-1.5 tabular-nums">{pct(row.change)}</td>
               <td className="py-1.5 tabular-nums">{eur(row.change_eur)}</td>
-              <td className="py-1.5">{row.exceeds_tolerance ? 'Supera tu tolerancia' : '—'}</td>
+              <td className="py-1.5">
+                {row.exceeds_tolerance ? 'Más de la caída que aceptas' : 'Dentro de lo que aceptas'}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -301,7 +313,7 @@ function Alternative({ data }: { data: PolicyAlternative }) {
     <div className="rounded-lg border p-4">
       <h3 className="font-semibold">{data.label}</h3>
       <p className="mt-1 text-sm">
-        {data.weights.length} posiciones · caja {pct(data.cash)}
+        {data.weights.length} empresas · sin invertir {pct(data.cash)}
       </p>
       {data.breaches.length > 0 ? (
         <ul className="mt-2 list-disc pl-5 text-sm text-destructive">
@@ -310,14 +322,14 @@ function Alternative({ data }: { data: PolicyAlternative }) {
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm">Dentro de los límites de la política.</p>
+        <p className="mt-2 text-sm">Cumple todos tus límites.</p>
       )}
-      <h4 className="mt-3 text-sm font-semibold">Órdenes para tu aportación</h4>
+      <h4 className="mt-3 text-sm font-semibold">Qué comprar con tu aportación</h4>
       {data.orders.length ? (
         <table className="mt-1 w-full text-left text-xs">
           <thead className="border-b text-muted-foreground">
             <tr>
-              <th className="pb-1">Valor</th>
+              <th className="pb-1">Empresa</th>
               <th className="pb-1">Acciones</th>
               <th className="pb-1">Importe</th>
               <th className="pb-1">Comisión</th>
@@ -337,7 +349,9 @@ function Alternative({ data }: { data: PolicyAlternative }) {
           </tbody>
         </table>
       ) : (
-        <p className="mt-1 text-sm">Ninguna orden supera el mínimo y el coste máximo.</p>
+        <p className="mt-1 text-sm">
+          Con esta aportación ninguna compra llega al mínimo sin pasarse de la comisión máxima.
+        </p>
       )}
       <p className="mt-2 text-sm">
         Costes {eur(data.costs_eur)} · efectivo sin invertir {eur(data.residual_cash_eur)}
@@ -362,11 +376,11 @@ function Proposal() {
     proposal.error instanceof ApiError && proposal.error.code === 'benchmark_prices_missing';
   return (
     <section aria-label="Equiponderada frente a política" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Equiponderada frente a la política</h2>
+      <h2 className="text-xl font-semibold">Reparto a partes iguales frente a tus límites</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        La misma selección Top-N con pesos iguales y con los límites de la política, y las compras
-        que necesitaría tu aportación sin vender nada. Son propuestas: GABI no envía órdenes. El
-        número de posiciones lo eliges tú; no se ajusta para mejorar resultados pasados.
+        Las mismas empresas mejor puntuadas, primero con el mismo dinero en cada una y después
+        respetando tus límites, y qué comprar con tu aportación sin vender nada. Son propuestas:
+        GABI nunca compra por ti. El número de empresas lo eliges tú.
       </p>
       <form
         className="mt-3 flex flex-wrap items-end gap-3"
@@ -379,7 +393,7 @@ function Proposal() {
           });
         }}
       >
-        <Field label="Aportación (€)">
+        <Field label="Dinero que vas a aportar (€)">
           <Input
             className="mt-1.5"
             name="contribution"
@@ -389,7 +403,7 @@ function Proposal() {
             defaultValue={request.contribution}
           />
         </Field>
-        <Field label="Posiciones">
+        <Field label="Número de empresas">
           <Input
             className="mt-1.5"
             name="positions"
@@ -408,7 +422,7 @@ function Proposal() {
         <p className="mt-3 text-sm">
           {proposal.error?.message}{' '}
           <Link className="text-primary underline" to="/cartera/perfil">
-            Ir a Perfil y benchmark
+            Ir a Mi perfil
           </Link>
         </p>
       )}
@@ -461,19 +475,20 @@ export function RiskPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Cartera / Riesgo"
-        title="Riesgo y política"
+        eyebrow="Cartera"
+        title="Riesgo y límites"
         description={
           <>
-            Cuánto depende tu cartera de cada emisor, sector y moneda, y una política con límites
-            para capital y aportaciones pequeños. No activa ninguna cartera ni envía órdenes.
+            Cuánto depende tu cartera de cada empresa, sector y moneda, y unos límites para no poner
+            demasiados huevos en la misma cesta. GABI nunca compra ni vende por ti.
           </>
         }
         guide={
           <p>
-            Avisar de una concentración no la limita: la política fija pesos máximos por emisor y
-            sector, sin apalancamiento, y descarta lo ilíquido. Dos clases de acciones del mismo
-            emisor cuentan como un solo riesgo. Todo sale de la caché local.
+            La cartera propuesta solo te avisa si se concentra mucho; aquí puedes fijar límites de
+            verdad: cuánto como mucho en una empresa o un sector, cuánto dejar sin invertir y qué
+            acciones descartar por ser difíciles de vender. Nunca se invierte dinero prestado. Todo
+            se calcula con los datos guardados en tu equipo.
           </p>
         }
       />

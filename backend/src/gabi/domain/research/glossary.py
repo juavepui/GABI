@@ -31,19 +31,20 @@ TERMS: dict[str, tuple[str, str]] = {
     "out_of_sample": ("Fuera de muestra (out-of-sample)",
                       "Datos que no se usaron para elegir la configuración. Solo un resultado fuera de muestra, o el "
                       "seguimiento real hacia delante, puede confirmar lo que un backtest sugiere."),
-    "live_forward": ("Live forward",
-                     "Seguimiento real hacia delante: la estrategia se registra antes de conocer el resultado y se "
-                     "evalúa con datos que aún no existían."),
+    "live_forward": ("Seguimiento en vivo (live forward)",
+                     "La prueba más honesta: se apunta la estrategia antes de conocer el resultado y se comprueba "
+                     "después con datos que todavía no existían, así que no puede ajustarse a posteriori."),
     "holdout": ("Reserva (holdout)",
                 "Periodo de datos guardado sin mirar para una única prueba final. Consultarlo antes de tiempo lo "
                 "invalida, por eso GABI lo protege en el backend."),
-    "block_coverage": ("Cobertura del universo por bloque",
-                       "Qué parte de todas las empresas del universo tiene todas las métricas de un bloque del "
-                       "score (Value, Quality, Momentum, Risk). Describe los datos del ranking entero, no de una "
-                       "empresa: si un bloque queda por debajo del umbral, su comparación es menos fiable."),
+    "block_coverage": ("Cobertura por apartado",
+                       "Qué parte de todas las empresas tiene todos los datos de un apartado de la puntuación "
+                       "(valoración, calidad, momentum o riesgo). Habla del ranking entero, no de una empresa: si "
+                       "en un apartado faltan muchos datos, comparar empresas por ese apartado es menos fiable."),
     "percentile": ("Percentil sectorial",
-                   "Posición de una empresa frente a las de su mismo sector, de 0 a 100. 100 es la mejor del "
-                   "sector en esa métrica, ya teniendo en cuenta si conviene un valor alto o bajo."),
+                   "Puesto de una empresa frente a las de su mismo sector, en una escala de 0 a 100. Un 80 quiere "
+                   "decir que sale mejor que el 80 % de su sector en esa métrica (ya teniendo en cuenta si "
+                   "conviene un número alto o bajo). 100 es la mejor del sector."),
 }
 
 # Every metric's help is a term (#197): the ⓘ of Ranking, company page and Comparar and the Ayuda

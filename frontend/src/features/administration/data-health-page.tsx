@@ -78,13 +78,13 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
   const data = state.result.data;
   const sources = data ? Object.entries(data.summary.sources) : [];
   return (
-    <Section title="Resumen del universo">
+    <Section title="Resumen de todas las empresas">
       <p className="text-xs text-muted-foreground">
-        Cobertura y frescura de cada fuente en la caché local. La comprobación lee la base y los
-        ficheros sin descargar nada; tarda unos segundos.
+        Para cada fuente de datos: a cuántas empresas llega y si sus datos están al día. Lee lo
+        guardado en tu equipo sin descargar nada; tarda unos segundos.
       </p>
       <RunButton running={state.running} onClick={() => state.run({ scope: 'universe' })}>
-        Comprobar calidad del universo
+        Comprobar los datos
       </RunButton>
       <HealthStatus
         state={state}
@@ -108,9 +108,9 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
             label="Cobertura y frescura por fuente"
             columns={[
               ['source', 'Fuente'],
-              ['coverage', 'Cobertura en caché'],
-              ['fresh', 'Frescura'],
-              ['threshold', 'Umbral de frescura'],
+              ['coverage', 'Empresas con dato'],
+              ['fresh', 'Al día'],
+              ['threshold', 'Se considera al día si tiene menos de'],
               ['oldest', 'Dato más antiguo'],
             ]}
             rows={sources.map(([, s]) => ({
@@ -204,15 +204,15 @@ function BlockCoverage() {
     enabled: requested,
   });
   return (
-    <Section title="Cobertura del universo por bloque">
+    <Section title="Datos completos en cada apartado de la puntuación">
       <p className="text-xs text-muted-foreground">
-        Qué parte del universo tiene datos completos en cada bloque, no solo si la fuente está
-        fresca. Calcula el ranking completo con la caché local y puede tardar.
+        Qué parte de las empresas tiene todos los datos de cada apartado (valoración, calidad,
+        momentum y riesgo). Tiene que calcular el ranking entero, así que puede tardar.
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <CoverageThreshold value={threshold} onChange={setThreshold} />
         <RunButton running={coverage.isFetching} onClick={() => setRequested(true)}>
-          Calcular cobertura
+          Calcular datos completos
         </RunButton>
       </div>
       {coverage.isError && (
@@ -224,9 +224,9 @@ function BlockCoverage() {
             label="Cobertura del universo por bloque"
             columns={[
               ['block', 'Bloque'],
-              ['n_metrics', 'Nº métricas'],
-              ['complete', 'Completo (todas)'],
-              ['any', 'Al menos una'],
+              ['n_metrics', 'Nº de métricas'],
+              ['complete', 'Con todas'],
+              ['any', 'Con al menos una'],
               ['none', 'Ninguna'],
             ]}
             rows={coverage.data.blocks.map((block) => ({
@@ -273,9 +273,9 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
   const p = data?.provenance;
   const entity = p?.entity_master;
   return (
-    <Section title="Procedencia de una empresa">
+    <Section title="De dónde salen los datos de una empresa">
       <p className="text-xs text-muted-foreground">
-        Qué fuente y qué fecha respalda cada dato detrás del resultado de una empresa concreta.
+        De dónde sale y de qué fecha es cada dato que usa GABI para una empresa.
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="grid gap-1 text-xs font-medium">
@@ -295,7 +295,7 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
           </datalist>
         </label>
         <DateField
-          label="Fecha de referencia del sector point-in-time"
+          label="Fecha (opcional): ver el sector que tenía entonces"
           value={asOf}
           max={today}
           onChange={setAsOf}
@@ -304,7 +304,7 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
           running={company.running || !symbol.trim() || !asOf}
           onClick={() => company.run({ scope: 'company', symbol: symbol.trim(), as_of: asOf })}
         >
-          Ver procedencia
+          Ver de dónde salen sus datos
         </RunButton>
       </div>
       <HealthStatus state={company} failure="No se pudo comprobar la empresa." />
@@ -341,13 +341,13 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
                   ? `${p.prices.adjusted_sessions} sesiones, última: ${dateText(p.prices.latest_date)}`
                   : 'sin precios en caché',
               ),
-              sourceRow('Fundamentales (Yahoo)', p.fundamentals),
+              sourceRow('Datos de las cuentas (Yahoo)', p.fundamentals),
               sourceRow(
                 'SEC EDGAR',
                 p.edgar,
                 `10-K: ${p.edgar.latest_10k_date ?? '—'} · 10-Q: ${p.edgar.latest_10q_date ?? '—'} · histórico XBRL: ${p.edgar.has_facts ? 'sí' : 'no'}`,
               ),
-              sourceRow('Insider (Form 4)', p.insider),
+              sourceRow('Compras y ventas de directivos (Form 4)', p.insider),
               {
                 source: 'Entity Master (sector)',
                 downloaded: entity.effective_date ?? '—',
@@ -399,7 +399,7 @@ function CompanySection({ universe }: { universe: UniverseHealth['universe'] }) 
             </>
           )}
           <Link className="text-xs underline" to={`/empresas/${encodeURIComponent(data.symbol)}`}>
-            Ver su score y cobertura ponderada en la ficha
+            Ver su puntuación y sus datos disponibles en la ficha
           </Link>
         </div>
       )}
@@ -588,13 +588,19 @@ export function DataHealthPage() {
         back={{ to: '/administracion', label: 'Administración' }}
         eyebrow="Administración"
         title="Calidad de los datos"
-        description={<>Cobertura, frescura y procedencia de cada fuente de datos.</>}
+        description={
+          <>
+            Qué datos faltan, si están al día y de dónde salen. Útil si una puntuación te parece
+            rara.
+          </>
+        }
         guide={
           <>
             <p>
-              Cobertura, frescura y procedencia de cada fuente: no solo qué score produce un
-              símbolo, sino con qué calidad de dato se calculó. Nada se descarga: cada comprobación
-              es un trabajo local que lee la caché.
+              Una puntuación es tan buena como los datos con que se calcula. Aquí puedes ver a
+              cuántas empresas llega cada fuente, si sus datos están al día y, para una empresa
+              concreta, de dónde sale cada dato. Nada se descarga: solo se lee lo que ya está
+              guardado en tu equipo.
             </p>
           </>
         }

@@ -14482,7 +14482,7 @@
             "title": "Blind Validation Id"
           },
           "evidence_note": {
-            "default": "Congelar pesos o iniciar seguimiento no acredita una ventaja independiente sobre SPY.",
+            "default": "Fijar los criterios o empezar a seguirlos con datos nuevos no demuestra por sí solo que GABI gane al S&P 500.",
             "title": "Evidence Note",
             "type": "string"
           },
@@ -14956,7 +14956,7 @@
             "$ref": "#/components/schemas/DataResponse"
           },
           "evidence_note": {
-            "default": "El Top-20 tiene evidencia retrospectiva; no hay ventaja independiente demostrada sobre SPY.",
+            "default": "Las 20 primeras se han probado solo con datos del pasado; todavía no está demostrado que ganen al S&P 500.",
             "title": "Evidence Note",
             "type": "string"
           },

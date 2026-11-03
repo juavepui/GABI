@@ -7,7 +7,8 @@ METRIC_INFO = {
     "sector": {"label": "Sector", "help": "Sector GICS al que pertenece la empresa."},
     "market_cap": {
         "label": "Cap. mercado (mil M$)",
-        "help": "Valor total de la empresa en bolsa (precio de la acción × nº de acciones), en miles de millones de dólares.",
+        "help": "Lo que vale la empresa en bolsa: precio de la acción × número de acciones, en miles de millones "
+                "de dólares. Sirve para saber si es grande, mediana o pequeña.",
     },
     "pe": {
         "label": "PER",
@@ -20,7 +21,9 @@ METRIC_INFO = {
     },
     "pb": {
         "label": "P/VC",
-        "help": "Precio / Valor Contable: cuánto paga el mercado por cada dólar de patrimonio neto contable de la empresa.",
+        "help": "Precio / valor contable: cuánto se paga en bolsa por cada dólar que la empresa vale «en libros» "
+                "(lo que tiene menos lo que debe). Más bajo suele indicar que está más barata, aunque en "
+                "empresas de servicios o tecnología el valor en libros dice poco.",
     },
     "ps": {
         "label": "P/Ventas",
@@ -28,8 +31,10 @@ METRIC_INFO = {
     },
     "ev_ebitda": {
         "label": "EV/EBITDA",
-        "help": "Valor de empresa entre EBITDA (beneficio operativo antes de intereses, impuestos y amortizaciones). "
-                "Permite comparar empresas con distinto nivel de deuda.",
+        "help": "Cuántas veces paga el precio de toda la empresa, incluida su deuda (EV), el beneficio que "
+                "genera su negocio antes de intereses, impuestos y amortizaciones (EBITDA). Como incluye la "
+                "deuda, sirve para comparar empresas muy endeudadas con otras que no lo están. Más bajo suele "
+                "ser más barato.",
     },
     "net_debt_to_ebitda": {
         "label": "Deuda neta/EBITDA",
@@ -48,7 +53,8 @@ METRIC_INFO = {
     },
     "roe": {
         "label": "ROE (%)",
-        "help": "Rentabilidad sobre el patrimonio neto (Return on Equity): beneficio generado por cada dólar de capital propio invertido.",
+        "help": "Rentabilidad sobre los fondos propios (ROE): cuánto beneficio gana la empresa por cada dólar "
+                "que han puesto sus accionistas. Más alto suele ser mejor, aunque mucha deuda también lo infla.",
     },
     "roa": {
         "label": "ROA (%)",
@@ -56,11 +62,11 @@ METRIC_INFO = {
     },
     "roic": {
         "label": "ROIC (%)",
-        "help": "Rentabilidad sobre el capital invertido (Return on Invested Capital), aproximada a partir de datos oficiales de "
-                "SEC EDGAR: beneficio neto entre (patrimonio neto + deuda a largo plazo) al cierre, sin ajuste fiscal, "
-                "sin restar caja ni promediar el capital. No es el ROIC de manual (NOPAT / capital invertido medio). Mide si la empresa gana más de lo que "
-                "le cuesta el capital que usa — clave para saber si tiene una ventaja competitiva (moat) real. Puede faltar si "
-                "la empresa no reporta esas partidas con las etiquetas XBRL habituales (ej. empresas casi sin deuda a largo plazo).",
+        "help": "Rentabilidad del capital invertido (ROIC): cuánto gana la empresa por cada dólar invertido en "
+                "el negocio, venga de los accionistas o de deuda. Si gana más de lo que le cuesta ese dinero, "
+                "suele tener alguna ventaja difícil de copiar. GABI lo aproxima con las cuentas oficiales de la "
+                "SEC: beneficio neto / (fondos propios + deuda a largo plazo), sin ajustes fiscales; no es el "
+                "ROIC «de manual». Puede faltar si la empresa no publica esas partidas de la forma habitual.",
     },
     "operating_margin": {
         "label": "Margen operativo (%)",
@@ -76,7 +82,8 @@ METRIC_INFO = {
     },
     "debt_to_equity": {
         "label": "Deuda/Patrimonio",
-        "help": "Deuda total dividida entre el patrimonio neto. Cuanto más alto, más apalancada (endeudada) está la empresa.",
+        "help": "Deuda total dividida entre los fondos propios. Cuanto más alta, más depende la empresa del "
+                "dinero prestado, y peor lo puede pasar si sube el tipo de interés o caen sus ventas.",
     },
     "current_ratio": {
         "label": "Ratio corriente",
@@ -97,7 +104,8 @@ METRIC_INFO = {
     },
     "free_cashflow": {
         "label": "Flujo de caja libre",
-        "help": "Efectivo que genera la empresa después de cubrir sus gastos operativos e inversiones.",
+        "help": "Caja libre (FCF): el dinero que le queda a la empresa tras pagar sus gastos y sus inversiones. "
+                "Es lo que puede usar para repartir dividendos, recomprar acciones o pagar deuda.",
     },
     "revenue_cagr_3y": {
         "label": "Crec. ingresos 3A CAGR (%)",
@@ -134,28 +142,30 @@ METRIC_INFO = {
         "help": "Índice de Fuerza Relativa a 14 sesiones. Por debajo de 30 sugiere sobreventa, por encima de 70 sobrecompra. "
                 "Zona considerada sana para entrar: 45-65.",
     },
-    "momentum_6m": {"label": "Momentum 6M (%)", "help": "Variación del precio en los últimos ~6 meses."},
-    "momentum_12m": {"label": "Momentum 12M (%)", "help": "Variación del precio en los últimos ~12 meses."},
+    "momentum_6m": {"label": "Momentum 6M (%)", "help": "Cuánto ha subido o bajado el precio en los últimos 6 meses aproximadamente."},
+    "momentum_12m": {"label": "Momentum 12M (%)", "help": "Cuánto ha subido o bajado el precio en los últimos 12 meses aproximadamente."},
     "rel_strength_6m": {
         "label": "Fuerza relativa 6M (%)",
         "help": "Diferencia de rentabilidad a 6 meses respecto al S&P 500 (ETF SPY). Positivo significa que lo está batiendo.",
     },
     "golden_cross_recent": {
         "label": "Golden cross reciente",
-        "help": "La media móvil de 50 sesiones ha cruzado por encima de la de 200 en los últimos 20 días de mercado "
-                "— señal técnica alcista clásica.",
+        "help": "Cruce dorado: en los últimos 20 días de bolsa, la media del precio de 50 días ha pasado por "
+                "encima de la media de 200 días. Es una señal clásica del análisis técnico de que la tendencia "
+                "mejora; no es fiable por sí sola.",
     },
     "volatility": {
         "label": "Volatilidad anualizada (%)",
-        "help": "Dispersión de los retornos diarios de la acción, anualizada, sobre todo el histórico de precios "
-                "cacheado (la ficha indica desde qué fecha). Más alta = movimientos de precio más bruscos (más "
-                "riesgo), en ambas direcciones.",
+        "help": "Cuánto se mueve el precio de un día a otro, expresado como movimiento típico en un año, con "
+                "todos los precios guardados (la ficha dice desde cuándo). Más alta = subidas y bajadas más "
+                "bruscas, es decir, más riesgo y más sustos.",
     },
     "max_drawdown": {
         "label": "Máximo drawdown (%)",
-        "help": "Mayor caída desde un máximo hasta un mínimo posterior en todo el histórico de precios cacheado; "
-                "la ficha y Comparar indican las fechas del pico y del valle, y la caída de los últimos 5 y 3 "
-                "años. Cuanto más cerca de 0%, menor ha sido la peor caída.",
+        "help": "La mayor caída desde un máximo hasta el punto más bajo posterior, con todos los precios "
+                "guardados. Por ejemplo, −40 % significa que en el peor momento quien compró en el máximo perdía "
+                "un 40 %. La ficha y Comparar indican las fechas y la caída de los últimos 5 y 3 años. Más cerca "
+                "de 0 % es mejor.",
     },
     "sharpe_ratio": {
         "label": "Sharpe Ratio",
@@ -169,38 +179,42 @@ METRIC_INFO = {
     },
     "beta_calc": {
         "label": "Beta (vs S&P 500)",
-        "help": "Sensibilidad del precio de la acción a los movimientos del S&P 500, calculada por GABI a partir del "
-                "histórico cacheado (no es el beta de Yahoo Finance). 1 = se mueve igual que el mercado; >1 = más "
-                "volátil que el mercado; <1 = más defensiva.",
+        "help": "Cuánto se mueve la acción cuando se mueve el mercado (S&P 500), calculado por GABI con los "
+                "precios guardados. 1 = igual que el mercado; 1,5 = un 50 % más (si el mercado cae un 10 %, ella "
+                "suele caer un 15 %); menos de 1 = más tranquila que el mercado.",
     },
     "alpha": {
         "label": "Alpha anualizado (%)",
-        "help": "Retorno de la acción por encima de lo que explicaría su beta frente al S&P 500 (modelo CAPM). "
-                "Positivo = ha batido a lo que le 'correspondía' dado su riesgo de mercado.",
+        "help": "Rentabilidad extra al año por encima de lo que le «tocaba» por moverse como el mercado (modelo "
+                "CAPM). Positiva = lo ha hecho mejor de lo esperado por su riesgo; es pasado y no garantiza el "
+                "futuro.",
     },
     "win_rate_monthly": {
         "label": "Win rate mensual (%)",
-        "help": "Porcentaje de meses con retorno positivo en el histórico de precios cacheado.",
+        "help": "En qué porcentaje de los meses guardados subió el precio.",
     },
     "dividend_yield": {
         "label": "Rentabilidad por dividendo (%)",
-        "help": "Dividendo anual entre precio de la acción. 0% no es necesariamente malo: muchas empresas de "
-                "crecimiento reinvierten el beneficio en vez de repartir dividendo.",
+        "help": "Dividendo de un año dividido entre el precio de la acción: qué porcentaje de lo invertido "
+                "recibirías en dividendos. Un 0 % no es malo por sí mismo: muchas empresas que crecen prefieren "
+                "reinvertir el beneficio en lugar de repartirlo.",
     },
     "avg_volume": {
         "label": "Volumen medio diario (3M)",
-        "help": "Número medio de acciones negociadas al día en los últimos 3 meses — indicador de liquidez: cuanto "
-                "más alto, más fácil entrar y salir de la posición sin mover el precio.",
+        "help": "Cuántas acciones se compran y venden de media al día (últimos 3 meses). Cuantas más, más fácil "
+                "es comprar o vender sin mover el precio.",
     },
     "value_score": {
-        "label": "Value",
-        "help": "Score 0-100 de PER, P/VC y EV/EBITDA frente a otras de su sector. "
-                "100 = la más barata de su sector.",
+        "label": "Valoración (Value)",
+        "help": "Nota de 0 a 100 sobre si la acción está barata frente a otras de su sector, según su PER, su "
+                "precio/valor contable y su EV/EBITDA. 100 = la más barata de su sector. Barata no siempre "
+                "significa ganga: a veces lo está por buenos motivos.",
     },
     "quality_score": {
-        "label": "Quality",
-        "help": "Score 0-100 de ROIC, margen operativo y crecimiento a 3 años de ingresos y FCF. "
-                "100 = los mejores fundamentales de su sector.",
+        "label": "Calidad (Quality)",
+        "help": "Nota de 0 a 100 sobre lo buena que es la empresa como negocio frente a las de su sector: "
+                "rentabilidad del capital (ROIC), margen operativo y cuánto han crecido sus ventas y su caja "
+                "libre en 3 años. 100 = el mejor negocio de su sector según estos datos.",
     },
     "quality_persistence_score": {
         "label": "Persistencia calidad",
@@ -249,43 +263,42 @@ METRIC_INFO = {
     "expectations_discount_rate": {"label": "Descuento DCF", "help": "Tasa de descuento fija usada por el reverse DCF."},
     "expectations_terminal_growth": {"label": "Crecimiento terminal", "help": "Crecimiento terminal fijo usado por el reverse DCF."},
     "momentum_score": {
-        "label": "Momentum",
-        "help": "Score 0-100 de momentum a 12 meses, fuerza relativa a 6 meses y precio frente a SMA200. "
-                "100 = el momentum más fuerte de su sector.",
+        "label": "Momentum (tendencia)",
+        "help": "Nota de 0 a 100 sobre si el precio viene subiendo: subida en 12 meses, subida frente al mercado "
+                "en 6 meses y precio frente a su media de 200 días. 100 = la tendencia más fuerte de su sector. "
+                "Que haya subido no garantiza que siga subiendo.",
     },
     "risk_score": {
-        "label": "Risk",
-        "help": "Score 0-100 de deuda, volatilidad y máximo drawdown frente a otras de su sector. "
-                "100 = la más 'segura' de su sector — no confundir con mejor "
-                "retorno esperado, solo menor riesgo.",
+        "label": "Riesgo (Risk)",
+        "help": "Nota de 0 a 100 sobre lo tranquila que es la acción frente a las de su sector: poca deuda, "
+                "precio que se mueve poco y caídas pequeñas. 100 = la de menos riesgo de su sector. Menos riesgo "
+                "no significa más rentabilidad.",
     },
     "composite_score": {
-        "label": "Composite",
-        "help": "Media ponderada de Value, Quality, Momentum y Risk según los pesos configurados. Es el score final "
-                "usado para ordenar el ranking.",
+        "label": "Puntuación GABI (Composite)",
+        "help": "La nota final de GABI, de 0 a 100: mezcla los cuatro apartados (valoración, calidad, momentum y "
+                "riesgo) con los pesos del modelo. Sirve para ordenar el ranking. Más alta es mejor según el "
+                "modelo, pero no es la probabilidad de que la acción suba.",
     },
     "metrics_available": {"label": "Datos", "help": "Número de métricas disponibles de las 13 que puntúan."},
     "metrics_possible": {"label": "Datos posibles", "help": "Número total de métricas que puntúan."},
     "score_coverage": {
-        "label": "Métricas disponibles",
-        "help": "Porcentaje de las 13 métricas puntuables con dato en esta empresa, sin ponderar (10 de 13 = 76,9 %). "
-                "La cartera objetivo exige al menos un 70 %. No confundir con la cobertura ponderada, que pesa "
-                "cada métrica según su bloque.",
+        "label": "Métricas con dato",
+        "help": "Qué parte de los 13 datos que usa la puntuación tiene esta empresa, contándolos todos igual (10 "
+                "de 13 = 76,9 %). Para entrar en la cartera propuesta hace falta al menos un 70 %.",
     },
     "next_earnings_days": {
         "label": "Próx. earnings (días)",
-        "help": "Días hasta la próxima publicación de resultados conocida (fuente: Yahoo Finance). La "
-                "fecha suele ser una estimación hasta que la empresa la confirma -- abre la Ficha de la "
-                "empresa para ver si está confirmada o estimada. Contexto temporal: no entra en el "
-                "Composite Score.",
+        "help": "Días que faltan para que la empresa presente sus próximos resultados (fuente: Yahoo Finance). "
+                "Hasta que la empresa la confirma, la fecha suele ser aproximada; la ficha indica cuál es el "
+                "caso. Es solo para tenerlo en cuenta: no cuenta para la puntuación.",
     },
     "confidence": {
-        "label": "Cobertura ponderada",
-        "help": "Disponibilidad de las 13 métricas puntuables, ponderada por los pesos de sus bloques, "
-                "en escala 0–100. 100 = todas presentes. Por eso difiere del porcentaje de métricas "
-                "disponibles cuando falta una métrica de un bloque con más peso. "
-                "No mide apoyo estadístico ni probabilidad futura; "
-                "esa dimensión se muestra aparte como Confianza de evidencia (BAJA/MEDIA/ALTA).",
+        "label": "Datos disponibles",
+        "help": "Cuántos de los 13 datos que usa la puntuación tiene esta empresa, de 0 a 100, dando más "
+                "importancia a los datos de los apartados que más pesan. 100 = los tiene todos. Si es bajo, la "
+                "puntuación es menos fiable. No mide si la empresa es buena ni la confianza en las pruebas (eso "
+                "es la «Confianza» BAJA/MEDIA/ALTA).",
     },
 }
 

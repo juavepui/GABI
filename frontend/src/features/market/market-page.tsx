@@ -139,9 +139,29 @@ export function MarketPage() {
     <>
       <div className="mb-7">
         <PageHeader
-          eyebrow="Mercado / Screener"
-          title="Explora el universo"
-          description="Compara empresas con los datos y el modelo de tu instalación local."
+          eyebrow="Descubrir"
+          title="Ranking de empresas"
+          description="Las empresas del S&P 500 ordenadas por su puntuación GABI, de 0 a 100. Cuanto más alta, mejor combinan un precio razonable, buena calidad, buena tendencia y poco riesgo según el modelo. Es un punto de partida para investigar, no una recomendación de compra."
+          guide={
+            <>
+              <p>
+                <strong>Qué estás viendo.</strong> Cada fila es una empresa. La puntuación resume
+                cuatro apartados: <em>valoración</em> (si su precio es razonable para lo que gana),{' '}
+                <em>calidad</em> (si es rentable y está poco endeudada), <em>momentum</em> (si su
+                precio viene subiendo) y <em>riesgo</em> (cuánto se mueve y cuánto ha llegado a
+                caer).
+              </p>
+              <p>
+                <strong>Cómo usarlo.</strong> Pulsa una empresa para ver su ficha y por qué puntúa
+                así. Marca la casilla de varias para compararlas, o la estrella para seguirlas. Los
+                colores van de rojo (peor) a verde (mejor).
+              </p>
+              <p>
+                <strong>Lo que no es.</strong> Una puntuación alta no garantiza que la acción vaya a
+                subir. Todavía no está demostrado que elegir así gane al S&P 500.
+              </p>
+            </>
+          }
           actions={
             <Button
               variant="outline"
@@ -149,12 +169,12 @@ export function MarketPage() {
               onClick={() => void result.refetch()}
             >
               <RotateCw className={result.isFetching ? 'animate-spin' : ''} aria-hidden="true" />
-              Consultar caché
+              Recargar
             </Button>
           }
         >
           <SectionLinks
-            label="Apartados de Mercado"
+            label="Otras páginas de Descubrir"
             links={[
               {
                 to: '/descubrir/comparar',
@@ -171,7 +191,7 @@ export function MarketPage() {
               {
                 to: '/eventos',
                 label: 'Eventos',
-                description: 'Cambios del ranking, filings y resultados',
+                description: 'Cambios en el ranking, informes y resultados',
                 icon: Radar,
               },
             ]}
@@ -179,30 +199,6 @@ export function MarketPage() {
         </PageHeader>
       </div>
       {data && <Evidence model={data.model} data={data.data} />}
-      {data && (
-        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {[
-            ['Universo local', String(data.data.universe_count), 'Empresas en la caché'],
-            ['Con score', String(data.data.scored_count), 'Modelo ' + data.model.model_id],
-            [
-              'Precios disponibles',
-              String(data.data.prices_available),
-              'Último: ' + dateLabel(data.data.latest_price_date),
-            ],
-            [
-              'Fundamentales',
-              String(data.data.fundamentals_available),
-              data.data.sec_available + ' con información SEC',
-            ],
-          ].map(([label, value, detail]) => (
-            <div key={label} className="rounded-xl border bg-card p-5">
-              <p className="text-xs text-muted-foreground">{label}</p>
-              <p className="my-2 text-2xl font-semibold tabular-nums">{value}</p>
-              <p className="break-words text-xs text-muted-foreground">{detail}</p>
-            </div>
-          ))}
-        </div>
-      )}
       <CoverageWarnings />
       <section aria-label="Filtros del ranking" className="mb-5 rounded-xl border bg-card p-4">
         <form key={params.toString()} onSubmit={filter} className="space-y-3">
@@ -306,7 +302,7 @@ export function MarketPage() {
                 defaultChecked={query.golden_cross_only}
                 className="size-4 accent-primary"
               />
-              Solo cruce dorado reciente
+              Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de subida)
             </label>
             <details className="relative">
               <summary className="flex cursor-pointer items-center gap-1">
@@ -336,11 +332,11 @@ export function MarketPage() {
               </fieldset>
             </details>
             <label className="flex items-center gap-2">
-              Resultados
+              Presentación de resultados
               <NativeSelect name="earnings" defaultValue={query.earnings ?? ''} className="h-8">
                 <option value="">Indiferente</option>
-                <option value="only">Solo los que presentan</option>
-                <option value="exclude">Excluir los que presentan</option>
+                <option value="only">Solo las que presentan</option>
+                <option value="exclude">Quitar las que presentan</option>
               </NativeSelect>
               en los próximos
               <Input
@@ -369,9 +365,8 @@ export function MarketPage() {
         <div>
           <LoadingState />
           <p className="mt-2 text-center text-sm text-muted-foreground">
-            Calculando el ranking con tu caché local. Si GABI acaba de arrancar o han cambiado los
-            datos, la primera consulta puede tardar. Las siguientes reutilizan la caché mientras
-            siga vigente.
+            Calculando el ranking con los datos de tu equipo. La primera vez tras arrancar GABI o
+            actualizar los datos puede tardar un poco; después es inmediato.
           </p>
         </div>
       ) : result.isError ? (
@@ -391,8 +386,8 @@ export function MarketPage() {
                   </span>
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Score y cobertura ponderada en puntos de 0 a 100, no probabilidad de acierto. —
-                  significa dato ausente.
+                  Puntuación de 0 a 100: sirve para ordenar, no es la probabilidad de ganar dinero.
+                  «—» significa que falta ese dato.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -443,7 +438,7 @@ export function MarketPage() {
                     <fieldset className="absolute left-0 top-11 z-20 max-h-80 w-64 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
                       <legend className="sr-only">Columnas visibles</legend>
                       <p className="mb-2 text-xs text-muted-foreground">
-                        Se recuerdan en este navegador. Empresa y Score siempre se muestran.
+                        Se recuerdan en este navegador. Empresa y Puntuación siempre se muestran.
                       </p>
                       {RANKING_COLUMNS.filter((column) => !column.fixed).map((column) => (
                         <label
@@ -472,7 +467,7 @@ export function MarketPage() {
                 <DataTable label="Tabla desplazable">
                   <table className="w-full text-left text-sm sm:min-w-[770px]">
                     <caption className="sr-only">
-                      Ranking del modelo local. Posición global antes de filtros.
+                      Ranking de GABI. La posición es la de todas las empresas, antes de filtrar.
                     </caption>
                     <thead className="bg-muted/60 text-xs text-muted-foreground">
                       <tr>
@@ -609,10 +604,11 @@ export function MarketPage() {
                 </DataTable>
                 <div className="px-5 pb-1">
                   <RankLegend>
-                    <Term k="composite_score">Score</Term> y{' '}
-                    <Term k="confidence">cobertura ponderada</Term> de 0 (rojo) a 100 (verde). El
-                    PER se colorea por su <Term k="percentile">percentil dentro del sector</Term>:
-                    verde es un PER bajo frente a sus comparables, no un PER bajo en absoluto.
+                    <Term k="composite_score">Puntuación</Term> y{' '}
+                    <Term k="confidence">datos disponibles</Term> de 0 (rojo) a 100 (verde). El{' '}
+                    <Term k="pe">PER</Term> se colorea comparándolo con empresas de su mismo sector
+                    (<Term k="percentile">percentil</Term>): verde es un PER bajo frente a sus
+                    parecidas, no necesariamente bajo en general.
                   </RankLegend>
                   {evidence.data && (
                     <UnevenEvidenceNote evidence={evidence.data} className="pb-3" />
@@ -623,7 +619,7 @@ export function MarketPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4 text-xs text-muted-foreground">
               <p>
                 {data.total ? data.offset + 1 : 0}–{data.offset + data.items.length} de {data.total}{' '}
-                · Consulta: {dateLabel(data.generated_at)}
+                · Calculado el {dateLabel(data.generated_at)}
               </p>
               <div className="flex items-center gap-2">
                 <label htmlFor="page-size">Filas</label>

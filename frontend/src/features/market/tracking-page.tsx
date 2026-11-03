@@ -17,11 +17,11 @@ export function TrackingPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/cartera', label: 'Cartera' }}
-        title="Seguimiento de cestas"
+        title="Carteras guardadas"
         description={
           <>
-            Cómo han evolucionado frente a SPY las carteras que guardaste, con sus mismas empresas y
-            el mismo peso. Es seguimiento, nunca una orden de compra o venta.
+            Cómo les ha ido a las carteras que guardaste, con las mismas empresas y el mismo
+            reparto, frente al S&amp;P 500 (SPY). Es solo seguimiento: nunca compra ni vende.
           </>
         }
       />
@@ -31,18 +31,18 @@ export function TrackingPage() {
       )}
       {snapshots.isSuccess && items.length === 0 && (
         <p className="rounded-xl border bg-card p-5 text-sm">
-          Aún no sigues ninguna cesta. En{' '}
+          Aún no has guardado ninguna cartera. En{' '}
           <Link className="text-primary underline" to="/cartera">
             Cartera objetivo
           </Link>
-          , «Guardar esta cartera para seguirla» guarda la de hoy.
+          , pulsa «Guardar esta cartera para seguirla» para guardar la de hoy.
         </p>
       )}
       {active != null && (
         <>
           <div className="max-w-md">
             <SnapshotPicker
-              label="Cesta guardada"
+              label="Cartera guardada"
               items={items}
               value={active}
               onChange={setSelected}
@@ -50,7 +50,7 @@ export function TrackingPage() {
           </div>
           <SnapshotProgress id={active} />
           <p className="text-sm text-muted-foreground">
-            Los cambios del ranking y de los filings de esta cesta están en{' '}
+            Los cambios en el ranking y en los informes oficiales de estas empresas están en{' '}
             <Link className="text-primary underline" to="/eventos">
               Eventos
             </Link>

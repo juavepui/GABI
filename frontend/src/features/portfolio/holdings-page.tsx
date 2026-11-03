@@ -25,8 +25,8 @@ import { formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 const KEY = ['portfolio', 'holdings'];
 const STATUS: Record<string, string> = {
   ok: '',
-  missing_price: 'Sin precio en caché',
-  missing_fx: 'Sin tipo de cambio en caché',
+  missing_price: 'No hay precio guardado',
+  missing_fx: 'No hay cambio de moneda guardado',
 };
 const eur = (value: number | null | undefined) =>
   formatMoney(value, { currency: 'EUR', digits: 2 });
@@ -126,7 +126,7 @@ function LotForm({
         />
       </label>
       <label className="text-sm font-medium">
-        Euros por unidad (opcional)
+        Cambio aplicado: euros por cada dólar/libra (opcional)
         <Input
           className="mt-1"
           name="fx_rate"
@@ -251,12 +251,18 @@ function Totals({ summary }: { summary: HoldingsSummary }) {
   if (!totals) return null;
   const cards: [string, string, string][] = [
     ['Valor actual', eur(totals.value_eur), `${totals.valued} de ${totals.positions} empresas`],
-    ['Coste', eur(totals.cost_eur), 'Con comisiones, en euros de cada compra'],
-    ['Rentabilidad', pct(totals.return_eur), 'Precio, sin dividendos'],
+    ['Lo que pagaste', eur(totals.cost_eur), 'Con comisiones, en euros del día de cada compra'],
     [
-      'SPY en el mismo periodo',
+      'Cuánto has ganado o perdido',
+      pct(totals.return_eur),
+      'Solo por el precio, sin contar dividendos',
+    ],
+    [
+      'El S&P 500 (SPY) en el mismo tiempo',
       pct(totals.spy_return_eur),
-      summary.benchmark_as_of ? 'Cierre del ' + summary.benchmark_as_of : 'Sin precio de SPY',
+      summary.benchmark_as_of
+        ? 'Al cierre del ' + summary.benchmark_as_of
+        : 'No hay precio del SPY',
     ],
   ];
   return (
@@ -275,20 +281,20 @@ function Totals({ summary }: { summary: HoldingsSummary }) {
 function Positions({ summary }: { summary: HoldingsSummary }) {
   return (
     <section aria-label="Posiciones" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Posiciones</h2>
+      <h2 className="text-xl font-semibold">Lo que tienes</h2>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs sm:text-sm">
           <thead className="border-b text-xs text-muted-foreground">
             <tr>
               <th className="pb-2">Empresa</th>
               <th className="pb-2 text-right">Acciones</th>
-              <th className="pb-2 text-right">Precio medio</th>
-              <th className="pb-2 text-right">Último cierre</th>
+              <th className="pb-2 text-right">Precio medio de compra</th>
+              <th className="pb-2 text-right">Precio de hoy</th>
               <th className="pb-2 text-right">Valor</th>
               <th className="pb-2 text-right">Valor (€)</th>
-              <th className="pb-2 text-right">Rentabilidad (€)</th>
+              <th className="pb-2 text-right">Ganancia o pérdida (€)</th>
               <th className="pb-2 text-right">SPY (€)</th>
-              <th className="pb-2 text-right">Peso</th>
+              <th className="pb-2 text-right">% de tu cartera</th>
             </tr>
           </thead>
           <tbody className="tabular-nums">
@@ -346,23 +352,23 @@ function Positions({ summary }: { summary: HoldingsSummary }) {
 function Deviations({ summary }: { summary: HoldingsSummary }) {
   return (
     <section aria-label="Frente a la cartera objetivo" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Frente a la cartera objetivo</h2>
+      <h2 className="text-xl font-semibold">Frente a la cartera que propone GABI</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Peso actual de cada empresa frente a su peso en el Top-20 del modelo activo de hoy. Una
-        desviación no es una orden: el plan de aportación de{' '}
+        Qué parte de tu cartera tiene cada empresa frente a la que tendría en la cartera propuesta
+        hoy. Una diferencia no es una orden de vender: en{' '}
         <Link className="text-primary underline" to="/cartera">
           Cartera objetivo
         </Link>{' '}
-        la reduce sin vender.
+        te dice dónde poner el dinero nuevo para acercarte sin vender.
       </p>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-left text-xs sm:text-sm">
           <thead className="border-b text-xs text-muted-foreground">
             <tr>
               <th className="pb-2">Empresa</th>
-              <th className="pb-2 text-right">Actual</th>
-              <th className="pb-2 text-right">Objetivo</th>
-              <th className="pb-2 text-right">Desviación (pp)</th>
+              <th className="pb-2 text-right">Tú</th>
+              <th className="pb-2 text-right">Propuesta</th>
+              <th className="pb-2 text-right">Diferencia (puntos %)</th>
             </tr>
           </thead>
           <tbody className="tabular-nums">
@@ -390,7 +396,7 @@ function Deviations({ summary }: { summary: HoldingsSummary }) {
                   <th className="pb-2">Sector</th>
                   <th className="pb-2 text-right">Mi cartera</th>
                   <th className="pb-2 text-right">S&amp;P 500</th>
-                  <th className="pb-2 text-right">Diferencia (pp)</th>
+                  <th className="pb-2 text-right">Diferencia (puntos %)</th>
                 </tr>
               </thead>
               <tbody className="tabular-nums">
@@ -425,7 +431,7 @@ function ImportCsv({ changed }: { changed: () => void }) {
     },
   });
   return (
-    <Folded title="Importar CSV de un bróker">
+    <Folded title="Importar tus compras desde un fichero de tu bróker (CSV)">
       <p className="text-xs text-muted-foreground">
         Formato genérico con cabecera <code>symbol,shares,price,date,currency,commission</code>{' '}
         (fecha AAAA-MM-DD; divisa USD, EUR o GBP; comisión opcional). Con punto y coma como
@@ -474,12 +480,13 @@ export function HoldingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Cartera / Mi cartera"
+        eyebrow="Cartera"
         title="Mi cartera"
         description={
           <>
-            Tus compras reales, guardadas en la base local. El valor usa el último cierre en caché;
-            consultar no descarga precios y ninguna orden se envía a ningún sitio.
+            Apunta aquí lo que compras de verdad para ver cuánto vale, cuánto ganas o pierdes y cómo
+            va frente al S&amp;P 500. Se guarda solo en tu equipo y GABI nunca compra ni vende por
+            ti.
           </>
         }
       />
@@ -495,12 +502,13 @@ export function HoldingsPage() {
                   role="status"
                   className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
                 >
-                  Sin valorar por falta de precio o de tipo de cambio en caché:{' '}
-                  {data.missing.join(', ')}. No entran en los totales.
+                  No se han podido valorar porque falta su precio o el cambio de moneda:{' '}
+                  {data.missing.join(', ')}. No cuentan en los totales; pulsa «Actualizar precios de
+                  mi cartera».
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Todas las posiciones tienen precio y tipo de cambio en caché.
+                  Todas tus empresas tienen precio y cambio de moneda guardados.
                 </p>
               )}
               <HoldingsPrices summary={data} />
@@ -528,7 +536,7 @@ export function HoldingsPage() {
           <ImportCsv changed={changed} />
           {data.lots.length > 0 && (
             <section aria-label="Compras registradas" className="rounded-xl border bg-card p-5">
-              <h2 className="text-xl font-semibold">Compras registradas</h2>
+              <h2 className="text-xl font-semibold">Compras apuntadas</h2>
               <ul className="mt-2 divide-y">
                 {data.lots.map((lot) => (
                   <LotRow key={lot.id + ':' + lot.updated_at} lot={lot} changed={changed} />

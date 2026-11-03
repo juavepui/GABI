@@ -15,15 +15,17 @@ test('cobertura parcial y filtros vacíos conservan el estado del universo y la 
   await page.goto('/descubrir?search=UNKNOWN');
   await expect(page.getByText('No hay empresas con estos filtros')).toBeVisible();
   const state = page.getByRole('region', { name: 'Estado de los datos' });
-  await expect(state.getByText('Datos cacheados disponibles')).toBeVisible();
-  await state.getByText(/Avisos de datos/).click();
+  await expect(state.getByText('Datos guardados en tu equipo')).toBeVisible();
+  await state.getByText(/Avisos sobre los datos/).click();
   await expect(
-    state.getByText('Cobertura parcial: faltan datos en parte del universo.'),
+    state.getByText(
+      'A algunas empresas les faltan datos, así que su puntuación es menos completa.',
+    ),
   ).toBeVisible();
   await expect(state).not.toContainText('incomplete_coverage');
   await page.reload();
   await expect(page).toHaveURL(/search=UNKNOWN/);
-  await expect(state.getByText('Con datos SEC')).toBeVisible();
+  await expect(state.getByText('Con informes oficiales (SEC)')).toBeVisible();
   await expect(state).toContainText(String(original.data.universe_count));
   expect(posts).toBe(0);
 });
@@ -85,18 +87,23 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
   });
   await page.goto('/descubrir?search=T000');
   const state = page.getByRole('region', { name: 'Estado de los datos' });
-  await expect(state.getByText('Datos obsoletos', { exact: true })).toBeVisible();
-  await expect(state.getByText('Hay precios fuera del plazo de frescura.')).toBeVisible();
   await expect(
-    state.getByRole('link', { name: 'Actualizar datos desde Administración' }),
-  ).toHaveAttribute('href', '/administracion');
+    state.getByText('Datos antiguos: conviene actualizarlos', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    state.getByText('Hay precios con más de una semana: actualiza los datos para ver los de hoy.'),
+  ).toBeVisible();
+  await expect(state.getByRole('link', { name: 'Actualizar los datos' })).toHaveAttribute(
+    'href',
+    '/administracion',
+  );
   // Stale data keeps its full notice; the usual evidence notice folds into the chip (#187).
-  await expect(page.getByText('Ventaja frente a SPY no demostrada')).toBeHidden();
-  await page.getByText(/Evidencia: no demostrada/).click();
-  await expect(page.getByText('Ventaja frente a SPY no demostrada')).toBeVisible();
+  await expect(page.getByText('Aún no está demostrado que GABI gane al mercado')).toBeHidden();
+  await page.getByText(/Aún sin pruebas de que gane al mercado/).click();
+  await expect(page.getByText('Aún no está demostrado que GABI gane al mercado')).toBeVisible();
   scenario = 'empty';
   await page.reload();
-  await expect(page.getByText('Sin datos locales suficientes')).toBeVisible();
+  await expect(page.getByText('Todavía no hay datos suficientes')).toBeVisible();
   await expect(page.getByText('La caché local no contiene empresas')).toBeVisible();
   scenario = 'error';
   await page.reload();
@@ -106,7 +113,9 @@ test('datos obsoletos, ausencia y errores de lectura tienen motivos y acciones d
   ).toBeVisible();
   scenario = 'stale';
   await page.getByRole('button', { name: 'Reintentar', exact: true }).click();
-  await expect(state.getByText('Datos obsoletos', { exact: true })).toBeVisible();
+  await expect(
+    state.getByText('Datos antiguos: conviene actualizarlos', { exact: true }),
+  ).toBeVisible();
   await expect(page).toHaveURL(/search=T000/);
   expect(posts).toBe(0);
 });
@@ -116,9 +125,9 @@ test('la ficha conserva fuentes y fechas por empresa junto al estado del univers
 }) => {
   await page.goto('/empresas/T000');
   await expect(page.getByRole('region', { name: 'Estado de los datos' })).toContainText(
-    'Fuentes: caché local de Yahoo y SEC',
+    'descargados de Yahoo Finance y de la SEC',
   );
-  await expect(page.getByText('Fundamentales · Yahoo', { exact: true })).toBeVisible();
-  await expect(page.getByText('Información · SEC', { exact: true })).toBeVisible();
-  await expect(page.getByText(/no constituyen un análisis histórico point-in-time/)).toBeVisible();
+  await expect(page.getByText('Datos de sus cuentas (Yahoo)', { exact: true })).toBeVisible();
+  await expect(page.getByText('Informes oficiales (SEC)', { exact: true })).toBeVisible();
+  await expect(page.getByText(/no con lo que se sabía en cada fecha pasada/)).toBeVisible();
 });

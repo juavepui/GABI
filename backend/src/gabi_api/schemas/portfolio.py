@@ -90,7 +90,8 @@ class PlanResponse(WireModel):
     holdings_unvalued: list[str]
     index_weight_basis: str = ("Peso de cada sector en el S&P 500 aproximado por la capitalización total de las "
                                "empresas del universo local, no por la capitalización flotante oficial.")
-    evidence_note: str = "El Top-20 tiene evidencia retrospectiva; no hay ventaja independiente demostrada sobre SPY."
+    evidence_note: str = ("Las 20 primeras se han probado solo con datos del pasado; todavía no está demostrado que "
+                          "ganen al S&P 500.")
     independent_advantage_demonstrated: Literal[False] = False
 
 

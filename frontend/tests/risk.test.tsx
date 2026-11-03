@@ -128,8 +128,8 @@ describe('Riesgo y política (#248)', () => {
     api.getPolicyProposal.mockResolvedValue(proposal);
     screen = renderScreen(<RiskPage />);
     await screen.findText('BRK-A, BRK-B');
-    await screen.findText('Órdenes para tu aportación');
-    expect(screen.text()).toContain('Supera tu tolerancia');
+    await screen.findText('Qué comprar con tu aportación');
+    expect(screen.text()).toContain('Más de la caída que aceptas');
     expect(screen.text()).toContain('TINY (volumen diario por debajo del mínimo)');
     expect(screen.text()).toContain('Quedan para próximas aportaciones: BBB.');
     const issuer = screen.container.querySelector<HTMLInputElement>('[name=max_issuer_weight]');
@@ -145,7 +145,7 @@ describe('Riesgo y política (#248)', () => {
     );
     screen = renderScreen(<RiskPage />);
     await screen.findText('Falta el cambio USDEUR=X en caché.');
-    expect(screen.text()).toContain('Ir a Perfil y benchmark');
+    expect(screen.text()).toContain('Ir a Mi perfil');
     expect(screen.text()).toContain('Sin posiciones valoradas.');
   });
 });

@@ -45,11 +45,13 @@ describe('avisos de evidencia y datos (#187)', () => {
   it('la situación habitual se pliega en un chip con el mismo detalle', () => {
     screen = renderScreen(<Evidence model={model} data={data} />);
     const summary = screen.container.querySelector('summary')!;
-    expect(summary.textContent).toContain('Evidencia: no demostrada · Datos: al día 21 oct 2026');
+    expect(summary.textContent).toContain(
+      'Aún sin pruebas de que gane al mercado · Datos al día: 21 oct 2026',
+    );
     expect(shown('Estado de la evidencia')).toBe(false);
     expect(shown('Estado de los datos')).toBe(false);
-    expect(screen.text()).toContain('Ventaja frente a SPY no demostrada');
-    expect(screen.text()).toContain('Con datos SEC');
+    expect(screen.text()).toContain('Aún no está demostrado que GABI gane al mercado');
+    expect(screen.text()).toContain('Con informes oficiales (SEC)');
   });
 
   it('con datos degradados el aviso completo sigue a la vista', () => {
@@ -60,8 +62,8 @@ describe('avisos de evidencia y datos (#187)', () => {
       />,
     );
     expect(shown('Estado de los datos')).toBe(true);
-    expect(screen.text()).toContain('Datos obsoletos');
-    expect(screen.container.querySelector('summary')!.textContent).not.toContain('Datos:');
+    expect(screen.text()).toContain('Datos antiguos: conviene actualizarlos');
+    expect(screen.container.querySelector('summary')!.textContent).not.toContain('Datos al día');
     expect(shown('Estado de la evidencia')).toBe(false);
   });
 

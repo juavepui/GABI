@@ -6,20 +6,20 @@ import { Input } from '@/shared/ui/input';
 
 const SOURCES: Record<string, { label: string; help: string }> = {
   fred: {
-    label: 'FRED (panel macro)',
-    help: 'Clave gratuita en fred.stlouisfed.org → My Account → API Keys.',
+    label: 'FRED (datos de la economía)',
+    help: 'Gratuita: crea una cuenta en fred.stlouisfed.org y búscala en My Account → API Keys.',
   },
   tiingo: {
-    label: 'Tiingo (histórico de precios)',
-    help: 'Cuenta gratuita en tiingo.com; la variable TIINGO_API_KEY tiene prioridad.',
+    label: 'Tiingo (precios antiguos)',
+    help: 'Gratuita en tiingo.com. Solo hace falta para investigar con precios de hace muchos años. (Si existe la variable de entorno TIINGO_API_KEY, se usa esa.)',
   },
   nasdaq: {
-    label: 'Nasdaq Data Link (empresas absorbidas)',
-    help: 'Account Settings → API Key en data.nasdaq.com; NASDAQ_DATA_LINK_API_KEY tiene prioridad.',
+    label: 'Nasdaq Data Link (empresas compradas por otras)',
+    help: 'En data.nasdaq.com → Account Settings → API Key. Solo para investigación. (Si existe NASDAQ_DATA_LINK_API_KEY, se usa esa.)',
   },
   fmp: {
-    label: 'Financial Modeling Prep (empresas desaparecidas)',
-    help: 'Dashboard → API Keys; la variable FMP_API_KEY tiene prioridad.',
+    label: 'Financial Modeling Prep (empresas que ya no cotizan)',
+    help: 'En su web → Dashboard → API Keys. Solo para investigación. (Si existe FMP_API_KEY, se usa esa.)',
   },
 };
 
@@ -62,7 +62,7 @@ function KeyRow({ source, configured }: { source: string; configured: boolean })
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          {info.help} Se guarda en un fichero local excluido del control de versiones.
+          {info.help} Se guarda en un fichero de tu equipo que nunca se comparte.
         </p>
         {save.isError && <p className="text-xs text-destructive">{save.error.message}</p>}
         {save.isSuccess && (

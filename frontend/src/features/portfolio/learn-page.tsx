@@ -24,26 +24,32 @@ const HiddenDrawdownChart = lazy(() => import('./hidden-drawdown-chart'));
 
 const topics = [
   {
-    title: 'Qué significa el score',
-    text: 'El Composite Score combina bloques de valor, calidad, momentum y riesgo. Una puntuación alta no garantiza una rentabilidad futura; comprueba cobertura, fecha y procedencia de cada dato.',
+    title: 'GABI en un minuto',
+    text: 'GABI mira las 500 mayores empresas de EE. UU. (el S&P 500), les pone una nota de 0 a 100 y propone una cartera con las mejores. No compra nada por ti: te ayuda a decidir y a aprender. Empieza por el Ranking, abre la ficha de las empresas que te llamen la atención y, antes de comprar, escribe en el Diario por qué lo harías.',
     path: '/descubrir',
-    action: 'Examinar el ranking',
+    action: 'Abrir el Ranking',
+  },
+  {
+    title: 'Qué significa la puntuación',
+    text: 'La puntuación GABI (en inglés, score) resume cuatro apartados: valoración (¿el precio es razonable para lo que gana?), calidad (¿es rentable y debe poco?), momentum (¿su precio viene subiendo?) y riesgo (¿cuánto se mueve y cuánto ha caído?). Una nota alta no garantiza que la acción vaya a subir; mira también si tiene todos sus datos.',
+    path: '/descubrir',
+    action: 'Ver el ranking',
   },
   {
     title: 'Cómo se construye la cartera',
-    text: 'La hipótesis congelada usa las 20 candidatas elegibles con más score y el mismo peso para cada una. Si hay menos de 20, se reparte entre las disponibles. La pantalla de Cartera aplica esa regla, calculada en el backend.',
+    text: 'GABI elige las 20 empresas con más puntuación que tengan datos suficientes y pone el mismo dinero en cada una. Es una regla fija («congelada»): no se retoca a posteriori para que los resultados pasados parezcan mejores. Si hay menos de 20 válidas, se reparte entre las que haya.',
     path: '/cartera',
     action: 'Ver cartera objetivo',
   },
   {
-    title: 'Qué dicen las pruebas',
-    text: 'Las pruebas retrospectivas y el seguimiento en vivo tienen límites distintos. GABI todavía no ha demostrado de forma independiente una ventaja clara frente al S&P 500. Cambiar el número de posiciones es un experimento, no un modelo validado.',
+    title: '¿Funciona? Lo que dicen las pruebas',
+    text: 'Hay dos tipos de prueba: con datos del pasado (backtest), que puede salir bien por casualidad, y siguiendo la cartera con datos nuevos, que es más fiable pero lleva tiempo. Hoy por hoy GABI no ha demostrado que gane al S&P 500. Por eso conviene comparar siempre con simplemente comprar el índice.',
     path: '/investigacion',
     action: 'Ver Investigación',
   },
   {
-    title: 'De una cifra a una tesis',
-    text: 'Antes de operar, escribe qué tendría que pasar para que una empresa merezca su precio, qué invalidaría tu idea y cuándo la revisarás. El diario conserva esas notas en la base local.',
+    title: 'Antes de comprar, escribe por qué',
+    text: 'Una nota alta no es una razón suficiente. Antes de comprar, apunta qué tendría que pasar para que la empresa merezca su precio, qué te haría cambiar de idea y cuándo lo revisarás. Releerlo después es la mejor forma de aprender. El Diario lo guarda en tu equipo.',
     path: '/cartera/diario',
     action: 'Abrir diario',
   },
@@ -286,19 +292,19 @@ function HowGabiThinks() {
         lo que corrige el motor V2 (ver más abajo).
       </Note>
 
-      <Heading>4. Score, cobertura y confianza de evidencia</Heading>
+      <Heading>4. Puntuación, datos disponibles y confianza</Heading>
       <p>
-        <strong>Score</strong> resume la posición relativa según las métricas.{' '}
-        <strong>Métricas disponibles</strong> cuenta cuántas de las 13 métricas puntuables tienen
-        dato (10 de 13 = 76,9 %); la cartera objetivo exige al menos un 70 %.{' '}
-        <strong>Cobertura ponderada</strong> (antes Confidence) mide lo mismo pesando cada métrica
-        según su bloque, en puntos de 0 a 100, por eso las dos cifras no coinciden.{' '}
-        <strong>Cobertura del universo por bloque</strong> no habla de una empresa: dice qué parte
-        del ranking tiene todas las métricas de cada bloque. <strong>Confianza de evidencia</strong>{' '}
-        (BAJA/MEDIA/ALTA) evalúa el respaldo estadístico, la estabilidad y la calidad con reglas
-        conservadoras. Una empresa puede tener score alto, datos completos y confianza BAJA si sus
-        factores no están confirmados. Ninguno de estos valores es una probabilidad de subir en el
-        futuro.
+        <strong>Puntuación</strong> (score): dónde queda la empresa frente a las demás según sus
+        métricas. <strong>Métricas con dato</strong>: cuántas de las 13 métricas que puntúan tiene
+        (10 de 13 = 76,9 %); para entrar en la cartera propuesta hace falta al menos un 70 %.{' '}
+        <strong>Datos disponibles</strong> (antes «cobertura ponderada»): lo mismo, pero dando más
+        importancia a las métricas de los apartados que más pesan, de 0 a 100; por eso las dos
+        cifras no coinciden. <strong>Cobertura por apartado</strong>: no habla de una empresa, sino
+        de qué parte de todo el ranking tiene todos los datos de cada apartado.{' '}
+        <strong>Confianza</strong> (BAJA/MEDIA/ALTA): cuánto respaldan las pruebas estadísticas a
+        esa empresa, con reglas prudentes. Una empresa puede tener buena puntuación, todos sus datos
+        y confianza BAJA si sus métricas no están comprobadas. Ninguno de estos valores es la
+        probabilidad de que suba.
       </p>
       <Note>
         En Mercado, Cartera y la ficha de cada empresa puedes consultar la confianza, la
@@ -459,7 +465,12 @@ export function LearnPage() {
       <PageHeader
         back={{ to: '/', label: 'Hoy' }}
         title="Aprender a usar GABI"
-        description={<>Vocabulario, estrategias, psicología y cómo piensa GABI por dentro.</>}
+        description={
+          <>
+            Qué significa cada término, estrategias para invertir, los errores mentales más comunes
+            y cómo decide GABI. Si empiezas de cero, lee «Primeros pasos».
+          </>
+        }
         guide={
           <>
             <p>

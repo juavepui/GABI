@@ -13,41 +13,50 @@ export function CoverageWarnings() {
     placeholderData: (previous) => previous,
   });
   const warnings = coverage.data?.warnings ?? [];
+  const threshold_pct = Math.round(threshold * 100);
   return (
     <section
-      aria-label="Cobertura del universo por bloque"
-      className="mb-5 flex flex-wrap items-end justify-between gap-3 rounded-xl border bg-card p-4"
+      aria-label="Datos que faltan por apartado"
+      className="mb-5 rounded-xl border bg-card p-4 text-sm"
     >
-      <div className="min-w-0 flex-1 text-sm">
-        {warnings.length > 0 ? (
-          <div
-            role="status"
-            className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
-          >
-            <p className="font-medium">
-              <Term k="block_coverage">Cobertura del universo por bloque</Term> degradada: el
-              ranking incluye bloques con menos del {Math.round(threshold * 100)} % del universo con
-              todas sus métricas.
-            </p>
-            <ul className="mt-1 list-disc pl-5">
-              {warnings.map((warning) => (
-                <li key={warning}>
-                  <WarningText text={warning} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          coverage.data && (
-            <p className="text-muted-foreground">
-              <Term k="block_coverage">Cobertura del universo por bloque</Term>: en todos los
-              bloques del score, al menos el {Math.round(threshold * 100)} % del universo (
-              {coverage.data.universe} empresas) tiene todas sus métricas.
-            </p>
-          )
-        )}
-      </div>
-      <CoverageThreshold value={threshold} onChange={setThreshold} />
+      {warnings.length > 0 ? (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          <p className="font-medium">
+            Ojo: en algún apartado de la puntuación faltan muchos datos (
+            <Term k="block_coverage">cobertura por apartado</Term>)
+          </p>
+          <p className="mt-1">
+            Menos del {threshold_pct} % de las empresas tienen todos los datos de estos apartados,
+            así que esa parte de la puntuación es menos fiable:
+          </p>
+          <ul className="mt-1 list-disc pl-5">
+            {warnings.map((warning) => (
+              <li key={warning}>
+                <WarningText text={warning} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        coverage.data && (
+          <p className="text-muted-foreground">
+            Datos completos: en cada apartado de la puntuación, al menos el {threshold_pct} % de las{' '}
+            {coverage.data.universe} empresas tienen todos sus datos (
+            <Term k="block_coverage">cobertura por apartado</Term>).
+          </p>
+        )
+      )}
+      <details className="mt-2 text-xs">
+        <summary className="cursor-pointer text-muted-foreground">
+          Cambiar el mínimo exigido
+        </summary>
+        <div className="mt-2">
+          <CoverageThreshold value={threshold} onChange={setThreshold} />
+        </div>
+      </details>
     </section>
   );
 }

@@ -10,7 +10,9 @@ test('el menú se organiza por tareas y la Ayuda está en la cabecera (#188)', a
     'Cartera',
     'Administración',
   ]);
-  await expect(page.getByRole('list', { name: 'Apartados de Hoy' })).toContainText('Panel macro');
+  await expect(page.getByRole('list', { name: 'Apartados de Hoy' })).toContainText(
+    'Economía (macro)',
+  );
   await page.getByRole('banner').getByRole('link', { name: 'Ayuda y glosario' }).click();
   await expect(page).toHaveURL(/\/ayuda$/);
   await expect(page).toHaveTitle('Ayuda · GABI');

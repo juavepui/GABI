@@ -1,8 +1,10 @@
+import { plainWarning } from '@/shared/lib/coverage-text';
+
 /** Backend warnings mark emphasis with **…**; show it as bold without parsing other Markdown. */
 export function WarningText({ text }: { text: string }) {
   return (
     <>
-      {text
+      {plainWarning(text)
         .split('**')
         .map((part, index) =>
           index % 2 ? <strong key={index}>{part}</strong> : <span key={index}>{part}</span>,
@@ -20,7 +22,7 @@ export function CoverageThreshold({
 }) {
   return (
     <label className="text-xs font-medium">
-      Universo con el bloque completo, mínimo (%)
+      Mínimo de empresas con todos los datos de cada apartado (%)
       <input
         className="mt-1.5 block h-10 w-28 rounded-md border bg-background px-2 text-sm"
         type="number"

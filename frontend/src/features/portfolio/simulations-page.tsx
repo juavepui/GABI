@@ -235,9 +235,10 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
         <form onSubmit={submit} className="rounded-xl border bg-card p-5">
           <h2 className="text-lg font-semibold">Registrar operación simulada</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Se usa el cierre de la primera sesión. Mercado y divisa salen del ticker (AAPL o BRK.B
-            en EE. UU.; SAP.DE, BP.L, SAN.MC o MC.PA en Europa) y los costes, de la cartera. Si
-            faltan precios, se ofrece descargarlos sin salir de aquí.
+            Se usa el precio de cierre del primer día de bolsa a partir de esa fecha. El mercado y
+            la moneda salen del símbolo (AAPL o BRK.B en EE. UU.; SAP.DE, BP.L, SAN.MC o MC.PA en
+            Europa) y las comisiones, de la cartera. Si faltan precios, podrás descargarlos desde
+            aquí.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label className="text-sm">
@@ -245,7 +246,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
               <Input className="mt-1" name="symbol" required maxLength={20} placeholder="AAPL" />
             </label>
             <label className="text-sm">
-              Lado
+              Operación
               <NativeSelect name="side" className="mt-1 w-full" defaultValue={trade.side}>
                 <option value="BUY">Comprar</option>
                 <option value="SELL">Vender</option>
@@ -256,7 +257,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
               <Input className="mt-1" name="requested_date" type="date" required />
             </label>
             <label className="text-sm">
-              Importe cotizado
+              Importe (en la moneda de la acción)
               <Input
                 className="mt-1"
                 name="notional"
@@ -379,7 +380,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
             </div>
           </AdvancedOptions>
           <Button className="mt-4" type="submit" pending={add.isPending}>
-            Registrar operación
+            Apuntar operación
           </Button>
           {add.isError && (
             <p role="alert" className="mt-2 text-sm text-destructive">
@@ -435,7 +436,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
         <h2 className="text-lg font-semibold">Evolución y costes</h2>
         {!trades.data?.items.length && (
           <p className="mt-3 text-sm text-muted-foreground">
-            El resultado frente a SPY aparece aquí en cuanto registres una operación.
+            Cuando apuntes una operación verás aquí cómo va frente al S&P 500 (SPY).
           </p>
         )}
         {result.isFetching && !result.data && <LoadingState />}
@@ -452,7 +453,7 @@ function Workspace({ portfolio }: { portfolio: SimulationPortfolio }) {
               pending={queue.isPending}
               onClick={() => queue.mutate()}
             >
-              Encolar cálculo largo
+              Calcular en segundo plano
             </Button>
             {queue.isError && (
               <p role="alert" className="text-sm text-destructive">
@@ -532,8 +533,9 @@ export function SimulationsPage() {
         title="Carteras simuladas"
         description={
           <>
-            Operaciones hipotéticas con costes y divisas. No se envían órdenes ni se descargan
-            precios al abrir la pantalla.
+            Practica sin arriesgar dinero: apunta compras y ventas imaginarias, con sus comisiones y
+            cambios de moneda, y mira cómo habrían ido frente al S&amp;P 500. Nada se compra de
+            verdad.
           </>
         }
       />
@@ -559,7 +561,7 @@ export function SimulationsPage() {
               />
             </label>
             <label className="text-sm">
-              Divisa base
+              Moneda de la cartera
               <NativeSelect
                 name="base_currency"
                 className="mt-1 w-full"

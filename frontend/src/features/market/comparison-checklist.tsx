@@ -11,11 +11,11 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { reasonText, show, VERDICTS } from './checklist-format';
 
 const SOURCES: Record<ComparedCriterion['source'], string> = {
-  sec_10k: 'SEC 10-K · último ejercicio',
-  'price+sec': 'Precio actual + SEC 10-K',
+  sec_10k: 'Informe anual SEC (10-K) · último año',
+  'price+sec': 'Precio de hoy + informe anual SEC',
   yahoo: 'Yahoo · dato actual',
-  'price+yahoo': 'Precio actual + consenso Yahoo',
-  prices: 'GABI con precios en caché',
+  'price+yahoo': 'Precio de hoy + previsiones de analistas (Yahoo)',
+  prices: 'Calculado por GABI con los precios',
 };
 
 function median(item: ChecklistMedian | undefined, what: string): string {
@@ -39,7 +39,7 @@ function Criterion({ item, company }: { item: ComparedCriterion; company: Compar
       {multiple && (
         <p className="text-xs text-muted-foreground">
           Propia: {median(company.history_medians[item.key], 'años')} · Sector:{' '}
-          {median(company.sector_medians[item.key], 'pares')}
+          {median(company.sector_medians[item.key], 'empresas')}
         </p>
       )}
     </div>
@@ -50,7 +50,7 @@ function Summary({ company }: { company: ComparedChecklist }) {
   const { passed, evaluated, missing } = company.summary;
   return (
     <span className="tabular-nums">
-      {evaluated ? `${passed} de ${evaluated} cumplidos` : 'Sin criterios evaluables'}
+      {evaluated ? `${passed} de ${evaluated} cumplidos` : 'Faltan datos para comprobarlos'}
       {missing ? (
         <span className="block text-xs text-muted-foreground">{missing} sin dato</span>
       ) : null}
@@ -83,8 +83,12 @@ export function ComparisonChecklist({ symbols }: { symbols: string[] }) {
   const items = query.data.items;
   const criteria = items[0]?.criteria ?? [];
   const rows: [string, string, (company: ComparedChecklist) => ReactNode][] = [
-    ['Checklist', 'Criterios cumplidos de los evaluables', (c) => <Summary company={c} />],
-    ['Alarmas', 'Alarmas activas del checklist', (c) => <Alarms company={c} />],
+    [
+      'Lista de comprobación',
+      'Criterios que cumple, de los que se pueden comprobar',
+      (c) => <Summary company={c} />,
+    ],
+    ['Alarmas', 'Señales de alerta encendidas', (c) => <Alarms company={c} />],
     ...criteria.map((criterion): [string, string, (company: ComparedChecklist) => ReactNode] => [
       criterion.label,
       SOURCES[criterion.source],
@@ -132,11 +136,11 @@ export function ComparisonChecklist({ symbols }: { symbols: string[] }) {
         </table>
       </div>
       <p className="text-xs text-muted-foreground">
-        Valores y umbrales del checklist de cada ficha. «Propia» es la mediana del múltiplo de la
-        empresa en sus últimos {items[0]?.history_years ?? 5} ejercicios; «Sector», la de las demás
-        empresas de su sector en el universo actual, con las mismas fórmulas SEC. Un múltiplo por
-        debajo de su referencia no implica que la empresa esté barata. El PER y el EV/EBITDA de
-        arriba son los de Yahoo (12 meses); estos se calculan con el último 10-K.
+        Los mismos criterios que en la ficha de cada empresa. «Propia» es lo habitual en esa empresa
+        en sus últimos {items[0]?.history_years ?? 5} años; «Sector», lo habitual en las demás
+        empresas de su sector. Estar por debajo no significa que sea una ganga. El PER y el
+        EV/EBITDA de la tabla de arriba son los de Yahoo (últimos 12 meses); los de aquí salen del
+        último informe anual oficial (10-K), así que pueden no coincidir.
       </p>
     </div>
   );

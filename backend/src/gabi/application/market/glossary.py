@@ -3,7 +3,7 @@
 from gabi.domain.market.metric_info import METRIC_INFO
 from gabi.domain.research.glossary import glossary
 
-BLOCK_LABELS = {"value": "Value", "quality": "Quality", "momentum": "Momentum", "risk": "Risk"}
+BLOCK_LABELS = {"value": "Valoración", "quality": "Calidad", "momentum": "Momentum (tendencia)", "risk": "Riesgo"}
 
 
 def metric_glossary(blocks: dict[str, list[str]], scored: dict[str, list[str]]) -> list[dict]:

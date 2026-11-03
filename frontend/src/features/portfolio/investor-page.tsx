@@ -123,7 +123,10 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
             defaultValue={profile.monthly_eur}
           />
         </Field>
-        <Field label="Horizonte de evaluación (meses)" hint="Plazo para juzgar a GABI.">
+        <Field
+          label="¿Cuántos meses le das a GABI? (horizonte)"
+          hint="Tiempo que esperarás antes de juzgar si funciona. En bolsa, menos de 3–5 años es poco."
+        >
           <Input
             className="mt-1.5"
             name="horizon_months"
@@ -135,8 +138,8 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
           />
         </Field>
         <Field
-          label="Tolerancia de pérdida (%)"
-          hint="Umbral de revisión: no es una garantía ni vende por sí solo."
+          label="¿Qué caída aguantarías sin vender? (%)"
+          hint="Si tu dinero cae más, GABI te avisará para que revises tu plan. No vende ni te protege por sí solo."
         >
           <Input
             className="mt-1.5"
@@ -149,7 +152,10 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
             required
           />
         </Field>
-        <Field label="¿Cuándo necesitarás el dinero?" hint="Opcional; distinto del horizonte.">
+        <Field
+          label="¿Cuándo necesitarás este dinero?"
+          hint="Opcional. Si lo necesitas pronto, la bolsa puede no ser buen sitio para él."
+        >
           <Input
             className="mt-1.5"
             name="capital_needed_by"
@@ -157,7 +163,10 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
             defaultValue={profile.capital_needed_by ?? ''}
           />
         </Field>
-        <Field label="Residencia fiscal (ISO)" hint="Sin confirmar no se aplica fiscalidad.">
+        <Field
+          label="País donde pagas impuestos (código de 2 letras, p. ej. ES)"
+          hint="Si lo dejas vacío no se calculan impuestos."
+        >
           <Input
             className="mt-1.5"
             name="tax_residence"
@@ -167,7 +176,9 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
         </Field>
       </div>
       <h3 className="mt-6 font-semibold">Costes de tu bróker</h3>
-      <p className="text-xs text-muted-foreground">Se aplican igual a la cartera y al benchmark.</p>
+      <p className="text-xs text-muted-foreground">
+        Se aplican igual a tu cartera y al índice de referencia, para que la comparación sea justa.
+      </p>
       <div className="mt-3 grid gap-4 sm:grid-cols-4">
         <Field label="Comisión fija (€)">
           <Input
@@ -190,7 +201,7 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
             defaultValue={percent(profile.commission_pct)}
           />
         </Field>
-        <Field label="Conversión de divisa (%)">
+        <Field label="Comisión por cambiar euros a dólares (%)">
           <Input
             className="mt-1.5"
             name="fx_cost_pct"
@@ -201,7 +212,7 @@ function ProfileForm({ profile, save }: { profile: InvestorProfileInput; save: S
             defaultValue={percent(profile.fx_cost_pct)}
           />
         </Field>
-        <Field label="Importe mínimo por orden (€)">
+        <Field label="Importe mínimo por compra (€)">
           <Input
             className="mt-1.5"
             name="min_order_eur"
@@ -253,7 +264,7 @@ function BenchmarkPrices() {
         pending={running}
         onClick={() => start.mutate({ kind: 'benchmark_prices' })}
       >
-        Actualizar benchmark
+        Actualizar precios del índice
       </Button>
       <p className="text-xs text-muted-foreground">
         Descarga de Yahoo Finance: SPY, el cambio USDEUR=X, el índice ^SP500TR y el ETF SXR8.DE.
@@ -289,27 +300,35 @@ function Cards({ items }: { items: [string, string, string][] }) {
 function performanceCards(performance: BenchmarkPerformance): [string, string, string][] {
   return [
     ['Aportado', eur(performance.contributed_eur), 'Costes: ' + eur(performance.costs_eur)],
-    ['Valor final', eur(performance.final_value_eur), 'Cierre del ' + (performance.end ?? '—')],
-    ['TWR', pct(performance.twr), 'Habilidad: no depende de cuándo aportas'],
-    ['XIRR', pct(performance.xirr), 'Tu experiencia, anualizada'],
     [
-      'Caída máxima',
-      pct(performance.max_drawdown),
-      'Por participación: el dinero nuevo no la oculta',
+      'Valor al final',
+      eur(performance.final_value_eur),
+      'Al cierre del ' + (performance.end ?? '—'),
     ],
+    [
+      'Rentabilidad de la inversión (TWR)',
+      pct(performance.twr),
+      'Cuánto rindió, sin importar cuándo metiste dinero',
+    ],
+    [
+      'Tu rentabilidad anual (XIRR)',
+      pct(performance.xirr),
+      'Lo que ganaste tú al año, contando cuándo aportaste',
+    ],
+    ['Mayor caída', pct(performance.max_drawdown), 'Medida sin que el dinero nuevo la disimule'],
     [
       'Peor momento sobre lo aportado',
       pct(performance.max_loss_on_contributions),
       eur(performance.max_euros_lost) + ' en euros',
     ],
     [
-      'En riesgo con tu tolerancia',
+      'Lo que perderías con la caída que aceptas',
       eur(performance.euros_at_risk_at_tolerance),
       'Sobre el valor actual',
     ],
     [
-      'Umbral de revisión',
-      performance.review_threshold_reached_on ? 'Alcanzado' : 'No alcanzado',
+      '¿Se llegó a tu caída máxima?',
+      performance.review_threshold_reached_on ? 'Sí' : 'No',
       performance.review_threshold_reached_on
         ? 'El ' + performance.review_threshold_reached_on + '; revisar, no vender por sí solo'
         : 'La caída nunca llegó a tu tolerancia',
@@ -343,10 +362,11 @@ function PlanBenchmark() {
   const data = benchmark.data;
   return (
     <section aria-label="Tu plan en el S&P 500" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Tu plan invertido en el S&P 500</h2>
+      <h2 className="text-xl font-semibold">¿Y si lo hubieras metido todo en el S&P 500?</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Qué habría pasado con tu capital inicial y tus aportaciones mensuales comprando SPY con los
-        costes de tu bróker. No es una previsión.
+        Qué habría pasado con tu dinero inicial y tus aportaciones de cada mes si los hubieras
+        invertido en el S&amp;P 500 (con el fondo SPY), con las comisiones de tu bróker. Es lo que
+        pasó en el pasado, no una previsión.
       </p>
       <form
         className="mt-3 flex flex-wrap items-end gap-3"
@@ -380,8 +400,8 @@ function PlanBenchmark() {
         <>
           {data.capital_need_before_horizon && (
             <p role="alert" className="mt-3 text-sm font-medium text-destructive">
-              Necesitas el dinero antes de terminar el horizonte: aclara ese plazo antes de exponer
-              ese capital a renta variable.
+              Necesitas el dinero antes de que acabe el plazo que le das a GABI. La bolsa puede caer
+              justo cuando lo necesites: piénsalo antes de invertir ese dinero en acciones.
             </p>
           )}
           <Cards items={performanceCards(data.performance)} />
@@ -411,25 +431,29 @@ function Vehicles({
   vehicles: BenchmarkVehicle[];
 }) {
   const rows: [string, string, BenchmarkPerformance | null | undefined][] = [
-    ['SPY (referencia de arriba)', 'Cierre ajustado con dividendos brutos', reference],
+    ['SPY (el de arriba)', 'Con los dividendos reinvertidos, antes de impuestos', reference],
     ...vehicles.map((row): [string, string, BenchmarkPerformance | null | undefined] => [
-      row.symbol + (row.theoretical ? ' · teórico' : ' · invertible'),
-      row.status === 'ok' ? row.label : 'Sin precios en caché: pulsa «Actualizar benchmark».',
+      row.symbol + (row.theoretical ? ' · teórico' : ' · lo puedes comprar'),
+      row.status === 'ok'
+        ? row.label
+        : 'Sin precios guardados: pulsa «Actualizar precios del índice».',
       row.performance,
     ]),
   ];
   return (
     <div className="mt-5 overflow-x-auto">
-      <h3 className="font-semibold">Índice teórico frente a vehículo invertible</h3>
+      <h3 className="font-semibold">
+        El índice frente a los fondos que puedes comprar desde Europa
+      </h3>
       <table className="mt-2 w-full text-left text-xs sm:text-sm">
         <thead className="border-b text-xs text-muted-foreground">
           <tr>
-            <th className="pb-2">Vehículo</th>
-            <th className="pb-2">Valor final</th>
+            <th className="pb-2">Fondo</th>
+            <th className="pb-2">Valor al final</th>
             <th className="pb-2">Costes</th>
             <th className="pb-2">TWR</th>
             <th className="pb-2">XIRR</th>
-            <th className="pb-2">Caída máxima</th>
+            <th className="pb-2">Mayor caída</th>
           </tr>
         </thead>
         <tbody>
@@ -457,7 +481,7 @@ function Scenarios({ rows, note }: { rows: StressScenario[]; note: string }) {
   if (!rows.length) return null;
   return (
     <div className="mt-5 overflow-x-auto">
-      <h3 className="font-semibold">Escenarios de estrés</h3>
+      <h3 className="font-semibold">¿Qué pasaría en una crisis?</h3>
       <p className="text-xs text-muted-foreground">
         Efecto inmediato sobre el valor actual. No son previsiones. {note}
       </p>
@@ -465,9 +489,9 @@ function Scenarios({ rows, note }: { rows: StressScenario[]; note: string }) {
         <thead className="border-b text-xs text-muted-foreground">
           <tr>
             <th className="pb-2">Escenario</th>
-            <th className="pb-2">Efecto</th>
+            <th className="pb-2">Caída</th>
             <th className="pb-2">En euros</th>
-            <th className="pb-2">Tu tolerancia</th>
+            <th className="pb-2">¿Más de lo que aceptas?</th>
           </tr>
         </thead>
         <tbody>
@@ -476,7 +500,7 @@ function Scenarios({ rows, note }: { rows: StressScenario[]; note: string }) {
               <td className="py-2">{row.label}</td>
               <td className="py-2 tabular-nums">{pct(row.change)}</td>
               <td className="py-2 tabular-nums">{eur(row.change_eur)}</td>
-              <td className="py-2">{row.exceeds_tolerance ? 'Superada: revisar el plan' : '—'}</td>
+              <td className="py-2">{row.exceeds_tolerance ? 'Sí: revisa tu plan' : 'No'}</td>
             </tr>
           ))}
         </tbody>
@@ -489,19 +513,19 @@ function Scenarios({ rows, note }: { rows: StressScenario[]; note: string }) {
 function Alternatives({ rows }: { rows: Alternative[] }) {
   return (
     <div className="mt-5 overflow-x-auto">
-      <h3 className="font-semibold">Activa, mixta e indexada con las mismas compras</h3>
+      <h3 className="font-semibold">Elegir acciones, mezclar o comprar el índice</h3>
       <p className="text-xs text-muted-foreground">
-        Cada compra repartida entre tu cartera y SPY. Es un rango para comparar, no una
-        recomendación de pesos.
+        Qué habría pasado con tus mismas compras si una parte hubiera ido al S&amp;P 500 (SPY) en
+        vez de a tus acciones. Sirve para comparar, no es una recomendación.
       </p>
       <table className="mt-2 w-full text-left text-xs sm:text-sm">
         <thead className="border-b text-xs text-muted-foreground">
           <tr>
-            <th className="pb-2">Alternativa</th>
-            <th className="pb-2">Valor final</th>
+            <th className="pb-2">Opción</th>
+            <th className="pb-2">Valor al final</th>
             <th className="pb-2">TWR</th>
             <th className="pb-2">XIRR</th>
-            <th className="pb-2">Caída máxima</th>
+            <th className="pb-2">Mayor caída</th>
           </tr>
         </thead>
         <tbody>
@@ -531,14 +555,16 @@ function HoldingsComparison() {
     comparison.error instanceof ApiError && comparison.error.code === 'no_holdings';
   return (
     <section aria-label="Mi cartera frente a SPY" className="rounded-xl border bg-card p-5">
-      <h2 className="text-xl font-semibold">Mi cartera frente a SPY con los mismos euros</h2>
+      <h2 className="text-xl font-semibold">
+        Mi cartera frente al S&amp;P 500 con el mismo dinero
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Cada compra de{' '}
         <Link className="text-primary underline" to="/cartera/mi-cartera">
           Mi cartera
         </Link>{' '}
-        compra también SPY el mismo día y por el mismo importe. Ambas con dividendos reinvertidos
-        (cierre ajustado).
+        se compara con haber comprado el S&amp;P 500 (fondo SPY) el mismo día y por el mismo
+        importe. En los dos casos se reinvierten los dividendos.
       </p>
       {comparison.isPending && <LoadingState />}
       {noHoldings && <p className="mt-3 text-sm">Todavía no has registrado compras.</p>}
@@ -550,22 +576,30 @@ function HoldingsComparison() {
           <Cards
             items={[
               [
-                'Diferencia de riqueza',
+                '¿Cuánto más (o menos) tienes?',
                 eur(data.comparison.wealth_difference_eur),
-                'Mi cartera menos SPY',
+                'Mi cartera menos el S&P 500',
               ],
-              ['Diferencia de TWR', pct(data.comparison.twr_difference), 'Habilidad'],
-              ['Diferencia de XIRR', pct(data.comparison.xirr_difference), 'Experiencia'],
               [
-                'Diferencia de caída máxima',
+                'Diferencia de rentabilidad (TWR)',
+                pct(data.comparison.twr_difference),
+                'Sin importar cuándo aportaste',
+              ],
+              [
+                'Diferencia de tu rentabilidad anual (XIRR)',
+                pct(data.comparison.xirr_difference),
+                'Contando cuándo aportaste',
+              ],
+              [
+                'Diferencia en la mayor caída',
                 pct(data.comparison.max_drawdown_difference),
-                'Positiva: mi cartera cayó menos',
+                'Si es positiva, tu cartera cayó menos',
               ],
             ]}
           />
           <h3 className="mt-5 font-semibold">Mi cartera</h3>
           <Cards items={performanceCards(data.portfolio)} />
-          <h3 className="mt-5 font-semibold">SPY con los mismos euros</h3>
+          <h3 className="mt-5 font-semibold">El S&amp;P 500 con el mismo dinero</h3>
           <Cards items={performanceCards(data.benchmark)} />
           {data.excluded.length > 0 && (
             <p className="mt-3 text-sm">
@@ -588,7 +622,7 @@ function HoldingsComparison() {
           <Scenarios
             rows={data.scenarios}
             note={
-              'Exposición al dólar aproximada por la divisa de cotización: ' +
+              'Parte de tu dinero que depende del dólar (si el dólar baja frente al euro, pierdes algo aunque la acción no se mueva): ' +
               formatPercent(data.usd_share, { digits: 0 }) +
               ' del valor actual.'
             }
@@ -614,19 +648,22 @@ export function InvestorPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Cartera / Perfil"
-        title="Perfil y benchmark"
+        eyebrow="Cartera"
+        title="Mi perfil"
         description={
           <>
-            Tu capital, tus aportaciones y tu tolerancia, y cómo les habría ido en el S&P 500 en
-            euros. No es una promesa de superar al índice.
+            Cuánto dinero tienes, cuánto aportas, cuánta caída aguantarías y qué habría pasado si lo
+            hubieras invertido en el S&amp;P 500. Es la referencia con la que comparar a GABI.
           </>
         }
         guide={
           <p>
-            La TWR mide la habilidad sin depender de cuándo aportas; la XIRR y la riqueza final
-            miden tu experiencia. La caída se calcula por participación para que el dinero nuevo no
-            la oculte. Los datos salen de la caché local; solo «Actualizar benchmark» descarga.
+            Verás dos rentabilidades. La <strong>TWR</strong> mide cuánto rindió la inversión, sin
+            importar cuándo metiste dinero: sirve para juzgar la estrategia. La{' '}
+            <strong>XIRR</strong> mide lo que ganaste tú, contando cuándo aportaste: si metiste
+            mucho justo antes de una caída, tu XIRR será peor aunque la estrategia sea la misma. Los
+            datos son los guardados en tu equipo; solo «Actualizar precios del índice» descarga
+            algo.
           </p>
         }
       />
@@ -646,8 +683,8 @@ export function InvestorPage() {
             </>
           ) : (
             <p className="text-sm">
-              Guarda tu perfil para ver tu plan en el S&P 500. Los valores propuestos son
-              orientativos: cámbialos por los tuyos.
+              Guarda tu perfil para ver qué habría pasado en el S&amp;P 500. Los valores que ves son
+              un ejemplo: cámbialos por los tuyos.
             </p>
           )}
           {profile.data.revisions.length > 1 && (

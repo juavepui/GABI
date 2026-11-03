@@ -44,21 +44,23 @@ export function DataUpdate() {
     <section className="space-y-3 rounded-lg border p-4 text-sm" aria-label="Actualizar datos">
       <h3 className="font-medium">Actualizar datos</h3>
       <p className="text-xs text-muted-foreground">
-        Precios y fundamentales de Yahoo Finance y datos oficiales de SEC EDGAR, descargando solo lo
-        caducado. Empieza con un subconjunto pequeño: la primera descarga de fundamentales tarda. No
-        revisa la composición del S&amp;P 500 ni las series macro: para eso está «Actualización
-        completa».
+        Descarga precios y datos de las cuentas (Yahoo Finance) e informes oficiales (SEC), solo de
+        lo que esté desactualizado. La primera vez tarda bastante: empieza con 50 empresas para
+        probar. No revisa qué empresas forman el S&amp;P 500 ni los datos de la economía; para eso
+        está «Actualización completa».
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="grid gap-1">
-          Tamaño del universo
+          ¿Cuántas empresas?
           <NativeSelect
             value={limit}
             onChange={(event) => setLimit(event.target.value as '50' | '150' | 'all')}
           >
             <NativeSelectOption value="50">Prueba rápida (50 empresas)</NativeSelectOption>
-            <NativeSelectOption value="150">Medio (150 empresas)</NativeSelectOption>
-            <NativeSelectOption value="all">Completo (S&amp;P 500)</NativeSelectOption>
+            <NativeSelectOption value="150">150 empresas</NativeSelectOption>
+            <NativeSelectOption value="all">
+              Todo el S&amp;P 500 (unas 500, tarda más)
+            </NativeSelectOption>
           </NativeSelect>
         </label>
         <label className="flex items-center gap-2">
@@ -67,7 +69,7 @@ export function DataUpdate() {
             checked={force}
             onChange={(event) => setForce(event.target.checked)}
           />
-          Forzar descarga aunque los datos estén frescos
+          Descargar todo de nuevo, aunque esté al día
         </label>
         <Button
           pending={running}

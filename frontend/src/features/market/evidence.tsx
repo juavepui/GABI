@@ -6,9 +6,9 @@ import { DataStatus } from './data-status';
 
 function EvidenceNotice({ model }: { model: ModelResponse }) {
   const status = {
-    FROZEN: 'Hipótesis congelada',
-    EXPERIMENTAL: 'Modelo experimental',
-    LIVE_FORWARD: 'Seguimiento en curso',
+    FROZEN: 'Regla fija',
+    EXPERIMENTAL: 'Versión de prueba',
+    LIVE_FORWARD: 'En observación con datos nuevos',
   }[model.status];
   return (
     <section
@@ -18,12 +18,15 @@ function EvidenceNotice({ model }: { model: ModelResponse }) {
       <Info size={18} className="mt-1 shrink-0 text-primary" aria-hidden="true" />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold">Ventaja frente a SPY no demostrada</p>
+          <p className="text-sm font-semibold">Aún no está demostrado que GABI gane al mercado</p>
           <Badge variant="outline">{status}</Badge>
         </div>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          {model.evidence_note} El score ordena empresas según el modelo; no es una rentabilidad
-          esperada.
+          {model.evidence_note} La puntuación sirve para ordenar empresas; no dice cuánto vas a
+          ganar.
+          <br />
+          «Regla fija» quiere decir que GABI no ajusta sus criterios a posteriori para que los
+          resultados pasados parezcan mejores.
         </p>
       </div>
     </section>
@@ -39,8 +42,8 @@ export function Evidence({ model, data }: { model: ModelResponse; data: DataResp
   const evidenceOpen = model.mode === 'RESEARCH' && !model.matches_frozen;
   const dataOpen = data.needs_attention === true;
   const chip = [
-    !evidenceOpen && 'Evidencia: no demostrada',
-    !dataOpen && 'Datos: al día ' + dateLabel(data.latest_price_date),
+    !evidenceOpen && 'Aún sin pruebas de que gane al mercado',
+    !dataOpen && 'Datos al día: ' + dateLabel(data.latest_price_date),
   ].filter(Boolean);
   return (
     <div className="mb-6 space-y-3">
@@ -51,7 +54,7 @@ export function Evidence({ model, data }: { model: ModelResponse; data: DataResp
           <summary className="inline-flex cursor-pointer items-center gap-2 rounded-full border bg-secondary/60 px-3 py-1 text-xs font-medium">
             <Info size={14} className="shrink-0 text-primary" aria-hidden="true" />
             {chip.join(' · ')}
-            <span className="text-muted-foreground group-open:hidden">· Ver detalle</span>
+            <span className="text-muted-foreground group-open:hidden">· Ver más</span>
           </summary>
           <div className="mt-3 space-y-3">
             {!evidenceOpen && <EvidenceNotice model={model} />}

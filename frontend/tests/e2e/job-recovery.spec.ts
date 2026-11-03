@@ -58,9 +58,9 @@ test('repetir un trabajo interrumpido evita doble clic, enlaza el nuevo intento 
   await expect(original.getByText('Trabajo interrumpido')).toBeVisible();
   await expect(original.getByRole('button', { name: 'Ver resultado' })).toHaveCount(0);
   await expect(
-    page.locator('#job-' + restricted.id).getByRole('button', { name: 'Solicitar nuevo intento' }),
+    page.locator('#job-' + restricted.id).getByRole('button', { name: 'Volver a intentarlo' }),
   ).toHaveCount(0);
-  await original.getByRole('button', { name: 'Solicitar nuevo intento' }).dblclick();
+  await original.getByRole('button', { name: 'Volver a intentarlo' }).dblclick();
   await expect(page.getByRole('link', { name: /Ver nuevo intento/ })).toHaveAttribute(
     'href',
     '#job-' + replacement.id,
@@ -99,17 +99,15 @@ test('una respuesta perdida reutiliza la clave y la cancelación solicitada se d
   });
   await page.goto('/administracion');
   const original = page.locator('#job-' + source.id);
+  await expect(original.getByText('Cancelado. No se ha guardado ningún resultado.')).toBeVisible();
   await expect(
-    original.getByText('Cancelación completada. No se publicó un resultado.'),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/El trabajo sigue en curso hasta alcanzar un punto seguro/),
+    page.getByText(/Se parará en cuanto pueda hacerlo sin dejar nada a medias/),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Cancelación solicitada' })).toBeDisabled();
-  await original.getByRole('button', { name: 'Solicitar nuevo intento' }).click();
+  await original.getByRole('button', { name: 'Volver a intentarlo' }).click();
   await expect(page.getByText('Respuesta no disponible')).toBeVisible();
   await page.reload();
-  await original.getByRole('button', { name: 'Solicitar nuevo intento' }).click();
+  await original.getByRole('button', { name: 'Volver a intentarlo' }).click();
   await expect(page.getByText('Respuesta no disponible')).toBeVisible();
   expect(keys).toHaveLength(2);
   expect(keys[0]).toBe(keys[1]);

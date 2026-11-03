@@ -26,7 +26,7 @@ export const sections: Section[] = [
     icon: Sun,
     pages: [
       { path: '/', label: 'Resumen' },
-      { path: '/macro', label: 'Panel macro' },
+      { path: '/macro', label: 'Economía (macro)' },
       { path: '/eventos', label: 'Eventos' },
     ],
   },
@@ -48,9 +48,9 @@ export const sections: Section[] = [
     pages: [
       { path: '/cartera', label: 'Cartera objetivo' },
       { path: '/cartera/mi-cartera', label: 'Mi cartera' },
-      { path: '/cartera/perfil', label: 'Perfil y benchmark' },
-      { path: '/cartera/riesgo', label: 'Riesgo y política' },
-      { path: '/cartera/seguimiento', label: 'Seguimiento' },
+      { path: '/cartera/perfil', label: 'Mi perfil' },
+      { path: '/cartera/riesgo', label: 'Riesgo y límites' },
+      { path: '/cartera/seguimiento', label: 'Carteras guardadas' },
       { path: '/cartera/diario', label: 'Diario de inversión' },
       { path: '/cartera/ideas', label: 'Historial de ideas' },
       { path: '/cartera/simuladas', label: 'Carteras simuladas' },

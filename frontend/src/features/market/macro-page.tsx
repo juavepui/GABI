@@ -10,17 +10,23 @@ export function MacroPage() {
     <div className="space-y-6">
       <PageHeader
         back={{ to: '/', label: 'Hoy' }}
-        title="Panel macro"
-        description={<>Contexto macroeconómico para tus tesis; no interviene en el score.</>}
+        title="Economía (macro)"
+        description={
+          <>
+            Cómo está la economía de EE. UU.: tipos de interés, inflación, dólar y señales de
+            recesión. Es contexto para tus decisiones; no cambia la puntuación de las empresas.
+          </>
+        }
         guide={
           <>
             <p>
-              Contexto para las tesis del{' '}
+              Útil para tus notas del{' '}
               <Link className="text-primary underline" to="/cartera/diario">
                 diario de inversión
               </Link>
-              . Estas series FRED no intervienen en el score de empresas. La consulta solo lee datos
-              descargados en este equipo.
+              : por ejemplo, si los tipos de interés suben, las empresas cuyo beneficio está muy
+              lejos en el futuro suelen sufrir más. Los datos son de FRED (la base de datos pública
+              de la Reserva Federal) y se leen de tu equipo; abrir esta página no descarga nada.
             </p>
           </>
         }
@@ -34,8 +40,8 @@ export function MacroPage() {
               role="note"
               className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
             >
-              Sin clave de FRED: estas series son las que ya estaban guardadas en este equipo y no
-              se pueden actualizar. Guarda la clave gratuita en{' '}
+              Falta la clave de FRED, así que estos datos no se pueden actualizar: ves los que ya
+              estaban guardados. Es gratuita; guárdala en{' '}
               <Link className="underline" to="/administracion">
                 Administración
               </Link>{' '}
@@ -58,18 +64,18 @@ export function MacroPage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {item.latest_value == null
-                    ? 'Sin dato local'
-                    : 'Dato a ' + dateLabel(item.latest_date)}
+                    ? 'Sin datos guardados'
+                    : 'Dato del ' + dateLabel(item.latest_date)}
                   {item.change_3m != null && (
                     <>
-                      {' · Cambio frente a 3 meses: '}
+                      {' · Cambio en 3 meses: '}
                       <span aria-hidden="true">{trend(item.change_3m)} </span>
                       {amount(item.change_3m, item.change_unit, true)}
                     </>
                   )}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  FRED {item.series_id} · {cadence(item)}
+                  Fuente: FRED ({item.series_id}) · {cadence(item)}
                 </p>
                 <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{item.help}</p>
               </article>
@@ -80,8 +86,8 @@ export function MacroPage() {
             <Link className="text-primary underline" to="/administracion">
               Administración
             </Link>
-            . La fecha de la próxima publicación CPI requiere una consulta externa y no se obtiene
-            al abrir este panel.
+            . La fecha del próximo dato de inflación (IPC) no se muestra porque habría que
+            consultarla en internet.
           </p>
         </>
       )}

@@ -54,7 +54,7 @@ describe('Inicio: estado de los datos', () => {
     api.getHome.mockResolvedValue(home({ prices_current: false }));
     screen = renderScreen(<HomePage />);
     await screen.findText('Falta el último cierre');
-    expect(screen.text()).toContain('Última sesión cerrada en NYSE: 02 oct 2026');
+    expect(screen.text()).toContain('El último día de bolsa fue el 02 oct 2026');
     expect(screen.text()).not.toContain('Al día');
   });
 
@@ -63,7 +63,7 @@ describe('Inicio: estado de los datos', () => {
     api.getHome.mockResolvedValue(home({ status: 'stale', warnings: ['prices_stale'] }));
     screen = renderScreen(<HomePage />);
     await screen.findText('Con datos antiguos');
-    expect(screen.text()).toContain('hay precios de hace más de 7 días');
+    expect(screen.text()).toContain('hay precios de hace más de una semana');
   });
 
   it('calcula el ranking cuando aún no está en caché', async () => {
@@ -72,7 +72,7 @@ describe('Inicio: estado de los datos', () => {
       compute ? new Promise(() => {}) : Promise.resolve(home(null)),
     );
     screen = renderScreen(<HomePage />);
-    await screen.findText('Calculando el ranking con tu caché local');
+    await screen.findText('Calculando el ranking con los datos de tu equipo');
     expect(api.getHome).toHaveBeenCalledWith(true, expect.anything());
   });
 

@@ -127,7 +127,7 @@ describe('Perfil y benchmark (#244)', () => {
   it('sin perfil propone valores y no consulta el benchmark', async () => {
     api.getInvestorProfile.mockResolvedValue({ current: null, revisions: [] });
     screen = renderScreen(<InvestorPage />);
-    await screen.findText('Guarda tu perfil para ver tu plan');
+    await screen.findText('Guarda tu perfil para ver qué habría pasado');
     expect(api.getInvestorBenchmark).not.toHaveBeenCalled();
     const tolerance = screen.container.querySelector<HTMLInputElement>('[name=loss_tolerance]');
     expect(tolerance?.value).toBe('20');
@@ -140,13 +140,13 @@ describe('Perfil y benchmark (#244)', () => {
       new ApiError(404, 'no_holdings', 'Mi cartera no tiene compras que comparar.'),
     );
     screen = renderScreen(<InvestorPage />);
-    await screen.findText('Necesitas el dinero antes de terminar el horizonte');
-    expect(screen.text()).toContain('TWR+25 %');
+    await screen.findText('Necesitas el dinero antes de que acabe el plazo');
+    expect(screen.text()).toContain('Rentabilidad de la inversión (TWR)+25 %');
     expect(screen.text()).toContain('El 2025-04-08; revisar, no vender por sí solo');
     expect(screen.text()).toContain('Todavía no has registrado compras.');
     expect(screen.text()).toContain('^SP500TR · teórico');
-    expect(screen.text()).toContain('Superada: revisar el plan');
-    expect(screen.text()).toContain('SXR8.DE · invertibleSin precios en caché');
+    expect(screen.text()).toContain('Sí: revisa tu plan');
+    expect(screen.text()).toContain('SXR8.DE · lo puedes comprarSin precios guardados');
     const fx = screen.container.querySelector<HTMLInputElement>('[name=fx_cost_pct]');
     expect(fx?.value).toBe('0.6');
   });
@@ -161,6 +161,6 @@ describe('Perfil y benchmark (#244)', () => {
     );
     screen = renderScreen(<InvestorPage />);
     await screen.findText('Faltan precios en caché de SPY.');
-    expect(screen.text()).toContain('Actualizar benchmark');
+    expect(screen.text()).toContain('Actualizar precios del índice');
   });
 });
