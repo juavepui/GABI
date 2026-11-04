@@ -1,13 +1,14 @@
 """Home notices of the old portada: blind rebalances due within a week and the #44 analysis state."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 
 from fastapi.testclient import TestClient
 
-from gabi import config
+from gabi import config, live_ledger
 from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.live_ledger import SqliteLiveLedger
 from gabi.infrastructure.storage.smallmid import SmallmidFiles
 from gabi_api.bootstrap import create_app
 
@@ -63,3 +64,32 @@ def test_notices_endpoint_reads_without_writing(tmp_path):
         assert sorted(path.name for path in config.DATA_DIR.iterdir()) == before
     assert response.status_code == 200
     assert response.json()["blind_rebalances"] == [] and response.json()["smallmid"]["freeze_deadline"] == "2027-01-15"
+    # No ledger yet: the follow-up never ran, and reading it created nothing (#290).
+    assert response.json()["periodic"]["status"] == "never"
+
+
+def test_periodic_notice_reports_the_newest_working_decision_and_hides_on_read_errors(tmp_path):
+    smallmid = SmallmidFiles(tmp_path, tmp_path, lambda: "2027-01-15")
+    working = {"created_at": "2026-09-25T21:30:00+00:00", "status": "SIGNAL", "model_id": "GABI-MF-v2"}
+    result = Notices(Blind(), smallmid, lambda: TODAY, lambda: (working, working)).current()
+    assert result["periodic"]["status"] == "late" and result["periodic"]["business_days"] == 4
+
+    def unreadable():
+        raise OSError("locked")
+    assert Notices(Blind(), smallmid, lambda: TODAY, unreadable).current()["periodic"] is None
+    assert Notices(Blind(), smallmid, lambda: TODAY).current()["periodic"] is None
+
+
+def test_ledger_summary_reads_only_three_fields_of_the_newest_decisions(monkeypatch):
+    reader = SqliteLiveLedger(config.DATA_DIR)
+    assert reader.last_decisions() == (None, None)
+    now = datetime(2024, 1, 10, 22, tzinfo=UTC)
+    base = {"model_id": "GABI-MF-v1", "model_version": "m", "config_version": "c", "market_date": "2024-01-10",
+            "top_n": [], "sources": {}, "data_fingerprint": "f", "git_commit": "g",
+            "configuration": {"weights": {}}}
+    monkeypatch.setattr(live_ledger, "_now", lambda: now)
+    live_ledger.append_decision({**base, "status": "SIGNAL"})
+    live_ledger.append_decision({**base, "model_id": "GABI-MF-v2", "status": "ERROR"})
+    last, working = reader.last_decisions()
+    assert last == {"created_at": now.isoformat(), "status": "ERROR", "model_id": "GABI-MF-v2"}
+    assert working == {"created_at": now.isoformat(), "status": "SIGNAL", "model_id": "GABI-MF-v1"}

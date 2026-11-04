@@ -349,8 +349,39 @@ test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async (
     ),
   ).toBeVisible();
   await expect(notices.getByText(/#44/)).toHaveCount(0);
+  // The fixture ledger has a decision the day before: the daily follow-up is on time (#290).
+  await expect(notices.getByText(/seguimiento diario/)).toHaveCount(0);
   await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
   await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
+});
+
+test('la portada avisa si el seguimiento diario no se ejecuta', async ({ page }) => {
+  let periodic: Record<string, string | number | null> = {
+    status: 'late',
+    last_run_at: '2026-09-22T21:30:00+00:00',
+    last_status: 'SIGNAL',
+    last_working_at: '2026-09-22T21:30:00+00:00',
+    business_days: 5,
+    max_business_days: 3,
+    model_id: 'GABI-MF-v2',
+  };
+  await page.route('**/api/v1/notices', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), periodic } });
+  });
+  await page.goto('/');
+  const notices = page.getByRole('region', { name: 'Avisos' });
+  await expect(
+    notices.getByText('El seguimiento diario de GABI lleva 5 días laborables sin ejecutarse'),
+  ).toBeVisible();
+  await expect(notices.getByText(/último registro correcto: 22 sept/)).toBeVisible();
+
+  periodic = { ...periodic, status: 'never', last_working_at: null, business_days: null };
+  await page.reload();
+  await expect(
+    notices.getByText('El seguimiento diario de GABI no se ha ejecutado nunca en este equipo.'),
+  ).toBeVisible();
+  await expect(notices.getByText('scripts\\programar_tareas.ps1')).toBeVisible();
 });
 
 test('un sistema en modo oscuro no oscurece los avisos del tema claro', async ({ page }) => {

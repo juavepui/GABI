@@ -14559,7 +14559,7 @@
         "type": "object"
       },
       "NoticesResponse": {
-        "description": "Home notices: blind rebalances due within a week and the state of the #44 analysis.",
+        "description": "Home notices: blind rebalances due within a week, the #44 analysis and the daily follow-up.",
         "properties": {
           "blind_available": {
             "title": "Blind Available",
@@ -14571,6 +14571,16 @@
             },
             "title": "Blind Rebalances",
             "type": "array"
+          },
+          "periodic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeriodicNotice"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "smallmid": {
             "anyOf": [
@@ -14879,6 +14889,90 @@
           "messages"
         ],
         "title": "PeriodQualityWarning",
+        "type": "object"
+      },
+      "PeriodicNotice": {
+        "description": "Whether the daily follow-up runs (#290): age of the newest live decision that did not fail.",
+        "properties": {
+          "business_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Days"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "last_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Status"
+          },
+          "last_working_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Working At"
+          },
+          "max_business_days": {
+            "title": "Max Business Days",
+            "type": "integer"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "status": {
+            "enum": [
+              "never",
+              "late",
+              "ok"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "last_run_at",
+          "last_status",
+          "last_working_at",
+          "business_days",
+          "max_business_days",
+          "model_id"
+        ],
+        "title": "PeriodicNotice",
         "type": "object"
       },
       "PlanRequest": {

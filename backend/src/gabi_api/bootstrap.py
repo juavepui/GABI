@@ -324,7 +324,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)
     app.state.notices = Notices(blind_validations, SmallmidFiles(settings.data_dir, settings.data_dir.parent,
-                                                               smallmid_freeze_deadline), today)
+                                                               smallmid_freeze_deadline), today,
+                                SqliteLiveLedger(settings.data_dir).last_decisions)
     app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),
                                          lambda: configured_keys(settings.data_dir))
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],

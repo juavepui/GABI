@@ -23,7 +23,8 @@ def main(service: PeriodicTasks, argv: list[str]) -> None:
     if args.run:
         report = service.run(refresh=not args.no_refresh, full_refresh=args.full_refresh)
         print(json.dumps(safe(report), ensure_ascii=False, indent=2))
-        if report.get("error") or report.get("ledger", {}).get("status") == "ERROR":
+        if report.get("error") or "ERROR" in (report.get("ledger", {}).get("status"),
+                                              report.get("ledger_activo", {}).get("status")):
             raise SystemExit(1)
     elif args.tiingo:
         print(json.dumps(safe(service.resume_tiingo()), ensure_ascii=False, indent=2))

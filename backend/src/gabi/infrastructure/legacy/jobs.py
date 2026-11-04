@@ -294,7 +294,8 @@ class LegacyExecutor:
 
             result = build_periodic_tasks(self.settings.data_dir, tiingo_fetch=self.tiingo_fetch,
                                           tiingo_import=self.tiingo_import, macro_sync=self.macro_sync).run(refresh=False)
-            if result.get("error") or result.get("ledger", {}).get("status") == "ERROR":
+            if result.get("error") or "ERROR" in (result.get("ledger", {}).get("status"),
+                                                  result.get("ledger_activo", {}).get("status")):
                 raise RuntimeError("El mantenimiento terminó con errores.")
             # Never surface pending #43/#44 results through jobs.
             return {"maintenance": "completed"}

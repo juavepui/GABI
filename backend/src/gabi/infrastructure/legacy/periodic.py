@@ -13,6 +13,12 @@ from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.periodic import PeriodicFiles
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
+# Code that scores the active model besides the sealed files the ledger already hashes (#290).
+ACTIVE_MODEL_CODE = ("infrastructure/model_versions.py", "domain/market/model_version.py",
+                     "domain/market/sec_metrics_v2.py", "application/market/stored_metrics_v2.py",
+                     "application/market/ranking.py", "infrastructure/storage/market.py",
+                     "infrastructure/legacy/market.py")
+
 
 class LegacyPeriodicOperations:
     def __init__(self, data_dir: Path, *, tiingo_fetch: Callable[[list[str]], dict] | None = None,
@@ -93,6 +99,33 @@ class LegacyPeriodicOperations:
         from gabi.live_ledger import capture_current
 
         return capture_current(run_error=error, maintenance=maintenance)
+
+    def capture_active_ledger(self, error, maintenance):
+        """The decision of the active model when it is not the sealed v1 (#290); None otherwise."""
+        from datetime import date
+
+        from gabi.domain.market.model_policy import FROZEN_MODEL_ID
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.settings import Settings
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+        from gabi.live_ledger import ModelCapture, capture_current
+
+        model = active_model()
+        if model.model_id == FROZEN_MODEL_ID:
+            return None
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()), calculators(model.technical), model_policy(model),
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+
+        def ranking():
+            universe = market.universe(market.small_file("sp500_constituents.csv"))
+            return universe, market.ranking(dict(model.weights), date.today()).table
+
+        capture = ModelCapture(model.model_id, model.weights, model.metrics_version, ACTIVE_MODEL_CODE, ranking)
+        try:
+            return capture_current(run_error=error, maintenance=maintenance, model=capture)
+        finally:
+            market.close()
 
     def fetch_tiingo(self, symbols):
         if self.tiingo_fetch is not None:

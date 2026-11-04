@@ -11,7 +11,7 @@ from gabi import live_ledger as ledger
 from gabi.domain.market import model_policy
 from gabi.domain.research.live_performance import entry_session
 from gabi.infrastructure.legacy.live_ledger import live_report
-from gabi.infrastructure.legacy.periodic import build_periodic_tasks
+from gabi.infrastructure.legacy.periodic import ACTIVE_MODEL_CODE, build_periodic_tasks
 from gabi_cli.commands.periodic import main as periodic_main
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
@@ -131,6 +131,49 @@ def test_capture_freezes_inputs_exclusions_sources_and_fingerprint(monkeypatch):
     replay = ledger.reproduce_decision(1)
     assert all(replay[k] for k in ("fingerprint_matches", "scores_match", "ranking_matches"))
     assert replay["replayed_top_n"] == original["payload"]["top_n"]
+
+
+def test_default_capture_keeps_the_sealed_v1_identity(monkeypatch):
+    setup_capture(monkeypatch, panel())
+    payload = ledger.capture_current()["payload"]
+    assert payload["model_id"] == model_policy.FROZEN_MODEL_ID
+    assert payload["configuration"] == {"weights": dict(model_policy.FROZEN_WEIGHTS), "universe_id": "SP500_CURRENT",
+                                        "top_n": 20, "coverage": .70,
+                                        "ranking": "descending composite, ascending ticker",
+                                        "report_cost_per_side": .001}
+    assert "infrastructure/model_versions.py" not in payload["code_sha256"]
+
+
+def test_active_model_is_recorded_as_its_own_version_with_its_metrics_and_code(monkeypatch):
+    setup_capture(monkeypatch, panel())
+    v1 = ledger.capture_current()["payload"]
+    frame = panel()
+    monkeypatch.setattr(screener, "build_screener_table", lambda *a, **k: pytest.fail("v2 never uses the v1 table"))
+    capture = ledger.ModelCapture("GABI-MF-v2", model_policy.FROZEN_WEIGHTS, "sec-metrics-v2.1",
+                                  ACTIVE_MODEL_CODE,
+                                  lambda: (pd.DataFrame({"symbol": frame.index}), frame.copy(deep=True)))
+    v2 = ledger.capture_current(model=capture)["payload"]
+    assert v2["model_id"] == "GABI-MF-v2" and v2["status"] == "SIGNAL" and len(v2["top_n"]) == 20
+    assert v2["configuration"]["metrics_version"] == "sec-metrics-v2.1"
+    assert set(ACTIVE_MODEL_CODE) <= set(v2["code_sha256"])
+    assert v2["config_version"] != v1["config_version"] and v2["model_version"] != v1["model_version"]
+    assert ledger.reproduce_decision(2)["ranking_matches"]
+    with pytest.raises(ValueError, match="varias versiones"):
+        live_report()
+
+
+def test_maintenance_records_the_sealed_and_the_active_model_in_one_chain(monkeypatch):
+    periodic_tasks = build_periodic_tasks(config.DATA_DIR)
+    setup_capture(monkeypatch, panel())
+    monkeypatch.setattr(periodic_tasks, "status", lambda: {})
+    monkeypatch.setattr(periodic_tasks, "record_due", lambda: [])
+    monkeypatch.setattr(periodic_tasks, "smallmid_step", lambda: {})
+    report = periodic_tasks.run(refresh=False)
+    assert report["ledger"]["status"] == "SIGNAL"
+    # The temporary cache has no universe file: the active model records NO_SIGNAL, never skips the day.
+    assert report["ledger_activo"] == {**report["ledger_activo"], "model_id": "GABI-MF-v2", "status": "NO_SIGNAL"}
+    assert [e["payload"]["model_id"] for e in ledger.events()] == [model_policy.FROZEN_MODEL_ID, "GABI-MF-v2"]
+    assert ledger.verify_integrity() == {"ok": True, "seq": 2, "hash": report["ledger_activo"]["record_hash"]}
 
 
 def test_empty_universe_is_no_signal_instead_of_a_silently_missing_execution(monkeypatch):

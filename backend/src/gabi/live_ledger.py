@@ -3,6 +3,8 @@
 import argparse
 import hashlib
 import json
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import numpy as np
@@ -151,39 +153,66 @@ def provenance(symbols: list[str]) -> dict:
     return _safe(result)
 
 
-def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT") -> dict:
-    names = ("scoring.py", "domain/market/scoring.py", "metrics.py", "domain/market/fundamentals.py", "technicals.py", "domain/market/technicals.py",
+@dataclass(frozen=True)
+class ModelCapture:
+    """Another declared model version recorded in the same chain (#290, ADR 0008).
+
+    ``ranking`` returns (universe, scored table) from the cache, never downloading. Without a
+    ModelCapture the decision is the sealed GABI-MF-v1 one, byte for byte as before."""
+    model_id: str
+    weights: Mapping[str, float]
+    metrics_version: str
+    code: tuple[str, ...]
+    ranking: Callable[[], tuple[pd.DataFrame, pd.DataFrame]]
+
+
+def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT",
+                   model: ModelCapture | None = None) -> dict:
+    names: tuple[str, ...] = ("scoring.py", "domain/market/scoring.py", "metrics.py", "domain/market/fundamentals.py", "technicals.py", "domain/market/technicals.py",
              "risk.py", "domain/market/risk.py", "domain/market/model_policy.py", "screener.py", "domain/market/events.py", "domain/market/insiders.py", "edgar.py", "domain/market/sec_facts.py",
              "live_ledger.py", "domain/research/live_performance.py", "evidence_confidence.py", "domain/market/evidence.py",
              "application/market/evidence_assessment.py", "evidence_catalog.py", "domain/research/evidence_catalog.py",
              "application/research/evidence_catalog.py",
              "infrastructure/storage/evidence_catalog.py", "infrastructure/storage/published_factors.py",
              "workspace.py", "__init__.py", "infrastructure/operational_settings.py")
+    if model is not None:
+        names = (*names, *model.code)
+        weights = dict(model.weights)
     hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
     specification = {"weights": weights if weights is not None else dict(model_policy.FROZEN_WEIGHTS),
                      "universe_id": universe_id, "top_n": 20, "coverage": .70,
                      "ranking": "descending composite, ascending ticker", "report_cost_per_side": .001}
+    if model is not None:
+        specification["metrics_version"] = model.metrics_version
     dirty = research_environment.working_tree_modified(config.BASE_DIR, "backend/src/gabi")
-    return {"model_id": model_policy.FROZEN_MODEL_ID, "configuration": specification,
+    return {"model_id": model.model_id if model is not None else model_policy.FROZEN_MODEL_ID,
+            "configuration": specification,
             "config_version": fingerprint(specification), "model_version": fingerprint({"spec": specification, "code": hashes}),
             "git_commit": research_lab._current_git_commit(), "working_tree_modified": dirty,
             "code_sha256": hashes, "dependencies": research_lab._dependency_versions(),
             "environment_fingerprint": research_lab._env_fingerprint()}
 
 
-def capture_current(*, run_error: str | None = None, maintenance: dict | None = None) -> dict:
-    """Read cached inputs and append the actual current decision, including failures."""
+def capture_current(*, run_error: str | None = None, maintenance: dict | None = None,
+                    model: ModelCapture | None = None) -> dict:
+    """Read cached inputs and append the actual current decision, including failures.
+
+    ``model``: record another declared version instead of the sealed GABI-MF-v1 (#290)."""
     from . import evidence_confidence, screener
 
+    weights = dict(model.weights) if model is not None else dict(model_policy.FROZEN_WEIGHTS)
     now = _now()
     market = last_completed_session(now)
-    payload = {"market_date": market, **model_metadata(), "status": "ERROR", "reason": run_error,
+    payload = {"market_date": market, **model_metadata(model=model), "status": "ERROR", "reason": run_error,
                "universe": [], "eligible": [], "ranking": [], "top_n": [], "excluded": {}, "sources": {},
                "inputs": [], "maintenance": maintenance or {}, "quality": {"fresh": False}}
     try:
-        universe = screener.get_universe()
+        if model is not None:
+            universe, table = model.ranking()
+        else:
+            universe = screener.get_universe()
+            table = screener.build_screener_table(universe, weights=weights)
         symbols = universe.symbol.tolist()
-        table = screener.build_screener_table(universe, weights=dict(model_policy.FROZEN_WEIGHTS))
         if table.empty:
             table = table.reindex(columns=["composite_score", "score_coverage"])
         if table.index.has_duplicates:
@@ -255,7 +284,7 @@ def capture_current(*, run_error: str | None = None, maintenance: dict | None = 
         try:
             context = {k: payload[k] for k in ("model_id", "model_version", "config_version", "git_commit", "data_fingerprint")}
             table.attrs["sources"] = payload["sources"]
-            evidence = evidence_confidence.build(table, dict(model_policy.FROZEN_WEIGHTS), now=timestamp, market_date=actual_market, context=context)
+            evidence = evidence_confidence.build(table, weights, now=timestamp, market_date=actual_market, context=context)
             payload["evidence"] = {s: evidence[s] for s in payload.get("proposed_top_n", [])}
         except Exception as exc:
             payload["evidence_error"] = f"{type(exc).__name__}: {exc}"
