@@ -9,7 +9,7 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.application.research.historical import _json_value
-from gabi.domain.market import current_reports
+from gabi.domain.market import current_reports, tenk_flags
 
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 DATASETS = ("surprises", "estimates", "insiders", "current_reports")
@@ -57,9 +57,9 @@ def _row(values: dict, keys: tuple[str, ...]) -> dict:
 class CompanyResearch:
     def __init__(self, store: ResearchStore, events: Callable[[str, date], list[dict]],
                  filings: Callable[[str], list[dict]], math: CompanyMath, today: Callable[[], date],
-                 *, reports: Callable[[str], dict] | None = None):
+                 *, reports: Callable[..., dict] | None = None, facts: Callable[[str, str], dict] | None = None):
         self.store, self.events, self.filings, self.math, self.today = store, events, filings, math, today
-        self.reports = reports
+        self.reports, self.facts = reports, facts
 
     def overview(self, symbol: str) -> dict:
         """Upcoming dated events, the surprise history and the latest consensus capture (current quarter)."""
@@ -123,3 +123,18 @@ class CompanyResearch:
         return {"symbol": symbol, "version": current_reports.VERSION, "cik": stored["cik"],
                 "captured_at": stored["captured_at"], "total": len(rows), "reports": reports,
                 "review_items": [current_reports.classify(code) for code in current_reports.REVIEW_ITEMS]}
+
+    def accounting_flags(self, symbol: str) -> dict:
+        """Accounting warning signs of ``tenk-flags-v1`` (#293) at today's date, from the local SEC data only.
+
+        ``facts(symbol, as_of)`` returns the company facts filed by ``as_of``; the index rows are
+        filtered by filing date in the rules. Nothing is downloaded.
+        """
+        symbol = normalize_symbol(symbol)
+        as_of = self.today()
+        index = (self.reports(symbol, forms=current_reports.FORMS + tenk_flags.FILING_FORMS)
+                 if self.reports else None)
+        facts = self.facts(symbol, as_of.isoformat()) if self.facts else {"facts": {"us-gaap": {}}}
+        result = tenk_flags.evaluate(facts, index if index and index.get("cik") else None, as_of)
+        return {"symbol": symbol, **result,
+                "note": "Una señal pide revisar la empresa; no dice que haya que vender ni que haya un fraude."}

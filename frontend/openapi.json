@@ -1,6 +1,138 @@
 {
   "components": {
     "schemas": {
+      "AccountingFlag": {
+        "properties": {
+          "key": {
+            "enum": [
+              "amended_10k",
+              "late_10k",
+              "auditor_change",
+              "restatement",
+              "receivables",
+              "accruals",
+              "dilution"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountingFlagSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "alerta",
+              "sin_alerta",
+              "no_evaluable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "status",
+          "rule",
+          "threshold",
+          "values",
+          "source",
+          "reason"
+        ],
+        "title": "AccountingFlag",
+        "type": "object"
+      },
+      "AccountingFlagSource": {
+        "properties": {
+          "accession": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accession"
+          },
+          "filed_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed Date"
+          },
+          "form": {
+            "title": "Form",
+            "type": "string"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          }
+        },
+        "required": [
+          "form",
+          "accession",
+          "filed_date",
+          "period_end"
+        ],
+        "title": "AccountingFlagSource",
+        "type": "object"
+      },
       "Alternative": {
         "additionalProperties": false,
         "properties": {
@@ -4347,6 +4479,50 @@
           "values"
         ],
         "title": "ChecklistThresholdsRequest",
+        "type": "object"
+      },
+      "CompanyAccountingFlags": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/AccountingFlag"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "version",
+          "as_of",
+          "flags",
+          "counts",
+          "note"
+        ],
+        "title": "CompanyAccountingFlags",
         "type": "object"
       },
       "CompanyChecklistResponse": {
@@ -11253,7 +11429,8 @@
               "estimaciones",
               "insiders",
               "tendencia",
-              "8k"
+              "8k",
+              "contable"
             ],
             "title": "Kind",
             "type": "string"
@@ -22047,6 +22224,102 @@
           }
         },
         "summary": "Company",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/accounting-flags": {
+      "get": {
+        "description": "Accounting warning signs from structured SEC data (#293); never downloads.",
+        "operationId": "company_accounting_flags_api_v1_companies__symbol__accounting_flags_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyAccountingFlags"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Accounting Flags",
         "tags": [
           "market"
         ]

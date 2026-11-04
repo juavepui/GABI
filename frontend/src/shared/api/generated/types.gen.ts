@@ -5,6 +5,65 @@ export type ClientOptions = {
 };
 
 /**
+ * AccountingFlag
+ */
+export type AccountingFlag = {
+    /**
+     * Key
+     */
+    key: 'amended_10k' | 'late_10k' | 'auditor_change' | 'restatement' | 'receivables' | 'accruals' | 'dilution';
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Rule
+     */
+    rule: string;
+    source: AccountingFlagSource | null;
+    /**
+     * Status
+     */
+    status: 'alerta' | 'sin_alerta' | 'no_evaluable';
+    /**
+     * Threshold
+     */
+    threshold: number | null;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * AccountingFlagSource
+ */
+export type AccountingFlagSource = {
+    /**
+     * Accession
+     */
+    accession: string | null;
+    /**
+     * Filed Date
+     */
+    filed_date: string | null;
+    /**
+     * Form
+     */
+    form: string;
+    /**
+     * Period End
+     */
+    period_end: string | null;
+};
+
+/**
  * Alternative
  */
 export type Alternative = {
@@ -2226,6 +2285,38 @@ export type ChecklistThresholdsRequest = {
     values: {
         [key: string]: number;
     };
+};
+
+/**
+ * CompanyAccountingFlags
+ */
+export type CompanyAccountingFlags = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Counts
+     */
+    counts: {
+        [key: string]: number;
+    };
+    /**
+     * Flags
+     */
+    flags: Array<AccountingFlag>;
+    /**
+     * Note
+     */
+    note: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Version
+     */
+    version: string;
 };
 
 /**
@@ -5876,7 +5967,7 @@ export type IdeaAlert = {
     /**
      * Kind
      */
-    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia' | '8k';
+    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia' | '8k' | 'contable';
     /**
      * Message
      */
@@ -11650,6 +11741,56 @@ export type CompanyApiV1CompaniesSymbolGetResponses = {
 };
 
 export type CompanyApiV1CompaniesSymbolGetResponse = CompanyApiV1CompaniesSymbolGetResponses[keyof CompanyApiV1CompaniesSymbolGetResponses];
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/accounting-flags';
+};
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetError = CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetErrors[keyof CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetErrors];
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyAccountingFlags;
+};
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponse = CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponses[keyof CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponses];
 
 export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetData = {
     body?: never;
