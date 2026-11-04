@@ -154,7 +154,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     session = session or (lambda: last_completed_session(datetime.now(UTC)))
     model = model or active_model()
     policy = model_policy(model)
-    repository = ReadOnlyMarket(settings, calculators(model.technical), policy, model.benchmark_symbol,
+    repository = ReadOnlyMarket(settings, calculators(model.technical, input_checks=model.input_checks), policy, model.benchmark_symbol,
                                 model.risk_free_rate, metrics_version=model.metrics_version)
     model_queries = ModelQueries(repository, policy)
     market = MarketQueries(repository, model_queries, today, session)

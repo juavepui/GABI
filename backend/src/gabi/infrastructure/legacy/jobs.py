@@ -76,7 +76,7 @@ class LegacyExecutor:
 
             model = active_model()
             policy = model_policy(model)
-            calculator = calculators(model.technical)
+            calculator = calculators(model.technical, input_checks=model.input_checks)
             # The comparison's baseline is the V1 ranking, whatever metrics the active version uses.
             market = ReadOnlyMarket(self.settings, calculator, policy, model.benchmark_symbol, model.risk_free_rate,
                                     metrics_version=SEC_METRICS_V1)
@@ -97,6 +97,8 @@ class LegacyExecutor:
                 market.close()
         if command.kind == "ranking_parity":
             return self._ranking_parity(progress)
+        if command.kind == "input_checks":
+            return self._input_checks(progress)
         if command.kind == "idea_alerts":
             from gabi.infrastructure.legacy.idea_alerts import run_idea_alerts
 
@@ -129,7 +131,7 @@ class LegacyExecutor:
             assert command.decision_policy is not None and command.holdings_text is not None
             model = active_model()
             policy = model_policy(model)
-            market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
+            market = ReadOnlyMarket(self.settings, calculators(model.technical, input_checks=model.input_checks), policy, model.benchmark_symbol,
                                     model.risk_free_rate, metrics_version=model.metrics_version)
             try:
                 service = Decisions(market, SqliteDecisions(self.settings.data_dir), policy, date.today,
@@ -153,7 +155,7 @@ class LegacyExecutor:
             assert command.snapshot_id is not None
             model = active_model()
             policy = model_policy(model)
-            market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
+            market = ReadOnlyMarket(self.settings, calculators(model.technical, input_checks=model.input_checks), policy, model.benchmark_symbol,
                                     model.risk_free_rate, metrics_version=model.metrics_version)
             try:
                 monitor = SignalMonitor(SqliteSignals(self.settings.data_dir), market, policy,
@@ -323,7 +325,7 @@ class LegacyExecutor:
         model = active_model()
         policy = model_policy(model)
         # The ranking the app shows: the active version, its weights and metrics.
-        market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
+        market = ReadOnlyMarket(self.settings, calculators(model.technical, input_checks=model.input_checks), policy, model.benchmark_symbol,
                                 model.risk_free_rate, metrics_version=model.metrics_version)
         today, weights = self.today(), dict(policy.weights)
         try:
@@ -334,6 +336,45 @@ class LegacyExecutor:
                 historical=lambda symbols, day: (self.parity_engine or self._historical_engine)(symbols, day, weights),
                 weights=weights, score_metrics=metric_blocks()[1], model_id=model.model_id,
                 metrics_version=model.metrics_version, today=today,
+                progress=progress or (lambda share, phase: None))
+        finally:
+            market.close()
+
+    def _input_checks(self, progress: Callable[[float, str], None] | None) -> dict:
+        """#295: every plausibility mark over the cached universe, and whether the active model applies them."""
+        from gabi.application.market.input_checks_report import report
+        from gabi.domain.market.fundamentals import compute_fundamental_metrics
+        from gabi.domain.market.sec_facts import SHARES_TAGS
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+        from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+        model = active_model()
+        market = ReadOnlyMarket(self.settings, calculators(model.technical), model_policy(model),
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+        database = self.settings.data_dir / "gabi.db"
+        cache, sec = SqliteCacheReads(database), SqliteSecReads(database)
+
+        def shares(symbol: str) -> float | None:
+            frame = sec.issuer_facts(symbol, tags=list(SHARES_TAGS), unit="shares")
+            if frame.empty:
+                return None
+            latest = frame.dropna(subset=["val"]).sort_values(["end_date", "filed_date"])
+            return float(latest["val"].iloc[-1]) if len(latest) else None
+
+        try:
+            market.connect()
+            market.discover()
+            return report(
+                universe=lambda: [str(symbol) for symbol in market.universe(
+                    market.small_file("sp500_constituents.csv"))["symbol"]],
+                fundamentals=lambda symbols: market.fundamentals(tuple(symbols)),
+                compute=compute_fundamental_metrics,
+                closes=lambda symbols: market.closes(tuple(symbols), self.settings.max_price_rows_per_batch),
+                splits=cache.split_dates, shares=shares, model_id=model.model_id,
+                applied=model.input_checks is not None,
                 progress=progress or (lambda share, phase: None))
         finally:
             market.close()
