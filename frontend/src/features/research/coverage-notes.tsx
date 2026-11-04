@@ -17,9 +17,9 @@ export function HistoricalCoverageNotes({
           <strong>Capa histórica 2010–2015</strong>: identidad SEC acreditada{' '}
           {layer.identity_accredited}/{layer.members} · precio acreditado {layer.accredited_prices}/
           {layer.members} ({Math.round((100 * layer.accredited_prices) / members)} %) · con score{' '}
-          {layer.scored}. Solo se usan datos con origen en la SEC, nunca los guardados por símbolo. Las
-          exclusiones están sesgadas hacia empresas que salen del índice y de menor tamaño: no uses
-          este periodo para afirmar que se bate al S&amp;P 500 sin las correcciones del #33.
+          {layer.scored}. Solo se usan datos con origen en la SEC, nunca los guardados por símbolo.
+          Las exclusiones están sesgadas hacia empresas que salen del índice y de menor tamaño: no
+          uses este periodo para afirmar que se bate al S&amp;P 500 sin las correcciones del #33.
           <span className="mt-1 block text-xs text-muted-foreground">
             Excluidas:{' '}
             {Object.entries(layer.excluded)
@@ -41,8 +41,8 @@ export function HistoricalCoverageNotes({
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        {total} empresas en la tabla · {coverage.with_fundamentals} con datos de sus cuentas de entonces
-        · {coverage.with_price} con precio/capitalización de esa fecha ·{' '}
+        {total} empresas en la tabla · {coverage.with_fundamentals} con datos de sus cuentas de
+        entonces · {coverage.with_price} con precio/capitalización de esa fecha ·{' '}
         {coverage.sector_approximate} con sector aproximado (no hay dato de la época) ·{' '}
         {coverage.no_sector} sin ningún sector conocido.
       </p>

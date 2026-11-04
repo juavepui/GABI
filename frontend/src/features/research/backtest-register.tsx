@@ -127,7 +127,8 @@ export function BacktestRegister({ sourceJobId }: { sourceJobId: string }) {
       {register.isError && <ErrorState error={register.error} retry={() => register.mutate()} />}
       {job.data && registered == null && (
         <p className="mt-3 text-muted-foreground">
-          Registro #{job.data.id.slice(0, 8)} · {job.data.phase} · {JOB_STATES[job.data.status] ?? job.data.status}
+          Registro #{job.data.id.slice(0, 8)} · {job.data.phase} ·{' '}
+          {JOB_STATES[job.data.status] ?? job.data.status}
         </p>
       )}
       {job.data?.status === 'failed' && (

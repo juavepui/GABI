@@ -198,8 +198,8 @@ export function ResearchLabPage() {
         title="Laboratorio de experimentos"
         description={
           <>
-            Cada experimento con datos del pasado, con sus reglas, la versión exacta del código y
-            su resultado, y herramientas para saber si un buen resultado puede ser suerte.
+            Cada experimento con datos del pasado, con sus reglas, la versión exacta del código y su
+            resultado, y herramientas para saber si un buen resultado puede ser suerte.
           </>
         }
         guide={
@@ -210,11 +210,11 @@ export function ResearchLabPage() {
               muestra) o con el seguimiento real con datos nuevos (en vivo).
             </p>
             <p>
-              Las herramientas de abajo responden a una pregunta: <em>¿este resultado puede ser
-              suerte?</em> El PSR y el DSR miden si la rentabilidad por riesgo resiste el poco
-              historial y las muchas variantes probadas; el PBO, si elegir «la mejor» variante es
-              sobre todo ruido; la incertidumbre por bloques da un rango en vez de un único
-              número.
+              Las herramientas de abajo responden a una pregunta:{' '}
+              <em>¿este resultado puede ser suerte?</em> El PSR y el DSR miden si la rentabilidad
+              por riesgo resiste el poco historial y las muchas variantes probadas; el PBO, si
+              elegir «la mejor» variante es sobre todo ruido; la incertidumbre por bloques da un
+              rango en vez de un único número.
             </p>
           </>
         }

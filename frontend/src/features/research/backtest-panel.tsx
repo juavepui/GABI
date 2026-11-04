@@ -397,10 +397,9 @@ function Panel({
           </div>
         </AdvancedOptions>
         <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
-          Decide el umbral de cambio y los costes antes de ver el resultado: cambiarlos después
-          para que salga mejor invalida la prueba. Con todas las empresas y varios años puede
-          tardar 20–30 minutos. Los datos tienen que estar preparados antes; esta tarea no descarga
-          nada.
+          Decide el umbral de cambio y los costes antes de ver el resultado: cambiarlos después para
+          que salga mejor invalida la prueba. Con todas las empresas y varios años puede tardar
+          20–30 minutos. Los datos tienen que estar preparados antes; esta tarea no descarga nada.
         </p>
         <Button
           className="w-fit"
@@ -427,7 +426,8 @@ function Panel({
         <section className="rounded-xl border bg-card p-5">
           <h3 className="font-semibold">Trabajo #{job.data.id.slice(0, 8)}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            {job.data.phase} · {job.data.progress} % · {JOB_STATES[job.data.status] ?? job.data.status}
+            {job.data.phase} · {job.data.progress} % ·{' '}
+            {JOB_STATES[job.data.status] ?? job.data.status}
           </p>
           {['queued', 'running'].includes(job.data.status) && (
             <Button

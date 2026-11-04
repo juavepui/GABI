@@ -132,7 +132,8 @@ export function BacktestFactors({
       {run.isError && <ErrorState error={run.error} retry={() => run.mutate()} />}
       {job.data && job.data.status !== 'succeeded' && (
         <p className="mt-3 text-muted-foreground">
-          Contraste #{job.data.id.slice(0, 8)} · {job.data.phase} · {JOB_STATES[job.data.status] ?? job.data.status}
+          Contraste #{job.data.id.slice(0, 8)} · {job.data.phase} ·{' '}
+          {JOB_STATES[job.data.status] ?? job.data.status}
           {['queued', 'running'].includes(job.data.status) && (
             <Button
               className="ml-3"

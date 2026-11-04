@@ -65,7 +65,8 @@ export function PrepareData({
       {run.isError && <ErrorState error={run.error} retry={() => run.mutate()} />}
       {job.data && job.data.status !== 'succeeded' && (
         <p className="text-muted-foreground">
-          Preparación #{job.data.id.slice(0, 8)} · {job.data.phase} · {JOB_STATES[job.data.status] ?? job.data.status}
+          Preparación #{job.data.id.slice(0, 8)} · {job.data.phase} ·{' '}
+          {JOB_STATES[job.data.status] ?? job.data.status}
           {['queued', 'running'].includes(job.data.status) && (
             <Button
               className="ml-3"

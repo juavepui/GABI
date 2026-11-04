@@ -185,7 +185,8 @@ export function FactorPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="font-semibold">Trabajo #{job.data.id.slice(0, 8)}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {job.data.phase} · {job.data.progress} % · {JOB_STATES[job.data.status] ?? job.data.status}
+            {job.data.phase} · {job.data.progress} % ·{' '}
+            {JOB_STATES[job.data.status] ?? job.data.status}
           </p>
           {['queued', 'running'].includes(job.data.status) && (
             <Button

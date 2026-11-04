@@ -141,9 +141,7 @@ export function ResearchPage() {
           <div className="rounded-xl border bg-card p-5">
             <p className="text-xs text-muted-foreground">¿Confirmado con datos nuevos?</p>
             <p className="mt-2 text-lg font-semibold">Todavía no</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Falta demostrar que gana al índice
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Falta demostrar que gana al índice</p>
           </div>
           <div className="rounded-xl border bg-card p-5">
             <p className="text-xs text-muted-foreground">Registro de pruebas</p>
@@ -279,8 +277,8 @@ export function ResearchPage() {
             ))}
           </ul>
           <p className="mt-4 text-xs text-muted-foreground">
-            Los datos guardados sin mirar para la prueba final y los resultados aún no publicados
-            no se consultan desde aquí.
+            Los datos guardados sin mirar para la prueba final y los resultados aún no publicados no
+            se consultan desde aquí.
           </p>
         </section>
       )}
