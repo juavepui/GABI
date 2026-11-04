@@ -49,6 +49,71 @@
         "title": "AnalysisPromptResponse",
         "type": "object"
       },
+      "AttributionPosition": {
+        "additionalProperties": false,
+        "properties": {
+          "contribution_pp": {
+            "title": "Contribution Pp",
+            "type": "number"
+          },
+          "gain_eur": {
+            "title": "Gain Eur",
+            "type": "number"
+          },
+          "open": {
+            "title": "Open",
+            "type": "boolean"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "sector",
+          "gain_eur",
+          "contribution_pp",
+          "open"
+        ],
+        "title": "AttributionPosition",
+        "type": "object"
+      },
+      "AttributionSector": {
+        "additionalProperties": false,
+        "properties": {
+          "contribution_pp": {
+            "title": "Contribution Pp",
+            "type": "number"
+          },
+          "gain_eur": {
+            "title": "Gain Eur",
+            "type": "number"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sector",
+          "gain_eur",
+          "contribution_pp"
+        ],
+        "title": "AttributionSector",
+        "type": "object"
+      },
       "BacktestCurvePoint": {
         "properties": {
           "estrategia": {
@@ -7577,7 +7642,7 @@
             "type": "string"
           },
           "reason": {
-            "description": "missing_price | missing_fx | after_last_session",
+            "description": "missing_price | missing_fx | after_last_session | sale | dividend",
             "title": "Reason",
             "type": "string"
           },
@@ -10197,6 +10262,17 @@
             "title": "Id",
             "type": "integer"
           },
+          "kind": {
+            "default": "buy",
+            "description": "Compra, venta o dividendo cobrado",
+            "enum": [
+              "buy",
+              "sell",
+              "dividend"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "note": {
             "anyOf": [
               {
@@ -10210,7 +10286,7 @@
             "title": "Note"
           },
           "price": {
-            "description": "Precio por acción en `currency`",
+            "description": "Precio por acción en `currency`; en un dividendo, el importe bruto cobrado",
             "exclusiveMinimum": 0.0,
             "maximum": 1000000000.0,
             "title": "Price",
@@ -10222,8 +10298,10 @@
             "type": "string"
           },
           "shares": {
-            "exclusiveMinimum": 0.0,
+            "default": 0,
+            "description": "0 en un dividendo",
             "maximum": 1000000000.0,
+            "minimum": 0.0,
             "title": "Shares",
             "type": "number"
           },
@@ -10237,11 +10315,18 @@
             "format": "date-time",
             "title": "Updated At",
             "type": "string"
+          },
+          "withholding": {
+            "default": 0,
+            "description": "Retención sobre un dividendo, en `currency`",
+            "maximum": 1000000000.0,
+            "minimum": 0.0,
+            "title": "Withholding",
+            "type": "number"
           }
         },
         "required": [
           "symbol",
-          "shares",
           "price",
           "purchase_date",
           "id",
@@ -10249,6 +10334,64 @@
           "updated_at"
         ],
         "title": "Holding",
+        "type": "object"
+      },
+      "HoldingClosed": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "enum": [
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "dividends": {
+            "title": "Dividends",
+            "type": "integer"
+          },
+          "dividends_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dividends Eur"
+          },
+          "realized_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized Eur"
+          },
+          "sales": {
+            "title": "Sales",
+            "type": "integer"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "currency",
+          "realized_eur",
+          "dividends_eur",
+          "sales",
+          "dividends"
+        ],
+        "title": "HoldingClosed",
         "type": "object"
       },
       "HoldingCreate": {
@@ -10286,6 +10429,17 @@
             "description": "Euros por unidad de `currency` que aplicó el bróker; vacío = caché",
             "title": "Fx Rate"
           },
+          "kind": {
+            "default": "buy",
+            "description": "Compra, venta o dividendo cobrado",
+            "enum": [
+              "buy",
+              "sell",
+              "dividend"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "note": {
             "anyOf": [
               {
@@ -10299,7 +10453,7 @@
             "title": "Note"
           },
           "price": {
-            "description": "Precio por acción en `currency`",
+            "description": "Precio por acción en `currency`; en un dividendo, el importe bruto cobrado",
             "exclusiveMinimum": 0.0,
             "maximum": 1000000000.0,
             "title": "Price",
@@ -10311,8 +10465,10 @@
             "type": "string"
           },
           "shares": {
-            "exclusiveMinimum": 0.0,
+            "default": 0,
+            "description": "0 en un dividendo",
             "maximum": 1000000000.0,
+            "minimum": 0.0,
             "title": "Shares",
             "type": "number"
           },
@@ -10321,11 +10477,18 @@
             "minLength": 1,
             "title": "Symbol",
             "type": "string"
+          },
+          "withholding": {
+            "default": 0,
+            "description": "Retención sobre un dividendo, en `currency`",
+            "maximum": 1000000000.0,
+            "minimum": 0.0,
+            "title": "Withholding",
+            "type": "number"
           }
         },
         "required": [
           "symbol",
-          "shares",
           "price",
           "purchase_date"
         ],
@@ -10483,6 +10646,22 @@
             "title": "Currency",
             "type": "string"
           },
+          "dividends": {
+            "title": "Dividends",
+            "type": "integer"
+          },
+          "dividends_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dividendos cobrados, netos de retención",
+            "title": "Dividends Eur"
+          },
           "first_purchase": {
             "format": "date",
             "title": "First Purchase",
@@ -10531,6 +10710,18 @@
             "description": "Rentabilidad de precio en `currency`, sin dividendos",
             "title": "Price Return"
           },
+          "realized_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ganancia realizada con las ventas, a coste medio",
+            "title": "Realized Eur"
+          },
           "return_eur": {
             "anyOf": [
               {
@@ -10541,6 +10732,10 @@
               }
             ],
             "title": "Return Eur"
+          },
+          "sales": {
+            "title": "Sales",
+            "type": "integer"
           },
           "sector": {
             "anyOf": [
@@ -10658,7 +10853,11 @@
           "spy_value_eur",
           "spy_return_eur",
           "weight_pct",
-          "status"
+          "status",
+          "realized_eur",
+          "dividends_eur",
+          "sales",
+          "dividends"
         ],
         "title": "HoldingPosition",
         "type": "object"
@@ -10681,9 +10880,31 @@
             ],
             "title": "Cost Eur"
           },
+          "dividends_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dividends Eur"
+          },
           "positions": {
             "title": "Positions",
             "type": "integer"
+          },
+          "realized_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized Eur"
           },
           "return_eur": {
             "anyOf": [
@@ -10728,6 +10949,8 @@
           "value_eur",
           "return_eur",
           "spy_return_eur",
+          "realized_eur",
+          "dividends_eur",
           "valued",
           "positions",
           "complete"
@@ -10829,6 +11052,104 @@
         "title": "HoldingsBenchmarkResult",
         "type": "object"
       },
+      "HoldingsPerformance": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "attribution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerformanceAttribution"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "base_currency": {
+            "const": "EUR",
+            "title": "Base Currency",
+            "type": "string"
+          },
+          "benchmark": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerformanceBenchmark"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blocked": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PerformanceBlocked"
+            },
+            "title": "Blocked",
+            "type": "array"
+          },
+          "gap_sessions": {
+            "default": 0,
+            "title": "Gap Sessions",
+            "type": "integer"
+          },
+          "gaps": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PerformanceGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "note": {
+            "default": "Valor diario con los cierres y cambios guardados; los días sin precio se listan y no se rellenan. El S&P 500 (SPY con dividendos reinvertidos, en euros) recibe el mismo dinero los mismos días. El pasado no garantiza el futuro.",
+            "title": "Note",
+            "type": "string"
+          },
+          "pending_eur": {
+            "default": 0.0,
+            "title": "Pending Eur",
+            "type": "number"
+          },
+          "portfolio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerformanceRisk"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "blocked",
+              "no_movements",
+              "no_complete_session"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "as_of",
+          "base_currency",
+          "status"
+        ],
+        "title": "HoldingsPerformance",
+        "type": "object"
+      },
       "HoldingsSummary": {
         "additionalProperties": false,
         "properties": {
@@ -10854,6 +11175,13 @@
             ],
             "title": "Benchmark As Of"
           },
+          "closed": {
+            "items": {
+              "$ref": "#/components/schemas/HoldingClosed"
+            },
+            "title": "Closed",
+            "type": "array"
+          },
           "deviations": {
             "items": {
               "$ref": "#/components/schemas/HoldingDeviation"
@@ -10876,7 +11204,7 @@
             "type": "array"
           },
           "note": {
-            "default": "Valores con el último cierre en caché, sin dividendos. SPY se compra con los mismos euros en las mismas fechas. Consultar no descarga precios; ninguna orden se envía a ningún sitio.",
+            "default": "Valores con el último cierre en caché. Las ventas y los dividendos cobrados se muestran aparte (ganancia realizada y dividendos netos). SPY se compra con los mismos euros en las mismas fechas. Consultar no descarga precios; ninguna orden se envía a ningún sitio.",
             "title": "Note",
             "type": "string"
           },
@@ -10917,6 +11245,7 @@
           "base_currency",
           "lots",
           "positions",
+          "closed",
           "totals",
           "benchmark_as_of",
           "deviations",
@@ -15027,6 +15356,511 @@
           "amount_eur"
         ],
         "title": "PendingContribution",
+        "type": "object"
+      },
+      "PerformanceAttribution": {
+        "additionalProperties": false,
+        "properties": {
+          "bought_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bought Eur"
+          },
+          "gain_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gain Eur"
+          },
+          "positions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AttributionPosition"
+            },
+            "title": "Positions",
+            "type": "array"
+          },
+          "return_on_bought": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return On Bought"
+          },
+          "sectors": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AttributionSector"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "no_purchases"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PerformanceAttribution",
+        "type": "object"
+      },
+      "PerformanceBenchmark": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "final_value_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Value Eur"
+          },
+          "max_drawdown": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown"
+          },
+          "missing": {
+            "default": [],
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "missing_sessions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Sessions"
+          },
+          "money_weighted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Money Weighted"
+          },
+          "net_contributed_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Contributed Eur"
+          },
+          "peak_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Date"
+          },
+          "recovered_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovered Date"
+          },
+          "series": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PerformancePoint"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "sessions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessions"
+          },
+          "shortfall_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Eur"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "missing_prices"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trough_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trough Date"
+          },
+          "twr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twr"
+          },
+          "twr_annualised": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twr Annualised"
+          },
+          "volatility": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volatility"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PerformanceBenchmark",
+        "type": "object"
+      },
+      "PerformanceBlocked": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "kind": {
+            "enum": [
+              "buy",
+              "sell",
+              "dividend"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "missing_fx",
+              "after_last_session"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "date",
+          "kind",
+          "reason"
+        ],
+        "title": "PerformanceBlocked",
+        "type": "object"
+      },
+      "PerformanceGap": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "required": [
+          "date",
+          "symbols"
+        ],
+        "title": "PerformanceGap",
+        "type": "object"
+      },
+      "PerformancePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "nav": {
+            "description": "Valor de una participación: base 1 el primer día",
+            "title": "Nav",
+            "type": "number"
+          },
+          "value_eur": {
+            "title": "Value Eur",
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "value_eur",
+          "nav"
+        ],
+        "title": "PerformancePoint",
+        "type": "object"
+      },
+      "PerformanceRisk": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "final_value_eur": {
+            "title": "Final Value Eur",
+            "type": "number"
+          },
+          "max_drawdown": {
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "money_weighted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rentabilidad anual del dinero invertido (TIR); vacía con menos de un año",
+            "title": "Money Weighted"
+          },
+          "net_contributed_eur": {
+            "description": "Compras − ventas − dividendos netos, en euros",
+            "title": "Net Contributed Eur",
+            "type": "number"
+          },
+          "peak_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Date"
+          },
+          "recovered_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovered Date"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/PerformancePoint"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "sessions": {
+            "title": "Sessions",
+            "type": "integer"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "trough_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trough Date"
+          },
+          "twr": {
+            "description": "Rentabilidad ponderada por tiempo: no la cambian aportaciones ni retiradas",
+            "title": "Twr",
+            "type": "number"
+          },
+          "twr_annualised": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twr Annualised"
+          },
+          "volatility": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Desviación típica anualizada de los retornos diarios",
+            "title": "Volatility"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "sessions",
+          "final_value_eur",
+          "net_contributed_eur",
+          "twr",
+          "twr_annualised",
+          "money_weighted",
+          "max_drawdown",
+          "peak_date",
+          "trough_date",
+          "recovered_date",
+          "volatility",
+          "series"
+        ],
+        "title": "PerformanceRisk",
         "type": "object"
       },
       "PeriodQualityWarning": {
@@ -26961,6 +27795,88 @@
           }
         },
         "summary": "Lots",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/holdings/performance": {
+      "get": {
+        "description": "Read-only (#294): daily evolution, returns, risk and attribution; never downloads.",
+        "operationId": "performance_api_v1_portfolio_holdings_performance_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingsPerformance"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Performance",
         "tags": [
           "portfolio"
         ]

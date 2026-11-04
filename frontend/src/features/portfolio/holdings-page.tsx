@@ -1,11 +1,17 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import type { Holding, HoldingCreate, HoldingsSummary } from '@/shared/api/generated/types.gen';
+import type {
+  Holding,
+  HoldingCreate,
+  HoldingsPerformance,
+  HoldingsSummary,
+} from '@/shared/api/generated/types.gen';
 import {
   createHolding,
   deleteHolding,
   getHoldings,
+  getHoldingsPerformance,
   getJobResult,
   importHoldings,
   updateHolding,
@@ -20,9 +26,17 @@ import { Folded } from '@/shared/ui/folded';
 import { PageHeader } from '@/shared/ui/page-header';
 import { ProgressBar } from '@/shared/ui/progress-bar';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { dateLabel, formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { Term } from '@/shared/ui/term';
+
+const PerformanceChart = lazy(() => import('./holdings-performance-chart'));
 
 const KEY = ['portfolio', 'holdings'];
+const KINDS: Record<string, { name: string; article: string }> = {
+  buy: { name: 'compra', article: 'una compra' },
+  sell: { name: 'venta', article: 'una venta' },
+  dividend: { name: 'dividendo', article: 'un dividendo' },
+};
 const STATUS: Record<string, string> = {
   ok: '',
   missing_price: 'No hay precio guardado',
@@ -38,9 +52,12 @@ const points = (value: number | null | undefined) =>
 
 function lotBody(form: FormData): HoldingCreate {
   const fx = String(form.get('fx_rate') ?? '').trim();
+  const kind = String(form.get('kind') ?? 'buy') as HoldingCreate['kind'];
   return {
     symbol: String(form.get('symbol') ?? '').trim(),
-    shares: Number(form.get('shares')),
+    kind,
+    shares: kind === 'dividend' ? 0 : Number(form.get('shares')),
+    withholding: kind === 'dividend' ? Number(form.get('withholding') || 0) : 0,
     price: Number(form.get('price')),
     purchase_date: String(form.get('purchase_date') ?? ''),
     currency: String(form.get('currency') ?? 'USD') as HoldingCreate['currency'],
@@ -50,7 +67,7 @@ function lotBody(form: FormData): HoldingCreate {
   };
 }
 
-/** The same fields to register a purchase and to correct one. */
+/** The same fields to register a purchase, a sale or a dividend and to correct one. */
 function LotForm({
   lot,
   label,
@@ -62,6 +79,8 @@ function LotForm({
   pending: boolean;
   onSubmit: (body: HoldingCreate) => void;
 }) {
+  const [kind, setKind] = useState(lot?.kind ?? 'buy');
+  const dividend = kind === 'dividend';
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit(lotBody(new FormData(event.currentTarget)));
@@ -69,23 +88,38 @@ function LotForm({
   return (
     <form onSubmit={submit} className="grid gap-3 sm:grid-cols-4">
       <label className="text-sm font-medium">
+        Tipo de movimiento
+        <NativeSelect
+          name="kind"
+          className="mt-1 w-full"
+          value={kind}
+          onChange={(event) => setKind(event.target.value as typeof kind)}
+        >
+          <option value="buy">Compra</option>
+          <option value="sell">Venta</option>
+          <option value="dividend">Dividendo cobrado</option>
+        </NativeSelect>
+      </label>
+      <label className="text-sm font-medium">
         Símbolo
         <Input className="mt-1" name="symbol" defaultValue={lot?.symbol} maxLength={20} required />
       </label>
+      {!dividend && (
+        <label className="text-sm font-medium">
+          Acciones
+          <Input
+            className="mt-1"
+            name="shares"
+            type="number"
+            min={0}
+            step="any"
+            defaultValue={lot?.shares}
+            required
+          />
+        </label>
+      )}
       <label className="text-sm font-medium">
-        Acciones
-        <Input
-          className="mt-1"
-          name="shares"
-          type="number"
-          min={0}
-          step="any"
-          defaultValue={lot?.shares}
-          required
-        />
-      </label>
-      <label className="text-sm font-medium">
-        Precio por acción
+        {dividend ? 'Importe bruto cobrado' : 'Precio por acción'}
         <Input
           className="mt-1"
           name="price"
@@ -96,8 +130,21 @@ function LotForm({
           required
         />
       </label>
+      {dividend && (
+        <label className="text-sm font-medium">
+          Retención (impuesto descontado)
+          <Input
+            className="mt-1"
+            name="withholding"
+            type="number"
+            min={0}
+            step="any"
+            defaultValue={lot?.withholding ?? 0}
+          />
+        </label>
+      )}
       <label className="text-sm font-medium">
-        Fecha de compra
+        Fecha
         <Input
           className="mt-1"
           name="purchase_date"
@@ -114,17 +161,19 @@ function LotForm({
           <option value="GBP">GBP</option>
         </NativeSelect>
       </label>
-      <label className="text-sm font-medium">
-        Comisión (en esa divisa)
-        <Input
-          className="mt-1"
-          name="commission"
-          type="number"
-          min={0}
-          step="any"
-          defaultValue={lot?.commission ?? 0}
-        />
-      </label>
+      {!dividend && (
+        <label className="text-sm font-medium">
+          Comisión (en esa divisa)
+          <Input
+            className="mt-1"
+            name="commission"
+            type="number"
+            min={0}
+            step="any"
+            defaultValue={lot?.commission ?? 0}
+          />
+        </label>
+      )}
       <label className="text-sm font-medium">
         Cambio aplicado: euros por cada dólar/libra (opcional)
         <Input
@@ -162,19 +211,29 @@ function LotRow({ lot, changed }: { lot: Holding; changed: () => void }) {
   const remove = useMutation({ mutationFn: () => deleteHolding(lot.id), onSuccess: changed });
   const currency = lot.currency ?? 'USD';
   const commission = lot.commission ?? 0;
+  const kind = KINDS[lot.kind ?? 'buy'];
   return (
     <li className="py-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span>
-          <span className="font-medium">{lot.symbol}</span> ·{' '}
-          {formatNumber(lot.shares, { digits: 4 })} acciones a {money(lot.price, currency)} el{' '}
-          {lot.purchase_date}
+          <span className="font-medium">{lot.symbol}</span> · {kind.name}:{' '}
+          {lot.kind === 'dividend' ? (
+            <>
+              {money(lot.price, currency)} brutos ({money(lot.withholding, currency)} de retención)
+              el {lot.purchase_date}
+            </>
+          ) : (
+            <>
+              {formatNumber(lot.shares, { digits: 4 })} acciones a {money(lot.price, currency)} el{' '}
+              {lot.purchase_date}
+            </>
+          )}
           {commission > 0 && <> · comisión {money(commission, currency)}</>}
           {lot.note && <span className="ml-2 text-muted-foreground">{lot.note}</span>}
         </span>
         <span className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditing(!editing)}>
-            {editing ? 'Cancelar' : 'Editar compra de ' + lot.symbol}
+            {editing ? 'Cancelar' : `Editar ${kind.name} de ${lot.symbol}`}
           </Button>
           <Button
             variant="outline"
@@ -182,7 +241,7 @@ function LotRow({ lot, changed }: { lot: Holding; changed: () => void }) {
             pending={remove.isPending}
             onClick={() => remove.mutate()}
           >
-            Borrar compra de {lot.symbol}
+            Borrar {kind.name} de {lot.symbol}
           </Button>
         </span>
       </div>
@@ -255,8 +314,14 @@ function Totals({ summary }: { summary: HoldingsSummary }) {
     [
       'Cuánto has ganado o perdido',
       pct(totals.return_eur),
-      'Solo por el precio, sin contar dividendos',
+      'Lo que aún tienes, solo por el precio',
     ],
+    [
+      'Ganado al vender',
+      eur(totals.realized_eur),
+      'Diferencia entre lo cobrado y lo que costaron esas acciones (a coste medio)',
+    ],
+    ['Dividendos cobrados', eur(totals.dividends_eur), 'Netos de la retención'],
     [
       'El S&P 500 (SPY) en el mismo tiempo',
       pct(totals.spy_return_eur),
@@ -266,7 +331,7 @@ function Totals({ summary }: { summary: HoldingsSummary }) {
     ],
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
       {cards.map(([label, value, hint]) => (
         <div key={label} className="rounded-xl border bg-card p-4">
           <p className="text-xs text-muted-foreground">{label}</p>
@@ -421,6 +486,200 @@ function Deviations({ summary }: { summary: HoldingsSummary }) {
   );
 }
 
+const BLOCKED: Record<string, string> = {
+  missing_fx: 'falta el cambio de moneda de ese día',
+  after_last_session: 'es posterior al último precio guardado',
+};
+
+function RiskCards({ risk }: { risk: NonNullable<HoldingsPerformance['portfolio']> }) {
+  const fall =
+    risk.max_drawdown < 0
+      ? `Del ${dateLabel(risk.peak_date)} al ${dateLabel(risk.trough_date)}; ${
+          risk.recovered_date
+            ? 'recuperada el ' + dateLabel(risk.recovered_date)
+            : 'aún sin recuperar'
+        }`
+      : 'No ha caído desde ningún máximo';
+  const cards: [React.ReactNode, string, string][] = [
+    [
+      <Term key="twr" k="twr">
+        Rentabilidad de tus elecciones
+      </Term>,
+      pct(risk.twr),
+      risk.twr_annualised == null
+        ? 'Desde el principio; sin anualizar (menos de un año)'
+        : `${pct(risk.twr_annualised)} al año`,
+    ],
+    [
+      <Term key="mw" k="money_weighted">
+        Rentabilidad de tu dinero
+      </Term>,
+      risk.money_weighted == null ? '—' : pct(risk.money_weighted) + ' al año',
+      risk.money_weighted == null
+        ? 'Hace falta al menos un año de historia'
+        : 'Teniendo en cuenta cuándo metiste y sacaste dinero',
+    ],
+    [
+      <Term key="dd" k="max_drawdown">
+        La mayor caída desde un máximo
+      </Term>,
+      pct(risk.max_drawdown),
+      fall,
+    ],
+    [
+      <Term key="vol" k="volatility">
+        Cuánto se mueve (volatilidad)
+      </Term>,
+      risk.volatility == null ? '—' : formatPercent(risk.volatility) + ' al año',
+      'Cuanto más alta, más sube y baja de un día a otro',
+    ],
+  ];
+  return (
+    <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {cards.map(([label, value, hint], index) => (
+        <div key={index} className="rounded-lg border p-3">
+          <dt className="text-xs text-muted-foreground">{label}</dt>
+          <dd className="mt-1 text-lg font-semibold tabular-nums">{value}</dd>
+          <dd className="text-xs text-muted-foreground">{hint}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Evolución (#294): the daily series, returns, risk, attribution and the S&P 500 with the same euros. */
+function Evolution() {
+  const query = useQuery({
+    queryKey: [...KEY, 'performance'],
+    queryFn: ({ signal }) => getHoldingsPerformance(signal),
+  });
+  return (
+    <section aria-label="Evolución de tu cartera" className="rounded-xl border bg-card p-5">
+      <h2 className="text-xl font-semibold">Cómo ha ido tu cartera</h2>
+      {query.isPending && <LoadingState />}
+      {query.isError && <ErrorState error={query.error} retry={() => void query.refetch()} />}
+      {query.data && <EvolutionContent data={query.data} />}
+    </section>
+  );
+}
+
+function EvolutionContent({ data }: { data: HoldingsPerformance }) {
+  if (data.status === 'blocked')
+    return (
+      <p role="status" className="mt-2 text-sm">
+        No se puede calcular la evolución porque falta un dato de estos movimientos:{' '}
+        {(data.blocked ?? [])
+          .map((row) => `${row.symbol} del ${row.date} (${BLOCKED[row.reason] ?? row.reason})`)
+          .join('; ')}
+        . Pulsa «Actualizar precios de mi cartera» o anota el cambio que aplicó tu bróker.
+      </p>
+    );
+  if (data.status !== 'ok' || !data.portfolio)
+    return (
+      <p className="mt-2 text-sm">
+        Todavía no hay ningún día con precio para todas tus empresas. Actualiza los precios.
+      </p>
+    );
+  const risk = data.portfolio;
+  const spy = data.benchmark?.status === 'ok' && data.benchmark.twr != null ? data.benchmark : null;
+  const gaps = data.gaps ?? [];
+  const gapSessions = data.gap_sessions ?? 0;
+  const attribution = data.attribution?.status === 'ok' ? data.attribution : null;
+  return (
+    <div className="mt-3 space-y-4 text-sm">
+      <p>
+        Del {dateLabel(risk.start)} al {dateLabel(risk.end)} tu cartera ha rendido{' '}
+        <strong>{pct(risk.twr)}</strong>
+        {spy && (
+          <>
+            {' '}
+            frente al <strong>{pct(spy.twr)}</strong> del S&amp;P 500 con el mismo dinero los mismos
+            días ({risk.twr >= (spy.twr ?? 0) ? 'por encima' : 'por debajo'})
+          </>
+        )}
+        . El pasado no garantiza el futuro, y con poco tiempo la diferencia puede ser suerte.
+      </p>
+      <RiskCards risk={risk} />
+      <Suspense fallback={<LoadingState />}>
+        <PerformanceChart portfolio={risk.series} benchmark={spy?.series ?? []} />
+      </Suspense>
+      {spy && (
+        <Folded title="El S&P 500 con el mismo dinero" className="rounded-lg border p-3">
+          <RiskCards risk={spy as NonNullable<HoldingsPerformance['portfolio']>} />
+          <p className="mt-2 text-xs text-muted-foreground">
+            SPY con los dividendos reinvertidos, en euros: compra cuando tú compras y vende cuando
+            tú vendes o cobras un dividendo, por los mismos euros.
+            {spy.shortfall_eur
+              ? ` Faltó SPY para igualar ${eur(spy.shortfall_eur)} de retiradas.`
+              : ''}
+          </p>
+        </Folded>
+      )}
+      {attribution && (
+        <div>
+          <h3 className="font-medium">
+            <Term k="attribution">De dónde sale lo que has ganado</Term>
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Sobre los {eur(attribution.bought_eur)} que has comprado has ganado{' '}
+            {eur(attribution.gain_eur)} ({pct(attribution.return_on_bought)}): valor de hoy + ventas
+            + dividendos netos − compras. Los puntos de cada fila suman ese total.
+          </p>
+          <div className="mt-2 grid gap-4 lg:grid-cols-2">
+            <table className="w-full text-left text-xs" aria-label="Atribución por empresa">
+              <thead className="border-b text-muted-foreground">
+                <tr>
+                  <th className="py-1.5">Empresa</th>
+                  <th className="text-right">Ganancia (€)</th>
+                  <th className="text-right">Puntos %</th>
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {(attribution.positions ?? []).map((row) => (
+                  <tr key={row.symbol} className="border-b last:border-0">
+                    <td className="py-1.5">
+                      {row.symbol}
+                      {!row.open && <span className="text-muted-foreground"> · vendida</span>}
+                    </td>
+                    <td className="text-right">{eur(row.gain_eur)}</td>
+                    <td className="text-right">{points(row.contribution_pp)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <table className="w-full text-left text-xs" aria-label="Atribución por sector">
+              <thead className="border-b text-muted-foreground">
+                <tr>
+                  <th className="py-1.5">Sector</th>
+                  <th className="text-right">Ganancia (€)</th>
+                  <th className="text-right">Puntos %</th>
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {(attribution.sectors ?? []).map((row) => (
+                  <tr key={row.sector} className="border-b last:border-0">
+                    <td className="py-1.5">{row.sector}</td>
+                    <td className="text-right">{eur(row.gain_eur)}</td>
+                    <td className="text-right">{points(row.contribution_pp)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {gapSessions > 0 && (
+        <p className="text-xs text-muted-foreground" role="status">
+          {gapSessions} {gapSessions === 1 ? 'día se ha saltado' : 'días se han saltado'} porque
+          faltaba el precio o el cambio de alguna empresa (no se rellenan): por ejemplo, el{' '}
+          {gaps[0].date} ({gaps[0].symbols.join(', ')}).
+        </p>
+      )}
+      <p className="text-xs text-muted-foreground">{data.note}</p>
+    </div>
+  );
+}
+
 function ImportCsv({ changed }: { changed: () => void }) {
   const [text, setText] = useState('');
   const run = useMutation({
@@ -431,11 +690,14 @@ function ImportCsv({ changed }: { changed: () => void }) {
     },
   });
   return (
-    <Folded title="Importar tus compras desde un fichero de tu bróker (CSV)">
+    <Folded title="Importar tus movimientos desde un fichero de tu bróker (CSV)">
       <p className="text-xs text-muted-foreground">
         Formato genérico con cabecera <code>symbol,shares,price,date,currency,commission</code>{' '}
-        (fecha AAAA-MM-DD; divisa USD, EUR o GBP; comisión opcional). Con punto y coma como
-        separador se admite la coma decimal. Si una fila no es válida no se importa ninguna.
+        (fecha AAAA-MM-DD; divisa USD, EUR o GBP; comisión opcional). Para ventas y dividendos,
+        añade las columnas <code>type</code> (compra, venta o dividendo) y <code>withholding</code>{' '}
+        (retención); en un dividendo, <code>price</code> es el importe bruto cobrado. Con punto y
+        coma como separador se admite la coma decimal. Si una fila no es válida no se importa
+        ninguna.
       </p>
       <label className="block text-sm font-medium" htmlFor="holdings-csv">
         Contenido del CSV
@@ -452,12 +714,12 @@ function ImportCsv({ changed }: { changed: () => void }) {
         className="w-full"
       />
       <Button disabled={!text.trim()} pending={run.isPending} onClick={() => run.mutate()}>
-        Importar compras
+        Importar movimientos
       </Button>
       {run.isError && <ErrorState error={run.error} retry={() => run.reset()} />}
       {run.data && (
         <p role="status" className="text-sm">
-          Importadas {run.data.imported} compras.
+          Importados {run.data.imported} movimientos.
         </p>
       )}
     </Folded>
@@ -516,17 +778,19 @@ export function HoldingsPage() {
             </section>
           )}
           {data.positions.length > 0 && <Positions summary={data} />}
+          {data.lots.length > 0 && <Evolution />}
           {data.deviations.length > 0 && <Deviations summary={data} />}
-          <section aria-label="Registrar una compra" className="rounded-xl border bg-card p-5">
-            <h2 className="text-xl font-semibold">Registrar una compra</h2>
+          <section aria-label="Registrar un movimiento" className="rounded-xl border bg-card p-5">
+            <h2 className="text-xl font-semibold">Apuntar una compra, una venta o un dividendo</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Si tu bróker aplicó un tipo de cambio, anótalo en euros por unidad de la divisa; si
-              no, se usa el de la caché en la fecha de compra.
+              no, se usa el de la caché en esa fecha. No se puede vender más de lo que tenías ese
+              día ni apuntar un dividendo de una empresa que no tenías.
             </p>
             <div className="mt-4">
               <LotForm
                 key={formKey}
-                label="Guardar compra"
+                label="Guardar movimiento"
                 pending={add.isPending}
                 onSubmit={(body) => add.mutate(body)}
               />
@@ -535,8 +799,8 @@ export function HoldingsPage() {
           </section>
           <ImportCsv changed={changed} />
           {data.lots.length > 0 && (
-            <section aria-label="Compras registradas" className="rounded-xl border bg-card p-5">
-              <h2 className="text-xl font-semibold">Compras apuntadas</h2>
+            <section aria-label="Movimientos registrados" className="rounded-xl border bg-card p-5">
+              <h2 className="text-xl font-semibold">Movimientos apuntados</h2>
               <ul className="mt-2 divide-y">
                 {data.lots.map((lot) => (
                   <LotRow key={lot.id + ':' + lot.updated_at} lot={lot} changed={changed} />

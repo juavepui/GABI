@@ -14,6 +14,7 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.domain.portfolio import contributions as rules
+from gabi.domain.portfolio.holdings import kind as holding_kind
 from gabi.domain.portfolio.holdings import price_symbols
 from gabi.domain.portfolio.simulation import fx_symbol
 
@@ -125,7 +126,13 @@ class InvestorBenchmark:
     def holdings(self) -> dict:
         """Read-only: the real purchases against SPY bought with the same euros on the same sessions."""
         profile, saved = self._current()
-        lots = self.lots()
+        movements = self.lots()
+        # This comparison follows purchases only; sales and dividends (#294) are listed as excluded and
+        # the holdings performance compares them with the same flows.
+        lots = [lot for lot in movements if holding_kind(lot) == "buy"]
+        others = [{"id": lot.get("id"), "symbol": lot["symbol"], "purchase_date": lot["purchase_date"],
+                   "reason": "sale" if holding_kind(lot) == "sell" else "dividend"}
+                  for lot in movements if holding_kind(lot) != "buy"]
         if not lots:
             raise QueryError("no_holdings", "Mi cartera no tiene compras que comparar.", 404)
         start = min(date.fromisoformat(lot["purchase_date"]) for lot in lots) - timedelta(days=LOOKBACK_DAYS)
@@ -150,7 +157,7 @@ class InvestorBenchmark:
             "as_of": self.today().isoformat(), "profile_revision": saved["revision"],
             "profile_version": profile.version, "source": self._source(prices, euros_per_dollar),
             "portfolio": portfolio, "benchmark": benchmark, "comparison": rules.compare(portfolio, benchmark),
-            "excluded": real["excluded"], "incomplete_sessions": real["incomplete_sessions"],
+            "excluded": real["excluded"] + others, "incomplete_sessions": real["incomplete_sessions"],
             "portfolio_series": self._points(real["daily"]), "benchmark_series": self._points(spy["daily"]),
             "usd_share": usd_share,
             "scenarios": rules.scenarios(value, usd_share, profile.loss_tolerance) if value > 0 else [],

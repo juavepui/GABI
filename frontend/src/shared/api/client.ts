@@ -46,6 +46,7 @@ import type {
   HoldingCreate,
   HoldingDeleted,
   HoldingImportResult,
+  HoldingsPerformance,
   HoldingsSummary,
   HoldingsBenchmarkResult,
   InvestorBenchmarkResult,
@@ -779,6 +780,9 @@ export function getSimulationResult(id: number, signal?: AbortSignal): Promise<S
   return get('/api/v1/portfolio/simulations/' + id + '/result', signal);
 }
 
+export function getHoldingsPerformance(signal?: AbortSignal): Promise<HoldingsPerformance> {
+  return get('/api/v1/portfolio/holdings/performance', signal);
+}
 export function getHoldings(signal?: AbortSignal): Promise<HoldingsSummary> {
   return get('/api/v1/portfolio/holdings', signal);
 }

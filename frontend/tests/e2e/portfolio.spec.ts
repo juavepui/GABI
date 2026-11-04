@@ -206,19 +206,19 @@ test('el icono ⓘ explica un término y lleva al glosario de la Ayuda', async (
   await expect(page.locator('#termino-psr')).toContainText('Probabilistic Sharpe Ratio');
 });
 
-test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', async ({
+test('Mi cartera guarda, edita, importa y borra compras, ventas y dividendos sin descargar precios', async ({
   page,
 }) => {
   await page.goto('/cartera/mi-cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera', level: 1 })).toBeVisible();
-  const form = page.getByRole('region', { name: 'Registrar una compra' });
+  const form = page.getByRole('region', { name: 'Registrar un movimiento' });
   await form.getByLabel('Símbolo').fill('T000');
   await form.getByLabel('Acciones').fill('10');
   await form.getByLabel('Precio por acción').fill('100');
-  await form.getByLabel('Fecha de compra').fill('2026-06-01');
+  await form.getByLabel('Fecha').fill('2026-06-01');
   await form.getByLabel('Cambio aplicado: euros por cada dólar/libra (opcional)').fill('0.9');
-  await form.getByRole('button', { name: 'Guardar compra' }).click();
-  const lots = page.getByRole('region', { name: 'Compras registradas' });
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  const lots = page.getByRole('region', { name: 'Movimientos registrados' });
   await expect(lots).toContainText('T000');
   await page.reload(); // The lot survives a reload: it lives in the local database.
   await expect(lots).toContainText('10 acciones');
@@ -236,15 +236,41 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
   await lots.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(lots).toContainText('12 acciones');
 
-  await page.getByText('Importar tus compras desde un fichero de tu bróker (CSV)').click();
+  // #294: a sale never exceeds what was held that day; a dividend records its withholding.
+  await form.getByLabel('Tipo de movimiento').selectOption('sell');
+  await form.getByLabel('Símbolo').fill('T000');
+  await form.getByLabel('Acciones').fill('20');
+  await form.getByLabel('Precio por acción').fill('110');
+  await form.getByLabel('Fecha').fill('2026-07-01');
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  await expect(form.getByText(/ese día tenías 12/)).toBeVisible();
+  await form.getByLabel('Acciones').fill('2');
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  await expect(lots).toContainText('venta: 2 acciones');
+  await form.getByLabel('Tipo de movimiento').selectOption('dividend');
+  await form.getByLabel('Símbolo').fill('T000');
+  await form.getByLabel('Importe bruto cobrado').fill('6');
+  await form.getByLabel('Retención (impuesto descontado)').fill('0.9');
+  await form.getByLabel('Fecha').fill('2026-08-03');
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  await expect(lots).toContainText('dividendo:');
+  await expect(page.getByRole('region', { name: 'Posiciones' })).toContainText('10');
+  // Without EUR rates in the test cache the sale and dividend have no euros: the evolution says why.
+  const evolution = page.getByRole('region', { name: 'Evolución de tu cartera' });
+  await expect(evolution).toContainText('No se puede calcular la evolución');
+  await expect(evolution).toContainText(
+    'T000 del 2026-07-01 (falta el cambio de moneda de ese día)',
+  );
+
+  await page.getByText('Importar tus movimientos desde un fichero de tu bróker (CSV)').click();
   await page
     .getByLabel('Contenido del CSV')
     .fill('symbol,shares,price,date\nT001,1,50,2026-07-01\nT002,-1,50,2026-07-01');
-  await page.getByRole('button', { name: 'Importar compras' }).click();
+  await page.getByRole('button', { name: 'Importar movimientos' }).click();
   await expect(page.getByText(/línea 3/)).toBeVisible(); // One wrong row rejects the whole file.
   await page.getByLabel('Contenido del CSV').fill('symbol,shares,price,date\nT001,1,50,2026-07-01');
-  await page.getByRole('button', { name: 'Importar compras' }).click();
-  await expect(page.getByText('Importadas 1 compras.')).toBeVisible();
+  await page.getByRole('button', { name: 'Importar movimientos' }).click();
+  await expect(page.getByText('Importados 1 movimientos.')).toBeVisible();
   await expect(lots).toContainText('T001');
 
   await page.goto('/cartera');
@@ -256,9 +282,12 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
   await expect(page.getByText('Tiene en cuenta lo que ya tienes en Mi cartera')).toBeVisible();
 
   await page.goto('/cartera/mi-cartera');
+  // The purchase cannot go while its sale and dividend need its shares: they go first.
+  for (const name of ['Borrar venta de T000', 'Borrar dividendo de T000'])
+    await lots.getByRole('button', { name }).click();
   for (const symbol of ['T000', 'T001'])
     await lots.getByRole('button', { name: 'Borrar compra de ' + symbol }).click();
-  await expect(page.getByRole('region', { name: 'Compras registradas' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Movimientos registrados' })).toHaveCount(0);
 });
 
 test('formularios con valores del backend y «Opciones avanzadas» recordadas (#190)', async ({

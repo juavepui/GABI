@@ -123,7 +123,7 @@ class ExcludedLot(WireModel):
     id: int | None
     symbol: str
     purchase_date: date
-    reason: str = Field(description="missing_price | missing_fx | after_last_session")
+    reason: str = Field(description="missing_price | missing_fx | after_last_session | sale | dividend")
 
 
 class BenchmarkComparison(WireModel):

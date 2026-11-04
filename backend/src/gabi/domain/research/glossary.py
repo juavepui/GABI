@@ -6,6 +6,19 @@ TERMS: dict[str, tuple[str, str]] = {
             "Probabilidad de que la estrategia tenga de verdad una rentabilidad por riesgo (Sharpe) "
             "positiva, y no solo por suerte. Tiene en cuenta cuántos datos hay y si hubo sustos "
             "extremos: un Sharpe alto con pocos años de datos puede dar un PSR modesto."),
+    "twr": ("Rentabilidad ponderada por tiempo (TWR)",
+            "Cuánto han ganado tus inversiones sin que influya cuándo metiste o sacaste dinero. Es la cifra "
+            "que sirve para comparar tu forma de elegir con un índice: si metes mucho dinero justo antes de "
+            "una caída, la TWR no te castiga por ese momento, solo por lo que hicieron tus empresas."),
+    "money_weighted": ("Rentabilidad del dinero invertido (TIR)",
+                       "Lo que ha rendido al año tu dinero teniendo en cuenta cuánto y cuándo lo pusiste o lo "
+                       "sacaste. Es tu experiencia real: si metiste mucho antes de una subida, sale mejor que la "
+                       "TWR. Solo se calcula con al menos un año de historia."),
+    "attribution": ("Atribución de la rentabilidad",
+                    "De dónde sale lo que has ganado o perdido: cuántos puntos aporta cada empresa o sector. "
+                    "Ganancia de una empresa = lo que vale hoy + lo que cobraste al vender + dividendos netos − "
+                    "lo que pagaste al comprar; los puntos se calculan sobre todo lo que compraste y suman el "
+                    "total."),
     "dsr": ("DSR (Deflated Sharpe Ratio)",
             "Como el PSR, pero descontando cuántas variantes se probaron antes de elegir esta. Si "
             "pruebas 100 configuraciones, alguna saldrá bien por casualidad; el DSR resta esa ventaja "
