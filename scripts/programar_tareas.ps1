@@ -17,7 +17,8 @@ if (-not (Test-Path -LiteralPath $python)) {
 # El worker es un proceso aparte. Se inicia al abrir sesión y continúa aunque
 # se cierre el navegador. Las tareas programadas solo encolan comandos.
 $worker = New-ScheduledTaskAction -Execute $python -Argument "-m gabi_cli worker" -WorkingDirectory $repo
-$workerTrigger = New-ScheduledTaskTrigger -AtLogOn
+# Solo al iniciar sesión este usuario: sin -User, Windows exige permisos de administrador (#290).
+$workerTrigger = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
 Register-ScheduledTask -TaskName "GABI - worker local" -Action $worker -Trigger $workerTrigger `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Seconds 0)) `
     -Description "GABI #66: ejecuta la cola persistente local" -Force
