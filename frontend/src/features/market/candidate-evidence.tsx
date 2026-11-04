@@ -11,24 +11,9 @@ import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { Folded } from '@/shared/ui/folded';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber, formatPercent } from '@/shared/lib/format';
+import { metricLabel } from '@/shared/lib/metric-labels';
 
-// The 13 scored metrics (scoring.SCORE_METRICS), with the labels of the old pages.
-const METRIC_LABELS: Record<string, string> = {
-  pe: 'PER',
-  pb: 'Precio / valor contable',
-  ev_ebitda: 'EV/EBITDA',
-  roic: 'ROIC',
-  operating_margin: 'Margen operativo',
-  revenue_cagr_3y: 'Crecimiento de ventas (3 años)',
-  fcf_cagr_3y: 'Crecimiento de la caja libre (3 años)',
-  momentum_12m: 'Subida en 12 meses',
-  rel_strength_6m: 'Subida frente al mercado (6 meses)',
-  price_vs_sma200: 'Precio frente a su media de 200 días',
-  debt_to_equity: 'Deuda/Patrimonio',
-  volatility: 'Volatilidad anualizada (todo el histórico)',
-  max_drawdown: 'Caída máxima (todo el histórico)',
-};
-const label = (metric: string) => METRIC_LABELS[metric] ?? metric;
+const label = metricLabel;
 const num = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });
 const pct = (value: number | null | undefined, digits = 0) => formatPercent(value, { digits });
 

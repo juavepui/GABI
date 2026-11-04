@@ -13,6 +13,7 @@ export const JOB_NAMES: Record<string, string> = {
   benchmark_prices: 'Precios del benchmark S&P 500 en EUR',
   idea_alerts: 'Alertas del historial de ideas',
   metrics_comparison: 'Comparar métricas V1 y SEC V2',
+  ranking_parity: 'Comparar el ranking de la app con el cálculo histórico',
   decision_plan: 'Generar decisiones de cartera',
   filing_check: 'Comprobar filings SEC',
   historical_ranking: 'Ranking histórico',

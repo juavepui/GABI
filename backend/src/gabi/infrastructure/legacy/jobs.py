@@ -21,8 +21,10 @@ class LegacyExecutor:
                  tiingo_fetch: Callable[[list[str]], dict] | None = None,
                  tiingo_import: Callable[[], dict] | None = None,
                  macro_sync: Callable[..., dict] | None = None,
-                 sec_sync: Callable[..., dict] | None = None):
+                 sec_sync: Callable[..., dict] | None = None,
+                 parity_engine: Callable[[list[str], date, dict], pd.DataFrame] | None = None):
         self.settings = settings
+        self.parity_engine = parity_engine
         self.today = today
         self.insider_sync = insider_sync
         self.factor_loader = factor_loader
@@ -93,6 +95,8 @@ class LegacyExecutor:
                     progress=lambda done, total: progress(done / total, "Comparando métricas") if progress else None)
             finally:
                 market.close()
+        if command.kind == "ranking_parity":
+            return self._ranking_parity(progress)
         if command.kind == "idea_alerts":
             from gabi.infrastructure.legacy.idea_alerts import run_idea_alerts
 
@@ -308,6 +312,45 @@ class LegacyExecutor:
                 raise RuntimeError("La cola Tiingo ya está en curso.")
             return {"download": "completed"}
         raise ValueError("Unsupported job")
+
+    def _ranking_parity(self, progress: Callable[[float, str], None] | None) -> dict:
+        """#291: the app's ranking and the historical engine's for today, over the app's universe."""
+        from gabi.application.market.ranking_parity import compare_rankings
+        from gabi.infrastructure.legacy.market import calculators, metric_blocks, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+        model = active_model()
+        policy = model_policy(model)
+        # The ranking the app shows: the active version, its weights and metrics.
+        market = ReadOnlyMarket(self.settings, calculators(model.technical), policy, model.benchmark_symbol,
+                                model.risk_free_rate, metrics_version=model.metrics_version)
+        today, weights = self.today(), dict(policy.weights)
+        try:
+            return compare_rankings(
+                universe=lambda: [str(symbol) for symbol in market.universe(
+                    market.small_file("sp500_constituents.csv"))["symbol"]],
+                live=lambda: market.ranking(weights, today).table,
+                historical=lambda symbols, day: (self.parity_engine or self._historical_engine)(symbols, day, weights),
+                weights=weights, score_metrics=metric_blocks()[1], model_id=model.model_id,
+                metrics_version=model.metrics_version, today=today,
+                progress=progress or (lambda share, phase: None))
+        finally:
+            market.close()
+
+    def _historical_engine(self, symbols: list[str], day: date, weights: dict) -> pd.DataFrame:
+        """``screener_asof`` in the operational mode of #237, as the prospective ensemble reads it."""
+        from gabi import screener_asof
+        from gabi.infrastructure.legacy.ensemble_live import check_engine_data
+        from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+        check_engine_data(self.settings.data_dir)
+        members = set(symbols)
+        current = {symbol: f"cik:{int(cik):010d}" for symbol, cik in
+                   SqliteSecReads(self.settings.data_dir / "gabi.db").stored_ciks().items()
+                   if symbol in members and str(cik).strip().isdigit()}
+        return screener_asof.build_ranking_as_of(day.isoformat(), weights=weights, symbols=symbols,
+                                                 operational_entities=current)["table"]
 
 
 def quality_snapshot(data_dir: Path) -> dict:

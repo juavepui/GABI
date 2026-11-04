@@ -358,6 +358,30 @@ def synthetic_job(command, app):
         from gabi.infrastructure.legacy.jobs import LegacyExecutor
 
         return LegacyExecutor(app.state.settings, today=lambda: TODAY)(command)
+    if command.kind == "ranking_parity":  # The real worker path; only the historical engine is replaced.
+        from gabi.domain.market import scoring
+        from gabi.infrastructure.legacy.jobs import LegacyExecutor
+
+        def engine(symbols, day, weights):
+            """The app's own rows with the first company's PE tripled, as if the 10-K disagreed with Yahoo."""
+            from gabi.infrastructure.legacy.market import calculators, model_policy
+            from gabi.infrastructure.model_versions import active_model
+            from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+            model = active_model()
+            market = ReadOnlyMarket(app.state.settings, calculators(model.technical), model_policy(model),
+                                    model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+            try:
+                frame = market.ranking(weights, day).table
+            finally:
+                market.close()
+            frame = frame.drop(columns=[c for c in frame if c.endswith(("_pct", "_score"))])
+            first = frame["pe"].first_valid_index()
+            if first is not None:
+                frame.loc[first, "pe"] *= 3
+            return scoring.build_scores(frame, weights=weights)
+
+        return LegacyExecutor(app.state.settings, today=lambda: TODAY, parity_engine=engine)(command)
     if command.kind == "sim_compare":
         return app.state.simulations.compare()
     if command.kind == "quality":

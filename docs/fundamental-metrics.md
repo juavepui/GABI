@@ -98,3 +98,26 @@ fecha, motivos de ROIC y margen, años mezclados, múltiplos con denominadores
 ≤ 0 y EV con deuda o caja ausentes), además de los ya existentes para filings
 posteriores a la fecha (`test_screener_asof`, `test_edgar`) y restatements
 posteriores (`test_edgar_historical_pit`).
+
+## Ranking de la app frente al cálculo histórico (#291)
+
+La app (ranking operativo) toma PER, P/VC, EV/EBITDA, márgenes y deuda/patrimonio
+de Yahoo (últimos 12 meses o último trimestre, `domain/market/metric_sources.py`).
+Las pruebas con datos del pasado los calculan con las fórmulas de arriba (10-K
+anual y precio del día). El trabajo `ranking_parity` («Calidad de los datos»)
+calcula los dos rankings para hoy, con el universo, los pesos y la versión de
+modelo activos, y el histórico con `screener_asof` en modo `operational_entities`
+(#237). Publica:
+
+- el acuerdo de orden (Spearman) del ranking, de cada apartado y de cada métrica;
+- cuántas empresas comparten el Top-20;
+- las empresas que más cambian de puesto y la métrica cuya aportación a su
+  puntuación cambia más, con su valor, fuente y periodo en cada cálculo.
+
+La aportación de una métrica es peso del apartado / suma de pesos disponibles ×
+percentil / métricas disponibles del apartado; sumadas dan la puntuación
+compuesta (`metrics_comparison.contributions`). La lectura (≥ 0,9 «casi igual»,
+≥ 0,7 «se parecen») es orientativa, no un umbral de validación. No modifica
+`screener_asof`, `sec_facts` ni `valuation_expectations`. Con el resultado real,
+el propietario decide si declarar una versión nueva del modelo con métricas SEC
+(ADR 0008); eso es un cambio aparte.
