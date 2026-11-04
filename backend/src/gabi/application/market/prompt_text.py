@@ -97,6 +97,6 @@ NO me digas simplemente si crees que la acción "va a subir". Ayúdame a constru
 
 **Tesis bajista** — qué tendría que ser cierto para que NO funcione (ej. expansión de múltiplos excesiva + desaceleración del crecimiento + CAPEX elevado sin retorno claro).
 
-**Qué invalidaría la inversión** — condiciones concretas y medibles (ej. "margen bruto por debajo de X%" o "crecimiento de ingresos por debajo de Y%"). Usa las métricas de arriba como referencia para fijar X e Y de forma razonada, explicando tu razonamiento.
+**Qué invalidaría la inversión** — condiciones medibles sobre las métricas de arriba, indicando la métrica y en qué dirección tendría que moverse (ej. "que el margen bruto empeore frente a su sector" o "que el crecimiento de ingresos se frene"). No propongas umbrales numéricos nuevos: los umbrales los calcula GABI con datos (por ejemplo, percentiles del sector) o los fijo yo en la ficha de inversión.
 
 Regla importante: cualquier cifra financiera que cites debe ser una de las que te he dado arriba, o una que saques literalmente de los documentos fuente que te pegue — nunca una cifra inventada o estimada de memoria."""

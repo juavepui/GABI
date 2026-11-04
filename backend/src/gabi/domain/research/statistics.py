@@ -146,13 +146,17 @@ def deflated_sharpe_ratio(selected_sharpe: float, trial_sharpes: list, n_obs: in
 
 def bootstrap_sharpe_ci(returns: pd.Series, periods_per_year: float, risk_free_rate: float = 0.0,
                         n_boot: int = 2000, block_size: int = None, ci: float = 0.95,
-                        seed: int = None) -> dict:
+                        *, seed: int) -> dict:
     """Intervalo de confianza del Sharpe anualizado por bootstrap circular
     por bloques (preserva autocorrelación de una serie temporal real, a
     diferencia de remuestrear cada observación de forma independiente).
     `block_size` por defecto ~√n. Más robusto que la aproximación normal de
     `sharpe_standard_error`/`probabilistic_sharpe_ratio`, a costa de no dar
-    una fórmula cerrada."""
+    una fórmula cerrada.
+
+    `seed` es obligatoria (#296): el mismo cálculo da siempre el mismo intervalo."""
+    if isinstance(seed, bool) or not isinstance(seed, int):
+        raise TypeError("bootstrap_sharpe_ci necesita una semilla entera explícita.")
     returns = returns.dropna()
     n = len(returns)
     if n < 30:

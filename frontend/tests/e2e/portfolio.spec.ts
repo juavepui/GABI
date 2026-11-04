@@ -282,11 +282,17 @@ test('Mi cartera guarda, edita, importa y borra compras, ventas y dividendos sin
   await expect(page.getByText('Tiene en cuenta lo que ya tienes en Mi cartera')).toBeVisible();
 
   await page.goto('/cartera/mi-cartera');
-  // The purchase cannot go while its sale and dividend need its shares: they go first.
-  for (const name of ['Borrar venta de T000', 'Borrar dividendo de T000'])
+  // The purchase cannot go while its sale and dividend need its shares: they go first, and each
+  // deletion must have finished before the next one, or the server rightly refuses the purchase.
+  for (const name of [
+    'Borrar venta de T000',
+    'Borrar dividendo de T000',
+    'Borrar compra de T000',
+    'Borrar compra de T001',
+  ]) {
     await lots.getByRole('button', { name }).click();
-  for (const symbol of ['T000', 'T001'])
-    await lots.getByRole('button', { name: 'Borrar compra de ' + symbol }).click();
+    await expect(page.getByRole('button', { name })).toHaveCount(0);
+  }
   await expect(page.getByRole('region', { name: 'Movimientos registrados' })).toHaveCount(0);
 });
 
