@@ -30,7 +30,7 @@ def run_idea_alerts(settings: Settings, today: Callable[[], date],
 
     database = settings.data_dir / "gabi.db"
     model = active_model()
-    market = ReadOnlyMarket(settings, calculators(model.technical), model_policy(model), model.benchmark_symbol,
+    market = ReadOnlyMarket(settings, calculators(model.technical, input_checks=model.input_checks), model_policy(model), model.benchmark_symbol,
                             model.risk_free_rate, metrics_version=model.metrics_version)
     signals = SqliteSignals(settings.data_dir)
     try:

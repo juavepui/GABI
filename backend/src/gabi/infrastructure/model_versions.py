@@ -6,7 +6,7 @@ sealed snapshot of the studies. Changing the active model is a commit that chang
 
 from types import MappingProxyType
 
-from gabi.domain.market import sec_metrics_v2
+from gabi.domain.market import input_checks, sec_metrics_v2
 from gabi.domain.market.model_policy import FROZEN_LABEL, FROZEN_MODEL_ID, FROZEN_WEIGHTS
 from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.technicals import TechnicalParameters
@@ -23,8 +23,15 @@ GABI_MF_V2 = ModelVersion("GABI-MF-v2", "GABI multifactor v2 · métricas SEC V2
                           GABI_MF_V1.technical, benchmark_symbol="SPY", risk_free_rate=0.04,
                           metrics_version=sec_metrics_v2.VERSION)
 
-VERSIONS = MappingProxyType({version.model_id: version for version in (GABI_MF_V1, GABI_MF_V2)})
-ACTIVE_MODEL_ID = GABI_MF_V2.model_id
+# #295: GABI-MF-v2 with the plausibility policy input-checks-v1: an impossible Yahoo value or an
+# unexplained price jump scores as missing. Activated by the owner on 2026-11-04; it starts without evidence
+# and inherits none from GABI-MF-v2.
+GABI_MF_V3 = ModelVersion("GABI-MF-v3", "GABI multifactor v3 · métricas SEC V2.1 y controles de entrada",
+                          FROZEN_WEIGHTS, GABI_MF_V1.technical, benchmark_symbol="SPY", risk_free_rate=0.04,
+                          metrics_version=sec_metrics_v2.VERSION, input_checks=input_checks.VERSION)
+
+VERSIONS = MappingProxyType({version.model_id: version for version in (GABI_MF_V1, GABI_MF_V2, GABI_MF_V3)})
+ACTIVE_MODEL_ID = GABI_MF_V3.model_id
 
 
 def active_model(model_id: str = ACTIVE_MODEL_ID) -> ModelVersion:

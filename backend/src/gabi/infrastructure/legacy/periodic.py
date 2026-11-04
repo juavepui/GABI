@@ -17,7 +17,7 @@ from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 ACTIVE_MODEL_CODE = ("infrastructure/model_versions.py", "domain/market/model_version.py",
                      "domain/market/sec_metrics_v2.py", "application/market/stored_metrics_v2.py",
                      "application/market/ranking.py", "infrastructure/storage/market.py",
-                     "infrastructure/legacy/market.py")
+                     "infrastructure/legacy/market.py", "domain/market/input_checks.py")
 
 
 class LegacyPeriodicOperations:
@@ -114,7 +114,7 @@ class LegacyPeriodicOperations:
         model = active_model()
         if model.model_id == FROZEN_MODEL_ID:
             return None
-        market = ReadOnlyMarket(Settings(self.data_dir.resolve()), calculators(model.technical), model_policy(model),
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()), calculators(model.technical, input_checks=model.input_checks), model_policy(model),
                                 model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
 
         def ranking():

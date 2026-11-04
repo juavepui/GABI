@@ -6,6 +6,7 @@ from math import isfinite
 from types import MappingProxyType
 
 from gabi.domain.market import sec_metrics_v2
+from gabi.domain.market.input_checks import VERSION as INPUT_CHECKS_VERSION
 from gabi.domain.market.model_policy import FROZEN_WEIGHTS, model_status, weights_match_frozen
 from gabi.domain.market.technicals import TechnicalParameters
 
@@ -31,6 +32,8 @@ class ModelVersion:
     risk_free_rate: float
     sealed_hypothesis: bool = False
     metrics_version: str = SEC_METRICS_V1
+    # Plausibility policy applied before scoring (#295); None scores every value as it comes.
+    input_checks: str | None = None
 
     def __post_init__(self) -> None:
         if not self.model_id or self.model_id == "EXPERIMENTAL" or not self.label or not self.benchmark_symbol:
@@ -45,6 +48,10 @@ class ModelVersion:
             raise ValueError(f"Unknown SEC metrics version: {self.metrics_version}")
         if self.sealed_hypothesis and self.metrics_version != SEC_METRICS_V1:
             raise ValueError("The sealed hypothesis scores with the SEC metrics V1")
+        if self.input_checks not in (None, INPUT_CHECKS_VERSION):
+            raise ValueError(f"Unknown input checks: {self.input_checks}")
+        if self.sealed_hypothesis and self.input_checks is not None:
+            raise ValueError("The sealed hypothesis scores every value as it comes")
         if min(vars(self.technical).values()) <= 0:
             raise ValueError("Technical windows must be positive")
         object.__setattr__(self, "weights", MappingProxyType(dict(self.weights)))
