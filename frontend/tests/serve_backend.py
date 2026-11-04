@@ -271,6 +271,16 @@ def synthetic_job(command, app):
         from gabi.infrastructure.legacy.live_ledger import run_live_report
 
         return run_live_report(command.live_report["model_version"])
+    if command.kind == "company_sync" and command.company["dataset"] == "current_reports":
+        # #292: the real store and rules over the real SEC rows of the backend fixture, issued to the fixture CIK.
+        from gabi.infrastructure.legacy.company import sync_current_reports
+
+        rows = json.loads((Path(__file__).parents[2] / "backend" / "tests" / "fixtures" / "sec_8k_submissions.json")
+                          .read_text(encoding="utf-8"))["SMCI"]
+        failed = sync_current_reports(Path(app.state.settings.data_dir), command.company["symbol"],
+                                      submissions=lambda cik: {**rows, "cik": cik})
+        return {"kind": "company_sync", "symbol": command.company["symbol"], "dataset": "current_reports",
+                "synced": not failed, "reason": next(iter(failed.values()), None)}
     if command.kind == "company_sync":  # No network in tests: report a successful empty sync.
         return {"kind": "company_sync", "symbol": command.company["symbol"],
                 "dataset": command.company["dataset"], "synced": True, "reason": None}

@@ -1,6 +1,6 @@
 """Alerts of open ideas (#247): registered invalidation conditions and other available signals.
 
-Version ``idea-alerts-v1``. An alert only asks the investor to review the idea;
+Version ``idea-alerts-v2`` (v1 plus the 8-K review Items of #292). An alert only asks the investor to review the idea;
 nothing is ever traded. Every alert has a stable key, so running the job again
 adds nothing new. The kinds:
 
@@ -21,7 +21,7 @@ adds nothing new. The kinds:
 import math
 from datetime import date
 
-VERSION = "idea-alerts-v1"
+VERSION = "idea-alerts-v2"  # v2 (#292): 8-Ks with a review Item.
 ESTIMATE_CUT = -0.05
 TREND_GAP = -0.10
 TREND_DRAWDOWN = -0.20
@@ -154,6 +154,23 @@ def signals(published_on: str, *, filings: list[dict], surprises: list[dict], re
             alerts.append(_alert(f"tendencia:{level}", "tendencia",
                                  f"La idea va {excess * 100:+.1f} puntos frente al S&P 500 y llegó a caer "
                                  f"{drawdown * 100:.1f} % desde su máximo.", excess=excess, max_drawdown=drawdown))
+    return alerts
+
+
+def current_reports(published_on: str, reports: list[dict]) -> list[dict]:
+    """One alert per review Item (1.03, 3.01, 4.01, 4.02) of an 8-K filed after the idea was published."""
+    alerts = []
+    for report in reports:
+        filed = report.get("filed_date")
+        if not filed or filed <= published_on:
+            continue
+        for item in report.get("items") or []:
+            if item.get("review"):
+                alerts.append(_alert(f"8k:{report['accession']}:{item['code']}", "8k",
+                                     f"{report['form']} del {filed}: {item['label']} (Item {item['code']}). "
+                                     "Revisa si cambia la tesis; no es una orden de compra ni de venta.",
+                                     form=report["form"], filed=filed, item=item["code"],
+                                     accession=report["accession"], url=report.get("url")))
     return alerts
 
 

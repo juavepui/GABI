@@ -265,6 +265,20 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   await expect(page.getByText(/Sin operaciones de insiders en los últimos 6 meses/)).toBeVisible();
   await page.getByRole('button', { name: 'Actualizar insiders de esta empresa' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' }).last()).toBeVisible();
+  // Only one company job at a time: wait until the insiders one has finished too.
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toHaveCount(2);
+  // #292: 8-Ks by SEC Item, downloaded only by the explicit button.
+  await page.getByText('Hechos relevantes comunicados a la SEC (8-K)').click();
+  await expect(page.getByText(/Todavía no hay 8-K guardados/)).toBeVisible();
+  await page.getByRole('button', { name: 'Descargar los 8-K de esta empresa' }).click();
+  const reports = page.getByRole('table', { name: 'Hechos relevantes (8-K)' });
+  await expect(
+    reports.getByRole('row', { name: /Cambio de auditor \(4\.01\)/ }).first(),
+  ).toContainText('Revisar');
+  await expect(reports.getByRole('link', { name: '0001375365-24-000036' })).toHaveAttribute(
+    'href',
+    /sec\.gov\/Archives\/edgar\/data\/1\/000137536524000036\/smci-20241024\.htm$/,
+  );
   await page.getByText('Prompt para analizar con IA').click();
   await expect(page.getByLabel('Prompt para analizar con IA')).toHaveValue(
     /No recalcules estos números/,

@@ -4464,6 +4464,69 @@
         "title": "CompanyChecklistResponse",
         "type": "object"
       },
+      "CompanyCurrentReports": {
+        "properties": {
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "cik": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cik"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/CurrentReport"
+            },
+            "title": "Reports",
+            "type": "array"
+          },
+          "review_items": {
+            "items": {
+              "$ref": "#/components/schemas/CurrentReportItem"
+            },
+            "title": "Review Items",
+            "type": "array"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "version",
+          "cik",
+          "captured_at",
+          "total",
+          "reports",
+          "review_items"
+        ],
+        "title": "CompanyCurrentReports",
+        "type": "object"
+      },
       "CompanyEvent": {
         "properties": {
           "days_until": {
@@ -4979,7 +5042,8 @@
             "enum": [
               "surprises",
               "estimates",
-              "insiders"
+              "insiders",
+              "current_reports"
             ],
             "title": "Dataset",
             "type": "string"
@@ -5828,6 +5892,99 @@
           "idempotency_key"
         ],
         "title": "CreateJobRequest",
+        "type": "object"
+      },
+      "CurrentReport": {
+        "properties": {
+          "accession": {
+            "title": "Accession",
+            "type": "string"
+          },
+          "amendment": {
+            "title": "Amendment",
+            "type": "boolean"
+          },
+          "filed_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed Date"
+          },
+          "form": {
+            "title": "Form",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CurrentReportItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "review": {
+            "title": "Review",
+            "type": "boolean"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accession",
+          "form",
+          "amendment",
+          "filed_date",
+          "report_date",
+          "url",
+          "items",
+          "review"
+        ],
+        "title": "CurrentReport",
+        "type": "object"
+      },
+      "CurrentReportItem": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "review": {
+            "title": "Review",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "category",
+          "label",
+          "review"
+        ],
+        "title": "CurrentReportItem",
         "type": "object"
       },
       "CurvePoint": {
@@ -11095,7 +11252,8 @@
               "resultados",
               "estimaciones",
               "insiders",
-              "tendencia"
+              "tendencia",
+              "8k"
             ],
             "title": "Kind",
             "type": "string"
@@ -22174,6 +22332,102 @@
           }
         },
         "summary": "Company Checklist Sector",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/current-reports": {
+      "get": {
+        "description": "Downloaded 8-Ks with their SEC Items classified (#292); never downloads.",
+        "operationId": "company_current_reports_api_v1_companies__symbol__current_reports_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCurrentReports"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Current Reports",
         "tags": [
           "market"
         ]

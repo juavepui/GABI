@@ -64,7 +64,7 @@ class IdeaNote(WireModel):
 class IdeaAlert(WireModel):
     key: str
     kind: Literal["invalidacion", "revision_dato", "ausencia", "no_evaluable", "revision_vencida", "filing",
-                  "resultados", "estimaciones", "insiders", "tendencia"]
+                  "resultados", "estimaciones", "insiders", "tendencia", "8k"]
     detected_at: str
     message: str
     evidence: dict[str, Any]

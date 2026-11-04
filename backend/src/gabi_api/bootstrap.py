@@ -81,6 +81,7 @@ from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.checklist_reference import load_checklist_reference
 from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+from gabi.infrastructure.storage.current_reports import SqliteCurrentReports
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
@@ -219,7 +220,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.company_research = CompanyResearch(
         SqliteCompanyResearch(settings.data_dir), repository.company_events,
         lambda symbol: signals.compare_filings(symbol, *signals.repository.filing_facts(symbol)),
-        LegacyCompanyMath(), today)
+        LegacyCompanyMath(), today, reports=SqliteCurrentReports(settings.data_dir / "gabi.db").for_symbol)
     app.state.company_checklist = CompanyChecklist(
         SqliteSecReads(settings.data_dir / "gabi.db"), SqliteCacheReads(settings.data_dir / "gabi.db"),
         SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,
