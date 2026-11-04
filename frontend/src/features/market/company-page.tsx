@@ -11,6 +11,7 @@ import { useBlockEvidence, useCompany } from './queries';
 import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
 import {
+  AccountingFlags,
   AnalysisPrompt,
   CompanyResearch,
   CurrentReports,
@@ -436,6 +437,7 @@ export function CompanyPage() {
               <CompanyTheses symbol={company.symbol} />
             </div>
             <FilingChanges symbol={company.symbol} />
+            <AccountingFlags symbol={company.symbol} />
             <CurrentReports symbol={company.symbol} />
             <div className="mb-6 space-y-3">
               <CompanyResearch symbol={company.symbol} />

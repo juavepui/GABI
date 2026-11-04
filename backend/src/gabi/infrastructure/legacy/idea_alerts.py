@@ -12,6 +12,7 @@ def run_idea_alerts(settings: Settings, today: Callable[[], date],
     from gabi.application.market.company_research import CompanyResearch
     from gabi.application.portfolio import idea_alerts
     from gabi.application.portfolio.ideas import Ideas
+    from gabi.domain.market.sec_reads import companyfacts
     from gabi.infrastructure.legacy.company import LegacyCompanyMath
     from gabi.infrastructure.legacy.filings import compare_cached
     from gabi.infrastructure.legacy.market import calculators, model_policy
@@ -39,12 +40,15 @@ def run_idea_alerts(settings: Settings, today: Callable[[], date],
         research = CompanyResearch(SqliteCompanyResearch(settings.data_dir), market.company_events,
                                    lambda symbol: compare_cached(symbol, *signals.filing_facts(symbol)),
                                    LegacyCompanyMath(), today,
-                                   reports=SqliteCurrentReports(database).for_symbol)
+                                   reports=SqliteCurrentReports(database).for_symbol,
+                                   facts=lambda symbol, day: companyfacts(
+                                       SqliteSecReads(database).issuer_facts(symbol, as_of=day), day))
         cards = SqliteInvestmentCards(settings.data_dir)
         return idea_alerts.run(
             Ideas(SqliteIdeas(settings.data_dir), SqliteSimulations(settings.data_dir).prices, today),
             card=lambda card_id: cards.get(card_id) or {}, checklist=checklist.company,
-            filings=research.filing_changes, current_reports=research.current_reports, overview=research.overview, insiders=research.insiders, today=today,
+            filings=research.filing_changes, current_reports=research.current_reports,
+            accounting_flags=research.accounting_flags, overview=research.overview, insiders=research.insiders, today=today,
             progress=progress or (lambda share, message: None))
     finally:
         market.close()

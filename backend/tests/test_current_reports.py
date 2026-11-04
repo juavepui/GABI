@@ -82,7 +82,7 @@ def seed_metrics(path: Path, symbol: str, cik: str) -> None:
 def test_storage_is_idempotent_and_reads_never_create_the_table(tmp_path):
     database = tmp_path / "gabi.db"
     store = SqliteCurrentReports(database, lambda: NOW)
-    assert store.for_symbol("SMCI") == {"cik": None, "captured_at": None, "rows": []}
+    assert store.for_symbol("SMCI") == {"cik": None, "captured_at": None, "forms": None, "rows": []}
     assert not database.exists()  # A read on a missing database creates nothing.
     seed_metrics(database, "SMCI", "1375365")
     assert store.for_symbol("SMCI")["cik"] == "0001375365"

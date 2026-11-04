@@ -197,6 +197,33 @@ class CompanyCurrentReports(BaseModel):
     review_items: list[CurrentReportItem]
 
 
+class AccountingFlagSource(BaseModel):
+    form: str
+    accession: str | None
+    filed_date: str | None
+    period_end: str | None
+
+
+class AccountingFlag(BaseModel):
+    key: Literal["amended_10k", "late_10k", "auditor_change", "restatement", "receivables", "accruals", "dilution"]
+    label: str
+    status: Literal["alerta", "sin_alerta", "no_evaluable"]
+    rule: str
+    threshold: float | None
+    values: dict[str, Any]
+    source: AccountingFlagSource | None
+    reason: str | None
+
+
+class CompanyAccountingFlags(BaseModel):
+    symbol: str
+    version: str
+    as_of: str
+    flags: list[AccountingFlag]
+    counts: dict[str, int]
+    note: str
+
+
 class InsiderTransaction(BaseModel):
     transaction_date: str | None
     owner_name: str | None

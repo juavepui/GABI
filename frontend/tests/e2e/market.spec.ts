@@ -279,6 +279,13 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
     'href',
     /sec\.gov\/Archives\/edgar\/data\/1\/000137536524000036\/smci-20241024\.htm$/,
   );
+  // #293: accounting signs; with the index just downloaded the 10-K/A check is evaluable.
+  await page.getByText('Señales contables de alerta (10-K y 8-K)').click();
+  const signs = page.getByRole('table', { name: 'Señales contables' });
+  await expect(signs.getByRole('row', { name: /Cuentas anuales corregidas/ })).toContainText(
+    'Sin señal',
+  );
+  await expect(signs).toContainText('No se puede comprobar');
   await page.getByText('Prompt para analizar con IA').click();
   await expect(page.getByLabel('Prompt para analizar con IA')).toHaveValue(
     /No recalcules estos números/,
