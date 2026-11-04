@@ -38,6 +38,9 @@ sin crear una ganancia o una pérdida por sí mismo. Un contrasplit hace la oper
   bloquean la valoración; nunca se estima un split por un salto de precio.
   Las posiciones sin verificar se excluyen del plan de aportaciones y del panel de riesgo,
   que las declaran sin valorar.
+- El índice del perfil usa la caché que actualiza su propio botón «Actualizar
+  benchmark». Solo la comparación de compras reales usa los precios emparejados
+  de cartera; una copia antigua de cartera no oculta una actualización del índice.
 - Los snapshots se reemplazan solo mediante la actualización explícita. No hay
   caché de cálculos: las consultas leen las filas guardadas por empresa, con límite
   de 30 símbolos y 10000 sesiones por símbolo. Los GET no escriben ni descargan.

@@ -157,3 +157,29 @@ def test_alternatives_split_each_purchase_and_scenarios_use_the_dollar_exposure(
     assert result["usd_share"] == 1.0
     scenario = {row["id"]: row for row in result["scenarios"]}["euro_+10"]
     assert scenario["change_eur"] == pytest.approx(1080 * (1 / 1.1 - 1))
+
+
+def test_profile_benchmark_is_not_shadowed_by_an_older_holdings_snapshot(tmp_path):
+    from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
+
+    seed_fixture(tmp_path)
+    with closing(sqlite3.connect(tmp_path / 'gabi.db')) as db, db:
+        db.executemany("INSERT INTO prices(symbol,date,close,adj_close) VALUES('USDEUR=X',?,0.9,0.9)",
+                       [(day.date().isoformat(),) for day in pd.bdate_range(end=TODAY, periods=320)])
+    # The benchmark refresh writes shared prices through TODAY. A previous holdings
+    # refresh only had these older sessions: it must not hide the benchmark update.
+    older = pd.bdate_range(end='2026-09-22', periods=10)
+    snapshot = pd.DataFrame({'Close': 100., 'Adj Close': 100., 'Stock Splits': 0.}, index=older)
+    SqliteHoldingsMarket(tmp_path).save('SPY', snapshot, '2026-09-22T23:00:00+00:00')
+    with TestClient(create_app(Settings(tmp_path), today=lambda: TODAY)) as api:
+        assert api.post('/api/v1/portfolio/investor/profile', json=PROFILE).status_code == 201
+        response = api.get('/api/v1/portfolio/investor/benchmark')
+        assert response.status_code == 200, response.text
+        assert response.json()['source']['last_price'] == TODAY.isoformat()
+        assert response.json()['series'][-1]['date'] == TODAY.isoformat()
+        assert api.post('/api/v1/portfolio/holdings', json={
+            'symbol': 'T000', 'shares': 1, 'price': 100, 'currency': 'EUR',
+            'purchase_date': '2026-09-10'}).status_code == 201
+        comparison = api.get('/api/v1/portfolio/investor/holdings-benchmark')
+        assert comparison.status_code == 200, comparison.text
+        assert comparison.json()['source']['last_price'] == '2026-09-22'

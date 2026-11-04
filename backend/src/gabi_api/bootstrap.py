@@ -265,8 +265,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.simulations = simulations
     app.state.holdings = holdings
     app.state.investor = InvestorBenchmark(SqliteInvestorProfile(settings.data_dir),
-                                           SqliteHoldingsMarket(settings.data_dir).prices, today,
-                                           lots=holdings.lots)
+                                           SqliteSimulations(settings.data_dir).prices, today,
+                                           lots=holdings.lots,
+                                           holdings_prices=SqliteHoldingsMarket(settings.data_dir).prices)
     identity_reads = SqliteIdentityReads(settings.data_dir / "gabi.db")
 
     def issuers(symbols: list[str]) -> dict[str, str]:

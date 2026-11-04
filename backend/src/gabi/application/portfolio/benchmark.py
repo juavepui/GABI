@@ -70,9 +70,13 @@ def _series(frame: pd.DataFrame | None, column: str) -> pd.Series:
 class InvestorBenchmark:
     def __init__(self, store: ProfileStore, prices: Callable[[list[str], str], dict[str, pd.DataFrame]],
                  today: Callable[[], date], now: Callable[[], datetime] = lambda: datetime.now(UTC),
-                 lots: Callable[[], list[dict]] = list):
-        """`prices(symbols, start)` reads cached daily prices; `lots()` the real purchases of #181."""
+                 lots: Callable[[], list[dict]] = list,
+                 holdings_prices: Callable[[list[str], str], dict[str, pd.DataFrame]] | None = None):
+        """`prices` follows benchmark refreshes; `holdings_prices` follows paired holdings refreshes.
+
+        Separate readers prevent a holdings snapshot from hiding the benchmark job's updates."""
         self.store, self.prices, self.today, self.now, self.lots = store, prices, today, now, lots
+        self.holdings_prices = holdings_prices or prices
 
     def profile(self) -> dict | None:
         return self.store.latest()
@@ -136,7 +140,7 @@ class InvestorBenchmark:
         if not lots:
             raise QueryError("no_holdings", "Mi cartera no tiene compras que comparar.", 404)
         start = min(date.fromisoformat(lot["purchase_date"]) for lot in lots) - timedelta(days=LOOKBACK_DAYS)
-        histories = self.prices(price_symbols(lots), start.isoformat())
+        histories = self.holdings_prices(price_symbols(lots), start.isoformat())
         prices, euros_per_dollar = self._benchmark_series(histories)
         euros_per_unit = {currency: _series(histories.get(pair), "close")
                           for currency in {lot["currency"] for lot in lots}
