@@ -283,7 +283,7 @@ def prospective_plan(settings: Settings, args: argparse.Namespace) -> None:
     from gabi.infrastructure.statistics.prospective import ScipyNormalCDF
     from gabi.infrastructure.storage.prospective_plans import FileProspectivePlans
 
-    record = gabi_blind_plan() if args.gabi else plan(cdf=ScipyNormalCDF())
+    record = gabi_blind_plan() if args.gabi else plan(cdf=ScipyNormalCDF(rng=None))
     if args.write:
         writer = FileProspectivePlans(args.output or settings.data_dir.parent / "docs/prospective-plan")
         payload = publish_plan(record, writer, name="gabi-id1.json" if args.gabi else "plan.json")
