@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, DatabaseZap, RefreshCw, ShieldCheck } from 'lucide-react';
 import {
@@ -18,6 +18,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { WeightsEditor } from './weights-editor';
 import { ModeSelector } from './mode-selector';
 import { DataUpdate } from './data-update';
+import { UpdateAll } from './update-all';
+import { AdvancedOptions } from '@/shared/ui/advanced-options';
 import { KeyEditor } from './key-editor';
 import { SectionLinks } from '@/shared/ui/section-links';
 import { ProgressBar } from '@/shared/ui/progress-bar';
@@ -368,55 +370,65 @@ export function AdministrationPage() {
             <CardDescription>Abrir esta página no descarga nada; solo los botones.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <DataUpdate />
-            <p className="text-xs text-muted-foreground">
-              «Actualización completa» hace todo: revisa qué empresas forman hoy el S&amp;P 500,
-              descarga sus precios, sus cuentas y sus informes oficiales, los del propio índice y
-              los datos de la economía. Es la que GABI lanza solo cada día si las tareas automáticas
-              están instaladas.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => submit.mutate({ kind: 'refresh' })} pending={submit.isPending}>
-                Actualización completa
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => submit.mutate({ kind: 'quality' })}
-                pending={submit.isPending}
-              >
-                Comprobar qué datos faltan
-              </Button>
-            </div>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const items = symbols
-                  .toUpperCase()
-                  .split(/[\s,;]+/)
-                  .filter(Boolean);
-                submit.mutate({ kind: 'symbols', symbols: items });
-              }}
-              className="space-y-2"
-            >
-              <label htmlFor="symbols" className="block text-sm font-medium">
-                Descargar solo algunas empresas o fondos
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  id="symbols"
-                  className="flex-1"
-                  value={symbols}
-                  onChange={(event) => setSymbols(event.target.value)}
-                  placeholder="SPY, RSP"
-                />
-                <Button type="submit" variant="outline" pending={submit.isPending}>
-                  Descargar
-                </Button>
+            <UpdateAll
+              jobs={jobs.data?.jobs}
+              pending={submit.isPending && submit.variables?.kind === 'refresh'}
+              onStart={() => submit.mutate({ kind: 'refresh' })}
+            />
+            <AdvancedOptions id="data-downloads" title="Otras formas de descargar">
+              <div className="space-y-6">
+                <DataUpdate />
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const items = symbols
+                      .toUpperCase()
+                      .split(/[\s,;]+/)
+                      .filter(Boolean);
+                    submit.mutate({ kind: 'symbols', symbols: items });
+                  }}
+                  className="space-y-2"
+                >
+                  <label htmlFor="symbols" className="block font-medium">
+                    Descargar solo algunas empresas o fondos
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Para una empresa o un fondo concreto que te falte (por ejemplo, un ETF como
+                    SPY). Hasta diez símbolos separados por comas.
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      id="symbols"
+                      className="flex-1"
+                      value={symbols}
+                      onChange={(event) => setSymbols(event.target.value)}
+                      placeholder="SPY, RSP"
+                    />
+                    <Button type="submit" variant="outline" pending={submit.isPending}>
+                      Descargar
+                    </Button>
+                  </div>
+                </form>
+                <div className="space-y-2">
+                  <p className="font-medium">Comprobar qué datos faltan</p>
+                  <p className="text-xs text-muted-foreground">
+                    No descarga nada: revisa los datos guardados y cuenta a cuántas empresas les
+                    falta algo. El detalle completo está en{' '}
+                    <Link className="text-primary underline" to="/administracion/calidad">
+                      Calidad de los datos
+                    </Link>
+                    .
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => submit.mutate({ kind: 'quality' })}
+                    pending={submit.isPending}
+                  >
+                    Comprobar qué datos faltan
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Hasta diez símbolos separados por comas. Solo descarga lo que falte.
-              </p>
-            </form>
+            </AdvancedOptions>
           </CardContent>
         </Card>
         <Card>

@@ -9,6 +9,7 @@ test('un job local sigue después de recargar y publica un resultado verificable
   await expect(page.getByLabel('Valor (%)')).toHaveCount(0);
   const mobile = testInfo.project.name === 'mobile';
   const name = mobile ? 'Descargar símbolos indicados' : 'Auditar cobertura local';
+  await page.getByText('Otras formas de descargar').click();
   if (mobile) {
     await page.getByLabel('Descargar solo algunas empresas o fondos').fill('SPY');
     await page.getByRole('button', { name: 'Descargar', exact: true }).click();
@@ -34,9 +35,10 @@ test('actualizar datos resume los fallos, reintenta los fallidos y guarda claves
   page,
 }) => {
   await page.goto('/administracion');
-  const update = page.getByRole('region', { name: 'Actualizar datos' });
+  await page.getByText('Otras formas de descargar').click();
+  const update = page.getByRole('region', { name: 'Actualizar solo una parte' });
   await update.getByRole('combobox', { name: '¿Cuántas empresas?' }).selectOption('150');
-  await update.getByRole('button', { name: 'Actualizar datos' }).click();
+  await update.getByRole('button', { name: 'Actualizar estas empresas' }).click();
   const result = update.getByRole('region', { name: 'Resultado de la actualización' });
   await expect(result.getByText(/Actualización de 3 empresas/)).toBeVisible({ timeout: 15_000 });
   await expect(result.getByText(/empresas con fallos: 1/)).toBeVisible();
@@ -170,26 +172,33 @@ test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra p
     await route.fulfill({ response, json: body });
   });
   await page.goto('/administracion');
-  const update = page.getByRole('region', { name: 'Actualizar datos' });
-  await update.getByRole('button', { name: 'Actualizar datos' }).click();
+  await page.getByText('Otras formas de descargar').click();
+  const update = page.getByRole('region', { name: 'Actualizar solo una parte' });
+  await update.getByRole('button', { name: 'Actualizar estas empresas' }).click();
   await expect(page.getByRole('button', { name: /^Trabajos: \d+ en curso$/ })).toBeVisible();
   // Leave the page that launched it: the header keeps track of the job.
   await page.getByRole('link', { name: 'Descubrir', exact: true }).first().click();
   await expect(page).toHaveURL(/\/descubrir$/);
   allowCompletion = true;
   const toast = page.getByRole('status', { name: 'Avisos de trabajos' });
-  await expect(toast.getByText('Actualizar datos', { exact: true })).toBeVisible({
+  await expect(
+    toast.getByText('Actualizar una parte de las empresas', { exact: true }),
+  ).toBeVisible({
     timeout: 15_000,
   });
   await expect(toast.getByText(/Completado/)).toBeVisible();
   await page.getByRole('button', { name: /^Trabajos:/ }).click();
   const panel = page.getByRole('region', { name: 'Trabajos locales' });
   await expect(panel.getByText('Recientes')).toBeVisible();
-  await expect(panel.getByText('Actualizar datos', { exact: true }).first()).toBeVisible();
+  await expect(
+    panel.getByText('Actualizar una parte de las empresas', { exact: true }).first(),
+  ).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(panel).toHaveCount(0);
   await toast.getByRole('button', { name: 'Cerrar aviso' }).first().click();
-  await expect(toast.getByText('Actualizar datos', { exact: true })).toHaveCount(0);
+  await expect(
+    toast.getByText('Actualizar una parte de las empresas', { exact: true }),
+  ).toHaveCount(0);
 });
 
 test('botones, campos y desplegables comparten tamaño de letra y altura', async ({ page }) => {
