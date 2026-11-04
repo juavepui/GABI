@@ -230,9 +230,22 @@ class SmallmidNotice(BaseModel):
     analyzed: bool
 
 
+class PeriodicNotice(BaseModel):
+    """Whether the daily follow-up runs (#290): age of the newest live decision that did not fail."""
+
+    status: Literal["never", "late", "ok"]
+    last_run_at: str | None
+    last_status: str | None
+    last_working_at: str | None
+    business_days: int | None
+    max_business_days: int
+    model_id: str | None
+
+
 class NoticesResponse(BaseModel):
-    """Home notices: blind rebalances due within a week and the state of the #44 analysis."""
+    """Home notices: blind rebalances due within a week, the #44 analysis and the daily follow-up."""
 
     blind_rebalances: list[BlindRebalanceNotice]
     blind_available: bool
     smallmid: SmallmidNotice | None
+    periodic: PeriodicNotice | None = None

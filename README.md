@@ -1484,9 +1484,9 @@ trimestre empezara con información ya conocida. Hay una sola orden para todo:
 
 | Orden | Qué hace | ¿Modifica algo? |
 | --- | --- | --- |
-| `python -m gabi.periodic_tasks --status` | Cuándo toca el próximo rebalanceo de cada prueba, si su cadena de hashes está intacta, si los precios están al día y cómo va la descarga de Tiingo del #44 | No |
-| `python -m gabi.periodic_tasks --run` | Actualiza el universo y sus datos (incluidos SPY y RSP) y registra los rebalanceos vencidos | Sí |
-| `python -m gabi.periodic_tasks --tiingo` | Reanuda la descarga de precios de empresas desaparecidas del #44 (tarda horas; se para sola si se agota el cupo mensual) | Sí |
+| `python -m gabi_cli periodic --status` | Cuándo toca el próximo rebalanceo de cada prueba, si su cadena de hashes está intacta, si los precios están al día y cómo va la descarga de Tiingo del #44 | No |
+| `python -m gabi_cli periodic --run` | Actualiza el universo y sus datos (incluidos SPY y RSP), registra los rebalanceos vencidos y anota la decisión del día en el registro en vivo (del modelo sellado y del activo) | Sí |
+| `python -m gabi_cli periodic --tiingo` | Reanuda la descarga de precios de empresas desaparecidas del #44 (tarda horas; se para sola si se agota el cupo mensual) | Sí |
 
 `--run` **se niega a registrar** si todavía no ha llegado la fecha, si SPY o RSP no tienen el último
 cierre, si más de un 5 % del universo no lo tiene o si la cadena de hashes está rota, y explica por qué.
@@ -1499,6 +1499,18 @@ de las 22:00 hora española, que es cuando cierra la bolsa de Nueva York. Para n
 las 23:30, y Tiingo una vez al mes). Es opcional y no se instala solo: hay que ejecutarlo a propósito
 desde PowerShell. El ordenador tiene que estar encendido a esa hora; si no, la tarea se ejecuta al
 encenderlo.
+
+**Comprobar que funciona (#290).** La portada avisa si el seguimiento diario no se ha ejecutado nunca o
+si lleva más de 3 días laborables sin un registro correcto. Para comprobarlo a mano en PowerShell:
+
+```powershell
+Get-ScheduledTask -TaskName "GABI*" | Select-Object TaskName, State   # deben salir las tres tareas
+backend\.venv\Scripts\python.exe -m gabi.live_ledger --verify         # "seq" crece con cada ejecución
+```
+
+Cada ejecución anota dos decisiones en la misma cadena: la del modelo sellado `GABI-MF-v1` (la que
+protege los estudios) y la del modelo que muestra la aplicación (hoy `GABI-MF-v2`), cada una con su
+versión. Un día sin anotar no se puede rellenar después.
 
 ## 🧮 Portfolio Lab: comparar esquemas de ponderación + stress tests
 

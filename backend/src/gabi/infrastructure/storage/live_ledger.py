@@ -69,6 +69,32 @@ class SqliteLiveLedger:
         except sqlite3.Error as exc:
             raise QueryError("live_ledger_unavailable", "No se puede leer el registro prospectivo.", 503) from exc
 
+    def last_decisions(self) -> tuple[dict | None, dict | None]:
+        """The newest decision and the newest one whose status is not ERROR, for the home notice (#290).
+
+        Only three fields are extracted inside SQLite, never a whole payload, and the chain is not
+        verified here. (None, None) without a ledger; an unreadable database raises OSError."""
+        if not self.path.is_file():
+            return None, None
+        fields = ("json_extract(payload_json,'$.created_at'), json_extract(payload_json,'$.status'), "
+                  "json_extract(payload_json,'$.model_id')")
+        decision = "json_extract(payload_json,'$.kind')='DECISION'"
+        try:
+            with self._connect() as db:
+                if not self._exists(db):
+                    return None, None
+                last = db.execute(f"SELECT {fields} FROM live_ledger WHERE {decision} "
+                                  "ORDER BY seq DESC LIMIT 1").fetchone()
+                working = db.execute(f"SELECT {fields} FROM live_ledger WHERE {decision} "
+                                     "AND json_extract(payload_json,'$.status')<>'ERROR' "
+                                     "ORDER BY seq DESC LIMIT 1").fetchone()
+        except sqlite3.Error as exc:
+            raise OSError(f"No se puede leer el registro prospectivo: {exc}") from exc
+
+        def described(row: tuple | None) -> dict | None:
+            return None if row is None else {"created_at": row[0], "status": row[1], "model_id": row[2]}
+        return described(last), described(working)
+
     def row(self, seq: int) -> Row | None:
         if not self.path.is_file():
             return None

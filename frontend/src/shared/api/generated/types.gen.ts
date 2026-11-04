@@ -7562,7 +7562,7 @@ export type ModelResponse = {
 /**
  * NoticesResponse
  *
- * Home notices: blind rebalances due within a week and the state of the #44 analysis.
+ * Home notices: blind rebalances due within a week, the #44 analysis and the daily follow-up.
  */
 export type NoticesResponse = {
     /**
@@ -7573,6 +7573,7 @@ export type NoticesResponse = {
      * Blind Rebalances
      */
     blind_rebalances: Array<BlindRebalanceNotice>;
+    periodic?: PeriodicNotice | null;
     smallmid: SmallmidNotice | null;
 };
 
@@ -7742,6 +7743,42 @@ export type PeriodQualityWarning = {
      * Messages
      */
     messages: Array<string>;
+};
+
+/**
+ * PeriodicNotice
+ *
+ * Whether the daily follow-up runs (#290): age of the newest live decision that did not fail.
+ */
+export type PeriodicNotice = {
+    /**
+     * Business Days
+     */
+    business_days: number | null;
+    /**
+     * Last Run At
+     */
+    last_run_at: string | null;
+    /**
+     * Last Status
+     */
+    last_status: string | null;
+    /**
+     * Last Working At
+     */
+    last_working_at: string | null;
+    /**
+     * Max Business Days
+     */
+    max_business_days: number;
+    /**
+     * Model Id
+     */
+    model_id: string | null;
+    /**
+     * Status
+     */
+    status: 'never' | 'late' | 'ok';
 };
 
 /**
