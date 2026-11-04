@@ -213,9 +213,9 @@ test('Mi cartera guarda, edita, importa y borra compras, ventas y dividendos sin
   await expect(page.getByRole('heading', { name: 'Mi cartera', level: 1 })).toBeVisible();
   const form = page.getByRole('region', { name: 'Registrar un movimiento' });
   await form.getByLabel('Símbolo').fill('T000');
-  await form.getByLabel('Acciones').fill('10');
+  await form.getByLabel('Acciones', { exact: true }).fill('10');
   await form.getByLabel('Precio por acción').fill('100');
-  await form.getByLabel('Fecha').fill('2026-06-01');
+  await form.getByLabel('Fecha', { exact: true }).fill('2026-06-01');
   await form.getByLabel('Cambio aplicado: euros por cada dólar/libra (opcional)').fill('0.9');
   await form.getByRole('button', { name: 'Guardar movimiento' }).click();
   const lots = page.getByRole('region', { name: 'Movimientos registrados' });
@@ -224,7 +224,10 @@ test('Mi cartera guarda, edita, importa y borra compras, ventas y dividendos sin
   await expect(lots).toContainText('10 acciones');
   // The test cache has no EUR rate: the position is shown in dollars and flagged, never filled in.
   const prices = page.getByRole('region', { name: 'Precios de mi cartera' });
-  await expect(prices.getByRole('status')).toContainText('T000');
+  await expect(
+    prices.getByRole('status').filter({ hasText: 'No se han podido valorar' }),
+  ).toContainText('T000');
+  await expect(prices.getByText(/no se han verificado los desdoblamientos/)).toBeVisible();
   await expect(
     prices.getByRole('button', { name: 'Actualizar precios de mi cartera' }),
   ).toBeVisible();
@@ -232,26 +235,26 @@ test('Mi cartera guarda, edita, importa y borra compras, ventas y dividendos sin
     page.getByRole('region', { name: 'Posiciones' }).getByText('No hay cambio de moneda guardado'),
   ).toBeVisible();
   await lots.getByRole('button', { name: 'Editar compra de T000' }).click();
-  await lots.getByLabel('Acciones').fill('12');
+  await lots.getByLabel('Acciones', { exact: true }).fill('12');
   await lots.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(lots).toContainText('12 acciones');
 
   // #294: a sale never exceeds what was held that day; a dividend records its withholding.
   await form.getByLabel('Tipo de movimiento').selectOption('sell');
   await form.getByLabel('Símbolo').fill('T000');
-  await form.getByLabel('Acciones').fill('20');
+  await form.getByLabel('Acciones', { exact: true }).fill('20');
   await form.getByLabel('Precio por acción').fill('110');
-  await form.getByLabel('Fecha').fill('2026-07-01');
+  await form.getByLabel('Fecha', { exact: true }).fill('2026-07-01');
   await form.getByRole('button', { name: 'Guardar movimiento' }).click();
   await expect(form.getByText(/ese día tenías 12/)).toBeVisible();
-  await form.getByLabel('Acciones').fill('2');
+  await form.getByLabel('Acciones', { exact: true }).fill('2');
   await form.getByRole('button', { name: 'Guardar movimiento' }).click();
   await expect(lots).toContainText('venta: 2 acciones');
   await form.getByLabel('Tipo de movimiento').selectOption('dividend');
   await form.getByLabel('Símbolo').fill('T000');
   await form.getByLabel('Importe bruto cobrado').fill('6');
   await form.getByLabel('Retención (impuesto descontado)').fill('0.9');
-  await form.getByLabel('Fecha').fill('2026-08-03');
+  await form.getByLabel('Fecha', { exact: true }).fill('2026-08-03');
   await form.getByRole('button', { name: 'Guardar movimiento' }).click();
   await expect(lots).toContainText('dividendo:');
   await expect(page.getByRole('region', { name: 'Posiciones' })).toContainText('10');

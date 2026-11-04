@@ -10398,6 +10398,19 @@
       "Holding": {
         "additionalProperties": false,
         "properties": {
+          "basis_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fecha de la base de acciones y precio; vacío = cantidades y precio originales del movimiento",
+            "title": "Basis Date"
+          },
           "commission": {
             "default": 0,
             "description": "En `currency`",
@@ -10574,6 +10587,19 @@
       "HoldingCreate": {
         "additionalProperties": false,
         "properties": {
+          "basis_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fecha de la base de acciones y precio; vacío = cantidades y precio originales del movimiento",
+            "title": "Basis Date"
+          },
           "commission": {
             "default": 0,
             "description": "En `currency`",
@@ -11135,6 +11161,31 @@
         "title": "HoldingTotals",
         "type": "object"
       },
+      "HoldingWarning": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "const": "unverified_actions",
+            "title": "Reason",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "reason",
+          "message"
+        ],
+        "title": "HoldingWarning",
+        "type": "object"
+      },
       "HoldingsBenchmarkResult": {
         "additionalProperties": false,
         "properties": {
@@ -11316,6 +11367,14 @@
           "version": {
             "title": "Version",
             "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HoldingWarning"
+            },
+            "title": "Warnings",
+            "type": "array"
           }
         },
         "required": [
@@ -11415,6 +11474,14 @@
                 "type": "null"
               }
             ]
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HoldingWarning"
+            },
+            "title": "Warnings",
+            "type": "array"
           }
         },
         "required": [

@@ -20,7 +20,7 @@ from gabi.domain.portfolio.simulation import fx_at, fx_symbol
 BASE_CURRENCY = "EUR"
 CURRENCIES = ("USD", "EUR", "GBP")
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^\-]{0,19}")
-CSV_COLUMNS = ("symbol", "shares", "price", "date", "currency", "commission", "type", "withholding")
+CSV_COLUMNS = ("symbol", "shares", "price", "date", "currency", "commission", "type", "withholding", "basis_date")
 KINDS = ("buy", "sell", "dividend")
 CSV_KINDS = {"": "buy", "buy": "buy", "compra": "buy", "sell": "sell", "venta": "sell",
              "dividend": "dividend", "dividendo": "dividend"}
@@ -62,10 +62,16 @@ def validate_lot(lot: dict, today: date) -> dict:
         fx_rate = None
     if not date(1970, 1, 1) <= purchase <= today:
         raise ValueError("La fecha del movimiento no puede ser futura.")
+    try:
+        basis = date.fromisoformat(str(lot.get("basis_date") or purchase.isoformat()))
+    except ValueError as exc:
+        raise ValueError("La fecha de ajuste de acciones y precio debe ser válida (AAAA-MM-DD).") from exc
+    if not purchase <= basis <= today:
+        raise ValueError("La fecha de ajuste debe estar entre el movimiento y hoy.")
     note = str(lot.get("note") or "").strip()[:200] or None
     return {"symbol": symbol, "kind": kind, "shares": shares, "price": price, "purchase_date": purchase.isoformat(),
             "currency": currency, "commission": commission, "withholding": withholding, "fx_rate": fx_rate,
-            "note": note}
+            "note": note, "basis_date": basis.isoformat() if lot.get('basis_date') else None}
 
 
 def kind(lot: dict) -> str:
@@ -134,7 +140,8 @@ def parse_csv(text: str, today: date) -> list[dict]:
                 "price": _number(row.get("price") or "", delimiter == ";"),
                 "commission": _number(row.get("commission") or "0", delimiter == ";"),
                 "purchase_date": row.get("date"), "kind": _kind(row.get("type")),
-                "withholding": _number(row.get("withholding") or "0", delimiter == ";")}, today))
+                "withholding": _number(row.get("withholding") or "0", delimiter == ";"),
+                "basis_date": row.get("basis_date")}, today))
         except ValueError as exc:
             errors.append(f"línea {number}: {exc}")
     if errors:

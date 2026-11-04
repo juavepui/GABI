@@ -21,7 +21,7 @@ import pandas as pd
 from gabi.domain.portfolio import contributions, metrics
 from gabi.domain.portfolio.holdings import EPSILON, kind
 
-VERSION = "holdings-performance-v1"
+VERSION = "holdings-performance-v2"
 LOOKBACK_DAYS = 7
 SIGN = {"buy": 1, "sell": -1, "dividend": -1}
 

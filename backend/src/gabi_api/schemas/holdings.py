@@ -16,6 +16,8 @@ class HoldingCreate(WireModel):
     price: float = Field(gt=0, le=1e9, allow_inf_nan=False,
                          description="Precio por acción en `currency`; en un dividendo, el importe bruto cobrado")
     purchase_date: date
+    basis_date: date | None = Field(default=None, description="Fecha de la base de acciones y precio; "
+                                   "vacío = cantidades y precio originales del movimiento")
     currency: Literal["USD", "EUR", "GBP"] = "USD"
     commission: float = Field(default=0, ge=0, le=1e9, allow_inf_nan=False, description="En `currency`")
     withholding: float = Field(default=0, ge=0, le=1e9, allow_inf_nan=False,
@@ -104,6 +106,12 @@ class HoldingDeviation(WireModel):
     deviation_pp: float | None
 
 
+class HoldingWarning(WireModel):
+    symbol: str
+    reason: Literal['unverified_actions']
+    message: str
+
+
 class HoldingsSummary(WireModel):
     as_of: date
     base_currency: Literal["EUR"]
@@ -116,6 +124,7 @@ class HoldingsSummary(WireModel):
     sectors: list[SectorWeight]
     missing: list[str]
     price_symbols: list[str]
+    warnings: list[HoldingWarning] = []
     note: str = ("Valores con el último cierre en caché. Las ventas y los dividendos cobrados se muestran aparte "
                  "(ganancia realizada y dividendos netos). SPY se compra con los mismos euros en las mismas fechas. "
                  "Consultar no descarga precios; ninguna orden se envía a ningún sitio.")
@@ -214,6 +223,7 @@ class HoldingsPerformance(WireModel):
     gap_sessions: int = 0
     blocked: list[PerformanceBlocked] = []
     pending_eur: float = 0.0
+    warnings: list[HoldingWarning] = []
     note: str = ("Valor diario con los cierres y cambios guardados; los días sin precio se listan y no se "
                  "rellenan. El S&P 500 (SPY con dividendos reinvertidos, en euros) recibe el mismo dinero los "
                  "mismos días. El pasado no garantiza el futuro.")

@@ -80,6 +80,17 @@ def test_proposal_compares_equal_weight_with_the_limits_and_proposes_orders(tmp_
 
 def test_api_reads_the_panel_without_writing_and_saves_policy_revisions(tmp_path):
     seed_fixture(tmp_path)
+    from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
+
+    with closing(sqlite3.connect(tmp_path / 'gabi.db')) as db:
+        for symbol in ('BRK-A', 'BRK-B'):
+            rows = db.execute('SELECT date,close,adj_close FROM prices WHERE symbol=? ORDER BY date',
+                              (symbol,)).fetchall()
+            frame = pd.DataFrame(rows, columns=['date', 'Close', 'Adj Close'])
+            frame['date'] = pd.to_datetime(frame['date'])
+            frame['Stock Splits'] = 0.
+            SqliteHoldingsMarket(tmp_path).save(symbol, frame.dropna(subset=['Adj Close']).set_index('date'),
+                                               f'{TODAY}T23:00:00+00:00')
     with closing(sqlite3.connect(tmp_path / "gabi.db")) as db, db:
         db.executemany("INSERT INTO prices(symbol,date,close,adj_close) VALUES('USDEUR=X',?,0.9,0.9)",
                        [(day.date().isoformat(),) for day in pd.bdate_range(end=TODAY, periods=30)])

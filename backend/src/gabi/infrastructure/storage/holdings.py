@@ -15,13 +15,13 @@ CREATE TABLE IF NOT EXISTS portfolio_holdings (
  id INTEGER PRIMARY KEY AUTOINCREMENT, symbol TEXT NOT NULL, shares REAL NOT NULL, price REAL NOT NULL,
  purchase_date TEXT NOT NULL, currency TEXT NOT NULL, commission REAL NOT NULL DEFAULT 0, fx_rate REAL,
  note TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
- kind TEXT NOT NULL DEFAULT 'buy', withholding REAL NOT NULL DEFAULT 0
+ kind TEXT NOT NULL DEFAULT 'buy', withholding REAL NOT NULL DEFAULT 0, basis_date TEXT
 );
 """
 COLUMNS = ("symbol", "shares", "price", "purchase_date", "currency", "commission", "fx_rate", "note", "kind",
-           "withholding")
+           "withholding", "basis_date")
 DEFAULTS = {"kind": "buy", "withholding": 0.0}  # A lot written without them is a purchase.
-ADDED = {"kind": "TEXT NOT NULL DEFAULT 'buy'", "withholding": "REAL NOT NULL DEFAULT 0"}
+ADDED = {"kind": "TEXT NOT NULL DEFAULT 'buy'", "withholding": "REAL NOT NULL DEFAULT 0", "basis_date": "TEXT"}
 MAX_LOTS = 200
 
 

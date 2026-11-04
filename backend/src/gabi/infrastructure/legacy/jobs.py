@@ -22,7 +22,8 @@ class LegacyExecutor:
                  tiingo_import: Callable[[], dict] | None = None,
                  macro_sync: Callable[..., dict] | None = None,
                  sec_sync: Callable[..., dict] | None = None,
-                 parity_engine: Callable[[list[str], date, dict], pd.DataFrame] | None = None):
+                 parity_engine: Callable[[list[str], date, dict], pd.DataFrame] | None = None,
+                 holdings_fetch: Callable[[list[str]], dict] | None = None):
         self.settings = settings
         self.parity_engine = parity_engine
         self.today = today
@@ -31,6 +32,7 @@ class LegacyExecutor:
         self.tiingo_fetch, self.tiingo_import = tiingo_fetch, tiingo_import
         self.macro_sync = macro_sync
         self.sec_sync = sec_sync
+        self.holdings_fetch = holdings_fetch
         self.blind_plans_root = blind_plans_root or settings.data_dir.parent
 
     reports_progress = True  # The worker passes progress(fraction, phase) to long downloads.
@@ -58,10 +60,11 @@ class LegacyExecutor:
                                   command.symbols[0] if command.symbols else None, fx_symbol, fetch_max_history)
         if command.kind == "holdings_prices":
             from gabi.application.portfolio.holdings import refresh_prices as refresh_holdings
-            from gabi.infrastructure.legacy.sim_prices import fetch_max_history
             from gabi.infrastructure.storage.holdings import SqliteHoldings
 
-            return refresh_holdings(SqliteHoldings(self.settings.data_dir), fetch_max_history)
+            if self.holdings_fetch is None:
+                raise ValueError('La descarga de precios y desdoblamientos de cartera no está configurada.')
+            return refresh_holdings(SqliteHoldings(self.settings.data_dir), self.holdings_fetch)
         if command.kind == "metrics_comparison":
             from gabi.application.market.cached_data import fundamentals_info
             from gabi.application.market.metrics_comparison import compare_metrics
