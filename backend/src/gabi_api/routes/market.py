@@ -25,6 +25,7 @@ from gabi_api.schemas.checklist import (
     ComparisonChecklistResponse,
 )
 from gabi_api.schemas.evidence import (
+    CompanyAccountingFlags,
     CompanyCurrentReports,
     CompanyEvidence,
     CompanyFilingChanges,
@@ -98,6 +99,12 @@ def company_filing_changes(symbol: SymbolPath, query: Research) -> dict:
 def company_current_reports(symbol: SymbolPath, query: Research) -> dict:
     """Downloaded 8-Ks with their SEC Items classified (#292); never downloads."""
     return query.current_reports(symbol)
+
+
+@router.get("/companies/{symbol}/accounting-flags", response_model=CompanyAccountingFlags)
+def company_accounting_flags(symbol: SymbolPath, query: Research) -> dict:
+    """Accounting warning signs from structured SEC data (#293); never downloads."""
+    return query.accounting_flags(symbol)
 
 
 def checklist_service(request: Request) -> CompanyChecklist:

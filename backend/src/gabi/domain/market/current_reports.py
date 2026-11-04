@@ -83,19 +83,19 @@ def filing_url(cik: str | int, accession: str, primary_document: str | None) -> 
     return f"{folder}/{primary_document}" if primary_document else f"{folder}/{accession}-index.htm"
 
 
-def from_submissions(payload: dict) -> list[dict]:
-    """The 8-K and 8-K/A rows of a submissions payload's ``recent`` block, as stored (newest first)."""
+def from_submissions(payload: dict, forms: tuple[str, ...] = FORMS) -> list[dict]:
+    """The rows of ``forms`` (8-K and 8-K/A by default) of a submissions payload's ``recent`` block, newest first."""
     recent = (payload.get("filings") or {}).get("recent") or {}
-    forms = recent.get("form") or []
+    listed = recent.get("form") or []
 
     def column(name: str, index: int):
         values = recent.get(name) or []
         return values[index] if index < len(values) else None
 
     rows = []
-    for index, form in enumerate(forms):
+    for index, form in enumerate(listed):
         accession = column("accessionNumber", index)
-        if form not in FORMS or not accession:
+        if form not in forms or not accession:
             continue
         rows.append({"accession": accession, "form": form, "filed_date": column("filingDate", index),
                      "report_date": column("reportDate", index) or None, "items": column("items", index) or "",

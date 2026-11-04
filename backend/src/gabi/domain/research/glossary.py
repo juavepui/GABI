@@ -119,6 +119,25 @@ TERMS: dict[str, tuple[str, str]] = {
                     "Cuando una empresa reconoce que unas cuentas ya publicadas tenían errores y no se deben "
                     "usar (Item 4.02 del 8-K). Es una señal seria: los números con que se analizó la empresa "
                     "pueden estar mal."),
+    "accounting_flags": ("Señales contables",
+                         "Comprobaciones automáticas sobre las cifras que la empresa presenta a la SEC que, a "
+                         "veces, aparecen antes de un problema: cuentas corregidas, informes tarde, cambio de "
+                         "auditor… Cada una tiene una regla y un umbral fijos. Una señal pide mirar con más "
+                         "cuidado; no demuestra nada ni dice que haya que vender."),
+    "form_10ka": ("10-K/A (informe anual corregido)",
+                  "Versión corregida o ampliada del informe anual (10-K). A veces solo añade información que "
+                  "faltaba; otras veces corrige cifras. Conviene ver qué cambió."),
+    "nt_10k": ("NT 10-K (aviso de retraso)",
+               "Aviso a la SEC de que la empresa no presentará su informe anual a tiempo. Puede ser un "
+               "problema administrativo, pero también una señal de dificultades con las cuentas."),
+    "accruals": ("Devengos (beneficio frente a caja)",
+                 "Parte del beneficio que todavía no se ha cobrado en efectivo. Se mide como (beneficio neto − "
+                 "caja generada por el negocio) / activos medios. Si es muy alta, el beneficio depende de "
+                 "estimaciones contables más que de dinero que entra."),
+    "dilution": ("Dilución",
+                 "Cuando la empresa tiene más acciones que antes (por ejemplo, porque emite acciones o paga "
+                 "a sus empleados con ellas), cada acción representa una parte más pequeña de la empresa. "
+                 "Es como repartir la misma tarta en más trozos."),
     "ttm_vs_annual": ("Últimos 12 meses frente a ejercicio anual",
                       "Yahoo suma los cuatro últimos trimestres (últimos 12 meses, TTM) y se actualiza cada "
                       "trimestre. El 10-K de la SEC es el informe anual: cubre un ejercicio cerrado y llega 2 o 3 "

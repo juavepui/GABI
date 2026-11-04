@@ -124,6 +124,7 @@ import type {
   SnapshotProgress,
   SnapshotRenamed,
   CompanyResearchResponse,
+  CompanyAccountingFlags,
   CompanyCurrentReports,
   CompanyFilingChanges,
   CompanyChecklistResponse,
@@ -352,6 +353,12 @@ export function getCompanyFilingChanges(
   signal?: AbortSignal,
 ): Promise<CompanyFilingChanges> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/filing-changes', signal);
+}
+export function getCompanyAccountingFlags(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyAccountingFlags> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/accounting-flags', signal);
 }
 export function getCompanyCurrentReports(
   symbol: string,

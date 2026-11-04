@@ -125,7 +125,7 @@ def test_an_8k_review_item_after_publication_raises_one_review_alert(tmp_path):
              "overview": unavailable, "insiders": unavailable, "today": lambda: date(2026, 6, 30),
              "current_reports": lambda symbol: {"reports": [report]}}
     result = job.run(ideas, **ports)
-    assert result["version"] == "idea-alerts-v2" and result["checked_by_kind"].get("8k") == 1
+    assert result["version"] == "idea-alerts-v3" and result["checked_by_kind"].get("8k") == 1
     assert job.run(ideas, **ports)["new_alerts"] == 0
     (alert,) = [alert for alert in ideas.detail(1)["pending_alerts"] if alert["kind"] == "8k"]
     assert "Cambio de auditor (Item 4.01)" in alert["message"]

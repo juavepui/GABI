@@ -57,6 +57,7 @@ from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.macro_series import macro_metadata
 from gabi.domain.market.model_version import ModelVersion
+from gabi.domain.market.sec_reads import companyfacts as sec_companyfacts
 from gabi.domain.market.selection import RankingFilter
 from gabi.domain.market.signals import compare_snapshots
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -220,7 +221,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.company_research = CompanyResearch(
         SqliteCompanyResearch(settings.data_dir), repository.company_events,
         lambda symbol: signals.compare_filings(symbol, *signals.repository.filing_facts(symbol)),
-        LegacyCompanyMath(), today, reports=SqliteCurrentReports(settings.data_dir / "gabi.db").for_symbol)
+        LegacyCompanyMath(), today, reports=SqliteCurrentReports(settings.data_dir / "gabi.db").for_symbol,
+        facts=lambda symbol, day: sec_companyfacts(
+            SqliteSecReads(settings.data_dir / "gabi.db").issuer_facts(symbol, as_of=day), day))
     app.state.company_checklist = CompanyChecklist(
         SqliteSecReads(settings.data_dir / "gabi.db"), SqliteCacheReads(settings.data_dir / "gabi.db"),
         SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,

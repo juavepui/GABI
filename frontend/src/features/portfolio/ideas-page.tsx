@@ -58,6 +58,7 @@ const ALERT: Record<string, string> = {
   insiders: 'Insiders',
   tendencia: 'Tendencia',
   '8k': 'Hecho relevante (8-K)',
+  contable: 'Señal contable',
 };
 
 function Alerts({ alerts, title }: { alerts: Idea['pending_alerts']; title: string }) {
