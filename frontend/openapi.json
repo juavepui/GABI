@@ -5710,6 +5710,7 @@
               "holdings_prices",
               "benchmark_prices",
               "metrics_comparison",
+              "ranking_parity",
               "backtest_v3_comparison",
               "idea_alerts"
             ],

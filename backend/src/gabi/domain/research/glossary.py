@@ -86,6 +86,15 @@ TERMS: dict[str, tuple[str, str]] = {
                    "Puesto de una empresa frente a las de su mismo sector, en una escala de 0 a 100. Un 80 quiere "
                    "decir que sale mejor que el 80 % de su sector en esa métrica (ya teniendo en cuenta si "
                    "conviene un número alto o bajo). 100 es la mejor del sector."),
+    "spearman": ("Acuerdo de orden (Spearman)",
+                 "Mide si dos listas ordenan las empresas igual. De −1 a 1: 1 = exactamente el mismo orden; "
+                 "0 = el orden de una no dice nada del de la otra. Solo mira los puestos, no los números: dos "
+                 "listas pueden tener un 0,9 aunque sus puntuaciones sean distintas."),
+    "ttm_vs_annual": ("Últimos 12 meses frente a ejercicio anual",
+                      "Yahoo suma los cuatro últimos trimestres (últimos 12 meses, TTM) y se actualiza cada "
+                      "trimestre. El 10-K de la SEC es el informe anual: cubre un ejercicio cerrado y llega 2 o 3 "
+                      "meses después. Para la misma empresa y el mismo día, el PER puede salir distinto según "
+                      "cuál se use."),
 }
 
 # Every metric's help is a term (#197): the ⓘ of Ranking, company page and Comparar and the Ayuda
