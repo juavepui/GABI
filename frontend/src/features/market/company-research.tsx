@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createJob,
   getAnalysisPrompt,
+  getCompanyCurrentReports,
   getCompanyFilingChanges,
   getCompanyInsiders,
   getCompanyResearch,
@@ -22,6 +23,7 @@ import {
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Textarea } from '@/shared/ui/textarea';
 import { JOB_STATES } from '@/shared/lib/jobs';
+import { Term } from '@/shared/ui/term';
 
 const EVENT_LABELS: Record<string, string> = {
   earnings: 'Earnings',
@@ -47,7 +49,7 @@ function SyncButton({
   label,
 }: {
   symbol: string;
-  dataset: 'surprises' | 'estimates' | 'insiders';
+  dataset: 'surprises' | 'estimates' | 'insiders' | 'current_reports';
   label: string;
 }) {
   const queryClient = useQueryClient();
@@ -77,7 +79,12 @@ function SyncButton({
   const synced = result.data?.synced === true;
   useEffect(() => {
     if (!synced) return;
-    const key = dataset === 'insiders' ? 'insiders' : 'research';
+    const key =
+      dataset === 'insiders'
+        ? 'insiders'
+        : dataset === 'current_reports'
+          ? 'current-reports'
+          : 'research';
     void queryClient.invalidateQueries({ queryKey: ['market', key, symbol] });
   }, [synced, symbol, dataset, queryClient]);
   return (
@@ -316,6 +323,104 @@ export function FilingChanges({ symbol }: { symbol: string }) {
       className="mb-6 rounded-xl border bg-card p-5 text-sm"
     >
       <FilingChangesContent symbol={symbol} />
+    </Folded>
+  );
+}
+
+function CurrentReportsContent({ symbol }: { symbol: string }) {
+  const query = useQuery({
+    queryKey: ['market', 'current-reports', symbol],
+    queryFn: ({ signal }) => getCompanyCurrentReports(symbol, signal),
+  });
+  if (query.isPending) return <LoadingState />;
+  if (query.isError) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
+  const data = query.data;
+  const review = data.review_items.map((item) => `${item.code} (${item.label.toLowerCase()})`);
+  return (
+    <>
+      <p>
+        Los <Term k="form_8k">8-K</Term> son los avisos que la empresa envía a la SEC cuando pasa
+        algo importante. Aquí ves los más recientes y de qué trata cada uno según el{' '}
+        <Term k="item_8k">Item</Term> que marcó la propia empresa. Los marcados con «Revisar» son
+        hechos serios: {review.join(', ')}. Si tienes una idea abierta sobre esta empresa, también
+        te llegará una alerta. Es un aviso para que lo mires, no una orden de compra ni de venta.
+      </p>
+      <HowToRead>
+        GABI no lee el texto del 8-K ni usa IA: traduce cada código con una tabla fija (
+        {data.version}). Un código que no está en la tabla sale «sin clasificar». Un 8-K/A corrige o
+        completa un 8-K anterior. Abre el enlace para leer el documento original en la web de la
+        SEC. Los 8-K se guardan al actualizar los datos SEC o con el botón de abajo; abrir la ficha
+        no descarga nada.
+      </HowToRead>
+      <SyncButton
+        symbol={symbol}
+        dataset="current_reports"
+        label="Descargar los 8-K de esta empresa"
+      />
+      {data.reports.length === 0 ? (
+        <p className="text-xs">
+          {data.cik
+            ? 'Todavía no hay 8-K guardados para esta empresa. Descárgalos con el botón o actualiza los datos SEC.'
+            : 'Esta empresa aún no tiene datos SEC guardados: actualiza primero sus datos para poder ver sus 8-K.'}
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs" aria-label="Hechos relevantes (8-K)">
+            <thead>
+              <tr className="border-b">
+                <th className="py-1.5 pr-3 font-medium">Presentado</th>
+                <th className="py-1.5 pr-3 font-medium">Tipo</th>
+                <th className="py-1.5 pr-3 font-medium">De qué trata</th>
+                <th className="py-1.5 pr-3 font-medium">
+                  <Term k="accession">Nº de registro</Term>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.reports.map((report) => (
+                <tr key={report.accession} className="border-b align-top last:border-0">
+                  <td className="py-1.5 pr-3 whitespace-nowrap">{dateLabel(report.filed_date)}</td>
+                  <td className="py-1.5 pr-3 whitespace-nowrap">
+                    {report.amendment ? '8-K/A (corrección)' : report.form}
+                  </td>
+                  <td className="py-1.5 pr-3">
+                    {report.review && <strong className="text-destructive">Revisar · </strong>}
+                    {report.items.length
+                      ? report.items.map((item) => `${item.label} (${item.code})`).join(' · ')
+                      : 'La empresa no indicó ningún Item'}
+                  </td>
+                  <td className="py-1.5 pr-3">
+                    <a className="underline" href={report.url} target="_blank" rel="noreferrer">
+                      {report.accession}
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {data.total > data.reports.length && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Se muestran los {data.reports.length} más recientes de {data.total} guardados.
+            </p>
+          )}
+        </div>
+      )}
+      {data.captured_at && (
+        <p className="text-xs text-muted-foreground">
+          Última descarga de 8-K: {dateLabel(data.captured_at.slice(0, 10))}.
+        </p>
+      )}
+    </>
+  );
+}
+
+export function CurrentReports({ symbol }: { symbol: string }) {
+  return (
+    <Folded
+      title="Hechos relevantes comunicados a la SEC (8-K)"
+      className="mb-6 rounded-xl border bg-card p-5 text-sm"
+    >
+      <CurrentReportsContent symbol={symbol} />
     </Folded>
   );
 }

@@ -169,6 +169,34 @@ class CompanyFilingChanges(BaseModel):
     results: list[FilingComparison]
 
 
+class CurrentReportItem(BaseModel):
+    code: str
+    category: str
+    label: str
+    review: bool
+
+
+class CurrentReport(BaseModel):
+    accession: str
+    form: str
+    amendment: bool
+    filed_date: str | None
+    report_date: str | None
+    url: str
+    items: list[CurrentReportItem]
+    review: bool
+
+
+class CompanyCurrentReports(BaseModel):
+    symbol: str
+    version: str
+    cik: str | None
+    captured_at: str | None
+    total: int
+    reports: list[CurrentReport]
+    review_items: list[CurrentReportItem]
+
+
 class InsiderTransaction(BaseModel):
     transaction_date: str | None
     owner_name: str | None

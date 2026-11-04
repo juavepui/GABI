@@ -123,6 +123,7 @@ import type {
   SnapshotProgress,
   SnapshotRenamed,
   CompanyResearchResponse,
+  CompanyCurrentReports,
   CompanyFilingChanges,
   CompanyChecklistResponse,
   ChecklistSectorMultiples,
@@ -350,6 +351,12 @@ export function getCompanyFilingChanges(
   signal?: AbortSignal,
 ): Promise<CompanyFilingChanges> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/filing-changes', signal);
+}
+export function getCompanyCurrentReports(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyCurrentReports> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/current-reports', signal);
 }
 export function getRankingStability(signal?: AbortSignal): Promise<RankingStability> {
   return get('/api/v1/ranking/stability', signal);

@@ -19,6 +19,7 @@ def run_idea_alerts(settings: Settings, today: Callable[[], date],
     from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
     from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
     from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+    from gabi.infrastructure.storage.current_reports import SqliteCurrentReports
     from gabi.infrastructure.storage.ideas import SqliteIdeas
     from gabi.infrastructure.storage.investment_cards import SqliteInvestmentCards
     from gabi.infrastructure.storage.market import ReadOnlyMarket
@@ -37,12 +38,13 @@ def run_idea_alerts(settings: Settings, today: Callable[[], date],
                                      FileChecklistThresholds(settings.data_dir), today)
         research = CompanyResearch(SqliteCompanyResearch(settings.data_dir), market.company_events,
                                    lambda symbol: compare_cached(symbol, *signals.filing_facts(symbol)),
-                                   LegacyCompanyMath(), today)
+                                   LegacyCompanyMath(), today,
+                                   reports=SqliteCurrentReports(database).for_symbol)
         cards = SqliteInvestmentCards(settings.data_dir)
         return idea_alerts.run(
             Ideas(SqliteIdeas(settings.data_dir), SqliteSimulations(settings.data_dir).prices, today),
             card=lambda card_id: cards.get(card_id) or {}, checklist=checklist.company,
-            filings=research.filing_changes, overview=research.overview, insiders=research.insiders, today=today,
+            filings=research.filing_changes, current_reports=research.current_reports, overview=research.overview, insiders=research.insiders, today=today,
             progress=progress or (lambda share, message: None))
     finally:
         market.close()

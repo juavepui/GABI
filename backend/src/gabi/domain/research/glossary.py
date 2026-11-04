@@ -90,6 +90,22 @@ TERMS: dict[str, tuple[str, str]] = {
                  "Mide si dos listas ordenan las empresas igual. De −1 a 1: 1 = exactamente el mismo orden; "
                  "0 = el orden de una no dice nada del de la otra. Solo mira los puestos, no los números: dos "
                  "listas pueden tener un 0,9 aunque sus puntuaciones sean distintas."),
+    "form_8k": ("8-K (hecho relevante)",
+                "Aviso que una empresa de EE. UU. envía a la SEC en pocos días cuando pasa algo importante: "
+                "resultados, una compra, un cambio de directivos, de auditor… Es la forma oficial de "
+                "contarlo a todos los inversores a la vez. Un 8-K/A corrige o completa uno anterior."),
+    "item_8k": ("Item de un 8-K",
+                "Código con el que la empresa marca de qué trata su 8-K, por ejemplo 2.02 = resultados o "
+                "5.02 = cambio de directivos. Lo pone la propia empresa; GABI solo lo traduce con una tabla "
+                "fija, sin leer ni interpretar el texto. Un código que no está en la tabla se muestra «sin "
+                "clasificar»."),
+    "accession": ("Número de registro (accession)",
+                  "Identificador único que la SEC da a cada documento presentado, como 0000320193-25-000071. "
+                  "Sirve para encontrar exactamente ese documento en la web de la SEC."),
+    "restatement": ("Reexpresión de cuentas",
+                    "Cuando una empresa reconoce que unas cuentas ya publicadas tenían errores y no se deben "
+                    "usar (Item 4.02 del 8-K). Es una señal seria: los números con que se analizó la empresa "
+                    "pueden estar mal."),
     "ttm_vs_annual": ("Últimos 12 meses frente a ejercicio anual",
                       "Yahoo suma los cuatro últimos trimestres (últimos 12 meses, TTM) y se actualiza cada "
                       "trimestre. El 10-K de la SEC es el informe anual: cubre un ejercicio cerrado y llega 2 o 3 "

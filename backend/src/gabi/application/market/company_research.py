@@ -9,11 +9,13 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.application.research.historical import _json_value
+from gabi.domain.market import current_reports
 
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
-DATASETS = ("surprises", "estimates", "insiders")
+DATASETS = ("surprises", "estimates", "insiders", "current_reports")
 INSIDER_MONTHS = 6
 MAX_INSIDER_SHOWN = 200
+MAX_REPORTS_SHOWN = 40
 INSIDER_KEYS = ("transaction_date", "owner_name", "owner_title", "transaction_code", "shares",
                 "price_per_share", "is_10b5_1_plan", "filed_date")
 SURPRISE_KEYS = ("earnings_date", "eps_estimate", "eps_reported", "surprise_pct", "price_reaction_pct")
@@ -44,7 +46,7 @@ def normalize_symbol(symbol: str) -> str:
 def normalize_company_sync(options: dict | None) -> dict:
     options = options or {}
     if set(options) != {"symbol", "dataset"} or options.get("dataset") not in DATASETS:
-        raise QueryError("invalid_job", "Indica una empresa y qué sincronizar (sorpresas o estimaciones).", 422)
+        raise QueryError("invalid_job", "Indica una empresa y qué sincronizar (sorpresas, estimaciones, insiders o 8-K).", 422)
     return {"symbol": normalize_symbol(str(options["symbol"])), "dataset": options["dataset"]}
 
 
@@ -54,8 +56,10 @@ def _row(values: dict, keys: tuple[str, ...]) -> dict:
 
 class CompanyResearch:
     def __init__(self, store: ResearchStore, events: Callable[[str, date], list[dict]],
-                 filings: Callable[[str], list[dict]], math: CompanyMath, today: Callable[[], date]):
+                 filings: Callable[[str], list[dict]], math: CompanyMath, today: Callable[[], date],
+                 *, reports: Callable[[str], dict] | None = None):
         self.store, self.events, self.filings, self.math, self.today = store, events, filings, math, today
+        self.reports = reports
 
     def overview(self, symbol: str) -> dict:
         """Upcoming dated events, the surprise history and the latest consensus capture (current quarter)."""
@@ -106,3 +110,16 @@ class CompanyResearch:
                 "rows": [{key: _json_value(value) for key, value in row.items()} for row in result["rows"]],
             })
         return {"symbol": symbol, "results": results}
+
+    def current_reports(self, symbol: str, limit: int = MAX_REPORTS_SHOWN) -> dict:
+        """Downloaded 8-Ks, newest first, with their Items classified by ``8k-items-v1`` (#292).
+
+        Reads the local store only; downloading is the company job's or the SEC sync's.
+        """
+        symbol = normalize_symbol(symbol)
+        stored = self.reports(symbol) if self.reports else {"cik": None, "captured_at": None, "rows": []}
+        rows = stored["rows"]
+        reports = [current_reports.describe(row, stored["cik"]) for row in rows[:limit]] if stored["cik"] else []
+        return {"symbol": symbol, "version": current_reports.VERSION, "cik": stored["cik"],
+                "captured_at": stored["captured_at"], "total": len(rows), "reports": reports,
+                "review_items": [current_reports.classify(code) for code in current_reports.REVIEW_ITEMS]}

@@ -36,12 +36,38 @@ def sync_company(data_dir: Path, symbol: str, dataset: str, *, today: date | Non
 
             insider_sync = insider_operation(data_dir)
         failed = insider_sync([symbol], max_age_hours=0)["failed"]
+    elif dataset == "current_reports":
+        failed = sync_current_reports(data_dir, symbol)
     elif dataset == "surprises":
         failed = sync_earnings_surprises(data_dir, [symbol], today=today)
     else:
         failed = sync_estimates(data_dir, [symbol])
     return {"kind": "company_sync", "symbol": symbol, "dataset": dataset, "synced": not failed,
             "reason": str(failed.get(symbol)) if failed else None}
+
+
+def sync_current_reports(data_dir: Path, symbol: str, *, submissions: Callable[[str], dict] | None = None) -> dict:
+    """#292: the SEC submissions index of the symbol's stored CIK; stores its 8-K rows. Failures by symbol."""
+    from gabi.application.market.sec_xbrl import validate_issuer
+    from gabi.infrastructure.storage.current_reports import SqliteCurrentReports
+    from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+    database = data_dir / "gabi.db"
+    cik = SqliteSecReads(database).stored_ciks().get(symbol)
+    if not cik or not str(cik).strip().isdigit():
+        return {symbol: "Esta empresa aún no tiene datos SEC: actualiza primero sus datos SEC."}
+    if submissions is None:
+        from gabi import config
+        from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+
+        submissions = SecXbrl(config.SEC_USER_AGENT).submissions
+    try:
+        payload = submissions(str(cik))
+        validate_issuer(payload, str(cik))
+        SqliteCurrentReports(database).save_submissions(str(cik), payload)
+    except Exception as exc:  # noqa: BLE001 - reported to the investor, never swallowed silently.
+        return {symbol: str(exc)}
+    return {}
 
 
 def analysis_prompt(table: pd.DataFrame, symbol: str) -> str:

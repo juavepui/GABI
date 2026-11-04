@@ -90,7 +90,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                              "/api/v1/market/snapshots/{snapshot_id}/progress",
                                              "/api/v1/companies/{symbol}/research",
                                              "/api/v1/administration/keys/{source}",
-                                             "/api/v1/companies/{symbol}/filing-changes",
+                                             "/api/v1/companies/{symbol}/filing-changes", "/api/v1/companies/{symbol}/current-reports",
                                              "/api/v1/market/snapshots/{snapshot_id}/rename",
                                              "/api/v1/companies/{symbol}/evidence",
                                              "/api/v1/companies/{symbol}/evidence.json",

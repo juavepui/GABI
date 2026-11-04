@@ -44,7 +44,9 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
                 companyfacts: Callable[[str], dict], checkpoint: Callable[[str, str, str], dict],
                 attempt_factory: Callable, retry: Callable, fingerprint: Callable,
                 now: Callable[[], datetime], full_refresh: bool = False,
-                fiscal_alignment: bool = False, successions: Mapping[str, Succession] = SUCCESSIONS) -> dict:
+                fiscal_alignment: bool = False, successions: Mapping[str, Succession] = SUCCESSIONS,
+                current_reports: Callable[[str, dict], int] | None = None) -> dict:
+    """``current_reports`` stores the 8-K rows of the submissions already downloaded (#292): no extra request."""
     succession = successions.get(normalize_cik(cik))
     probe, own = _Calls(), None
     if succession is not None:
@@ -65,6 +67,8 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
         filings = own if own is not None else retry(lambda: submissions(cik), attempt)
         validate_issuer(filings, cik)
         attempt.payload(filings)
+        if current_reports is not None:
+            current_reports(cik, filings)
         recent = filings.get("filings", {}).get("recent", {})
         filing_hash = fingerprint(recent)
         has_facts, cached = store.has_facts(entity), store.metrics(symbol)

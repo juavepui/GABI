@@ -2280,6 +2280,40 @@ export type CompanyChecklistResponse = {
 };
 
 /**
+ * CompanyCurrentReports
+ */
+export type CompanyCurrentReports = {
+    /**
+     * Captured At
+     */
+    captured_at: string | null;
+    /**
+     * Cik
+     */
+    cik: string | null;
+    /**
+     * Reports
+     */
+    reports: Array<CurrentReport>;
+    /**
+     * Review Items
+     */
+    review_items: Array<CurrentReportItem>;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
  * CompanyEvent
  */
 export type CompanyEvent = {
@@ -2556,7 +2590,7 @@ export type CompanySyncRequest = {
     /**
      * Dataset
      */
-    dataset: 'surprises' | 'estimates' | 'insiders';
+    dataset: 'surprises' | 'estimates' | 'insiders' | 'current_reports';
     /**
      * Symbol
      */
@@ -2905,6 +2939,66 @@ export type CreateJobRequest = {
      */
     symbols?: Array<string>;
     update?: DataUpdateRequest | null;
+};
+
+/**
+ * CurrentReport
+ */
+export type CurrentReport = {
+    /**
+     * Accession
+     */
+    accession: string;
+    /**
+     * Amendment
+     */
+    amendment: boolean;
+    /**
+     * Filed Date
+     */
+    filed_date: string | null;
+    /**
+     * Form
+     */
+    form: string;
+    /**
+     * Items
+     */
+    items: Array<CurrentReportItem>;
+    /**
+     * Report Date
+     */
+    report_date: string | null;
+    /**
+     * Review
+     */
+    review: boolean;
+    /**
+     * Url
+     */
+    url: string;
+};
+
+/**
+ * CurrentReportItem
+ */
+export type CurrentReportItem = {
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Review
+     */
+    review: boolean;
 };
 
 /**
@@ -5782,7 +5876,7 @@ export type IdeaAlert = {
     /**
      * Kind
      */
-    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia';
+    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia' | '8k';
     /**
      * Message
      */
@@ -11706,6 +11800,56 @@ export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponse
 };
 
 export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponse = CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses[keyof CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses];
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/current-reports';
+};
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetError = CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetErrors[keyof CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetErrors];
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyCurrentReports;
+};
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponse = CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponses[keyof CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponses];
 
 export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetData = {
     body?: never;

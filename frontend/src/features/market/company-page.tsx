@@ -10,7 +10,13 @@ import { metric, dateLabel, formatNumber } from '@/shared/lib/format';
 import { useBlockEvidence, useCompany } from './queries';
 import { Evidence } from './evidence';
 import { CompanyEvidenceDetail } from './candidate-evidence';
-import { AnalysisPrompt, CompanyResearch, FilingChanges, Insiders } from './company-research';
+import {
+  AnalysisPrompt,
+  CompanyResearch,
+  CurrentReports,
+  FilingChanges,
+  Insiders,
+} from './company-research';
 import { CompanyChecklist } from './company-checklist';
 import { FollowButton } from './follow-button';
 
@@ -430,6 +436,7 @@ export function CompanyPage() {
               <CompanyTheses symbol={company.symbol} />
             </div>
             <FilingChanges symbol={company.symbol} />
+            <CurrentReports symbol={company.symbol} />
             <div className="mb-6 space-y-3">
               <CompanyResearch symbol={company.symbol} />
               <Insiders symbol={company.symbol} />

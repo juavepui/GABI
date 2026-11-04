@@ -110,7 +110,7 @@ class CompanySyncRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
     symbol: str = Field(pattern=r"^[A-Za-z0-9^][A-Za-z0-9^.\-]{0,19}$")
-    dataset: Literal["surprises", "estimates", "insiders"]
+    dataset: Literal["surprises", "estimates", "insiders", "current_reports"]
 
 
 class DataUpdateRequest(BaseModel):

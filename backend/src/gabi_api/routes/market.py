@@ -25,6 +25,7 @@ from gabi_api.schemas.checklist import (
     ComparisonChecklistResponse,
 )
 from gabi_api.schemas.evidence import (
+    CompanyCurrentReports,
     CompanyEvidence,
     CompanyFilingChanges,
     CompanyInsiders,
@@ -91,6 +92,12 @@ def company_insiders(symbol: SymbolPath, query: Research) -> dict:
 @router.get("/companies/{symbol}/filing-changes", response_model=CompanyFilingChanges)
 def company_filing_changes(symbol: SymbolPath, query: Research) -> dict:
     return query.filing_changes(symbol)
+
+
+@router.get("/companies/{symbol}/current-reports", response_model=CompanyCurrentReports)
+def company_current_reports(symbol: SymbolPath, query: Research) -> dict:
+    """Downloaded 8-Ks with their SEC Items classified (#292); never downloads."""
+    return query.current_reports(symbol)
 
 
 def checklist_service(request: Request) -> CompanyChecklist:
