@@ -127,6 +127,19 @@ test.describe('calidad de los datos', () => {
     ).toContainText('Yahoo, últimos 12 meses');
   });
 
+  test('datos imposibles o sospechosos (#295)', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const section = page.getByRole('region', { name: 'Datos imposibles o sospechosos' });
+    await section.getByRole('button', { name: 'Buscar datos imposibles' }).click();
+    // The test cache holds no impossible value: the section says so and which model applies the checks.
+    await expect(
+      section.getByText(/No hay ningún dato imposible ni sospechoso en las 16 empresas/),
+    ).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(section).toContainText('El modelo activo (GABI-MF-v3) no usa para puntuar');
+  });
+
   test('identidades del universo', async ({ page }) => {
     await page.goto('/administracion/calidad');
     const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });

@@ -6016,6 +6016,7 @@
               "benchmark_prices",
               "metrics_comparison",
               "ranking_parity",
+              "input_checks",
               "backtest_v3_comparison",
               "idea_alerts"
             ],

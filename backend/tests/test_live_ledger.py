@@ -12,6 +12,7 @@ from gabi.domain.market import model_policy
 from gabi.domain.research.live_performance import entry_session
 from gabi.infrastructure.legacy.live_ledger import live_report
 from gabi.infrastructure.legacy.periodic import ACTIVE_MODEL_CODE, build_periodic_tasks
+from gabi.infrastructure.model_versions import active_model
 from gabi_cli.commands.periodic import main as periodic_main
 
 NOW = datetime(2024, 1, 10, 22, tzinfo=UTC)
@@ -171,8 +172,9 @@ def test_maintenance_records_the_sealed_and_the_active_model_in_one_chain(monkey
     report = periodic_tasks.run(refresh=False)
     assert report["ledger"]["status"] == "SIGNAL"
     # The temporary cache has no universe file: the active model records NO_SIGNAL, never skips the day.
-    assert report["ledger_activo"] == {**report["ledger_activo"], "model_id": "GABI-MF-v2", "status": "NO_SIGNAL"}
-    assert [e["payload"]["model_id"] for e in ledger.events()] == [model_policy.FROZEN_MODEL_ID, "GABI-MF-v2"]
+    active = active_model().model_id
+    assert report["ledger_activo"] == {**report["ledger_activo"], "model_id": active, "status": "NO_SIGNAL"}
+    assert [e["payload"]["model_id"] for e in ledger.events()] == [model_policy.FROZEN_MODEL_ID, active]
     assert ledger.verify_integrity() == {"ok": True, "seq": 2, "hash": report["ledger_activo"]["record_hash"]}
 
 

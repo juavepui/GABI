@@ -31,18 +31,24 @@ def test_v1_declares_the_values_of_the_sealed_snapshot():
     assert GABI_MF_V1.sealed_hypothesis and active_model("GABI-MF-v1") is GABI_MF_V1
 
 
-def test_v2_is_active_with_the_v1_parameters_and_the_sec_metrics_v2():
+def test_v3_is_active_v2_with_the_input_checks_and_v2_stays_declared():
     from dataclasses import replace
 
-    from gabi.domain.market import model_version, sec_metrics_v2
+    from gabi.domain.market import input_checks, model_version, sec_metrics_v2
+    from gabi.infrastructure.model_versions import GABI_MF_V2, VERSIONS
 
     active = active_model()
-    assert active.model_id == "GABI-MF-v2" and not active.sealed_hypothesis
-    assert active.metrics_version == sec_metrics_v2.VERSION == "sec-metrics-v2.1"
-    # Only the SEC metrics change; everything else is v1's, and no evidence is inherited.
-    assert replace(active, model_id=GABI_MF_V1.model_id, label=GABI_MF_V1.label, sealed_hypothesis=True,
+    assert active.model_id == "GABI-MF-v3" and not active.sealed_hypothesis
+    assert active.input_checks == input_checks.VERSION == "input-checks-v1"
+    # Only the input checks change from v2; v2 changed only the SEC metrics from v1. No evidence is inherited.
+    assert replace(active, model_id=GABI_MF_V2.model_id, label=GABI_MF_V2.label, input_checks=None) == GABI_MF_V2
+    assert GABI_MF_V2.metrics_version == sec_metrics_v2.VERSION == "sec-metrics-v2.1"
+    assert replace(GABI_MF_V2, model_id=GABI_MF_V1.model_id, label=GABI_MF_V1.label, sealed_hypothesis=True,
                    metrics_version=GABI_MF_V1.metrics_version) == GABI_MF_V1
+    assert set(VERSIONS) == {"GABI-MF-v1", "GABI-MF-v2", "GABI-MF-v3"}
     assert model_version.status(active, dict(active.weights)) == "EXPERIMENTAL"
+    with pytest.raises(ValueError):
+        replace(GABI_MF_V1, input_checks=input_checks.VERSION)  # The sealed hypothesis stays unchecked.
 
 
 @pytest.mark.parametrize("case", REFERENCE["cases"])

@@ -19,6 +19,11 @@ TERMS: dict[str, tuple[str, str]] = {
                     "Ganancia de una empresa = lo que vale hoy + lo que cobraste al vender + dividendos netos − "
                     "lo que pagaste al comprar; los puntos se calculan sobre todo lo que compraste y suman el "
                     "total."),
+    "input_checks": ("Controles de datos imposibles",
+                     "Reglas fijas que revisan cada dato antes de usarlo: un PER de 40.000, un margen del 300 % o "
+                     "un precio que sube un 80 % en un día sin split no son creíbles. El dato se guarda y se "
+                     "muestra con su motivo, pero el modelo GABI-MF-v3 no lo usa para puntuar: cuenta como un dato "
+                     "que falta."),
     "dsr": ("DSR (Deflated Sharpe Ratio)",
             "Como el PSR, pero descontando cuántas variantes se probaron antes de elegir esta. Si "
             "pruebas 100 configuraciones, alguna saldrá bien por casualidad; el DSR resta esa ventaja "
