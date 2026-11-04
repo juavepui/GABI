@@ -12,6 +12,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber } from '@/shared/lib/format';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { Hash } from '@/shared/ui/hash';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean }) {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -82,7 +83,7 @@ export function EstimateCaptures({ researchAllowed }: { researchAllowed: boolean
       {job.data && (
         <p className="mt-3 text-sm text-muted-foreground">
           Trabajo {job.data.id.slice(0, 8)} · {job.data.phase} · {job.data.progress} % ·{' '}
-          {job.data.status}
+          {JOB_STATES[job.data.status] ?? job.data.status}
         </p>
       )}
       {job.data && ['queued', 'running'].includes(job.data.status) && (

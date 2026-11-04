@@ -349,27 +349,30 @@ export function SavedAudits() {
         recalculan ni se modifican desde esta pantalla.
       </p>
       {available.overfitting_audit && (
-        <Section title="Auditoría retrospectiva de las configuraciones documentadas" open>
+        <Section
+          title="¿Fue suerte elegir esta configuración? · revisión de las variantes probadas"
+          open
+        >
           <Overfitting />
         </Section>
       )}
       {available.factor_benchmark && (
-        <Section title="Benchmark ajustado por beta/factores · auditoría guardada">
+        <Section title="¿Gana al mercado una vez descontado su riesgo y su estilo? · revisión guardada">
           <SavedBenchmark />
         </Section>
       )}
       {available.factor_stability && (
-        <Section title="Estabilidad temporal FF5 + Momentum · auditoría guardada">
+        <Section title="¿Cambia su estilo con el tiempo? (modelo de factores FF5 + Momentum) · revisión guardada">
           <SavedStability />
         </Section>
       )}
       {available.block_bootstrap && (
-        <Section title="Incertidumbre por bloques · diagnóstico guardado">
+        <Section title="¿Qué margen de error tienen los resultados? (bootstrap por bloques) · revisión guardada">
           <SavedBootstrap />
         </Section>
       )}
       {available.rank_stability && (
-        <Section title="Estabilidad histórica · vecindad preregistrada de pesos">
+        <Section title="¿Aguanta si se cambian un poco los pesos? · prueba fijada de antemano">
           <SavedRankStability />
         </Section>
       )}

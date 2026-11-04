@@ -13,6 +13,7 @@ import { PrepareData } from './prepare-data';
 import { PageHeader } from '@/shared/ui/page-header';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { dateText } from '@/shared/lib/format';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 export function HistoricalPage() {
   const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
@@ -55,13 +56,23 @@ export function HistoricalPage() {
       <PageHeader
         back={{ to: '/investigacion', label: 'Investigación' }}
         title="Ranking histórico"
-        description={<>Reconstruye el S&amp;P 500 en una fecha pasada ya observada.</>}
+        description={
+          <>
+            Mira cómo habría sido el ranking de GABI en una fecha pasada, con lo que se sabía
+            entonces, y simula cómo habría ido seguirlo (backtest).
+          </>
+        }
         guide={
           <>
             <p>
-              Reconstruye el S&amp;P 500 en una fecha ya observada. El cálculo usa el motor
-              histórico existente y se ejecuta en el worker; no crea una validación independiente ni
-              consulta las reservas prospectivas o anteriores a 2010.
+              Reconstruye el S&amp;P 500 de una fecha pasada usando solo la información de aquel
+              día: las empresas que estaban en el índice, los informes ya publicados y los precios
+              hasta entonces. Así se evita «mirar el futuro» sin darse cuenta.
+            </p>
+            <p>
+              Un buen resultado aquí es un indicio, no una prueba: es fácil que una estrategia
+              parezca buena en el pasado. Los datos posteriores al 2 de julio de 2025 y los
+              anteriores a 2010 están reservados para pruebas futuras y no se pueden consultar.
             </p>
           </>
         }
@@ -122,7 +133,8 @@ export function HistoricalPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="font-semibold">Trabajo #{job.data.id.slice(0, 8)}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {job.data.phase} · {job.data.progress} % · {job.data.status}
+            {job.data.phase} · {job.data.progress} % ·{' '}
+            {JOB_STATES[job.data.status] ?? job.data.status}
           </p>
           {['queued', 'running'].includes(job.data.status) && (
             <Button

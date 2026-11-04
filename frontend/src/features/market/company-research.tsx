@@ -21,6 +21,7 @@ import {
 } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Textarea } from '@/shared/ui/textarea';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 const EVENT_LABELS: Record<string, string> = {
   earnings: 'Earnings',
@@ -93,7 +94,7 @@ function SyncButton({
       {start.isError && <ErrorState error={start.error} retry={() => start.reset()} />}
       {job.data && job.data.status !== 'succeeded' && (
         <p className="text-xs text-muted-foreground" role="status">
-          Descarga en curso: {job.data.phase} ({job.data.status}).
+          Descarga en curso: {job.data.phase} ({JOB_STATES[job.data.status] ?? job.data.status}).
         </p>
       )}
       {result.data &&

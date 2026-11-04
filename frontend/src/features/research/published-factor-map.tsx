@@ -5,6 +5,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { formatNumber } from '@/shared/lib/format';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Hash } from '@/shared/ui/hash';
+import { Term } from '@/shared/ui/term';
 
 const labels: Record<string, string> = {
   pe: 'PER',
@@ -59,13 +60,21 @@ export function PublishedFactorMap() {
         <table className="w-full min-w-[740px] text-left text-sm">
           <thead>
             <tr className="border-b text-xs text-muted-foreground">
-              <th className="py-2">Factor</th>
-              <th>IC medio</th>
-              <th>ICIR</th>
-              <th>p Holm</th>
-              <th>Clasificación</th>
+              <th className="py-2">Métrica</th>
+              <th>
+                <Term k="rank_ic">IC medio</Term>
+              </th>
+              <th>
+                <Term k="icir">ICIR</Term>
+              </th>
+              <th>
+                <Term k="holm">p Holm</Term>
+              </th>
+              <th>Conclusión</th>
               <th>Trimestres</th>
-              <th>Spread Q5−Q1</th>
+              <th>
+                <Term k="quintile_spread">Diferencia Q5−Q1</Term>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -128,11 +137,15 @@ export function PublishedFactorMap() {
                   <tr className="border-b text-xs text-muted-foreground">
                     <th className="py-2">División</th>
                     <th>Industria</th>
-                    <th>IC medio</th>
-                    <th>ICIR</th>
+                    <th>
+                      <Term k="rank_ic">IC medio</Term>
+                    </th>
+                    <th>
+                      <Term k="icir">ICIR</Term>
+                    </th>
                     <th>Trimestres</th>
-                    <th>IC positivo</th>
-                    <th>Soporte</th>
+                    <th>Trimestres con IC positivo</th>
+                    <th>¿Datos suficientes?</th>
                     {factor.sic_divisions[0]?.windows.map((window) => (
                       <th key={window.period}>IC {window.period}</th>
                     ))}

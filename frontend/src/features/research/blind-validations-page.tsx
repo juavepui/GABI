@@ -11,6 +11,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { Textarea } from '@/shared/ui/textarea';
 import { dateText } from '@/shared/lib/format';
 import { Hash } from '@/shared/ui/hash';
+import { Term } from '@/shared/ui/term';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -209,14 +210,16 @@ function Validation({ item }: { item: BlindStatus }) {
           <dd>{item.n_periods}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Próximo rebalanceo</dt>
+          <dt className="text-muted-foreground">
+            Próxima <Term k="rebalance">revisión de la cartera</Term>
+          </dt>
           <dd>
             {item.next_rebalance_due}
             {item.rebalance_due ? ' · toca registrar' : ''}
           </dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Desbloqueo</dt>
+          <dt className="text-muted-foreground">Se podrá ver el resultado el</dt>
           <dd>
             {dateText(item.unlock_date)}
             {!item.revealed && item.days_to_unlock > 0
@@ -225,7 +228,9 @@ function Validation({ item }: { item: BlindStatus }) {
           </dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Cadena de sellos</dt>
+          <dt className="text-muted-foreground">
+            <Term k="seal">Cadena de sellos</Term>
+          </dt>
           <dd>
             {item.integrity.ok ? 'Íntegra' : `Alterada desde ${dateText(item.integrity.broken_at)}`}
           </dd>
@@ -233,7 +238,9 @@ function Validation({ item }: { item: BlindStatus }) {
       </dl>
       {plan && (
         <div className="mt-4 rounded-lg border p-3 text-sm" role="note">
-          <p className="font-medium">Preregistro del #{plan.issue}</p>
+          <p className="font-medium">
+            <Term k="preregistration">Preregistro</Term> del #{plan.issue}
+          </p>
           <p className="mt-1 text-muted-foreground">
             Revisiones fijadas: {plan.looks.join(', ')}. Solo se miran resultados en esas fechas: el
             rendimiento se calcula hasta la última revisión alcanzada y el sello no se puede romper
@@ -269,15 +276,19 @@ export function BlindValidationsPage() {
         back={{ to: '/investigacion', label: 'Investigación' }}
         title="Validaciones ciegas"
         description={
-          <>Seguimiento hacia delante con el resultado sellado hasta su fecha de desbloqueo.</>
+          <>
+            Pruebas con datos que aún no existían cuando se fijaron las reglas. El resultado queda
+            oculto hasta una fecha, para que nadie se sienta tentado de retocar la estrategia por el
+            camino.
+          </>
         }
         guide={
           <>
             <p>
-              Cada rebalanceo queda registrado de forma inmutable (posiciones, precios y hash
-              encadenado) y el rendimiento frente al SPY queda oculto hasta la fecha de desbloqueo.
-              Esta vista no muestra posiciones ni precios. El backend aplica la fecha de desbloqueo
-              y las revisiones de cada preregistro; ocultar un botón no basta.
+              Cada vez que toca revisar la cartera (rebalanceo) se guarda qué empresas y a qué
+              precios, con un sello digital encadenado: si alguien cambiara un dato pasado, se
+              notaría. Cómo va frente al S&amp;P 500 (SPY) queda oculto hasta la fecha de
+              desbloqueo, y lo bloquea el servidor, no solo la pantalla.
             </p>
             <p>
               Ver el resultado a medias es la forma más humana de arruinar una prueba prospectiva:

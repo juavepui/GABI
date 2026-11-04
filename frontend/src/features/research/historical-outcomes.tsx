@@ -8,6 +8,7 @@ import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateText, formatPercent } from '@/shared/lib/format';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { Hash } from '@/shared/ui/hash';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 const signedPct = (value: number | null | undefined) =>
   value == null ? '—' : (value > 0 ? '+' : '') + formatPercent(value, { digits: 1, fixed: true });
@@ -86,7 +87,7 @@ export function HistoricalOutcomes({
       className="space-y-3 rounded-xl border bg-card p-5 text-sm"
       aria-label="Resultado posterior de las primeras candidatas"
     >
-      <h3 className="text-lg font-semibold">Resultado posterior de las primeras candidatas</h3>
+      <h3 className="text-lg font-semibold">¿Cómo les fue después a las primeras del ranking?</h3>
       <p className="text-xs text-muted-foreground">
         Reconstrucción exploratoria con rentabilidad total ajustada por dividendos, cartera
         equiponderada y SPY. Los símbolos sin precio completo se excluyen y se indican. Solo se
@@ -130,7 +131,8 @@ export function HistoricalOutcomes({
       {run.isError && <ErrorState error={run.error} retry={() => run.mutate()} />}
       {job.data && job.data.status !== 'succeeded' && (
         <p className="text-muted-foreground">
-          Evaluación #{job.data.id.slice(0, 8)} · {job.data.phase} · {job.data.status}
+          Evaluación #{job.data.id.slice(0, 8)} · {job.data.phase} ·{' '}
+          {JOB_STATES[job.data.status] ?? job.data.status}
           {['queued', 'running'].includes(job.data.status) && (
             <Button
               className="ml-3"

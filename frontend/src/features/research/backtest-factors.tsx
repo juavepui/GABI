@@ -14,6 +14,7 @@ import { dateText, formatNumber, formatPercent } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Hash } from '@/shared/ui/hash';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 const RollingChart = lazy(() =>
   import('./backtest-factor-charts').then((module) => ({ default: module.RollingChart })),
@@ -131,7 +132,8 @@ export function BacktestFactors({
       {run.isError && <ErrorState error={run.error} retry={() => run.mutate()} />}
       {job.data && job.data.status !== 'succeeded' && (
         <p className="mt-3 text-muted-foreground">
-          Contraste #{job.data.id.slice(0, 8)} · {job.data.phase} · {job.data.status}
+          Contraste #{job.data.id.slice(0, 8)} · {job.data.phase} ·{' '}
+          {JOB_STATES[job.data.status] ?? job.data.status}
           {['queued', 'running'].includes(job.data.status) && (
             <Button
               className="ml-3"

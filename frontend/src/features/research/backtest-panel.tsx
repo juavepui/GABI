@@ -27,6 +27,7 @@ import { HowToRead } from '@/shared/ui/how-to-read';
 import { ResearchModeNotice } from '@/shared/ui/research-mode';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Hash } from '@/shared/ui/hash';
+import { JOB_STATES } from '@/shared/lib/jobs';
 
 const BacktestChart = lazy(() => import('./backtest-chart'));
 
@@ -35,7 +36,11 @@ type Engine = 'backtest_v1' | 'backtest_v2' | 'backtest_v3_comparison';
 const selectClass = 'mt-1.5 w-full';
 const pct = (value: number | null | undefined, digits = 1) => formatPercent(value, { digits });
 const num = (value: number | null | undefined, digits = 2) => formatNumber(value, { digits });
-const SERIES = { estrategia: 'Estrategia', universo_ew: 'Universo equiponderado', spy: 'SPY' };
+const SERIES = {
+  estrategia: 'Estrategia',
+  universo_ew: 'Todas a partes iguales',
+  spy: 'S&P 500 (SPY)',
+};
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -178,10 +183,10 @@ function Panel({
       </div>
       <p className="max-w-3xl text-sm text-muted-foreground">
         {engine === 'backtest_v1'
-          ? 'V1 cobra un coste plano de compra y venta sobre cada posición nueva y compara con el universo equiponderado y el SPY. Los universos de 50 o 100 empresas son pruebas parciales.'
+          ? 'Motor V1 (simplificado): cobra un coste fijo por cada compra y venta y compara con dos referencias: todas las empresas a partes iguales y el S&P 500 (SPY). Con 50 o 100 empresas es solo una prueba parcial.'
           : engine === 'backtest_v3_comparison'
-            ? 'Ejecuta V2 con estas opciones y después V3 sobre las mismas selecciones y datos, con costes como V2, base y estrés, más la validación de la política de #248. Es un diagnóstico del motor; tarda algo más que V2.'
-            : 'V2 opera con acciones y caja, comisión fija y spread sobre los ajustes reales, SPY comprado y mantenido y curva diaria. Solo el universo completo es citable; la muestra rápida sirve para iterar.'}
+            ? 'Ejecuta V2 con estas opciones y después V3 con las mismas empresas y datos (con costes normales y con costes altos, y comprobando los límites de la política de #248). Sirve para revisar el motor, no la estrategia; tarda algo más que V2.'
+            : 'Motor V2 (realista): compra acciones enteras, guarda la caja que sobra, cobra comisión y la diferencia entre precio de compra y de venta (spread), y compara con haber comprado y mantenido el S&P 500 (SPY), día a día. Solo el resultado con todas las empresas vale para sacar conclusiones; la muestra rápida es para probar.'}
       </p>
       {!researchAllowed && <ResearchModeNotice action="Ejecutar backtests" />}
       <form
@@ -239,8 +244,8 @@ function Panel({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <HelpField
               id="backtest-hurdle"
-              label="Umbral de rotación (puntos Composite)"
-              help="Puntos de score que debe superar una candidata nueva para sustituir a una posición. Más alto: menos rotación y menos costes."
+              label="Umbral de cambio (puntos de puntuación)"
+              help="Cuántos puntos más debe tener una empresa nueva para sustituir a una que ya está en la cartera. Más alto: menos cambios y menos comisiones."
               className="text-xs font-medium"
             >
               <Input
@@ -392,9 +397,9 @@ function Panel({
           </div>
         </AdvancedOptions>
         <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
-          Fija el umbral de rotación y los costes antes de mirar el resultado. El universo completo
-          puede tardar 20-30 minutos en rangos de varios años. Los datos deben estar preparados; el
-          job no descarga fuentes.
+          Decide el umbral de cambio y los costes antes de ver el resultado: cambiarlos después para
+          que salga mejor invalida la prueba. Con todas las empresas y varios años puede tardar
+          20–30 minutos. Los datos tienen que estar preparados antes; esta tarea no descarga nada.
         </p>
         <Button
           className="w-fit"
@@ -421,7 +426,8 @@ function Panel({
         <section className="rounded-xl border bg-card p-5">
           <h3 className="font-semibold">Trabajo #{job.data.id.slice(0, 8)}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            {job.data.phase} · {job.data.progress} % · {job.data.status}
+            {job.data.phase} · {job.data.progress} % ·{' '}
+            {JOB_STATES[job.data.status] ?? job.data.status}
           </p>
           {['queued', 'running'].includes(job.data.status) && (
             <Button
@@ -504,14 +510,15 @@ function BacktestResult({ result }: { result: BacktestPreview }) {
         </table>
       </div>
       <p className="text-xs text-muted-foreground">
-        Sharpe: exceso de retorno sobre la volatilidad. Sortino: solo penaliza la volatilidad a la
-        baja. Drawdown: mayor caída desde un máximo.{' '}
+        Sharpe: rentabilidad extra (sobre un depósito sin riesgo) por cada unidad de riesgo; más
+        alto es mejor. Sortino: igual, pero solo cuenta como riesgo las bajadas. Drawdown: la mayor
+        caída desde un máximo.{' '}
         {v2
           ? 'En V2 se calculan sobre la curva diaria real.'
-          : 'En V1 se calculan por periodos de rebalanceo; si el universo equiponderado tiene un Sharpe parecido, elegir las primeras no aporta tanto como sugiere el retorno.'}
+          : 'En V1 se calculan con un dato por revisión de cartera. Si «todas las empresas a partes iguales» tiene un Sharpe parecido, elegir las mejor puntuadas no aporta tanto como parece.'}
       </p>
       <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Turnover medio" value={num(result.turnover_medio, 1) + ' %'} />
+        <Stat label="Rotación media (turnover)" value={num(result.turnover_medio, 1) + ' %'} />
         {v2 && (
           <>
             <Stat label="Capital final" value={num(result.capital_final, 0) + ' $'} />
