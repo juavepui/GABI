@@ -10,6 +10,7 @@ from gabi_api.schemas.holdings import (
     HoldingImport,
     HoldingImportResult,
     HoldingList,
+    HoldingsPerformance,
     HoldingsSummary,
     sector_weights,
 )
@@ -26,6 +27,12 @@ def summary(holdings: Annotated[Holdings, Depends(service)]) -> HoldingsSummary:
     """Read-only valuation from cached prices: it never downloads nor initializes the table."""
     result = holdings.summary()
     return HoldingsSummary.model_validate(result | {"sectors": sector_weights(result["sectors"])})
+
+
+@router.get("/performance", response_model=HoldingsPerformance)
+def performance(holdings: Annotated[Holdings, Depends(service)]) -> HoldingsPerformance:
+    """Read-only (#294): daily evolution, returns, risk and attribution; never downloads."""
+    return HoldingsPerformance.model_validate(holdings.performance())
 
 
 @router.get("/lots", response_model=HoldingList)

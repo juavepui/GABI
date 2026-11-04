@@ -101,6 +101,50 @@ export type AnalysisPromptResponse = {
 };
 
 /**
+ * AttributionPosition
+ */
+export type AttributionPosition = {
+    /**
+     * Contribution Pp
+     */
+    contribution_pp: number;
+    /**
+     * Gain Eur
+     */
+    gain_eur: number;
+    /**
+     * Open
+     */
+    open: boolean;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * AttributionSector
+ */
+export type AttributionSector = {
+    /**
+     * Contribution Pp
+     */
+    contribution_pp: number;
+    /**
+     * Gain Eur
+     */
+    gain_eur: number;
+    /**
+     * Sector
+     */
+    sector: string;
+};
+
+/**
  * BacktestCurvePoint
  */
 export type BacktestCurvePoint = {
@@ -4000,7 +4044,7 @@ export type ExcludedLot = {
     /**
      * Reason
      *
-     * missing_price | missing_fx | after_last_session
+     * missing_price | missing_fx | after_last_session | sale | dividend
      */
     reason: string;
     /**
@@ -5412,13 +5456,19 @@ export type Holding = {
      */
     id: number;
     /**
+     * Kind
+     *
+     * Compra, venta o dividendo cobrado
+     */
+    kind?: 'buy' | 'sell' | 'dividend';
+    /**
      * Note
      */
     note?: string | null;
     /**
      * Price
      *
-     * Precio por acción en `currency`
+     * Precio por acción en `currency`; en un dividendo, el importe bruto cobrado
      */
     price: number;
     /**
@@ -5427,8 +5477,10 @@ export type Holding = {
     purchase_date: string;
     /**
      * Shares
+     *
+     * 0 en un dividendo
      */
-    shares: number;
+    shares?: number;
     /**
      * Symbol
      */
@@ -5437,6 +5489,42 @@ export type Holding = {
      * Updated At
      */
     updated_at: string;
+    /**
+     * Withholding
+     *
+     * Retención sobre un dividendo, en `currency`
+     */
+    withholding?: number;
+};
+
+/**
+ * HoldingClosed
+ */
+export type HoldingClosed = {
+    /**
+     * Currency
+     */
+    currency: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Dividends
+     */
+    dividends: number;
+    /**
+     * Dividends Eur
+     */
+    dividends_eur: number | null;
+    /**
+     * Realized Eur
+     */
+    realized_eur: number | null;
+    /**
+     * Sales
+     */
+    sales: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
 };
 
 /**
@@ -5460,13 +5548,19 @@ export type HoldingCreate = {
      */
     fx_rate?: number | null;
     /**
+     * Kind
+     *
+     * Compra, venta o dividendo cobrado
+     */
+    kind?: 'buy' | 'sell' | 'dividend';
+    /**
      * Note
      */
     note?: string | null;
     /**
      * Price
      *
-     * Precio por acción en `currency`
+     * Precio por acción en `currency`; en un dividendo, el importe bruto cobrado
      */
     price: number;
     /**
@@ -5475,12 +5569,20 @@ export type HoldingCreate = {
     purchase_date: string;
     /**
      * Shares
+     *
+     * 0 en un dividendo
      */
-    shares: number;
+    shares?: number;
     /**
      * Symbol
      */
     symbol: string;
+    /**
+     * Withholding
+     *
+     * Retención sobre un dividendo, en `currency`
+     */
+    withholding?: number;
 };
 
 /**
@@ -5572,6 +5674,16 @@ export type HoldingPosition = {
      */
     currency: 'USD' | 'EUR' | 'GBP';
     /**
+     * Dividends
+     */
+    dividends: number;
+    /**
+     * Dividends Eur
+     *
+     * Dividendos cobrados, netos de retención
+     */
+    dividends_eur: number | null;
+    /**
      * First Purchase
      */
     first_purchase: string;
@@ -5598,9 +5710,19 @@ export type HoldingPosition = {
      */
     price_return: number | null;
     /**
+     * Realized Eur
+     *
+     * Ganancia realizada con las ventas, a coste medio
+     */
+    realized_eur: number | null;
+    /**
      * Return Eur
      */
     return_eur: number | null;
+    /**
+     * Sales
+     */
+    sales: number;
     /**
      * Sector
      */
@@ -5656,9 +5778,17 @@ export type HoldingTotals = {
      */
     cost_eur: number | null;
     /**
+     * Dividends Eur
+     */
+    dividends_eur: number | null;
+    /**
      * Positions
      */
     positions: number;
+    /**
+     * Realized Eur
+     */
+    realized_eur: number | null;
     /**
      * Return Eur
      */
@@ -5735,6 +5865,51 @@ export type HoldingsBenchmarkResult = {
 };
 
 /**
+ * HoldingsPerformance
+ */
+export type HoldingsPerformance = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    attribution?: PerformanceAttribution | null;
+    /**
+     * Base Currency
+     */
+    base_currency: 'EUR';
+    benchmark?: PerformanceBenchmark | null;
+    /**
+     * Blocked
+     */
+    blocked?: Array<PerformanceBlocked>;
+    /**
+     * Gap Sessions
+     */
+    gap_sessions?: number;
+    /**
+     * Gaps
+     */
+    gaps?: Array<PerformanceGap>;
+    /**
+     * Note
+     */
+    note?: string;
+    /**
+     * Pending Eur
+     */
+    pending_eur?: number;
+    portfolio?: PerformanceRisk | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'blocked' | 'no_movements' | 'no_complete_session';
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
  * HoldingsSummary
  */
 export type HoldingsSummary = {
@@ -5750,6 +5925,10 @@ export type HoldingsSummary = {
      * Benchmark As Of
      */
     benchmark_as_of: string | null;
+    /**
+     * Closed
+     */
+    closed: Array<HoldingClosed>;
     /**
      * Deviations
      */
@@ -7914,6 +8093,244 @@ export type PendingContribution = {
      * Date
      */
     date: string;
+};
+
+/**
+ * PerformanceAttribution
+ */
+export type PerformanceAttribution = {
+    /**
+     * Bought Eur
+     */
+    bought_eur?: number | null;
+    /**
+     * Gain Eur
+     */
+    gain_eur?: number | null;
+    /**
+     * Positions
+     */
+    positions?: Array<AttributionPosition>;
+    /**
+     * Return On Bought
+     */
+    return_on_bought?: number | null;
+    /**
+     * Sectors
+     */
+    sectors?: Array<AttributionSector>;
+    /**
+     * Status
+     */
+    status: 'ok' | 'no_purchases';
+};
+
+/**
+ * PerformanceBenchmark
+ */
+export type PerformanceBenchmark = {
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Final Value Eur
+     */
+    final_value_eur?: number | null;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown?: number | null;
+    /**
+     * Missing
+     */
+    missing?: Array<string>;
+    /**
+     * Missing Sessions
+     */
+    missing_sessions?: number | null;
+    /**
+     * Money Weighted
+     */
+    money_weighted?: number | null;
+    /**
+     * Net Contributed Eur
+     */
+    net_contributed_eur?: number | null;
+    /**
+     * Peak Date
+     */
+    peak_date?: string | null;
+    /**
+     * Recovered Date
+     */
+    recovered_date?: string | null;
+    /**
+     * Series
+     */
+    series?: Array<PerformancePoint>;
+    /**
+     * Sessions
+     */
+    sessions?: number | null;
+    /**
+     * Shortfall Eur
+     */
+    shortfall_eur?: number | null;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'missing_prices';
+    /**
+     * Trough Date
+     */
+    trough_date?: string | null;
+    /**
+     * Twr
+     */
+    twr?: number | null;
+    /**
+     * Twr Annualised
+     */
+    twr_annualised?: number | null;
+    /**
+     * Volatility
+     */
+    volatility?: number | null;
+};
+
+/**
+ * PerformanceBlocked
+ */
+export type PerformanceBlocked = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Id
+     */
+    id: number | null;
+    /**
+     * Kind
+     */
+    kind: 'buy' | 'sell' | 'dividend';
+    /**
+     * Reason
+     */
+    reason: 'missing_fx' | 'after_last_session';
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * PerformanceGap
+ */
+export type PerformanceGap = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+};
+
+/**
+ * PerformancePoint
+ */
+export type PerformancePoint = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Nav
+     *
+     * Valor de una participación: base 1 el primer día
+     */
+    nav: number;
+    /**
+     * Value Eur
+     */
+    value_eur: number;
+};
+
+/**
+ * PerformanceRisk
+ */
+export type PerformanceRisk = {
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Final Value Eur
+     */
+    final_value_eur: number;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown: number;
+    /**
+     * Money Weighted
+     *
+     * Rentabilidad anual del dinero invertido (TIR); vacía con menos de un año
+     */
+    money_weighted: number | null;
+    /**
+     * Net Contributed Eur
+     *
+     * Compras − ventas − dividendos netos, en euros
+     */
+    net_contributed_eur: number;
+    /**
+     * Peak Date
+     */
+    peak_date: string | null;
+    /**
+     * Recovered Date
+     */
+    recovered_date: string | null;
+    /**
+     * Series
+     */
+    series: Array<PerformancePoint>;
+    /**
+     * Sessions
+     */
+    sessions: number;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Trough Date
+     */
+    trough_date: string | null;
+    /**
+     * Twr
+     *
+     * Rentabilidad ponderada por tiempo: no la cambian aportaciones ni retiradas
+     */
+    twr: number;
+    /**
+     * Twr Annualised
+     */
+    twr_annualised: number | null;
+    /**
+     * Volatility
+     *
+     * Desviación típica anualizada de los retornos diarios
+     */
+    volatility: number | null;
 };
 
 /**
@@ -14355,6 +14772,51 @@ export type LotsApiV1PortfolioHoldingsLotsGetResponses = {
 };
 
 export type LotsApiV1PortfolioHoldingsLotsGetResponse = LotsApiV1PortfolioHoldingsLotsGetResponses[keyof LotsApiV1PortfolioHoldingsLotsGetResponses];
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/holdings/performance';
+};
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetError = PerformanceApiV1PortfolioHoldingsPerformanceGetErrors[keyof PerformanceApiV1PortfolioHoldingsPerformanceGetErrors];
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HoldingsPerformance;
+};
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetResponse = PerformanceApiV1PortfolioHoldingsPerformanceGetResponses[keyof PerformanceApiV1PortfolioHoldingsPerformanceGetResponses];
 
 export type UpdateApiV1PortfolioHoldingsLotIdPostData = {
     body: HoldingCreate;

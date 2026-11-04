@@ -48,7 +48,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/checklist/thresholds", "/api/v1/checklist/thresholds/reset",
                                          "/api/v1/portfolio/decisions/jobs/{job_id}/decisions.csv",
                                          "/api/v1/portfolio/decisions/{plan_id}/decisions.csv",
-                                         "/api/v1/portfolio/holdings", "/api/v1/portfolio/holdings/lots",
+                                         "/api/v1/portfolio/holdings", "/api/v1/portfolio/holdings/lots", "/api/v1/portfolio/holdings/performance",
                                          "/api/v1/portfolio/holdings/import", "/api/v1/portfolio/holdings/{lot_id}",
                                          "/api/v1/portfolio/holdings/{lot_id}/delete", "/api/v1/watchlist",
                                          "/api/v1/portfolio/investor/profile", "/api/v1/portfolio/investor/benchmark",
