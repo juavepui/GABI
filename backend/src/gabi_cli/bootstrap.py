@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from functools import partial
 from pathlib import Path
 
@@ -20,16 +20,20 @@ import pandas as pd
 from gabi.application.administration.jobs import JobCommand, Jobs
 from gabi.application.errors import QueryError
 from gabi.application.market.checklist import CompanyChecklist
+from gabi.application.portfolio.holdings_prices import refresh as refresh_holdings_market
 from gabi.application.research.academic_factors import prepare_factor_snapshot
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.insiders import insider_operation, sec_user_agent
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
+from gabi.infrastructure.providers.yahoo import history as yahoo_history
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.academic_factors import FileFactorCache
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi_api.bootstrap import create_app, start_warm_thread
@@ -62,10 +66,19 @@ def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = N
     insiders = insider_operation(settings.data_dir, now=clock, mapping_loader=ciks.mapping, cik_resolver=ciks.resolve)
     factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())
     tiingo_fetch, tiingo_import = build_tiingo_operations(settings, now=clock)
+    holdings_market = SqliteHoldingsMarket(settings.data_dir)
+    def holdings_fetch(symbols: list[str]) -> dict:
+        lots = SqliteHoldings(settings.data_dir).lots()
+        start = (min(date.fromisoformat(row['purchase_date']) for row in lots) - timedelta(days=7)).isoformat()
+        return refresh_holdings_market(symbols,
+                                       source=lambda symbol: yahoo_history(symbol, start=start, auto_adjust=False,
+                                                                           actions=True, raise_errors=True),
+                                       save=holdings_market.save, now=clock)
     return LegacyExecutor(settings, insider_sync=insiders, factor_loader=factors,
                           tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
                           macro_sync=build_fred_operation(settings, now=clock),
-                          sec_sync=build_xbrl_operation(settings, user_agent, now=clock))
+                          sec_sync=build_xbrl_operation(settings, user_agent, now=clock),
+                          holdings_fetch=holdings_fetch)
 
 
 def build_checklist(settings: Settings) -> CompanyChecklist:

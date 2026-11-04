@@ -5432,6 +5432,12 @@ export type HistoricalTableRow = {
  */
 export type Holding = {
     /**
+     * Basis Date
+     *
+     * Fecha de la base de acciones y precio; vacío = cantidades y precio originales del movimiento
+     */
+    basis_date?: string | null;
+    /**
      * Commission
      *
      * En `currency`
@@ -5531,6 +5537,12 @@ export type HoldingClosed = {
  * HoldingCreate
  */
 export type HoldingCreate = {
+    /**
+     * Basis Date
+     *
+     * Fecha de la base de acciones y precio; vacío = cantidades y precio originales del movimiento
+     */
+    basis_date?: string | null;
     /**
      * Commission
      *
@@ -5808,6 +5820,24 @@ export type HoldingTotals = {
 };
 
 /**
+ * HoldingWarning
+ */
+export type HoldingWarning = {
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Reason
+     */
+    reason: 'unverified_actions';
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * HoldingsBenchmarkResult
  */
 export type HoldingsBenchmarkResult = {
@@ -5907,6 +5937,10 @@ export type HoldingsPerformance = {
      * Version
      */
     version: string;
+    /**
+     * Warnings
+     */
+    warnings?: Array<HoldingWarning>;
 };
 
 /**
@@ -5958,6 +5992,10 @@ export type HoldingsSummary = {
      */
     sectors: Array<SectorWeight>;
     totals: HoldingTotals | null;
+    /**
+     * Warnings
+     */
+    warnings?: Array<HoldingWarning>;
 };
 
 /**

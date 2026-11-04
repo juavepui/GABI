@@ -167,7 +167,9 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         return {str(symbol): str(industry) for symbol, industry in zip(universe["symbol"], universe["industry"],
                                                                        strict=True) if isinstance(industry, str)}
 
-    holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteSimulations(settings.data_dir).prices,
+    from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
+
+    holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteHoldingsMarket(settings.data_dir).prices,
                         lambda: repository.ranking(dict(policy.weights), today()).table, today)
     portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
     macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata(series_metadata()),
@@ -264,7 +266,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.holdings = holdings
     app.state.investor = InvestorBenchmark(SqliteInvestorProfile(settings.data_dir),
                                            SqliteSimulations(settings.data_dir).prices, today,
-                                           lots=holdings.lots)
+                                           lots=holdings.lots,
+                                           holdings_prices=SqliteHoldingsMarket(settings.data_dir).prices)
     identity_reads = SqliteIdentityReads(settings.data_dir / "gabi.db")
 
     def issuers(symbols: list[str]) -> dict[str, str]:
@@ -274,7 +277,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
 
     def euros_per_dollar() -> float | None:
         start = (today() - timedelta(days=10)).isoformat()
-        frame = SqliteSimulations(settings.data_dir).prices(["USDEUR=X"], start).get("USDEUR=X")
+        frame = SqliteHoldingsMarket(settings.data_dir).prices(["USDEUR=X"], start).get("USDEUR=X")
         closes = frame["close"].dropna() if frame is not None and "close" in frame else None
         return float(closes.iloc[-1]) if closes is not None and not closes.empty and closes.iloc[-1] > 0 else None
 

@@ -60,6 +60,7 @@ function lotBody(form: FormData): HoldingCreate {
     withholding: kind === 'dividend' ? Number(form.get('withholding') || 0) : 0,
     price: Number(form.get('price')),
     purchase_date: String(form.get('purchase_date') ?? ''),
+    basis_date: String(form.get('basis_date') ?? '').trim() || null,
     currency: String(form.get('currency') ?? 'USD') as HoldingCreate['currency'],
     commission: Number(form.get('commission') || 0),
     fx_rate: fx ? Number(fx) : null,
@@ -161,6 +162,20 @@ function LotForm({
           <option value="GBP">GBP</option>
         </NativeSelect>
       </label>
+      {!dividend && (
+        <label className="text-sm font-medium sm:col-span-2">
+          Ajuste del bróker: fecha de acciones y precio
+          <Input
+            className="mt-1"
+            name="basis_date"
+            type="date"
+            defaultValue={lot?.basis_date ?? ''}
+          />
+          <span className="text-xs text-muted-foreground">
+            Déjala vacía si anotas las acciones y el precio originales de esa compra o venta.
+          </span>
+        </label>
+      )}
       {!dividend && (
         <label className="text-sm font-medium">
           Comisión (en esa divisa)
@@ -559,6 +574,15 @@ function Evolution() {
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} retry={() => void query.refetch()} />}
       {query.data && <EvolutionContent data={query.data} />}
+      {query.data?.warnings?.map((warning) => (
+        <p
+          key={warning.symbol}
+          role="status"
+          className="mt-2 text-sm text-amber-800 dark:text-amber-300"
+        >
+          {warning.message}
+        </p>
+      ))}
     </section>
   );
 }
@@ -697,7 +721,9 @@ function ImportCsv({ changed }: { changed: () => void }) {
         añade las columnas <code>type</code> (compra, venta o dividendo) y <code>withholding</code>{' '}
         (retención); en un dividendo, <code>price</code> es el importe bruto cobrado. Con punto y
         coma como separador se admite la coma decimal. Si una fila no es válida no se importa
-        ninguna.
+        ninguna. Si el bróker reajustó las acciones y el precio por un desdoblamiento, añade
+        <code> basis_date</code> con la fecha de ese ajuste; si son los datos originales, déjala
+        vacía.
       </p>
       <label className="block text-sm font-medium" htmlFor="holdings-csv">
         Contenido del CSV
@@ -774,6 +800,15 @@ export function HoldingsPage() {
                 </p>
               )}
               <HoldingsPrices summary={data} />
+              {data.warnings?.map((warning) => (
+                <p
+                  key={warning.symbol}
+                  role="status"
+                  className="mt-2 text-sm text-amber-800 dark:text-amber-300"
+                >
+                  {warning.message}
+                </p>
+              ))}
               <p className="mt-2 text-xs text-muted-foreground">{data.note}</p>
             </section>
           )}
