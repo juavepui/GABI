@@ -37,6 +37,30 @@ class HomeAlert(BaseModel):
     detail: dict[str, Any] = Field(default_factory=dict)
 
 
+class SummarySentence(BaseModel):
+    """One plain-language sentence of «Tu resumen de hoy»; `values` holds the data every number comes from."""
+
+    kind: Literal["data", "moves", "other_model", "unscored", "target", "earnings"]
+    tone: Literal["good", "bad", "neutral"]
+    text: str
+    symbols: list[str]
+    link: str | None
+    values: dict[str, Any]
+
+
+class HomeSummary(BaseModel):
+    """«Tu resumen de hoy» (#307): templates, no AI. `no_companies`: the user follows nothing yet."""
+
+    status: Literal["ready", "no_companies"]
+    followed_count: int
+    watched_count: int
+    held_count: int
+    score_points: float
+    rank_places: int
+    window_days: int
+    sentences: list[SummarySentence]
+
+
 class HomeResponse(BaseModel):
     """The home page. `ranking_ready=False`: the frozen ranking is not cached yet (ask again with compute)."""
 
@@ -49,3 +73,4 @@ class HomeResponse(BaseModel):
     last_update: HomeLastUpdate | None
     steps: HomeSteps
     alerts: list[HomeAlert] = Field(default_factory=list)
+    summary: HomeSummary | None = None

@@ -6071,6 +6071,7 @@ export type HomeResponse = {
      */
     ranking_ready: boolean;
     steps: HomeSteps;
+    summary?: HomeSummary | null;
     /**
      * Target
      */
@@ -6101,6 +6102,46 @@ export type HomeSteps = {
      * Updated
      */
     updated: boolean;
+};
+
+/**
+ * HomeSummary
+ *
+ * «Tu resumen de hoy» (#307): templates, no AI. `no_companies`: the user follows nothing yet.
+ */
+export type HomeSummary = {
+    /**
+     * Followed Count
+     */
+    followed_count: number;
+    /**
+     * Held Count
+     */
+    held_count: number;
+    /**
+     * Rank Places
+     */
+    rank_places: number;
+    /**
+     * Score Points
+     */
+    score_points: number;
+    /**
+     * Sentences
+     */
+    sentences: Array<SummarySentence>;
+    /**
+     * Status
+     */
+    status: 'ready' | 'no_companies';
+    /**
+     * Watched Count
+     */
+    watched_count: number;
+    /**
+     * Window Days
+     */
+    window_days: number;
 };
 
 /**
@@ -11156,6 +11197,40 @@ export type StressScenario = {
      * Value Eur
      */
     value_eur: number;
+};
+
+/**
+ * SummarySentence
+ *
+ * One plain-language sentence of «Tu resumen de hoy»; `values` holds the data every number comes from.
+ */
+export type SummarySentence = {
+    /**
+     * Kind
+     */
+    kind: 'data' | 'moves' | 'other_model' | 'unscored' | 'target' | 'earnings';
+    /**
+     * Link
+     */
+    link: string | null;
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Tone
+     */
+    tone: 'good' | 'bad' | 'neutral';
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
 };
 
 /**

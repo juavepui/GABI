@@ -21,6 +21,7 @@ import { SectionLinks } from '@/shared/ui/section-links';
 import { HomeNotices } from './home-notices';
 import { MacroStrip } from '@/features/market/index';
 import { HomeAlerts } from './home-alerts';
+import { HomeSummaryCard } from './home-summary';
 import { PageHeader } from '@/shared/ui/page-header';
 
 const WARNINGS: Record<string, string> = {
@@ -276,7 +277,10 @@ export function HomePage() {
         eyebrow="Inicio"
         title="Tu GABI hoy"
         description={
-          <>Lo que tienes pendiente, cómo están tus datos y la cartera que GABI propone hoy.</>
+          <>
+            Qué ha cambiado en tus empresas, lo que tienes pendiente, cómo están tus datos y la
+            cartera que GABI propone hoy.
+          </>
         }
         guide={
           <>
@@ -304,6 +308,7 @@ export function HomePage() {
       {data && (
         <>
           <FirstSteps home={data} />
+          <HomeSummaryCard summary={data.summary} rankingReady={data.ranking_ready} />
           <HomeAlerts alerts={data.alerts ?? []} />
           <MacroStrip />
           <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">

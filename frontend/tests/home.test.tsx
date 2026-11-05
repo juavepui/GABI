@@ -85,3 +85,68 @@ describe('Inicio: estado de los datos', () => {
     expect(screen.text()).toContain('Reintentar');
   });
 });
+
+const SUMMARY_BASE = {
+  followed_count: 2,
+  watched_count: 2,
+  held_count: 0,
+  score_points: 10,
+  rank_places: 5,
+  window_days: 7,
+};
+
+describe('Inicio: tu resumen de hoy (#307)', () => {
+  it('enseña las frases del backend con su enlace y la explicación plegada', async () => {
+    api.getNotices.mockResolvedValue(NOTICES);
+    api.getHome.mockResolvedValue({
+      ...home({ prices_current: true }),
+      summary: {
+        ...SUMMARY_BASE,
+        status: 'ready',
+        sentences: [
+          {
+            kind: 'moves',
+            tone: 'good',
+            text: 'Desde que empezaste a seguirlas, 1 de las empresas que sigues ha cambiado mucho: AAA sube 12,3 puntos (de 55,0 a 67,3).',
+            symbols: ['AAA'],
+            link: '/descubrir/seguidas',
+            values: {},
+          },
+        ],
+      },
+    });
+    screen = renderScreen(<HomePage />);
+    await screen.findText('AAA sube 12,3 puntos');
+    expect(screen.text()).toContain('Tu resumen de hoy');
+    expect(screen.text()).toContain('Buena noticia:');
+    expect(screen.text()).toContain('Ver empresas seguidas');
+    expect(screen.text()).toContain('moverse 10 puntos o 5 puestos');
+    expect(screen.text()).toContain('sin inteligencia artificial');
+  });
+
+  it('explica qué hacer si todavía no sigues ninguna empresa', async () => {
+    api.getNotices.mockResolvedValue(NOTICES);
+    api.getHome.mockResolvedValue({
+      ...home({ prices_current: true }),
+      summary: {
+        ...SUMMARY_BASE,
+        followed_count: 0,
+        watched_count: 0,
+        status: 'no_companies',
+        sentences: [],
+      },
+    });
+    screen = renderScreen(<HomePage />);
+    await screen.findText('Todavía no sigues ninguna empresa');
+    expect(screen.text()).toContain('Abrir el Ranking');
+  });
+
+  it('avisa de que el resumen llega cuando termine el ranking', async () => {
+    api.getNotices.mockResolvedValue(NOTICES);
+    api.getHome.mockImplementation((compute: boolean) =>
+      compute ? new Promise(() => {}) : Promise.resolve(home(null)),
+    );
+    screen = renderScreen(<HomePage />);
+    await screen.findText('El resumen aparecerá en cuanto termine el cálculo del ranking.');
+  });
+});
