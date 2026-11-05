@@ -9,6 +9,7 @@ Bandas de color (las de «alta / media / baja» de la ficha, #310, con dos tramo
 """
 
 import math
+from typing import Any
 
 import pandas as pd
 
@@ -50,7 +51,7 @@ def _best_mean_first(sector: dict) -> tuple[float, str]:
 
 def build(table: pd.DataFrame) -> dict:
     """`table`: the ranking, indexed by symbol and sorted by score (position 1 = best)."""
-    companies = []
+    companies: list[dict[str, Any]] = []
     for position, (symbol, row) in enumerate(table.iterrows(), 1):
         score, cap = _number(row.get("composite_score")), _number(row.get("market_cap"))
         cap = cap if cap is not None and cap > 0 else None
