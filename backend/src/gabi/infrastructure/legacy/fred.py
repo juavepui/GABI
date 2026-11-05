@@ -8,11 +8,15 @@ from pathlib import Path
 
 from gabi.application.administration.fred import synchronize
 from gabi.application.administration.sync_events import SyncAttempt
-from gabi.domain.market.fred import SERIES
+from gabi.domain.market.macro_series import synchronized_series
 from gabi.infrastructure.legacy.source_errors import fred_error, retry
 from gabi.infrastructure.providers.fred import FredSource, fred_key
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
+
+# The captured series and those added for the Macro panel (#309). The data-quality report and the
+# research history refresh keep `fred.SERIES`, pinned by their migration captures.
+SERIES = synchronized_series()
 
 
 def fred_operation(data_dir: Path, *, now: Callable[[], datetime] | None = None,

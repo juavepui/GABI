@@ -3,6 +3,21 @@ from typing import Literal
 
 from gabi_api.schemas.market import WireModel
 
+Block = Literal["liquidity", "inflation_rates", "growth_jobs", "conditions"]
+
+
+class MacroLabel(WireModel):
+    """A block's state in words (#309), from a fixed rule on one series; context, never a signal."""
+
+    block: Block
+    title: str
+    label: str
+    tone: Literal["good", "bad", "neutral"]
+    series_id: str | None  # None: no data stored for the series the rule needs
+    value: float | None  # the value the rule read (the Fed balance: its % change)
+    date: date | None
+    rule: str
+
 
 class MacroPoint(WireModel):
     series_id: str
@@ -15,6 +30,7 @@ class MacroPoint(WireModel):
     # level of a weekly balance, or the 3-month average of unemployment (Sahm).
     aggregation: Literal["end_of_period", "average", "year_over_year", "wednesday_level", "three_month_average"]
     home: bool  # shown in the Home context strip (#195)
+    block: Block  # the panel group it belongs to (#309)
     latest_value: float | None
     latest_date: date | None
     change_3m: float | None
@@ -22,6 +38,7 @@ class MacroPoint(WireModel):
 
 class MacroResponse(WireModel):
     items: list[MacroPoint]
+    labels: list[MacroLabel]
     source: str = "FRED local cache"
     affects_score: bool = False
     fred_key_configured: bool  # without it the cached series cannot be refreshed

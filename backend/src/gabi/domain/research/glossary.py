@@ -148,6 +148,26 @@ TERMS: dict[str, tuple[str, str]] = {
                       "trimestre. El 10-K de la SEC es el informe anual: cubre un ejercicio cerrado y llega 2 o 3 "
                       "meses después. Para la misma empresa y el mismo día, el PER puede salir distinto según "
                       "cuál se use."),
+    "nfci": ("Condiciones financieras (NFCI)",
+             "Lo fácil o difícil que es conseguir dinero prestado en EE. UU. Lo calcula cada semana la Reserva "
+             "Federal de Chicago con más de 100 datos de crédito, bolsa y bancos. Vale 0 en condiciones medias: "
+             "negativo es más fácil de lo normal (holgadas) y positivo, más difícil (tensas)."),
+    "initial_claims": ("Nuevas peticiones de paro",
+                       "Personas que piden el subsidio de paro por primera vez en una semana en EE. UU. Es uno de "
+                       "los primeros datos que avisan de que el empleo se enfría; conviene mirar la tendencia de "
+                       "varias semanas, no una sola."),
+    "breakeven_inflation": ("Inflación esperada por el mercado",
+                            "La inflación que el mercado espera de media para los próximos años. Sale de comparar "
+                            "lo que paga el bono normal del Tesoro con el bono protegido contra la inflación "
+                            "(TIPS): la diferencia es la inflación que los inversores dan por hecha."),
+    "fed_liquidity": ("Liquidez (balance de la Fed)",
+                      "El dinero que la Reserva Federal mete en el sistema comprando bonos. Si su balance crece, "
+                      "inyecta dinero; si se reduce, lo retira. Más liquidez ha coincidido a menudo con bolsas al "
+                      "alza, pero no es una regla fija."),
+    "macro_labels": ("Etiquetas de la economía",
+                     "Una palabra por apartado (liquidez, inflación, empleo y condiciones financieras) sacada de "
+                     "una regla fija sobre un dato de FRED, por ejemplo «holgadas» si el NFCI está por debajo de "
+                     "0. Describen el momento; no predicen la bolsa ni cambian la puntuación de las empresas."),
 }
 
 # Every metric's help is a term (#197): the ⓘ of Ranking, company page and Comparar and the Ayuda

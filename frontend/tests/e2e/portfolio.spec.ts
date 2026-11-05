@@ -338,6 +338,13 @@ test('Inicio muestra la franja macro de la caché y el panel declara frecuencia 
     page.getByText('Fuente: FRED (WALCL) · Semanal · saldo de cada miércoles'),
   ).toBeVisible();
   await expect(page.getByText(/no es alcista por sí mismo/)).toBeVisible();
+  // #309: one label in words per block, then the series grouped under the same four blocks.
+  const words = page.getByRole('region', { name: 'La economía en palabras' });
+  await expect(words.getByRole('listitem')).toHaveCount(4);
+  await expect(words).toContainText('Condiciones financieras');
+  await expect(
+    page.getByRole('region', { name: 'Crecimiento y empleo' }).getByText('Tasa de paro'),
+  ).toBeVisible();
 });
 
 test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', async ({
