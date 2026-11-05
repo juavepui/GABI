@@ -74,8 +74,8 @@ export function TrialDetail({ id }: { id: string }) {
           className={
             'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ' +
             (data.result_verified
-              ? 'bg-emerald-100 text-emerald-800'
-              : 'bg-amber-100 text-amber-900')
+              ? 'bg-success-soft text-success-ink'
+              : 'bg-warning-soft text-warning-ink')
           }
         >
           {data.result_verified ? (

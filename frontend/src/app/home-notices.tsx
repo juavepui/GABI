@@ -13,7 +13,7 @@ function PeriodicFollowUp({ notice }: { notice: PeriodicNotice }) {
     'Cada día laborable anota qué empresas elige GABI, para comprobar más adelante, con datos nuevos, si acierta. Un día sin anotar no se puede recuperar después.';
   if (notice.status === 'never')
     return (
-      <p role="alert" className="rounded-lg border border-amber-500/40 p-3">
+      <p role="alert" className="rounded-lg border border-warning-border p-3">
         <strong>El seguimiento diario de GABI no se ha ejecutado nunca en este equipo.</strong>{' '}
         {lost} Para activarlo, ejecuta una vez en PowerShell <code>{SCHEDULE_SCRIPT}</code>: se
         lanza solo de martes a sábado a las 05:00; si el ordenador está apagado, al encenderlo.
@@ -21,7 +21,7 @@ function PeriodicFollowUp({ notice }: { notice: PeriodicNotice }) {
     );
   if (notice.status === 'late')
     return (
-      <p role="alert" className="rounded-lg border border-amber-500/40 p-3">
+      <p role="alert" className="rounded-lg border border-warning-border p-3">
         <strong>
           El seguimiento diario de GABI lleva {notice.business_days} días laborables sin ejecutarse
         </strong>{' '}
@@ -54,7 +54,7 @@ export function HomeNotices() {
   const data = notices.data;
   return (
     <div className="mb-6 space-y-2 text-sm" aria-label="Avisos" role="region">
-      <p className="rounded-lg border border-amber-500/40 bg-amber-50/60 p-3 dark:bg-amber-950/20">
+      <p className="rounded-lg border border-warning-border bg-warning-soft p-3">
         Herramienta para uso personal y para aprender.{' '}
         <strong>No es asesoramiento financiero</strong> ni te dice qué comprar. Los datos vienen de
         fuentes gratuitas (Yahoo Finance, la SEC y la Reserva Federal) y pueden llegar con retraso o
@@ -68,7 +68,7 @@ export function HomeNotices() {
         </p>
       )}
       {data?.smallmid && !data.smallmid.analyzed && data.smallmid.data_frozen && (
-        <p role="alert" className="rounded-lg border border-amber-500/40 p-3">
+        <p role="alert" className="rounded-lg border border-warning-border p-3">
           Los datos del estudio fuera del S&amp;P 500 (#44) ya están cerrados y falta analizarlos.
           Lo hacen solas las tareas automáticas si están instaladas; si no, ejecuta{' '}
           <code>{COMMAND}</code>.

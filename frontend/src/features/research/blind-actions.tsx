@@ -35,7 +35,7 @@ function RebalanceResult({ jobId }: { jobId: string }) {
       posiciones, hash {data.record_hash?.slice(0, 12)}…
     </p>
   ) : (
-    <p role="status" className="mt-2 text-sm text-amber-700 dark:text-amber-400">
+    <p role="status" className="mt-2 text-sm text-warning-ink">
       No registrado: {data.reason}
     </p>
   );

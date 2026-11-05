@@ -64,7 +64,7 @@ const ALERT: Record<string, string> = {
 function Alerts({ alerts, title }: { alerts: Idea['pending_alerts']; title: string }) {
   if (!alerts.length) return null;
   return (
-    <div className="mt-2 rounded-lg border border-amber-500/40 p-2 text-xs">
+    <div className="mt-2 rounded-lg border border-warning-border p-2 text-xs">
       <p className="font-medium">{title}</p>
       <ul className="mt-1 space-y-1">
         {alerts.map((alert) => (

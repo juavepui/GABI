@@ -56,6 +56,7 @@ import {
   sections as allSections,
 } from './navigation';
 import { JobsIndicator } from './jobs-indicator';
+import { ThemeToggle } from './theme-toggle';
 import { rememberLaunch } from './job-launches';
 
 // Any mutation that returns a job (it was queued or cancelled) refreshes the job lists at once,
@@ -86,8 +87,8 @@ const client: QueryClient = new QueryClient({
 const subLink = ({ isActive }: { isActive: boolean }) =>
   'block shrink-0 rounded-md px-3 py-1.5 text-[13px] transition-colors ' +
   (isActive
-    ? 'bg-white/15 font-semibold text-white'
-    : 'text-[#c5d8cc] hover:bg-white/10 hover:text-white');
+    ? 'bg-sidebar-foreground/15 font-semibold text-sidebar-foreground'
+    : 'text-sidebar-muted hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground');
 /** «GABI / Sección / Apartado»: where the page sits, with links back up. */
 function Breadcrumb({ pathname }: { pathname: string }) {
   const section = sectionOf(pathname);
@@ -180,27 +181,27 @@ function Shell() {
     <div className="min-h-screen lg:pl-60">
       <a
         href="#contenido"
-        className="sr-only z-50 rounded-md bg-primary p-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        className="sr-only z-50 rounded-md bg-primary p-3 text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
       >
         Saltar al contenido
       </a>
-      <aside className="bg-primary text-primary-foreground lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-60 lg:flex-col">
+      <aside className="bg-sidebar text-sidebar-foreground lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-60 lg:flex-col">
         <Link
           to="/"
           aria-label="GABI, inicio"
           className="flex items-center gap-3 px-5 py-3 lg:px-7 lg:py-8"
         >
-          <span className="flex size-8 items-center justify-center rounded-xl bg-white/10 lg:size-10">
+          <span className="flex size-8 items-center justify-center rounded-xl bg-sidebar-foreground/10 lg:size-10">
             <Leaf size={20} aria-hidden="true" />
           </span>
           <span>
             <span className="block text-lg font-semibold tracking-[0.14em] lg:text-xl">GABI</span>
-            <span className="hidden text-[11px] tracking-wide text-[#c5d8cc] lg:block">
+            <span className="hidden text-[11px] tracking-wide text-sidebar-muted lg:block">
               Análisis con evidencia
             </span>
           </span>
         </Link>
-        <p className="hidden px-7 pb-3 text-[10px] uppercase tracking-[0.18em] text-[#b7cebf] lg:block">
+        <p className="hidden px-7 pb-3 text-[10px] uppercase tracking-[0.18em] text-sidebar-muted lg:block">
           Espacio de trabajo
         </p>
         <nav
@@ -217,8 +218,8 @@ function Shell() {
                   'flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors lg:py-3 ' +
                   (item === section
                     ? // On wide screens its pages are listed below and carry the highlight.
-                      'bg-[#dceaca] font-semibold text-[#183e32] lg:bg-transparent lg:text-white'
-                    : 'text-[#d5e3da] hover:bg-white/10')
+                      'bg-sidebar-active font-semibold text-sidebar-active-foreground lg:bg-transparent lg:text-sidebar-foreground'
+                    : 'text-sidebar-muted hover:bg-sidebar-foreground/10')
                 }
               >
                 <item.icon size={18} aria-hidden="true" />
@@ -227,7 +228,7 @@ function Shell() {
               {item === section && (
                 <ul
                   aria-label={'Apartados de ' + item.label}
-                  className="ml-6 mt-1 mb-2 hidden space-y-0.5 border-l border-white/15 pl-2 lg:block"
+                  className="ml-6 mt-1 mb-2 hidden space-y-0.5 border-l border-sidebar-foreground/15 pl-2 lg:block"
                 >
                   {item.pages.map((sub) => (
                     <li key={sub.path}>
@@ -255,12 +256,12 @@ function Shell() {
           </nav>
         )}
         <div className="mt-auto hidden px-5 pb-6 lg:block">
-          <div className="rounded-xl border border-white/15 bg-white/5 p-4">
+          <div className="rounded-xl border border-sidebar-foreground/15 bg-sidebar-foreground/5 p-4">
             <p className="flex items-center gap-2 text-xs font-medium">
               <HardDrive size={14} aria-hidden="true" />
               Tu instalación local
             </p>
-            <p className="mt-2 text-[11px] leading-relaxed text-[#c5d8cc]">
+            <p className="mt-2 text-[11px] leading-relaxed text-sidebar-muted">
               Datos y cálculos permanecen en este equipo.
             </p>
           </div>
@@ -271,6 +272,7 @@ function Shell() {
         <CompanySearch />
         <div className="flex shrink-0 items-center gap-2">
           <JobsIndicator />
+          <ThemeToggle />
           <Link
             to={HELP.path}
             aria-label="Ayuda y glosario"

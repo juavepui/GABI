@@ -35,9 +35,9 @@ export function BlockBars({
   const fill = (key: (typeof BLOCKS)[number][0]) =>
     'block h-full rounded-full ' +
     (summary.strengths.includes(key)
-      ? 'bg-emerald-600'
+      ? 'bg-success'
       : summary.weakness === key
-        ? 'bg-red-600'
+        ? 'bg-danger'
         : 'bg-primary/70');
   if (compact)
     return (

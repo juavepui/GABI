@@ -27,7 +27,7 @@ export function ProgressBar({
       >
         <div
           className={
-            'h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-700 ' +
+            'h-full rounded-full bg-gradient-to-r from-success to-success transition-[width] duration-700 ' +
             (running ? 'animate-pulse' : '')
           }
           style={{ width: `${Math.max(percent, running ? 3 : 0)}%` }}

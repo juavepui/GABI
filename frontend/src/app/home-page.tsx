@@ -49,7 +49,7 @@ function Step({
       <Icon
         size={20}
         aria-hidden="true"
-        className={done ? 'mt-0.5 text-emerald-600' : 'mt-0.5 text-muted-foreground'}
+        className={done ? 'mt-0.5 text-success' : 'mt-0.5 text-muted-foreground'}
       />
       <div className="min-w-0 flex-1">
         <p className={'text-sm font-medium ' + (done ? 'text-muted-foreground line-through' : '')}>
@@ -123,12 +123,12 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
         <>
           <p className="mt-2 text-sm">
             {data.status === 'ready' && data.prices_current === true && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">
+              <span className="rounded-full bg-success-soft px-2 py-0.5 text-success-ink">
                 Al día
               </span>
             )}
             {data.status === 'ready' && data.prices_current === false && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900">
+              <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning-ink">
                 Falta el último cierre
               </span>
             )}
@@ -136,12 +136,14 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
               <span className="rounded-full bg-muted px-2 py-0.5">Listos para usar</span>
             )}
             {data.status === 'stale' && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900">
+              <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning-ink">
                 Con datos antiguos
               </span>
             )}
             {data.status === 'empty' && (
-              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-800">Sin datos</span>
+              <span className="rounded-full bg-danger-soft px-2 py-0.5 text-danger-ink">
+                Sin datos
+              </span>
             )}
           </p>
           <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -179,7 +181,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
           </p>
           {computing && (
             <div className="h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-              <div className="h-full w-1/3 animate-[pulse_1.2s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+              <div className="h-full w-1/3 animate-[pulse_1.2s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-success to-success" />
             </div>
           )}
         </div>
@@ -229,7 +231,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
               </span>
               <span className="h-1.5 w-20 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                 <span
-                  className="block h-full rounded-full bg-emerald-500"
+                  className="block h-full rounded-full bg-success"
                   style={{ width: `${Math.min(Math.max(row.composite_score, 0), 100)}%` }}
                 />
               </span>

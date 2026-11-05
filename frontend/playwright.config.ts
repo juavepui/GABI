@@ -27,6 +27,7 @@ export default defineConfig({
         '**/headings.spec.ts',
         '**/mode.spec.ts',
         '**/navigation.spec.ts',
+        '**/theme.spec.ts',
       ],
     },
     {

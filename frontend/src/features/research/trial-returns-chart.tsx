@@ -23,7 +23,7 @@ export default function TrialReturnsChart({ points }: { points: TrialPoint[] }) 
     >
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="#e4e9e1" strokeDasharray="3 3" />
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
           <XAxis dataKey="date" tick={{ fontSize: 10 }} minTickGap={40} />
           <YAxis
             tickFormatter={(value) => percent(Number(value))}
@@ -33,7 +33,10 @@ export default function TrialReturnsChart({ points }: { points: TrialPoint[] }) 
           <Tooltip formatter={(value) => percent(Number(value))} />
           <Bar dataKey="value" name="Rentabilidad del periodo">
             {points.map((point) => (
-              <Cell key={point.date} fill={(point.value ?? 0) >= 0 ? '#059669' : '#e11d48'} />
+              <Cell
+                key={point.date}
+                fill={(point.value ?? 0) >= 0 ? 'var(--success)' : 'var(--danger)'}
+              />
             ))}
           </Bar>
         </BarChart>

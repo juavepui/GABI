@@ -12,12 +12,18 @@ export default function SimulationChart({ curve }: { curve: CurvePoint[] }) {
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#22764f"
+            stroke="var(--chart-1)"
             dot={false}
             connectNulls={false}
             name="Valor"
           />
-          <Line type="monotone" dataKey="cash" stroke="#d09028" dot={false} name="Efectivo" />
+          <Line
+            type="monotone"
+            dataKey="cash"
+            stroke="var(--chart-3)"
+            dot={false}
+            name="Efectivo"
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

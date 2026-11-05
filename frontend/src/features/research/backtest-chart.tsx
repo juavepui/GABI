@@ -20,7 +20,7 @@ export default function BacktestChart({
             type="monotone"
             dataKey="estrategia"
             name="Estrategia"
-            stroke="#22764f"
+            stroke="var(--chart-1)"
             dot={false}
           />
           {withUniverse && (
@@ -28,11 +28,11 @@ export default function BacktestChart({
               type="monotone"
               dataKey="universo_ew"
               name="Universo equiponderado"
-              stroke="#d09028"
+              stroke="var(--chart-3)"
               dot={false}
             />
           )}
-          <Line type="monotone" dataKey="spy" name="SPY" stroke="#4467b3" dot={false} />
+          <Line type="monotone" dataKey="spy" name="SPY" stroke="var(--chart-2)" dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>

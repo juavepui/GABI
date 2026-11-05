@@ -393,9 +393,7 @@ function Positions({ summary }: { summary: HoldingsSummary }) {
                   </span>
                   <ThesisMark symbol={row.symbol} />
                   {row.status !== 'ok' && (
-                    <span className="block text-xs text-amber-700 dark:text-amber-300">
-                      {STATUS[row.status]}
-                    </span>
+                    <span className="block text-xs text-warning-ink">{STATUS[row.status]}</span>
                   )}
                 </td>
                 <td className="text-right">{formatNumber(row.shares, { digits: 4 })}</td>
@@ -575,11 +573,7 @@ function Evolution() {
       {query.isError && <ErrorState error={query.error} retry={() => void query.refetch()} />}
       {query.data && <EvolutionContent data={query.data} />}
       {query.data?.warnings?.map((warning) => (
-        <p
-          key={warning.symbol}
-          role="status"
-          className="mt-2 text-sm text-amber-800 dark:text-amber-300"
-        >
+        <p key={warning.symbol} role="status" className="mt-2 text-sm text-warning-ink">
           {warning.message}
         </p>
       ))}
@@ -788,7 +782,7 @@ export function HoldingsPage() {
               {data.missing.length > 0 ? (
                 <p
                   role="status"
-                  className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                  className="rounded-lg border border-warning-border bg-warning-soft p-3 text-sm text-warning-ink"
                 >
                   No se han podido valorar porque falta su precio o el cambio de moneda:{' '}
                   {data.missing.join(', ')}. No cuentan en los totales; pulsa «Actualizar precios de
@@ -801,11 +795,7 @@ export function HoldingsPage() {
               )}
               <HoldingsPrices summary={data} />
               {data.warnings?.map((warning) => (
-                <p
-                  key={warning.symbol}
-                  role="status"
-                  className="mt-2 text-sm text-amber-800 dark:text-amber-300"
-                >
+                <p key={warning.symbol} role="status" className="mt-2 text-sm text-warning-ink">
                   {warning.message}
                 </p>
               ))}

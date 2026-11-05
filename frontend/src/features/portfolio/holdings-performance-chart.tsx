@@ -27,12 +27,18 @@ export default function HoldingsPerformanceChart({
           <YAxis width={48} tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="cartera" name="Tu cartera" stroke="#22764f" dot={false} />
+          <Line
+            type="monotone"
+            dataKey="cartera"
+            name="Tu cartera"
+            stroke="var(--chart-1)"
+            dot={false}
+          />
           <Line
             type="monotone"
             dataKey="sp500"
             name="S&P 500"
-            stroke="#5b6bd6"
+            stroke="var(--chart-2)"
             dot={false}
             connectNulls={false}
           />

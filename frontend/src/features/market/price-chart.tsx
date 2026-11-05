@@ -34,19 +34,19 @@ export default function PriceChart({ prices }: { prices: PricePoint[] }) {
             margin={{ top: 12, right: 12, bottom: 0, left: 0 }}
             accessibilityLayer
           >
-            <CartesianGrid vertical={false} stroke="#e4e9e1" strokeDasharray="3 3" />
+            <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
               tickFormatter={(d) => dateLabel(String(d))}
               minTickGap={60}
-              tick={{ fontSize: 11, fill: '#637169' }}
+              tick={{ fontSize: 11, fill: 'var(--chart-axis)' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               domain={['auto', 'auto']}
               tickFormatter={(v) => String(Math.round(Number(v)))}
-              tick={{ fontSize: 11, fill: '#637169' }}
+              tick={{ fontSize: 11, fill: 'var(--chart-axis)' }}
               axisLine={false}
               tickLine={false}
               width={48}
@@ -57,12 +57,18 @@ export default function PriceChart({ prices }: { prices: PricePoint[] }) {
                 metric({ value: v == null ? null : Number(v), unit: 'USD' }),
                 'Cierre ajustado',
               ]}
-              contentStyle={{ borderRadius: 10, borderColor: '#dfe5dc', fontSize: 12 }}
+              contentStyle={{
+                borderRadius: 10,
+                borderColor: 'var(--border)',
+                backgroundColor: 'var(--card)',
+                color: 'var(--foreground)',
+                fontSize: 12,
+              }}
             />
             <Line
               type="linear"
               dataKey="adj_close"
-              stroke="#2d654b"
+              stroke="var(--chart-1)"
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}

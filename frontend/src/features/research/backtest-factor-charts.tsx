@@ -15,12 +15,12 @@ export type RollingPoint = { end: string; estimate: number; low: number; high: n
 export type WealthPoint = { date: string } & Record<string, number | string | null>;
 
 const COLORS: Record<string, string> = {
-  strategy: '#22764f',
-  spy: '#4467b3',
-  rf: '#8a8a8a',
-  universe_ew: '#d09028',
-  spy_beta: '#8d4fb3',
-  ff6: '#c2413b',
+  strategy: 'var(--chart-1)',
+  spy: 'var(--chart-2)',
+  rf: 'var(--chart-6)',
+  universe_ew: 'var(--chart-3)',
+  spy_beta: 'var(--chart-4)',
+  ff6: 'var(--chart-5)',
 };
 
 export function RollingChart({ points, full }: { points: RollingPoint[]; full: number | null }) {
@@ -36,14 +36,14 @@ export function RollingChart({ points, full }: { points: RollingPoint[]; full: n
             dataKey="band"
             name="IC 95 % puntual HAC"
             stroke="none"
-            fill="#22764f"
+            fill="var(--chart-1)"
             fillOpacity={0.15}
           />
-          <Line dataKey="estimate" name="Coeficiente" stroke="#22764f" dot />
+          <Line dataKey="estimate" name="Coeficiente" stroke="var(--chart-1)" dot />
           {full != null && (
             <ReferenceLine y={full} strokeDasharray="4 4" label="Muestra completa" />
           )}
-          <ReferenceLine y={0} stroke="#8a8a8a" />
+          <ReferenceLine y={0} stroke="var(--chart-6)" />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -72,7 +72,7 @@ export function WealthChart({
               key={name}
               dataKey={name}
               name={labels[name] ?? name}
-              stroke={COLORS[name] ?? '#555'}
+              stroke={COLORS[name] ?? 'var(--chart-6)'}
               dot={false}
             />
           ))}

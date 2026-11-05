@@ -10,6 +10,23 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>GABI</title>
+    <script>
+      // Theme before the first paint (#321): the saved choice or, by default, the system's.
+      // Same rule as src/shared/lib/theme.ts; storage may be blocked, so it never throws.
+      (function () {
+        var choice = 'system';
+        try {
+          choice = localStorage.getItem('gabi-theme') || 'system';
+        } catch (error) {}
+        var dark =
+          choice === 'dark' ||
+          (choice !== 'light' &&
+            !!window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
