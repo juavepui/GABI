@@ -4595,6 +4595,7 @@ export type Exposure = {
      * Issuers
      */
     issuers: Array<IssuerExposure>;
+    issuers_reading?: Reading | null;
     /**
      * Liquidity
      */
@@ -8962,6 +8963,7 @@ export type PlanResponse = {
      * Sectors
      */
     sectors: Array<SectorWeight>;
+    sectors_reading: Reading;
     /**
      * Status
      */
@@ -10039,6 +10041,24 @@ export type RankingStability = {
      */
     weights: {
         [key: string]: number;
+    };
+};
+
+/**
+ * Reading
+ *
+ * A chart's conclusion in words (#323, #324); `values` holds every number of the text.
+ */
+export type Reading = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
     };
 };
 
