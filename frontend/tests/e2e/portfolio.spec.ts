@@ -13,6 +13,18 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   // The test universe is almost all Information Technology: the descriptive warning must show.
   const breakdown = page.getByRole('region', { name: 'Reparto por sector' });
   await expect(breakdown.getByRole('status')).toContainText('Sector Information Technology');
+  // #324: the conclusion first, then paired bars with the warning limit; the table stays one click away.
+  await expect(
+    breakdown.getByText(/Pasa tu límite de aviso del 25,0 %: Information Technology/),
+  ).toBeVisible();
+  const bars = breakdown.getByRole('list', {
+    name: 'Peso de cada sector: cartera propuesta y S&P 500',
+  });
+  await expect(
+    bars.getByRole('listitem').filter({ hasText: 'Information Technology' }),
+  ).toContainText('Pasa tu límite de aviso');
+  await page.screenshot({ path: test.info().outputPath('reparto-sector.png'), fullPage: true });
+  await breakdown.getByText('Ver como tabla').click();
   await expect(breakdown.getByRole('columnheader', { name: 'S&P 500' })).toBeVisible();
   await expect(breakdown.getByRole('row', { name: /Information Technology/ })).toBeVisible();
   await page

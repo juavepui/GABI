@@ -8945,6 +8945,16 @@
             "title": "Issuers",
             "type": "array"
           },
+          "issuers_reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reading"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "liquidity": {
             "items": {
               "$ref": "#/components/schemas/LiquidityRow"
@@ -17260,6 +17270,9 @@
             "title": "Sectors",
             "type": "array"
           },
+          "sectors_reading": {
+            "$ref": "#/components/schemas/Reading"
+          },
           "status": {
             "enum": [
               "FROZEN",
@@ -17292,6 +17305,7 @@
           "concentration",
           "sector_limit_percent",
           "industry_limit_percent",
+          "sectors_reading",
           "holdings_source",
           "holdings_unvalued"
         ],
@@ -19328,6 +19342,27 @@
           "perturbations"
         ],
         "title": "RankingStability",
+        "type": "object"
+      },
+      "Reading": {
+        "additionalProperties": false,
+        "description": "A chart's conclusion in words (#323, #324); `values` holds every number of the text.",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "text",
+          "values"
+        ],
+        "title": "Reading",
         "type": "object"
       },
       "RebasedPoint": {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ChartFrame } from '../src/shared/ui/charts/chart-frame';
+import { CompareBars } from '../src/shared/ui/charts/compare-bars';
 import { RangeDot } from '../src/shared/ui/charts/range-dot';
 import { renderScreen } from './render';
 
@@ -67,5 +68,36 @@ describe('piezas comunes de gráficas (#323)', () => {
     expect(lefts).toContain('100%');
     // «Hoy» sits over the dot and, at the right edge, grows inwards.
     expect(screen.text()).toContain('Hoy 30,0');
+  });
+
+  it('CompareBars escribe cada número, la referencia y lo que pasa del límite en palabras', () => {
+    screen = renderScreen(
+      <CompareBars
+        label="Peso por sector"
+        rows={[
+          { label: 'Tecnología', value: 40, reference: 31.5, flag: 'Pasa tu límite de aviso' },
+          { label: 'Salud', value: 10, reference: 12 },
+        ]}
+        format={(value) => ratio(value) + ' %'}
+        valueLabel="Cartera propuesta"
+        referenceLabel="S&P 500"
+        limit={{ value: 25, label: 'Tu límite de aviso' }}
+      />,
+    );
+    const text = screen.text();
+    expect(text).toContain('Cartera propuesta: 40,0 %');
+    expect(text).toContain('S&P 500: 31,5 %');
+    expect(text).toContain('Pasa tu límite de aviso');
+    expect(text.match(/Pasa tu límite de aviso/g)).toHaveLength(1);
+    expect(text).toContain('Tu límite de aviso');
+    // The bars share one scale: 40 is the widest, the 25 % limit sits at 62,5 %.
+    const widths = Array.from(screen.container.querySelectorAll('[style*="width"]')).map(
+      (node) => (node as HTMLElement).style.width,
+    );
+    expect(widths[0]).toBe('100%');
+    const lines = Array.from(screen.container.querySelectorAll('[style*="left"]')).map(
+      (node) => (node as HTMLElement).style.left,
+    );
+    expect(lines).toContain('62.5%');
   });
 });
