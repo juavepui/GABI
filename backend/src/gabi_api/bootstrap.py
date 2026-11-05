@@ -29,6 +29,7 @@ from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
 from gabi.application.market.market_health import MarketHealthQueries
 from gabi.application.market.queries import MarketQueries
+from gabi.application.market.score_history import ScoreHistoryQueries
 from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
 from gabi.application.market.snapshots import SnapshotTracking
@@ -103,6 +104,7 @@ from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedArtifacts, FilePublishedLedger
 from gabi.infrastructure.storage.saved_audits import FileSavedAudits
+from gabi.infrastructure.storage.score_history import SqliteScoreHistory
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
@@ -220,6 +222,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.macro = macro
+    app.state.score_history = ScoreHistoryQueries(SqliteScoreHistory(settings.data_dir), lambda: policy.model_id)
     app.state.market_health = MarketHealthQueries(SqliteMarketHealth(settings.data_dir),
                                                   lambda: model.benchmark_symbol, today)
     app.state.signals = signals
@@ -330,7 +333,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
                           repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items,
-                          app.state.market_health.cached)
+                          app.state.market_health.cached, SqliteScoreHistory(settings.data_dir).previous_day)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)

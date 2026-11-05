@@ -37,6 +37,7 @@ import type {
   MacroResponse,
   MarketHealthResponse,
   HeatmapResponse,
+  ScoreHistoryResponse,
   SaveSnapshot,
   Snapshot,
   SnapshotList,
@@ -720,6 +721,13 @@ export function getComparisonPrices(
 
 export function getMacro(signal?: AbortSignal): Promise<MacroResponse> {
   return get('/api/v1/market/macro', signal);
+}
+
+export function getCompanyScoreHistory(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<ScoreHistoryResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/score-history', signal);
 }
 
 export function getHeatmap(signal?: AbortSignal): Promise<HeatmapResponse> {

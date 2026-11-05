@@ -49,6 +49,7 @@ from gabi_api.schemas.market import (
     PricePoint,
     RankingResponse,
     RiskWindowsResponse,
+    ScoreHistoryResponse,
     company_headline,
     company_row,
     data_response,
@@ -80,6 +81,12 @@ def research_service(request: Request) -> CompanyResearch:
 
 
 Research = Annotated[CompanyResearch, Depends(research_service)]
+
+
+@router.get("/companies/{symbol}/score-history", response_model=ScoreHistoryResponse)
+def company_score_history(symbol: SymbolPath, request: Request) -> dict:
+    """Read-only: the score and position the daily task stored for the company (#328)."""
+    return request.app.state.score_history.company(symbol)
 
 
 @router.get("/companies/{symbol}/research", response_model=CompanyResearchResponse)

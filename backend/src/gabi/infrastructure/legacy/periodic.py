@@ -100,6 +100,33 @@ class LegacyPeriodicOperations:
 
         return capture_current(run_error=error, maintenance=maintenance)
 
+    def record_scores(self):
+        """Score and position of every company with the active model, dated by its prices (#328)."""
+        from gabi.application.market.queries import describe_data
+        from gabi.domain.market import score_history
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.settings import Settings
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+        from gabi.infrastructure.storage.score_history import SqliteScoreHistory
+
+        model = active_model()
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()),
+                                calculators(model.technical, input_checks=model.input_checks), model_policy(model),
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+        try:
+            today = datetime.now(UTC).date()
+            snapshot = market.ranking(dict(model.weights), today)
+            day = describe_data(snapshot, today).latest_price_date
+            if day is None:
+                return {"guardadas": 0, "motivo": "sin precios"}
+            rows = score_history.rows(snapshot.table)
+            saved = SqliteScoreHistory(self.data_dir).record(day.isoformat(), model.model_id,
+                                                               model.metrics_version, rows, len(snapshot.table))
+            return {"dia": day.isoformat(), "modelo": model.model_id, "guardadas": saved}
+        finally:
+            market.close()
+
     def capture_active_ledger(self, error, maintenance):
         """The decision of the active model when it is not the sealed v1 (#290); None otherwise."""
         from datetime import date
