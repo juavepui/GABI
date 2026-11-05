@@ -27,6 +27,7 @@ from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.glossary import metric_glossary, technical_terms
 from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
+from gabi.application.market.market_health import MarketHealthQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
@@ -97,6 +98,7 @@ from gabi.infrastructure.storage.keys import configured_keys
 from gabi.infrastructure.storage.live_ledger import SqliteLiveLedger
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.market_health import SqliteMarketHealth
 from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedArtifacts, FilePublishedLedger
@@ -218,6 +220,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.macro = macro
+    app.state.market_health = MarketHealthQueries(SqliteMarketHealth(settings.data_dir),
+                                                  lambda: model.benchmark_symbol, today)
     app.state.signals = signals
     app.state.company_research = CompanyResearch(
         SqliteCompanyResearch(settings.data_dir), repository.company_events,
@@ -325,7 +329,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
-                          repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items)
+                          repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items,
+                          app.state.market_health.cached)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)
@@ -383,6 +388,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
 
 def warm_rankings(app: FastAPI) -> None:
     """Read-only: build the frozen ranking (home, cartera) and the active model's one (Mercado)."""
+    try:  # Before Inicio, so its summary can say how the market is (#308); context, so a failure is skipped.
+        app.state.market_health.current()
+    except Exception:  # noqa: BLE001 - the traffic light must never stop the rankings from warming.
+        pass
     try:
         app.state.home.summary(compute=True)
         app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)

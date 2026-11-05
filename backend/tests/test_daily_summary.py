@@ -113,3 +113,18 @@ def test_long_lists_are_cut_and_the_rest_counted():
     assert all(sentence["kind"] != "data" for sentence in result["sentences"])
     for sentence in result["sentences"]:
         _numbers_come_from_values(sentence)
+
+
+def test_the_market_sentence_comes_from_the_traffic_light_when_it_is_computed():
+    watched = [_row("AAA", score=50.0, before=49.0, rank=10, rank_before=11)]
+    market = {"status": "ready", "state": "pressure", "state_label": "Con presión", "score": 66.67,
+              "days_in_state": 8, "days_at_least": False}
+    result = summary.build(watched=watched, held=[], target=[], scored={"AAA"}, earnings={},
+                           latest_price_date="2026-11-04", target_size=20, today=TODAY, model_id=MODEL, market=market)
+    sentence = next(item for item in result["sentences"] if item["kind"] == "market")
+    assert sentence["text"] == ("El mercado está «Con presión» desde hace 8 sesiones (nota de 67 sobre 100): "
+                                "describe el momento, no lo que hará.")
+    assert sentence["tone"] == "neutral"
+    _numbers_come_from_values(sentence)
+    no_market = _build(watched)
+    assert all(item["kind"] != "market" for item in no_market["sentences"])

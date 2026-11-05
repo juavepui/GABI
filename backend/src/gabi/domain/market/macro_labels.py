@@ -10,7 +10,7 @@ BLOCKS: dict[str, tuple[str, tuple[str, ...]]] = {
     "liquidity": ("Liquidez", ("WALCL",)),
     "inflation_rates": ("Inflación y tipos", ("CPIAUCSL", "T10YIE", "FEDFUNDS", "DGS10", "DFII10")),
     "growth_jobs": ("Crecimiento y empleo", ("UNRATE", "ICSA", "SAHMREALTIME", "T10Y2Y")),
-    "conditions": ("Condiciones financieras", ("NFCI", "BAMLH0A0HYM2", "DTWEXBGS")),
+    "conditions": ("Condiciones financieras", ("NFCI", "BAMLH0A0HYM2", "VIXCLS", "DTWEXBGS")),
 }
 
 LIQUIDITY_FLAT_PCT = 1.0  # Fed balance change in ~3 months within ±1 %: «estable».

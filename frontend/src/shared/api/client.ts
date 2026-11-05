@@ -35,6 +35,7 @@ import type {
   ComparisonResponse,
   RiskWindowsResponse,
   MacroResponse,
+  MarketHealthResponse,
   SaveSnapshot,
   Snapshot,
   SnapshotList,
@@ -718,6 +719,10 @@ export function getComparisonPrices(
 
 export function getMacro(signal?: AbortSignal): Promise<MacroResponse> {
   return get('/api/v1/market/macro', signal);
+}
+
+export function getMarketHealth(signal?: AbortSignal): Promise<MarketHealthResponse> {
+  return get('/api/v1/market/health', signal);
 }
 
 export function getSnapshots(signal?: AbortSignal): Promise<SnapshotList> {
