@@ -1,4 +1,7 @@
 import { lazy, Suspense } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getCompanyResearch } from '@/shared/api/client';
+import type { CompanyRow } from '@/shared/api/generated/types.gen';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ExternalLink, CalendarDays, ShieldCheck } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
@@ -81,6 +84,28 @@ const groups = [
     ],
   },
 ] as const;
+/** Next results and how much the price usually moves that day (#310); shares the research query's cache. */
+function EarningsMove({ symbol, next }: { symbol: string; next: CompanyRow['next_earnings'] }) {
+  const query = useQuery({
+    queryKey: ['market', 'research', symbol],
+    queryFn: ({ signal }) => getCompanyResearch(symbol, signal),
+  });
+  const move = query.data?.typical_move;
+  return (
+    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+      {next
+        ? 'Próximos resultados: ' +
+          dateLabel(next.event_date) +
+          (next.is_estimate ? ' (fecha aproximada). ' : '. ')
+        : 'Sin fecha de los próximos resultados. '}
+      {move?.text}
+      {move &&
+        move.count > 0 &&
+        ' Un salto así ese día es normal y no cambia, por sí solo, la empresa.'}
+    </p>
+  );
+}
+
 export function CompanyPage() {
   const { symbol = '' } = useParams();
   const [params, setParams] = useSearchParams();
@@ -122,6 +147,10 @@ export function CompanyPage() {
                   </span>
                   <FollowButton symbol={company.symbol} />
                 </div>
+                <section aria-label="En pocas palabras" className="mt-3">
+                  <p className="max-w-2xl text-base">{data.headline.text}</p>
+                  <EarningsMove symbol={company.symbol} next={company.next_earnings} />
+                </section>
                 <section
                   aria-label="Por qué está aquí"
                   className="mt-3 max-w-xl"
