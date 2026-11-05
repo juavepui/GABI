@@ -14,6 +14,10 @@ from gabi.infrastructure.providers.fred import FredSource, fred_key
 from gabi.infrastructure.storage.fred import SqliteFred
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
+# The captured series and those added for the Macro panel (#309). The data-quality report and the
+# research history refresh keep `fred.SERIES`, pinned by their migration captures.
+SERIES = synchronized_series()
+
 
 def fred_operation(data_dir: Path, *, now: Callable[[], datetime] | None = None,
                    wall_time: Callable[[], float] = time.perf_counter,
@@ -25,5 +29,5 @@ def fred_operation(data_dir: Path, *, now: Callable[[], datetime] | None = None,
     def attempt(provider: str, sid: str, dataset: str) -> SyncAttempt:
         return SyncAttempt(provider, sid, dataset, events, now=clock, wall_time=wall_time, cpu_time=cpu_time)
 
-    return partial(synchronize, SqliteFred(path, clock), synchronized_series(), partial(fred_key, data_dir), FredSource().fetch,
+    return partial(synchronize, SqliteFred(path, clock), SERIES, partial(fred_key, data_dir), FredSource().fetch,
                    events.get, attempt, retry, fred_error, clock)
