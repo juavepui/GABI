@@ -40,3 +40,10 @@ data/research_reproductions/
 data/periodic_tasks/
 data/live_ledger/
 data/kaggle/
+
+# Restos de tests y auditorías locales
+.audit_*/
+.pytest_tmp_*/
+**/.pytest_tmp_*/
+data/test_tmp_*/
+earnings_measure_*/
