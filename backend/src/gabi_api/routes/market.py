@@ -49,6 +49,7 @@ from gabi_api.schemas.market import (
     PricePoint,
     RankingResponse,
     RiskWindowsResponse,
+    company_headline,
     company_row,
     data_response,
     finite,
@@ -267,7 +268,8 @@ def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^
             bars: Annotated[int, Query(ge=1, le=1000)] = 252) -> CompanyResponse:
     result, prices = market.company(symbol, bars)
     row = result.rows.iloc[0]
-    return CompanyResponse(company=company_row(str(result.rows.index[0]), row, result),
+    symbol = str(result.rows.index[0])
+    return CompanyResponse(company=company_row(symbol, row, result), headline=company_headline(symbol, row, result),
                            model=model_response(result.model), data=data_response(result.data),
                            prices=[PricePoint.model_validate({"date": record["date"], "close": finite(record["close"]),
                                                               "adj_close": finite(record["adj_close"])})

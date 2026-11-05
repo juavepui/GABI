@@ -1,14 +1,15 @@
 from datetime import date, datetime
 from enum import StrEnum
 from math import isfinite
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
 from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
-from gabi.domain.market.candidate_summary import summarize
+from gabi.domain.market.candidate_summary import summarize, warning
+from gabi.domain.market.company_overview import headline
 from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
@@ -160,8 +161,17 @@ class PricePoint(WireModel):
     adj_close: float | None
 
 
+class CompanyHeadline(WireModel):
+    """The company page's first two sentences (#310); `values` holds every number of the text."""
+
+    text: str
+    level: Literal["high", "medium", "low"] | None  # None: no score today
+    values: dict[str, Any]
+
+
 class CompanyResponse(WireModel):
     company: CompanyRow
+    headline: CompanyHeadline
     model: ModelResponse
     data: DataResponse
     prices: list[PricePoint]
@@ -276,6 +286,13 @@ def company_row(symbol: str, row: pd.Series, result: RankingResult) -> CompanyRo
                       golden_cross_recent=None if pd.isna(golden) else bool(golden),
                       identity=Identity.model_validate(result.snapshot.identities[symbol]), provenance=provenance,
                       filings=filings, next_earnings=earnings, summary=candidate_summary(row))
+
+
+def company_headline(symbol: str, row: pd.Series, result: RankingResult) -> CompanyHeadline:
+    table = result.snapshot.table
+    return CompanyHeadline.model_validate(headline(
+        name=text_or_none(row.get("name")), symbol=symbol, sector=text_or_none(row.get("sector")), row=row,
+        rank=int(table.index.get_loc(symbol)) + 1, universe=len(table), warning_text=warning(row)))
 
 
 def ranking_response(result: RankingResult) -> RankingResponse:

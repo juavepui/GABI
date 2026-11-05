@@ -132,10 +132,21 @@ class ConsensusEstimate(BaseModel):
     source: str
 
 
+class TypicalMove(BaseModel):
+    """How much the price usually moves on results day (#310): mean absolute reaction, in %."""
+
+    count: int  # reports with a price reaction used (at most 8)
+    mean_abs_pct: float | None
+    max_abs_pct: float | None
+    enough: bool  # False with fewer than 4: orientative only
+    text: str
+
+
 class CompanyResearchResponse(BaseModel):
     symbol: str
     events: list[CompanyEvent]
     surprises: list[EarningsSurprise]
+    typical_move: TypicalMove
     estimate: ConsensusEstimate | None
     revision_90d: dict[str, Any] | None
 

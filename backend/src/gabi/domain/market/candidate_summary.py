@@ -53,6 +53,11 @@ def _warning(row: Mapping) -> tuple[str | None, str | None]:
     return None, None
 
 
+def warning(row: Mapping) -> str | None:
+    """The main warning's text alone (the company page's first lines, #310)."""
+    return _warning(row)[1]
+
+
 def summarize(row: Mapping) -> dict:
     """Strong blocks, weak block, main warning and the sentence that joins them with « · »."""
     blocks = {key: _number(row.get(key + "_score")) for key in BLOCKS}

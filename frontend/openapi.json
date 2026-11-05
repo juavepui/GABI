@@ -4993,6 +4993,44 @@
         "title": "CompanyFilingChanges",
         "type": "object"
       },
+      "CompanyHeadline": {
+        "additionalProperties": false,
+        "description": "The company page's first two sentences (#310); `values` holds every number of the text.",
+        "properties": {
+          "level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "text",
+          "level",
+          "values"
+        ],
+        "title": "CompanyHeadline",
+        "type": "object"
+      },
       "CompanyInsiders": {
         "description": "Open-market Form 4 activity of the last months; informative, never scored.",
         "properties": {
@@ -5115,12 +5153,16 @@
           "symbol": {
             "title": "Symbol",
             "type": "string"
+          },
+          "typical_move": {
+            "$ref": "#/components/schemas/TypicalMove"
           }
         },
         "required": [
           "symbol",
           "events",
           "surprises",
+          "typical_move",
           "estimate",
           "revision_90d"
         ],
@@ -5140,6 +5182,9 @@
             "format": "date-time",
             "title": "Generated At",
             "type": "string"
+          },
+          "headline": {
+            "$ref": "#/components/schemas/CompanyHeadline"
           },
           "metric_sources": {
             "additionalProperties": {
@@ -5171,6 +5216,7 @@
         },
         "required": [
           "company",
+          "headline",
           "model",
           "data",
           "prices",
@@ -22394,6 +22440,54 @@
           "unit"
         ],
         "title": "TrialRow",
+        "type": "object"
+      },
+      "TypicalMove": {
+        "description": "How much the price usually moves on results day (#310): mean absolute reaction, in %.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "enough": {
+            "title": "Enough",
+            "type": "boolean"
+          },
+          "max_abs_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Abs Pct"
+          },
+          "mean_abs_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Abs Pct"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "count",
+          "mean_abs_pct",
+          "max_abs_pct",
+          "enough",
+          "text"
+        ],
+        "title": "TypicalMove",
         "type": "object"
       },
       "UnavailableBootstrapDataset": {
