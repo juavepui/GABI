@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { ChartFrame } from '@/shared/ui/charts/chart-frame';
 import { CompareBars } from '@/shared/ui/charts/compare-bars';
+import { CrisisBars } from './crisis-bars';
 import { Link } from 'react-router-dom';
 import type {
   GroupWeight,
@@ -308,21 +309,31 @@ function Panel({ data }: { data: RiskPanel }) {
           </li>
         ))}
       </ul>
-      <h3 className="mt-4 text-sm font-semibold">¿Qué pasaría en una crisis?</h3>
-      <table className="mt-1 w-full text-left text-xs sm:text-sm">
-        <tbody>
-          {stress.scenarios.map((row) => (
-            <tr key={row.id} className="border-b last:border-0">
-              <td className="py-1.5">{row.label}</td>
-              <td className="py-1.5 tabular-nums">{pct(row.change)}</td>
-              <td className="py-1.5 tabular-nums">{eur(row.change_eur)}</td>
-              <td className="py-1.5">
-                {row.exceeds_tolerance ? 'Más de la caída que aceptas' : 'Dentro de lo que aceptas'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <CrisisBars
+        rows={stress.scenarios}
+        reading={stress.reading}
+        note={<>Efecto inmediato sobre el valor de hoy de Mi cartera. No son previsiones.</>}
+        table={
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <tbody>
+                {stress.scenarios.map((row) => (
+                  <tr key={row.id} className="border-b last:border-0">
+                    <td className="py-1.5">{row.label}</td>
+                    <td className="py-1.5 tabular-nums">{pct(row.change)}</td>
+                    <td className="py-1.5 tabular-nums">{eur(row.change_eur)}</td>
+                    <td className="py-1.5">
+                      {row.exceeds_tolerance
+                        ? 'Más de la caída que aceptas'
+                        : 'Dentro de lo que aceptas'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        }
+      />
       <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
         {stress.notes.map((note) => (
           <li key={note}>{note}</li>

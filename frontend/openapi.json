@@ -11512,6 +11512,16 @@
             "title": "Alternatives",
             "type": "array"
           },
+          "alternatives_reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reading"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "as_of": {
             "format": "date",
             "title": "As Of",
@@ -11566,6 +11576,16 @@
             },
             "title": "Scenarios",
             "type": "array"
+          },
+          "scenarios_reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reading"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "source": {
             "$ref": "#/components/schemas/BenchmarkSource"
@@ -13229,6 +13249,16 @@
             },
             "title": "Scenarios",
             "type": "array"
+          },
+          "scenarios_reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reading"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "series": {
             "items": {
@@ -19652,6 +19682,16 @@
             },
             "title": "Notes",
             "type": "array"
+          },
+          "reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reading"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "scenarios": {
             "items": {

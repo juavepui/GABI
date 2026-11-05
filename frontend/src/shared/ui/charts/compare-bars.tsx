@@ -45,32 +45,34 @@ export function CompareBars({
   );
   return (
     <div className="space-y-3">
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs" aria-label="Leyenda">
-        <li className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="size-3 rounded-sm"
-            style={{ background: 'var(--chart-1)' }}
-          />
-          {valueLabel}
-        </li>
-        {paired && referenceLabel && (
+      {(paired || limit) && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs" aria-label="Leyenda">
           <li className="flex items-center gap-1.5">
             <span
               aria-hidden="true"
               className="size-3 rounded-sm"
-              style={{ background: 'var(--chart-6)' }}
+              style={{ background: 'var(--chart-1)' }}
             />
-            {referenceLabel}
+            {valueLabel}
           </li>
-        )}
-        {limit && (
-          <li className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-3 border-l-2 border-dashed border-foreground" />
-            {limit.label}
-          </li>
-        )}
-      </ul>
+          {paired && referenceLabel && (
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="size-3 rounded-sm"
+                style={{ background: 'var(--chart-6)' }}
+              />
+              {referenceLabel}
+            </li>
+          )}
+          {limit && (
+            <li className="flex items-center gap-1.5">
+              <span aria-hidden="true" className="h-3 border-l-2 border-dashed border-foreground" />
+              {limit.label}
+            </li>
+          )}
+        </ul>
+      )}
       <ul className="space-y-2.5" aria-label={label}>
         {rows.map((row) => (
           <li

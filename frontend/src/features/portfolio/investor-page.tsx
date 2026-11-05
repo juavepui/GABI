@@ -13,6 +13,7 @@ import type {
   BenchmarkVehicle,
   InvestorProfileInput,
   InvestorProfileRevision,
+  Reading,
   StressScenario,
 } from '@/shared/api/generated/types.gen';
 import {
@@ -30,7 +31,11 @@ import { Folded } from '@/shared/ui/folded';
 import { PageHeader } from '@/shared/ui/page-header';
 import { ProgressBar } from '@/shared/ui/progress-bar';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
-import { formatMoney, formatPercent } from '@/shared/lib/format';
+import { formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
+import { ChartFrame } from '@/shared/ui/charts/chart-frame';
+import { CompareBars } from '@/shared/ui/charts/compare-bars';
+import { Term } from '@/shared/ui/term';
+import { CrisisBars } from './crisis-bars';
 
 const PROFILE_KEY = ['portfolio', 'investor', 'profile'];
 const BENCHMARK_KEY = ['portfolio', 'investor', 'benchmark'];
@@ -414,6 +419,7 @@ function PlanBenchmark() {
           <Vehicles reference={data.performance} vehicles={data.vehicles} />
           <Scenarios
             rows={data.scenarios}
+            reading={data.scenarios_reading}
             note="Todo el plan está expuesto al dólar: es el S&P 500."
           />
         </>
@@ -477,70 +483,118 @@ function Vehicles({
 }
 
 /** Declared shocks, not forecasts: crossing the tolerance means reviewing the plan, never selling by itself. */
-function Scenarios({ rows, note }: { rows: StressScenario[]; note: string }) {
-  if (!rows.length) return null;
+function Scenarios({
+  rows,
+  note,
+  reading,
+}: {
+  rows: StressScenario[];
+  note: string;
+  reading: Reading | null | undefined;
+}) {
   return (
-    <div className="mt-5 overflow-x-auto">
-      <h3 className="font-semibold">¿Qué pasaría en una crisis?</h3>
-      <p className="text-xs text-muted-foreground">
-        Efecto inmediato sobre el valor actual. No son previsiones. {note}
-      </p>
-      <table className="mt-2 w-full text-left text-xs sm:text-sm">
-        <thead className="border-b text-xs text-muted-foreground">
-          <tr>
-            <th className="pb-2">Escenario</th>
-            <th className="pb-2">Caída</th>
-            <th className="pb-2">En euros</th>
-            <th className="pb-2">¿Más de lo que aceptas?</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id} className="border-b last:border-0">
-              <td className="py-2">{row.label}</td>
-              <td className="py-2 tabular-nums">{pct(row.change)}</td>
-              <td className="py-2 tabular-nums">{eur(row.change_eur)}</td>
-              <td className="py-2">{row.exceeds_tolerance ? 'Sí: revisa tu plan' : 'No'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <CrisisBars
+      rows={rows}
+      reading={reading}
+      note={<>Efecto inmediato sobre el valor actual. No son previsiones. {note}</>}
+      table={
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs sm:text-sm">
+            <thead className="border-b text-xs text-muted-foreground">
+              <tr>
+                <th className="pb-2">Escenario</th>
+                <th className="pb-2">Caída</th>
+                <th className="pb-2">En euros</th>
+                <th className="pb-2">¿Más de lo que aceptas?</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b last:border-0">
+                  <td className="py-2">{row.label}</td>
+                  <td className="py-2 tabular-nums">{pct(row.change)}</td>
+                  <td className="py-2 tabular-nums">{eur(row.change_eur)}</td>
+                  <td className="py-2">{row.exceeds_tolerance ? 'Sí: revisa tu plan' : 'No'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      }
+    />
   );
 }
 
 /** A range of splits between the active portfolio and the index; GABI does not pick one. */
-function Alternatives({ rows }: { rows: Alternative[] }) {
+function Alternatives({
+  rows,
+  reading,
+}: {
+  rows: Alternative[];
+  reading: Reading | null | undefined;
+}) {
+  const known = rows.filter((row) => row.performance.final_value_eur != null);
   return (
-    <div className="mt-5 overflow-x-auto">
-      <h3 className="font-semibold">Elegir acciones, mezclar o comprar el índice</h3>
-      <p className="text-xs text-muted-foreground">
-        Qué habría pasado con tus mismas compras si una parte hubiera ido al S&amp;P 500 (SPY) en
-        vez de a tus acciones. Sirve para comparar, no es una recomendación.
+    <ChartFrame
+      className="mt-5"
+      title="¿Compensa elegir acciones frente a comprar el índice?"
+      conclusion={reading?.text}
+      note={
+        <>
+          Qué habría pasado con tus mismas compras si una parte hubiera ido al S&amp;P 500 (SPY) en
+          vez de a tus acciones. Son datos del pasado: no garantizan el futuro. Sirve para comparar,
+          no es una recomendación.
+        </>
+      }
+      table={
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs sm:text-sm">
+            <thead className="border-b text-xs text-muted-foreground">
+              <tr>
+                <th className="pb-2">Opción</th>
+                <th className="pb-2">Valor al final</th>
+                <th className="pb-2">TWR</th>
+                <th className="pb-2">XIRR</th>
+                <th className="pb-2">Mayor caída</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.index_weight} className="border-b last:border-0">
+                  <td className="py-2">{row.label}</td>
+                  <td className="py-2 tabular-nums">{eur(row.performance.final_value_eur)}</td>
+                  <td className="py-2 tabular-nums">{pct(row.performance.twr)}</td>
+                  <td className="py-2 tabular-nums">{pct(row.performance.xirr)}</td>
+                  <td className="py-2 tabular-nums">{pct(row.performance.max_drawdown)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      }
+    >
+      <p className="text-xs font-medium">Valor al final</p>
+      <CompareBars
+        label="Valor al final de cada opción"
+        rows={known.map((row) => ({
+          label: row.label,
+          value: row.performance.final_value_eur ?? 0,
+        }))}
+        format={(value) => eur(value)}
+        valueLabel="Valor al final"
+      />
+      <p className="text-xs font-medium">
+        <Term k="max_drawdown">La mayor caída desde un máximo</Term>
       </p>
-      <table className="mt-2 w-full text-left text-xs sm:text-sm">
-        <thead className="border-b text-xs text-muted-foreground">
-          <tr>
-            <th className="pb-2">Opción</th>
-            <th className="pb-2">Valor al final</th>
-            <th className="pb-2">TWR</th>
-            <th className="pb-2">XIRR</th>
-            <th className="pb-2">Mayor caída</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.index_weight} className="border-b last:border-0">
-              <td className="py-2">{row.label}</td>
-              <td className="py-2 tabular-nums">{eur(row.performance.final_value_eur)}</td>
-              <td className="py-2 tabular-nums">{pct(row.performance.twr)}</td>
-              <td className="py-2 tabular-nums">{pct(row.performance.xirr)}</td>
-              <td className="py-2 tabular-nums">{pct(row.performance.max_drawdown)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <CompareBars
+        label="Mayor caída desde un máximo de cada opción"
+        rows={known
+          .filter((row) => row.performance.max_drawdown != null)
+          .map((row) => ({ label: row.label, value: -(row.performance.max_drawdown ?? 0) * 100 }))}
+        format={(value) => '−' + formatNumber(value, { digits: 1, fixed: true }) + ' %'}
+        valueLabel="Mayor caída"
+      />
+    </ChartFrame>
   );
 }
 
@@ -618,9 +672,10 @@ function HoldingsComparison() {
               Sesiones sin precio de alguna posición omitidas: {data.incomplete_sessions}.
             </p>
           )}
-          <Alternatives rows={data.alternatives} />
+          <Alternatives rows={data.alternatives} reading={data.alternatives_reading} />
           <Scenarios
             rows={data.scenarios}
+            reading={data.scenarios_reading}
             note={
               'Parte de tu dinero que depende del dólar (si el dólar baja frente al euro, pierdes algo aunque la acción no se mueva): ' +
               formatPercent(data.usd_share, { digits: 0 }) +

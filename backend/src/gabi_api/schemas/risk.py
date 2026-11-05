@@ -82,6 +82,7 @@ class RiskScenario(WireModel):
 class RiskStress(WireModel):
     scenarios: list[RiskScenario]
     notes: list[str]
+    reading: Reading | None = None  # #325
 
 
 class RiskPanel(WireModel):

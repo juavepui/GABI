@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ChartFrame } from '../src/shared/ui/charts/chart-frame';
 import { CompareBars } from '../src/shared/ui/charts/compare-bars';
 import { RangeDot } from '../src/shared/ui/charts/range-dot';
+import { CrisisBars } from '../src/features/portfolio/crisis-bars';
 import { renderScreen } from './render';
 
 let screen: ReturnType<typeof renderScreen> | undefined;
@@ -99,5 +100,28 @@ describe('piezas comunes de gráficas (#323)', () => {
       (node) => (node as HTMLElement).style.left,
     );
     expect(lines).toContain('62.5%');
+  });
+
+  it('CrisisBars dibuja lo que perderías, tu límite y dice en palabras lo que lo pasa', () => {
+    screen = renderScreen(
+      <CrisisBars
+        rows={[
+          { id: 'a', label: 'Mercado −35 %', change_eur: -3850, exceeds_tolerance: true },
+          { id: 'b', label: 'El euro baja un 10 %', change_eur: 1210, exceeds_tolerance: false },
+        ]}
+        reading={{ text: 'Con los 11.000 € de hoy…', values: { tolerance_eur: 2200 } }}
+        note="No son previsiones."
+        table={<table aria-label="Datos" />}
+      />,
+    );
+    const text = screen.text();
+    expect(text).toContain('¿Aguantaría tu dinero una crisis?');
+    expect(text).toContain('Con los 11.000 € de hoy…');
+    expect(text).toMatch(/Lo que perderías: −3\.850\s€/);
+    // A shock that would gain money is drawn as no loss and written with its sign.
+    expect(text).toMatch(/\+1\.210\s€/);
+    expect(text).toMatch(/\+1\.210\s€/);
+    expect(text).toContain('Más de lo que aceptas perder: revisa tu plan');
+    expect(text).toContain('Lo que aceptas perder');
   });
 });
