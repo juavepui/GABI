@@ -338,3 +338,45 @@ class AnalysisPromptResponse(BaseModel):
     symbol: str
     revision: str
     prompt: str
+
+
+HeatBand = Literal["very_high", "high", "medium", "low", "very_low", "none"]
+
+
+class HeatmapCompany(WireModel):
+    symbol: str
+    name: str | None
+    sector: str
+    market_cap: float | None  # USD; the tile's size
+    composite_score: float | None
+    rank: int | None  # position among the scored companies (1 = best)
+    band: HeatBand  # colour band of the score; «none» without score
+    reason: str | None  # why it is grey or cannot be drawn
+
+
+class HeatmapSector(WireModel):
+    sector: str
+    companies: int
+    scored: int
+    mean_score: float | None
+    in_top: int  # how many are in the top fifth of the scored companies
+    market_cap: float | None
+
+
+class HeatmapBand(WireModel):
+    band: HeatBand
+    min_score: float | None  # lower limit of the band; None for the lowest
+
+
+class HeatmapResponse(WireModel):
+    """Mapa de calor del universo (#311): the active ranking, grouped by sector; no calculation in React."""
+
+    model_id: str
+    generated_at: datetime
+    data: DataResponse
+    companies: list[HeatmapCompany]
+    sectors: list[HeatmapSector]
+    scored: int
+    top_count: int
+    top_share: float
+    bands: list[HeatmapBand]

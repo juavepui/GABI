@@ -5141,6 +5141,129 @@ export type HealthResponse = {
 };
 
 /**
+ * HeatmapBand
+ */
+export type HeatmapBand = {
+    /**
+     * Band
+     */
+    band: 'very_high' | 'high' | 'medium' | 'low' | 'very_low' | 'none';
+    /**
+     * Min Score
+     */
+    min_score: number | null;
+};
+
+/**
+ * HeatmapCompany
+ */
+export type HeatmapCompany = {
+    /**
+     * Band
+     */
+    band: 'very_high' | 'high' | 'medium' | 'low' | 'very_low' | 'none';
+    /**
+     * Composite Score
+     */
+    composite_score: number | null;
+    /**
+     * Market Cap
+     */
+    market_cap: number | null;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Rank
+     */
+    rank: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Sector
+     */
+    sector: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * HeatmapResponse
+ *
+ * Mapa de calor del universo (#311): the active ranking, grouped by sector; no calculation in React.
+ */
+export type HeatmapResponse = {
+    /**
+     * Bands
+     */
+    bands: Array<HeatmapBand>;
+    /**
+     * Companies
+     */
+    companies: Array<HeatmapCompany>;
+    data: DataResponse;
+    /**
+     * Generated At
+     */
+    generated_at: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Scored
+     */
+    scored: number;
+    /**
+     * Sectors
+     */
+    sectors: Array<HeatmapSector>;
+    /**
+     * Top Count
+     */
+    top_count: number;
+    /**
+     * Top Share
+     */
+    top_share: number;
+};
+
+/**
+ * HeatmapSector
+ */
+export type HeatmapSector = {
+    /**
+     * Companies
+     */
+    companies: number;
+    /**
+     * In Top
+     */
+    in_top: number;
+    /**
+     * Market Cap
+     */
+    market_cap: number | null;
+    /**
+     * Mean Score
+     */
+    mean_score: number | null;
+    /**
+     * Scored
+     */
+    scored: number;
+    /**
+     * Sector
+     */
+    sector: string;
+};
+
+/**
  * HistogramBin
  */
 export type HistogramBin = {
@@ -13736,6 +13859,51 @@ export type HealthApiV1MarketHealthGetResponses = {
 };
 
 export type HealthApiV1MarketHealthGetResponse = HealthApiV1MarketHealthGetResponses[keyof HealthApiV1MarketHealthGetResponses];
+
+export type HeatmapApiV1MarketHeatmapGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/heatmap';
+};
+
+export type HeatmapApiV1MarketHeatmapGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HeatmapApiV1MarketHeatmapGetError = HeatmapApiV1MarketHeatmapGetErrors[keyof HeatmapApiV1MarketHeatmapGetErrors];
+
+export type HeatmapApiV1MarketHeatmapGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HeatmapResponse;
+};
+
+export type HeatmapApiV1MarketHeatmapGetResponse = HeatmapApiV1MarketHeatmapGetResponses[keyof HeatmapApiV1MarketHeatmapGetResponses];
 
 export type SnapshotApiV1MarketMacroGetData = {
     body?: never;

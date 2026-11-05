@@ -761,3 +761,22 @@ test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la b
   await search.fill('zzzz');
   await expect(page.getByText('Ningún término contiene «zzzz».')).toBeVisible();
 });
+
+test('el mapa del mercado agrupa por sector, explica los colores y tiene lista (#311)', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/descubrir/mapa');
+  await expect(page.getByRole('heading', { name: 'Mapa del mercado' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Leyenda de colores' })).toContainText(
+    'sin puntuación',
+  );
+  if (testInfo.project.name === 'desktop') {
+    await expect(page.getByRole('img', { name: /Mapa de las empresas por sector/ })).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('mapa.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Lista por sectores' }).click();
+  }
+  const sector = page.locator('details').first();
+  await sector.locator('summary').click();
+  await sector.getByRole('link').first().click();
+  await expect(page).toHaveURL(/\/empresas\//);
+});

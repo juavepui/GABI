@@ -17,6 +17,7 @@ import {
   CompanyPage,
   ComparisonPage,
   WatchlistPage,
+  HeatmapPage,
   MacroPage,
   EventsPage,
   TrackingPage,
@@ -310,6 +311,7 @@ function Shell() {
           <Route path="/descubrir" element={<MarketPage />} />
           <Route path="/descubrir/comparar" element={<ComparisonPage />} />
           <Route path="/descubrir/seguidas" element={<WatchlistPage />} />
+          <Route path="/descubrir/mapa" element={<HeatmapPage />} />
           <Route path="/empresas/:symbol" element={<CompanyPage />} />
           <Route path="/cartera" element={<PortfolioPage />} />
           <Route path="/cartera/mi-cartera" element={<HoldingsPage />} />

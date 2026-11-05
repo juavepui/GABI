@@ -43,6 +43,7 @@ from gabi_api.schemas.market import (
     ComparisonPricesResponse,
     ComparisonResponse,
     DataResponse,
+    HeatmapResponse,
     MetricGlossary,
     ModelResponse,
     PricePoint,
@@ -231,6 +232,13 @@ def selection(search: Annotated[str, Query(max_length=100)] = "",
 
 
 Selected = Annotated[Selection, Depends(selection)]
+
+
+@router.get("/market/heatmap", response_model=HeatmapResponse)
+def heatmap(market: Service) -> HeatmapResponse:
+    """Read-only map of the universe by sector, size and score (#311); the same ranking as /ranking."""
+    result = market.heatmap()
+    return HeatmapResponse.model_validate(result | {"data": data_response(result["data"])})
 
 
 @router.get("/ranking", response_model=RankingResponse)

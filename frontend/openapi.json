@@ -9931,6 +9931,249 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HeatmapBand": {
+        "additionalProperties": false,
+        "properties": {
+          "band": {
+            "enum": [
+              "very_high",
+              "high",
+              "medium",
+              "low",
+              "very_low",
+              "none"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "min_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Score"
+          }
+        },
+        "required": [
+          "band",
+          "min_score"
+        ],
+        "title": "HeatmapBand",
+        "type": "object"
+      },
+      "HeatmapCompany": {
+        "additionalProperties": false,
+        "properties": {
+          "band": {
+            "enum": [
+              "very_high",
+              "high",
+              "medium",
+              "low",
+              "very_low",
+              "none"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "composite_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Composite Score"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "sector",
+          "market_cap",
+          "composite_score",
+          "rank",
+          "band",
+          "reason"
+        ],
+        "title": "HeatmapCompany",
+        "type": "object"
+      },
+      "HeatmapResponse": {
+        "additionalProperties": false,
+        "description": "Mapa de calor del universo (#311): the active ranking, grouped by sector; no calculation in React.",
+        "properties": {
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/HeatmapBand"
+            },
+            "title": "Bands",
+            "type": "array"
+          },
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/HeatmapCompany"
+            },
+            "title": "Companies",
+            "type": "array"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataResponse"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "integer"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/HeatmapSector"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "top_count": {
+            "title": "Top Count",
+            "type": "integer"
+          },
+          "top_share": {
+            "title": "Top Share",
+            "type": "number"
+          }
+        },
+        "required": [
+          "model_id",
+          "generated_at",
+          "data",
+          "companies",
+          "sectors",
+          "scored",
+          "top_count",
+          "top_share",
+          "bands"
+        ],
+        "title": "HeatmapResponse",
+        "type": "object"
+      },
+      "HeatmapSector": {
+        "additionalProperties": false,
+        "properties": {
+          "companies": {
+            "title": "Companies",
+            "type": "integer"
+          },
+          "in_top": {
+            "title": "In Top",
+            "type": "integer"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "mean_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Score"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "integer"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sector",
+          "companies",
+          "scored",
+          "mean_score",
+          "in_top",
+          "market_cap"
+        ],
+        "title": "HeatmapSector",
+        "type": "object"
+      },
       "HistogramBin": {
         "properties": {
           "end": {
@@ -26063,6 +26306,88 @@
           }
         },
         "summary": "Health",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/market/heatmap": {
+      "get": {
+        "description": "Read-only map of the universe by sector, size and score (#311); the same ranking as /ranking.",
+        "operationId": "heatmap_api_v1_market_heatmap_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeatmapResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Heatmap",
         "tags": [
           "market"
         ]
