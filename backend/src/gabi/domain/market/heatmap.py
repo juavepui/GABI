@@ -42,6 +42,12 @@ def reason(score: float | None, cap: float | None) -> str | None:
     return None
 
 
+def _best_mean_first(sector: dict) -> tuple[float, str]:
+    """Best mean score first; sectors without any score last, by name."""
+    mean = sector["mean_score"]
+    return (-float(mean) if mean is not None else 1.0, str(sector["sector"]))
+
+
 def build(table: pd.DataFrame) -> dict:
     """`table`: the ranking, indexed by symbol and sorted by score (position 1 = best)."""
     companies = []
@@ -64,7 +70,7 @@ def build(table: pd.DataFrame) -> dict:
                         "mean_score": sum(scores) / len(scores) if scores else None,
                         "in_top": sum(item["symbol"] in top for item in members),
                         "market_cap": sum(caps) if caps else None})
-    sectors.sort(key=lambda item: (-(item["mean_score"] if item["mean_score"] is not None else -1), item["sector"]))
+    sectors.sort(key=_best_mean_first)
     return {"companies": companies, "sectors": sectors, "scored": len(scored), "top_count": len(top),
             "top_share": TOP_SHARE, "bands": [{"band": name, "min_score": None if limit == -math.inf else limit}
                                               for limit, name in BANDS]}
