@@ -7986,6 +7986,7 @@ export type MacroPoint = {
      * Series Id
      */
     series_id: string;
+    trend: MacroTrend;
     /**
      * Unit
      */
@@ -8016,6 +8017,50 @@ export type MacroResponse = {
      * Source
      */
     source?: string;
+};
+
+/**
+ * MacroTrend
+ *
+ * Its last 5 years, one point per month, read with fixed rules (#327); context, never a forecast.
+ */
+export type MacroTrend = {
+    /**
+     * Direction
+     */
+    direction: 'up' | 'down' | 'flat' | null;
+    /**
+     * End
+     */
+    end?: number | null;
+    /**
+     * Level
+     */
+    level: 'above' | 'below' | 'usual' | null;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Points
+     */
+    points: Array<TrendPoint>;
+    /**
+     * Start
+     */
+    start?: number | null;
+    /**
+     * Text
+     */
+    text: string | null;
+    /**
+     * Years
+     */
+    years?: number | null;
 };
 
 /**
@@ -11838,6 +11883,20 @@ export type ThesisCounts = {
     items: {
         [key: string]: ThesisCount;
     };
+};
+
+/**
+ * TrendPoint
+ */
+export type TrendPoint = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Value
+     */
+    value: number;
 };
 
 /**

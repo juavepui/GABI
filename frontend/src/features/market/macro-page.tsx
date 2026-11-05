@@ -5,6 +5,7 @@ import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
 import { PageHeader } from '@/shared/ui/page-header';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Term } from '@/shared/ui/term';
+import { Sparkline } from '@/shared/ui/charts/sparkline';
 import { amount, cadence, trend, useMacro } from './macro-format';
 
 const TONE: Record<MacroLabel['tone'], string> = {
@@ -65,6 +66,24 @@ function SeriesCard({ item }: { item: MacroPoint }) {
       <p className="mt-1 text-xs text-muted-foreground">
         Fuente: FRED ({item.series_id}) · {cadence(item)}
       </p>
+      {item.trend.text && (
+        <div className="mt-3 space-y-1">
+          <Sparkline
+            values={item.trend.points.map((point) => point.value)}
+            reference={item.trend.median}
+            description={item.trend.text}
+            width={240}
+            height={48}
+            className="w-full"
+          />
+          <p className="text-xs">{item.trend.text}</p>
+          {item.trend.median != null && (
+            <p className="text-xs text-muted-foreground">
+              Un punto por mes; la línea discontinua es su mediana de esos años.
+            </p>
+          )}
+        </div>
+      )}
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{item.help}</p>
     </article>
   );

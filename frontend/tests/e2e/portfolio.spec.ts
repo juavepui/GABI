@@ -350,6 +350,11 @@ test('Inicio muestra la franja macro de la caché y el panel declara frecuencia 
     page.getByText('Fuente: FRED (WALCL) · Semanal · saldo de cada miércoles'),
   ).toBeVisible();
   await expect(page.getByText(/no es alcista por sí mismo/)).toBeVisible();
+  // #327: each series with its 5-year line read in words (the e2e cache has a short history: it says so).
+  await expect(
+    page.getByText(/Todavía no hay 12 meses de datos guardados|en los últimos 12 meses/).first(),
+  ).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('macro.png'), fullPage: true });
   // #309: one label in words per block, then the series grouped under the same four blocks.
   const words = page.getByRole('region', { name: 'La economía en palabras' });
   await expect(words.getByRole('listitem')).toHaveCount(4);

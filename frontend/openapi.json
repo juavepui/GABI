@@ -15400,6 +15400,9 @@
             "title": "Series Id",
             "type": "string"
           },
+          "trend": {
+            "$ref": "#/components/schemas/MacroTrend"
+          },
           "unit": {
             "title": "Unit",
             "type": "string"
@@ -15417,7 +15420,8 @@
           "block",
           "latest_value",
           "latest_date",
-          "change_3m"
+          "change_3m",
+          "trend"
         ],
         "title": "MacroPoint",
         "type": "object"
@@ -15460,6 +15464,120 @@
           "fred_key_configured"
         ],
         "title": "MacroResponse",
+        "type": "object"
+      },
+      "MacroTrend": {
+        "additionalProperties": false,
+        "description": "Its last 5 years, one point per month, read with fixed rules (#327); context, never a forecast.",
+        "properties": {
+          "direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down",
+                  "flat"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "above",
+                  "below",
+                  "usual"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "years": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years"
+          }
+        },
+        "required": [
+          "points",
+          "months",
+          "direction",
+          "level",
+          "median",
+          "text"
+        ],
+        "title": "MacroTrend",
         "type": "object"
       },
       "ManualExperimentRequest": {
@@ -22507,6 +22625,26 @@
           "items"
         ],
         "title": "ThesisCounts",
+        "type": "object"
+      },
+      "TrendPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "TrendPoint",
         "type": "object"
       },
       "TrialDetail": {

@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { dateLabel, formatNumber } from '@/shared/lib/format';
+import { Sparkline } from '@/shared/ui/charts/sparkline';
 import { amount, cadence, trend, useMacro } from './macro-format';
+
+const DIRECTION = { up: 'Subiendo', down: 'Bajando', flat: 'Estable' } as const;
 
 /** Compact macro context for Home (#195): the series the backend marks, read from the FRED cache. */
 export function MacroStrip() {
@@ -43,6 +46,20 @@ export function MacroStrip() {
                 {item.latest_value == null ? 'Sin datos guardados' : dateLabel(item.latest_date)} ·{' '}
                 {cadence(item)}
               </p>
+              {item.trend.direction && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  {/* The last 12 months only: the 5-year view and its median are on the Macro page. */}
+                  <Sparkline
+                    values={item.trend.points.slice(-13).map((point) => point.value)}
+                    description={item.trend.text ?? ''}
+                    width={72}
+                    height={20}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {DIRECTION[item.trend.direction]} en 12 meses
+                  </span>
+                </div>
+              )}
             </li>
           ))}
         </ul>
