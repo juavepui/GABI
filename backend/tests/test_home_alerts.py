@@ -120,4 +120,13 @@ def test_home_shows_every_alert_from_stored_data_without_writing(tmp_path):
     assert kinds["top_changes"]["detail"]["entered"] == [symbol for symbol in target if symbol != "T000"]
     assert kinds["thesis_review"]["date"] == "2026-07-10" and kinds["filings"]["symbols"] == ["T001"]
     assert [alert["severity"] for alert in body["alerts"]][:2] == ["high", "high"]
+    # «Tu resumen de hoy» (#307): only with the ranking, about the 12 followed companies and Mi cartera.
+    assert cold["summary"] is None
+    summary = body["summary"]
+    assert summary["status"] == "ready" and summary["followed_count"] == 12 and summary["held_count"] == 1
+    kinds = {sentence["kind"]: sentence for sentence in summary["sentences"]}
+    # Followed without a saved score (an old row): not comparable, said so instead of a made-up change.
+    assert "moves" not in kinds and set(kinds["other_model"]["symbols"]) == set(watched)
+    assert kinds["target"]["values"]["in_target"] == len(set(watched) & set(target))
+    assert set(kinds["earnings"]["symbols"]) == set(watched)
     assert after == before

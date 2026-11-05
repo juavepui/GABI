@@ -10,8 +10,10 @@ import pandas as pd
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot, describe_data
+from gabi.domain.market import watchlist as watchlist_rules
 from gabi.domain.market.identity import normalize_symbol
 from gabi.domain.portfolio import alerts as rules
+from gabi.domain.portfolio import daily_summary
 from gabi.domain.portfolio.selection import target_portfolio
 
 FROZEN_POSITIONS = 20
@@ -37,6 +39,7 @@ class AlertSources:
     held: Callable[[], list[str]]  # Mi cartera
     events: Callable[[list[str], date], list[dict] | None]  # cached corporate events; None while busy
     watched: Callable[[], list[str]] = list  # Empresas seguidas (#182)
+    watched_items: Callable[[], list[dict]] = list  # Their saved rows, with score and rank when added (#307)
 
 
 def _no_alerts() -> AlertSources:
@@ -63,7 +66,7 @@ class HomeQueries:
         keys = self.configured_keys()
         result: dict = {
             "as_of": today.isoformat(), "model_id": self.policy.model_id, "ranking_ready": snapshot is not None,
-            "data": None, "target": [], "target_positions": FROZEN_POSITIONS, "alerts": [],
+            "data": None, "target": [], "target_positions": FROZEN_POSITIONS, "alerts": [], "summary": None,
             "last_update": None if last_update is None else {
                 "kind": last_update["kind"], "finished_at": last_update["finished_at"]},
             "steps": {"fred_key": bool(keys.get("fred")), "universe": self.universe_present(),
@@ -88,7 +91,24 @@ class HomeQueries:
              "composite_score": float(row["composite_score"]), "weight_pct": float(row["weight_pct"])}
             for symbol, row in target.to_dict("index").items()]
         result["alerts"] = rules.ordered(alerts + self._ranking_alerts(table, target, held, today))
+        result["summary"] = self._summary(table, target, held, data.latest_price_date, today)
         return result
+
+    def _summary(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str], latest_price_date: str | None,
+                 today: date) -> dict:
+        """«Tu resumen de hoy» (#307), from the same cached table: nothing is recomputed or downloaded."""
+        watched = watchlist_rules.rows(self.sources.watched_items(), table, self.policy.model_id, {})
+        columns = [column for column in ("next_earnings_date", "next_earnings_is_estimate", "composite_score")
+                   if column in table]
+        mine = list(dict.fromkeys([*(row["symbol"] for row in watched), *held]))
+        rows = table.loc[table.index.isin(mine), columns].to_dict("index")
+        return daily_summary.build(
+            watched=watched, held=held, target=[str(symbol) for symbol in target.index],
+            scored={str(symbol) for symbol, row in rows.items() if pd.notna(row.get("composite_score"))},
+            earnings={str(symbol): (None if pd.isna(row.get("next_earnings_date")) else row.get("next_earnings_date"),
+                                    bool(row.get("next_earnings_is_estimate"))) for symbol, row in rows.items()},
+            latest_price_date=latest_price_date, target_size=FROZEN_POSITIONS, today=today,
+            model_id=self.policy.model_id)
 
     def _ranking_alerts(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str],
                         today: date) -> list[dict]:

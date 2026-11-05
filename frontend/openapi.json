@@ -11633,6 +11633,16 @@
           "steps": {
             "$ref": "#/components/schemas/HomeSteps"
           },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "target": {
             "items": {
               "$ref": "#/components/schemas/HomeTarget"
@@ -11691,6 +11701,62 @@
           "updated"
         ],
         "title": "HomeSteps",
+        "type": "object"
+      },
+      "HomeSummary": {
+        "description": "«Tu resumen de hoy» (#307): templates, no AI. `no_companies`: the user follows nothing yet.",
+        "properties": {
+          "followed_count": {
+            "title": "Followed Count",
+            "type": "integer"
+          },
+          "held_count": {
+            "title": "Held Count",
+            "type": "integer"
+          },
+          "rank_places": {
+            "title": "Rank Places",
+            "type": "integer"
+          },
+          "score_points": {
+            "title": "Score Points",
+            "type": "number"
+          },
+          "sentences": {
+            "items": {
+              "$ref": "#/components/schemas/SummarySentence"
+            },
+            "title": "Sentences",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "no_companies"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "watched_count": {
+            "title": "Watched Count",
+            "type": "integer"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "followed_count",
+          "watched_count",
+          "held_count",
+          "score_points",
+          "rank_places",
+          "window_days",
+          "sentences"
+        ],
+        "title": "HomeSummary",
         "type": "object"
       },
       "HomeTarget": {
@@ -21064,6 +21130,69 @@
           "exceeds_tolerance"
         ],
         "title": "StressScenario",
+        "type": "object"
+      },
+      "SummarySentence": {
+        "description": "One plain-language sentence of «Tu resumen de hoy»; `values` holds the data every number comes from.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "data",
+              "moves",
+              "other_model",
+              "unscored",
+              "target",
+              "earnings"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "tone": {
+            "enum": [
+              "good",
+              "bad",
+              "neutral"
+            ],
+            "title": "Tone",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "tone",
+          "text",
+          "symbols",
+          "link",
+          "values"
+        ],
+        "title": "SummarySentence",
         "type": "object"
       },
       "SymbolWeight": {
