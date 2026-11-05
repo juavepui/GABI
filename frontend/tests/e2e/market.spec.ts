@@ -335,6 +335,11 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
     'Revisión manual',
   );
   await page.getByText('Múltiplos frente a su historia y su sector').click();
+  // #326: each multiple read in words first; without data, it says so instead of drawing a dot.
+  const reading = page.getByRole('list', { name: 'Múltiplos en su rango' });
+  await expect(reading.getByRole('listitem').first()).toContainText(/PER/);
+  await expect(page.getByText(/¿Está cara o barata para ella y para su sector\?/)).toBeVisible();
+  await page.getByText('Ver como tabla').first().click();
   const multiples = page.getByRole('table', { name: 'Múltiplos frente a su historia y su sector' });
   // The e2e fixture has no SEC facts: medians are explained, never shown as zero.
   await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(

@@ -2156,6 +2156,10 @@ export type ChecklistSectorMultiples = {
      */
     peers: number;
     /**
+     * Reading
+     */
+    reading: Array<MultipleSectorReading>;
+    /**
      * Reason
      */
     reason: string | null;
@@ -2389,6 +2393,10 @@ export type CompanyChecklistResponse = {
      */
     fiscal_year_end: string | null;
     multiples_history: ChecklistMultiplesHistory;
+    /**
+     * Multiples Reading
+     */
+    multiples_reading: Array<MultipleOwnReading>;
     pass_rate_reference: ChecklistReference | null;
     /**
      * Qualitative
@@ -8289,6 +8297,100 @@ export type ModelResponse = {
      * Weights Unit
      */
     weights_unit?: 'fraction';
+};
+
+/**
+ * MultipleOwnReading
+ *
+ * One multiple today against its own last years (#326): range, median and the plain sentence.
+ */
+export type MultipleOwnReading = {
+    /**
+     * Cheaper Years
+     */
+    cheaper_years: number | null;
+    /**
+     * Current
+     */
+    current: number | null;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Max
+     */
+    max: number | null;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Min
+     */
+    min: number | null;
+    /**
+     * Pricier Years
+     */
+    pricier_years: number | null;
+    /**
+     * Side
+     */
+    side: 'cheaper' | 'pricier' | 'inline' | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'few_years' | 'missing' | 'negative' | 'not_applicable';
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Years
+     */
+    years: number;
+};
+
+/**
+ * MultipleSectorReading
+ */
+export type MultipleSectorReading = {
+    /**
+     * Current
+     */
+    current: number | null;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Peers
+     */
+    peers: number;
+    /**
+     * Side
+     */
+    side: 'cheaper' | 'pricier' | 'inline' | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'missing';
+    /**
+     * Text
+     */
+    text: string;
 };
 
 /**

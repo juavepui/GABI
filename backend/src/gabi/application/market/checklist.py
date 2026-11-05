@@ -12,7 +12,7 @@ from gabi.application.errors import QueryError
 from gabi.application.market import cached_data
 from gabi.application.market.company_research import normalize_symbol
 from gabi.application.research.historical import _json_value
-from gabi.domain.market import checklist, checklist_reference
+from gabi.domain.market import checklist, checklist_reference, multiples_reading
 from gabi.domain.market.sec_reads import companyfacts
 
 
@@ -192,6 +192,10 @@ class CompanyChecklist:
                         "yahoo_fetched_at": market.yahoo_fetched_at},
             **result,
             "multiples_history": history,
+            # #326: each multiple against its own years, read with fixed rules.
+            "multiples_reading": multiples_reading.own_readings(
+                {item["key"]: item["value"] for item in result["criteria"]}, history["by_year"], result["criteria"],
+                financial=result["financial_sector"]),
             "pass_rate_reference": None if not rates or reference is None else {"as_of": reference["as_of"],
                                                           "issuers": reference["issuers"], "sector": gics},
         })
@@ -204,8 +208,9 @@ class CompanyChecklist:
         sector = sectors.get(symbol)
         base = {"symbol": symbol, "as_of": today.isoformat(), "sector": sector}
         if not sector:
-            return _json({**base, "peers": 0, "reason": "not_in_universe", "cached": False,
-                          "medians": checklist.sector_medians({}, financial=False)})
+            medians = checklist.sector_medians({}, financial=False)
+            return _json({**base, "peers": 0, "reason": "not_in_universe", "cached": False, "medians": medians,
+                          "reading": multiples_reading.sector_readings({}, medians, 0)})
         financial = sector in checklist.FINANCIAL_SECTORS
         # Every sector member is computed once and shared by all its companies; each excludes itself.
         members = sorted(peer for peer, peer_sector in sectors.items() if peer_sector == sector)
@@ -237,5 +242,7 @@ class CompanyChecklist:
                 while len(self._sector_cache) > SECTOR_CACHE_ENTRIES:
                     self._sector_cache.popitem(last=False)
         peers = {peer: row for peer, row in values.items() if peer != symbol}
-        return _json({**base, "peers": len(peers), "reason": None, "cached": cached,
-                      "medians": checklist.sector_medians(peers, financial=financial)})
+        medians = checklist.sector_medians(peers, financial=financial)
+        return _json({**base, "peers": len(peers), "reason": None, "cached": cached, "medians": medians,
+                      # #326: today's multiples against the sector median, read with fixed rules.
+                      "reading": multiples_reading.sector_readings(values.get(symbol) or {}, medians, len(peers))})
