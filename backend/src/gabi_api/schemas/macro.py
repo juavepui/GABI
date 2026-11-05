@@ -19,6 +19,25 @@ class MacroLabel(WireModel):
     rule: str
 
 
+class TrendPoint(WireModel):
+    date: date
+    value: float
+
+
+class MacroTrend(WireModel):
+    """Its last 5 years, one point per month, read with fixed rules (#327); context, never a forecast."""
+
+    points: list[TrendPoint]
+    months: int
+    direction: Literal["up", "down", "flat"] | None  # None: fewer than 13 months stored
+    level: Literal["above", "below", "usual"] | None  # against its 5-year median; None below 24 months
+    median: float | None
+    start: float | None = None  # value 12 months ago
+    end: float | None = None
+    years: int | None = None
+    text: str | None
+
+
 class MacroPoint(WireModel):
     series_id: str
     label: str
@@ -34,6 +53,7 @@ class MacroPoint(WireModel):
     latest_value: float | None
     latest_date: date | None
     change_3m: float | None
+    trend: MacroTrend
 
 
 class MacroResponse(WireModel):

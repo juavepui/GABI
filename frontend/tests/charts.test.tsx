@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ChartFrame } from '../src/shared/ui/charts/chart-frame';
 import { CompareBars } from '../src/shared/ui/charts/compare-bars';
 import { RangeDot } from '../src/shared/ui/charts/range-dot';
+import { Sparkline } from '../src/shared/ui/charts/sparkline';
 import { CrisisBars } from '../src/features/portfolio/crisis-bars';
 import { renderScreen } from './render';
 
@@ -123,5 +124,26 @@ describe('piezas comunes de gráficas (#323)', () => {
     expect(text).toMatch(/\+1\.210\s€/);
     expect(text).toContain('Más de lo que aceptas perder: revisa tu plan');
     expect(text).toContain('Lo que aceptas perder');
+  });
+
+  it('Sparkline se lee en palabras, marca la mediana y no dibuja nada sin datos', () => {
+    screen = renderScreen(
+      <Sparkline
+        values={[3, 3.5, 4.2]}
+        reference={3.5}
+        description="Subiendo en los últimos 12 meses (de 3,0 a 4,2)."
+      />,
+    );
+    const svg = screen.container.querySelector('svg[role="img"]');
+    expect(svg?.getAttribute('aria-label')).toBe(
+      'Subiendo en los últimos 12 meses (de 3,0 a 4,2).',
+    );
+    expect(
+      screen.container.querySelector('polyline')?.getAttribute('points')?.split(' '),
+    ).toHaveLength(3);
+    expect(screen.container.querySelector('line')?.getAttribute('stroke-dasharray')).toBe('3 3');
+    screen.unmount();
+    screen = renderScreen(<Sparkline values={[1]} description="Sin datos" />);
+    expect(screen.container.querySelector('svg')).toBeNull();
   });
 });

@@ -25,3 +25,15 @@ class SqliteMacro:
                                  "AND value IS NOT NULL ORDER BY date DESC LIMIT 1",
                                  (series_id, cutoff.isoformat())).fetchone()
             return (date.fromisoformat(row[0]), float(row[1])) if row else None
+
+    def history(self, series_id: str, start: date) -> list[tuple[date, float]]:
+        """Values from `start` on, oldest first; bounded (about 5 years of a daily series)."""
+        if not self.path.is_file():
+            return []
+        with closing(sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=5)) as db:
+            db.execute("PRAGMA query_only=ON")
+            if db.execute("SELECT 1 FROM sqlite_schema WHERE name='macro_series'").fetchone() is None:
+                return []
+            rows = db.execute("SELECT date,value FROM macro_series WHERE series_id=? AND date>=? "
+                              "AND value IS NOT NULL ORDER BY date LIMIT 4000", (series_id, start.isoformat()))
+            return [(date.fromisoformat(day), float(value)) for day, value in rows]
