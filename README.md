@@ -1496,7 +1496,7 @@ cuando falta una semana o menos para un rebalanceo. Lo hecho queda en `data/peri
 **Cuándo ejecutarlo**: el día del rebalanceo (el primero es el **21 de diciembre de 2026**), después
 de las 22:00 hora española, que es cuando cierra la bolsa de Nueva York. Para no tener que acordarse,
 `scripts/programar_tareas.ps1` lo programa en el Programador de tareas de Windows (de martes a sábado a
-las 23:30, y Tiingo una vez al mes). Es opcional y no se instala solo: hay que ejecutarlo a propósito
+las 05:00, con el cierre de Nueva York de la víspera, y Tiingo una vez al mes). Es opcional y no se instala solo: hay que ejecutarlo a propósito
 desde PowerShell. El ordenador tiene que estar encendido a esa hora; si no, la tarea se ejecuta al
 encenderlo.
 

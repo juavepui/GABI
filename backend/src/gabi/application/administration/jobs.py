@@ -242,7 +242,7 @@ class Jobs:
     def list(self) -> list[dict]:
         return self.repository.list()
 
-    def retry(self, job_id: str, key: str) -> dict:
+    def retry(self, job_id: str, key: str, *, origin: str = "ui") -> dict:
         """Explicit new command for safe operational jobs; never resume arbitrary research."""
         source = self.repository.get(job_id)
         if source["kind"] not in {"refresh", "quality"}:
@@ -256,7 +256,7 @@ class Jobs:
             raise QueryError("invalid_job", "La clave de repetición no es válida.", 422)
         command = JobCommand(source["kind"], tuple(parameters["symbols"]), parameters["start"], parameters["end"])
         # Namespace the request by its source. A lost HTTP response can safely be retried.
-        return self.submit(command, f"retry:{job_id}:{key}")
+        return self.submit(command, f"retry:{job_id}:{key}", origin=origin)
 
     def get(self, job_id: str) -> dict:
         return self.repository.get(job_id)
