@@ -10,13 +10,13 @@ const SCHEDULE_SCRIPT = 'scripts\\programar_tareas.ps1';
 /** Whether the daily follow-up ran recently (#290); the backend decides the status. */
 function PeriodicFollowUp({ notice }: { notice: PeriodicNotice }) {
   const lost =
-    'Cada noche anota qué empresas elige GABI, para comprobar más adelante, con datos nuevos, si acierta. Un día sin anotar no se puede recuperar después.';
+    'Cada día laborable anota qué empresas elige GABI, para comprobar más adelante, con datos nuevos, si acierta. Un día sin anotar no se puede recuperar después.';
   if (notice.status === 'never')
     return (
       <p role="alert" className="rounded-lg border border-amber-500/40 p-3">
         <strong>El seguimiento diario de GABI no se ha ejecutado nunca en este equipo.</strong>{' '}
         {lost} Para activarlo, ejecuta una vez en PowerShell <code>{SCHEDULE_SCRIPT}</code>: se
-        lanza solo de martes a sábado a las 23:30, con el ordenador encendido.
+        lanza solo de martes a sábado a las 05:00; si el ordenador está apagado, al encenderlo.
       </p>
     );
   if (notice.status === 'late')
@@ -26,8 +26,8 @@ function PeriodicFollowUp({ notice }: { notice: PeriodicNotice }) {
           El seguimiento diario de GABI lleva {notice.business_days} días laborables sin ejecutarse
         </strong>{' '}
         (último registro correcto: {dateText(notice.last_working_at)}). {lost} Comprueba que el
-        ordenador estaba encendido a las 23:30 y que las tareas siguen programadas; si no, vuelve a
-        ejecutar <code>{SCHEDULE_SCRIPT}</code>.
+        ordenador se ha encendido en los últimos días y que las tareas siguen programadas; si no,
+        vuelve a ejecutar <code>{SCHEDULE_SCRIPT}</code>.
       </p>
     );
   if (notice.last_status === 'ERROR')

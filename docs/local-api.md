@@ -70,6 +70,12 @@ Arranca `uv run --project backend python -m gabi_cli worker` en otra terminal.
 schedule daily|tiingo` encola las tareas programadas con claves estables. Tiingo
 solo se encola el día 2 de cada mes; `schedule tiingo --force` permite recuperarlo
 manualmente otro día. El Programador comprueba la fecha a diario a las 10:00.
+La tarea diaria usa `schedule daily --reintentar`: si el PC estaba apagado o
+suspendido a las 05:00, Windows la lanza al volver, a veces antes de que haya
+internet. Con esa opción espera hasta 15 minutos a que responda Yahoo, sigue el
+refresco y, si falla porque las fuentes no respondieron (`sources_failed`), lo
+repite hasta 2 veces con 10 minutos de pausa. Otros fallos no se repiten. Sin la
+opción, el comando solo encola y termina.
 El
 worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban
 que coincide con su configuración inmutable antes de tocar datos.
