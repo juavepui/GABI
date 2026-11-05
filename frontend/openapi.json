@@ -14819,6 +14819,89 @@
         "title": "LocalSettingsResponse",
         "type": "object"
       },
+      "MacroLabel": {
+        "additionalProperties": false,
+        "description": "A block's state in words (#309), from a fixed rule on one series; context, never a signal.",
+        "properties": {
+          "block": {
+            "enum": [
+              "liquidity",
+              "inflation_rates",
+              "growth_jobs",
+              "conditions"
+            ],
+            "title": "Block",
+            "type": "string"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "series_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tone": {
+            "enum": [
+              "good",
+              "bad",
+              "neutral"
+            ],
+            "title": "Tone",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "block",
+          "title",
+          "label",
+          "tone",
+          "series_id",
+          "value",
+          "date",
+          "rule"
+        ],
+        "title": "MacroLabel",
+        "type": "object"
+      },
       "MacroPoint": {
         "additionalProperties": false,
         "properties": {
@@ -14831,6 +14914,16 @@
               "three_month_average"
             ],
             "title": "Aggregation",
+            "type": "string"
+          },
+          "block": {
+            "enum": [
+              "liquidity",
+              "inflation_rates",
+              "growth_jobs",
+              "conditions"
+            ],
+            "title": "Block",
             "type": "string"
           },
           "change_3m": {
@@ -14910,6 +15003,7 @@
           "frequency",
           "aggregation",
           "home",
+          "block",
           "latest_value",
           "latest_date",
           "change_3m"
@@ -14936,6 +15030,13 @@
             "title": "Items",
             "type": "array"
           },
+          "labels": {
+            "items": {
+              "$ref": "#/components/schemas/MacroLabel"
+            },
+            "title": "Labels",
+            "type": "array"
+          },
           "source": {
             "default": "FRED local cache",
             "title": "Source",
@@ -14944,6 +15045,7 @@
         },
         "required": [
           "items",
+          "labels",
           "fred_key_configured"
         ],
         "title": "MacroResponse",

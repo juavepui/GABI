@@ -23,7 +23,7 @@ from gabi import config, edgar, entity_master, scoring
 from gabi.application.administration import data_quality as quality_queries
 from gabi.application.market import cached_data
 from gabi.domain.market import data_quality as quality
-from gabi.domain.market import fred
+from gabi.domain.market.macro_series import synchronized_series
 from gabi.infrastructure import operational_settings
 from gabi.infrastructure.storage import data_fingerprint
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
@@ -73,7 +73,7 @@ def _readers():
         lambda symbols: cached_data.fundamentals_fetched_at(_cache(), symbols),
         edgar.get_edgar_fetched_at, insiders.fetched_at, edgar.get_symbols_with_facts,
         entity_master.get_sector_asof, local_cik_status, edgar.CIK_CACHE.exists(),
-        macro.fetched_at_all, tuple(fred.SERIES), macro.history,
+        macro.fetched_at_all, tuple(synchronized_series()), macro.history,
         lambda symbols: cached_data.fundamentals(_cache(), symbols), edgar.get_edgar_metrics)
 
 

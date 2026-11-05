@@ -8,7 +8,7 @@ from pathlib import Path
 
 from gabi.application.administration.fred import synchronize
 from gabi.application.administration.sync_events import SyncAttempt
-from gabi.domain.market.fred import SERIES
+from gabi.domain.market.macro_series import synchronized_series
 from gabi.infrastructure.legacy.source_errors import fred_error, retry
 from gabi.infrastructure.providers.fred import FredSource, fred_key
 from gabi.infrastructure.storage.fred import SqliteFred
@@ -25,5 +25,5 @@ def fred_operation(data_dir: Path, *, now: Callable[[], datetime] | None = None,
     def attempt(provider: str, sid: str, dataset: str) -> SyncAttempt:
         return SyncAttempt(provider, sid, dataset, events, now=clock, wall_time=wall_time, cpu_time=cpu_time)
 
-    return partial(synchronize, SqliteFred(path, clock), SERIES, partial(fred_key, data_dir), FredSource().fetch,
+    return partial(synchronize, SqliteFred(path, clock), synchronized_series(), partial(fred_key, data_dir), FredSource().fetch,
                    events.get, attempt, retry, fred_error, clock)

@@ -53,9 +53,8 @@ from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedger
 from gabi.application.research.portfolio_lab_queries import PortfolioLabQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
-from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
-from gabi.domain.market.macro_series import macro_metadata
+from gabi.domain.market.macro_series import macro_metadata, synchronized_series
 from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.sec_reads import companyfacts as sec_companyfacts
 from gabi.domain.market.selection import RankingFilter
@@ -172,7 +171,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteHoldingsMarket(settings.data_dir).prices,
                         lambda: repository.ranking(dict(policy.weights), today()).table, today)
     portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
-    macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata(series_metadata()),
+    macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata({key: dict(meta) for key, meta in synchronized_series().items()}),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
     signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
                             compare_snapshots, compare_cached, jobs)

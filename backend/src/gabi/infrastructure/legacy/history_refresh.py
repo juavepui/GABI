@@ -14,7 +14,8 @@ import pandas as pd
 
 from gabi.application.market import cached_data
 from gabi.application.research.history_refresh import RefreshPorts, refresh
-from gabi.domain.market import fred, freshness
+from gabi.domain.market import freshness
+from gabi.domain.market.macro_series import synchronized_series
 from gabi.domain.research import history_refresh as rules
 from gabi.infrastructure import operational_settings
 from gabi.infrastructure.providers import yahoo
@@ -146,7 +147,7 @@ def run() -> dict:
             symbols, ciks, max_workers=1, progress_cb=progress, incremental=False),
         fundamentals_fetched_at=lambda symbols: cached_data.fundamentals_fetched_at(_cache(), symbols),
         fetch_fundamentals=lambda symbols: data_fetch.fetch_fundamentals_batch(symbols, max_workers=2),
-        fred_key=config.load_fred_key, fred_series=fred.SERIES,
+        fred_key=config.load_fred_key, fred_series=synchronized_series(),
         fetch_fred=lambda sid, key, units: FredSource().fetch(sid, key, units, 10000, require_complete=False),
         store_fred=series.upsert, benchmark=operational_settings.benchmark_symbol(),
         log=lambda message: print(message, flush=True)))

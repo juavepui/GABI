@@ -7699,6 +7699,46 @@ export type LocalSettingsResponse = {
 };
 
 /**
+ * MacroLabel
+ *
+ * A block's state in words (#309), from a fixed rule on one series; context, never a signal.
+ */
+export type MacroLabel = {
+    /**
+     * Block
+     */
+    block: 'liquidity' | 'inflation_rates' | 'growth_jobs' | 'conditions';
+    /**
+     * Date
+     */
+    date: string | null;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Rule
+     */
+    rule: string;
+    /**
+     * Series Id
+     */
+    series_id: string | null;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Tone
+     */
+    tone: 'good' | 'bad' | 'neutral';
+    /**
+     * Value
+     */
+    value: number | null;
+};
+
+/**
  * MacroPoint
  */
 export type MacroPoint = {
@@ -7706,6 +7746,10 @@ export type MacroPoint = {
      * Aggregation
      */
     aggregation: 'end_of_period' | 'average' | 'year_over_year' | 'wednesday_level' | 'three_month_average';
+    /**
+     * Block
+     */
+    block: 'liquidity' | 'inflation_rates' | 'growth_jobs' | 'conditions';
     /**
      * Change 3M
      */
@@ -7764,6 +7808,10 @@ export type MacroResponse = {
      * Items
      */
     items: Array<MacroPoint>;
+    /**
+     * Labels
+     */
+    labels: Array<MacroLabel>;
     /**
      * Source
      */
