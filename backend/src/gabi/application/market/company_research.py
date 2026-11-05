@@ -10,6 +10,7 @@ import pandas as pd
 from gabi.application.errors import QueryError
 from gabi.application.research.historical import _json_value
 from gabi.domain.market import current_reports, tenk_flags
+from gabi.domain.market.company_overview import typical_move
 
 SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
 DATASETS = ("surprises", "estimates", "insiders", "current_reports")
@@ -75,7 +76,10 @@ class CompanyResearch:
             "events": [{key: _json_value(event[key]) for key in ("event_type", "event_date", "range_end",
                                                                  "is_estimate", "days_until", "source")}
                        for event in upcoming],
-            "surprises": [_row(row, SURPRISE_KEYS) for row in self.store.surprises(symbol).to_dict("records")],
+            "surprises": (surprises := [_row(row, SURPRISE_KEYS)
+                                        for row in self.store.surprises(symbol).to_dict("records")]),
+            # Stored newest first; the typical move reads them in date order (#310).
+            "typical_move": typical_move([row["price_reaction_pct"] for row in reversed(surprises)]),
             "estimate": None if latest is None else _row(latest, ESTIMATE_KEYS),
             "revision_90d": None if revision is None else {key: _json_value(value) for key, value in revision.items()},
         }

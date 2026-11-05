@@ -479,7 +479,12 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   test.skip(testInfo.project.name !== 'desktop', 'Criterio de escritorio');
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto('/empresas/T000');
-  await expect(page.getByText('Puntuación GABI', { exact: true })).toBeInViewport();
+  // #310: what it is and how it scores, in the first lines.
+  const brief = page.getByRole('region', { name: 'En pocas palabras' });
+  await expect(brief.getByText(/es una empresa del sector|sector no disponible/)).toBeInViewport();
+  await expect(brief.getByText(/Sin datos de cómo reaccionó el precio/)).toBeVisible();
+  // The score is read in the first sentence («66,0 de 100, puesto 1 de 16»); its card follows below.
+  await expect(brief.getByText(/Su puntuación GABI es \w+: [\d,]+ de 100/)).toBeInViewport();
   await expect(page.getByText(/Precio al cierre del/)).toBeInViewport();
 });
 

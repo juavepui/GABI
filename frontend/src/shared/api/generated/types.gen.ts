@@ -2569,6 +2569,28 @@ export type CompanyFilingChanges = {
 };
 
 /**
+ * CompanyHeadline
+ *
+ * The company page's first two sentences (#310); `values` holds every number of the text.
+ */
+export type CompanyHeadline = {
+    /**
+     * Level
+     */
+    level: 'high' | 'medium' | 'low' | null;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * CompanyInsiders
  *
  * Open-market Form 4 activity of the last months; informative, never scored.
@@ -2643,6 +2665,7 @@ export type CompanyResearchResponse = {
      * Symbol
      */
     symbol: string;
+    typical_move: TypicalMove;
 };
 
 /**
@@ -2655,6 +2678,7 @@ export type CompanyResponse = {
      * Generated At
      */
     generated_at: string;
+    headline: CompanyHeadline;
     /**
      * Metric Sources
      */
@@ -11583,6 +11607,34 @@ export type TrialRow = {
      * Value
      */
     value: string | number | number | boolean | null;
+};
+
+/**
+ * TypicalMove
+ *
+ * How much the price usually moves on results day (#310): mean absolute reaction, in %.
+ */
+export type TypicalMove = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Enough
+     */
+    enough: boolean;
+    /**
+     * Max Abs Pct
+     */
+    max_abs_pct: number | null;
+    /**
+     * Mean Abs Pct
+     */
+    mean_abs_pct: number | null;
+    /**
+     * Text
+     */
+    text: string;
 };
 
 /**
