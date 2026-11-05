@@ -14,6 +14,7 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.domain.portfolio import contributions as rules
+from gabi.domain.portfolio import stress_reading
 from gabi.domain.portfolio.holdings import kind as holding_kind
 from gabi.domain.portfolio.holdings import price_symbols
 from gabi.domain.portfolio.simulation import fx_symbol
@@ -157,6 +158,9 @@ class InvestorBenchmark:
         portfolio, benchmark = rules.performance(real, profile), rules.performance(spy, profile)
         value = sum(real["value_by_currency"].values())
         usd_share = (value - real["value_by_currency"].get("EUR", 0.0)) / value if value > 0 else 0.0
+        scenarios = rules.scenarios(value, usd_share, profile.loss_tolerance) if value > 0 else []
+        alternatives = self._alternatives(lots, adjusted, euros_per_unit, prices, euros_per_dollar,
+                                          real, spy, vehicle, profile)
         return {
             "as_of": self.today().isoformat(), "profile_revision": saved["revision"],
             "profile_version": profile.version, "source": self._source(prices, euros_per_dollar),
@@ -164,9 +168,10 @@ class InvestorBenchmark:
             "excluded": real["excluded"] + others, "incomplete_sessions": real["incomplete_sessions"],
             "portfolio_series": self._points(real["daily"]), "benchmark_series": self._points(spy["daily"]),
             "usd_share": usd_share,
-            "scenarios": rules.scenarios(value, usd_share, profile.loss_tolerance) if value > 0 else [],
-            "alternatives": self._alternatives(lots, adjusted, euros_per_unit, prices, euros_per_dollar,
-                                               real, spy, vehicle, profile),
+            "scenarios": scenarios,
+            "scenarios_reading": stress_reading.scenarios(scenarios, profile.loss_tolerance, value),  # #325
+            "alternatives": alternatives,
+            "alternatives_reading": stress_reading.alternatives(alternatives),
         }
 
     @staticmethod
@@ -220,7 +225,10 @@ class InvestorBenchmark:
             "performance": rules.performance(result, profile),
             "pending": [{"date": day.isoformat(), "amount_eur": amount} for day, amount in result["pending"]],
             "series": self._points(result["daily"]),
-            "scenarios": self._plan_scenarios(result, profile),
+            "scenarios": (scenarios := self._plan_scenarios(result, profile)),
+            "scenarios_reading": stress_reading.scenarios(  # #325
+                scenarios, profile.loss_tolerance,
+                float(result["daily"]["value_eur"].iloc[-1]) if not result["daily"].empty else 0.0),
             "vehicles": [self._vehicle(spec, histories, flows, start, euros_per_dollar, profile)
                          for spec in VEHICLES],
         }

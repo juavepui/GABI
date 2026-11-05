@@ -6003,6 +6003,7 @@ export type HoldingsBenchmarkResult = {
      * Un rango para comparar, no una recomendación de pesos
      */
     alternatives: Array<Alternative>;
+    alternatives_reading?: Reading | null;
     /**
      * As Of
      */
@@ -6041,6 +6042,7 @@ export type HoldingsBenchmarkResult = {
      * Scenarios
      */
     scenarios: Array<StressScenario>;
+    scenarios_reading?: Reading | null;
     source: BenchmarkSource;
     /**
      * Usd Share
@@ -6923,6 +6925,7 @@ export type InvestorBenchmarkResult = {
      * Exposición al dólar del 100 %: el S&P 500
      */
     scenarios: Array<StressScenario>;
+    scenarios_reading?: Reading | null;
     /**
      * Series
      */
@@ -10239,6 +10242,7 @@ export type RiskStress = {
      * Notes
      */
     notes: Array<string>;
+    reading?: Reading | null;
     /**
      * Scenarios
      */

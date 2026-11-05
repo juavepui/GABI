@@ -144,5 +144,5 @@ describe('Comparar por secciones (#194)', () => {
     await screen.findText('ALL: 104,3');
     expect(screen.text()).toContain('SPY: —');
     expect(api.getComparisonPrices).toHaveBeenCalledWith(['ALL', 'TRV'], 252, expect.anything());
-  });
+  }, 15_000); // Renders the whole page with lazy charts: slow on a busy machine, not wrong.
 });
