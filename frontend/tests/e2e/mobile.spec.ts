@@ -197,3 +197,15 @@ test('en móvil la pestaña activa queda a la vista y ninguna sección desborda'
     });
   }
 });
+
+test('el mapa del mercado se lee como lista en móvil, sin desplazamiento lateral (#311)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir/mapa');
+  await expect(page.getByRole('heading', { name: 'Mapa del mercado' })).toBeVisible();
+  await expect(page.getByText(/en una pantalla pequeña el mapa no se lee bien/i)).toBeVisible();
+  await expect(page.getByRole('img', { name: /Mapa de las empresas por sector/ })).toBeHidden();
+  await expect(page.locator('details').first()).toBeVisible();
+  const scroll = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  expect(scroll).toBeLessThanOrEqual(1);
+});

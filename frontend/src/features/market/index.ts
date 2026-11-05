@@ -7,3 +7,4 @@ export { MarketHealthCard } from './market-health';
 export { EventsPage } from './events-page';
 export { TrackingPage } from './tracking-page';
 export { WatchlistPage } from './watchlist-page';
+export { HeatmapPage } from './heatmap-page';

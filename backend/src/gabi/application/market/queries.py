@@ -7,6 +7,7 @@ import pandas as pd
 
 from gabi.application.administration.model import ModelQueries, ModelState
 from gabi.application.errors import QueryError
+from gabi.domain.market import heatmap
 from gabi.domain.market.freshness import MAX_BEHIND_SHARE, prices_current
 from gabi.domain.market.selection import RankingFilter, RankingSort, filter_ranking, sort_ranking
 
@@ -100,6 +101,15 @@ class MarketQueries:
 
     def model(self, override: dict[str, float] | None = None) -> ModelState:
         return self.models.model(override)
+
+    def heatmap(self) -> dict:
+        """Mapa de calor (#311): the active model's ranking grouped by sector; the same table as /ranking."""
+        model = self.model()
+        today = self.today()
+        snapshot = self.repository.ranking(model.weights, today)
+        return heatmap.build(snapshot.table) | {
+            "model_id": model.model_id, "generated_at": snapshot.generated_at,
+            "data": describe_data(snapshot, today, self.last_session() if self.last_session else None)}
 
     def ranking(self, filters: RankingFilter, offset: int = 0, limit: int = 100,
                 override: dict[str, float] | None = None, requested_mode: str | None = None,
