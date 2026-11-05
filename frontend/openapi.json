@@ -4213,6 +4213,13 @@
             "title": "Peers",
             "type": "integer"
           },
+          "reading": {
+            "items": {
+              "$ref": "#/components/schemas/MultipleSectorReading"
+            },
+            "title": "Reading",
+            "type": "array"
+          },
           "reason": {
             "anyOf": [
               {
@@ -4247,7 +4254,8 @@
           "peers",
           "reason",
           "cached",
-          "medians"
+          "medians",
+          "reading"
         ],
         "title": "ChecklistSectorMultiples",
         "type": "object"
@@ -4631,6 +4639,13 @@
           "multiples_history": {
             "$ref": "#/components/schemas/ChecklistMultiplesHistory"
           },
+          "multiples_reading": {
+            "items": {
+              "$ref": "#/components/schemas/MultipleOwnReading"
+            },
+            "title": "Multiples Reading",
+            "type": "array"
+          },
           "pass_rate_reference": {
             "anyOf": [
               {
@@ -4700,6 +4715,7 @@
           "dcf",
           "qualitative",
           "multiples_history",
+          "multiples_reading",
           "pass_rate_reference"
         ],
         "title": "CompanyChecklistResponse",
@@ -15956,6 +15972,214 @@
           "blind_validation_id"
         ],
         "title": "ModelResponse",
+        "type": "object"
+      },
+      "MultipleOwnReading": {
+        "description": "One multiple today against its own last years (#326): range, median and the plain sentence.",
+        "properties": {
+          "cheaper_years": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cheaper Years"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "pricier_years": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricier Years"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cheaper",
+                  "pricier",
+                  "inline"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "few_years",
+              "missing",
+              "negative",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "years": {
+            "title": "Years",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "status",
+          "current",
+          "min",
+          "max",
+          "median",
+          "years",
+          "cheaper_years",
+          "pricier_years",
+          "side",
+          "text"
+        ],
+        "title": "MultipleOwnReading",
+        "type": "object"
+      },
+      "MultipleSectorReading": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "peers": {
+            "title": "Peers",
+            "type": "integer"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cheaper",
+                  "pricier",
+                  "inline"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "missing"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "status",
+          "current",
+          "median",
+          "peers",
+          "side",
+          "text"
+        ],
+        "title": "MultipleSectorReading",
         "type": "object"
       },
       "NoticesResponse": {

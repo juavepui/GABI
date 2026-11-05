@@ -20,6 +20,8 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Folded } from '@/shared/ui/folded';
+import { ChartFrame } from '@/shared/ui/charts/chart-frame';
+import { RangeDot, type RangeMark } from '@/shared/ui/charts/range-dot';
 import { Hint } from '@/shared/ui/hint';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Input } from '@/shared/ui/input';
@@ -284,74 +286,133 @@ function Multiples({ data }: { data: CompanyChecklistResponse }) {
   const current = Object.fromEntries(data.criteria.map((item) => [item.key, item.value]));
   const explained = Object.fromEntries(data.criteria.map((item) => [item.key, item.explanation]));
   const history = data.multiples_history;
+  const readings = data.multiples_reading;
+  const headline = readings.find((item) => item.status === 'ok') ?? readings[0];
+  const ratio = (value: number) => formatNumber(value, { digits: 1, fixed: true });
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        ¿Está cara o barata? Compara sus múltiplos de hoy (cuántas veces paga el precio sus
-        beneficios o su caja) con lo habitual en la propia empresa en sus últimos {history.years}{' '}
-        años y con lo habitual en las demás empresas de su sector. Que hoy esté por debajo no
-        significa que sea una ganga: a veces es más barata porque el mercado espera que le vaya
-        peor.
-      </p>
-      <div className="overflow-x-auto" role="region" aria-label="Tabla de múltiplos" tabIndex={0}>
-        <table
-          className="w-full text-left text-xs"
-          aria-label="Múltiplos frente a su historia y su sector"
-        >
-          <thead>
-            <tr className="border-b">
-              {MULTIPLE_COLUMNS.map(([title, help]) => (
-                <th key={title} className="py-1.5 pr-3 font-medium">
-                  <Hint content={help}>
-                    {title === 'Mediana propia' ? `${title} (${history.years} años)` : title}
-                  </Hint>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {MULTIPLES.map(([key, label]) => (
-              <tr key={key} className="border-b last:border-0">
-                <th scope="row" className="py-1.5 pr-3 font-normal">
-                  <Hint content={explained[key]}>{label}</Hint>
-                </th>
-                <td className="py-1.5 pr-3 tabular-nums">{show(current[key], 'ratio')}</td>
-                <td className="py-1.5 pr-3 tabular-nums">{median(history.median[key], 'años')}</td>
-                <td className="py-1.5 pr-3 tabular-nums">
-                  {sector.isPending
-                    ? 'Calculando…'
-                    : sector.isError
-                      ? 'No disponible'
-                      : median(sector.data.medians[key], 'empresas')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {sector.isError && <ErrorState error={sector.error} retry={() => void sector.refetch()} />}
-      {sector.data && (
-        <p className="text-xs text-muted-foreground">
-          Sector: {sector.data.sector ?? '—'}
-          {sector.data.reason
-            ? ` · ${reasonText(sector.data.reason)}`
-            : ` · ${sector.data.peers} empresas del sector`}
-        </p>
-      )}
-      <ul className="space-y-1 text-xs" aria-label="Múltiplos por ejercicio">
-        {history.by_year.map((year) => (
-          <li
-            key={year.fiscal_year_end}
-            className="flex flex-wrap justify-between gap-2 border-b py-1"
+    <ChartFrame
+      title="¿Está cara o barata para ella y para su sector?"
+      conclusion={headline?.text}
+      note={
+        <>
+          Cada línea va de su múltiplo más bajo al más alto de sus últimos {history.years} años; el
+          punto es hoy. Que hoy esté más barata no significa que sea una ganga: a veces lo está
+          porque el mercado espera que le vaya peor.
+        </>
+      }
+      table={
+        <div className="space-y-3">
+          <div
+            className="overflow-x-auto"
+            role="region"
+            aria-label="Tabla de múltiplos"
+            tabIndex={0}
           >
-            <span className="text-muted-foreground">{dateLabel(year.fiscal_year_end)}</span>
-            <span className="tabular-nums">
-              {MULTIPLES.map(([key, label]) => `${label} ${show(year[key], 'ratio')}`).join(' · ')}
-            </span>
-          </li>
-        ))}
+            <table
+              className="w-full text-left text-xs"
+              aria-label="Múltiplos frente a su historia y su sector"
+            >
+              <thead>
+                <tr className="border-b">
+                  {MULTIPLE_COLUMNS.map(([title, help]) => (
+                    <th key={title} className="py-1.5 pr-3 font-medium">
+                      <Hint content={help}>
+                        {title === 'Mediana propia' ? `${title} (${history.years} años)` : title}
+                      </Hint>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {MULTIPLES.map(([key, label]) => (
+                  <tr key={key} className="border-b last:border-0">
+                    <th scope="row" className="py-1.5 pr-3 font-normal">
+                      <Hint content={explained[key]}>{label}</Hint>
+                    </th>
+                    <td className="py-1.5 pr-3 tabular-nums">{show(current[key], 'ratio')}</td>
+                    <td className="py-1.5 pr-3 tabular-nums">
+                      {median(history.median[key], 'años')}
+                    </td>
+                    <td className="py-1.5 pr-3 tabular-nums">
+                      {sector.isPending
+                        ? 'Calculando…'
+                        : sector.isError
+                          ? 'No disponible'
+                          : median(sector.data.medians[key], 'empresas')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {sector.isError && (
+            <ErrorState error={sector.error} retry={() => void sector.refetch()} />
+          )}
+          {sector.data && (
+            <p className="text-xs text-muted-foreground">
+              Sector: {sector.data.sector ?? '—'}
+              {sector.data.reason
+                ? ` · ${reasonText(sector.data.reason)}`
+                : ` · ${sector.data.peers} empresas del sector`}
+            </p>
+          )}
+          <ul className="space-y-1 text-xs" aria-label="Múltiplos por ejercicio">
+            {history.by_year.map((year) => (
+              <li
+                key={year.fiscal_year_end}
+                className="flex flex-wrap justify-between gap-2 border-b py-1"
+              >
+                <span className="text-muted-foreground">{dateLabel(year.fiscal_year_end)}</span>
+                <span className="tabular-nums">
+                  {MULTIPLES.map(([key, label]) => `${label} ${show(year[key], 'ratio')}`).join(
+                    ' · ',
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      }
+    >
+      <ul className="space-y-4" aria-label="Múltiplos en su rango">
+        {readings.map((item) => {
+          const peer = sector.data?.reading.find((row) => row.key === item.key);
+          const marks: RangeMark[] = [];
+          if (item.median != null) marks.push({ value: item.median, label: 'Su mediana' });
+          if (peer?.status === 'ok' && peer.median != null)
+            marks.push({ value: peer.median, label: 'Sector' });
+          return (
+            <li key={item.key} className="space-y-1">
+              <p className="text-sm font-medium">
+                <Hint content={explained[item.key]}>{item.label}</Hint>
+              </p>
+              {item.status === 'ok' &&
+                item.current != null &&
+                item.min != null &&
+                item.max != null && (
+                  <RangeDot
+                    min={item.min}
+                    max={item.max}
+                    value={item.current}
+                    marks={marks}
+                    format={ratio}
+                    description={item.text}
+                  />
+                )}
+              {/* The headline is already the conclusion above: not repeated here. */}
+              {item !== headline && <p className="text-xs text-muted-foreground">{item.text}</p>}
+              <p className="text-xs text-muted-foreground">
+                {sector.isPending
+                  ? 'Comparando con su sector…'
+                  : sector.isError
+                    ? 'No se pudo comparar con su sector.'
+                    : (peer?.text ?? '')}
+              </p>
+            </li>
+          );
+        })}
       </ul>
-    </div>
+    </ChartFrame>
   );
 }
 

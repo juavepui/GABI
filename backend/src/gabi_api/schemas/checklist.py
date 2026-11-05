@@ -136,6 +136,38 @@ class ChecklistMultiplesHistory(BaseModel):
     median: dict[str, ChecklistMedian]
 
 
+ReadingStatus = Literal["ok", "few_years", "missing", "negative", "not_applicable"]
+ReadingSide = Literal["cheaper", "pricier", "inline"]
+
+
+class MultipleOwnReading(BaseModel):
+    """One multiple today against its own last years (#326): range, median and the plain sentence."""
+
+    key: str
+    label: str
+    status: ReadingStatus
+    current: float | None
+    min: float | None  # lowest positive value of its years
+    max: float | None
+    median: float | None  # None unless there are enough years
+    years: int  # years with a positive value
+    cheaper_years: int | None  # years when it was cheaper than today
+    pricier_years: int | None  # years when it was more expensive than today
+    side: ReadingSide | None
+    text: str
+
+
+class MultipleSectorReading(BaseModel):
+    key: str
+    label: str
+    status: Literal["ok", "missing"]
+    current: float | None
+    median: float | None
+    peers: int
+    side: ReadingSide | None
+    text: str
+
+
 class ChecklistSectorMultiples(BaseModel):
     symbol: str
     as_of: str
@@ -144,6 +176,7 @@ class ChecklistSectorMultiples(BaseModel):
     reason: str | None
     cached: bool
     medians: dict[str, ChecklistMedian]
+    reading: list[MultipleSectorReading]
 
 
 class CompanyChecklistResponse(BaseModel):
@@ -161,6 +194,7 @@ class CompanyChecklistResponse(BaseModel):
     dcf: ChecklistDcf
     qualitative: list[ChecklistQualitative]
     multiples_history: ChecklistMultiplesHistory
+    multiples_reading: list[MultipleOwnReading]
     pass_rate_reference: ChecklistReference | None
 
 
