@@ -119,7 +119,7 @@ export function HeatmapPage() {
               <li className="flex items-center gap-1.5">
                 <span
                   aria-hidden="true"
-                  className="size-3 rounded-sm border border-dashed border-[#52514e]"
+                  className="size-3 rounded-sm border border-dashed border-muted-foreground"
                   style={{ background: BAND.none.fill }}
                 />
                 sin puntuación

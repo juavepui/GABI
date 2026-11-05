@@ -94,7 +94,10 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
       />
       {data && (
         <>
-          <div role="alert" className="space-y-1 rounded-md border border-amber-500/40 p-3 text-xs">
+          <div
+            role="alert"
+            className="space-y-1 rounded-md border border-warning-border p-3 text-xs"
+          >
             {data.summary.structural_limitations.map((text) => (
               <p key={text}>
                 <strong>Limitación estructural conocida:</strong> {text}

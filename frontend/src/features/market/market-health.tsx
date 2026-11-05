@@ -6,16 +6,16 @@ import { HowToRead } from '@/shared/ui/how-to-read';
 import { Term } from '@/shared/ui/term';
 
 const STATE_TONE: Record<NonNullable<MarketHealthResponse['state']>, string> = {
-  favorable: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
-  pressure: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100',
-  correction: 'bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-100',
+  favorable: 'bg-success-soft text-success-ink',
+  pressure: 'bg-warning-soft text-warning-ink',
+  correction: 'bg-danger-soft text-danger-ink',
 };
 
 const RESULT: Record<NonNullable<MarketCheck['result']> | 'none', { label: string; dot: string }> =
   {
-    pass: { label: 'Pasa', dot: 'bg-emerald-500' },
-    caution: { label: 'Precaución', dot: 'bg-amber-500' },
-    fail: { label: 'Falla', dot: 'bg-rose-500' },
+    pass: { label: 'Pasa', dot: 'bg-success' },
+    caution: { label: 'Precaución', dot: 'bg-warning' },
+    fail: { label: 'Falla', dot: 'bg-danger' },
     none: { label: 'Sin dato', dot: 'bg-muted-foreground/40' },
   };
 

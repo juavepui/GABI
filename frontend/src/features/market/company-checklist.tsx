@@ -66,7 +66,7 @@ const CAVEATS: Record<string, string> = {
 function Caveat({ caveat }: { caveat: string | null | undefined }) {
   if (!caveat || !CAVEATS[caveat]) return null;
   return (
-    <span role="note" className="mt-1 block text-xs text-amber-700 dark:text-amber-400">
+    <span role="note" className="mt-1 block text-xs text-warning-ink">
       ⚠ {CAVEATS[caveat]}
     </span>
   );

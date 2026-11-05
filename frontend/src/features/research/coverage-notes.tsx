@@ -13,7 +13,7 @@ export function HistoricalCoverageNotes({
   return (
     <div className="space-y-2 text-sm" aria-label="Cobertura de la reconstrucción" role="region">
       {layer && (
-        <p className="rounded-lg border border-sky-300 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950">
+        <p className="rounded-lg border border-info-border bg-info-soft p-3">
           <strong>Capa histórica 2010–2015</strong>: identidad SEC acreditada{' '}
           {layer.identity_accredited}/{layer.members} · precio acreditado {layer.accredited_prices}/
           {layer.members} ({Math.round((100 * layer.accredited_prices) / members)} %) · con score{' '}
@@ -29,7 +29,7 @@ export function HistoricalCoverageNotes({
         </p>
       )}
       {coverage.identity && coverage.identity.ambiguous > 0 && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950">
+        <p className="rounded-lg border border-warning-border bg-warning-soft p-3 text-warning-ink">
           {coverage.identity.ambiguous}/{total} empresas con identidad ambigua (varios alias en
           conflicto para esta fecha). No se usan sus datos por símbolo para calcular la puntuación.
         </p>
@@ -47,7 +47,7 @@ export function HistoricalCoverageNotes({
         {coverage.no_sector} sin ningún sector conocido.
       </p>
       {coverage.warnings.length > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950">
+        <div className="rounded-lg border border-warning-border bg-warning-soft p-3 text-warning-ink">
           <p className="font-medium">
             ⚠️ En algún apartado de la puntuación faltan muchos datos en esta reconstrucción
           </p>

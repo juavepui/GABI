@@ -63,7 +63,7 @@ export function BacktestDiagnostics({ jobId, v1 }: { jobId: string; v1: boolean 
             Ningún rebalanceo por debajo del umbral.
           </p>
         ) : (
-          <ul className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-400">
+          <ul className="mt-2 space-y-1 text-xs text-warning-ink">
             {data.quality_warnings.map((row) => (
               <li key={row.fecha}>
                 {row.fecha}:{' '}

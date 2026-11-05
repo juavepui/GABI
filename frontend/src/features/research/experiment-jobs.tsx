@@ -81,7 +81,7 @@ function PboResult({ jobId }: { jobId: string }) {
   return (
     <div className="mt-4 space-y-2 text-sm" role="region" aria-label="Resultado PBO">
       {data.pbo == null ? (
-        <p className="text-amber-700 dark:text-amber-400">{data.message}</p>
+        <p className="text-warning-ink">{data.message}</p>
       ) : (
         <>
           <p
@@ -185,7 +185,7 @@ function BootstrapResult({ jobId }: { jobId: string }) {
   return (
     <div className="mt-4" role="region" aria-label="Resultado del bootstrap">
       {data.view == null ? (
-        <p className="text-sm text-amber-700 dark:text-amber-400">{data.message}</p>
+        <p className="text-sm text-warning-ink">{data.message}</p>
       ) : (
         <BlockBootstrapResult
           view={data.view}

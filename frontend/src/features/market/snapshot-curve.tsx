@@ -20,7 +20,7 @@ export default function SnapshotCurve({ points }: { points: SnapshotCurvePoint[]
     >
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart data={points} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="#e4e9e1" strokeDasharray="3 3" />
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
             tickFormatter={(d) => dateLabel(String(d))}
@@ -30,8 +30,8 @@ export default function SnapshotCurve({ points }: { points: SnapshotCurvePoint[]
           <YAxis domain={['auto', 'auto']} width={48} tick={{ fontSize: 11 }} />
           <Tooltip labelFormatter={(label) => dateLabel(String(label))} />
           <Legend />
-          <Line dataKey="basket" name="Cesta guardada" dot={false} stroke="#2563eb" />
-          <Line dataKey="spy" name="SPY" dot={false} stroke="#dc2626" />
+          <Line dataKey="basket" name="Cesta guardada" dot={false} stroke="var(--series-1)" />
+          <Line dataKey="spy" name="SPY" dot={false} stroke="var(--chart-5)" />
         </LineChart>
       </ResponsiveContainer>
     </div>

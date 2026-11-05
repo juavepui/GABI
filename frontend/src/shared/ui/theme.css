@@ -1,6 +1,7 @@
 @import 'tailwindcss';
-/* GABI only has a light theme: `dark:` must not follow the OS setting, or warnings become
-   dark-on-dark when Windows is in dark mode. It would only apply under an explicit .dark class. */
+/* Two themes (#321). `index.html` puts `.dark` on <html> before the first paint from the saved choice
+   (Claro / Oscuro / Automático = the system's). `dark:` follows that class, never the OS directly.
+   Every colour is a variable defined once per theme; components never use fixed colours. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
@@ -17,6 +18,31 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-success-ink: var(--success-ink);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-danger-ink: var(--danger-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-border: var(--info-border);
+  --color-info-ink: var(--info-ink);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
   --color-border: var(--border);
   --color-input: var(--border);
   --color-ring: var(--primary);
@@ -37,13 +63,147 @@
   --muted-foreground: #637169;
   --accent: #e8f0df;
   --destructive: #a13b35;
+  --destructive-foreground: #fff;
   --border: #dfe5dc;
+  --focus: #56825d;
+  /* States: solid (icons, dots, bars), soft (box background), border and ink (text on soft). */
+  --success: #1f7a4d;
+  --success-foreground: #fff;
+  --success-soft: #e3f3e8;
+  --success-border: #9fd2b2;
+  --success-ink: #14532d;
+  --warning: #b45309;
+  --warning-foreground: #fff;
+  --warning-soft: #fdf3d7;
+  --warning-border: #e9b949;
+  --warning-ink: #6b3410;
+  --danger: #be123c;
+  --danger-foreground: #fff;
+  --danger-soft: #fde4e7;
+  --danger-border: #f3a3af;
+  --danger-ink: #821432;
+  --info: #0369a1;
+  --info-soft: #e0f1fc;
+  --info-border: #8cc9ee;
+  --info-ink: #0c4a6e;
+  /* The sidebar stays dark green in both themes. */
+  --sidebar: #183e32;
+  --sidebar-foreground: #fff;
+  --sidebar-muted: #c5d8cc;
+  --sidebar-active: #dceaca;
+  --sidebar-active-foreground: #183e32;
+  /* Charts: grid, axis text, series in a fixed order, and the score map (#311). */
+  --chart-grid: #e4e9e1;
+  --chart-axis: #637169;
+  --chart-1: #22764f;
+  --chart-2: #4467b3;
+  --chart-3: #c27f12;
+  --chart-4: #8d4fb3;
+  --chart-5: #c2413b;
+  --chart-6: #6b7280;
+  --series-1: #2563eb;
+  --series-2: #16a34a;
+  --series-3: #d97706;
+  --series-4: #9333ea;
+  --series-5: #db2777;
+  /* Ranking cells: the hue comes from the position (red → green); these set how light it is. */
+  --rank-saturation: 70%;
+  --rank-lightness: 87%;
+  --rank-legend-lightness: 80%;
+  --rank-strong-saturation: 65%;
+  --rank-strong-lightness: 40%;
+  --rank-strong-ink: #fff;
+  --heat-very-high: #1c5cab;
+  --heat-very-high-ink: #fff;
+  --heat-high: #6da7ec;
+  --heat-high-ink: #0b0b0b;
+  --heat-medium: #d6d5cf;
+  --heat-medium-ink: #0b0b0b;
+  --heat-low: #e57a49;
+  --heat-low-ink: #0b0b0b;
+  --heat-very-low: #a8380f;
+  --heat-very-low-ink: #fff;
+  --heat-none: #f4f3ef;
+  --heat-none-ink: #52514e;
   font-family: Inter, 'Segoe UI', system-ui, sans-serif;
   color: var(--foreground);
   background: var(--background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+/* Dark theme for reading: very dark grey-green, not black; near-white text, not pure white;
+   states lighter and less saturated, with the same meaning as in light. */
+:root.dark {
+  color-scheme: dark;
+  --background: #131815;
+  --foreground: #e3e9e5;
+  --card: #1b221e;
+  --primary: #8fcfaa;
+  --primary-foreground: #0f241a;
+  --secondary: #243029;
+  --muted: #212a25;
+  --muted-foreground: #a7b4ac;
+  --accent: #26362c;
+  --destructive: #e8877d;
+  --destructive-foreground: #23100e;
+  --border: #33403a;
+  --focus: #8fcfaa;
+  --success: #5cc18e;
+  --success-foreground: #0d1f15;
+  --success-soft: #16301f;
+  --success-border: #2f6b48;
+  --success-ink: #c3ead2;
+  --warning: #e6a947;
+  --warning-foreground: #1f1504;
+  --warning-soft: #33270d;
+  --warning-border: #7d5d1f;
+  --warning-ink: #f5dca8;
+  --danger: #f08497;
+  --danger-foreground: #2a0910;
+  --danger-soft: #3a141b;
+  --danger-border: #823040;
+  --danger-ink: #fbcbd3;
+  --info: #6cbdea;
+  --info-soft: #0f2b3b;
+  --info-border: #285f7f;
+  --info-ink: #c6e5f7;
+  --sidebar: #0f2a21;
+  --sidebar-foreground: #eef3ef;
+  --sidebar-muted: #b3c9bb;
+  --sidebar-active: #2a4a3c;
+  --sidebar-active-foreground: #eef3ef;
+  --chart-grid: #2c3631;
+  --chart-axis: #a7b4ac;
+  --chart-1: #5cc18e;
+  --chart-2: #8aa6e6;
+  --chart-3: #e6a947;
+  --chart-4: #bf92dd;
+  --chart-5: #ee8a84;
+  --chart-6: #9ca3af;
+  --series-1: #6f9ff5;
+  --series-2: #4cc77b;
+  --series-3: #f0a64a;
+  --series-4: #bb84f2;
+  --series-5: #f07ab3;
+  --rank-saturation: 40%;
+  --rank-lightness: 24%;
+  --rank-legend-lightness: 30%;
+  --rank-strong-saturation: 45%;
+  --rank-strong-lightness: 32%;
+  --rank-strong-ink: #f3f5f2;
+  --heat-very-high: #6da7ec;
+  --heat-very-high-ink: #0b0b0b;
+  --heat-high: #2f62a3;
+  --heat-high-ink: #fff;
+  --heat-medium: #4a4a45;
+  --heat-medium-ink: #f0efec;
+  --heat-low: #a24c26;
+  --heat-low-ink: #fff;
+  --heat-very-low: #ef8f61;
+  --heat-very-low-ink: #0b0b0b;
+  --heat-none: #232321;
+  --heat-none-ink: #c3c2b7;
 }
 /* Element defaults go in the base layer: unlayered rules would beat every Tailwind utility
    (text-sm, border-*, outline-none) whatever their specificity. */
@@ -74,7 +234,7 @@
     accent-color: var(--primary);
   }
   :focus-visible {
-    outline: 2px solid #56825d;
+    outline: 2px solid var(--focus);
     outline-offset: 3px;
   }
 }
@@ -94,4 +254,26 @@
 }
 .data-table :is(td, th).num > button {
   margin-left: auto;
+}
+
+/* Charts (recharts) in both themes (#321): its default tooltip and axis text carry fixed light colours
+   inline, so the theme overrides them here once instead of in every chart. */
+.recharts-default-tooltip {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground);
+}
+.recharts-cartesian-axis-tick-value,
+.recharts-polar-angle-axis-tick-value {
+  fill: var(--chart-axis);
+}
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--chart-grid);
+}
+.recharts-cartesian-grid line {
+  stroke: var(--chart-grid);
+}
+.recharts-legend-item-text {
+  color: var(--foreground) !important;
 }

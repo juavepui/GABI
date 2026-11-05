@@ -155,7 +155,7 @@ export function DeflatedSharpePanel({
         </p>
       )}
       {rows.data && options.length < 2 && (
-        <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">
+        <p className="mt-3 text-sm text-warning-ink">
           Esta familia tiene menos de 2 experimentos con Sharpe: no se puede calcular DSR (hacen
           falta al menos 2 intentos para estimar cuánto varía el Sharpe entre ellos por azar).
         </p>

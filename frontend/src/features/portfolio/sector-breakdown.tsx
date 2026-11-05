@@ -20,7 +20,7 @@ export function SectorBreakdown({ data }: { data: PlanResponse }) {
       {data.concentration.length > 0 ? (
         <div
           role="status"
-          className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="mt-4 rounded-lg border border-warning-border bg-warning-soft p-3 text-sm text-warning-ink"
         >
           <p className="font-medium">Demasiado dinero en un mismo sector</p>
           <ul className="mt-1 list-disc pl-5">

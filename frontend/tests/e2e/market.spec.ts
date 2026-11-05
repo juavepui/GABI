@@ -405,13 +405,36 @@ test('la portada avisa si el seguimiento diario no se ejecuta', async ({ page })
   await expect(notices.getByText('scripts\\programar_tareas.ps1')).toBeVisible();
 });
 
-test('un sistema en modo oscuro no oscurece los avisos del tema claro', async ({ page }) => {
+test('el tema sigue al sistema por defecto y se puede fijar en Claro u Oscuro (#321)', async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
+  const html = page.locator('html');
+  // Automático (default): the system is dark, so is GABI, from the first paint.
+  await expect(html).toHaveClass(/dark/);
+  await expect(html).toHaveCSS('color-scheme', 'dark');
+  await expect(html).toHaveCSS('background-color', 'rgb(19, 24, 21)');
+  const theme = page.getByRole('radiogroup', { name: 'Tema de la pantalla' });
+  await expect(theme.getByRole('radio', { name: /Automático/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  // Claro wins over the system and is remembered after reloading.
+  await theme.getByRole('radio', { name: 'Claro' }).click();
+  await expect(html).not.toHaveClass(/dark/);
+  await page.reload();
+  await expect(html).not.toHaveClass(/dark/);
+  await expect(html).toHaveCSS('background-color', 'rgb(247, 248, 245)');
+  // The warning box keeps its light colours in the light theme.
   const notice = page.getByRole('region', { name: 'Avisos' }).getByText(/No es asesoramiento/);
   await expect(notice).toBeVisible();
-  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(247, 248, 245)');
-  await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+  // Oscuro with a light system.
+  await page.emulateMedia({ colorScheme: 'light' });
+  await theme.getByRole('radio', { name: 'Oscuro' }).click();
+  await expect(html).toHaveClass(/dark/);
+  await page.reload();
+  await expect(html).toHaveClass(/dark/);
 });
 
 test('la portada resume datos, cartera objetivo y primeros pasos sin descargar nada', async ({

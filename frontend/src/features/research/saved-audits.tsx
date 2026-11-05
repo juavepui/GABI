@@ -72,7 +72,7 @@ function Overfitting() {
         conserva también los ensayos de sensibilidad a costes. Sharpe aritmético de excesos, RF
         anual 4 %, observaciones trimestrales para todas las frecuencias.
       </p>
-      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-amber-800 dark:text-amber-300">
+      <p className="rounded-lg border border-warning-border bg-warning-soft p-3 text-warning-ink">
         Auditoría parcial de investigación: faltan ensayos con parámetros originales no
         recuperables. PBO evalúa elegir el mejor Sharpe; la elección histórica también miró
         drawdown. DSR usa el número nominal de variantes correlacionadas y no constituye validación

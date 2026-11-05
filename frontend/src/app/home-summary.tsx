@@ -4,8 +4,8 @@ import { formatNumber } from '@/shared/lib/format';
 import { HowToRead } from '@/shared/ui/how-to-read';
 
 const TONE: Record<SummarySentence['tone'], { dot: string; label: string }> = {
-  good: { dot: 'bg-emerald-500', label: 'Buena noticia' },
-  bad: { dot: 'bg-rose-500', label: 'Ojo' },
+  good: { dot: 'bg-success', label: 'Buena noticia' },
+  bad: { dot: 'bg-danger', label: 'Ojo' },
   neutral: { dot: 'bg-muted-foreground/50', label: 'Información' },
 };
 

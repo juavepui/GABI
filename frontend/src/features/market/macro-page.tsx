@@ -8,8 +8,8 @@ import { Term } from '@/shared/ui/term';
 import { amount, cadence, trend, useMacro } from './macro-format';
 
 const TONE: Record<MacroLabel['tone'], string> = {
-  good: 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100',
-  bad: 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100',
+  good: 'border-success-border bg-success-soft text-success-ink',
+  bad: 'border-warning-border bg-warning-soft text-warning-ink',
   neutral: 'border-border bg-muted/40',
 };
 
@@ -104,7 +104,7 @@ export function MacroPage() {
           {!query.data.fred_key_configured && (
             <p
               role="note"
-              className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+              className="rounded-xl border border-warning-border bg-warning-soft p-4 text-sm text-warning-ink"
             >
               Falta la clave de FRED, así que estos datos no se pueden actualizar: ves los que ya
               estaban guardados. Es gratuita; guárdala en{' '}

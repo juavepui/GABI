@@ -42,7 +42,7 @@ function Tile(props: TileProps) {
         width={width}
         height={height}
         fill={band.fill}
-        stroke="#fcfcfb"
+        stroke="var(--card)"
         strokeWidth={2}
         strokeDasharray={props.band === 'none' ? '3 2' : undefined}
       />
@@ -89,7 +89,7 @@ function SectorFrame({ frame }: { frame: Frame }) {
         width={frame.width}
         height={frame.height}
         fill="none"
-        stroke="#0b0b0b"
+        stroke="var(--foreground)"
         strokeWidth={2}
       />
       {label && (
@@ -99,7 +99,7 @@ function SectorFrame({ frame }: { frame: Frame }) {
             y={frame.y + 2}
             width={Math.min(frame.width - 4, frame.name.length * 6.5 + 10)}
             height={17}
-            fill="#fcfcfb"
+            fill="var(--card)"
             opacity={0.92}
           />
           <text
@@ -107,7 +107,7 @@ function SectorFrame({ frame }: { frame: Frame }) {
             y={frame.y + 14}
             fontSize={11}
             fontWeight={600}
-            fill="#0b0b0b"
+            fill="var(--foreground)"
             stroke="none"
           >
             {frame.name.length * 6.5 + 10 > frame.width - 4

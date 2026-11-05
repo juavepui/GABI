@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 /** Background for a ranked cell: 0 = worst (red) .. 1 = best (green); the position comes from the backend. */
 function rankStyle(position: number | null | undefined) {
   if (position == null) return undefined;
-  return { backgroundColor: `hsl(${Math.round(position * 120)}, 70%, 87%)` };
+  // Hue from the position; saturation and lightness from the theme (#321), so it reads in dark mode.
+  return {
+    backgroundColor: `hsl(${Math.round(position * 120)}, var(--rank-saturation), var(--rank-lightness))`,
+  };
 }
 
 function rankTitle(position: number | null | undefined, scope: string) {
@@ -65,7 +68,7 @@ export function RankLegend({ children }: { children: ReactNode }) {
         className="inline-block h-3 w-24 shrink-0 rounded-full"
         style={{
           background:
-            'linear-gradient(to right, hsl(0,70%,80%), hsl(60,70%,80%), hsl(120,70%,80%))',
+            'linear-gradient(to right, hsl(0, var(--rank-saturation), var(--rank-legend-lightness)), hsl(60, var(--rank-saturation), var(--rank-legend-lightness)), hsl(120, var(--rank-saturation), var(--rank-legend-lightness)))',
         }}
         aria-hidden="true"
       />

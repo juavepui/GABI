@@ -30,7 +30,7 @@ export function FollowButton({ symbol, compact = false }: { symbol: string; comp
       >
         <Star
           aria-hidden="true"
-          className={following ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground'}
+          className={following ? 'fill-warning text-warning' : 'text-muted-foreground'}
         />
         {!compact && (following ? 'Siguiendo' : 'Seguir')}
       </Button>

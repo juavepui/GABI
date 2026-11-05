@@ -12,7 +12,7 @@ export default function DecisionChart({ curve }: { curve: DecisionProgress['curv
           <Line
             type="monotone"
             dataKey="portfolio"
-            stroke="#22764f"
+            stroke="var(--chart-1)"
             dot={false}
             connectNulls={false}
             name="Cartera"
@@ -20,7 +20,7 @@ export default function DecisionChart({ curve }: { curve: DecisionProgress['curv
           <Line
             type="monotone"
             dataKey="spy"
-            stroke="#d09028"
+            stroke="var(--chart-3)"
             dot={false}
             connectNulls={false}
             name="SPY"
