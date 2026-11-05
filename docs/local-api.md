@@ -74,7 +74,8 @@ La tarea diaria usa `schedule daily --reintentar`: si el PC estaba apagado o
 suspendido a las 05:00, Windows la lanza al volver, a veces antes de que haya
 internet. Con esa opción espera hasta 15 minutos a que responda Yahoo, sigue el
 refresco y, si falla porque las fuentes no respondieron (`sources_failed`), lo
-repite hasta 2 veces con 10 minutos de pausa. Otros fallos no se repiten. Sin la
+repite hasta 2 veces: al momento si ya había fallado antes de lanzar la tarea, y con 10
+minutos de pausa si falla mientras la tarea lo sigue. Otros fallos no se repiten. Sin la
 opción, el comando solo encola y termina.
 El
 worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban

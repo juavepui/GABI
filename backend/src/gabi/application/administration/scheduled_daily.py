@@ -4,6 +4,8 @@ Unattended mode is for the Windows task. After the computer wakes up, the networ
 minute to come back, and a refresh started without it fails for every company. So it first waits
 for the network, then follows the refresh and, if it failed because the sources did not answer,
 repeats it a few times. Other failures are not retried: repeating them would hide a real problem.
+A refresh that had already failed before this run is repeated at once; one that fails while this run
+follows it is repeated after a pause, so that a network that is still coming back has time.
 """
 
 from collections.abc import Callable
@@ -93,10 +95,16 @@ def schedule_daily(jobs: Jobs, today: date, unattended: Unattended | None = None
         finished = wait_for_job(jobs, refresh["id"], unattended)
         if finished is None or finished["status"] != "failed" or finished["error_code"] not in RETRYABLE_ERRORS:
             return
-        unattended.report(f"El refresco falló porque las fuentes no respondieron; "
-                          f"reintento {attempt} de {policy.retries} dentro de {policy.retry_delay_seconds / 60:g} min.")
-        unattended.sleep(policy.retry_delay_seconds)
-        wait_for_network(unattended)
+        if refresh["status"] == "failed":
+            # It had already failed before this run (for example, this morning without network). The network
+            # has just been checked, so there is nothing to wait for.
+            unattended.report(f"El refresco programado de hoy había fallado antes porque las fuentes no respondieron; "
+                              f"se repite ahora (reintento {attempt} de {policy.retries}).")
+        else:
+            unattended.report(f"El refresco acaba de fallar porque las fuentes no respondieron; reintento {attempt} "
+                              f"de {policy.retries} dentro de {policy.retry_delay_seconds / 60:g} min.")
+            unattended.sleep(policy.retry_delay_seconds)
+            wait_for_network(unattended)
         try:
             refresh = jobs.retry(finished["id"], f"programado:{today}:{attempt}", origin="scheduler")
         except QueryError as exc:

@@ -136,3 +136,24 @@ def test_running_again_the_same_day_reuses_the_same_retry(tmp_path):
     schedule_daily(Jobs(store), TODAY, unattended(Clock(), [True], worker, []))
     schedule_daily(Jobs(store), TODAY, unattended(Clock(), [True], FakeWorker(store, []), []))
     assert [job["status"] for job in refreshes(store)] == ["failed", "succeeded"]
+
+
+def test_a_refresh_that_had_already_failed_is_repeated_at_once(tmp_path):
+    store, clock, messages = SqliteJobs(tmp_path), Clock(), []
+    schedule_daily(Jobs(store), TODAY)
+    earlier = FakeWorker(store, ["sources_failed"])
+    earlier.step()
+    earlier.step()
+    worker = FakeWorker(store, [None])
+    schedule_daily(Jobs(store), TODAY, unattended(clock, [True], worker, messages))
+    assert [job["status"] for job in refreshes(store)] == ["failed", "succeeded"]
+    assert 600 not in clock.sleeps
+    assert "había fallado antes" in messages[0] and "se repite ahora (reintento 1 de 2)" in messages[0]
+
+
+def test_a_refresh_that_fails_during_the_run_waits_before_repeating(tmp_path):
+    store, clock, messages = SqliteJobs(tmp_path), Clock(), []
+    worker = FakeWorker(store, ["sources_failed", None])
+    schedule_daily(Jobs(store), TODAY, unattended(clock, [True], worker, messages))
+    assert "acaba de fallar" in messages[0] and "dentro de 10 min" in messages[0]
+    assert 600 in clock.sleeps
