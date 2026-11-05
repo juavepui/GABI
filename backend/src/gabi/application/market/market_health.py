@@ -28,10 +28,20 @@ class MarketHealthSource(Protocol):
 class MarketHealthQueries:
     def __init__(self, source: MarketHealthSource, benchmark: Callable[[], str], today: Callable[[], date]):
         self.source, self.benchmark, self.today = source, benchmark, today
-        self._lock, self._cached = threading.Lock(), None
+        self._lock = threading.Lock()
+        self._cached: tuple[tuple, dict] | None = None  # (key, result)
+
+    def _key(self) -> tuple:
+        return self.source.stamp(), self.benchmark(), self.today()
+
+    def cached(self) -> dict | None:
+        """The result only when it is already computed for the current data; never reads prices."""
+        key = self._key()
+        with self._lock:
+            return self._cached[1] if self._cached is not None and self._cached[0] == key else None
 
     def current(self) -> dict:
-        key = (self.source.stamp(), self.benchmark(), self.today())
+        key = self._key()
         with self._lock:
             if self._cached is not None and self._cached[0] == key:
                 return self._cached[1]

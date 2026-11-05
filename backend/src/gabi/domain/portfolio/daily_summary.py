@@ -17,6 +17,7 @@ SCORE_POINTS = float(DEFAULT_THRESHOLDS["score_change"])
 RANK_PLACES = int(DEFAULT_THRESHOLDS["rank_change"])
 MAX_NAMED = 3
 MONTHS = ("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+MARKET_TONE = {"favorable": "good", "pressure": "neutral", "correction": "bad"}
 WEEKDAYS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
 
 
@@ -90,12 +91,12 @@ def _climbed(row: dict) -> bool:
 
 def build(*, watched: list[dict], held: list[str], target: list[str], scored: set[str],
           earnings: dict[str, tuple[str | None, bool]], latest_price_date: str | None, target_size: int,
-          today: date, model_id: str) -> dict:
+          today: date, model_id: str, market: dict | None = None) -> dict:
     """The summary from values already read once.
 
     `watched`: rows of «Empresas seguidas» (`domain.market.watchlist.rows`); `held`: Mi cartera's symbols;
     `target`: today's frozen target; `scored`: the companies with a score today;
-    `earnings`: symbol → (next results date, estimated?).
+    `earnings`: symbol → (next results date, estimated?); `market`: the traffic light (#308), when computed.
     """
     watched_symbols = [row["symbol"] for row in watched]
     mine = list(dict.fromkeys([*watched_symbols, *held]))
@@ -174,4 +175,13 @@ def build(*, watched: list[dict], held: list[str], target: list[str], scored: se
                                  "dates": {symbol: day for day, symbol, _ in soon},
                                  "estimated": [symbol for _, symbol, estimated in soon if estimated]},
             [symbol for _, symbol, _ in soon], "/eventos"))
+    if market and market.get("status") == "ready" and market.get("state"):
+        days = int(market["days_in_state"])
+        since = (f"desde hace {'al menos ' if market.get('days_at_least') else ''}"
+                 f"{days} {'sesión' if days == 1 else 'sesiones'}")
+        sentences.append(_sentence(
+            "market", MARKET_TONE[market["state"]],
+            f"El mercado está «{market['state_label']}» {since} (nota de {number(market['score'], 0)} sobre 100): "
+            "describe el momento, no lo que hará.",
+            {"score": market["score"], "scale": 100, "days_in_state": days, "state": market["state"]}))
     return {**base, "status": "ready", "sentences": sentences}

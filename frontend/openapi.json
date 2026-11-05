@@ -21454,7 +21454,8 @@
               "other_model",
               "unscored",
               "target",
-              "earnings"
+              "earnings",
+              "market"
             ],
             "title": "Kind",
             "type": "string"

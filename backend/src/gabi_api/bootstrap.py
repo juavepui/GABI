@@ -329,7 +329,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
-                          repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items)
+                          repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items,
+                          app.state.market_health.cached)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)
@@ -387,6 +388,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
 
 def warm_rankings(app: FastAPI) -> None:
     """Read-only: build the frozen ranking (home, cartera) and the active model's one (Mercado)."""
+    try:  # Before Inicio, so its summary can say how the market is (#308); context, so a failure is skipped.
+        app.state.market_health.current()
+    except Exception:  # noqa: BLE001 - the traffic light must never stop the rankings from warming.
+        pass
     try:
         app.state.home.summary(compute=True)
         app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)

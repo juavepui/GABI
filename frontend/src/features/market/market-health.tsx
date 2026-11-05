@@ -11,12 +11,13 @@ const STATE_TONE: Record<NonNullable<MarketHealthResponse['state']>, string> = {
   correction: 'bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-100',
 };
 
-const RESULT: Record<NonNullable<MarketCheck['result']> | 'none', { label: string; dot: string }> = {
-  pass: { label: 'Pasa', dot: 'bg-emerald-500' },
-  caution: { label: 'Precaución', dot: 'bg-amber-500' },
-  fail: { label: 'Falla', dot: 'bg-rose-500' },
-  none: { label: 'Sin dato', dot: 'bg-muted-foreground/40' },
-};
+const RESULT: Record<NonNullable<MarketCheck['result']> | 'none', { label: string; dot: string }> =
+  {
+    pass: { label: 'Pasa', dot: 'bg-emerald-500' },
+    caution: { label: 'Precaución', dot: 'bg-amber-500' },
+    fail: { label: 'Falla', dot: 'bg-rose-500' },
+    none: { label: 'Sin dato', dot: 'bg-muted-foreground/40' },
+  };
 
 const TERM: Record<MarketCheck['key'], string> = {
   trend: 'sma200',
@@ -59,7 +60,9 @@ export function MarketHealthCard() {
           <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             {health.state && (
               <span
-                className={'rounded-full px-3 py-1 text-base font-semibold ' + STATE_TONE[health.state]}
+                className={
+                  'rounded-full px-3 py-1 text-base font-semibold ' + STATE_TONE[health.state]
+                }
               >
                 {health.state_label}
               </span>
@@ -95,12 +98,12 @@ export function MarketHealthCard() {
           <HowToRead className="mt-2">
             Cuatro comprobaciones con umbrales fijos: si el índice está por encima de sus medias de
             50 y 200 sesiones; si al menos el 60 % de las empresas está por encima de su media de
-            200 sesiones (por debajo del 40 % falla); cuántas jornadas de ventas fuertes ha habido en
-            las últimas 25 sesiones (pasa con 3 o menos, falla con 6 o más); y el VIX (pasa por
+            200 sesiones (por debajo del 40 % falla); cuántas jornadas de ventas fuertes ha habido
+            en las últimas 25 sesiones (pasa con 3 o menos, falla con 6 o más); y el VIX (pasa por
             debajo de 20, falla desde 30). Cada una suma 2 puntos si pasa y 1 si pide precaución; la
             nota es el porcentaje de los puntos posibles. «Favorable» desde 75, «Con presión» desde
-            40, «En corrección» por debajo. Para un inversor a largo plazo, un mercado con presión es
-            normal y no es motivo, por sí solo, para vender: estas reglas no están probadas para
+            40, «En corrección» por debajo. Para un inversor a largo plazo, un mercado con presión
+            es normal y no es motivo, por sí solo, para vender: estas reglas no están probadas para
             acertar el momento.
           </HowToRead>
         </>

@@ -40,7 +40,7 @@ class HomeAlert(BaseModel):
 class SummarySentence(BaseModel):
     """One plain-language sentence of «Tu resumen de hoy»; `values` holds the data every number comes from."""
 
-    kind: Literal["data", "moves", "other_model", "unscored", "target", "earnings"]
+    kind: Literal["data", "moves", "other_model", "unscored", "target", "earnings", "market"]
     tone: Literal["good", "bad", "neutral"]
     text: str
     symbols: list[str]

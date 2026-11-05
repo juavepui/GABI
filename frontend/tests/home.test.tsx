@@ -2,11 +2,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { HomeResponse } from '../src/shared/api/generated/types.gen';
 import { renderScreen } from './render';
 
-const api = vi.hoisted(() => ({ getHome: vi.fn(), getNotices: vi.fn() }));
+const api = vi.hoisted(() => ({
+  getHome: vi.fn(),
+  getNotices: vi.fn(),
+  getMarketHealth: vi.fn(() => new Promise(() => {})),
+}));
 vi.mock('@/shared/api/client', async (actual) => ({
   ...(await actual<typeof import('../src/shared/api/client')>()),
   getHome: api.getHome,
   getNotices: api.getNotices,
+  getMarketHealth: api.getMarketHealth,
 }));
 const { HomePage } = await import('../src/app/home-page');
 const { ApiError } = await import('../src/shared/api/client');

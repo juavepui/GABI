@@ -11302,7 +11302,7 @@ export type SummarySentence = {
     /**
      * Kind
      */
-    kind: 'data' | 'moves' | 'other_model' | 'unscored' | 'target' | 'earnings';
+    kind: 'data' | 'moves' | 'other_model' | 'unscored' | 'target' | 'earnings' | 'market';
     /**
      * Link
      */
