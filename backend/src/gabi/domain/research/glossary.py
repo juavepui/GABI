@@ -164,6 +164,25 @@ TERMS: dict[str, tuple[str, str]] = {
                       "El dinero que la Reserva Federal mete en el sistema comprando bonos. Si su balance crece, "
                       "inyecta dinero; si se reduce, lo retira. Más liquidez ha coincidido a menudo con bolsas al "
                       "alza, pero no es una regla fija."),
+    "vix": ("VIX (índice del miedo)",
+            "Cuánto esperan los inversores que se mueva el S&P 500 en el próximo mes, calculado con el precio de "
+            "las opciones. Por debajo de 20 suele indicar calma y por encima de 30, miedo. Sube de golpe cuando la "
+            "bolsa cae con fuerza; no dice hacia dónde irá."),
+    "sma200": ("Media de 200 sesiones",
+               "El precio medio de los últimos 200 días de bolsa (unos 10 meses). Si el precio está por encima, la "
+               "tendencia de fondo es al alza; por debajo, a la baja. La de 50 sesiones mira los últimos 2-3 meses."),
+    "distribution_day": ("Jornada de ventas fuertes",
+                         "Un día en que el índice cae al menos un 0,2 % y se negocia más volumen que el día anterior: "
+                         "señal de que grandes inversores están vendiendo. Varias en pocas semanas suelen acompañar a "
+                         "los mercados cansados."),
+    "market_breadth": ("Participación (amplitud del mercado)",
+                       "Cuántas empresas acompañan al índice. Si el S&P 500 sube pero solo lo hacen unas pocas "
+                       "empresas grandes, la subida es más frágil que si suben la mayoría."),
+    "market_health": ("Semáforo del mercado",
+                      "Una nota de 0 a 100 y un estado en palabras («Favorable», «Con presión», «En corrección») a "
+                      "partir de 4 comprobaciones con umbrales fijos: tendencia, participación, jornadas de ventas "
+                      "fuertes y nerviosismo. Describe el mercado de hoy; no predice lo que hará ni cambia la "
+                      "puntuación de las empresas, y no está demostrado que acierte el momento de comprar o vender."),
     "macro_labels": ("Etiquetas de la economía",
                      "Una palabra por apartado (liquidez, inflación, empleo y condiciones financieras) sacada de "
                      "una regla fija sobre un dato de FRED, por ejemplo «holgadas» si el NFCI está por debajo de "

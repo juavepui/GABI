@@ -32,6 +32,12 @@ NEW_SERIES: dict[str, dict] = {
                 "de empleo que antes llegan: si suben varias semanas seguidas, el mercado laboral se enfría. "
                 "Una sola semana dice poco: hay festivos, temporales y ajustes por estación.",
     },
+    "VIXCLS": {
+        "label": "Nerviosismo de la bolsa (VIX)", "unit": "índice", "units_param": "lin",
+        "help": "Cuánto esperan los inversores que se mueva el S&P 500 en el próximo mes, sacado del precio de las "
+                "opciones. Por debajo de 20 es lo habitual en calma; por encima de 30, miedo. Sube de golpe en las "
+                "caídas fuertes y baja despacio. Describe el ánimo de hoy; no dice hacia dónde irá la bolsa.",
+    },
     "T10YIE": {
         "label": "Inflación esperada a 10 años", "unit": "%", "units_param": "lin",
         "help": "La inflación media que espera el mercado para los próximos 10 años, sacada de la diferencia "
@@ -75,6 +81,7 @@ PRESENTATION |= {
     "UNRATE": {"frequency": "monthly", "aggregation": "end_of_period"},
     "ICSA": {"frequency": "weekly", "aggregation": "end_of_period"},
     "T10YIE": {"frequency": "daily", "aggregation": "end_of_period"},
+    "VIXCLS": {"frequency": "daily", "aggregation": "end_of_period"},  # #308
 }
 
 BLOCK = {series_id: block for block, (_, members) in BLOCKS.items() for series_id in members}

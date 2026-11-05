@@ -7964,6 +7964,100 @@ export type ManualExperimentRequest = {
 };
 
 /**
+ * MarketCheck
+ *
+ * One of the four checks: its result (None without data), its plain sentence and the values it read.
+ */
+export type MarketCheck = {
+    /**
+     * Key
+     */
+    key: 'trend' | 'breadth' | 'distribution' | 'volatility';
+    /**
+     * Result
+     */
+    result: 'pass' | 'caution' | 'fail' | null;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number | number | string | null;
+    };
+};
+
+/**
+ * MarketHealthResponse
+ *
+ * Semáforo del mercado (#308). `no_data`: fewer than 201 sessions of the index stored.
+ */
+export type MarketHealthResponse = {
+    /**
+     * Affects Score
+     */
+    affects_score?: boolean;
+    /**
+     * As Of
+     */
+    as_of?: string | null;
+    /**
+     * Benchmark
+     */
+    benchmark: string;
+    /**
+     * Checks
+     */
+    checks?: Array<MarketCheck>;
+    /**
+     * Days At Least
+     */
+    days_at_least?: boolean | null;
+    /**
+     * Days In State
+     */
+    days_in_state?: number | null;
+    /**
+     * History Sessions
+     */
+    history_sessions?: number | null;
+    /**
+     * Score
+     */
+    score?: number | null;
+    /**
+     * Sessions
+     */
+    sessions?: number | null;
+    /**
+     * State
+     */
+    state?: 'favorable' | 'pressure' | 'correction' | null;
+    /**
+     * State Label
+     */
+    state_label?: string | null;
+    /**
+     * Status
+     */
+    status: 'ready' | 'no_data';
+    /**
+     * Universe Count
+     */
+    universe_count: number;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
  * Metric
  */
 export type Metric = {
@@ -11232,7 +11326,7 @@ export type SummarySentence = {
     /**
      * Kind
      */
-    kind: 'data' | 'moves' | 'other_model' | 'unscored' | 'target' | 'earnings';
+    kind: 'data' | 'moves' | 'other_model' | 'unscored' | 'target' | 'earnings' | 'market';
     /**
      * Link
      */
@@ -13597,6 +13691,51 @@ export type MetricGlossaryApiV1LearnMetricsGetResponses = {
 };
 
 export type MetricGlossaryApiV1LearnMetricsGetResponse = MetricGlossaryApiV1LearnMetricsGetResponses[keyof MetricGlossaryApiV1LearnMetricsGetResponses];
+
+export type HealthApiV1MarketHealthGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/health';
+};
+
+export type HealthApiV1MarketHealthGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HealthApiV1MarketHealthGetError = HealthApiV1MarketHealthGetErrors[keyof HealthApiV1MarketHealthGetErrors];
+
+export type HealthApiV1MarketHealthGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MarketHealthResponse;
+};
+
+export type HealthApiV1MarketHealthGetResponse = HealthApiV1MarketHealthGetResponses[keyof HealthApiV1MarketHealthGetResponses];
 
 export type SnapshotApiV1MarketMacroGetData = {
     body?: never;

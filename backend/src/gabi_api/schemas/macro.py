@@ -42,3 +42,35 @@ class MacroResponse(WireModel):
     source: str = "FRED local cache"
     affects_score: bool = False
     fred_key_configured: bool  # without it the cached series cannot be refreshed
+
+
+CheckResult = Literal["pass", "caution", "fail"]
+
+
+class MarketCheck(WireModel):
+    """One of the four checks: its result (None without data), its plain sentence and the values it read."""
+
+    key: Literal["trend", "breadth", "distribution", "volatility"]
+    result: CheckResult | None
+    title: str
+    text: str
+    values: dict[str, float | int | str | None]
+
+
+class MarketHealthResponse(WireModel):
+    """Semáforo del mercado (#308). `no_data`: fewer than 201 sessions of the index stored."""
+
+    status: Literal["ready", "no_data"]
+    version: str
+    benchmark: str
+    universe_count: int
+    affects_score: bool = False
+    sessions: int | None = None
+    as_of: date | None = None
+    score: float | None = None
+    state: Literal["favorable", "pressure", "correction"] | None = None
+    state_label: str | None = None
+    days_in_state: int | None = None
+    days_at_least: bool | None = None  # True: the state lasts at least the whole window counted
+    history_sessions: int | None = None
+    checks: list[MarketCheck] = []

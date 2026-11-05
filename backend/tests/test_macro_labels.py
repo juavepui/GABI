@@ -60,7 +60,7 @@ def test_missing_data_is_said_instead_of_guessed():
 
 
 def test_new_series_are_refreshed_without_touching_the_captured_ones():
-    assert set(NEW_SERIES) == {"NFCI", "UNRATE", "ICSA", "T10YIE"} and not set(NEW_SERIES) & set(SERIES)
+    assert set(NEW_SERIES) == {"NFCI", "UNRATE", "ICSA", "T10YIE", "VIXCLS"} and not set(NEW_SERIES) & set(SERIES)
     assert set(synchronized_series()) == set(SERIES) | set(NEW_SERIES)
     # The regular FRED refresh downloads them too; the captured quality report keeps the original nine.
     from gabi.infrastructure.legacy import fred as refresh

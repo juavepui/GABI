@@ -431,6 +431,8 @@ test('la portada resume datos, cartera objetivo y primeros pasos sin descargar n
   await expect(target.getByRole('listitem').first()).toBeVisible();
   const summary = page.getByRole('region', { name: 'Tu resumen de hoy' });
   await expect(summary.getByRole('heading', { name: 'Tu resumen de hoy' })).toBeVisible();
+  const health = page.getByRole('region', { name: 'Cómo está el mercado' });
+  await expect(health.getByRole('heading', { name: /Cómo está el mercado/ })).toBeVisible();
   const alerts = page.getByRole('region', { name: 'Qué requiere tu atención' });
   await expect(alerts.getByRole('heading', { name: 'Qué requiere tu atención' })).toBeVisible();
   // The home page itself only reads: no POST (no job, no download).

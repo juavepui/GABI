@@ -40,6 +40,7 @@ class AlertSources:
     events: Callable[[list[str], date], list[dict] | None]  # cached corporate events; None while busy
     watched: Callable[[], list[str]] = list  # Empresas seguidas (#182)
     watched_items: Callable[[], list[dict]] = list  # Their saved rows, with score and rank when added (#307)
+    market: Callable[[], dict | None] = lambda: None  # The market traffic light, only if already computed (#308)
 
 
 def _no_alerts() -> AlertSources:
@@ -107,8 +108,8 @@ class HomeQueries:
             scored={str(symbol) for symbol, row in rows.items() if pd.notna(row.get("composite_score"))},
             earnings={str(symbol): (None if pd.isna(row.get("next_earnings_date")) else row.get("next_earnings_date"),
                                     bool(row.get("next_earnings_is_estimate"))) for symbol, row in rows.items()},
-            latest_price_date=None if latest_price_date is None else latest_price_date.isoformat(), target_size=FROZEN_POSITIONS, today=today,
-            model_id=self.policy.model_id)
+            latest_price_date=None if latest_price_date is None else latest_price_date.isoformat(),
+            target_size=FROZEN_POSITIONS, today=today, model_id=self.policy.model_id, market=self.sources.market())
 
     def _ranking_alerts(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str],
                         today: date) -> list[dict]:
