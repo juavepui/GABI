@@ -329,7 +329,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
-                          repository.cached_events, app.state.watchlist.symbols)
+                          repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)
