@@ -27,6 +27,7 @@ from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.glossary import metric_glossary, technical_terms
 from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
+from gabi.application.market.market_health import MarketHealthQueries
 from gabi.application.market.queries import MarketQueries
 from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
@@ -97,6 +98,7 @@ from gabi.infrastructure.storage.keys import configured_keys
 from gabi.infrastructure.storage.live_ledger import SqliteLiveLedger
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.market_health import SqliteMarketHealth
 from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedArtifacts, FilePublishedLedger
@@ -218,6 +220,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.macro = macro
+    app.state.market_health = MarketHealthQueries(SqliteMarketHealth(settings.data_dir),
+                                                  lambda: model.benchmark_symbol, today)
     app.state.signals = signals
     app.state.company_research = CompanyResearch(
         SqliteCompanyResearch(settings.data_dir), repository.company_events,

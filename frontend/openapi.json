@@ -15178,6 +15178,216 @@
         "title": "ManualExperimentRequest",
         "type": "object"
       },
+      "MarketCheck": {
+        "additionalProperties": false,
+        "description": "One of the four checks: its result (None without data), its plain sentence and the values it read.",
+        "properties": {
+          "key": {
+            "enum": [
+              "trend",
+              "breadth",
+              "distribution",
+              "volatility"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pass",
+                  "caution",
+                  "fail"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "key",
+          "result",
+          "title",
+          "text",
+          "values"
+        ],
+        "title": "MarketCheck",
+        "type": "object"
+      },
+      "MarketHealthResponse": {
+        "additionalProperties": false,
+        "description": "Semáforo del mercado (#308). `no_data`: fewer than 201 sessions of the index stored.",
+        "properties": {
+          "affects_score": {
+            "default": false,
+            "title": "Affects Score",
+            "type": "boolean"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "checks": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MarketCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "days_at_least": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days At Least"
+          },
+          "days_in_state": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days In State"
+          },
+          "history_sessions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History Sessions"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "sessions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessions"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "enum": [
+                  "favorable",
+                  "pressure",
+                  "correction"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "state_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Label"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "no_data"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "universe_count": {
+            "title": "Universe Count",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "benchmark",
+          "universe_count"
+        ],
+        "title": "MarketHealthResponse",
+        "type": "object"
+      },
       "Metric": {
         "additionalProperties": false,
         "properties": {
@@ -25547,6 +25757,88 @@
           }
         },
         "summary": "Metric Glossary",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/market/health": {
+      "get": {
+        "description": "Read-only traffic light of the market (#308): context, never a signal; nothing is downloaded.",
+        "operationId": "health_api_v1_market_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketHealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Health",
         "tags": [
           "market"
         ]
