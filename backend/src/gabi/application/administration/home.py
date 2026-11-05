@@ -94,7 +94,7 @@ class HomeQueries:
         result["summary"] = self._summary(table, target, held, data.latest_price_date, today)
         return result
 
-    def _summary(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str], latest_price_date: str | None,
+    def _summary(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str], latest_price_date: date | None,
                  today: date) -> dict:
         """«Tu resumen de hoy» (#307), from the same cached table: nothing is recomputed or downloaded."""
         watched = watchlist_rules.rows(self.sources.watched_items(), table, self.policy.model_id, {})
@@ -107,7 +107,7 @@ class HomeQueries:
             scored={str(symbol) for symbol, row in rows.items() if pd.notna(row.get("composite_score"))},
             earnings={str(symbol): (None if pd.isna(row.get("next_earnings_date")) else row.get("next_earnings_date"),
                                     bool(row.get("next_earnings_is_estimate"))) for symbol, row in rows.items()},
-            latest_price_date=latest_price_date, target_size=FROZEN_POSITIONS, today=today,
+            latest_price_date=None if latest_price_date is None else latest_price_date.isoformat(), target_size=FROZEN_POSITIONS, today=today,
             model_id=self.policy.model_id)
 
     def _ranking_alerts(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str],
