@@ -50,6 +50,8 @@ class PeriodicOperations(Protocol):
     def import_tiingo(self) -> dict: ...
     def mark_tiingo_complete(self, fetched: dict) -> None: ...
     def record_scores(self) -> dict: ...
+    def install_ranking_revision(self) -> dict: ...
+    def save_ranking(self) -> dict: ...
 
 
 class PeriodicTasks:
@@ -176,6 +178,11 @@ class PeriodicTasks:
         if not integrity["ok"]:
             raise ValueError(f"Ledger no íntegro antes del mantenimiento: {integrity['reason']}")
         report: dict = {}
+        # Before the refresh, so its writes are counted (#342); a failure only keeps the old cache behaviour.
+        try:
+            report["contador_ranking"] = self.operations.install_ranking_revision()
+        except Exception as exc:  # noqa: BLE001 - recorded in the report, the run goes on.
+            report["contador_ranking"] = {"error": f"{type(exc).__name__}: {exc}"}
         try:
             report["antes"] = self.status()
             if refresh:
@@ -198,6 +205,11 @@ class PeriodicTasks:
             report["puntuaciones"] = self.operations.record_scores()
         except Exception as exc:  # noqa: BLE001 - recorded in the report, the run goes on.
             report["puntuaciones"] = {"error": f"{type(exc).__name__}: {exc}"}
+        # The ranking for the next server start (#342); last, so nothing above depends on it.
+        try:
+            report["ranking_guardado"] = self.operations.save_ranking()
+        except Exception as exc:  # noqa: BLE001 - recorded in the report, the run goes on.
+            report["ranking_guardado"] = {"error": f"{type(exc).__name__}: {exc}"}
         self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "run", **report})
         return report
 

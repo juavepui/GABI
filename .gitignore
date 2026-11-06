@@ -15,6 +15,7 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 data/*.bak
+data/ranking_snapshot.pkl*
 data/cbop/
 data/nsi/
 data/*.csv

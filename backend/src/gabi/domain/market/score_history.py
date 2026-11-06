@@ -30,10 +30,19 @@ def _decimal(value: float) -> str:
     return f"{value:.1f}".replace(".", ",")
 
 
+def _plain_rows(table: pd.DataFrame):
+    """``table.iterrows()`` without copying ``table.attrs`` (the ranking's per-company sources) into every row.
+
+    pandas deep-copies ``attrs`` into each row Series: 500 copies took 2-11 s on the ranking (#342)."""
+    plain = table.copy(deep=False)
+    plain.attrs = {}
+    return plain.iterrows()
+
+
 def rows(table: pd.DataFrame) -> list[tuple[str, float, int]]:
     """(symbol, score, position) of every company with a score; the table is the ranking, best first."""
     result = []
-    for position, (symbol, row) in enumerate(table.iterrows(), 1):
+    for position, (symbol, row) in enumerate(_plain_rows(table), 1):
         score = _number(row.get("composite_score"))
         if score is not None:
             result.append((str(symbol), score, position))

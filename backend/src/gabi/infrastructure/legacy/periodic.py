@@ -128,6 +128,33 @@ class LegacyPeriodicOperations:
         finally:
             market.close()
 
+    def install_ranking_revision(self):
+        """Triggers that count changes of the ranking's inputs (#342); idempotent explicit write."""
+        from gabi.infrastructure.storage import ranking_revision
+
+        return ranking_revision.install(self.data_dir / "gabi.db")
+
+    def save_ranking(self):
+        """The active model's ranking for today, saved so the next server start reuses it (#342).
+
+        Same weights, date (local, like the API) and calculators as the ranking the server would build."""
+        from datetime import date
+
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.settings import Settings
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+        model = active_model()
+        policy = model_policy(model)
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()),
+                                calculators(model.technical, input_checks=model.input_checks), policy,
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+        try:
+            return market.save_snapshot(dict(policy.weights), date.today())
+        finally:
+            market.close()
+
     def capture_active_ledger(self, error, maintenance):
         """The decision of the active model when it is not the sealed v1 (#290); None otherwise."""
         from datetime import date

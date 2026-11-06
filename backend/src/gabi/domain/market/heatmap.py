@@ -49,10 +49,19 @@ def _best_mean_first(sector: dict) -> tuple[float, str]:
     return (-float(mean) if mean is not None else 1.0, str(sector["sector"]))
 
 
+def _plain_rows(table: pd.DataFrame):
+    """``table.iterrows()`` without copying ``table.attrs`` (the ranking's per-company sources) into every row.
+
+    pandas deep-copies ``attrs`` into each row Series: 500 copies took 2-11 s on the ranking (#342)."""
+    plain = table.copy(deep=False)
+    plain.attrs = {}
+    return plain.iterrows()
+
+
 def build(table: pd.DataFrame) -> dict:
     """`table`: the ranking, indexed by symbol and sorted by score (position 1 = best)."""
     companies: list[dict[str, Any]] = []
-    for position, (symbol, row) in enumerate(table.iterrows(), 1):
+    for position, (symbol, row) in enumerate(_plain_rows(table), 1):
         score, cap = _number(row.get("composite_score")), _number(row.get("market_cap"))
         cap = cap if cap is not None and cap > 0 else None
         companies.append({"symbol": str(symbol), "name": _text(row.get("name")),
