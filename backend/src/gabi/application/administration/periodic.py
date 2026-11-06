@@ -49,6 +49,7 @@ class PeriodicOperations(Protocol):
     def fetch_tiingo(self, symbols: list[str]) -> dict: ...
     def import_tiingo(self) -> dict: ...
     def mark_tiingo_complete(self, fetched: dict) -> None: ...
+    def record_scores(self) -> dict: ...
 
 
 class PeriodicTasks:
@@ -192,6 +193,11 @@ class PeriodicTasks:
         if active is not None:
             report["ledger_activo"] = {"seq": active["seq"], "record_hash": active["record_hash"],
                                        "status": active["payload"]["status"], "model_id": active["payload"]["model_id"]}
+        # Every company's score of the day (#328), after the ledger: a failure here never changes its status.
+        try:
+            report["puntuaciones"] = self.operations.record_scores()
+        except Exception as exc:  # noqa: BLE001 - recorded in the report, the run goes on.
+            report["puntuaciones"] = {"error": f"{type(exc).__name__}: {exc}"}
         self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "run", **report})
         return report
 

@@ -380,3 +380,25 @@ class HeatmapResponse(WireModel):
     top_count: int
     top_share: float
     bands: list[HeatmapBand]
+
+
+class ScorePoint(WireModel):
+    day: date
+    model_id: str
+    score: float
+    rank: int
+    universe: int
+
+
+class ScoreHistoryReading(WireModel):
+    text: str
+    values: dict[str, Any]
+
+
+class ScoreHistoryResponse(WireModel):
+    """Puntuación de cada día (#328), stored by the daily task; days of other models are named, not compared."""
+
+    symbol: str
+    model_id: str
+    points: list[ScorePoint]
+    reading: ScoreHistoryReading

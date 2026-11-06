@@ -10662,6 +10662,69 @@ export type ScoreBlocksEvidence = {
 };
 
 /**
+ * ScoreHistoryReading
+ */
+export type ScoreHistoryReading = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * ScoreHistoryResponse
+ *
+ * Puntuación de cada día (#328), stored by the daily task; days of other models are named, not compared.
+ */
+export type ScoreHistoryResponse = {
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Points
+     */
+    points: Array<ScorePoint>;
+    reading: ScoreHistoryReading;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * ScorePoint
+ */
+export type ScorePoint = {
+    /**
+     * Day
+     */
+    day: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Rank
+     */
+    rank: number;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Universe
+     */
+    universe: number;
+};
+
+/**
  * SearchTrial
  */
 export type SearchTrial = {
@@ -13271,6 +13334,56 @@ export type CompanyResearchApiV1CompaniesSymbolResearchGetResponses = {
 };
 
 export type CompanyResearchApiV1CompaniesSymbolResearchGetResponse = CompanyResearchApiV1CompaniesSymbolResearchGetResponses[keyof CompanyResearchApiV1CompaniesSymbolResearchGetResponses];
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/score-history';
+};
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetError = CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetErrors[keyof CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetErrors];
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScoreHistoryResponse;
+};
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponse = CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponses[keyof CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponses];
 
 export type ComparisonApiV1ComparisonGetData = {
     body?: never;

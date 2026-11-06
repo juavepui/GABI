@@ -20409,6 +20409,93 @@
         "title": "ScoreBlocksEvidence",
         "type": "object"
       },
+      "ScoreHistoryReading": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "text",
+          "values"
+        ],
+        "title": "ScoreHistoryReading",
+        "type": "object"
+      },
+      "ScoreHistoryResponse": {
+        "additionalProperties": false,
+        "description": "Puntuación de cada día (#328), stored by the daily task; days of other models are named, not compared.",
+        "properties": {
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ScorePoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reading": {
+            "$ref": "#/components/schemas/ScoreHistoryReading"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "model_id",
+          "points",
+          "reading"
+        ],
+        "title": "ScoreHistoryResponse",
+        "type": "object"
+      },
+      "ScorePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "universe": {
+            "title": "Universe",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "model_id",
+          "score",
+          "rank",
+          "universe"
+        ],
+        "title": "ScorePoint",
+        "type": "object"
+      },
       "SearchTrial": {
         "properties": {
           "configuration_sha256": {
@@ -25292,6 +25379,102 @@
           }
         },
         "summary": "Company Research",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/score-history": {
+      "get": {
+        "description": "Read-only: the score and position the daily task stored for the company (#328).",
+        "operationId": "company_score_history_api_v1_companies__symbol__score_history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreHistoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Score History",
         "tags": [
           "market"
         ]

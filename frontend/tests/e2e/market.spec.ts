@@ -339,7 +339,11 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   const reading = page.getByRole('list', { name: 'Múltiplos en su rango' });
   await expect(reading.getByRole('listitem').first()).toContainText(/PER/);
   await expect(page.getByText(/¿Está cara o barata para ella y para su sector\?/)).toBeVisible();
-  await page.getByText('Ver como tabla').first().click();
+  await page
+    .getByRole('figure')
+    .filter({ hasText: '¿Está cara o barata para ella y para su sector?' })
+    .getByText('Ver como tabla')
+    .click();
   const multiples = page.getByRole('table', { name: 'Múltiplos frente a su historia y su sector' });
   // The e2e fixture has no SEC facts: medians are explained, never shown as zero.
   await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
@@ -513,6 +517,10 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   const brief = page.getByRole('region', { name: 'En pocas palabras' });
   await expect(brief.getByText(/es una empresa del sector|sector no disponible/)).toBeInViewport();
   await expect(brief.getByText(/Sin datos de cómo reaccionó el precio/)).toBeVisible();
+  // #328: the e2e cache has no stored days yet, and the page says so instead of drawing a line.
+  await expect(page.getByRole('region', { name: 'Evolución de la puntuación' })).toContainText(
+    'Todavía no hay días guardados',
+  );
   // The score is read in the first sentence («66,0 de 100, puesto 1 de 16»); its card follows below.
   await expect(brief.getByText(/Su puntuación GABI es \w+: [\d,]+ de 100/)).toBeInViewport();
   await expect(page.getByText(/Precio al cierre del/)).toBeInViewport();

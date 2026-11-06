@@ -91,12 +91,14 @@ def _climbed(row: dict) -> bool:
 
 def build(*, watched: list[dict], held: list[str], target: list[str], scored: set[str],
           earnings: dict[str, tuple[str | None, bool]], latest_price_date: str | None, target_size: int,
-          today: date, model_id: str, market: dict | None = None) -> dict:
+          today: date, model_id: str, market: dict | None = None, previous: dict | None = None) -> dict:
     """The summary from values already read once.
 
     `watched`: rows of «Empresas seguidas» (`domain.market.watchlist.rows`); `held`: Mi cartera's symbols;
     `target`: today's frozen target; `scored`: the companies with a score today;
-    `earnings`: symbol → (next results date, estimated?); `market`: the traffic light (#308), when computed.
+    `earnings`: symbol → (next results date, estimated?); `market`: the traffic light (#308), when computed;
+    `previous` (#328): {"day", "rows"} — the last day the daily task stored with the same model, with rows shaped
+    like `watched` for every company of yours; when present, «qué ha cambiado» is measured since that day.
     """
     watched_symbols = [row["symbol"] for row in watched]
     mine = list(dict.fromkeys([*watched_symbols, *held]))
@@ -110,25 +112,40 @@ def build(*, watched: list[dict], held: list[str], target: list[str], scored: se
             "data", "neutral", f"Datos con los precios del cierre del {long_day(latest_price_date)}.",
             {"latest_price_date": latest_price_date}))
 
-    if watched:
-        comparable = [row for row in watched if row.get("same_model")
+    compare = previous["rows"] if previous else watched
+    since = short_day(previous["day"]) if previous else None
+    if compare:
+        comparable = [row for row in compare if row.get("same_model")
                       and (row.get("score_change") is not None or row.get("rank_change") is not None)]
         movers = sorted((row for row in comparable if _moved(row)),
                         key=lambda row: (-abs(row["score_change"] or 0), -abs(row["rank_change"] or 0), row["symbol"]))
         values = {"compared": len(comparable), "moved": len(movers), "score_points": SCORE_POINTS,
-                  "rank_places": RANK_PLACES,
+                  "rank_places": RANK_PLACES, "since_day": previous["day"] if previous else None,
                   "companies": {row["symbol"]: {key: row.get(key) for key in (
                       "added_at", "score_at_add", "composite_score", "score_change", "rank_at_add", "rank",
                       "rank_change")} for row in movers}}
         if movers:
             up = sum(1 for row in movers if _climbed(row))
             tone = "good" if up == len(movers) else "bad" if up == 0 else "neutral"
-            subject = ("1 de las empresas que sigues ha cambiado mucho" if len(movers) == 1
-                       else f"{len(movers)} de las empresas que sigues han cambiado mucho")
+            if previous:
+                opening = f"Desde el último día guardado ({since}), " + (
+                    "1 de tus empresas ha cambiado mucho" if len(movers) == 1
+                    else f"{len(movers)} de tus empresas han cambiado mucho")
+            else:
+                opening = "Desde que empezaste a seguirlas, " + (
+                    "1 de las empresas que sigues ha cambiado mucho" if len(movers) == 1
+                    else f"{len(movers)} de las empresas que sigues han cambiado mucho")
             sentences.append(_sentence(
-                "moves", tone, f"Desde que empezaste a seguirlas, {subject}: "
+                "moves", tone, f"{opening}: "
                 f"{_join([_move(row) for row in movers])}.", values, [row["symbol"] for row in movers],
                 "/descubrir/seguidas"))
+        elif comparable and previous:
+            subject = ("Tu empresa no ha cambiado mucho" if len(comparable) == 1
+                       else f"Ninguna de tus {len(comparable)} empresas ha cambiado mucho")
+            sentences.append(_sentence(
+                "moves", "neutral", f"{subject} desde el último día guardado ({since}): "
+                f"menos de {number(SCORE_POINTS, 0)} puntos y de {RANK_PLACES} puestos.", values,
+                link="/descubrir/seguidas"))
         elif comparable:
             subject = ("La empresa que sigues no ha cambiado mucho" if len(comparable) == 1
                        else f"Ninguna de las {len(comparable)} empresas que sigues ha cambiado mucho")
@@ -136,7 +153,7 @@ def build(*, watched: list[dict], held: list[str], target: list[str], scored: se
                 "moves", "neutral", f"{subject} desde que empezaste a seguirla{'s' if len(comparable) > 1 else ''}: "
                 f"menos de {number(SCORE_POINTS, 0)} puntos y de {RANK_PLACES} puestos.", values,
                 link="/descubrir/seguidas"))
-        other_model = [row["symbol"] for row in watched if not row.get("same_model")]
+        other_model = [] if previous else [row["symbol"] for row in watched if not row.get("same_model")]
         if other_model:
             sentences.append(_sentence(
                 "other_model", "neutral",

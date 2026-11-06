@@ -41,6 +41,8 @@ class AlertSources:
     watched: Callable[[], list[str]] = list  # Empresas seguidas (#182)
     watched_items: Callable[[], list[dict]] = list  # Their saved rows, with score and rank when added (#307)
     market: Callable[[], dict | None] = lambda: None  # The market traffic light, only if already computed (#308)
+    # The last day the daily task stored before the given ISO day, for a model (#328): (day, symbol → score, rank).
+    previous_scores: Callable[[str, str], tuple[str, dict] | None] = lambda model, before: None
 
 
 def _no_alerts() -> AlertSources:
@@ -109,7 +111,27 @@ class HomeQueries:
             earnings={str(symbol): (None if pd.isna(row.get("next_earnings_date")) else row.get("next_earnings_date"),
                                     bool(row.get("next_earnings_is_estimate"))) for symbol, row in rows.items()},
             latest_price_date=None if latest_price_date is None else latest_price_date.isoformat(),
-            target_size=FROZEN_POSITIONS, today=today, model_id=self.policy.model_id, market=self.sources.market())
+            target_size=FROZEN_POSITIONS, today=today, model_id=self.policy.model_id, market=self.sources.market(),
+            previous=self._previous(table, mine, latest_price_date))
+
+    def _previous(self, table: pd.DataFrame, mine: list[str], latest_price_date: date | None) -> dict | None:
+        """Your companies against the last day stored with the same model (#328), or None without one."""
+        if latest_price_date is None or not mine:
+            return None
+        found = self.sources.previous_scores(self.policy.model_id, latest_price_date.isoformat())
+        if found is None:
+            return None
+        day, scores = found
+        rows = []
+        for symbol in mine:
+            score, rank = watchlist_rules.standing(table, symbol)
+            before = scores.get(symbol)
+            if score is None or rank is None or before is None:
+                continue
+            rows.append({"symbol": symbol, "composite_score": score, "rank": rank, "same_model": True,
+                         "score_at_add": before[0], "rank_at_add": before[1], "added_at": day,
+                         "score_change": score - before[0], "rank_change": before[1] - rank})
+        return {"day": day, "rows": rows} if rows else None
 
     def _ranking_alerts(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str],
                         today: date) -> list[dict]:
