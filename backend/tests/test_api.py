@@ -371,7 +371,7 @@ def test_stale_empty_and_corrupt_are_distinct(api):
     assert "SECRET" not in failure.text and str(root) not in failure.text
 
 
-def test_metadata_evidence_never_reads_blind_payloads(api):
+def test_metadata_evidence_never_reads_blind_payloads(api, monkeypatch):
     client, repository, root = api
     with sqlite3.connect(root / "gabi.db") as writer:
         writer.execute("INSERT INTO blind_validations(id,created_at,name,model_id,weights_json,n_positions,rebalance_months,start_date,unlock_date,status) VALUES(1,'2026-09-29','fixture','GABI-MF-v1',?,10,3,'2026-09-29','2027-09-29','locked')", (json.dumps(dict(model_policy.FROZEN_WEIGHTS)),))
@@ -380,9 +380,23 @@ def test_metadata_evidence_never_reads_blind_payloads(api):
     assert model["status"] == "LIVE_FORWARD" and model["blind_validation_id"] == 1
     assert model["independent_advantage_demonstrated"] is False
     blocked = {"symbols_json", "entry_prices_json", "record_hash", "ranking_json", "returns_json", "result_json"}
+
+    def deny(action, table, column, *args):
+        return sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_READ and column in blocked else sqlite3.SQLITE_OK
+
+    # The model state reads on its own short connection (#342) and the ranking on the shared one: guard both.
+    private = repository._short_connection
+
+    def guarded():
+        db = private()
+        db.set_authorizer(deny)
+        return db
+
+    monkeypatch.setattr(repository, "_short_connection", guarded)
+    with repository.lock:
+        repository.connect()
     assert repository.connection is not None
-    repository.connection.set_authorizer(lambda action, table, column, *args:
-                                        sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_READ and column in blocked else sqlite3.SQLITE_OK)
+    repository.connection.set_authorizer(deny)
     assert client.get("/api/v1/model").status_code == 200
     assert client.get("/api/v1/ranking").status_code == 200
 
