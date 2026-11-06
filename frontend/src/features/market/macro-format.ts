@@ -35,9 +35,3 @@ const AGGREGATION: Record<MacroPoint['aggregation'], string> = {
 export function cadence(item: MacroPoint): string {
   return `${FREQUENCY[item.frequency]} · ${AGGREGATION[item.aggregation]}`;
 }
-
-/** ▲ / ▼ / = for the change against three months earlier. */
-export function trend(change: number | null | undefined): string {
-  if (change == null) return '';
-  return change > 0 ? '▲' : change < 0 ? '▼' : '=';
-}

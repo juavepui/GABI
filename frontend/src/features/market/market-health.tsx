@@ -2,22 +2,26 @@ import { useQuery } from '@tanstack/react-query';
 import { getMarketHealth } from '@/shared/api/client';
 import type { MarketCheck, MarketHealthResponse } from '@/shared/api/generated/types.gen';
 import { dateLabel, formatNumber } from '@/shared/lib/format';
+import { Activity } from 'lucide-react';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { StatusTag } from '@/shared/ui/status';
+import type { Tone } from '@/shared/ui/tone';
+import { SummaryCard } from '@/shared/ui/summary-card';
 import { Term } from '@/shared/ui/term';
+import { VerdictBanner } from '@/shared/ui/verdict-banner';
 
-const STATE_TONE: Record<NonNullable<MarketHealthResponse['state']>, string> = {
-  favorable: 'bg-success-soft text-success-ink',
-  pressure: 'bg-warning-soft text-warning-ink',
-  correction: 'bg-danger-soft text-danger-ink',
+const STATE_TONE: Record<NonNullable<MarketHealthResponse['state']>, Tone> = {
+  favorable: 'good',
+  pressure: 'caution',
+  correction: 'bad',
 };
 
-const RESULT: Record<NonNullable<MarketCheck['result']> | 'none', { label: string; dot: string }> =
-  {
-    pass: { label: 'Pasa', dot: 'bg-success' },
-    caution: { label: 'Precaución', dot: 'bg-warning' },
-    fail: { label: 'Falla', dot: 'bg-danger' },
-    none: { label: 'Sin dato', dot: 'bg-muted-foreground/40' },
-  };
+const RESULT: Record<NonNullable<MarketCheck['result']> | 'none', { label: string; tone: Tone }> = {
+  pass: { label: 'Pasa', tone: 'good' },
+  caution: { label: 'Precaución', tone: 'caution' },
+  fail: { label: 'Falla', tone: 'bad' },
+  none: { label: 'Sin dato', tone: 'neutral' },
+};
 
 const TERM: Record<MarketCheck['key'], string> = {
   trend: 'sma200',
@@ -42,49 +46,41 @@ export function MarketHealthCard() {
   const health = query.data;
   if (query.isError) return null;
   return (
-    <section aria-label="Cómo está el mercado" className="rounded-xl border bg-card p-5">
-      <h2 className="text-lg font-semibold">
-        Cómo está el mercado <Term k="market_health" name="Semáforo del mercado" />
-      </h2>
+    <SummaryCard
+      title="Cómo está el mercado"
+      icon={Activity}
+      titleExtra={<Term k="market_health" name="Semáforo del mercado" />}
+    >
       {!health ? (
-        <p className="mt-2 text-sm text-muted-foreground" role="status">
+        <p className="text-sm text-muted-foreground" role="status">
           Leyendo los precios guardados…
         </p>
       ) : health.status === 'no_data' ? (
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Sin datos suficientes: hacen falta al menos 201 días de bolsa de precios del índice (
           {health.benchmark}) guardados en tu equipo. Actualiza los datos en Administración.
         </p>
       ) : (
         <>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {health.state && (
-              <span
-                className={
-                  'rounded-full px-3 py-1 text-base font-semibold ' + STATE_TONE[health.state]
-                }
-              >
-                {health.state_label}
+          <VerdictBanner
+            tone={health.state ? STATE_TONE[health.state] : 'neutral'}
+            verdict={health.state_label ?? 'Sin estado'}
+            explanation={
+              <span className="text-muted-foreground">
+                {days(health)} en este estado · cierre del {dateLabel(health.as_of)}
               </span>
-            )}
-            <span className="text-sm tabular-nums">
-              {formatNumber(health.score, { digits: 0 })} de 100
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {days(health)} en este estado · cierre del {dateLabel(health.as_of)}
-            </span>
-          </div>
+            }
+            value={formatNumber(health.score, { digits: 0 }) + ' de 100'}
+            valueLabel="Nota del semáforo"
+          />
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {(health.checks ?? []).map((check) => {
               const result = RESULT[check.result ?? 'none'];
               return (
                 <li key={check.key} className="min-w-0 rounded-lg border p-3 text-sm">
-                  <p className="flex items-center gap-2 font-medium">
-                    <span aria-hidden="true" className={'size-2.5 rounded-full ' + result.dot} />
+                  <p className="flex flex-wrap items-center gap-2 font-medium">
                     {check.title} <Term k={TERM[check.key]} />
-                    <span className="ml-auto text-xs font-normal text-muted-foreground">
-                      {result.label}
-                    </span>
+                    <StatusTag tone={result.tone} label={result.label} className="ml-auto" />
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">{check.text}</p>
                 </li>
@@ -108,6 +104,6 @@ export function MarketHealthCard() {
           </HowToRead>
         </>
       )}
-    </section>
+    </SummaryCard>
   );
 }

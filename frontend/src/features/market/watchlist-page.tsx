@@ -11,23 +11,28 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { DataTable } from '@/shared/ui/data-table';
+import { Direction } from '@/shared/ui/status';
 import { PageHeader } from '@/shared/ui/page-header';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateText, formatNumber } from '@/shared/lib/format';
 
-const changeClass = (value: number | null | undefined) =>
-  value == null || value === 0
-    ? 'text-muted-foreground'
-    : value > 0
-      ? 'text-success-ink'
-      : 'text-danger-ink';
+// The direction in a neutral colour with arrow and word (#320); the level keeps its own reading.
+const WORDS = {
+  puntos: { up: 'sube', down: 'baja', flat: 'igual' },
+  puestos: { up: 'gana', down: 'pierde', flat: 'mismo puesto' },
+} as const;
 
 function Change({ value, unit }: { value: number | null | undefined; unit: string }) {
   if (value == null) return null;
+  const points = unit === 'puntos';
   return (
-    <span className={'block text-xs ' + changeClass(value)}>
-      {formatNumber(value, { digits: unit === 'puntos' ? 1 : 0, signed: true })} {unit}
-    </span>
+    <Direction
+      value={value}
+      words={points ? WORDS.puntos : WORDS.puestos}
+      className="block text-xs"
+    >
+      {value === 0 ? null : formatNumber(Math.abs(value), { digits: points ? 1 : 0 }) + ' ' + unit}
+    </Direction>
   );
 }
 

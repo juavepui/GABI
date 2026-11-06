@@ -12,6 +12,7 @@ const SCREENS: [string, string, RegExp | string][] = [
   ['cartera', '/cartera', 'Mi cartera objetivo'],
   ['mapa', '/descubrir/mapa', 'Mapa del mercado'],
   ['macro', '/macro', 'Economía (macro)'],
+  ['seguidas', '/descubrir/seguidas', 'Empresas seguidas'],
   ['investigacion', '/investigacion', /Investigación/],
 ];
 

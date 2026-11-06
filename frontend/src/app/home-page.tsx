@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Circle,
   CircleDashed,
+  Database,
   FlaskConical,
   GraduationCap,
   Settings2,
@@ -18,6 +19,8 @@ import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { SectionLinks } from '@/shared/ui/section-links';
+import { StatusTag } from '@/shared/ui/status';
+import { SummaryCard } from '@/shared/ui/summary-card';
 import { HomeNotices } from './home-notices';
 import { MacroStrip, MarketHealthCard } from '@/features/market/index';
 import { HomeAlerts } from './home-alerts';
@@ -117,34 +120,25 @@ function FirstSteps({ home }: { home: HomeResponse }) {
 function DataCard({ home, computing }: { home: HomeResponse; computing: boolean }) {
   const data = home.data;
   return (
-    <section className="min-w-0 rounded-xl border bg-card p-5" aria-label="Estado de los datos">
-      <h2 className="text-lg font-semibold">Estado de los datos</h2>
+    <SummaryCard
+      title="Estado de los datos"
+      icon={Database}
+      more={{ to: '/administracion/calidad', label: 'Ver calidad de los datos' }}
+    >
       {data ? (
         <>
-          <p className="mt-2 text-sm">
+          <p className="text-sm">
             {data.status === 'ready' && data.prices_current === true && (
-              <span className="rounded-full bg-success-soft px-2 py-0.5 text-success-ink">
-                Al día
-              </span>
+              <StatusTag tone="good" label="Al día" />
             )}
             {data.status === 'ready' && data.prices_current === false && (
-              <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning-ink">
-                Falta el último cierre
-              </span>
+              <StatusTag tone="caution" label="Falta el último cierre" />
             )}
             {data.status === 'ready' && data.prices_current == null && (
-              <span className="rounded-full bg-muted px-2 py-0.5">Listos para usar</span>
+              <StatusTag tone="neutral" label="Listos para usar" />
             )}
-            {data.status === 'stale' && (
-              <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning-ink">
-                Con datos antiguos
-              </span>
-            )}
-            {data.status === 'empty' && (
-              <span className="rounded-full bg-danger-soft px-2 py-0.5 text-danger-ink">
-                Sin datos
-              </span>
-            )}
+            {data.status === 'stale' && <StatusTag tone="caution" label="Con datos antiguos" />}
+            {data.status === 'empty' && <StatusTag tone="bad" label="Sin datos" />}
           </p>
           <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
             <div>
@@ -173,7 +167,7 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
           )}
         </>
       ) : (
-        <div className="mt-3 space-y-2" role="status">
+        <div className="space-y-2" role="status">
           <p className="text-sm text-muted-foreground">
             {computing
               ? 'Calculando el ranking con los datos de tu equipo. Tras arrancar o actualizar los datos tarda entre 20 segundos y un minuto; después es inmediato.'
@@ -194,16 +188,19 @@ function DataCard({ home, computing }: { home: HomeResponse; computing: boolean 
       <Button asChild size="sm" variant="outline" className="mt-3">
         <Link to="/administracion">Actualizar datos</Link>
       </Button>
-    </section>
+    </SummaryCard>
   );
 }
 
 function TargetCard({ home }: { home: HomeResponse }) {
   const shown = home.target.slice(0, 8);
   return (
-    <section className="min-w-0 rounded-xl border bg-card p-5" aria-label="Cartera objetivo de hoy">
-      <h2 className="text-lg font-semibold">Cartera objetivo de hoy</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
+    <SummaryCard
+      title="Cartera objetivo de hoy"
+      icon={BriefcaseBusiness}
+      more={{ to: '/cartera', label: 'Ver la cartera propuesta' }}
+    >
+      <p className="text-xs text-muted-foreground">
         Las {home.target_positions} empresas con más puntuación, con el mismo dinero en cada una. Es
         la regla fija de GABI ({home.model_id}); todavía no está demostrado que gane al S&amp;P 500.
       </p>
@@ -248,10 +245,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
           {formatNumber(home.target[0].weight_pct, { digits: 1 })} % cada una.
         </p>
       )}
-      <Button asChild size="sm" className="mt-4">
-        <Link to="/cartera">Ver la cartera propuesta</Link>
-      </Button>
-    </section>
+    </SummaryCard>
   );
 }
 

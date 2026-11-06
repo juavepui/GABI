@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
 import type { HomeSummary, SummarySentence } from '@/shared/api/generated/types.gen';
 import { formatNumber } from '@/shared/lib/format';
+import { Newspaper } from 'lucide-react';
 import { HowToRead } from '@/shared/ui/how-to-read';
+import { SummaryCard } from '@/shared/ui/summary-card';
+import { TONE_STYLE, type Tone } from '@/shared/ui/tone';
 
-const TONE: Record<SummarySentence['tone'], { dot: string; label: string }> = {
-  good: { dot: 'bg-success', label: 'Buena noticia' },
-  bad: { dot: 'bg-danger', label: 'Ojo' },
-  neutral: { dot: 'bg-muted-foreground/50', label: 'Información' },
+// Each sentence carries its tone as icon + colour, and in words for screen readers (#320).
+const TONE: Record<SummarySentence['tone'], { tone: Tone; label: string }> = {
+  good: { tone: 'good', label: 'Buena noticia' },
+  bad: { tone: 'bad', label: 'Ojo' },
+  neutral: { tone: 'neutral', label: 'Información' },
 };
 
 const ACTION: Partial<Record<SummarySentence['kind'], string>> = {
@@ -25,16 +29,15 @@ export function HomeSummaryCard({
   rankingReady: boolean;
 }) {
   return (
-    <section aria-label="Tu resumen de hoy" className="rounded-xl border bg-card p-5">
-      <h2 className="text-lg font-semibold">Tu resumen de hoy</h2>
+    <SummaryCard title="Tu resumen de hoy" icon={Newspaper}>
       {!summary ? (
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {rankingReady
             ? 'No hay resumen: faltan los datos del ranking.'
             : 'El resumen aparecerá en cuanto termine el cálculo del ranking.'}
         </p>
       ) : summary.status === 'no_companies' ? (
-        <div className="mt-2 space-y-3 text-sm">
+        <div className="space-y-3 text-sm">
           <p className="text-muted-foreground">
             Todavía no sigues ninguna empresa ni tienes compras apuntadas en Mi cartera. Pulsa
             «Seguir» en la ficha de una empresa y aquí verás, cada día, qué ha cambiado en ella.
@@ -44,16 +47,15 @@ export function HomeSummaryCard({
           </Link>
         </div>
       ) : (
-        <ul className="mt-3 space-y-2 text-sm">
+        <ul className="space-y-2 text-sm">
           {summary.sentences.map((sentence) => {
             const tone = TONE[sentence.tone];
+            const style = TONE_STYLE[tone.tone];
+            const Icon = style.icon;
             const action = ACTION[sentence.kind];
             return (
-              <li key={sentence.kind} className="flex items-start gap-2.5">
-                <span
-                  aria-hidden="true"
-                  className={'mt-1.5 size-2 shrink-0 rounded-full ' + tone.dot}
-                />
+              <li key={sentence.kind} className="flex items-start gap-2.5" data-tone={tone.tone}>
+                <Icon size={16} aria-hidden="true" className={'mt-0.5 shrink-0 ' + style.ink} />
                 <p className="min-w-0">
                   <span className="sr-only">{tone.label}: </span>
                   {sentence.text}
@@ -84,6 +86,6 @@ export function HomeSummaryCard({
           tu equipo. Es información, no una recomendación de comprar o vender.
         </HowToRead>
       )}
-    </section>
+    </SummaryCard>
   );
 }
