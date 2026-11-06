@@ -90,7 +90,7 @@ function FirstSteps({ home }: { home: HomeResponse }) {
         <Step
           done={steps.universe && steps.updated}
           title="Actualizar los datos"
-          detail="Descarga precios y cuentas de las empresas. Empieza con 50 para probar; las 500 del S&P 500 tardan varios minutos."
+          detail="En Administración, pulsa «Actualizar todo». La primera vez tarda bastante; si quieres probar antes, en «Otras formas de descargar» puedes empezar con 50 empresas."
           action={{ to: '/administracion', label: 'Actualizar datos' }}
         />
         <Step

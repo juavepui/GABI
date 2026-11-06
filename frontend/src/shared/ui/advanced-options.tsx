@@ -26,10 +26,12 @@ export function AdvancedOptions({
   id,
   children,
   className = '',
+  title = 'Opciones avanzadas',
 }: {
   id: string;
   children: ReactNode;
   className?: string;
+  title?: string;
 }) {
   const [open, setOpen] = useState(() => remembered(id));
   return (
@@ -42,7 +44,7 @@ export function AdvancedOptions({
         remember(id, next);
       }}
     >
-      <summary className="cursor-pointer font-medium">Opciones avanzadas</summary>
+      <summary className="cursor-pointer font-medium">{title}</summary>
       <div className="mt-3">{children}</div>
     </details>
   );

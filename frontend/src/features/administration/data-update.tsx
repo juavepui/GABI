@@ -41,13 +41,12 @@ export function DataUpdate() {
   const running = start.isPending || ['queued', 'running'].includes(job.data?.status ?? '');
   const data = result.data;
   return (
-    <section className="space-y-3 rounded-lg border p-4 text-sm" aria-label="Actualizar datos">
-      <h3 className="font-medium">Actualizar datos</h3>
+    <section className="space-y-3 text-sm" aria-label="Actualizar solo una parte">
+      <h3 className="font-medium">Actualizar solo una parte de las empresas</h3>
       <p className="text-xs text-muted-foreground">
-        Descarga precios y datos de las cuentas (Yahoo Finance) e informes oficiales (SEC), solo de
-        lo que esté desactualizado. La primera vez tarda bastante: empieza con 50 empresas para
-        probar. No revisa qué empresas forman el S&amp;P 500 ni los datos de la economía; para eso
-        está «Actualización completa».
+        Útil la primera vez, para probar GABI sin esperar a las 500: descarga precios, cuentas e
+        informes de 50 o 150 empresas. Al terminar te dice cuáles fallaron y te deja reintentar solo
+        esas. No actualiza la lista del S&amp;P 500 ni los datos de la economía.
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="grid gap-1">
@@ -69,9 +68,10 @@ export function DataUpdate() {
             checked={force}
             onChange={(event) => setForce(event.target.checked)}
           />
-          Descargar todo de nuevo, aunque esté al día
+          Volver a descargarlo aunque ya esté al día
         </label>
         <Button
+          variant="outline"
           pending={running}
           onClick={() =>
             start.mutate({
@@ -80,7 +80,7 @@ export function DataUpdate() {
             })
           }
         >
-          Actualizar datos
+          Actualizar estas empresas
         </Button>
       </div>
       {start.isError && <p className="text-destructive">{start.error.message}</p>}
