@@ -101,6 +101,67 @@ export type AnalysisPromptResponse = {
 };
 
 /**
+ * AnnualResultsPoint
+ */
+export type AnnualResultsPoint = {
+    /**
+     * Filed
+     */
+    filed: string | null;
+    /**
+     * Fiscal Year End
+     */
+    fiscal_year_end: string;
+    /**
+     * Free Cash Flow
+     */
+    free_cash_flow: number | null;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Missing
+     */
+    missing: {
+        [key: string]: string;
+    };
+    /**
+     * Net Income
+     */
+    net_income: number | null;
+    /**
+     * Restated
+     */
+    restated: boolean;
+    /**
+     * Revenue
+     */
+    revenue: number | null;
+};
+
+/**
+ * AnnualResultsResponse
+ *
+ * Ingresos, beneficio neto y caja libre por ejercicio (#328), from the stored SEC 10-K facts; display only.
+ */
+export type AnnualResultsResponse = {
+    /**
+     * Currency
+     */
+    currency: 'USD';
+    /**
+     * Points
+     */
+    points: Array<AnnualResultsPoint>;
+    reading: ScoreHistoryReading;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * AttributionPosition
  */
 export type AttributionPosition = {
@@ -12936,6 +12997,56 @@ export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses 
 };
 
 export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponse = CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses[keyof CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses];
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/annual-results';
+};
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetError = CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetErrors[keyof CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetErrors];
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AnnualResultsResponse;
+};
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponse = CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponses[keyof CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponses];
 
 export type CompanyChecklistApiV1CompaniesSymbolChecklistGetData = {
     body?: never;

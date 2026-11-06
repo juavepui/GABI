@@ -521,6 +521,10 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   await expect(page.getByRole('region', { name: 'Evolución de la puntuación' })).toContainText(
     'Todavía no hay días guardados',
   );
+  // The e2e fixture has no SEC reports: the yearly figures say why instead of showing empty bars.
+  await expect(page.getByRole('region', { name: 'Ingresos y beneficio por año' })).toContainText(
+    'todavía no se han descargado sus informes de la SEC',
+  );
   // The score is read in the first sentence («66,0 de 100, puesto 1 de 16»); its card follows below.
   await expect(brief.getByText(/Su puntuación GABI es \w+: [\d,]+ de 100/)).toBeInViewport();
   await expect(page.getByText(/Precio al cierre del/)).toBeInViewport();

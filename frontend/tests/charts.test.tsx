@@ -3,6 +3,7 @@ import { ChartFrame } from '../src/shared/ui/charts/chart-frame';
 import { CompareBars } from '../src/shared/ui/charts/compare-bars';
 import { RangeDot } from '../src/shared/ui/charts/range-dot';
 import { Sparkline } from '../src/shared/ui/charts/sparkline';
+import { YearColumns } from '../src/shared/ui/charts/year-columns';
 import { CrisisBars } from '../src/features/portfolio/crisis-bars';
 import { renderScreen } from './render';
 
@@ -145,5 +146,26 @@ describe('piezas comunes de gráficas (#323)', () => {
     screen.unmount();
     screen = renderScreen(<Sparkline values={[1]} description="Sin datos" />);
     expect(screen.container.querySelector('svg')).toBeNull();
+  });
+
+  it('YearColumns escribe cada año, las pérdidas, los huecos y las cifras rehechas en palabras (#328)', () => {
+    screen = renderScreen(
+      <YearColumns
+        label="Beneficio neto por ejercicio"
+        format={(value) => value.toString()}
+        columns={[
+          { label: '2022', value: 15, marked: true },
+          { label: '2023', value: -17 },
+          { label: '2024', value: null },
+        ]}
+      />,
+    );
+    const list = screen.container.querySelector('[aria-label="Beneficio neto por ejercicio"]');
+    expect(list?.querySelectorAll('li')).toHaveLength(3);
+    const text = screen.text();
+    expect(text).toContain('2022: 15 (cifra rehecha después)');
+    expect(text).toContain('2023: -17');
+    expect(text).toContain('2024: sin dato');
+    expect(text).toContain('Sin dato');
   });
 });

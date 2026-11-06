@@ -20,6 +20,7 @@ from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
+from gabi.application.market.annual_results import AnnualResultsQueries
 from gabi.application.market.block_evidence import BlockEvidence
 from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.market.company_research import CompanyResearch
@@ -222,6 +223,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.macro = macro
+    app.state.annual_results = AnnualResultsQueries(SqliteSecReads(settings.data_dir / "gabi.db"))
     app.state.score_history = ScoreHistoryQueries(SqliteScoreHistory(settings.data_dir), lambda: policy.model_id)
     app.state.market_health = MarketHealthQueries(SqliteMarketHealth(settings.data_dir),
                                                   lambda: model.benchmark_symbol, today)
