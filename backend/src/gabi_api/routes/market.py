@@ -37,7 +37,6 @@ from gabi_api.schemas.evidence import (
     ScoreBlocksEvidence,
 )
 from gabi_api.schemas.market import (
-    METRIC_SOURCE_WIRE,
     AnalysisPromptResponse,
     AnnualResultsResponse,
     CompanyResponse,
@@ -278,7 +277,7 @@ def ranking_export(request: Request, market: Service, selected: Selected,
 
 
 @router.get("/companies/{symbol}", response_model=CompanyResponse)
-def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^[A-Za-z0-9^][A-Za-z0-9^.\-]*$")], market: Service,
+def company(request: Request, symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^[A-Za-z0-9^][A-Za-z0-9^.\-]*$")], market: Service,
             bars: Annotated[int, Query(ge=1, le=1000)] = 252) -> CompanyResponse:
     result, prices = market.company(symbol, bars)
     row = result.rows.iloc[0]
@@ -288,7 +287,7 @@ def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^
                            prices=[PricePoint.model_validate({"date": record["date"], "close": finite(record["close"]),
                                                               "adj_close": finite(record["adj_close"])})
                                    for record in prices.to_dict(orient="records")],
-                                   metric_sources=METRIC_SOURCE_WIRE,
+                                   metric_sources=request.app.state.metric_source_wire,
                                    generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)
 
 
@@ -298,7 +297,7 @@ def comparison(request: Request, market: Service, symbols: Annotated[list[str], 
     items = [company_row(str(symbol), row, result) for symbol, row in result.rows.iterrows()]
     values = {item.symbol: {key: metric.value for key, metric in item.metrics.items()} for item in items}
     return ComparisonResponse(items=items, positions=positions(values, request.app.state.metric_directions),
-                              metric_sources=METRIC_SOURCE_WIRE,
+                              metric_sources=request.app.state.metric_source_wire,
                               model=model_response(result.model), data=data_response(result.data),
                               generated_at=result.snapshot.generated_at, revision=result.snapshot.revision)
 

@@ -52,7 +52,7 @@ const field = (key: string) => FIELDS[key] ?? metricLabel(key);
 function Result({ data }: { data: Report }) {
   const model = data.applied
     ? `El modelo activo (${data.model_id}) no usa para puntuar los valores imposibles ni, tras un salto de precio, las métricas de precio: cuentan como datos que faltan. La capitalización solo se informa.`
-    : `El modelo activo (${data.model_id}) todavía puntúa todos los valores tal y como vienen.`;
+    : `El modelo activo (${data.model_id}) puntúa los valores tal y como vienen, igual que en la prueba con datos del pasado: estas marcas son solo un aviso para revisar.`;
   return (
     <div className="space-y-3">
       <p className="rounded-md border p-3">

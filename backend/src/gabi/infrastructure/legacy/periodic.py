@@ -18,7 +18,9 @@ ACTIVE_MODEL_CODE = ("infrastructure/model_versions.py", "domain/market/model_ve
                      "domain/market/sec_metrics_v2.py", "application/market/stored_metrics_v2.py",
                      "application/market/ranking.py", "infrastructure/storage/market.py",
                      "infrastructure/legacy/market.py", "domain/market/input_checks.py",
-                     "domain/market/revenue_growth.py", "application/market/stored_revenue_growth.py")
+                     "domain/market/revenue_growth.py", "application/market/stored_revenue_growth.py",
+                     "domain/market/engine_fundamentals.py", "infrastructure/legacy/engine_fundamentals.py",
+                     "infrastructure/storage/engine_fundamentals.py", "screener_asof.py")
 
 
 class LegacyPeriodicOperations:
@@ -127,6 +129,15 @@ class LegacyPeriodicOperations:
             return {"dia": day.isoformat(), "modelo": model.model_id, "guardadas": saved}
         finally:
             market.close()
+
+    def record_engine_fundamentals(self):
+        """The tested engine's company metrics of today for GABI-MF-v5 (#347); explicit write."""
+        from datetime import date
+
+        from gabi.infrastructure.legacy.engine_fundamentals import record
+        from gabi.infrastructure.settings import Settings
+
+        return record(Settings(self.data_dir.resolve()), date.today())
 
     def install_ranking_revision(self):
         """Triggers that count changes of the ranking's inputs (#342); idempotent explicit write."""

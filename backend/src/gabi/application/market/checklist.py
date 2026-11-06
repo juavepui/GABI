@@ -2,7 +2,7 @@
 
 import threading
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import date
 from typing import Protocol
 
@@ -56,7 +56,8 @@ class CompanyChecklist:
     def __init__(self, facts: FactsReader, cache: cached_data.CacheReader, insiders: InsiderReader, store: ThresholdStore,
                  today: Callable[[], date], universe: Callable[[], list[tuple[str, str]]] = list,
                  ranking_row: Callable[[str], dict] = lambda symbol: {},
-                 reference: Callable[[], dict | None] = lambda: None):
+                 reference: Callable[[], dict | None] = lambda: None,
+                 reference_sources: Mapping[str, tuple[str, str]] | None = None):
         self.facts, self.cache, self.insiders, self.store, self.today = facts, cache, insiders, store, today
         # (symbol, sector) of the current universe; sector peers come from it, as in the ranking.
         self.universe = universe
@@ -65,6 +66,8 @@ class CompanyChecklist:
         self.ranking_row = ranking_row
         # Dated values of the S&P 500 per criterion and sector (#171): pass rates for context, never verdicts.
         self.reference = reference
+        # Where the ranking row's values come from with the active model (#347): v5 takes them from the SEC.
+        self.reference_sources = reference_sources
         # In-process memo of peer multiples, keyed by the peers' last filings and prices: a new
         # sync changes the key, so stale medians are never served. Nothing is written.
         self._sector_cache: OrderedDict[tuple, dict] = OrderedDict()
@@ -151,7 +154,8 @@ class CompanyChecklist:
             price=price, price_date=str(latest[0]) if latest else None, shares=shares, shares_date=shares_date,
             shares_source=source, share_history_ok=history_ok, forward_eps=_finite(info.get("forwardEps")),
             beta=references["beta_calc"], insiders_pct=_finite(info.get("heldPercentInsiders")),
-            yahoo_fetched_at=record.get("fetched_at"), references=references)
+            yahoo_fetched_at=record.get("fetched_at"), references=references,
+            reference_sources=self.reference_sources)
         insiders = self.insiders.insider_transactions(symbol)
         values, edited, warning = self._thresholds()
         result = checklist.evaluate(

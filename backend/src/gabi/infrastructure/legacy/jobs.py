@@ -383,18 +383,11 @@ class LegacyExecutor:
             market.close()
 
     def _historical_engine(self, symbols: list[str], day: date, weights: dict) -> pd.DataFrame:
-        """``screener_asof`` in the operational mode of #237, as the prospective ensemble reads it."""
-        from gabi import screener_asof
-        from gabi.infrastructure.legacy.ensemble_live import check_engine_data
-        from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+        """``screener_asof`` in the operational mode of #237 with the fiscal alignment of #38: the tested engine
+        (#35 ``operativo-38``), as GABI-MF-v5 stores it (#347)."""
+        from gabi.infrastructure.legacy.engine_fundamentals import ranking
 
-        check_engine_data(self.settings.data_dir)
-        members = set(symbols)
-        current = {symbol: f"cik:{int(cik):010d}" for symbol, cik in
-                   SqliteSecReads(self.settings.data_dir / "gabi.db").stored_ciks().items()
-                   if symbol in members and str(cik).strip().isdigit()}
-        return screener_asof.build_ranking_as_of(day.isoformat(), weights=weights, symbols=symbols,
-                                                 operational_entities=current)["table"]
+        return ranking(self.settings, symbols, day, weights)
 
 
 def quality_snapshot(data_dir: Path) -> dict:
