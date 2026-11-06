@@ -820,3 +820,35 @@ test('el mapa del mercado agrupa por sector, explica los colores y tiene lista (
   await sector.getByRole('link').first().click();
   await expect(page).toHaveURL(/\/empresas\//);
 });
+
+test('filtros activos con «×», barra fija de la ficha y «Cómo leer» en panel lateral (#320)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?golden_cross_only=true&hide_no_data=false');
+  const active = page.getByRole('group', { name: 'Filtros activos' });
+  await expect(active).toContainText('Con cruce dorado reciente');
+  await expect(active).toContainText('Incluye empresas sin datos');
+  await active.getByRole('button', { name: 'Quitar filtro: Con cruce dorado reciente' }).click();
+  await expect(page).not.toHaveURL(/golden_cross_only/);
+  await expect(page).toHaveURL(/hide_no_data=false/);
+  await expect(active).not.toContainText('Con cruce dorado reciente');
+
+  await page.goto('/empresas/T001');
+  const bar = page.getByRole('navigation', { name: 'Secciones de la ficha de T001' });
+  await expect(bar.getByRole('link', { name: 'Comprobaciones' })).toBeVisible();
+  await bar.getByRole('link', { name: 'Comprobaciones' }).click();
+  await expect(page).toHaveURL(/#comprobaciones$/);
+  // The bar stays on top and, once the header is gone, says the company and its verdict.
+  await expect(bar).toBeInViewport();
+  await expect(bar).toContainText(/Puntuación (alta|media|baja)/);
+
+  await page.goto('/');
+  const button = page.getByRole('button', { name: 'Cómo leer esta página' });
+  await button.click();
+  const panel = page.getByRole('complementary', { name: 'Cómo leer esta página' });
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('Qué es GABI');
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(button).toBeFocused();
+});
