@@ -402,3 +402,23 @@ class ScoreHistoryResponse(WireModel):
     model_id: str
     points: list[ScorePoint]
     reading: ScoreHistoryReading
+
+
+class AnnualResultsPoint(WireModel):
+    fiscal_year_end: date
+    label: str
+    filed: date | None
+    restated: bool
+    revenue: float | None
+    net_income: float | None
+    free_cash_flow: float | None
+    missing: dict[str, str]
+
+
+class AnnualResultsResponse(WireModel):
+    """Ingresos, beneficio neto y caja libre por ejercicio (#328), from the stored SEC 10-K facts; display only."""
+
+    symbol: str
+    currency: Literal["USD"]
+    points: list[AnnualResultsPoint]
+    reading: ScoreHistoryReading

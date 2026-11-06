@@ -39,6 +39,7 @@ from gabi_api.schemas.evidence import (
 from gabi_api.schemas.market import (
     METRIC_SOURCE_WIRE,
     AnalysisPromptResponse,
+    AnnualResultsResponse,
     CompanyResponse,
     ComparisonPricesResponse,
     ComparisonResponse,
@@ -87,6 +88,12 @@ Research = Annotated[CompanyResearch, Depends(research_service)]
 def company_score_history(symbol: SymbolPath, request: Request) -> dict:
     """Read-only: the score and position the daily task stored for the company (#328)."""
     return request.app.state.score_history.company(symbol)
+
+
+@router.get("/companies/{symbol}/annual-results", response_model=AnnualResultsResponse)
+def company_annual_results(symbol: SymbolPath, request: Request) -> dict:
+    """Read-only: revenue, net income and free cash flow by fiscal year from the stored SEC reports (#328)."""
+    return request.app.state.annual_results.company(symbol)
 
 
 @router.get("/companies/{symbol}/research", response_model=CompanyResearchResponse)

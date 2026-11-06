@@ -181,6 +181,121 @@
         "title": "AnalysisPromptResponse",
         "type": "object"
       },
+      "AnnualResultsPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "filed": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed"
+          },
+          "fiscal_year_end": {
+            "format": "date",
+            "title": "Fiscal Year End",
+            "type": "string"
+          },
+          "free_cash_flow": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Cash Flow"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "missing": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "object"
+          },
+          "net_income": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Income"
+          },
+          "restated": {
+            "title": "Restated",
+            "type": "boolean"
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue"
+          }
+        },
+        "required": [
+          "fiscal_year_end",
+          "label",
+          "filed",
+          "restated",
+          "revenue",
+          "net_income",
+          "free_cash_flow",
+          "missing"
+        ],
+        "title": "AnnualResultsPoint",
+        "type": "object"
+      },
+      "AnnualResultsResponse": {
+        "additionalProperties": false,
+        "description": "Ingresos, beneficio neto y caja libre por ejercicio (#328), from the stored SEC 10-K facts; display only.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualResultsPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reading": {
+            "$ref": "#/components/schemas/ScoreHistoryReading"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "currency",
+          "points",
+          "reading"
+        ],
+        "title": "AnnualResultsResponse",
+        "type": "object"
+      },
       "AttributionPosition": {
         "additionalProperties": false,
         "properties": {
@@ -24620,6 +24735,102 @@
           }
         },
         "summary": "Company Analysis Prompt",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/companies/{symbol}/annual-results": {
+      "get": {
+        "description": "Read-only: revenue, net income and free cash flow by fiscal year from the stored SEC reports (#328).",
+        "operationId": "company_annual_results_api_v1_companies__symbol__annual_results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9^][A-Za-z0-9^.\\-]*$",
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualResultsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Modo no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Empresa no encontrada"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos cambiados"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Consulta no válida"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error interno"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Datos no disponibles"
+          }
+        },
+        "summary": "Company Annual Results",
         "tags": [
           "market"
         ]

@@ -24,6 +24,7 @@ import {
 import { CompanyChecklist } from './company-checklist';
 import { FollowButton } from './follow-button';
 import { ScoreHistory } from './score-history';
+import { AnnualResults } from './annual-results';
 
 import { CompanyTheses } from './company-theses';
 import { InvestmentCardSection } from './investment-card';
@@ -212,6 +213,7 @@ export function CompanyPage() {
               ))}
             </div>
             <ScoreHistory symbol={company.symbol} />
+            <AnnualResults symbol={company.symbol} />
             <Folded
               title="¿Cuánto fiarse de su puntuación? · las pruebas a favor y en contra"
               className="mb-6 rounded-xl border bg-card p-5"

@@ -38,6 +38,7 @@ import type {
   MarketHealthResponse,
   HeatmapResponse,
   ScoreHistoryResponse,
+  AnnualResultsResponse,
   SaveSnapshot,
   Snapshot,
   SnapshotList,
@@ -728,6 +729,13 @@ export function getCompanyScoreHistory(
   signal?: AbortSignal,
 ): Promise<ScoreHistoryResponse> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/score-history', signal);
+}
+
+export function getCompanyAnnualResults(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<AnnualResultsResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/annual-results', signal);
 }
 
 export function getHeatmap(signal?: AbortSignal): Promise<HeatmapResponse> {
