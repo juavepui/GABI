@@ -72,12 +72,45 @@ def freshness(source: dict, benchmark: dict, *, market_date: str, now: datetime,
     return {"fresh": not stale, "reasons": stale, "sources": source, "benchmark": benchmark, "market_date": market_date}
 
 
+SHARED_KEYS = ("predictive_test", "placebos", "bootstrap", "tail", "trace")
+# The catalogue's per-factor studies that factor_components copies into every company's factors.
+FACTOR_SHARED_KEYS = ("windows", "sector_stability", "size_stability", "sic_division_stability")
+
+
+def sanitized_shared(catalogue: dict, trace: dict) -> dict:
+    """``safe`` of the parts every company of one assessment shares, computed once (#342).
+
+    ``trace`` is the common trace without ``symbol``; ``assess`` appends the company's symbol exactly as
+    ``safe({**trace, "symbol": symbol})`` would. ``factors`` holds each metric's catalogue studies, which
+    ``factor_components`` copies into every company (about 7 KB per factor). The returned values are shared,
+    read-only, by every result."""
+    return {"predictive_test": safe(catalogue.get("model", {})), "placebos": safe(catalogue.get("placebos", {})),
+            "bootstrap": safe(catalogue.get("bootstrap", {})), "tail": safe(catalogue.get("tail", {})),
+            "trace": safe(trace), "sources": (catalogue, trace),
+            "factors": {metric: {key: safe(evidence.get(key, {})) for key in FACTOR_SHARED_KEYS}
+                        for metric, evidence in catalogue.get("factors", {}).items()}}
+
+
+def _clean_factor(factor: dict, shared: dict) -> dict:
+    """``safe(factor)`` reusing the catalogue studies sanitized once in ``shared``."""
+    studies = shared["factors"].get(factor["metric"])
+    if studies is None:
+        return safe(factor)
+    clean = safe({key: (None if key in FACTOR_SHARED_KEYS else value) for key, value in factor.items()})
+    for key in FACTOR_SHARED_KEYS:
+        clean[key] = studies[key]
+    return clean
+
+
 def assess(row: pd.Series, weights: dict, *, catalogue: dict, quality: dict, stability: dict,
-           trace: dict, model_matches: bool, stage: str = "LIVE_FORWARD", rules: EvidenceRules = DEFAULT_RULES) -> dict:
+           trace: dict, model_matches: bool, stage: str = "LIVE_FORWARD", rules: EvidenceRules = DEFAULT_RULES,
+           shared: dict | None = None) -> dict:
     """Pure rule application. Supplied evidence must already have reviewed provenance.
 
     Production uses only evidence_catalog.load(); it supplies no independent confirmations.
     This API also permits explicitly supplied synthetic evidence for rule tests.
+    ``shared``: ``sanitized_shared(catalogue, common trace)`` when ``trace`` is that common trace plus the company's
+    ``symbol``; the result is identical, without sanitizing the catalogue and trace again for every company.
     """
     if stage not in STAGES:
         raise ValueError("Fase de evidencia inválida.")
@@ -121,7 +154,7 @@ def assess(row: pd.Series, weights: dict, *, catalogue: dict, quality: dict, sta
         reasons_against.append("No hay dos confirmaciones independientes acreditadas del mismo modelo")
     else:
         reasons_for.append("Dos confirmaciones independientes acreditadas del mismo modelo")
-    return safe({"confidence_level": level, "score": score, "score_coverage": coverage,
+    result = {"confidence_level": level, "score": score, "score_coverage": coverage,
                               "weighted_data_coverage": _number(row.get("confidence")), "collection_stage": stage,
                               "evidence_stage": "OOS" if level == "ALTA" else "RETROSPECTIVE",
                               "rules": {"version": RULE_VERSION, "sha256": rules.rule_sha256,
@@ -133,6 +166,21 @@ def assess(row: pd.Series, weights: dict, *, catalogue: dict, quality: dict, sta
                               "stability": stability, "quality": quality, "predictive_test": model,
                               "placebos": placebos, "bootstrap": bootstrap, "tail": catalogue.get("tail", {}),
                               "independent_confirmations": sorted(confirmations), "trace": trace,
-                              "interpretation": "Categoría conservadora de evidencia; no probabilidad futura ni cambio del ranking."})
+                              "interpretation": "Categoría conservadora de evidencia; no probabilidad futura ni cambio del ranking."}
+    if shared is None:
+        return safe(result)
+    # Only for the very catalogue and common trace it was built from (the same objects, so the check is free).
+    shared_catalogue, common = shared["sources"]
+    symbol = trace.get("symbol")
+    if (catalogue is not shared_catalogue or "symbol" in common or "symbol" not in trace
+            or len(trace) != len(common) + 1 or any(key not in trace or trace[key] is not value
+                                                   for key, value in common.items())):
+        raise ValueError("La traza o el catálogo no son los comunes de esta evaluación.")
+    clean = safe({key: (None if key in SHARED_KEYS or key == "factors" else value) for key, value in result.items()})
+    clean["factors"] = [_clean_factor(factor, shared) for factor in factors]
+    for key in SHARED_KEYS:
+        clean[key] = shared[key]
+    clean["trace"] = {**shared["trace"], "symbol": safe(symbol)}
+    return clean
 
 

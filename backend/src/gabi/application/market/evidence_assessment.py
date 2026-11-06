@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from gabi.domain.market.evidence import DEFAULT_RULES, EvidenceRules, assess, freshness
+from gabi.domain.market.evidence import DEFAULT_RULES, EvidenceRules, assess, freshness, sanitized_shared
 from gabi.domain.research.live_ledger import fingerprint
 
 
@@ -30,7 +30,10 @@ def build_evidence(frame: pd.DataFrame, weights: dict, *, universe_id="SP500_CUR
         stability = companies.to_dict("index")
     except (ValueError, TypeError, KeyError):
         stability = {}
+    # The catalogue and the common trace are sanitized once, not once per company (#342).
+    shared = sanitized_shared(catalogue, trace) if "symbol" not in trace else None
     return {str(symbol): assess(row, weights, catalogue=catalogue,
                                quality=freshness(source.get(symbol, {}), source.get(benchmark, {}), market_date=market_date, now=now, rules=rules),
-                               stability=stability.get(str(symbol), {}), trace={**trace, "symbol": str(symbol)}, model_matches=matching, stage=stage, rules=rules)
+                               stability=stability.get(str(symbol), {}), trace={**trace, "symbol": str(symbol)}, model_matches=matching, stage=stage, rules=rules,
+                               shared=shared)
             for symbol, row in frame.iterrows()}
