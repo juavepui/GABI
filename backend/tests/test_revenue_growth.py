@@ -111,8 +111,8 @@ def test_fill_on_a_database_without_sec_tables_writes_nothing(tmp_path):
     assert not (tmp_path / "gabi.db").exists()
 
 
-def test_v4_is_declared_but_the_active_model_is_still_v3():
-    assert ACTIVE_MODEL_ID == "GABI-MF-v3" and active_model() is GABI_MF_V3
+def test_v4_is_the_active_model_and_differs_from_v3_only_in_the_sec_metrics():
+    assert ACTIVE_MODEL_ID == "GABI-MF-v4" and active_model() is GABI_MF_V4
     assert GABI_MF_V4.metrics_version == "sec-metrics-v2.2" and GABI_MF_V3.metrics_version == "sec-metrics-v2.1"
     assert (GABI_MF_V4.weights, GABI_MF_V4.technical, GABI_MF_V4.input_checks) == (
         GABI_MF_V3.weights, GABI_MF_V3.technical, GABI_MF_V3.input_checks)

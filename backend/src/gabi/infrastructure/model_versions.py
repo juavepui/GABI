@@ -31,15 +31,16 @@ GABI_MF_V3 = ModelVersion("GABI-MF-v3", "GABI multifactor v3 · métricas SEC V2
                           metrics_version=sec_metrics_v2.VERSION, input_checks=input_checks.VERSION)
 
 # #339: GABI-MF-v3 with the revenue growth of revenue-growth-v1 (SEC metrics V2.2): the series starts from the
-# tag with the latest year and a series behind the latest annual report scores as missing. Declared, not
-# active: activating it is the owner's decision after seeing its effect; it would start without evidence.
+# tag with the latest year and a series behind the latest annual report scores as missing. Activated by the
+# owner on 2026-11-06 after its effect on the day's ranking (#339: same Top-20, 23 companies change that
+# metric); it starts without evidence and inherits none from GABI-MF-v3, which stays declared.
 GABI_MF_V4 = ModelVersion("GABI-MF-v4", "GABI multifactor v4 · métricas SEC V2.2 y controles de entrada",
                           FROZEN_WEIGHTS, GABI_MF_V1.technical, benchmark_symbol="SPY", risk_free_rate=0.04,
                           metrics_version=revenue_growth.METRICS_VERSION, input_checks=input_checks.VERSION)
 
 VERSIONS = MappingProxyType({version.model_id: version
                              for version in (GABI_MF_V1, GABI_MF_V2, GABI_MF_V3, GABI_MF_V4)})
-ACTIVE_MODEL_ID = GABI_MF_V3.model_id
+ACTIVE_MODEL_ID = GABI_MF_V4.model_id
 
 
 def active_model(model_id: str = ACTIVE_MODEL_ID) -> ModelVersion:

@@ -17,7 +17,8 @@ from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 ACTIVE_MODEL_CODE = ("infrastructure/model_versions.py", "domain/market/model_version.py",
                      "domain/market/sec_metrics_v2.py", "application/market/stored_metrics_v2.py",
                      "application/market/ranking.py", "infrastructure/storage/market.py",
-                     "infrastructure/legacy/market.py", "domain/market/input_checks.py")
+                     "infrastructure/legacy/market.py", "domain/market/input_checks.py",
+                     "domain/market/revenue_growth.py", "application/market/stored_revenue_growth.py")
 
 
 class LegacyPeriodicOperations:
