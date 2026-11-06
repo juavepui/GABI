@@ -14,6 +14,7 @@ from typing import Protocol
 import pandas as pd
 
 from gabi.application.errors import QueryError
+from gabi.domain.portfolio import exposure_reading, stress_reading
 from gabi.domain.portfolio import risk_policy as rules
 from gabi.domain.portfolio.selection import target_portfolio
 
@@ -102,8 +103,11 @@ class PortfolioRisk:
                 "daily_volume_eur": dollar_volume * rate if dollar_volume and rate else None,
                 "beta": _number(info.get("beta_calc"))})
         exposure = rules.exposures(positions, policy)
+        # #324: the issuer weights in one sentence, against the policy's limit per company.
+        exposure["issuers_reading"] = exposure_reading.holdings_issuers(exposure["issuers"], policy.max_issuer_weight)
         days = {row["symbol"]: row["days_to_trade"] for row in exposure["liquidity"]}
         stress = rules.stress([row | {"days_to_trade": days.get(row["symbol"])} for row in positions], tolerance)
+        stress["reading"] = stress_reading.scenarios(stress["scenarios"], tolerance, exposure["total_eur"])  # #325
         return {"as_of": self.today().isoformat(), "policy_version": policy.version, "policy_revision": revision,
                 "policy": rules.stored(policy), "loss_tolerance": tolerance, "positions": len(positions),
                 "unvalued": [row["symbol"] for row in valued if row["status"] != "ok"],

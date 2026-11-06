@@ -8,6 +8,7 @@ import json
 import sqlite3
 from collections import OrderedDict
 from collections.abc import Iterator
+from contextlib import closing
 from dataclasses import replace
 from datetime import UTC, date, datetime
 from io import StringIO
@@ -21,9 +22,11 @@ from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot
 from gabi.application.market.ranking import Calculators, MarketBatch, build_ranking
 from gabi.domain.market.identity import resolve_claims
-from gabi.domain.market.model_version import SEC_METRICS_V1, SEC_METRICS_VERSIONS
+from gabi.domain.market.model_version import SEC_METRICS_V1, SEC_METRICS_V2_2, SEC_METRICS_VERSIONS
+from gabi.domain.market.revenue_growth import stored_growth
 from gabi.domain.market.sec_metrics_v2 import stored_roic
 from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage import ranking_revision, ranking_snapshot_file
 
 
 class SqlInputs:
@@ -140,39 +143,72 @@ class ReadOnlyMarket:
         self.tables = {row[0] for row in self.rows("SELECT name FROM sqlite_schema WHERE type='table'")}
 
     def token(self, universe_bytes: bytes | None) -> str:
-        version = self.rows("PRAGMA data_version")[0][0] if self.connection is not None else None
-        signature = ("market-query-v1", self.stamp(self.db), self.stamp(self.db.with_name("gabi.db-wal")),
-                     version, hashlib.sha256(universe_bytes or b"").hexdigest())
+        """Cache token of the ranking's inputs. With the revision triggers installed (#342) only a change in a
+        table the ranking reads (or in the schema) changes it; otherwise any write to gabi.db does."""
+        universe = hashlib.sha256(universe_bytes or b"").hexdigest()
+        stamp = self.stamp(self.db)
+        inputs = ranking_revision.read(self.connection) if self.connection is not None else None
+        if inputs is not None and stamp is not None:
+            signature: tuple = ("market-query-v2", stamp[:2], inputs, universe)
+        else:
+            version = self.rows("PRAGMA data_version")[0][0] if self.connection is not None else None
+            signature = ("market-query-v1", stamp, self.stamp(self.db.with_name("gabi.db-wal")), version, universe)
         return hashlib.sha256(repr(signature).encode()).hexdigest()
 
+    def tracked(self) -> bool:
+        """Whether the token follows only the ranking's inputs (the revision triggers are installed)."""
+        return self.connection is not None and ranking_revision.read(self.connection) is not None
+
+    def _short_connection(self) -> sqlite3.Connection | None:
+        """A private read-only connection for small reads that must not queue behind a ranking (#342).
+
+        The shared connection and ``self.lock`` belong to the ranking, which can take a minute to compute; the
+        mode, the weights and a company's events are a few rows and open their own connection instead."""
+        if self.stamp(self.db) is None:
+            return None
+        db = sqlite3.connect(self.db.as_uri() + "?mode=ro", uri=True, timeout=2)
+        db.execute("PRAGMA query_only=ON")
+        return db
+
+    @staticmethod
+    def _bounded(db: sqlite3.Connection, sql: str, params: tuple = (), maximum: int = 10_000) -> list[tuple]:
+        values = db.execute(sql, params).fetchmany(maximum + 1)
+        if len(values) > maximum:
+            raise QueryError("resource_limit", "El histórico supera el presupuesto de lectura; no se ha truncado el cálculo.")
+        return values
+
     def local_model(self) -> LocalModel:
-        with self.lock:
-            try:
-                mode_bytes, weights_bytes = self.small_file("app_mode.json"), self.small_file("weights.json")
-                mode = json.loads(mode_bytes).get("mode", "INVESTOR") if mode_bytes else "INVESTOR"
-                if mode not in {"INVESTOR", "RESEARCH"}:
-                    raise ValueError("Invalid mode")
-                weights = json.loads(weights_bytes) if weights_bytes else dict(self.policy.weights)
-                if not isinstance(weights, dict):
-                    raise ValueError("Invalid weights")
-                weights = {str(key): float(value) for key, value in weights.items()}
-                self.connect()
-                self.discover()
+        """Mode, weights and tracking state; never waits for a ranking being computed (#342)."""
+        try:
+            mode_bytes, weights_bytes = self.small_file("app_mode.json"), self.small_file("weights.json")
+            mode = json.loads(mode_bytes).get("mode", "INVESTOR") if mode_bytes else "INVESTOR"
+            if mode not in {"INVESTOR", "RESEARCH"}:
+                raise ValueError("Invalid mode")
+            weights = json.loads(weights_bytes) if weights_bytes else dict(self.policy.weights)
+            if not isinstance(weights, dict):
+                raise ValueError("Invalid weights")
+            weights = {str(key): float(value) for key, value in weights.items()}
+            db = self._short_connection()
+            if db is None:
+                return LocalModel(mode, weights, None, False)
+            with closing(db):
+                tables = {row[0] for row in self._bounded(db, "SELECT name FROM sqlite_schema WHERE type='table'")}
                 blind_id = None
-                if {"blind_validations", "blind_validation_periods"} <= self.tables:
+                if {"blind_validations", "blind_validation_periods"} <= tables:
                     # Metadata only. Never SELECT results, prices, symbols or sealed rankings.
-                    candidates = self.rows("SELECT id,weights_json FROM blind_validations v WHERE status='locked' "
-                                           "AND EXISTS(SELECT 1 FROM blind_validation_periods p WHERE p.validation_id=v.id)")
+                    candidates = self._bounded(db, "SELECT id,weights_json FROM blind_validations v WHERE status='locked' "
+                                               "AND EXISTS(SELECT 1 FROM blind_validation_periods p WHERE p.validation_id=v.id)")
                     for candidate_id, raw_weights in candidates:
                         if self.policy.matches(json.loads(raw_weights)):
                             blind_id = int(candidate_id)
                             break
-                weak = bool(self.rows("SELECT 1 FROM experiments WHERE stage='LIVE_FORWARD' LIMIT 1")) if "experiments" in self.tables else False
-                return LocalModel(mode, weights, blind_id, weak)
-            except QueryError:
-                raise
-            except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
-                raise QueryError("local_state_error", "No se puede leer el estado local del modelo.") from exc
+                weak = bool(self._bounded(db, "SELECT 1 FROM experiments WHERE stage='LIVE_FORWARD' LIMIT 1")) \
+                    if "experiments" in tables else False
+            return LocalModel(mode, weights, blind_id, weak)
+        except QueryError:
+            raise
+        except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
+            raise QueryError("local_state_error", "No se puede leer el estado local del modelo.") from exc
 
     def universe(self, contents: bytes | None) -> pd.DataFrame:
         if not contents:
@@ -191,6 +227,45 @@ class ReadOnlyMarket:
         return (revision, today.isoformat(), tuple(sorted(weights.items())), self.benchmark_symbol,
                 self.risk_free_rate, self.policy.model_id, self.metrics_version)
 
+    @property
+    def snapshot_path(self):
+        return self.settings.data_dir / ranking_snapshot_file.NAME
+
+    def _remember(self, key: tuple, snapshot: RankingSnapshot) -> None:
+        self.cache[key] = monotonic(), snapshot
+        self.cache.move_to_end(key)
+        while len(self.cache) > self.settings.cache_entries:
+            self.cache.popitem(last=False)
+
+    def _fresh(self, key: tuple) -> RankingSnapshot | None:
+        """The memory entry while fresh; else the daily task's saved ranking when its key matches exactly (#342).
+
+        Only a key built on the ranking-input revision can match a saved file, because ``save_snapshot`` refuses
+        to write one for an untracked database (its file-stamp token depends on the connection's data_version)."""
+        existing = self.cache.get(key)
+        if existing and monotonic() - existing[0] < self.settings.cache_seconds:
+            self.cache.move_to_end(key)
+            return existing[1]
+        stored = ranking_snapshot_file.load(self.snapshot_path, key)
+        if isinstance(stored, RankingSnapshot):
+            self._remember(key, stored)
+            return stored
+        return None
+
+    def save_snapshot(self, weights: dict[str, float], today: date) -> dict:
+        """Explicit write (daily task): compute or reuse the ranking and save it for the next server start."""
+        with self.lock:
+            self.connect()
+            if not self.tracked():
+                return {"guardado": False, "motivo": "sin contador de revisión de datos"}
+            raw = self.small_file("sp500_constituents.csv")
+            snapshot = self.ranking(weights, today)
+            key = self._key(self.token(raw), weights, today)
+            if snapshot.revision != key[0]:
+                return {"guardado": False, "motivo": "los datos cambiaron durante el cálculo"}
+            size = ranking_snapshot_file.save(self.snapshot_path, key, replace(snapshot, cache_hit=False))
+            return {"guardado": True, "dia": today.isoformat(), "empresas": len(snapshot.table), "bytes": size}
+
     def cached_ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot | None:
         """The cached snapshot while it is fresh. Never computes; None while another request computes it."""
         if not self.lock.acquire(blocking=False):
@@ -198,10 +273,8 @@ class ReadOnlyMarket:
         try:
             self.connect()
             key = self._key(self.token(self.small_file("sp500_constituents.csv")), weights, today)
-            existing = self.cache.get(key)
-            if existing and monotonic() - existing[0] < self.settings.cache_seconds:
-                return replace(existing[1], cache_hit=True)
-            return None
+            existing = self._fresh(key)
+            return replace(existing, cache_hit=True) if existing else None
         except (OSError, ValueError, sqlite3.Error, QueryError):
             return None
         finally:
@@ -214,10 +287,9 @@ class ReadOnlyMarket:
                 raw = self.small_file("sp500_constituents.csv")
                 revision = self.token(raw)
                 key = self._key(revision, weights, today)
-                existing = self.cache.get(key)
-                if existing and monotonic() - existing[0] < self.settings.cache_seconds:
-                    self.cache.move_to_end(key)
-                    return replace(existing[1], cache_hit=True)
+                existing = self._fresh(key)
+                if existing:
+                    return replace(existing, cache_hit=True)
                 universe = self.universe(raw)
                 if self.connection is not None:
                     self.connection.execute("BEGIN")
@@ -233,10 +305,7 @@ class ReadOnlyMarket:
                 stamp = self.stamp(self.settings.data_dir / "sp500_constituents.csv")
                 cached_at = datetime.fromtimestamp(stamp[3] / 1e9, UTC) if stamp else None
                 snapshot = RankingSnapshot(table, identities, revision, datetime.now(UTC), cached_at)
-                self.cache[key] = monotonic(), snapshot
-                self.cache.move_to_end(key)
-                while len(self.cache) > self.settings.cache_entries:
-                    self.cache.popitem(last=False)
+                self._remember(key, snapshot)
                 return snapshot
             except QueryError:
                 raise
@@ -287,12 +356,18 @@ class ReadOnlyMarket:
         frame["date"] = pd.to_datetime(frame["date"])
         return {str(symbol): group.drop(columns="symbol").set_index("date") for symbol, group in frame.groupby("symbol")}
 
-    def fundamentals(self, symbols: tuple[str, ...]) -> dict:
-        if not symbols or "fundamentals" not in self.tables:
+    def fundamentals(self, symbols: tuple[str, ...], db: sqlite3.Connection | None = None) -> dict:
+        """``db``: a private connection (#342) instead of the ranking's shared one."""
+        if db is not None:
+            run = lambda sql, params, maximum: self._bounded(db, sql, params, maximum)  # noqa: E731
+            tables = {row[0] for row in self._bounded(db, "SELECT name FROM sqlite_schema WHERE type='table'")}
+        else:
+            run, tables = self.rows, self.tables
+        if not symbols or "fundamentals" not in tables:
             return {}
         placeholders = ",".join("?" * len(symbols))
         bound = self.settings.max_small_file_bytes
-        rows = self.rows("SELECT symbol,fetched_at,substr(CAST(info_json AS BLOB),1,?),"
+        rows = run("SELECT symbol,fetched_at,substr(CAST(info_json AS BLOB),1,?),"
                          "substr(CAST(quarterly_income_json AS BLOB),1,?),"
                          f"substr(CAST(quarterly_cashflow_json AS BLOB),1,?) FROM fundamentals WHERE symbol IN ({placeholders})",
                          (bound + 1, bound + 1, bound + 1, *symbols), len(symbols))
@@ -302,7 +377,8 @@ class ReadOnlyMarket:
                          "quarterly_cashflow": json.loads(cashflow)} for symbol, fetched, info, income, cashflow in rows}
 
     def sec(self, symbols: tuple[str, ...], sectors: dict[str, str | None] | None = None) -> dict:
-        """SEC metrics of the batch. With SEC metrics V2 only the ROIC comes from ``sec_metrics_v2``:
+        """SEC metrics of the batch. With SEC metrics V2 the ROIC comes from ``sec_metrics_v2`` (and with V2.2
+        the revenue growth from ``sec_revenue_growth``, #339):
         absent, outdated or financial-sector rows leave it missing, never the V1 value (#245)."""
         if not symbols or "edgar_metrics" not in self.tables:
             return {}
@@ -321,6 +397,16 @@ class ReadOnlyMarket:
                 symbols, len(symbols))}
         for symbol, metrics in result.items():
             metrics["roic"] = stored_roic(stored.get(symbol), sector=(sectors or {}).get(symbol))
+        if self.metrics_version == SEC_METRICS_V2_2:
+            # #339: the revenue growth of revenue-growth-v1; an absent or outdated row leaves it missing.
+            growth = {}
+            if "sec_revenue_growth" in self.tables:
+                growth_columns = ("rule_version", "revenue_cagr_3y", "state")
+                growth = {row[0]: dict(zip(growth_columns, row[1:], strict=True)) for row in self.rows(
+                    f"SELECT symbol,{','.join(growth_columns)} FROM sec_revenue_growth WHERE symbol IN ({placeholders})",
+                    symbols, len(symbols))}
+            for symbol, metrics in result.items():
+                metrics["revenue_cagr_3y"] = stored_growth(growth.get(symbol))
         return result
 
     def identities(self, symbols: tuple[str, ...], today: date) -> dict[str, dict]:
@@ -353,19 +439,19 @@ class ReadOnlyMarket:
 
     def company_events(self, symbol: str, today: date) -> list[dict]:
         """Dated corporate events parsed from the cached fundamentals record (no download)."""
-        with self.lock:
-            try:
-                self.connect()
-                self.discover()
-                record = self.fundamentals((symbol,)).get(symbol)
-                if not record:
-                    return []
-                return self.calculators.events(symbol, record.get("info", {}), record.get("fetched_at", ""),
-                                               today=today)
-            except QueryError:
-                raise
-            except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
-                raise QueryError("data_read_error", "No se pueden consultar los datos de la empresa.") from exc
+        try:
+            db = self._short_connection()
+            if db is None:
+                return []
+            with closing(db):
+                record = self.fundamentals((symbol,), db).get(symbol)
+            if not record:
+                return []
+            return self.calculators.events(symbol, record.get("info", {}), record.get("fetched_at", ""), today=today)
+        except QueryError:
+            raise
+        except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
+            raise QueryError("data_read_error", "No se pueden consultar los datos de la empresa.") from exc
 
     def price_history(self, symbol: str, limit: int, revision: str) -> pd.DataFrame:
         with self.lock:

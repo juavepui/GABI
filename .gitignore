@@ -15,6 +15,7 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 data/*.bak
+data/ranking_snapshot.pkl*
 data/cbop/
 data/nsi/
 data/*.csv
@@ -38,4 +39,12 @@ data/research_reproductions/
 
 .streamlit/secrets.toml
 data/periodic_tasks/
+data/live_ledger/
 data/kaggle/
+
+# Restos de tests y auditorías locales
+.audit_*/
+.pytest_tmp_*/
+**/.pytest_tmp_*/
+data/test_tmp_*/
+earnings_measure_*/

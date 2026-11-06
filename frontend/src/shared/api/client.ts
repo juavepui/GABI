@@ -35,6 +35,10 @@ import type {
   ComparisonResponse,
   RiskWindowsResponse,
   MacroResponse,
+  MarketHealthResponse,
+  HeatmapResponse,
+  ScoreHistoryResponse,
+  AnnualResultsResponse,
   SaveSnapshot,
   Snapshot,
   SnapshotList,
@@ -46,6 +50,7 @@ import type {
   HoldingCreate,
   HoldingDeleted,
   HoldingImportResult,
+  HoldingsPerformance,
   HoldingsSummary,
   HoldingsBenchmarkResult,
   InvestorBenchmarkResult,
@@ -123,6 +128,8 @@ import type {
   SnapshotProgress,
   SnapshotRenamed,
   CompanyResearchResponse,
+  CompanyAccountingFlags,
+  CompanyCurrentReports,
   CompanyFilingChanges,
   CompanyChecklistResponse,
   ChecklistSectorMultiples,
@@ -350,6 +357,18 @@ export function getCompanyFilingChanges(
   signal?: AbortSignal,
 ): Promise<CompanyFilingChanges> {
   return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/filing-changes', signal);
+}
+export function getCompanyAccountingFlags(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyAccountingFlags> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/accounting-flags', signal);
+}
+export function getCompanyCurrentReports(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyCurrentReports> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/current-reports', signal);
 }
 export function getRankingStability(signal?: AbortSignal): Promise<RankingStability> {
   return get('/api/v1/ranking/stability', signal);
@@ -705,6 +724,28 @@ export function getMacro(signal?: AbortSignal): Promise<MacroResponse> {
   return get('/api/v1/market/macro', signal);
 }
 
+export function getCompanyScoreHistory(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<ScoreHistoryResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/score-history', signal);
+}
+
+export function getCompanyAnnualResults(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<AnnualResultsResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/annual-results', signal);
+}
+
+export function getHeatmap(signal?: AbortSignal): Promise<HeatmapResponse> {
+  return get('/api/v1/market/heatmap', signal);
+}
+
+export function getMarketHealth(signal?: AbortSignal): Promise<MarketHealthResponse> {
+  return get('/api/v1/market/health', signal);
+}
+
 export function getSnapshots(signal?: AbortSignal): Promise<SnapshotList> {
   return get('/api/v1/market/snapshots', signal);
 }
@@ -772,6 +813,9 @@ export function getSimulationResult(id: number, signal?: AbortSignal): Promise<S
   return get('/api/v1/portfolio/simulations/' + id + '/result', signal);
 }
 
+export function getHoldingsPerformance(signal?: AbortSignal): Promise<HoldingsPerformance> {
+  return get('/api/v1/portfolio/holdings/performance', signal);
+}
 export function getHoldings(signal?: AbortSignal): Promise<HoldingsSummary> {
   return get('/api/v1/portfolio/holdings', signal);
 }

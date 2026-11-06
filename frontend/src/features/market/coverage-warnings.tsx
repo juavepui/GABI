@@ -22,7 +22,7 @@ export function CoverageWarnings() {
       {warnings.length > 0 ? (
         <div
           role="status"
-          className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="rounded-lg border border-warning-border bg-warning-soft p-3 text-warning-ink"
         >
           <p className="font-medium">
             Ojo: en algún apartado de la puntuación faltan muchos datos (

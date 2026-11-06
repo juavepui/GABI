@@ -110,7 +110,7 @@ class CompanySyncRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
     symbol: str = Field(pattern=r"^[A-Za-z0-9^][A-Za-z0-9^.\-]{0,19}$")
-    dataset: Literal["surprises", "estimates", "insiders"]
+    dataset: Literal["surprises", "estimates", "insiders", "current_reports"]
 
 
 class DataUpdateRequest(BaseModel):
@@ -135,7 +135,7 @@ class DataHealthRequest(BaseModel):
 
 
 class CreateJobRequest(BaseModel):
-    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "backtest_v3_comparison", "idea_alerts"]
+    kind: Literal["refresh", "symbols", "quality", "backtest", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "ranking_parity", "input_checks", "backtest_v3_comparison", "idea_alerts"]
     idempotency_key: str = Field(min_length=8, max_length=100)
     symbols: list[str] = Field(default_factory=list, max_length=10)
     start: str | None = None
@@ -230,9 +230,22 @@ class SmallmidNotice(BaseModel):
     analyzed: bool
 
 
+class PeriodicNotice(BaseModel):
+    """Whether the daily follow-up runs (#290): age of the newest live decision that did not fail."""
+
+    status: Literal["never", "late", "ok"]
+    last_run_at: str | None
+    last_status: str | None
+    last_working_at: str | None
+    business_days: int | None
+    max_business_days: int
+    model_id: str | None
+
+
 class NoticesResponse(BaseModel):
-    """Home notices: blind rebalances due within a week and the state of the #44 analysis."""
+    """Home notices: blind rebalances due within a week, the #44 analysis and the daily follow-up."""
 
     blind_rebalances: list[BlindRebalanceNotice]
     blind_available: bool
     smallmid: SmallmidNotice | None
+    periodic: PeriodicNotice | None = None

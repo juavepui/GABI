@@ -40,6 +40,7 @@ from gabi.infrastructure.providers import source_retry
 from gabi.infrastructure.providers.sec_cik import SecTickerMap
 from gabi.infrastructure.providers.sec_xbrl import SecXbrl
 from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.current_reports import SqliteCurrentReports
 from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
@@ -390,7 +391,8 @@ def synchronize_issuer(symbol: str, cik: str, *, full_refresh: bool = False) -> 
     return synchronize(symbol, cik, store=SqliteXbrl(config.DB_PATH, _now), submissions=fetch_submissions,
                        companyfacts=fetch_company_facts, checkpoint=events.get, attempt_factory=attempt,
                        retry=source_retry.retry, fingerprint=sync_rules.fingerprint, now=_now,
-                       full_refresh=full_refresh, fiscal_alignment=fiscal_alignment_enabled())
+                       full_refresh=full_refresh, fiscal_alignment=fiscal_alignment_enabled(),
+                       current_reports=SqliteCurrentReports(config.DB_PATH, _now).save_submissions)
 
 
 def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,

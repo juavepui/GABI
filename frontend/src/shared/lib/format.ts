@@ -33,13 +33,19 @@ export function formatPercent(
 
 export function formatMoney(
   value: number | null | undefined,
-  { currency = 'USD', digits = 0 }: { currency?: string; digits?: number } = {},
+  {
+    currency = 'USD',
+    digits = 0,
+    grouping = false,
+  }: { currency?: string; digits?: number; grouping?: boolean } = {},
 ): string {
   if (value == null || Number.isNaN(value)) return '—';
+  // Spanish leaves 4-digit amounts ungrouped («3500 €»); `grouping` writes «3.500 €», as backend sentences do.
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency,
     maximumFractionDigits: digits,
+    ...(grouping ? { useGrouping: true } : {}),
   }).format(value);
 }
 

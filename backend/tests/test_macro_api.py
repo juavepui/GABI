@@ -56,10 +56,11 @@ def test_macro_says_whether_the_cached_series_can_be_refreshed(tmp_path):
 
 
 def test_every_series_declares_frequency_aggregation_and_the_home_strip(tmp_path):
-    from gabi.domain.market.fred import SERIES, series_metadata
+    from gabi.domain.market.fred import series_metadata
+    from gabi.domain.market.macro_series import synchronized_series
     with TestClient(create_app(Settings(tmp_path))) as api:
         rows = {row["series_id"]: row for row in api.get("/api/v1/market/macro").json()["items"]}
-    assert set(rows) == set(SERIES)
+    assert set(rows) == set(synchronized_series())  # The captured series and those added in #309.
     assert (rows["FEDFUNDS"]["frequency"], rows["FEDFUNDS"]["aggregation"]) == ("monthly", "average")
     assert (rows["CPIAUCSL"]["frequency"], rows["CPIAUCSL"]["aggregation"]) == ("monthly", "year_over_year")
     assert (rows["WALCL"]["frequency"], rows["WALCL"]["aggregation"]) == ("weekly", "wednesday_level")

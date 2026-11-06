@@ -112,6 +112,17 @@ class SqliteCacheReads:
                     found[symbol] = rows[0]
             return found
 
+    def split_dates(self, symbols: list[str]) -> dict[str, list[str]]:
+        """Recorded split dates by symbol (#295): a price jump on those days is explained."""
+        with read_only(self.path, self.max_field_bytes) as (db, tables):
+            if db is None or "splits" not in tables:
+                return {}
+            found: dict[str, list[str]] = {}
+            for symbol, day in self._batched(db, "SELECT symbol,date FROM splits WHERE symbol IN ({marks}) "
+                                             "ORDER BY symbol,date", symbols):
+                found.setdefault(symbol, []).append(str(day)[:10])
+            return found
+
     def split_ratios_after(self, symbol: str, as_of: str) -> list[float]:
         with read_only(self.path, self.max_field_bytes) as (db, tables):
             if db is None or "splits" not in tables:

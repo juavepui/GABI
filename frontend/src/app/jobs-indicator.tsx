@@ -69,17 +69,13 @@ function Toasts({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: string) =>
             key={toast.id}
             className={
               'flex items-start gap-3 rounded-xl border bg-card p-3 text-sm shadow-lg ' +
-              (ok ? 'border-emerald-300' : 'border-rose-300')
+              (ok ? 'border-success-border' : 'border-danger-border')
             }
           >
             {ok ? (
-              <CheckCircle2
-                size={18}
-                className="mt-0.5 shrink-0 text-emerald-600"
-                aria-hidden="true"
-              />
+              <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
             ) : (
-              <CircleX size={18} className="mt-0.5 shrink-0 text-rose-600" aria-hidden="true" />
+              <CircleX size={18} className="mt-0.5 shrink-0 text-danger" aria-hidden="true" />
             )}
             <div className="min-w-0 flex-1">
               <p className="font-medium">{toast.name}</p>
@@ -150,7 +146,7 @@ export function JobsIndicator() {
           className={
             'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ' +
             (active.length
-              ? 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+              ? 'border-success-border bg-success-soft text-success-ink hover:bg-success-soft'
               : 'bg-background hover:bg-muted')
           }
         >
@@ -161,7 +157,7 @@ export function JobsIndicator() {
           )}
           <span className="hidden sm:inline">Trabajos</span>
           {active.length > 0 && (
-            <span className="rounded-full bg-emerald-600 px-1.5 text-white tabular-nums">
+            <span className="rounded-full bg-success px-1.5 text-success-foreground tabular-nums">
               {active.length}
             </span>
           )}
@@ -204,8 +200,8 @@ export function JobsIndicator() {
                       <span
                         className={
                           job.status === 'succeeded'
-                            ? 'shrink-0 text-emerald-700'
-                            : 'shrink-0 text-rose-700'
+                            ? 'shrink-0 text-success-ink'
+                            : 'shrink-0 text-danger-ink'
                         }
                       >
                         {JOB_STATES[job.status] ?? job.status}

@@ -271,6 +271,16 @@ def synthetic_job(command, app):
         from gabi.infrastructure.legacy.live_ledger import run_live_report
 
         return run_live_report(command.live_report["model_version"])
+    if command.kind == "company_sync" and command.company["dataset"] == "current_reports":
+        # #292: the real store and rules over the real SEC rows of the backend fixture, issued to the fixture CIK.
+        from gabi.infrastructure.legacy.company import sync_current_reports
+
+        rows = json.loads((Path(__file__).parents[2] / "backend" / "tests" / "fixtures" / "sec_8k_submissions.json")
+                          .read_text(encoding="utf-8"))["SMCI"]
+        failed = sync_current_reports(Path(app.state.settings.data_dir), command.company["symbol"],
+                                      submissions=lambda cik: {**rows, "cik": cik})
+        return {"kind": "company_sync", "symbol": command.company["symbol"], "dataset": "current_reports",
+                "synced": not failed, "reason": next(iter(failed.values()), None)}
     if command.kind == "company_sync":  # No network in tests: report a successful empty sync.
         return {"kind": "company_sync", "symbol": command.company["symbol"],
                 "dataset": command.company["dataset"], "synced": True, "reason": None}
@@ -354,10 +364,38 @@ def synthetic_job(command, app):
 
         return refresh_prices(SqliteSimulations(Path(app.state.settings.data_dir)), command.portfolio_id,
                               command.symbols[0] if command.symbols else None, fx_symbol, download)
+    if command.kind == "input_checks":  # Read-only over the fixture: the real worker path (#295).
+        from gabi.infrastructure.legacy.jobs import LegacyExecutor
+
+        return LegacyExecutor(app.state.settings, today=lambda: TODAY)(command)
     if command.kind == "metrics_comparison":  # Read-only over the fixture: the real worker path.
         from gabi.infrastructure.legacy.jobs import LegacyExecutor
 
         return LegacyExecutor(app.state.settings, today=lambda: TODAY)(command)
+    if command.kind == "ranking_parity":  # The real worker path; only the historical engine is replaced.
+        from gabi.domain.market import scoring
+        from gabi.infrastructure.legacy.jobs import LegacyExecutor
+
+        def engine(symbols, day, weights):
+            """The app's own rows with the first company's PE tripled, as if the 10-K disagreed with Yahoo."""
+            from gabi.infrastructure.legacy.market import calculators, model_policy
+            from gabi.infrastructure.model_versions import active_model
+            from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+            model = active_model()
+            market = ReadOnlyMarket(app.state.settings, calculators(model.technical), model_policy(model),
+                                    model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+            try:
+                frame = market.ranking(weights, day).table
+            finally:
+                market.close()
+            frame = frame.drop(columns=[c for c in frame if c.endswith(("_pct", "_score"))])
+            first = frame["pe"].first_valid_index()
+            if first is not None:
+                frame.loc[first, "pe"] *= 3
+            return scoring.build_scores(frame, weights=weights)
+
+        return LegacyExecutor(app.state.settings, today=lambda: TODAY, parity_engine=engine)(command)
     if command.kind == "sim_compare":
         return app.state.simulations.compare()
     if command.kind == "quality":

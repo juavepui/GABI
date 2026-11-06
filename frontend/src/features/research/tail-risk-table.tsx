@@ -86,7 +86,7 @@ export function TailRiskTable({
           </tbody>
         </table>
       </div>
-      <ul className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-400">
+      <ul className="mt-2 space-y-1 text-xs text-warning-ink">
         {series.flatMap(tailWarnings).map((warning) => (
           <li key={warning}>{warning}</li>
         ))}

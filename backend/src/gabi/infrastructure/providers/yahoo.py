@@ -4,10 +4,23 @@ yfinance owns its HTTP and response sizes, so no byte budget is added here. Call
 ``yfinance`` attributes when made, which keeps one replaceable transport for tests and tools.
 """
 
+import socket
 from pathlib import Path
 
 import pandas as pd
 import yfinance
+
+PRICE_HOST = "query1.finance.yahoo.com"
+
+
+def reachable(timeout: float = 5.0) -> bool:
+    """True when the Yahoo price host resolves and accepts a TCP connection. Without this, a refresh
+    started right after the computer wakes up fails for every company with a DNS error."""
+    try:
+        with socket.create_connection((PRICE_HOST, 443), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
 def download(tickers: list[str], **options) -> pd.DataFrame:

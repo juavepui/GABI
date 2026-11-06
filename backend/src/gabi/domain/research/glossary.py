@@ -6,6 +6,24 @@ TERMS: dict[str, tuple[str, str]] = {
             "Probabilidad de que la estrategia tenga de verdad una rentabilidad por riesgo (Sharpe) "
             "positiva, y no solo por suerte. Tiene en cuenta cuántos datos hay y si hubo sustos "
             "extremos: un Sharpe alto con pocos años de datos puede dar un PSR modesto."),
+    "twr": ("Rentabilidad ponderada por tiempo (TWR)",
+            "Cuánto han ganado tus inversiones sin que influya cuándo metiste o sacaste dinero. Es la cifra "
+            "que sirve para comparar tu forma de elegir con un índice: si metes mucho dinero justo antes de "
+            "una caída, la TWR no te castiga por ese momento, solo por lo que hicieron tus empresas."),
+    "money_weighted": ("Rentabilidad del dinero invertido (TIR)",
+                       "Lo que ha rendido al año tu dinero teniendo en cuenta cuánto y cuándo lo pusiste o lo "
+                       "sacaste. Es tu experiencia real: si metiste mucho antes de una subida, sale mejor que la "
+                       "TWR. Solo se calcula con al menos un año de historia."),
+    "attribution": ("Atribución de la rentabilidad",
+                    "De dónde sale lo que has ganado o perdido: cuántos puntos aporta cada empresa o sector. "
+                    "Ganancia de una empresa = lo que vale hoy + lo que cobraste al vender + dividendos netos − "
+                    "lo que pagaste al comprar; los puntos se calculan sobre todo lo que compraste y suman el "
+                    "total."),
+    "input_checks": ("Controles de datos imposibles",
+                     "Reglas fijas que revisan cada dato antes de usarlo: un PER de 40.000, un margen del 300 % o "
+                     "un precio que sube un 80 % en un día sin split no son creíbles. El dato se guarda y se "
+                     "muestra con su motivo, pero el modelo en uso no lo usa para puntuar: cuenta como un dato "
+                     "que falta."),
     "dsr": ("DSR (Deflated Sharpe Ratio)",
             "Como el PSR, pero descontando cuántas variantes se probaron antes de elegir esta. Si "
             "pruebas 100 configuraciones, alguna saldrá bien por casualidad; el DSR resta esa ventaja "
@@ -86,6 +104,89 @@ TERMS: dict[str, tuple[str, str]] = {
                    "Puesto de una empresa frente a las de su mismo sector, en una escala de 0 a 100. Un 80 quiere "
                    "decir que sale mejor que el 80 % de su sector en esa métrica (ya teniendo en cuenta si "
                    "conviene un número alto o bajo). 100 es la mejor del sector."),
+    "spearman": ("Acuerdo de orden (Spearman)",
+                 "Mide si dos listas ordenan las empresas igual. De −1 a 1: 1 = exactamente el mismo orden; "
+                 "0 = el orden de una no dice nada del de la otra. Solo mira los puestos, no los números: dos "
+                 "listas pueden tener un 0,9 aunque sus puntuaciones sean distintas."),
+    "form_8k": ("8-K (hecho relevante)",
+                "Aviso que una empresa de EE. UU. envía a la SEC en pocos días cuando pasa algo importante: "
+                "resultados, una compra, un cambio de directivos, de auditor… Es la forma oficial de "
+                "contarlo a todos los inversores a la vez. Un 8-K/A corrige o completa uno anterior."),
+    "item_8k": ("Item de un 8-K",
+                "Código con el que la empresa marca de qué trata su 8-K, por ejemplo 2.02 = resultados o "
+                "5.02 = cambio de directivos. Lo pone la propia empresa; GABI solo lo traduce con una tabla "
+                "fija, sin leer ni interpretar el texto. Un código que no está en la tabla se muestra «sin "
+                "clasificar»."),
+    "accession": ("Número de registro (accession)",
+                  "Identificador único que la SEC da a cada documento presentado, como 0000320193-25-000071. "
+                  "Sirve para encontrar exactamente ese documento en la web de la SEC."),
+    "restatement": ("Reexpresión de cuentas",
+                    "Cuando una empresa reconoce que unas cuentas ya publicadas tenían errores y no se deben "
+                    "usar (Item 4.02 del 8-K). Es una señal seria: los números con que se analizó la empresa "
+                    "pueden estar mal."),
+    "accounting_flags": ("Señales contables",
+                         "Comprobaciones automáticas sobre las cifras que la empresa presenta a la SEC que, a "
+                         "veces, aparecen antes de un problema: cuentas corregidas, informes tarde, cambio de "
+                         "auditor… Cada una tiene una regla y un umbral fijos. Una señal pide mirar con más "
+                         "cuidado; no demuestra nada ni dice que haya que vender."),
+    "form_10ka": ("10-K/A (informe anual corregido)",
+                  "Versión corregida o ampliada del informe anual (10-K). A veces solo añade información que "
+                  "faltaba; otras veces corrige cifras. Conviene ver qué cambió."),
+    "nt_10k": ("NT 10-K (aviso de retraso)",
+               "Aviso a la SEC de que la empresa no presentará su informe anual a tiempo. Puede ser un "
+               "problema administrativo, pero también una señal de dificultades con las cuentas."),
+    "accruals": ("Devengos (beneficio frente a caja)",
+                 "Parte del beneficio que todavía no se ha cobrado en efectivo. Se mide como (beneficio neto − "
+                 "caja generada por el negocio) / activos medios. Si es muy alta, el beneficio depende de "
+                 "estimaciones contables más que de dinero que entra."),
+    "dilution": ("Dilución",
+                 "Cuando la empresa tiene más acciones que antes (por ejemplo, porque emite acciones o paga "
+                 "a sus empleados con ellas), cada acción representa una parte más pequeña de la empresa. "
+                 "Es como repartir la misma tarta en más trozos."),
+    "ttm_vs_annual": ("Últimos 12 meses frente a ejercicio anual",
+                      "Yahoo suma los cuatro últimos trimestres (últimos 12 meses, TTM) y se actualiza cada "
+                      "trimestre. El 10-K de la SEC es el informe anual: cubre un ejercicio cerrado y llega 2 o 3 "
+                      "meses después. Para la misma empresa y el mismo día, el PER puede salir distinto según "
+                      "cuál se use."),
+    "nfci": ("Condiciones financieras (NFCI)",
+             "Lo fácil o difícil que es conseguir dinero prestado en EE. UU. Lo calcula cada semana la Reserva "
+             "Federal de Chicago con más de 100 datos de crédito, bolsa y bancos. Vale 0 en condiciones medias: "
+             "negativo es más fácil de lo normal (holgadas) y positivo, más difícil (tensas)."),
+    "initial_claims": ("Nuevas peticiones de paro",
+                       "Personas que piden el subsidio de paro por primera vez en una semana en EE. UU. Es uno de "
+                       "los primeros datos que avisan de que el empleo se enfría; conviene mirar la tendencia de "
+                       "varias semanas, no una sola."),
+    "breakeven_inflation": ("Inflación esperada por el mercado",
+                            "La inflación que el mercado espera de media para los próximos años. Sale de comparar "
+                            "lo que paga el bono normal del Tesoro con el bono protegido contra la inflación "
+                            "(TIPS): la diferencia es la inflación que los inversores dan por hecha."),
+    "fed_liquidity": ("Liquidez (balance de la Fed)",
+                      "El dinero que la Reserva Federal mete en el sistema comprando bonos. Si su balance crece, "
+                      "inyecta dinero; si se reduce, lo retira. Más liquidez ha coincidido a menudo con bolsas al "
+                      "alza, pero no es una regla fija."),
+    "vix": ("VIX (índice del miedo)",
+            "Cuánto esperan los inversores que se mueva el S&P 500 en el próximo mes, calculado con el precio de "
+            "las opciones. Por debajo de 20 suele indicar calma y por encima de 30, miedo. Sube de golpe cuando la "
+            "bolsa cae con fuerza; no dice hacia dónde irá."),
+    "sma200": ("Media de 200 sesiones",
+               "El precio medio de los últimos 200 días de bolsa (unos 10 meses). Si el precio está por encima, la "
+               "tendencia de fondo es al alza; por debajo, a la baja. La de 50 sesiones mira los últimos 2-3 meses."),
+    "distribution_day": ("Jornada de ventas fuertes",
+                         "Un día en que el índice cae al menos un 0,2 % y se negocia más volumen que el día anterior: "
+                         "señal de que grandes inversores están vendiendo. Varias en pocas semanas suelen acompañar a "
+                         "los mercados cansados."),
+    "market_breadth": ("Participación (amplitud del mercado)",
+                       "Cuántas empresas acompañan al índice. Si el S&P 500 sube pero solo lo hacen unas pocas "
+                       "empresas grandes, la subida es más frágil que si suben la mayoría."),
+    "market_health": ("Semáforo del mercado",
+                      "Una nota de 0 a 100 y un estado en palabras («Favorable», «Con presión», «En corrección») a "
+                      "partir de 4 comprobaciones con umbrales fijos: tendencia, participación, jornadas de ventas "
+                      "fuertes y nerviosismo. Describe el mercado de hoy; no predice lo que hará ni cambia la "
+                      "puntuación de las empresas, y no está demostrado que acierte el momento de comprar o vender."),
+    "macro_labels": ("Etiquetas de la economía",
+                     "Una palabra por apartado (liquidez, inflación, empleo y condiciones financieras) sacada de "
+                     "una regla fija sobre un dato de FRED, por ejemplo «holgadas» si el NFCI está por debajo de "
+                     "0. Describen el momento; no predicen la bolsa ni cambian la puntuación de las empresas."),
 }
 
 # Every metric's help is a term (#197): the ⓘ of Ranking, company page and Comparar and the Ayuda

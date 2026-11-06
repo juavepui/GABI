@@ -20,6 +20,7 @@ from gabi.application.administration.model import ModelCommands, ModelQueries
 from gabi.application.administration.notices import Notices
 from gabi.application.errors import QueryError
 from gabi.application.market.analysis_prompt import AnalysisPrompt
+from gabi.application.market.annual_results import AnnualResultsQueries
 from gabi.application.market.block_evidence import BlockEvidence
 from gabi.application.market.checklist import CompanyChecklist
 from gabi.application.market.company_research import CompanyResearch
@@ -27,7 +28,9 @@ from gabi.application.market.evidence import EvidenceQueries
 from gabi.application.market.glossary import metric_glossary, technical_terms
 from gabi.application.market.glossary import terms as glossary_terms
 from gabi.application.market.macro import MacroQueries
+from gabi.application.market.market_health import MarketHealthQueries
 from gabi.application.market.queries import MarketQueries
+from gabi.application.market.score_history import ScoreHistoryQueries
 from gabi.application.market.signals import SignalMonitor
 from gabi.application.market.snapshot_math import SnapshotCalculations
 from gabi.application.market.snapshots import SnapshotTracking
@@ -53,10 +56,10 @@ from gabi.application.research.live_ledger import LiveLedgerCommands, LiveLedger
 from gabi.application.research.portfolio_lab_queries import PortfolioLabQueries
 from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
-from gabi.domain.market.fred import series_metadata
 from gabi.domain.market.freshness import last_completed_session
-from gabi.domain.market.macro_series import macro_metadata
+from gabi.domain.market.macro_series import macro_metadata, synchronized_series
 from gabi.domain.market.model_version import ModelVersion
+from gabi.domain.market.sec_reads import companyfacts as sec_companyfacts
 from gabi.domain.market.selection import RankingFilter
 from gabi.domain.market.signals import compare_snapshots
 from gabi.infrastructure.legacy.backtests import LegacyBacktestMath
@@ -81,6 +84,7 @@ from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.checklist_reference import load_checklist_reference
 from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+from gabi.infrastructure.storage.current_reports import SqliteCurrentReports
 from gabi.infrastructure.storage.decisions import SqliteDecisions
 from gabi.infrastructure.storage.estimates import SqliteEstimateCaptures
 from gabi.infrastructure.storage.evidence_catalog import FileEvidenceCatalog
@@ -96,10 +100,12 @@ from gabi.infrastructure.storage.keys import configured_keys
 from gabi.infrastructure.storage.live_ledger import SqliteLiveLedger
 from gabi.infrastructure.storage.macro import SqliteMacro
 from gabi.infrastructure.storage.market import ReadOnlyMarket
+from gabi.infrastructure.storage.market_health import SqliteMarketHealth
 from gabi.infrastructure.storage.mode import FileMode
 from gabi.infrastructure.storage.published_factors import FilePublishedFactors
 from gabi.infrastructure.storage.published_research import FilePublishedArtifacts, FilePublishedLedger
 from gabi.infrastructure.storage.saved_audits import FileSavedAudits
+from gabi.infrastructure.storage.score_history import SqliteScoreHistory
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi.infrastructure.storage.signals import SqliteSignals
 from gabi.infrastructure.storage.simulations import SqliteSimulations
@@ -152,7 +158,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     session = session or (lambda: last_completed_session(datetime.now(UTC)))
     model = model or active_model()
     policy = model_policy(model)
-    repository = ReadOnlyMarket(settings, calculators(model.technical), policy, model.benchmark_symbol,
+    repository = ReadOnlyMarket(settings, calculators(model.technical, input_checks=model.input_checks), policy, model.benchmark_symbol,
                                 model.risk_free_rate, metrics_version=model.metrics_version)
     model_queries = ModelQueries(repository, policy)
     market = MarketQueries(repository, model_queries, today, session)
@@ -165,10 +171,12 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         return {str(symbol): str(industry) for symbol, industry in zip(universe["symbol"], universe["industry"],
                                                                        strict=True) if isinstance(industry, str)}
 
-    holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteSimulations(settings.data_dir).prices,
+    from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
+
+    holdings = Holdings(SqliteHoldings(settings.data_dir), SqliteHoldingsMarket(settings.data_dir).prices,
                         lambda: repository.ranking(dict(policy.weights), today()).table, today)
     portfolio = PortfolioQueries(repository, policy, today, industries, holdings.values_eur)
-    macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata(series_metadata()),
+    macro = MacroQueries(SqliteMacro(settings.data_dir), macro_metadata({key: dict(meta) for key, meta in synchronized_series().items()}),
                          lambda: bool(configured_keys(settings.data_dir).get("fred")))
     signals = SignalMonitor(SqliteSignals(settings.data_dir), repository, policy, today,
                             compare_snapshots, compare_cached, jobs)
@@ -215,11 +223,17 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.jobs = jobs
     app.state.portfolio = portfolio
     app.state.macro = macro
+    app.state.annual_results = AnnualResultsQueries(SqliteSecReads(settings.data_dir / "gabi.db"))
+    app.state.score_history = ScoreHistoryQueries(SqliteScoreHistory(settings.data_dir), lambda: policy.model_id)
+    app.state.market_health = MarketHealthQueries(SqliteMarketHealth(settings.data_dir),
+                                                  lambda: model.benchmark_symbol, today)
     app.state.signals = signals
     app.state.company_research = CompanyResearch(
         SqliteCompanyResearch(settings.data_dir), repository.company_events,
         lambda symbol: signals.compare_filings(symbol, *signals.repository.filing_facts(symbol)),
-        LegacyCompanyMath(), today)
+        LegacyCompanyMath(), today, reports=SqliteCurrentReports(settings.data_dir / "gabi.db").for_symbol,
+        facts=lambda symbol, day: sec_companyfacts(
+            SqliteSecReads(settings.data_dir / "gabi.db").issuer_facts(symbol, as_of=day), day))
     app.state.company_checklist = CompanyChecklist(
         SqliteSecReads(settings.data_dir / "gabi.db"), SqliteCacheReads(settings.data_dir / "gabi.db"),
         SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,
@@ -260,7 +274,8 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     app.state.holdings = holdings
     app.state.investor = InvestorBenchmark(SqliteInvestorProfile(settings.data_dir),
                                            SqliteSimulations(settings.data_dir).prices, today,
-                                           lots=holdings.lots)
+                                           lots=holdings.lots,
+                                           holdings_prices=SqliteHoldingsMarket(settings.data_dir).prices)
     identity_reads = SqliteIdentityReads(settings.data_dir / "gabi.db")
 
     def issuers(symbols: list[str]) -> dict[str, str]:
@@ -270,7 +285,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
 
     def euros_per_dollar() -> float | None:
         start = (today() - timedelta(days=10)).isoformat()
-        frame = SqliteSimulations(settings.data_dir).prices(["USDEUR=X"], start).get("USDEUR=X")
+        frame = SqliteHoldingsMarket(settings.data_dir).prices(["USDEUR=X"], start).get("USDEUR=X")
         closes = frame["close"].dropna() if frame is not None and "close" in frame else None
         return float(closes.iloc[-1]) if closes is not None and not closes.empty and closes.iloc[-1] > 0 else None
 
@@ -319,12 +334,14 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
     alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
-                          repository.cached_events, app.state.watchlist.symbols)
+                          repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items,
+                          app.state.market_health.cached, SqliteScoreHistory(settings.data_dir).previous_day)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)
     app.state.notices = Notices(blind_validations, SmallmidFiles(settings.data_dir, settings.data_dir.parent,
-                                                               smallmid_freeze_deadline), today)
+                                                               smallmid_freeze_deadline), today,
+                                SqliteLiveLedger(settings.data_dir).last_decisions)
     app.state.key_commands = KeyCommands(LegacyKeyWriter(settings.data_dir),
                                          lambda: configured_keys(settings.data_dir))
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"],
@@ -376,6 +393,10 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
 
 def warm_rankings(app: FastAPI) -> None:
     """Read-only: build the frozen ranking (home, cartera) and the active model's one (Mercado)."""
+    try:  # Before Inicio, so its summary can say how the market is (#308); context, so a failure is skipped.
+        app.state.market_health.current()
+    except Exception:  # noqa: BLE001 - the traffic light must never stop the rankings from warming.
+        pass
     try:
         app.state.home.summary(compute=True)
         app.state.market.ranking(RankingFilter(hide_no_data=False), limit=1)

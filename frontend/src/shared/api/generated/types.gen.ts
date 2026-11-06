@@ -5,6 +5,65 @@ export type ClientOptions = {
 };
 
 /**
+ * AccountingFlag
+ */
+export type AccountingFlag = {
+    /**
+     * Key
+     */
+    key: 'amended_10k' | 'late_10k' | 'auditor_change' | 'restatement' | 'receivables' | 'accruals' | 'dilution';
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Rule
+     */
+    rule: string;
+    source: AccountingFlagSource | null;
+    /**
+     * Status
+     */
+    status: 'alerta' | 'sin_alerta' | 'no_evaluable';
+    /**
+     * Threshold
+     */
+    threshold: number | null;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * AccountingFlagSource
+ */
+export type AccountingFlagSource = {
+    /**
+     * Accession
+     */
+    accession: string | null;
+    /**
+     * Filed Date
+     */
+    filed_date: string | null;
+    /**
+     * Form
+     */
+    form: string;
+    /**
+     * Period End
+     */
+    period_end: string | null;
+};
+
+/**
  * Alternative
  */
 export type Alternative = {
@@ -39,6 +98,111 @@ export type AnalysisPromptResponse = {
      * Symbol
      */
     symbol: string;
+};
+
+/**
+ * AnnualResultsPoint
+ */
+export type AnnualResultsPoint = {
+    /**
+     * Filed
+     */
+    filed: string | null;
+    /**
+     * Fiscal Year End
+     */
+    fiscal_year_end: string;
+    /**
+     * Free Cash Flow
+     */
+    free_cash_flow: number | null;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Missing
+     */
+    missing: {
+        [key: string]: string;
+    };
+    /**
+     * Net Income
+     */
+    net_income: number | null;
+    /**
+     * Restated
+     */
+    restated: boolean;
+    /**
+     * Revenue
+     */
+    revenue: number | null;
+};
+
+/**
+ * AnnualResultsResponse
+ *
+ * Ingresos, beneficio neto y caja libre por ejercicio (#328), from the stored SEC 10-K facts; display only.
+ */
+export type AnnualResultsResponse = {
+    /**
+     * Currency
+     */
+    currency: 'USD';
+    /**
+     * Points
+     */
+    points: Array<AnnualResultsPoint>;
+    reading: ScoreHistoryReading;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * AttributionPosition
+ */
+export type AttributionPosition = {
+    /**
+     * Contribution Pp
+     */
+    contribution_pp: number;
+    /**
+     * Gain Eur
+     */
+    gain_eur: number;
+    /**
+     * Open
+     */
+    open: boolean;
+    /**
+     * Sector
+     */
+    sector: string | null;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * AttributionSector
+ */
+export type AttributionSector = {
+    /**
+     * Contribution Pp
+     */
+    contribution_pp: number;
+    /**
+     * Gain Eur
+     */
+    gain_eur: number;
+    /**
+     * Sector
+     */
+    sector: string;
 };
 
 /**
@@ -2053,6 +2217,10 @@ export type ChecklistSectorMultiples = {
      */
     peers: number;
     /**
+     * Reading
+     */
+    reading: Array<MultipleSectorReading>;
+    /**
      * Reason
      */
     reason: string | null;
@@ -2229,6 +2397,38 @@ export type ChecklistThresholdsRequest = {
 };
 
 /**
+ * CompanyAccountingFlags
+ */
+export type CompanyAccountingFlags = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Counts
+     */
+    counts: {
+        [key: string]: number;
+    };
+    /**
+     * Flags
+     */
+    flags: Array<AccountingFlag>;
+    /**
+     * Note
+     */
+    note: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Version
+     */
+    version: string;
+};
+
+/**
  * CompanyChecklistResponse
  */
 export type CompanyChecklistResponse = {
@@ -2254,6 +2454,10 @@ export type CompanyChecklistResponse = {
      */
     fiscal_year_end: string | null;
     multiples_history: ChecklistMultiplesHistory;
+    /**
+     * Multiples Reading
+     */
+    multiples_reading: Array<MultipleOwnReading>;
     pass_rate_reference: ChecklistReference | null;
     /**
      * Qualitative
@@ -2277,6 +2481,40 @@ export type CompanyChecklistResponse = {
      * Thresholds Warning
      */
     thresholds_warning: string | null;
+};
+
+/**
+ * CompanyCurrentReports
+ */
+export type CompanyCurrentReports = {
+    /**
+     * Captured At
+     */
+    captured_at: string | null;
+    /**
+     * Cik
+     */
+    cik: string | null;
+    /**
+     * Reports
+     */
+    reports: Array<CurrentReport>;
+    /**
+     * Review Items
+     */
+    review_items: Array<CurrentReportItem>;
+    /**
+     * Symbol
+     */
+    symbol: string;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Version
+     */
+    version: string;
 };
 
 /**
@@ -2400,6 +2638,28 @@ export type CompanyFilingChanges = {
 };
 
 /**
+ * CompanyHeadline
+ *
+ * The company page's first two sentences (#310); `values` holds every number of the text.
+ */
+export type CompanyHeadline = {
+    /**
+     * Level
+     */
+    level: 'high' | 'medium' | 'low' | null;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * CompanyInsiders
  *
  * Open-market Form 4 activity of the last months; informative, never scored.
@@ -2474,6 +2734,7 @@ export type CompanyResearchResponse = {
      * Symbol
      */
     symbol: string;
+    typical_move: TypicalMove;
 };
 
 /**
@@ -2486,6 +2747,7 @@ export type CompanyResponse = {
      * Generated At
      */
     generated_at: string;
+    headline: CompanyHeadline;
     /**
      * Metric Sources
      */
@@ -2556,7 +2818,7 @@ export type CompanySyncRequest = {
     /**
      * Dataset
      */
-    dataset: 'surprises' | 'estimates' | 'insiders';
+    dataset: 'surprises' | 'estimates' | 'insiders' | 'current_reports';
     /**
      * Symbol
      */
@@ -2882,7 +3144,7 @@ export type CreateJobRequest = {
     /**
      * Kind
      */
-    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices' | 'benchmark_prices' | 'metrics_comparison' | 'backtest_v3_comparison' | 'idea_alerts';
+    kind: 'refresh' | 'symbols' | 'quality' | 'backtest' | 'sim_result' | 'sim_compare' | 'decision_plan' | 'filing_check' | 'historical_ranking' | 'factor_analysis' | 'estimate_analysis' | 'backtest_v1' | 'backtest_v2' | 'backtest_register' | 'backtest_factors' | 'prepare_history' | 'historical_outcomes' | 'experiment_pbo' | 'experiment_bootstrap' | 'live_forward_report' | 'blind_rebalance' | 'blind_performance' | 'blind_export' | 'portfolio_lab' | 'company_sync' | 'data_update' | 'data_health' | 'sim_prices' | 'holdings_prices' | 'benchmark_prices' | 'metrics_comparison' | 'ranking_parity' | 'input_checks' | 'backtest_v3_comparison' | 'idea_alerts';
     live_report?: LiveReportRequest | null;
     outcomes?: OutcomesRequest | null;
     /**
@@ -2905,6 +3167,66 @@ export type CreateJobRequest = {
      */
     symbols?: Array<string>;
     update?: DataUpdateRequest | null;
+};
+
+/**
+ * CurrentReport
+ */
+export type CurrentReport = {
+    /**
+     * Accession
+     */
+    accession: string;
+    /**
+     * Amendment
+     */
+    amendment: boolean;
+    /**
+     * Filed Date
+     */
+    filed_date: string | null;
+    /**
+     * Form
+     */
+    form: string;
+    /**
+     * Items
+     */
+    items: Array<CurrentReportItem>;
+    /**
+     * Report Date
+     */
+    report_date: string | null;
+    /**
+     * Review
+     */
+    review: boolean;
+    /**
+     * Url
+     */
+    url: string;
+};
+
+/**
+ * CurrentReportItem
+ */
+export type CurrentReportItem = {
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Review
+     */
+    review: boolean;
 };
 
 /**
@@ -3815,7 +4137,7 @@ export type ExcludedLot = {
     /**
      * Reason
      *
-     * missing_price | missing_fx | after_last_session
+     * missing_price | missing_fx | after_last_session | sale | dividend
      */
     reason: string;
     /**
@@ -4334,6 +4656,7 @@ export type Exposure = {
      * Issuers
      */
     issuers: Array<IssuerExposure>;
+    issuers_reading?: Reading | null;
     /**
      * Liquidity
      */
@@ -4888,6 +5211,129 @@ export type HealthResponse = {
 };
 
 /**
+ * HeatmapBand
+ */
+export type HeatmapBand = {
+    /**
+     * Band
+     */
+    band: 'very_high' | 'high' | 'medium' | 'low' | 'very_low' | 'none';
+    /**
+     * Min Score
+     */
+    min_score: number | null;
+};
+
+/**
+ * HeatmapCompany
+ */
+export type HeatmapCompany = {
+    /**
+     * Band
+     */
+    band: 'very_high' | 'high' | 'medium' | 'low' | 'very_low' | 'none';
+    /**
+     * Composite Score
+     */
+    composite_score: number | null;
+    /**
+     * Market Cap
+     */
+    market_cap: number | null;
+    /**
+     * Name
+     */
+    name: string | null;
+    /**
+     * Rank
+     */
+    rank: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Sector
+     */
+    sector: string;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * HeatmapResponse
+ *
+ * Mapa de calor del universo (#311): the active ranking, grouped by sector; no calculation in React.
+ */
+export type HeatmapResponse = {
+    /**
+     * Bands
+     */
+    bands: Array<HeatmapBand>;
+    /**
+     * Companies
+     */
+    companies: Array<HeatmapCompany>;
+    data: DataResponse;
+    /**
+     * Generated At
+     */
+    generated_at: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Scored
+     */
+    scored: number;
+    /**
+     * Sectors
+     */
+    sectors: Array<HeatmapSector>;
+    /**
+     * Top Count
+     */
+    top_count: number;
+    /**
+     * Top Share
+     */
+    top_share: number;
+};
+
+/**
+ * HeatmapSector
+ */
+export type HeatmapSector = {
+    /**
+     * Companies
+     */
+    companies: number;
+    /**
+     * In Top
+     */
+    in_top: number;
+    /**
+     * Market Cap
+     */
+    market_cap: number | null;
+    /**
+     * Mean Score
+     */
+    mean_score: number | null;
+    /**
+     * Scored
+     */
+    scored: number;
+    /**
+     * Sector
+     */
+    sector: string;
+};
+
+/**
  * HistogramBin
  */
 export type HistogramBin = {
@@ -5203,6 +5649,12 @@ export type HistoricalTableRow = {
  */
 export type Holding = {
     /**
+     * Basis Date
+     *
+     * Fecha de la base de acciones y precio; vacío = cantidades y precio originales del movimiento
+     */
+    basis_date?: string | null;
+    /**
      * Commission
      *
      * En `currency`
@@ -5227,13 +5679,19 @@ export type Holding = {
      */
     id: number;
     /**
+     * Kind
+     *
+     * Compra, venta o dividendo cobrado
+     */
+    kind?: 'buy' | 'sell' | 'dividend';
+    /**
      * Note
      */
     note?: string | null;
     /**
      * Price
      *
-     * Precio por acción en `currency`
+     * Precio por acción en `currency`; en un dividendo, el importe bruto cobrado
      */
     price: number;
     /**
@@ -5242,8 +5700,10 @@ export type Holding = {
     purchase_date: string;
     /**
      * Shares
+     *
+     * 0 en un dividendo
      */
-    shares: number;
+    shares?: number;
     /**
      * Symbol
      */
@@ -5252,12 +5712,54 @@ export type Holding = {
      * Updated At
      */
     updated_at: string;
+    /**
+     * Withholding
+     *
+     * Retención sobre un dividendo, en `currency`
+     */
+    withholding?: number;
+};
+
+/**
+ * HoldingClosed
+ */
+export type HoldingClosed = {
+    /**
+     * Currency
+     */
+    currency: 'USD' | 'EUR' | 'GBP';
+    /**
+     * Dividends
+     */
+    dividends: number;
+    /**
+     * Dividends Eur
+     */
+    dividends_eur: number | null;
+    /**
+     * Realized Eur
+     */
+    realized_eur: number | null;
+    /**
+     * Sales
+     */
+    sales: number;
+    /**
+     * Symbol
+     */
+    symbol: string;
 };
 
 /**
  * HoldingCreate
  */
 export type HoldingCreate = {
+    /**
+     * Basis Date
+     *
+     * Fecha de la base de acciones y precio; vacío = cantidades y precio originales del movimiento
+     */
+    basis_date?: string | null;
     /**
      * Commission
      *
@@ -5275,13 +5777,19 @@ export type HoldingCreate = {
      */
     fx_rate?: number | null;
     /**
+     * Kind
+     *
+     * Compra, venta o dividendo cobrado
+     */
+    kind?: 'buy' | 'sell' | 'dividend';
+    /**
      * Note
      */
     note?: string | null;
     /**
      * Price
      *
-     * Precio por acción en `currency`
+     * Precio por acción en `currency`; en un dividendo, el importe bruto cobrado
      */
     price: number;
     /**
@@ -5290,12 +5798,20 @@ export type HoldingCreate = {
     purchase_date: string;
     /**
      * Shares
+     *
+     * 0 en un dividendo
      */
-    shares: number;
+    shares?: number;
     /**
      * Symbol
      */
     symbol: string;
+    /**
+     * Withholding
+     *
+     * Retención sobre un dividendo, en `currency`
+     */
+    withholding?: number;
 };
 
 /**
@@ -5387,6 +5903,16 @@ export type HoldingPosition = {
      */
     currency: 'USD' | 'EUR' | 'GBP';
     /**
+     * Dividends
+     */
+    dividends: number;
+    /**
+     * Dividends Eur
+     *
+     * Dividendos cobrados, netos de retención
+     */
+    dividends_eur: number | null;
+    /**
      * First Purchase
      */
     first_purchase: string;
@@ -5413,9 +5939,19 @@ export type HoldingPosition = {
      */
     price_return: number | null;
     /**
+     * Realized Eur
+     *
+     * Ganancia realizada con las ventas, a coste medio
+     */
+    realized_eur: number | null;
+    /**
      * Return Eur
      */
     return_eur: number | null;
+    /**
+     * Sales
+     */
+    sales: number;
     /**
      * Sector
      */
@@ -5471,9 +6007,17 @@ export type HoldingTotals = {
      */
     cost_eur: number | null;
     /**
+     * Dividends Eur
+     */
+    dividends_eur: number | null;
+    /**
      * Positions
      */
     positions: number;
+    /**
+     * Realized Eur
+     */
+    realized_eur: number | null;
     /**
      * Return Eur
      */
@@ -5493,6 +6037,24 @@ export type HoldingTotals = {
 };
 
 /**
+ * HoldingWarning
+ */
+export type HoldingWarning = {
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Reason
+     */
+    reason: 'unverified_actions';
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
  * HoldingsBenchmarkResult
  */
 export type HoldingsBenchmarkResult = {
@@ -5502,6 +6064,7 @@ export type HoldingsBenchmarkResult = {
      * Un rango para comparar, no una recomendación de pesos
      */
     alternatives: Array<Alternative>;
+    alternatives_reading?: Reading | null;
     /**
      * As Of
      */
@@ -5540,6 +6103,7 @@ export type HoldingsBenchmarkResult = {
      * Scenarios
      */
     scenarios: Array<StressScenario>;
+    scenarios_reading?: Reading | null;
     source: BenchmarkSource;
     /**
      * Usd Share
@@ -5547,6 +6111,55 @@ export type HoldingsBenchmarkResult = {
      * Valor actual en posiciones no cotizadas en EUR (aproximación)
      */
     usd_share: number;
+};
+
+/**
+ * HoldingsPerformance
+ */
+export type HoldingsPerformance = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    attribution?: PerformanceAttribution | null;
+    /**
+     * Base Currency
+     */
+    base_currency: 'EUR';
+    benchmark?: PerformanceBenchmark | null;
+    /**
+     * Blocked
+     */
+    blocked?: Array<PerformanceBlocked>;
+    /**
+     * Gap Sessions
+     */
+    gap_sessions?: number;
+    /**
+     * Gaps
+     */
+    gaps?: Array<PerformanceGap>;
+    /**
+     * Note
+     */
+    note?: string;
+    /**
+     * Pending Eur
+     */
+    pending_eur?: number;
+    portfolio?: PerformanceRisk | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'blocked' | 'no_movements' | 'no_complete_session';
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Warnings
+     */
+    warnings?: Array<HoldingWarning>;
 };
 
 /**
@@ -5565,6 +6178,10 @@ export type HoldingsSummary = {
      * Benchmark As Of
      */
     benchmark_as_of: string | null;
+    /**
+     * Closed
+     */
+    closed: Array<HoldingClosed>;
     /**
      * Deviations
      */
@@ -5594,6 +6211,10 @@ export type HoldingsSummary = {
      */
     sectors: Array<SectorWeight>;
     totals: HoldingTotals | null;
+    /**
+     * Warnings
+     */
+    warnings?: Array<HoldingWarning>;
 };
 
 /**
@@ -5669,6 +6290,7 @@ export type HomeResponse = {
      */
     ranking_ready: boolean;
     steps: HomeSteps;
+    summary?: HomeSummary | null;
     /**
      * Target
      */
@@ -5699,6 +6321,46 @@ export type HomeSteps = {
      * Updated
      */
     updated: boolean;
+};
+
+/**
+ * HomeSummary
+ *
+ * «Tu resumen de hoy» (#307): templates, no AI. `no_companies`: the user follows nothing yet.
+ */
+export type HomeSummary = {
+    /**
+     * Followed Count
+     */
+    followed_count: number;
+    /**
+     * Held Count
+     */
+    held_count: number;
+    /**
+     * Rank Places
+     */
+    rank_places: number;
+    /**
+     * Score Points
+     */
+    score_points: number;
+    /**
+     * Sentences
+     */
+    sentences: Array<SummarySentence>;
+    /**
+     * Status
+     */
+    status: 'ready' | 'no_companies';
+    /**
+     * Watched Count
+     */
+    watched_count: number;
+    /**
+     * Window Days
+     */
+    window_days: number;
 };
 
 /**
@@ -5782,7 +6444,7 @@ export type IdeaAlert = {
     /**
      * Kind
      */
-    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia';
+    kind: 'invalidacion' | 'revision_dato' | 'ausencia' | 'no_evaluable' | 'revision_vencida' | 'filing' | 'resultados' | 'estimaciones' | 'insiders' | 'tendencia' | '8k' | 'contable';
     /**
      * Message
      */
@@ -6324,6 +6986,7 @@ export type InvestorBenchmarkResult = {
      * Exposición al dólar del 100 %: el S&P 500
      */
     scenarios: Array<StressScenario>;
+    scenarios_reading?: Reading | null;
     /**
      * Series
      */
@@ -7297,6 +7960,46 @@ export type LocalSettingsResponse = {
 };
 
 /**
+ * MacroLabel
+ *
+ * A block's state in words (#309), from a fixed rule on one series; context, never a signal.
+ */
+export type MacroLabel = {
+    /**
+     * Block
+     */
+    block: 'liquidity' | 'inflation_rates' | 'growth_jobs' | 'conditions';
+    /**
+     * Date
+     */
+    date: string | null;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Rule
+     */
+    rule: string;
+    /**
+     * Series Id
+     */
+    series_id: string | null;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Tone
+     */
+    tone: 'good' | 'bad' | 'neutral';
+    /**
+     * Value
+     */
+    value: number | null;
+};
+
+/**
  * MacroPoint
  */
 export type MacroPoint = {
@@ -7304,6 +8007,10 @@ export type MacroPoint = {
      * Aggregation
      */
     aggregation: 'end_of_period' | 'average' | 'year_over_year' | 'wednesday_level' | 'three_month_average';
+    /**
+     * Block
+     */
+    block: 'liquidity' | 'inflation_rates' | 'growth_jobs' | 'conditions';
     /**
      * Change 3M
      */
@@ -7340,6 +8047,7 @@ export type MacroPoint = {
      * Series Id
      */
     series_id: string;
+    trend: MacroTrend;
     /**
      * Unit
      */
@@ -7363,9 +8071,57 @@ export type MacroResponse = {
      */
     items: Array<MacroPoint>;
     /**
+     * Labels
+     */
+    labels: Array<MacroLabel>;
+    /**
      * Source
      */
     source?: string;
+};
+
+/**
+ * MacroTrend
+ *
+ * Its last 5 years, one point per month, read with fixed rules (#327); context, never a forecast.
+ */
+export type MacroTrend = {
+    /**
+     * Direction
+     */
+    direction: 'up' | 'down' | 'flat' | null;
+    /**
+     * End
+     */
+    end?: number | null;
+    /**
+     * Level
+     */
+    level: 'above' | 'below' | 'usual' | null;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Months
+     */
+    months: number;
+    /**
+     * Points
+     */
+    points: Array<TrendPoint>;
+    /**
+     * Start
+     */
+    start?: number | null;
+    /**
+     * Text
+     */
+    text: string | null;
+    /**
+     * Years
+     */
+    years?: number | null;
 };
 
 /**
@@ -7446,6 +8202,100 @@ export type ManualExperimentRequest = {
      * Universe
      */
     universe: string;
+};
+
+/**
+ * MarketCheck
+ *
+ * One of the four checks: its result (None without data), its plain sentence and the values it read.
+ */
+export type MarketCheck = {
+    /**
+     * Key
+     */
+    key: 'trend' | 'breadth' | 'distribution' | 'volatility';
+    /**
+     * Result
+     */
+    result: 'pass' | 'caution' | 'fail' | null;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: number | number | string | null;
+    };
+};
+
+/**
+ * MarketHealthResponse
+ *
+ * Semáforo del mercado (#308). `no_data`: fewer than 201 sessions of the index stored.
+ */
+export type MarketHealthResponse = {
+    /**
+     * Affects Score
+     */
+    affects_score?: boolean;
+    /**
+     * As Of
+     */
+    as_of?: string | null;
+    /**
+     * Benchmark
+     */
+    benchmark: string;
+    /**
+     * Checks
+     */
+    checks?: Array<MarketCheck>;
+    /**
+     * Days At Least
+     */
+    days_at_least?: boolean | null;
+    /**
+     * Days In State
+     */
+    days_in_state?: number | null;
+    /**
+     * History Sessions
+     */
+    history_sessions?: number | null;
+    /**
+     * Score
+     */
+    score?: number | null;
+    /**
+     * Sessions
+     */
+    sessions?: number | null;
+    /**
+     * State
+     */
+    state?: 'favorable' | 'pressure' | 'correction' | null;
+    /**
+     * State Label
+     */
+    state_label?: string | null;
+    /**
+     * Status
+     */
+    status: 'ready' | 'no_data';
+    /**
+     * Universe Count
+     */
+    universe_count: number;
+    /**
+     * Version
+     */
+    version: string;
 };
 
 /**
@@ -7560,9 +8410,103 @@ export type ModelResponse = {
 };
 
 /**
+ * MultipleOwnReading
+ *
+ * One multiple today against its own last years (#326): range, median and the plain sentence.
+ */
+export type MultipleOwnReading = {
+    /**
+     * Cheaper Years
+     */
+    cheaper_years: number | null;
+    /**
+     * Current
+     */
+    current: number | null;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Max
+     */
+    max: number | null;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Min
+     */
+    min: number | null;
+    /**
+     * Pricier Years
+     */
+    pricier_years: number | null;
+    /**
+     * Side
+     */
+    side: 'cheaper' | 'pricier' | 'inline' | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'few_years' | 'missing' | 'negative' | 'not_applicable';
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Years
+     */
+    years: number;
+};
+
+/**
+ * MultipleSectorReading
+ */
+export type MultipleSectorReading = {
+    /**
+     * Current
+     */
+    current: number | null;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Median
+     */
+    median: number | null;
+    /**
+     * Peers
+     */
+    peers: number;
+    /**
+     * Side
+     */
+    side: 'cheaper' | 'pricier' | 'inline' | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'missing';
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
  * NoticesResponse
  *
- * Home notices: blind rebalances due within a week and the state of the #44 analysis.
+ * Home notices: blind rebalances due within a week, the #44 analysis and the daily follow-up.
  */
 export type NoticesResponse = {
     /**
@@ -7573,6 +8517,7 @@ export type NoticesResponse = {
      * Blind Rebalances
      */
     blind_rebalances: Array<BlindRebalanceNotice>;
+    periodic?: PeriodicNotice | null;
     smallmid: SmallmidNotice | null;
 };
 
@@ -7731,6 +8676,244 @@ export type PendingContribution = {
 };
 
 /**
+ * PerformanceAttribution
+ */
+export type PerformanceAttribution = {
+    /**
+     * Bought Eur
+     */
+    bought_eur?: number | null;
+    /**
+     * Gain Eur
+     */
+    gain_eur?: number | null;
+    /**
+     * Positions
+     */
+    positions?: Array<AttributionPosition>;
+    /**
+     * Return On Bought
+     */
+    return_on_bought?: number | null;
+    /**
+     * Sectors
+     */
+    sectors?: Array<AttributionSector>;
+    /**
+     * Status
+     */
+    status: 'ok' | 'no_purchases';
+};
+
+/**
+ * PerformanceBenchmark
+ */
+export type PerformanceBenchmark = {
+    /**
+     * End
+     */
+    end?: string | null;
+    /**
+     * Final Value Eur
+     */
+    final_value_eur?: number | null;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown?: number | null;
+    /**
+     * Missing
+     */
+    missing?: Array<string>;
+    /**
+     * Missing Sessions
+     */
+    missing_sessions?: number | null;
+    /**
+     * Money Weighted
+     */
+    money_weighted?: number | null;
+    /**
+     * Net Contributed Eur
+     */
+    net_contributed_eur?: number | null;
+    /**
+     * Peak Date
+     */
+    peak_date?: string | null;
+    /**
+     * Recovered Date
+     */
+    recovered_date?: string | null;
+    /**
+     * Series
+     */
+    series?: Array<PerformancePoint>;
+    /**
+     * Sessions
+     */
+    sessions?: number | null;
+    /**
+     * Shortfall Eur
+     */
+    shortfall_eur?: number | null;
+    /**
+     * Start
+     */
+    start?: string | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'missing_prices';
+    /**
+     * Trough Date
+     */
+    trough_date?: string | null;
+    /**
+     * Twr
+     */
+    twr?: number | null;
+    /**
+     * Twr Annualised
+     */
+    twr_annualised?: number | null;
+    /**
+     * Volatility
+     */
+    volatility?: number | null;
+};
+
+/**
+ * PerformanceBlocked
+ */
+export type PerformanceBlocked = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Id
+     */
+    id: number | null;
+    /**
+     * Kind
+     */
+    kind: 'buy' | 'sell' | 'dividend';
+    /**
+     * Reason
+     */
+    reason: 'missing_fx' | 'after_last_session';
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * PerformanceGap
+ */
+export type PerformanceGap = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+};
+
+/**
+ * PerformancePoint
+ */
+export type PerformancePoint = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Nav
+     *
+     * Valor de una participación: base 1 el primer día
+     */
+    nav: number;
+    /**
+     * Value Eur
+     */
+    value_eur: number;
+};
+
+/**
+ * PerformanceRisk
+ */
+export type PerformanceRisk = {
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Final Value Eur
+     */
+    final_value_eur: number;
+    /**
+     * Max Drawdown
+     */
+    max_drawdown: number;
+    /**
+     * Money Weighted
+     *
+     * Rentabilidad anual del dinero invertido (TIR); vacía con menos de un año
+     */
+    money_weighted: number | null;
+    /**
+     * Net Contributed Eur
+     *
+     * Compras − ventas − dividendos netos, en euros
+     */
+    net_contributed_eur: number;
+    /**
+     * Peak Date
+     */
+    peak_date: string | null;
+    /**
+     * Recovered Date
+     */
+    recovered_date: string | null;
+    /**
+     * Series
+     */
+    series: Array<PerformancePoint>;
+    /**
+     * Sessions
+     */
+    sessions: number;
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * Trough Date
+     */
+    trough_date: string | null;
+    /**
+     * Twr
+     *
+     * Rentabilidad ponderada por tiempo: no la cambian aportaciones ni retiradas
+     */
+    twr: number;
+    /**
+     * Twr Annualised
+     */
+    twr_annualised: number | null;
+    /**
+     * Volatility
+     *
+     * Desviación típica anualizada de los retornos diarios
+     */
+    volatility: number | null;
+};
+
+/**
  * PeriodQualityWarning
  */
 export type PeriodQualityWarning = {
@@ -7742,6 +8925,42 @@ export type PeriodQualityWarning = {
      * Messages
      */
     messages: Array<string>;
+};
+
+/**
+ * PeriodicNotice
+ *
+ * Whether the daily follow-up runs (#290): age of the newest live decision that did not fail.
+ */
+export type PeriodicNotice = {
+    /**
+     * Business Days
+     */
+    business_days: number | null;
+    /**
+     * Last Run At
+     */
+    last_run_at: string | null;
+    /**
+     * Last Status
+     */
+    last_status: string | null;
+    /**
+     * Last Working At
+     */
+    last_working_at: string | null;
+    /**
+     * Max Business Days
+     */
+    max_business_days: number;
+    /**
+     * Model Id
+     */
+    model_id: string | null;
+    /**
+     * Status
+     */
+    status: 'never' | 'late' | 'ok';
 };
 
 /**
@@ -7853,6 +9072,7 @@ export type PlanResponse = {
      * Sectors
      */
     sectors: Array<SectorWeight>;
+    sectors_reading: Reading;
     /**
      * Status
      */
@@ -8934,6 +10154,24 @@ export type RankingStability = {
 };
 
 /**
+ * Reading
+ *
+ * A chart's conclusion in words (#323, #324); `values` holds every number of the text.
+ */
+export type Reading = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * RebasedPoint
  */
 export type RebasedPoint = {
@@ -9110,6 +10348,7 @@ export type RiskStress = {
      * Notes
      */
     notes: Array<string>;
+    reading?: Reading | null;
     /**
      * Scenarios
      */
@@ -9481,6 +10720,69 @@ export type ScoreBlocksEvidence = {
      * Status
      */
     status: 'RETROSPECTIVE_DESCRIPTIVE';
+};
+
+/**
+ * ScoreHistoryReading
+ */
+export type ScoreHistoryReading = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * ScoreHistoryResponse
+ *
+ * Puntuación de cada día (#328), stored by the daily task; days of other models are named, not compared.
+ */
+export type ScoreHistoryResponse = {
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Points
+     */
+    points: Array<ScorePoint>;
+    reading: ScoreHistoryReading;
+    /**
+     * Symbol
+     */
+    symbol: string;
+};
+
+/**
+ * ScorePoint
+ */
+export type ScorePoint = {
+    /**
+     * Day
+     */
+    day: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Rank
+     */
+    rank: number;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Universe
+     */
+    universe: number;
 };
 
 /**
@@ -10434,6 +11736,40 @@ export type StressScenario = {
 };
 
 /**
+ * SummarySentence
+ *
+ * One plain-language sentence of «Tu resumen de hoy»; `values` holds the data every number comes from.
+ */
+export type SummarySentence = {
+    /**
+     * Kind
+     */
+    kind: 'data' | 'moves' | 'other_model' | 'unscored' | 'target' | 'earnings' | 'market';
+    /**
+     * Link
+     */
+    link: string | null;
+    /**
+     * Symbols
+     */
+    symbols: Array<string>;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Tone
+     */
+    tone: 'good' | 'bad' | 'neutral';
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * SymbolWeight
  */
 export type SymbolWeight = {
@@ -10674,6 +12010,20 @@ export type ThesisCounts = {
 };
 
 /**
+ * TrendPoint
+ */
+export type TrendPoint = {
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Value
+     */
+    value: number;
+};
+
+/**
  * TrialDetail
  *
  * A published trial with its configuration and its published result, never recomputed.
@@ -10783,6 +12133,34 @@ export type TrialRow = {
      * Value
      */
     value: string | number | number | boolean | null;
+};
+
+/**
+ * TypicalMove
+ *
+ * How much the price usually moves on results day (#310): mean absolute reaction, in %.
+ */
+export type TypicalMove = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Enough
+     */
+    enough: boolean;
+    /**
+     * Max Abs Pct
+     */
+    max_abs_pct: number | null;
+    /**
+     * Mean Abs Pct
+     */
+    mean_abs_pct: number | null;
+    /**
+     * Text
+     */
+    text: string;
 };
 
 /**
@@ -11520,6 +12898,56 @@ export type CompanyApiV1CompaniesSymbolGetResponses = {
 
 export type CompanyApiV1CompaniesSymbolGetResponse = CompanyApiV1CompaniesSymbolGetResponses[keyof CompanyApiV1CompaniesSymbolGetResponses];
 
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/accounting-flags';
+};
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetError = CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetErrors[keyof CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetErrors];
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyAccountingFlags;
+};
+
+export type CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponse = CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponses[keyof CompanyAccountingFlagsApiV1CompaniesSymbolAccountingFlagsGetResponses];
+
 export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetData = {
     body?: never;
     path: {
@@ -11569,6 +12997,56 @@ export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses 
 };
 
 export type CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponse = CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses[keyof CompanyAnalysisPromptApiV1CompaniesSymbolAnalysisPromptGetResponses];
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/annual-results';
+};
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetError = CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetErrors[keyof CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetErrors];
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AnnualResultsResponse;
+};
+
+export type CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponse = CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponses[keyof CompanyAnnualResultsApiV1CompaniesSymbolAnnualResultsGetResponses];
 
 export type CompanyChecklistApiV1CompaniesSymbolChecklistGetData = {
     body?: never;
@@ -11669,6 +13147,56 @@ export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponse
 };
 
 export type CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponse = CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses[keyof CompanyChecklistSectorApiV1CompaniesSymbolChecklistSectorGetResponses];
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/current-reports';
+};
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetError = CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetErrors[keyof CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetErrors];
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompanyCurrentReports;
+};
+
+export type CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponse = CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponses[keyof CompanyCurrentReportsApiV1CompaniesSymbolCurrentReportsGetResponses];
 
 export type CompanyEvidenceApiV1CompaniesSymbolEvidenceGetData = {
     body?: never;
@@ -11917,6 +13445,56 @@ export type CompanyResearchApiV1CompaniesSymbolResearchGetResponses = {
 };
 
 export type CompanyResearchApiV1CompaniesSymbolResearchGetResponse = CompanyResearchApiV1CompaniesSymbolResearchGetResponses[keyof CompanyResearchApiV1CompaniesSymbolResearchGetResponses];
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetData = {
+    body?: never;
+    path: {
+        /**
+         * Symbol
+         */
+        symbol: string;
+    };
+    query?: never;
+    url: '/api/v1/companies/{symbol}/score-history';
+};
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetError = CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetErrors[keyof CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetErrors];
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScoreHistoryResponse;
+};
+
+export type CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponse = CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponses[keyof CompanyScoreHistoryApiV1CompaniesSymbolScoreHistoryGetResponses];
 
 export type ComparisonApiV1ComparisonGetData = {
     body?: never;
@@ -12645,6 +14223,96 @@ export type MetricGlossaryApiV1LearnMetricsGetResponses = {
 };
 
 export type MetricGlossaryApiV1LearnMetricsGetResponse = MetricGlossaryApiV1LearnMetricsGetResponses[keyof MetricGlossaryApiV1LearnMetricsGetResponses];
+
+export type HealthApiV1MarketHealthGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/health';
+};
+
+export type HealthApiV1MarketHealthGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HealthApiV1MarketHealthGetError = HealthApiV1MarketHealthGetErrors[keyof HealthApiV1MarketHealthGetErrors];
+
+export type HealthApiV1MarketHealthGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MarketHealthResponse;
+};
+
+export type HealthApiV1MarketHealthGetResponse = HealthApiV1MarketHealthGetResponses[keyof HealthApiV1MarketHealthGetResponses];
+
+export type HeatmapApiV1MarketHeatmapGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/market/heatmap';
+};
+
+export type HeatmapApiV1MarketHeatmapGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type HeatmapApiV1MarketHeatmapGetError = HeatmapApiV1MarketHeatmapGetErrors[keyof HeatmapApiV1MarketHeatmapGetErrors];
+
+export type HeatmapApiV1MarketHeatmapGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HeatmapResponse;
+};
+
+export type HeatmapApiV1MarketHeatmapGetResponse = HeatmapApiV1MarketHeatmapGetResponses[keyof HeatmapApiV1MarketHeatmapGetResponses];
 
 export type SnapshotApiV1MarketMacroGetData = {
     body?: never;
@@ -14033,6 +15701,51 @@ export type LotsApiV1PortfolioHoldingsLotsGetResponses = {
 };
 
 export type LotsApiV1PortfolioHoldingsLotsGetResponse = LotsApiV1PortfolioHoldingsLotsGetResponses[keyof LotsApiV1PortfolioHoldingsLotsGetResponses];
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/portfolio/holdings/performance';
+};
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetErrors = {
+    /**
+     * Modo no permitido
+     */
+    403: ErrorResponse;
+    /**
+     * Empresa no encontrada
+     */
+    404: ErrorResponse;
+    /**
+     * Datos cambiados
+     */
+    409: ErrorResponse;
+    /**
+     * Consulta no válida
+     */
+    422: ErrorResponse;
+    /**
+     * Error interno
+     */
+    500: ErrorResponse;
+    /**
+     * Datos no disponibles
+     */
+    503: ErrorResponse;
+};
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetError = PerformanceApiV1PortfolioHoldingsPerformanceGetErrors[keyof PerformanceApiV1PortfolioHoldingsPerformanceGetErrors];
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: HoldingsPerformance;
+};
+
+export type PerformanceApiV1PortfolioHoldingsPerformanceGetResponse = PerformanceApiV1PortfolioHoldingsPerformanceGetResponses[keyof PerformanceApiV1PortfolioHoldingsPerformanceGetResponses];
 
 export type UpdateApiV1PortfolioHoldingsLotIdPostData = {
     body: HoldingCreate;

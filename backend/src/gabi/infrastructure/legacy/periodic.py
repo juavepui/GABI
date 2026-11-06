@@ -13,6 +13,13 @@ from gabi.infrastructure.storage.blind import SqliteBlindStore
 from gabi.infrastructure.storage.periodic import PeriodicFiles
 from gabi.infrastructure.storage.sync_events import OperationSyncEvents
 
+# Code that scores the active model besides the sealed files the ledger already hashes (#290).
+ACTIVE_MODEL_CODE = ("infrastructure/model_versions.py", "domain/market/model_version.py",
+                     "domain/market/sec_metrics_v2.py", "application/market/stored_metrics_v2.py",
+                     "application/market/ranking.py", "infrastructure/storage/market.py",
+                     "infrastructure/legacy/market.py", "domain/market/input_checks.py",
+                     "domain/market/revenue_growth.py", "application/market/stored_revenue_growth.py")
+
 
 class LegacyPeriodicOperations:
     def __init__(self, data_dir: Path, *, tiingo_fetch: Callable[[list[str]], dict] | None = None,
@@ -93,6 +100,87 @@ class LegacyPeriodicOperations:
         from gabi.live_ledger import capture_current
 
         return capture_current(run_error=error, maintenance=maintenance)
+
+    def record_scores(self):
+        """Score and position of every company with the active model, dated by its prices (#328)."""
+        from gabi.application.market.queries import describe_data
+        from gabi.domain.market import score_history
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.settings import Settings
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+        from gabi.infrastructure.storage.score_history import SqliteScoreHistory
+
+        model = active_model()
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()),
+                                calculators(model.technical, input_checks=model.input_checks), model_policy(model),
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+        try:
+            today = datetime.now(UTC).date()
+            snapshot = market.ranking(dict(model.weights), today)
+            day = describe_data(snapshot, today).latest_price_date
+            if day is None:
+                return {"guardadas": 0, "motivo": "sin precios"}
+            rows = score_history.rows(snapshot.table)
+            saved = SqliteScoreHistory(self.data_dir).record(day.isoformat(), model.model_id,
+                                                               model.metrics_version, rows, len(snapshot.table))
+            return {"dia": day.isoformat(), "modelo": model.model_id, "guardadas": saved}
+        finally:
+            market.close()
+
+    def install_ranking_revision(self):
+        """Triggers that count changes of the ranking's inputs (#342); idempotent explicit write."""
+        from gabi.infrastructure.storage import ranking_revision
+
+        return ranking_revision.install(self.data_dir / "gabi.db")
+
+    def save_ranking(self):
+        """The active model's ranking for today, saved so the next server start reuses it (#342).
+
+        Same weights, date (local, like the API) and calculators as the ranking the server would build."""
+        from datetime import date
+
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.settings import Settings
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+        model = active_model()
+        policy = model_policy(model)
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()),
+                                calculators(model.technical, input_checks=model.input_checks), policy,
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+        try:
+            return market.save_snapshot(dict(policy.weights), date.today())
+        finally:
+            market.close()
+
+    def capture_active_ledger(self, error, maintenance):
+        """The decision of the active model when it is not the sealed v1 (#290); None otherwise."""
+        from datetime import date
+
+        from gabi.domain.market.model_policy import FROZEN_MODEL_ID
+        from gabi.infrastructure.legacy.market import calculators, model_policy
+        from gabi.infrastructure.model_versions import active_model
+        from gabi.infrastructure.settings import Settings
+        from gabi.infrastructure.storage.market import ReadOnlyMarket
+        from gabi.live_ledger import ModelCapture, capture_current
+
+        model = active_model()
+        if model.model_id == FROZEN_MODEL_ID:
+            return None
+        market = ReadOnlyMarket(Settings(self.data_dir.resolve()), calculators(model.technical, input_checks=model.input_checks), model_policy(model),
+                                model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+
+        def ranking():
+            universe = market.universe(market.small_file("sp500_constituents.csv"))
+            return universe, market.ranking(dict(model.weights), date.today()).table
+
+        capture = ModelCapture(model.model_id, model.weights, model.metrics_version, ACTIVE_MODEL_CODE, ranking)
+        try:
+            return capture_current(run_error=error, maintenance=maintenance, model=capture)
+        finally:
+            market.close()
 
     def fetch_tiingo(self, symbols):
         if self.tiingo_fetch is not None:

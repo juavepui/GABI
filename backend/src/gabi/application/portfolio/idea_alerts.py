@@ -1,7 +1,7 @@
 """Explicit, idempotent alert job of open ideas (#247), over local data only.
 
 For each open idea it reads its published card, the company's checklist, latest
-filings, earnings surprises, consensus revision and insider summary from the local
+filings, 8-Ks with a review Item (#292), earnings surprises, consensus revision and insider summary from the local
 cache, plus the idea's evaluation, and records the new observations and alerts.
 Nothing is downloaded and nothing is traded: an alert asks for a review.
 """
@@ -23,7 +23,8 @@ def _safe(port: Callable, *args, default=None):
 
 def run(ideas: Ideas, *, card: Callable[[int], dict], checklist: Callable[[str], dict],
         filings: Callable[[str], dict], overview: Callable[[str], dict], insiders: Callable[[str], dict],
-        today: Callable[[], date], progress: Callable[[float, str], None] = lambda share, message: None) -> dict:
+        today: Callable[[], date], current_reports: Callable[[str], dict] | None = None,
+        accounting_flags: Callable[[str], dict] | None = None, progress: Callable[[float, str], None] = lambda share, message: None) -> dict:
     listing = ideas.list()
     open_ideas = [row for row in listing["items"] if row["state"]["status"] == "abierta"]
     counts: dict[str, int] = {}
@@ -40,6 +41,12 @@ def run(ideas: Ideas, *, card: Callable[[int], dict], checklist: Callable[[str],
                                 surprises=research.get("surprises") or [], revision=research.get("revision_90d"),
                                 insiders=_safe(insiders, symbol), evaluation=row["evaluation"],
                                 month=today().strftime("%Y-%m"))
+        if current_reports is not None:
+            reports = (_safe(current_reports, symbol) or {}).get("reports") or []
+            alerts += rules.current_reports(row["state"]["published_on"], reports)
+        if accounting_flags is not None:
+            flags = (_safe(accounting_flags, symbol) or {}).get("flags") or []
+            alerts += rules.accounting_flags(row["state"]["published_on"], flags)
         added = ideas.record_alerts(idea_id, found, alerts)
         new_total += added
         for alert in alerts:

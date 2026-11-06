@@ -5,11 +5,11 @@ import { jobName } from '@/shared/lib/jobs';
 const SEVERITY: Record<HomeAlert['severity'], { label: string; tone: string }> = {
   high: {
     label: 'Importante',
-    tone: 'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950',
+    tone: 'border-danger-border bg-danger-soft',
   },
   medium: {
     label: 'Revisar',
-    tone: 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950',
+    tone: 'border-warning-border bg-warning-soft',
   },
   info: { label: 'Aviso', tone: 'border-border bg-muted/40' },
 };

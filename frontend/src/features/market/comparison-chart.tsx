@@ -12,8 +12,14 @@ import type { ComparisonPricesResponse } from '@/shared/api/generated/types.gen'
 import { dateLabel, formatNumber } from '@/shared/lib/format';
 
 // Distinct hues for up to five companies; SPY stays grey and dashed as the reference.
-const COLORS = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#db2777'];
-const BENCHMARK_COLOR = '#6b7280';
+const COLORS = [
+  'var(--series-1)',
+  'var(--series-2)',
+  'var(--series-3)',
+  'var(--series-4)',
+  'var(--series-5)',
+];
+const BENCHMARK_COLOR = 'var(--chart-6)';
 
 /** Adjusted closes rebased to 100 by the backend; this only draws them. */
 export default function ComparisonChart({ data }: { data: ComparisonPricesResponse }) {
@@ -41,19 +47,19 @@ export default function ComparisonChart({ data }: { data: ComparisonPricesRespon
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <LineChart data={rows} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
-            <CartesianGrid vertical={false} stroke="#e4e9e1" strokeDasharray="3 3" />
+            <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
               tickFormatter={(d) => dateLabel(String(d))}
               minTickGap={60}
-              tick={{ fontSize: 11, fill: '#637169' }}
+              tick={{ fontSize: 11, fill: 'var(--chart-axis)' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               domain={['auto', 'auto']}
               tickFormatter={(v) => String(Math.round(Number(v)))}
-              tick={{ fontSize: 11, fill: '#637169' }}
+              tick={{ fontSize: 11, fill: 'var(--chart-axis)' }}
               axisLine={false}
               tickLine={false}
               width={40}
@@ -64,7 +70,13 @@ export default function ComparisonChart({ data }: { data: ComparisonPricesRespon
                 formatNumber(v == null ? null : Number(v), { digits: 1 }),
                 String(name),
               ]}
-              contentStyle={{ borderRadius: 10, borderColor: '#dfe5dc', fontSize: 12 }}
+              contentStyle={{
+                borderRadius: 10,
+                borderColor: 'var(--border)',
+                backgroundColor: 'var(--card)',
+                color: 'var(--foreground)',
+                fontSize: 12,
+              }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             {series.map((symbol, index) => (

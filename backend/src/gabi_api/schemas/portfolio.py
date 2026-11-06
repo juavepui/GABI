@@ -1,11 +1,12 @@
 """Explicit units and provenance for the read-only portfolio plan."""
 
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
 from gabi.application.portfolio.planning import PortfolioPlan
+from gabi.domain.portfolio import exposure_reading
 from gabi_api.schemas.market import (
     CandidateSummary,
     DataResponse,
@@ -70,6 +71,13 @@ class ConcentrationWarning(WireModel):
     limit_percent: float
 
 
+class Reading(WireModel):
+    """A chart's conclusion in words (#323, #324); `values` holds every number of the text."""
+
+    text: str
+    values: dict[str, Any]
+
+
 class PlanResponse(WireModel):
     target: list[TargetPosition]
     allocations: list[CapitalAllocation]
@@ -86,6 +94,7 @@ class PlanResponse(WireModel):
     concentration: list[ConcentrationWarning]
     sector_limit_percent: float
     industry_limit_percent: float
+    sectors_reading: Reading
     holdings_source: Literal["saved", "text", "none"]
     holdings_unvalued: list[str]
     index_weight_basis: str = ("Peso de cada sector en el S&P 500 aproximado por la capitalización total de las "
@@ -119,5 +128,7 @@ def plan_response(plan: PortfolioPlan) -> PlanResponse:
                                             weight_percent=row["weight_pct"], limit_percent=row["limit_pct"])
                        for row in plan.concentration],
         sector_limit_percent=plan.sector_limit_pct, industry_limit_percent=plan.industry_limit_pct,
+        sectors_reading=Reading.model_validate(
+            exposure_reading.plan_sectors(plan.sector_weights, plan.concentration, plan.sector_limit_pct)),
         holdings_source=plan.holdings_source, holdings_unvalued=plan.holdings_unvalued,
     )

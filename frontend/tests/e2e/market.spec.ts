@@ -265,6 +265,27 @@ test('la ficha muestra catalizadores, métricas informativas, filings y sincroni
   await expect(page.getByText(/Sin operaciones de insiders en los últimos 6 meses/)).toBeVisible();
   await page.getByRole('button', { name: 'Actualizar insiders de esta empresa' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' }).last()).toBeVisible();
+  // Only one company job at a time: wait until the insiders one has finished too.
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toHaveCount(2);
+  // #292: 8-Ks by SEC Item, downloaded only by the explicit button.
+  await page.getByText('Hechos relevantes comunicados a la SEC (8-K)').click();
+  await expect(page.getByText(/Todavía no hay 8-K guardados/)).toBeVisible();
+  await page.getByRole('button', { name: 'Descargar los 8-K de esta empresa' }).click();
+  const reports = page.getByRole('table', { name: 'Hechos relevantes (8-K)' });
+  await expect(
+    reports.getByRole('row', { name: /Cambio de auditor \(4\.01\)/ }).first(),
+  ).toContainText('Revisar');
+  await expect(reports.getByRole('link', { name: '0001375365-24-000036' })).toHaveAttribute(
+    'href',
+    /sec\.gov\/Archives\/edgar\/data\/1\/000137536524000036\/smci-20241024\.htm$/,
+  );
+  // #293: accounting signs; with the index just downloaded the 10-K/A check is evaluable.
+  await page.getByText('Señales contables de alerta (10-K y 8-K)').click();
+  const signs = page.getByRole('table', { name: 'Señales contables' });
+  await expect(signs.getByRole('row', { name: /Cuentas anuales corregidas/ })).toContainText(
+    'Sin señal',
+  );
+  await expect(signs).toContainText('No se puede comprobar');
   await page.getByText('Prompt para analizar con IA').click();
   await expect(page.getByLabel('Prompt para analizar con IA')).toHaveValue(
     /No recalcules estos números/,
@@ -314,6 +335,15 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
     'Revisión manual',
   );
   await page.getByText('Múltiplos frente a su historia y su sector').click();
+  // #326: each multiple read in words first; without data, it says so instead of drawing a dot.
+  const reading = page.getByRole('list', { name: 'Múltiplos en su rango' });
+  await expect(reading.getByRole('listitem').first()).toContainText(/PER/);
+  await expect(page.getByText(/¿Está cara o barata para ella y para su sector\?/)).toBeVisible();
+  await page
+    .getByRole('figure')
+    .filter({ hasText: '¿Está cara o barata para ella y para su sector?' })
+    .getByText('Ver como tabla')
+    .click();
   const multiples = page.getByRole('table', { name: 'Múltiplos frente a su historia y su sector' });
   // The e2e fixture has no SEC facts: medians are explained, never shown as zero.
   await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
@@ -349,17 +379,71 @@ test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async (
     ),
   ).toBeVisible();
   await expect(notices.getByText(/#44/)).toHaveCount(0);
+  // The fixture ledger has a decision the day before: the daily follow-up is on time (#290).
+  await expect(notices.getByText(/seguimiento diario/)).toHaveCount(0);
   await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
   await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
 });
 
-test('un sistema en modo oscuro no oscurece los avisos del tema claro', async ({ page }) => {
+test('la portada avisa si el seguimiento diario no se ejecuta', async ({ page }) => {
+  let periodic: Record<string, string | number | null> = {
+    status: 'late',
+    last_run_at: '2026-09-22T21:30:00+00:00',
+    last_status: 'SIGNAL',
+    last_working_at: '2026-09-22T21:30:00+00:00',
+    business_days: 5,
+    max_business_days: 3,
+    model_id: 'GABI-MF-v2',
+  };
+  await page.route('**/api/v1/notices', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), periodic } });
+  });
+  await page.goto('/');
+  const notices = page.getByRole('region', { name: 'Avisos' });
+  await expect(
+    notices.getByText('El seguimiento diario de GABI lleva 5 días laborables sin ejecutarse'),
+  ).toBeVisible();
+  await expect(notices.getByText(/último registro correcto: 22 sept/)).toBeVisible();
+
+  periodic = { ...periodic, status: 'never', last_working_at: null, business_days: null };
+  await page.reload();
+  await expect(
+    notices.getByText('El seguimiento diario de GABI no se ha ejecutado nunca en este equipo.'),
+  ).toBeVisible();
+  await expect(notices.getByText('scripts\\programar_tareas.ps1')).toBeVisible();
+});
+
+test('el tema sigue al sistema por defecto y se puede fijar en Claro u Oscuro (#321)', async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
+  const html = page.locator('html');
+  // Automático (default): the system is dark, so is GABI, from the first paint.
+  await expect(html).toHaveClass(/dark/);
+  await expect(html).toHaveCSS('color-scheme', 'dark');
+  await expect(html).toHaveCSS('background-color', 'rgb(19, 24, 21)');
+  const theme = page.getByRole('radiogroup', { name: 'Tema de la pantalla' });
+  await expect(theme.getByRole('radio', { name: /Automático/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  // Claro wins over the system and is remembered after reloading.
+  await theme.getByRole('radio', { name: 'Claro' }).click();
+  await expect(html).not.toHaveClass(/dark/);
+  await page.reload();
+  await expect(html).not.toHaveClass(/dark/);
+  await expect(html).toHaveCSS('background-color', 'rgb(247, 248, 245)');
+  // The warning box keeps its light colours in the light theme.
   const notice = page.getByRole('region', { name: 'Avisos' }).getByText(/No es asesoramiento/);
   await expect(notice).toBeVisible();
-  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(247, 248, 245)');
-  await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+  // Oscuro with a light system.
+  await page.emulateMedia({ colorScheme: 'light' });
+  await theme.getByRole('radio', { name: 'Oscuro' }).click();
+  await expect(html).toHaveClass(/dark/);
+  await page.reload();
+  await expect(html).toHaveClass(/dark/);
 });
 
 test('la portada resume datos, cartera objetivo y primeros pasos sin descargar nada', async ({
@@ -377,6 +461,10 @@ test('la portada resume datos, cartera objetivo y primeros pasos sin descargar n
   await expect(data.getByText('Empresas puntuadas')).toBeVisible({ timeout: 30_000 });
   const target = page.getByRole('region', { name: 'Cartera objetivo de hoy' });
   await expect(target.getByRole('listitem').first()).toBeVisible();
+  const summary = page.getByRole('region', { name: 'Tu resumen de hoy' });
+  await expect(summary.getByRole('heading', { name: 'Tu resumen de hoy' })).toBeVisible();
+  const health = page.getByRole('region', { name: 'Cómo está el mercado' });
+  await expect(health.getByRole('heading', { name: /Cómo está el mercado/ })).toBeVisible();
   const alerts = page.getByRole('region', { name: 'Qué requiere tu atención' });
   await expect(alerts.getByRole('heading', { name: 'Qué requiere tu atención' })).toBeVisible();
   // The home page itself only reads: no POST (no job, no download).
@@ -425,7 +513,20 @@ test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', asyn
   test.skip(testInfo.project.name !== 'desktop', 'Criterio de escritorio');
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto('/empresas/T000');
-  await expect(page.getByText('Puntuación GABI', { exact: true })).toBeInViewport();
+  // #310: what it is and how it scores, in the first lines.
+  const brief = page.getByRole('region', { name: 'En pocas palabras' });
+  await expect(brief.getByText(/es una empresa del sector|sector no disponible/)).toBeInViewport();
+  await expect(brief.getByText(/Sin datos de cómo reaccionó el precio/)).toBeVisible();
+  // #328: the e2e cache has no stored days yet, and the page says so instead of drawing a line.
+  await expect(page.getByRole('region', { name: 'Evolución de la puntuación' })).toContainText(
+    'Todavía no hay días guardados',
+  );
+  // The e2e fixture has no SEC reports: the yearly figures say why instead of showing empty bars.
+  await expect(page.getByRole('region', { name: 'Ingresos y beneficio por año' })).toContainText(
+    'todavía no se han descargado sus informes de la SEC',
+  );
+  // The score is read in the first sentence («66,0 de 100, puesto 1 de 16»); its card follows below.
+  await expect(brief.getByText(/Su puntuación GABI es \w+: [\d,]+ de 100/)).toBeInViewport();
   await expect(page.getByText(/Precio al cierre del/)).toBeInViewport();
 });
 
@@ -699,4 +800,23 @@ test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la b
   await expect(page.locator('dt', { hasText: 'PER' })).toHaveCount(0);
   await search.fill('zzzz');
   await expect(page.getByText('Ningún término contiene «zzzz».')).toBeVisible();
+});
+
+test('el mapa del mercado agrupa por sector, explica los colores y tiene lista (#311)', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/descubrir/mapa');
+  await expect(page.getByRole('heading', { name: 'Mapa del mercado' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Leyenda de colores' })).toContainText(
+    'sin puntuación',
+  );
+  if (testInfo.project.name === 'desktop') {
+    await expect(page.getByRole('img', { name: /Mapa de las empresas por sector/ })).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('mapa.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Lista por sectores' }).click();
+  }
+  const sector = page.locator('details').first();
+  await sector.locator('summary').click();
+  await sector.getByRole('link').first().click();
+  await expect(page).toHaveURL(/\/empresas\//);
 });

@@ -16,7 +16,7 @@ export function ThesisMark({ symbol }: { symbol: string }) {
   if (!counts.data || counts.data.items[symbol]?.open) return null;
   return (
     <Link
-      className="block text-xs text-amber-700 underline dark:text-amber-300"
+      className="block text-xs text-warning-ink underline"
       to={'/empresas/' + encodeURIComponent(symbol) + '#tesis'}
     >
       {counts.data.items[symbol] ? 'Sin tesis abierta' : 'Sin tesis'} · escribir una

@@ -215,7 +215,7 @@ export function PlanFreshness({ data }: { data: DecisionFreshness }) {
   return (
     <div
       role="alert"
-      className="mt-3 rounded-lg border border-amber-500/50 bg-amber-50 p-3 text-sm"
+      className="mt-3 rounded-lg border border-warning-border bg-warning-soft p-3 text-sm"
     >
       <p className="font-medium">
         Plan desfasado: guardado {age}, el ranking ha cambiado en {data.changes.length} de sus{' '}

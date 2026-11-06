@@ -32,7 +32,7 @@ def preregister(output: Path) -> dict:
         if record["sha256"] != digest:
             raise ValueError("La especificación cambió después del preregistro.")
         return record
-    plan = hypothesis.sequential_plan(boundaries(hypothesis.fractions(), cdf=ScipyNormalCDF()),
+    plan = hypothesis.sequential_plan(boundaries(hypothesis.fractions(), cdf=ScipyNormalCDF(rng=None)),
                                       obrien_fleming_spending)
     validation_id = blind_validation.create_validation(
         "Hipótesis de valor -- prueba prospectiva ciega (#43)", hypothesis.WEIGHTS, 20, 3, hypothesis.START,

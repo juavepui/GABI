@@ -19,14 +19,19 @@ export default function HiddenDrawdownChart() {
     >
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart data={hiddenDrawdown()} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="#e4e9e1" strokeDasharray="3 3" />
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
           <XAxis dataKey="day" tick={{ fontSize: 11 }} minTickGap={40} />
           <YAxis domain={[60, 110]} width={40} tick={{ fontSize: 11 }} />
           <Tooltip
             formatter={(value) => formatNumber(Number(value), { digits: 1, fixed: true })}
             labelFormatter={(d) => `Sesión ${d}`}
           />
-          <Line dataKey="value" name="Capital (ejemplo sintético)" dot={false} stroke="#2563eb" />
+          <Line
+            dataKey="value"
+            name="Capital (ejemplo sintético)"
+            dot={false}
+            stroke="var(--series-1)"
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

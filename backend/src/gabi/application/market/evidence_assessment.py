@@ -14,6 +14,10 @@ def build_evidence(frame: pd.DataFrame, weights: dict, *, universe_id="SP500_CUR
           rules: EvidenceRules = DEFAULT_RULES, context: dict | None = None) -> dict[str, dict]:
     """Assess the complete unfiltered ranking, with actual loaded input metadata."""
     source = frame.attrs.get("sources", {})
+    # pandas deep-copies ``attrs`` (the per-company sources) into every row and every slice: 17 of 27 s on the
+    # 500-company ranking (#342). Nothing below reads attrs except ``source``, taken above.
+    frame = frame.copy(deep=False)
+    frame.attrs = {}
     trace = {"model_id": model_id, "universe_id": universe_id, "weights": weights,
              "sources": catalogue.get("sources", {}), "sources_fingerprint": catalogue.get("sources_fingerprint"),
              "data_fingerprint": "signal-inputs-v1:" + fingerprint({"inputs": frame.rename_axis("symbol").reset_index().to_dict("records"),

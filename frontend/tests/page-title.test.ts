@@ -10,6 +10,7 @@ describe('título de la pestaña por ruta (#177)', () => {
     expect(pageTitle('/ayuda')).toBe('Ayuda · GABI');
     expect(pageTitle('/cartera', '?plan=experimental')).toBe('Plan experimental · GABI');
     expect(pageTitle('/descubrir')).toBe('Ranking · GABI');
+    expect(pageTitle('/descubrir/mapa')).toBe('Mapa del mercado · GABI');
     expect(pageTitle('/cartera')).toBe('Cartera objetivo · GABI');
     expect(pageTitle('/administracion/calidad')).toBe('Calidad de los datos · GABI');
     expect(pageTitle('/empresas/BRK.B')).toBe('BRK.B · Ficha · GABI');

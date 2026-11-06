@@ -128,6 +128,11 @@ def test_the_plan_starts_from_saved_holdings_unless_a_what_if_is_typed(tmp_path)
         db.execute("INSERT INTO prices(symbol,date,close,adj_close) VALUES('USDEUR=X',?,0.5,0.5)",
                    (TODAY.isoformat(),))
         price = db.execute("SELECT close FROM prices WHERE symbol='T000' ORDER BY date DESC LIMIT 1").fetchone()[0]
+    from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
+
+    verified = pd.DataFrame({'Close': [price], 'Adj Close': [price], 'Stock Splits': [0.]},
+                            index=pd.to_datetime([TODAY]))
+    SqliteHoldingsMarket(tmp_path).save('T000', verified, f'{TODAY.isoformat()}T23:00:00+00:00')
     app = create_app(Settings(tmp_path), today=lambda: TODAY)
     with TestClient(app) as api:
         api.post("/api/v1/portfolio/holdings", json=LOT | {"shares": 2})

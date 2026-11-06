@@ -48,7 +48,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/checklist/thresholds", "/api/v1/checklist/thresholds/reset",
                                          "/api/v1/portfolio/decisions/jobs/{job_id}/decisions.csv",
                                          "/api/v1/portfolio/decisions/{plan_id}/decisions.csv",
-                                         "/api/v1/portfolio/holdings", "/api/v1/portfolio/holdings/lots",
+                                         "/api/v1/portfolio/holdings", "/api/v1/portfolio/holdings/lots", "/api/v1/portfolio/holdings/performance",
                                          "/api/v1/portfolio/holdings/import", "/api/v1/portfolio/holdings/{lot_id}",
                                          "/api/v1/portfolio/holdings/{lot_id}/delete", "/api/v1/watchlist",
                                          "/api/v1/portfolio/investor/profile", "/api/v1/portfolio/investor/benchmark",
@@ -70,7 +70,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                          "/api/v1/portfolio/journal", "/api/v1/portfolio/cards", "/api/v1/portfolio/ideas", "/api/v1/portfolio/ideas/{idea_id}", "/api/v1/portfolio/ideas/{idea_id}/events", "/api/v1/portfolio/ideas/{idea_id}/notes", "/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/save", "/api/v1/portfolio/ideas/{idea_id}/notes/{note_id}/delete", "/api/v1/portfolio/cards/{card_id}", "/api/v1/portfolio/cards/{card_id}/save", "/api/v1/portfolio/cards/{card_id}/state",
                                          "/api/v1/portfolio/journal/{entry_id}/review",
                                          "/api/v1/portfolio/journal/{entry_id}/delete", "/api/v1/portfolio/journal/symbols", "/api/v1/portfolio/journal/{entry_id}/changes",
-                                         "/api/v1/market/macro", "/api/v1/market/snapshots",
+                                         "/api/v1/market/macro", "/api/v1/companies/{symbol}/score-history", "/api/v1/companies/{symbol}/annual-results", "/api/v1/market/heatmap", "/api/v1/market/health", "/api/v1/market/snapshots",
                                          "/api/v1/market/snapshots/{snapshot_id}/earnings",
                                          "/api/v1/market/signals", "/api/v1/market/signals/compare",
                                          "/api/v1/market/signals/filings/record",
@@ -90,7 +90,7 @@ def test_health_and_openapi_without_creating_data(tmp_path):
                                              "/api/v1/market/snapshots/{snapshot_id}/progress",
                                              "/api/v1/companies/{symbol}/research",
                                              "/api/v1/administration/keys/{source}",
-                                             "/api/v1/companies/{symbol}/filing-changes",
+                                             "/api/v1/companies/{symbol}/filing-changes", "/api/v1/companies/{symbol}/current-reports", "/api/v1/companies/{symbol}/accounting-flags",
                                              "/api/v1/market/snapshots/{snapshot_id}/rename",
                                              "/api/v1/companies/{symbol}/evidence",
                                              "/api/v1/companies/{symbol}/evidence.json",
@@ -371,7 +371,7 @@ def test_stale_empty_and_corrupt_are_distinct(api):
     assert "SECRET" not in failure.text and str(root) not in failure.text
 
 
-def test_metadata_evidence_never_reads_blind_payloads(api):
+def test_metadata_evidence_never_reads_blind_payloads(api, monkeypatch):
     client, repository, root = api
     with sqlite3.connect(root / "gabi.db") as writer:
         writer.execute("INSERT INTO blind_validations(id,created_at,name,model_id,weights_json,n_positions,rebalance_months,start_date,unlock_date,status) VALUES(1,'2026-09-29','fixture','GABI-MF-v1',?,10,3,'2026-09-29','2027-09-29','locked')", (json.dumps(dict(model_policy.FROZEN_WEIGHTS)),))
@@ -380,9 +380,23 @@ def test_metadata_evidence_never_reads_blind_payloads(api):
     assert model["status"] == "LIVE_FORWARD" and model["blind_validation_id"] == 1
     assert model["independent_advantage_demonstrated"] is False
     blocked = {"symbols_json", "entry_prices_json", "record_hash", "ranking_json", "returns_json", "result_json"}
+
+    def deny(action, table, column, *args):
+        return sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_READ and column in blocked else sqlite3.SQLITE_OK
+
+    # The model state reads on its own short connection (#342) and the ranking on the shared one: guard both.
+    private = repository._short_connection
+
+    def guarded():
+        db = private()
+        db.set_authorizer(deny)
+        return db
+
+    monkeypatch.setattr(repository, "_short_connection", guarded)
+    with repository.lock:
+        repository.connect()
     assert repository.connection is not None
-    repository.connection.set_authorizer(lambda action, table, column, *args:
-                                        sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_READ and column in blocked else sqlite3.SQLITE_OK)
+    repository.connection.set_authorizer(deny)
     assert client.get("/api/v1/model").status_code == 200
     assert client.get("/api/v1/ranking").status_code == 200
 

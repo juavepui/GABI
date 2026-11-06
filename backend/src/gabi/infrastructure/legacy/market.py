@@ -4,6 +4,7 @@ import gabi.domain.market.scoring as scoring
 from gabi.application.administration.model import ModelPolicy
 from gabi.application.market.ranking import Calculators
 from gabi.domain.market import events as events_calendar
+from gabi.domain.market import input_checks as checks
 from gabi.domain.market import model_version
 from gabi.domain.market.fundamentals import compute_fundamental_metrics
 from gabi.domain.market.model_version import ModelVersion
@@ -11,9 +12,26 @@ from gabi.domain.market.risk import compute_risk_metrics
 from gabi.domain.market.technicals import TechnicalParameters, compute_technicals
 
 
-def calculators(parameters: TechnicalParameters) -> Calculators:
-    return Calculators(compute_fundamental_metrics, partial(compute_technicals, parameters=parameters),
-                       compute_risk_metrics, events_calendar.parse_corporate_events,
+def calculators(parameters: TechnicalParameters, *, input_checks: str | None = None) -> Calculators:
+    """The ranking formulas; with ``input_checks`` (#295) a marked value is scored as missing."""
+    technicals = partial(compute_technicals, parameters=parameters)
+    if input_checks is None:
+        return Calculators(compute_fundamental_metrics, technicals, compute_risk_metrics,
+                           events_calendar.parse_corporate_events, scoring.build_scores, scoring.compute_confidence)
+    if input_checks != checks.VERSION:
+        raise ValueError(f"Unknown input checks: {input_checks}")
+
+    def fundamentals(record: dict) -> dict:
+        metrics = compute_fundamental_metrics(record)
+        return checks.apply(metrics, checks.check_fields(metrics))
+
+    def checked_technicals(prices, benchmark, **options) -> dict:
+        return checks.apply(technicals(prices, benchmark, **options), checks.check_jumps(prices))
+
+    def risk(prices, benchmark, **options) -> dict:
+        return checks.apply(compute_risk_metrics(prices, benchmark, **options), checks.check_jumps(prices))
+
+    return Calculators(fundamentals, checked_technicals, risk, events_calendar.parse_corporate_events,
                        scoring.build_scores, scoring.compute_confidence)
 
 

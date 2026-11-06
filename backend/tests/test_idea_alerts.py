@@ -103,3 +103,29 @@ def test_the_job_is_a_known_explicit_kind():
     assert JobCommand("idea_alerts").kind == "idea_alerts"
     with pytest.raises(QueryError):
         JobCommand("idea_alerts", symbols=("ACME",))
+
+
+def test_an_8k_review_item_after_publication_raises_one_review_alert(tmp_path):
+    """#292: a change of auditor (Item 4.01) filed after the idea asks for a review, once."""
+    days = pd.bdate_range("2026-01-02", "2026-06-30")
+    frame = pd.DataFrame({"adj_close": 100.0, "close": 100.0}, index=days)
+    prices = {"ACME": frame, "SPY": frame * 5, "USDEUR=X": frame / 100}
+    ideas = Ideas(SqliteIdeas(tmp_path), lambda symbols, start: {s: prices[s] for s in symbols},
+                  lambda: date(2026, 6, 30), lambda: datetime(2026, 1, 2, 9, tzinfo=UTC))
+    ideas.record_publication(card({"position_eur": 1000}))
+
+    def unavailable(symbol):
+        raise QueryError("missing", "sin datos", 404)
+
+    report = {"accession": "0000000001-26-000009", "form": "8-K", "filed_date": "2026-03-02",
+              "url": "https://www.sec.gov/x", "items": [
+                  {"code": "4.01", "category": "auditor", "label": "Cambio de auditor", "review": True},
+                  {"code": "9.01", "category": "anexos", "label": "Estados financieros y anexos", "review": False}]}
+    ports = {"card": lambda card_id: card({"position_eur": 1000}), "checklist": unavailable, "filings": unavailable,
+             "overview": unavailable, "insiders": unavailable, "today": lambda: date(2026, 6, 30),
+             "current_reports": lambda symbol: {"reports": [report]}}
+    result = job.run(ideas, **ports)
+    assert result["version"] == "idea-alerts-v3" and result["checked_by_kind"].get("8k") == 1
+    assert job.run(ideas, **ports)["new_alerts"] == 0
+    (alert,) = [alert for alert in ideas.detail(1)["pending_alerts"] if alert["kind"] == "8k"]
+    assert "Cambio de auditor (Item 4.01)" in alert["message"]

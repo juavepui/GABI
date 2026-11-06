@@ -1,14 +1,15 @@
 from datetime import date, datetime
 from enum import StrEnum
 from math import isfinite
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
 from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
-from gabi.domain.market.candidate_summary import summarize
+from gabi.domain.market.candidate_summary import summarize, warning
+from gabi.domain.market.company_overview import headline
 from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
@@ -160,8 +161,17 @@ class PricePoint(WireModel):
     adj_close: float | None
 
 
+class CompanyHeadline(WireModel):
+    """The company page's first two sentences (#310); `values` holds every number of the text."""
+
+    text: str
+    level: Literal["high", "medium", "low"] | None  # None: no score today
+    values: dict[str, Any]
+
+
 class CompanyResponse(WireModel):
     company: CompanyRow
+    headline: CompanyHeadline
     model: ModelResponse
     data: DataResponse
     prices: list[PricePoint]
@@ -278,6 +288,13 @@ def company_row(symbol: str, row: pd.Series, result: RankingResult) -> CompanyRo
                       filings=filings, next_earnings=earnings, summary=candidate_summary(row))
 
 
+def company_headline(symbol: str, row: pd.Series, result: RankingResult) -> CompanyHeadline:
+    table = result.snapshot.table
+    return CompanyHeadline.model_validate(headline(
+        name=text_or_none(row.get("name")), symbol=symbol, sector=text_or_none(row.get("sector")), row=row,
+        rank=int(table.index.get_loc(symbol)) + 1, universe=len(table), warning_text=warning(row)))
+
+
 def ranking_response(result: RankingResult) -> RankingResponse:
     sectors = sorted(str(value) for value in result.snapshot.table.get("sector", pd.Series(dtype=str)).dropna().unique())
     return RankingResponse(items=[company_row(str(symbol), row, result) for symbol, row in result.rows.iterrows()],
@@ -321,3 +338,87 @@ class AnalysisPromptResponse(BaseModel):
     symbol: str
     revision: str
     prompt: str
+
+
+HeatBand = Literal["very_high", "high", "medium", "low", "very_low", "none"]
+
+
+class HeatmapCompany(WireModel):
+    symbol: str
+    name: str | None
+    sector: str
+    market_cap: float | None  # USD; the tile's size
+    composite_score: float | None
+    rank: int | None  # position among the scored companies (1 = best)
+    band: HeatBand  # colour band of the score; «none» without score
+    reason: str | None  # why it is grey or cannot be drawn
+
+
+class HeatmapSector(WireModel):
+    sector: str
+    companies: int
+    scored: int
+    mean_score: float | None
+    in_top: int  # how many are in the top fifth of the scored companies
+    market_cap: float | None
+
+
+class HeatmapBand(WireModel):
+    band: HeatBand
+    min_score: float | None  # lower limit of the band; None for the lowest
+
+
+class HeatmapResponse(WireModel):
+    """Mapa de calor del universo (#311): the active ranking, grouped by sector; no calculation in React."""
+
+    model_id: str
+    generated_at: datetime
+    data: DataResponse
+    companies: list[HeatmapCompany]
+    sectors: list[HeatmapSector]
+    scored: int
+    top_count: int
+    top_share: float
+    bands: list[HeatmapBand]
+
+
+class ScorePoint(WireModel):
+    day: date
+    model_id: str
+    score: float
+    rank: int
+    universe: int
+
+
+class ScoreHistoryReading(WireModel):
+    text: str
+    values: dict[str, Any]
+
+
+class ScoreHistoryResponse(WireModel):
+    """Puntuación de cada día (#328), stored by the daily task; days of other models are named, not compared."""
+
+    symbol: str
+    model_id: str
+    points: list[ScorePoint]
+    reading: ScoreHistoryReading
+
+
+class AnnualResultsPoint(WireModel):
+    fiscal_year_end: date
+    label: str
+    filed: date | None
+    restated: bool
+    revenue: float | None
+    net_income: float | None
+    free_cash_flow: float | None
+    missing: dict[str, str]
+
+
+class AnnualResultsResponse(WireModel):
+    """Ingresos, beneficio neto y caja libre por ejercicio (#328), from the stored SEC 10-K facts; display only."""
+
+    symbol: str
+    currency: Literal["USD"]
+    points: list[AnnualResultsPoint]
+    reading: ScoreHistoryReading

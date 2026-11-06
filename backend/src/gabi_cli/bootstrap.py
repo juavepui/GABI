@@ -1,6 +1,6 @@
 """Queue scheduled tasks and run the separate local worker.
 
-Usage: python -m gabi_cli serve [--port N] | worker | schedule daily | schedule tiingo | periodic <options> |
+Usage: python -m gabi_cli serve [--port N] | worker | schedule daily [--reintentar] | schedule tiingo | periodic <options> |
 research <command> | market checklist-coverage [--output FILE]
 """
 
@@ -11,25 +11,31 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from functools import partial
 from pathlib import Path
 
 import pandas as pd
 
 from gabi.application.administration.jobs import JobCommand, Jobs
+from gabi.application.administration.scheduled_daily import Unattended, schedule_daily
 from gabi.application.errors import QueryError
 from gabi.application.market.checklist import CompanyChecklist
+from gabi.application.portfolio.holdings_prices import refresh as refresh_holdings_market
 from gabi.application.research.academic_factors import prepare_factor_snapshot
 from gabi.infrastructure.jobs.worker import Worker
 from gabi.infrastructure.legacy.insiders import insider_operation, sec_user_agent
 from gabi.infrastructure.legacy.jobs import LegacyExecutor
 from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
+from gabi.infrastructure.providers.yahoo import history as yahoo_history
+from gabi.infrastructure.providers.yahoo import reachable as yahoo_reachable
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.academic_factors import FileFactorCache
 from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
 from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
 from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
 from gabi.infrastructure.storage.jobs import SqliteJobs
 from gabi.infrastructure.storage.sec_reads import SqliteSecReads
 from gabi_api.bootstrap import create_app, start_warm_thread
@@ -62,10 +68,19 @@ def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = N
     insiders = insider_operation(settings.data_dir, now=clock, mapping_loader=ciks.mapping, cik_resolver=ciks.resolve)
     factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())
     tiingo_fetch, tiingo_import = build_tiingo_operations(settings, now=clock)
+    holdings_market = SqliteHoldingsMarket(settings.data_dir)
+    def holdings_fetch(symbols: list[str]) -> dict:
+        lots = SqliteHoldings(settings.data_dir).lots()
+        start = (min(date.fromisoformat(row['purchase_date']) for row in lots) - timedelta(days=7)).isoformat()
+        return refresh_holdings_market(symbols,
+                                       source=lambda symbol: yahoo_history(symbol, start=start, auto_adjust=False,
+                                                                           actions=True, raise_errors=True),
+                                       save=holdings_market.save, now=clock)
     return LegacyExecutor(settings, insider_sync=insiders, factor_loader=factors,
                           tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
                           macro_sync=build_fred_operation(settings, now=clock),
-                          sec_sync=build_xbrl_operation(settings, user_agent, now=clock))
+                          sec_sync=build_xbrl_operation(settings, user_agent, now=clock),
+                          holdings_fetch=holdings_fetch)
 
 
 def build_checklist(settings: Settings) -> CompanyChecklist:
@@ -109,6 +124,8 @@ def main() -> None:
     parser.add_argument("kind", nargs="?", choices=["daily", "tiingo"])
     parser.add_argument("--once", action="store_true", help="Procesa un trabajo y termina")
     parser.add_argument("--force", action="store_true", help="Permite encolar Tiingo fuera del día 2")
+    parser.add_argument("--reintentar", action="store_true",
+                        help="Con schedule daily: espera a tener internet y repite el refresco si fallan las fuentes")
     parser.add_argument("--port", type=int, default=8000, help="Puerto local de serve (solo 127.0.0.1; 8000 por defecto)")
     args = parser.parse_args()
     settings = Settings.from_environment()
@@ -149,18 +166,16 @@ def main() -> None:
         if args.kind == "tiingo" and today.day != 2 and not args.force:
             return
         jobs = Jobs(store)
-        commands: tuple[tuple[JobCommand, str], ...]
         if args.kind == "daily":
-            commands = ((JobCommand("refresh"), f"schedule:refresh:{today}"),
-                        (JobCommand("maintenance"), f"schedule:maintenance:{today}"))
-        else:
-            commands = ((JobCommand("tiingo"), f"schedule:tiingo:{today:%Y-%m}"),)
-        for command, key in commands:
-            try:
-                jobs.submit(command, key, origin="scheduler")
-            except QueryError as exc:
-                if exc.code != "job_conflict":
-                    raise
+            unattended = Unattended(network_ready=yahoo_reachable, sleep=time.sleep, monotonic=time.monotonic,
+                                    report=lambda message: print(message, flush=True)) if args.reintentar else None
+            schedule_daily(jobs, today, unattended)
+            return
+        try:
+            jobs.submit(JobCommand("tiingo"), f"schedule:tiingo:{today:%Y-%m}", origin="scheduler")
+        except QueryError as exc:
+            if exc.code != "job_conflict":
+                raise
         return
     worker = Worker(store, build_executor(settings), settings.data_dir)
     if args.once:

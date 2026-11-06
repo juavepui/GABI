@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 import pandas as pd
 
 from gabi import config, identity
-from gabi.application.market import cached_data, stored_metrics_v2
+from gabi.application.market import cached_data, stored_metrics_v2, stored_revenue_growth
 from gabi.application.market import market_downloads as downloads
 from gabi.application.market.price_sync import run as run_price_sync
 from gabi.domain.market import sync_events as sync_rules
@@ -260,5 +260,8 @@ def refresh_data(symbols: list, force: bool = False, progress_cb=None, edgar_pro
         result["failed"].setdefault(sym, {})["edgar"] = reason
     result["edgar_refreshed"] = edgar_result["edgar_refreshed"]
     # SEC metrics V2 (#245): rows missing or of another version, from local facts only.
-    result["metrics_v2"] = stored_metrics_v2.fill(list(issuers), store=SqliteXbrl(config.DB_PATH, lambda: datetime.now(UTC)))
+    xbrl = SqliteXbrl(config.DB_PATH, lambda: datetime.now(UTC))
+    result["metrics_v2"] = stored_metrics_v2.fill(list(issuers), store=xbrl)
+    # Revenue growth revenue-growth-v1 (#339), from local facts only.
+    result["revenue_growth"] = stored_revenue_growth.fill(list(issuers), store=xbrl)
     return result

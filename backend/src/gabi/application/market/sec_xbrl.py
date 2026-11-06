@@ -7,7 +7,7 @@ from typing import Protocol
 
 import pandas as pd
 
-from gabi.application.market import stored_metrics_v2
+from gabi.application.market import stored_metrics_v2, stored_revenue_growth
 from gabi.domain.market.checklist import CHECKLIST_TAGS, DILUTED_SHARES_TAGS
 from gabi.domain.market.observations import change_status, delta_rows
 from gabi.domain.market.sec_facts import (
@@ -19,13 +19,16 @@ from gabi.domain.market.sec_facts import (
 )
 from gabi.domain.market.sec_succession import SUCCESSIONS, Succession, files_annual_report
 from gabi.domain.market.sec_xbrl import FIELDS, KEYS, facts_due, normalize_cik
+from gabi.domain.market.tenk_flags import USD_TAGS as FLAG_USD_TAGS
 from gabi.domain.market.valuation_v2 import USD_TAGS as V2_USD_TAGS
 from gabi.domain.research.cbop import USD_TAGS as CBOP_USD_TAGS
 
 # Stored USD tags: the metric tags plus the checklist-only ones (#167), those of
 # SEC metrics V2 (#245) and those of the CBOP-v1 data gate (#252). Metrics keep
-# reading TRACKED_TAGS; the extra rows only feed their own readers.
-FACT_TAGS = list(dict.fromkeys(TRACKED_TAGS + list(CHECKLIST_TAGS) + list(V2_USD_TAGS) + list(CBOP_USD_TAGS)))
+# reading TRACKED_TAGS; the extra rows only feed their own readers. The receivables of the
+# accounting signs (#293) too: adding a tag reprocesses each stored issuer once.
+FACT_TAGS = list(dict.fromkeys(TRACKED_TAGS + list(CHECKLIST_TAGS) + list(V2_USD_TAGS) + list(CBOP_USD_TAGS)
+                               + list(FLAG_USD_TAGS)))
 # Share-unit tags: outstanding shares plus the 10-K diluted average, the checklist's
 # fallback for issuers that only report shares per class.
 SHARE_FACT_TAGS = list(dict.fromkeys(SHARES_TAGS + DILUTED_SHARES_TAGS))
@@ -38,13 +41,16 @@ class XbrlStore(Protocol):
     def facts(self, entity: str) -> pd.DataFrame: ...
     def save(self, symbol: str, cik: str, rows: list[dict], metrics: dict) -> None: ...
     def save_metrics_v2(self, symbol: str, cik: str | None, row: dict) -> None: ...
+    def save_revenue_growth(self, symbol: str, cik: str | None, row: dict) -> None: ...
 
 
 def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callable[[str], dict],
                 companyfacts: Callable[[str], dict], checkpoint: Callable[[str, str, str], dict],
                 attempt_factory: Callable, retry: Callable, fingerprint: Callable,
                 now: Callable[[], datetime], full_refresh: bool = False,
-                fiscal_alignment: bool = False, successions: Mapping[str, Succession] = SUCCESSIONS) -> dict:
+                fiscal_alignment: bool = False, successions: Mapping[str, Succession] = SUCCESSIONS,
+                current_reports: Callable[[str, dict], int] | None = None) -> dict:
+    """``current_reports`` stores the 8-K rows of the submissions already downloaded (#292): no extra request."""
     succession = successions.get(normalize_cik(cik))
     probe, own = _Calls(), None
     if succession is not None:
@@ -65,6 +71,8 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
         filings = own if own is not None else retry(lambda: submissions(cik), attempt)
         validate_issuer(filings, cik)
         attempt.payload(filings)
+        if current_reports is not None:
+            current_reports(cik, filings)
         recent = filings.get("filings", {}).get("recent", {})
         filing_hash = fingerprint(recent)
         has_facts, cached = store.has_facts(entity), store.metrics(symbol)
@@ -107,6 +115,8 @@ def synchronize(symbol: str, cik: str, *, store: XbrlStore, submissions: Callabl
         store.save(symbol, cik, rows, metrics)
         # SEC metrics V2 (#245) from the stored history, the only source of the V2 rows.
         stored_metrics_v2.refresh(store, symbol, cik)
+        # Revenue growth revenue-growth-v1 (#339), from the same stored history.
+        stored_revenue_growth.refresh(store, symbol, cik)
         state["fact_tags"] = tags_version
         filed = incoming.filed_date.dropna()
         state["watermark"] = max(cp.get("watermark", ""), str(filed.max()) if len(filed) else "")

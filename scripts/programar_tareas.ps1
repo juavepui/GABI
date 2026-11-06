@@ -17,16 +17,19 @@ if (-not (Test-Path -LiteralPath $python)) {
 # El worker es un proceso aparte. Se inicia al abrir sesión y continúa aunque
 # se cierre el navegador. Las tareas programadas solo encolan comandos.
 $worker = New-ScheduledTaskAction -Execute $python -Argument "-m gabi_cli worker" -WorkingDirectory $repo
-$workerTrigger = New-ScheduledTaskTrigger -AtLogOn
+# Solo al iniciar sesión este usuario: sin -User, Windows exige permisos de administrador (#290).
+$workerTrigger = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
 Register-ScheduledTask -TaskName "GABI - worker local" -Action $worker -Trigger $workerTrigger `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Seconds 0)) `
     -Description "GABI #66: ejecuta la cola persistente local" -Force
 Start-ScheduledTask -TaskName "GABI - worker local"
 
-# De martes a sábado a las 23:30 (hora española), después del cierre de Nueva York:
+# De martes a sábado a las 05:00 (hora española), con el cierre de Nueva York de la víspera ya definitivo:
 # encola refresco y mantenimiento; este conserva las comprobaciones #43/#44.
-$daily = New-ScheduledTaskAction -Execute $python -Argument "-m gabi_cli schedule daily" -WorkingDirectory $repo
-$dailyTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Tuesday, Wednesday, Thursday, Friday, Saturday -At 23:30
+# Si el PC estaba apagado o suspendido, se lanza al encenderlo, a veces antes de que haya red:
+# --reintentar espera a tener internet y repite el refresco si fallan las fuentes.
+$daily = New-ScheduledTaskAction -Execute $python -Argument "-m gabi_cli schedule daily --reintentar" -WorkingDirectory $repo
+$dailyTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Tuesday, Wednesday, Thursday, Friday, Saturday -At 05:00
 Register-ScheduledTask -TaskName "GABI - tareas diarias" -Action $daily -Trigger $dailyTrigger `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable) -Description "GABI #46: datos y pruebas ciegas" -Force
 

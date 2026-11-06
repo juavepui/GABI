@@ -70,6 +70,13 @@ Arranca `uv run --project backend python -m gabi_cli worker` en otra terminal.
 schedule daily|tiingo` encola las tareas programadas con claves estables. Tiingo
 solo se encola el día 2 de cada mes; `schedule tiingo --force` permite recuperarlo
 manualmente otro día. El Programador comprueba la fecha a diario a las 10:00.
+La tarea diaria usa `schedule daily --reintentar`: si el PC estaba apagado o
+suspendido a las 05:00, Windows la lanza al volver, a veces antes de que haya
+internet. Con esa opción espera hasta 15 minutos a que responda Yahoo, sigue el
+refresco y, si falla porque las fuentes no respondieron (`sources_failed`), lo
+repite hasta 2 veces: al momento si ya había fallado antes de lanzar la tarea, y con 10
+minutos de pausa si falla mientras la tarea lo sigue. Otros fallos no se repiten. Sin la
+opción, el comando solo encola y termina.
 El
 worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban
 que coincide con su configuración inmutable antes de tocar datos.
@@ -193,6 +200,43 @@ caché. Medido el 2026-10-16 con la base local completa, solo lectura y sin red:
 25,7 s la pasada en frío y 0,14-0,15 s cada pasada sin cambios. Antes, la primera
 consulta tras un `data_update` tardó 19,4 s en `/api/v1/data/status`.
 
+### Esperas de «Consultando la caché local» (#342)
+
+- **Lecturas pequeñas sin candado.** El modo/pesos (`local_model`, que piden casi
+  todas las pantallas) y los eventos de una empresa abren su propia conexión corta
+  de solo lectura; ya no esperan al candado del ranking. Antes, la lista de
+  experimentos tardaba 25 s tras arrancar (0,01 s de consulta y el resto en
+  espera); ahora, 0,43 s con el ranking aún calculándose.
+- **Revisión de las entradas del ranking.** Con el contador instalado, la revisión
+  deja de depender de la fecha/tamaño de `gabi.db` y su WAL. Pasa a ser identidad
+  del fichero + `ranking_input_revision` (linaje aleatorio y contador) +
+  `PRAGMA schema_version` + universo. Los triggers `ranking_rev_<tabla>_<op>` suben
+  el contador en cada INSERT/UPDATE/DELETE de `prices`, `fundamentals`,
+  `edgar_metrics`, `sec_metrics_v2`, `sec_revenue_growth`, `macro_series`,
+  `entities` y `entity_aliases`, sea cual sea el escritor. Escribir en el diario,
+  en las seguidas o en la cartera ya no obliga a recalcular. Solo la tarea diaria
+  instala el contador (`ranking_revision.install`, idempotente), nunca una
+  consulta. Si falta la tabla o algún trigger de una tabla de entrada presente, se
+  usa la revisión anterior (`market-query-v1`). Coste medido: una inserción masiva
+  de precios tarda ~2,3 veces más (500 000 filas, de 9,5 s a 21,7 s); la
+  actualización diaria escribe pocos miles.
+- **Ranking guardado por la tarea diaria.** Al final de la tarea,
+  `ReadOnlyMarket.save_snapshot` guarda el ranking del modelo activo de hoy en
+  `data/ranking_snapshot.pkl` (escritura atómica, ~0,6 MB). La cabecera lleva el
+  SHA-256 de la clave completa y la versión de pandas. Al no encontrarlo en
+  memoria, el servidor lo carga solo si la clave coincide exactamente (4 ms frente
+  a 25-60 s de cálculo); con cualquier diferencia, fichero dañado o base sin
+  contador, calcula como antes. Sin contador no se guarda nada: la revisión
+  antigua depende de `data_version`, que es propio de cada conexión y no sirve
+  para comparar entre procesos.
+- **Sin copias por fila.** pandas copia en profundidad `table.attrs` (las fuentes
+  por empresa) en cada fila de `iterrows` y en cada corte. El mapa de calor, el
+  histórico de puntuaciones y la evidencia trabajan sobre una vista sin `attrs`
+  (la evidencia lee antes las fuentes). Mapa de calor: de 1,8-11 s a 0,05 s con
+  el ranking en memoria. Evidencia del universo: de 27 s a 9 s bajo perfilador.
+  Leer solo una ventana de precios no se hace: las métricas de riesgo usan todo
+  el histórico y cambiarían los resultados.
+
 Medición con la base local completa (2026-10-02, solo lectura y sin red):
 
 | Situación | Antes | Después |
@@ -211,7 +255,8 @@ en el orden de la clave primaria (símbolo, fecha). El ranking completo es
 idéntico (igualdad exacta de la tabla de 503 × 86) y tarda un 49 % menos:
 33,5 s → 17,0 s con el disco en caché. Se descartó precalcular tras cada
 actualización: la caché vive en el proceso de la API y el worker es otro
-proceso. La tasa de meses positivos (`risk._monthly_win_rate`, unos 3 s) no se
+proceso (desde #342, la tarea diaria guarda el ranking en disco con su clave
+y la API lo reutiliza). La tasa de meses positivos (`risk._monthly_win_rate`, unos 3 s) no se
 toca: el módulo lo usan motores antiguos y el ahorro no compensa el riesgo.
 
 ## Verificación y medición

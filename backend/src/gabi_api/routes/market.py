@@ -25,6 +25,8 @@ from gabi_api.schemas.checklist import (
     ComparisonChecklistResponse,
 )
 from gabi_api.schemas.evidence import (
+    CompanyAccountingFlags,
+    CompanyCurrentReports,
     CompanyEvidence,
     CompanyFilingChanges,
     CompanyInsiders,
@@ -37,15 +39,19 @@ from gabi_api.schemas.evidence import (
 from gabi_api.schemas.market import (
     METRIC_SOURCE_WIRE,
     AnalysisPromptResponse,
+    AnnualResultsResponse,
     CompanyResponse,
     ComparisonPricesResponse,
     ComparisonResponse,
     DataResponse,
+    HeatmapResponse,
     MetricGlossary,
     ModelResponse,
     PricePoint,
     RankingResponse,
     RiskWindowsResponse,
+    ScoreHistoryResponse,
+    company_headline,
     company_row,
     data_response,
     finite,
@@ -78,6 +84,18 @@ def research_service(request: Request) -> CompanyResearch:
 Research = Annotated[CompanyResearch, Depends(research_service)]
 
 
+@router.get("/companies/{symbol}/score-history", response_model=ScoreHistoryResponse)
+def company_score_history(symbol: SymbolPath, request: Request) -> dict:
+    """Read-only: the score and position the daily task stored for the company (#328)."""
+    return request.app.state.score_history.company(symbol)
+
+
+@router.get("/companies/{symbol}/annual-results", response_model=AnnualResultsResponse)
+def company_annual_results(symbol: SymbolPath, request: Request) -> dict:
+    """Read-only: revenue, net income and free cash flow by fiscal year from the stored SEC reports (#328)."""
+    return request.app.state.annual_results.company(symbol)
+
+
 @router.get("/companies/{symbol}/research", response_model=CompanyResearchResponse)
 def company_research(symbol: SymbolPath, query: Research) -> dict:
     return query.overview(symbol)
@@ -91,6 +109,18 @@ def company_insiders(symbol: SymbolPath, query: Research) -> dict:
 @router.get("/companies/{symbol}/filing-changes", response_model=CompanyFilingChanges)
 def company_filing_changes(symbol: SymbolPath, query: Research) -> dict:
     return query.filing_changes(symbol)
+
+
+@router.get("/companies/{symbol}/current-reports", response_model=CompanyCurrentReports)
+def company_current_reports(symbol: SymbolPath, query: Research) -> dict:
+    """Downloaded 8-Ks with their SEC Items classified (#292); never downloads."""
+    return query.current_reports(symbol)
+
+
+@router.get("/companies/{symbol}/accounting-flags", response_model=CompanyAccountingFlags)
+def company_accounting_flags(symbol: SymbolPath, query: Research) -> dict:
+    """Accounting warning signs from structured SEC data (#293); never downloads."""
+    return query.accounting_flags(symbol)
 
 
 def checklist_service(request: Request) -> CompanyChecklist:
@@ -218,6 +248,13 @@ def selection(search: Annotated[str, Query(max_length=100)] = "",
 Selected = Annotated[Selection, Depends(selection)]
 
 
+@router.get("/market/heatmap", response_model=HeatmapResponse)
+def heatmap(market: Service) -> HeatmapResponse:
+    """Read-only map of the universe by sector, size and score (#311); the same ranking as /ranking."""
+    result = market.heatmap()
+    return HeatmapResponse.model_validate(result | {"data": data_response(result["data"])})
+
+
 @router.get("/ranking", response_model=RankingResponse)
 def ranking(market: Service, selected: Selected, offset: Annotated[int, Query(ge=0, le=1000)] = 0,
             limit: Annotated[int, Query(ge=1, le=500)] = 100) -> RankingResponse:
@@ -245,7 +282,8 @@ def company(symbol: Annotated[str, Path(min_length=1, max_length=20, pattern=r"^
             bars: Annotated[int, Query(ge=1, le=1000)] = 252) -> CompanyResponse:
     result, prices = market.company(symbol, bars)
     row = result.rows.iloc[0]
-    return CompanyResponse(company=company_row(str(result.rows.index[0]), row, result),
+    symbol = str(result.rows.index[0])
+    return CompanyResponse(company=company_row(symbol, row, result), headline=company_headline(symbol, row, result),
                            model=model_response(result.model), data=data_response(result.data),
                            prices=[PricePoint.model_validate({"date": record["date"], "close": finite(record["close"]),
                                                               "adj_close": finite(record["adj_close"])})

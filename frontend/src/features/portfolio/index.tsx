@@ -469,7 +469,7 @@ export function PortfolioPage() {
                     </>
                   )}
                   {data.holdings_unvalued.length > 0 &&
-                    ' No se han podido valorar (falta su precio o el cambio de moneda): ' +
+                    ' No se han podido valorar con datos verificados (revisa precios, cambio de moneda y desdoblamientos en Mi cartera): ' +
                       data.holdings_unvalued.join(', ') +
                       '.'}
                 </p>

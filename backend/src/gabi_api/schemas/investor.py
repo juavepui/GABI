@@ -5,6 +5,7 @@ from datetime import date, datetime
 from pydantic import Field
 
 from gabi_api.schemas.market import WireModel
+from gabi_api.schemas.portfolio import Reading
 
 
 class InvestorProfileInput(WireModel):
@@ -116,6 +117,7 @@ class InvestorBenchmarkResult(WireModel):
     pending: list[PendingContribution]
     series: list[BenchmarkPoint]
     scenarios: list[StressScenario] = Field(description="Exposición al dólar del 100 %: el S&P 500")
+    scenarios_reading: Reading | None = None  # #325
     vehicles: list[BenchmarkVehicle] = Field(description="Las mismas aportaciones en el índice TR y en un ETF Acc")
 
 
@@ -123,7 +125,7 @@ class ExcludedLot(WireModel):
     id: int | None
     symbol: str
     purchase_date: date
-    reason: str = Field(description="missing_price | missing_fx | after_last_session")
+    reason: str = Field(description="missing_price | missing_fx | after_last_session | sale | dividend")
 
 
 class BenchmarkComparison(WireModel):
@@ -148,4 +150,6 @@ class HoldingsBenchmarkResult(WireModel):
     benchmark_series: list[BenchmarkPoint]
     usd_share: float = Field(description="Valor actual en posiciones no cotizadas en EUR (aproximación)")
     scenarios: list[StressScenario]
+    scenarios_reading: Reading | None = None  # #325
     alternatives: list[Alternative] = Field(description="Un rango para comparar, no una recomendación de pesos")
+    alternatives_reading: Reading | None = None

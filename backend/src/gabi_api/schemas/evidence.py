@@ -132,10 +132,21 @@ class ConsensusEstimate(BaseModel):
     source: str
 
 
+class TypicalMove(BaseModel):
+    """How much the price usually moves on results day (#310): mean absolute reaction, in %."""
+
+    count: int  # reports with a price reaction used (at most 8)
+    mean_abs_pct: float | None
+    max_abs_pct: float | None
+    enough: bool  # False with fewer than 4: orientative only
+    text: str
+
+
 class CompanyResearchResponse(BaseModel):
     symbol: str
     events: list[CompanyEvent]
     surprises: list[EarningsSurprise]
+    typical_move: TypicalMove
     estimate: ConsensusEstimate | None
     revision_90d: dict[str, Any] | None
 
@@ -167,6 +178,61 @@ class FilingComparison(BaseModel):
 class CompanyFilingChanges(BaseModel):
     symbol: str
     results: list[FilingComparison]
+
+
+class CurrentReportItem(BaseModel):
+    code: str
+    category: str
+    label: str
+    review: bool
+
+
+class CurrentReport(BaseModel):
+    accession: str
+    form: str
+    amendment: bool
+    filed_date: str | None
+    report_date: str | None
+    url: str
+    items: list[CurrentReportItem]
+    review: bool
+
+
+class CompanyCurrentReports(BaseModel):
+    symbol: str
+    version: str
+    cik: str | None
+    captured_at: str | None
+    total: int
+    reports: list[CurrentReport]
+    review_items: list[CurrentReportItem]
+
+
+class AccountingFlagSource(BaseModel):
+    form: str
+    accession: str | None
+    filed_date: str | None
+    period_end: str | None
+
+
+class AccountingFlag(BaseModel):
+    key: Literal["amended_10k", "late_10k", "auditor_change", "restatement", "receivables", "accruals", "dilution"]
+    label: str
+    status: Literal["alerta", "sin_alerta", "no_evaluable"]
+    rule: str
+    threshold: float | None
+    values: dict[str, Any]
+    source: AccountingFlagSource | None
+    reason: str | None
+
+
+class CompanyAccountingFlags(BaseModel):
+    symbol: str
+    version: str
+    as_of: str
+    flags: list[AccountingFlag]
+    counts: dict[str, int]
+    note: str
 
 
 class InsiderTransaction(BaseModel):

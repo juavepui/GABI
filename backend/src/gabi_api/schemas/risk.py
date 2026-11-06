@@ -5,6 +5,7 @@ from datetime import date, datetime
 from pydantic import Field
 
 from gabi_api.schemas.market import WireModel
+from gabi_api.schemas.portfolio import Reading
 
 
 class PortfolioPolicyInput(WireModel):
@@ -67,6 +68,7 @@ class Exposure(WireModel):
     factors: dict[str, FactorTilt]
     liquidity: list[LiquidityRow]
     breaches: list[str]
+    issuers_reading: Reading | None = None  # Mi cartera only (#324); not on the policy alternatives
 
 
 class RiskScenario(WireModel):
@@ -80,6 +82,7 @@ class RiskScenario(WireModel):
 class RiskStress(WireModel):
     scenarios: list[RiskScenario]
     notes: list[str]
+    reading: Reading | None = None  # #325
 
 
 class RiskPanel(WireModel):

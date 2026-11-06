@@ -39,7 +39,10 @@ function background(pct: number | null | undefined): CSSProperties | undefined {
   if (pct == null) return undefined;
   const clamped = Math.max(0, Math.min(100, pct));
   const hue = clamped <= 50 ? (clamped / 50) * 40 : 40 + ((clamped - 50) / 50) * 102;
-  return { backgroundColor: `hsl(${Math.round(hue)}, 65%, 40%)`, color: 'white' };
+  return {
+    backgroundColor: `hsl(${Math.round(hue)}, var(--rank-strong-saturation), var(--rank-strong-lightness))`,
+    color: 'var(--rank-strong-ink)',
+  };
 }
 
 export function HistoricalTable({ jobId }: { jobId: string }) {

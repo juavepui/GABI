@@ -117,7 +117,7 @@ def test_deflated_sharpe_ratio_real_position_count_family():
 
 def test_bootstrap_ci_requires_minimum_observations():
     with pytest.raises(ValueError):
-        sr.bootstrap_sharpe_ci(pd.Series(np.random.normal(0, 0.01, 10)), periods_per_year=252)
+        sr.bootstrap_sharpe_ci(pd.Series(np.random.normal(0, 0.01, 10)), periods_per_year=252, seed=0)
 
 
 def test_bootstrap_ci_narrows_with_more_observations():

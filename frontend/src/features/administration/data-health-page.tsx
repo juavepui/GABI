@@ -8,6 +8,8 @@ import { Input } from '@/shared/ui/input';
 import { ErrorState } from '@/shared/ui/resource-state';
 import { DateField, HealthStatus, RunButton, Section, Table } from './data-health';
 import { MetricsComparison } from './metrics-comparison';
+import { RankingParity } from './ranking-parity';
+import { InputChecks } from './input-checks';
 import { age, pct, useHealthJob, useToday, type Row } from './data-health-job';
 import { PageHeader } from '@/shared/ui/page-header';
 import { Term } from '@/shared/ui/term';
@@ -92,7 +94,10 @@ function UniverseSection({ state }: { state: ReturnType<typeof useHealthJob<Univ
       />
       {data && (
         <>
-          <div role="alert" className="space-y-1 rounded-md border border-amber-500/40 p-3 text-xs">
+          <div
+            role="alert"
+            className="space-y-1 rounded-md border border-warning-border p-3 text-xs"
+          >
             {data.summary.structural_limitations.map((text) => (
               <p key={text}>
                 <strong>Limitación estructural conocida:</strong> {text}
@@ -608,6 +613,8 @@ export function DataHealthPage() {
       <UniverseSection state={universe} />
       <BlockCoverage />
       <MetricsComparison />
+      <RankingParity />
+      <InputChecks />
       <CompanySection universe={universe.result.data?.universe ?? []} />
       <ArchiveSection />
     </div>

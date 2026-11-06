@@ -1,5 +1,7 @@
 import type { PlanResponse } from '@/shared/api/generated/types.gen';
 import { Folded } from '@/shared/ui/folded';
+import { ChartFrame } from '@/shared/ui/charts/chart-frame';
+import { CompareBars } from '@/shared/ui/charts/compare-bars';
 import { formatNumber } from '@/shared/lib/format';
 
 const pct = (value: number | null | undefined) =>
@@ -9,6 +11,9 @@ const points = (value: number | null | undefined) =>
 
 /** Sector and industry weights of the target, computed by the backend; descriptive, not a selection rule. */
 export function SectorBreakdown({ data }: { data: PlanResponse }) {
+  const overLimit = new Set(
+    data.concentration.filter((item) => item.kind === 'sector').map((item) => item.name),
+  );
   return (
     <section aria-label="Reparto por sector" className="rounded-xl border bg-card p-5">
       <h2 className="text-xl font-semibold">Reparto por sector</h2>
@@ -20,7 +25,7 @@ export function SectorBreakdown({ data }: { data: PlanResponse }) {
       {data.concentration.length > 0 ? (
         <div
           role="status"
-          className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="mt-4 rounded-lg border border-warning-border bg-warning-soft p-3 text-sm text-warning-ink"
         >
           <p className="font-medium">Demasiado dinero en un mismo sector</p>
           <ul className="mt-1 list-disc pl-5">
@@ -40,31 +45,53 @@ export function SectorBreakdown({ data }: { data: PlanResponse }) {
           {pct(data.industry_limit_percent)}.
         </p>
       )}
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-left text-xs sm:text-sm">
-          <caption className="sr-only">Peso por sector frente al S&amp;P 500</caption>
-          <thead className="border-b text-xs text-muted-foreground">
-            <tr>
-              <th className="pb-2">Sector</th>
-              <th className="pb-2 text-right">Empresas</th>
-              <th className="pb-2 text-right">Cartera</th>
-              <th className="pb-2 text-right">S&amp;P 500</th>
-              <th className="pb-2 text-right">Diferencia (puntos %)</th>
-            </tr>
-          </thead>
-          <tbody className="tabular-nums">
-            {data.sectors.map((row) => (
-              <tr key={row.sector} className="border-b last:border-0">
-                <td className="py-2">{row.sector}</td>
-                <td className="text-right">{row.positions}</td>
-                <td className="text-right">{pct(row.weight_percent)}</td>
-                <td className="text-right">{pct(row.index_weight_percent)}</td>
-                <td className="text-right">{points(row.difference_points)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ChartFrame
+        className="mt-4"
+        title="¿Tengo demasiados huevos en una cesta?"
+        conclusion={data.sectors_reading.text}
+        note={<>La línea discontinua es tu límite de aviso; no es un máximo obligatorio.</>}
+        table={
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <caption className="sr-only">Peso por sector frente al S&amp;P 500</caption>
+              <thead className="border-b text-xs text-muted-foreground">
+                <tr>
+                  <th className="pb-2">Sector</th>
+                  <th className="pb-2 text-right">Empresas</th>
+                  <th className="pb-2 text-right">Cartera</th>
+                  <th className="pb-2 text-right">S&amp;P 500</th>
+                  <th className="pb-2 text-right">Diferencia (puntos %)</th>
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {data.sectors.map((row) => (
+                  <tr key={row.sector} className="border-b last:border-0">
+                    <td className="py-2">{row.sector}</td>
+                    <td className="text-right">{row.positions}</td>
+                    <td className="text-right">{pct(row.weight_percent)}</td>
+                    <td className="text-right">{pct(row.index_weight_percent)}</td>
+                    <td className="text-right">{points(row.difference_points)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        }
+      >
+        <CompareBars
+          label="Peso de cada sector: cartera propuesta y S&P 500"
+          rows={data.sectors.map((row) => ({
+            label: row.sector,
+            value: row.weight_percent,
+            reference: row.index_weight_percent,
+            flag: overLimit.has(row.sector) ? 'Pasa tu límite de aviso' : null,
+          }))}
+          format={pct}
+          valueLabel="Cartera propuesta"
+          referenceLabel="S&P 500"
+          limit={{ value: data.sector_limit_percent, label: 'Tu límite de aviso' }}
+        />
+      </ChartFrame>
       {data.industries.length > 0 && (
         <div className="mt-4">
           <Folded title="Peso por industria" className="rounded-lg border p-3 text-sm">

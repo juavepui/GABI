@@ -1,4 +1,8 @@
-"""Real holdings (purchase lots) in gabi.db: GET never initializes the table; every write is explicit (#181)."""
+"""Real holdings (#181) and their sales and dividends (#294) in gabi.db.
+
+GET never initializes the table; every write is explicit. A table created before #294 gains the
+``kind`` and ``withholding`` columns on its first write; its rows are purchases.
+"""
 
 import sqlite3
 from contextlib import closing
@@ -10,11 +14,21 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS portfolio_holdings (
  id INTEGER PRIMARY KEY AUTOINCREMENT, symbol TEXT NOT NULL, shares REAL NOT NULL, price REAL NOT NULL,
  purchase_date TEXT NOT NULL, currency TEXT NOT NULL, commission REAL NOT NULL DEFAULT 0, fx_rate REAL,
- note TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+ note TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+ kind TEXT NOT NULL DEFAULT 'buy', withholding REAL NOT NULL DEFAULT 0, basis_date TEXT
 );
 """
-COLUMNS = ("symbol", "shares", "price", "purchase_date", "currency", "commission", "fx_rate", "note")
+COLUMNS = ("symbol", "shares", "price", "purchase_date", "currency", "commission", "fx_rate", "note", "kind",
+           "withholding", "basis_date")
+DEFAULTS = {"kind": "buy", "withholding": 0.0}  # A lot written without them is a purchase.
+ADDED = {"kind": "TEXT NOT NULL DEFAULT 'buy'", "withholding": "REAL NOT NULL DEFAULT 0", "basis_date": "TEXT"}
 MAX_LOTS = 200
+
+
+
+def _value(lot: dict, column: str):
+    value = lot.get(column)
+    return DEFAULTS[column] if value is None and column in DEFAULTS else value
 
 
 class SqliteHoldings:
@@ -43,6 +57,11 @@ class SqliteHoldings:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         db = sqlite3.connect(self.path, timeout=5)
         db.executescript(SCHEMA)
+        present = {row[1] for row in db.execute("PRAGMA table_info(portfolio_holdings)")}
+        for column, definition in ADDED.items():
+            if column not in present:
+                db.execute(f"ALTER TABLE portfolio_holdings ADD COLUMN {column} {definition}")
+        db.commit()
         return db
 
     def lots(self) -> list[dict]:
@@ -54,7 +73,7 @@ class SqliteHoldings:
                               (MAX_LOTS + 1,)).fetchall()
         if len(rows) > MAX_LOTS:
             raise QueryError("resource_limit", f"La cartera supera {MAX_LOTS} compras.")
-        return [dict(row) for row in rows]
+        return [{"kind": "buy", "withholding": 0.0} | dict(row) for row in rows]
 
     def lot(self, lot_id: int) -> dict | None:
         db = self._read()
@@ -62,7 +81,7 @@ class SqliteHoldings:
             return None
         with closing(db):
             row = db.execute("SELECT * FROM portfolio_holdings WHERE id=?", (lot_id,)).fetchone()
-        return dict(row) if row is not None else None
+        return {"kind": "buy", "withholding": 0.0} | dict(row) if row is not None else None
 
     def add(self, lots: list[dict], now: str) -> list[int]:
         """Insert every lot or none, within the lot budget."""
@@ -76,7 +95,7 @@ class SqliteHoldings:
             ids = []
             for lot in lots:
                 cursor = db.execute(f"INSERT INTO portfolio_holdings({','.join(COLUMNS)},created_at,updated_at) "
-                                    f"VALUES({marks})", (*(lot.get(column) for column in COLUMNS), now, now))
+                                    f"VALUES({marks})", (*(_value(lot, column) for column in COLUMNS), now, now))
                 assert cursor.lastrowid is not None
                 ids.append(int(cursor.lastrowid))
             db.commit()
@@ -87,7 +106,7 @@ class SqliteHoldings:
             return False
         with closing(self._write()) as db:
             cursor = db.execute(f"UPDATE portfolio_holdings SET {','.join(column + '=?' for column in COLUMNS)},"
-                                "updated_at=? WHERE id=?", (*(lot.get(column) for column in COLUMNS), now, lot_id))
+                                "updated_at=? WHERE id=?", (*(_value(lot, column) for column in COLUMNS), now, lot_id))
             db.commit()
             return cursor.rowcount == 1
 

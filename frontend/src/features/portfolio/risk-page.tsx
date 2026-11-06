@@ -5,6 +5,9 @@ import {
   useQueryClient,
   type UseMutationResult,
 } from '@tanstack/react-query';
+import { ChartFrame } from '@/shared/ui/charts/chart-frame';
+import { CompareBars } from '@/shared/ui/charts/compare-bars';
+import { CrisisBars } from './crisis-bars';
 import { Link } from 'react-router-dom';
 import type {
   GroupWeight,
@@ -232,29 +235,51 @@ function Panel({ data }: { data: RiskPanel }) {
           ))}
         </ul>
       )}
-      <div className="mt-4 overflow-x-auto">
-        <h3 className="text-sm font-semibold">Por empresa</h3>
-        <table className="mt-1 w-full text-left text-xs sm:text-sm">
-          <thead className="border-b text-xs text-muted-foreground">
-            <tr>
-              <th className="pb-2">Empresa</th>
-              <th className="pb-2">Acciones</th>
-              <th className="pb-2">% de tu cartera</th>
-            </tr>
-          </thead>
-          <tbody>
-            {exposure.issuers.map((row) => (
-              <tr key={row.issuer} className="border-b last:border-0">
-                <td className="py-1.5">{row.issuer}</td>
-                <td className="py-1.5">{row.symbols.join(', ')}</td>
-                <td className={'py-1.5 tabular-nums ' + (row.exceeds ? 'text-destructive' : '')}>
-                  {pct(row.weight)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <h3 className="mt-4 text-sm font-semibold">Por empresa</h3>
+      <ChartFrame
+        className="mt-1"
+        title="¿Cuánto pesa cada empresa en tu cartera?"
+        conclusion={exposure.issuers_reading?.text}
+        note={<>La línea discontinua es tu límite por empresa, de tu política de riesgo.</>}
+        table={
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="border-b text-xs text-muted-foreground">
+                <tr>
+                  <th className="pb-2">Empresa</th>
+                  <th className="pb-2">Acciones</th>
+                  <th className="pb-2">% de tu cartera</th>
+                </tr>
+              </thead>
+              <tbody>
+                {exposure.issuers.map((row) => (
+                  <tr key={row.issuer} className="border-b last:border-0">
+                    <td className="py-1.5">{row.issuer}</td>
+                    <td className="py-1.5">{row.symbols.join(', ')}</td>
+                    <td
+                      className={'py-1.5 tabular-nums ' + (row.exceeds ? 'text-destructive' : '')}
+                    >
+                      {pct(row.weight)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        }
+      >
+        <CompareBars
+          label="Peso de cada empresa en Mi cartera"
+          rows={exposure.issuers.map((row) => ({
+            label: row.issuer + ' (' + row.symbols.join(', ') + ')',
+            value: row.weight * 100,
+            flag: row.exceeds ? 'Pasa tu límite por empresa' : null,
+          }))}
+          format={(value) => formatNumber(value, { digits: 1, fixed: true }) + ' %'}
+          valueLabel="% de tu cartera"
+          limit={{ value: data.policy.max_issuer_weight * 100, label: 'Tu límite por empresa' }}
+        />
+      </ChartFrame>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Weights title="Sector" rows={exposure.sectors} />
         <Weights title="Moneda en la que cotiza" rows={exposure.listing_currency} />
@@ -284,21 +309,31 @@ function Panel({ data }: { data: RiskPanel }) {
           </li>
         ))}
       </ul>
-      <h3 className="mt-4 text-sm font-semibold">¿Qué pasaría en una crisis?</h3>
-      <table className="mt-1 w-full text-left text-xs sm:text-sm">
-        <tbody>
-          {stress.scenarios.map((row) => (
-            <tr key={row.id} className="border-b last:border-0">
-              <td className="py-1.5">{row.label}</td>
-              <td className="py-1.5 tabular-nums">{pct(row.change)}</td>
-              <td className="py-1.5 tabular-nums">{eur(row.change_eur)}</td>
-              <td className="py-1.5">
-                {row.exceeds_tolerance ? 'Más de la caída que aceptas' : 'Dentro de lo que aceptas'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <CrisisBars
+        rows={stress.scenarios}
+        reading={stress.reading}
+        note={<>Efecto inmediato sobre el valor de hoy de Mi cartera. No son previsiones.</>}
+        table={
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <tbody>
+                {stress.scenarios.map((row) => (
+                  <tr key={row.id} className="border-b last:border-0">
+                    <td className="py-1.5">{row.label}</td>
+                    <td className="py-1.5 tabular-nums">{pct(row.change)}</td>
+                    <td className="py-1.5 tabular-nums">{eur(row.change_eur)}</td>
+                    <td className="py-1.5">
+                      {row.exceeds_tolerance
+                        ? 'Más de la caída que aceptas'
+                        : 'Dentro de lo que aceptas'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        }
+      />
       <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
         {stress.notes.map((note) => (
           <li key={note}>{note}</li>

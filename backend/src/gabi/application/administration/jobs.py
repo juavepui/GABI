@@ -20,7 +20,7 @@ from gabi.application.research.preparation import normalize_preparation
 from gabi.application.research.reservations import OBSERVED_END, require_factor_period, require_observed_period
 from gabi.domain.portfolio.simulation import listing
 
-JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "backtest_v3_comparison", "idea_alerts"]
+JobKind = Literal["refresh", "symbols", "quality", "backtest", "maintenance", "tiingo", "sim_result", "sim_compare", "decision_plan", "filing_check", "historical_ranking", "factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_register", "backtest_factors", "prepare_history", "historical_outcomes", "experiment_pbo", "experiment_bootstrap", "live_forward_report", "blind_rebalance", "blind_performance", "blind_export", "portfolio_lab", "company_sync", "data_update", "data_health", "sim_prices", "holdings_prices", "benchmark_prices", "metrics_comparison", "ranking_parity", "input_checks", "backtest_v3_comparison", "idea_alerts"]
 RESEARCH_KINDS = {"factor_analysis", "estimate_analysis", "backtest_v1", "backtest_v2", "backtest_v3_comparison",
                   "backtest_register",
                   "backtest_factors", "historical_outcomes", "experiment_pbo", "experiment_bootstrap",
@@ -242,7 +242,7 @@ class Jobs:
     def list(self) -> list[dict]:
         return self.repository.list()
 
-    def retry(self, job_id: str, key: str) -> dict:
+    def retry(self, job_id: str, key: str, *, origin: str = "ui") -> dict:
         """Explicit new command for safe operational jobs; never resume arbitrary research."""
         source = self.repository.get(job_id)
         if source["kind"] not in {"refresh", "quality"}:
@@ -256,7 +256,7 @@ class Jobs:
             raise QueryError("invalid_job", "La clave de repetición no es válida.", 422)
         command = JobCommand(source["kind"], tuple(parameters["symbols"]), parameters["start"], parameters["end"])
         # Namespace the request by its source. A lost HTTP response can safely be retried.
-        return self.submit(command, f"retry:{job_id}:{key}")
+        return self.submit(command, f"retry:{job_id}:{key}", origin=origin)
 
     def get(self, job_id: str) -> dict:
         return self.repository.get(job_id)

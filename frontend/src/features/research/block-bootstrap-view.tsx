@@ -25,7 +25,7 @@ function Histogram({ view, column }: { view: BlockBootstrapView; column: string 
   const marks: [number | null | undefined, string, string][] = [
     [item.lower, 'Inferior', 'currentColor'],
     [item.upper, 'Superior', 'currentColor'],
-    [item.observed, 'Observado', 'rgb(220 38 38)'],
+    [item.observed, 'Observado', 'var(--chart-5)'],
   ];
   return (
     <figure className="space-y-1">
@@ -88,7 +88,7 @@ export function BlockBootstrapResult({
   const primary = view.intervals.filter((row) => row.block_size === view.primary_block);
   return (
     <div className="space-y-4 text-sm">
-      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-amber-800 dark:text-amber-300">
+      <p className="rounded-lg border border-warning-border bg-warning-soft p-3 text-warning-ink">
         Remuestrear el pasado no genera evidencia OOS nueva. Las fracciones bootstrap no son
         p-valores ni probabilidades de éxito futuro.
       </p>

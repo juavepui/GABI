@@ -19,8 +19,8 @@ const changeClass = (value: number | null | undefined) =>
   value == null || value === 0
     ? 'text-muted-foreground'
     : value > 0
-      ? 'text-emerald-700 dark:text-emerald-400'
-      : 'text-red-700 dark:text-red-400';
+      ? 'text-success-ink'
+      : 'text-danger-ink';
 
 function Change({ value, unit }: { value: number | null | undefined; unit: string }) {
   if (value == null) return null;

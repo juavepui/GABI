@@ -1,4 +1,4 @@
-"""Home notices of the old Streamlit portada: blind rebalances due within a week and the #44 analysis."""
+"""Home notices: blind rebalances due within a week, the #44 analysis and whether the daily follow-up runs (#290)."""
 
 from collections.abc import Callable
 from datetime import date
@@ -6,6 +6,9 @@ from typing import Protocol
 
 from gabi.application.administration.periodic import SOON_DAYS
 from gabi.application.errors import QueryError
+from gabi.domain.administration import periodic_health
+
+LastDecisions = Callable[[], tuple[dict | None, dict | None]]
 
 
 class BlindList(Protocol):
@@ -17,8 +20,10 @@ class SmallmidState(Protocol):
 
 
 class Notices:
-    def __init__(self, blind: BlindList, smallmid: SmallmidState, today: Callable[[], date]):
+    def __init__(self, blind: BlindList, smallmid: SmallmidState, today: Callable[[], date],
+                 last_decisions: LastDecisions | None = None):
         self.blind, self.smallmid, self.today = blind, smallmid, today
+        self.last_decisions = last_decisions
 
     def current(self) -> dict:
         """Like the old portada, a failing source hides its notice instead of breaking the page."""
@@ -36,4 +41,11 @@ class Notices:
             smallmid = self.smallmid.state(current)
         except OSError:
             smallmid = None
-        return {"blind_rebalances": rebalances, "blind_available": blind_available, "smallmid": smallmid}
+        periodic = None
+        if self.last_decisions is not None:
+            try:
+                periodic = periodic_health.assess(*self.last_decisions(), current)
+            except OSError:
+                periodic = None
+        return {"blind_rebalances": rebalances, "blind_available": blind_available, "smallmid": smallmid,
+                "periodic": periodic}

@@ -4,7 +4,7 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.goto('/cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
   await expect(page).toHaveTitle('Cartera objetivo · GABI');
-  await expect(page.getByText('GABI-MF-v2 · sin pruebas aún')).toBeVisible();
+  await expect(page.getByText('GABI-MF-v4 · sin pruebas aún')).toBeVisible();
   await page
     .getByLabel('¿Y si ya tuviera…? Escribe acciones imaginarias (SÍMBOLO,euros; una por línea)')
     .fill('T000,100');
@@ -13,6 +13,18 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   // The test universe is almost all Information Technology: the descriptive warning must show.
   const breakdown = page.getByRole('region', { name: 'Reparto por sector' });
   await expect(breakdown.getByRole('status')).toContainText('Sector Information Technology');
+  // #324: the conclusion first, then paired bars with the warning limit; the table stays one click away.
+  await expect(
+    breakdown.getByText(/Pasa tu límite de aviso del 25,0 %: Information Technology/),
+  ).toBeVisible();
+  const bars = breakdown.getByRole('list', {
+    name: 'Peso de cada sector: cartera propuesta y S&P 500',
+  });
+  await expect(
+    bars.getByRole('listitem').filter({ hasText: 'Information Technology' }),
+  ).toContainText('Pasa tu límite de aviso');
+  await page.screenshot({ path: test.info().outputPath('reparto-sector.png'), fullPage: true });
+  await breakdown.getByText('Ver como tabla').click();
   await expect(breakdown.getByRole('columnheader', { name: 'S&P 500' })).toBeVisible();
   await expect(breakdown.getByRole('row', { name: /Information Technology/ })).toBeVisible();
   await page
@@ -80,7 +92,7 @@ test('la cartera objetivo se guarda para seguirla y sus eventos están en Evento
   await page.getByRole('main').getByRole('link', { name: 'Eventos' }).click();
   await expect(page.getByRole('heading', { name: 'Eventos', level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'Comparar ahora' }).click();
-  await expect(page.getByText('cambios detectados')).toBeVisible();
+  await expect(page.getByText(/desde que guardaste la cesta/)).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Próximas presentaciones de resultados' }),
   ).toBeVisible();
@@ -206,25 +218,28 @@ test('el icono ⓘ explica un término y lleva al glosario de la Ayuda', async (
   await expect(page.locator('#termino-psr')).toContainText('Probabilistic Sharpe Ratio');
 });
 
-test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', async ({
+test('Mi cartera guarda, edita, importa y borra compras, ventas y dividendos sin descargar precios', async ({
   page,
 }) => {
   await page.goto('/cartera/mi-cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera', level: 1 })).toBeVisible();
-  const form = page.getByRole('region', { name: 'Registrar una compra' });
+  const form = page.getByRole('region', { name: 'Registrar un movimiento' });
   await form.getByLabel('Símbolo').fill('T000');
-  await form.getByLabel('Acciones').fill('10');
+  await form.getByLabel('Acciones', { exact: true }).fill('10');
   await form.getByLabel('Precio por acción').fill('100');
-  await form.getByLabel('Fecha de compra').fill('2026-06-01');
+  await form.getByLabel('Fecha', { exact: true }).fill('2026-06-01');
   await form.getByLabel('Cambio aplicado: euros por cada dólar/libra (opcional)').fill('0.9');
-  await form.getByRole('button', { name: 'Guardar compra' }).click();
-  const lots = page.getByRole('region', { name: 'Compras registradas' });
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  const lots = page.getByRole('region', { name: 'Movimientos registrados' });
   await expect(lots).toContainText('T000');
   await page.reload(); // The lot survives a reload: it lives in the local database.
   await expect(lots).toContainText('10 acciones');
   // The test cache has no EUR rate: the position is shown in dollars and flagged, never filled in.
   const prices = page.getByRole('region', { name: 'Precios de mi cartera' });
-  await expect(prices.getByRole('status')).toContainText('T000');
+  await expect(
+    prices.getByRole('status').filter({ hasText: 'No se han podido valorar' }),
+  ).toContainText('T000');
+  await expect(prices.getByText(/no se han verificado los desdoblamientos/)).toBeVisible();
   await expect(
     prices.getByRole('button', { name: 'Actualizar precios de mi cartera' }),
   ).toBeVisible();
@@ -232,19 +247,45 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
     page.getByRole('region', { name: 'Posiciones' }).getByText('No hay cambio de moneda guardado'),
   ).toBeVisible();
   await lots.getByRole('button', { name: 'Editar compra de T000' }).click();
-  await lots.getByLabel('Acciones').fill('12');
+  await lots.getByLabel('Acciones', { exact: true }).fill('12');
   await lots.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(lots).toContainText('12 acciones');
 
-  await page.getByText('Importar tus compras desde un fichero de tu bróker (CSV)').click();
+  // #294: a sale never exceeds what was held that day; a dividend records its withholding.
+  await form.getByLabel('Tipo de movimiento').selectOption('sell');
+  await form.getByLabel('Símbolo').fill('T000');
+  await form.getByLabel('Acciones', { exact: true }).fill('20');
+  await form.getByLabel('Precio por acción').fill('110');
+  await form.getByLabel('Fecha', { exact: true }).fill('2026-07-01');
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  await expect(form.getByText(/ese día tenías 12/)).toBeVisible();
+  await form.getByLabel('Acciones', { exact: true }).fill('2');
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  await expect(lots).toContainText('venta: 2 acciones');
+  await form.getByLabel('Tipo de movimiento').selectOption('dividend');
+  await form.getByLabel('Símbolo').fill('T000');
+  await form.getByLabel('Importe bruto cobrado').fill('6');
+  await form.getByLabel('Retención (impuesto descontado)').fill('0.9');
+  await form.getByLabel('Fecha', { exact: true }).fill('2026-08-03');
+  await form.getByRole('button', { name: 'Guardar movimiento' }).click();
+  await expect(lots).toContainText('dividendo:');
+  await expect(page.getByRole('region', { name: 'Posiciones' })).toContainText('10');
+  // Without EUR rates in the test cache the sale and dividend have no euros: the evolution says why.
+  const evolution = page.getByRole('region', { name: 'Evolución de tu cartera' });
+  await expect(evolution).toContainText('No se puede calcular la evolución');
+  await expect(evolution).toContainText(
+    'T000 del 2026-07-01 (falta el cambio de moneda de ese día)',
+  );
+
+  await page.getByText('Importar tus movimientos desde un fichero de tu bróker (CSV)').click();
   await page
     .getByLabel('Contenido del CSV')
     .fill('symbol,shares,price,date\nT001,1,50,2026-07-01\nT002,-1,50,2026-07-01');
-  await page.getByRole('button', { name: 'Importar compras' }).click();
+  await page.getByRole('button', { name: 'Importar movimientos' }).click();
   await expect(page.getByText(/línea 3/)).toBeVisible(); // One wrong row rejects the whole file.
   await page.getByLabel('Contenido del CSV').fill('symbol,shares,price,date\nT001,1,50,2026-07-01');
-  await page.getByRole('button', { name: 'Importar compras' }).click();
-  await expect(page.getByText('Importadas 1 compras.')).toBeVisible();
+  await page.getByRole('button', { name: 'Importar movimientos' }).click();
+  await expect(page.getByText('Importados 1 movimientos.')).toBeVisible();
   await expect(lots).toContainText('T001');
 
   await page.goto('/cartera');
@@ -256,9 +297,18 @@ test('Mi cartera guarda, edita, importa y borra compras sin descargar precios', 
   await expect(page.getByText('Tiene en cuenta lo que ya tienes en Mi cartera')).toBeVisible();
 
   await page.goto('/cartera/mi-cartera');
-  for (const symbol of ['T000', 'T001'])
-    await lots.getByRole('button', { name: 'Borrar compra de ' + symbol }).click();
-  await expect(page.getByRole('region', { name: 'Compras registradas' })).toHaveCount(0);
+  // The purchase cannot go while its sale and dividend need its shares: they go first, and each
+  // deletion must have finished before the next one, or the server rightly refuses the purchase.
+  for (const name of [
+    'Borrar venta de T000',
+    'Borrar dividendo de T000',
+    'Borrar compra de T000',
+    'Borrar compra de T001',
+  ]) {
+    await lots.getByRole('button', { name }).click();
+    await expect(page.getByRole('button', { name })).toHaveCount(0);
+  }
+  await expect(page.getByRole('region', { name: 'Movimientos registrados' })).toHaveCount(0);
 });
 
 test('formularios con valores del backend y «Opciones avanzadas» recordadas (#190)', async ({
@@ -300,6 +350,18 @@ test('Inicio muestra la franja macro de la caché y el panel declara frecuencia 
     page.getByText('Fuente: FRED (WALCL) · Semanal · saldo de cada miércoles'),
   ).toBeVisible();
   await expect(page.getByText(/no es alcista por sí mismo/)).toBeVisible();
+  // #327: each series with its 5-year line read in words (the e2e cache has a short history: it says so).
+  await expect(
+    page.getByText(/Todavía no hay 12 meses de datos guardados|en los últimos 12 meses/).first(),
+  ).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('macro.png'), fullPage: true });
+  // #309: one label in words per block, then the series grouped under the same four blocks.
+  const words = page.getByRole('region', { name: 'La economía en palabras' });
+  await expect(words.getByRole('listitem')).toHaveCount(4);
+  await expect(words).toContainText('Condiciones financieras');
+  await expect(
+    page.getByRole('region', { name: 'Crecimiento y empleo' }).getByText('Tasa de paro'),
+  ).toBeVisible();
 });
 
 test('Perfil y benchmark guarda revisiones y no descarga precios al consultar', async ({

@@ -14,6 +14,8 @@ import pandas as pd
 
 from gabi.application.errors import QueryError
 from gabi.domain.portfolio import contributions as rules
+from gabi.domain.portfolio import stress_reading
+from gabi.domain.portfolio.holdings import kind as holding_kind
 from gabi.domain.portfolio.holdings import price_symbols
 from gabi.domain.portfolio.simulation import fx_symbol
 
@@ -69,9 +71,13 @@ def _series(frame: pd.DataFrame | None, column: str) -> pd.Series:
 class InvestorBenchmark:
     def __init__(self, store: ProfileStore, prices: Callable[[list[str], str], dict[str, pd.DataFrame]],
                  today: Callable[[], date], now: Callable[[], datetime] = lambda: datetime.now(UTC),
-                 lots: Callable[[], list[dict]] = list):
-        """`prices(symbols, start)` reads cached daily prices; `lots()` the real purchases of #181."""
+                 lots: Callable[[], list[dict]] = list,
+                 holdings_prices: Callable[[list[str], str], dict[str, pd.DataFrame]] | None = None):
+        """`prices` follows benchmark refreshes; `holdings_prices` follows paired holdings refreshes.
+
+        Separate readers prevent a holdings snapshot from hiding the benchmark job's updates."""
         self.store, self.prices, self.today, self.now, self.lots = store, prices, today, now, lots
+        self.holdings_prices = holdings_prices or prices
 
     def profile(self) -> dict | None:
         return self.store.latest()
@@ -125,11 +131,17 @@ class InvestorBenchmark:
     def holdings(self) -> dict:
         """Read-only: the real purchases against SPY bought with the same euros on the same sessions."""
         profile, saved = self._current()
-        lots = self.lots()
+        movements = self.lots()
+        # This comparison follows purchases only; sales and dividends (#294) are listed as excluded and
+        # the holdings performance compares them with the same flows.
+        lots = [lot for lot in movements if holding_kind(lot) == "buy"]
+        others = [{"id": lot.get("id"), "symbol": lot["symbol"], "purchase_date": lot["purchase_date"],
+                   "reason": "sale" if holding_kind(lot) == "sell" else "dividend"}
+                  for lot in movements if holding_kind(lot) != "buy"]
         if not lots:
             raise QueryError("no_holdings", "Mi cartera no tiene compras que comparar.", 404)
         start = min(date.fromisoformat(lot["purchase_date"]) for lot in lots) - timedelta(days=LOOKBACK_DAYS)
-        histories = self.prices(price_symbols(lots), start.isoformat())
+        histories = self.holdings_prices(price_symbols(lots), start.isoformat())
         prices, euros_per_dollar = self._benchmark_series(histories)
         euros_per_unit = {currency: _series(histories.get(pair), "close")
                           for currency in {lot["currency"] for lot in lots}
@@ -146,16 +158,20 @@ class InvestorBenchmark:
         portfolio, benchmark = rules.performance(real, profile), rules.performance(spy, profile)
         value = sum(real["value_by_currency"].values())
         usd_share = (value - real["value_by_currency"].get("EUR", 0.0)) / value if value > 0 else 0.0
+        scenarios = rules.scenarios(value, usd_share, profile.loss_tolerance) if value > 0 else []
+        alternatives = self._alternatives(lots, adjusted, euros_per_unit, prices, euros_per_dollar,
+                                          real, spy, vehicle, profile)
         return {
             "as_of": self.today().isoformat(), "profile_revision": saved["revision"],
             "profile_version": profile.version, "source": self._source(prices, euros_per_dollar),
             "portfolio": portfolio, "benchmark": benchmark, "comparison": rules.compare(portfolio, benchmark),
-            "excluded": real["excluded"], "incomplete_sessions": real["incomplete_sessions"],
+            "excluded": real["excluded"] + others, "incomplete_sessions": real["incomplete_sessions"],
             "portfolio_series": self._points(real["daily"]), "benchmark_series": self._points(spy["daily"]),
             "usd_share": usd_share,
-            "scenarios": rules.scenarios(value, usd_share, profile.loss_tolerance) if value > 0 else [],
-            "alternatives": self._alternatives(lots, adjusted, euros_per_unit, prices, euros_per_dollar,
-                                               real, spy, vehicle, profile),
+            "scenarios": scenarios,
+            "scenarios_reading": stress_reading.scenarios(scenarios, profile.loss_tolerance, value),  # #325
+            "alternatives": alternatives,
+            "alternatives_reading": stress_reading.alternatives(alternatives),
         }
 
     @staticmethod
@@ -209,7 +225,10 @@ class InvestorBenchmark:
             "performance": rules.performance(result, profile),
             "pending": [{"date": day.isoformat(), "amount_eur": amount} for day, amount in result["pending"]],
             "series": self._points(result["daily"]),
-            "scenarios": self._plan_scenarios(result, profile),
+            "scenarios": (scenarios := self._plan_scenarios(result, profile)),
+            "scenarios_reading": stress_reading.scenarios(  # #325
+                scenarios, profile.loss_tolerance,
+                float(result["daily"]["value_eur"].iloc[-1]) if not result["daily"].empty else 0.0),
             "vehicles": [self._vehicle(spec, histories, flows, start, euros_per_dollar, profile)
                          for spec in VEHICLES],
         }

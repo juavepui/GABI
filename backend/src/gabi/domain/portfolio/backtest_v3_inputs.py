@@ -25,6 +25,7 @@ from datetime import date
 import pandas as pd
 
 from gabi.domain.portfolio.backtest_v3 import Bar, Event
+from gabi.domain.portfolio.split_basis import split_factor as _split_factor
 from gabi.domain.research import issuer_evidence
 
 TODAY_SPLITS = "today_splits"
@@ -37,15 +38,6 @@ class SeriesInputs:
     bars: dict[date, Bar]
     events: list[Event]
     anomalies: list[dict]
-
-
-def _split_factor(index: pd.DatetimeIndex, splits: pd.Series) -> pd.Series:
-    """Product of the split ratios after each session: the later splits a today-basis price carries."""
-    factor = pd.Series(1.0, index=index)
-    for day, ratio in splits.items():
-        if ratio and math.isfinite(ratio) and ratio > 0:
-            factor[factor.index < pd.Timestamp(day)] *= float(ratio)
-    return factor
 
 
 def _number(value) -> float | None:
