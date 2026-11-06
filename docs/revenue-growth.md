@@ -25,6 +25,9 @@ sincronización SEC y en el refresco diario; no descarga nada.
 - `sec-metrics-v2.2` = ROIC de V2.1 + este crecimiento.
 - `GABI-MF-v4` = `GABI-MF-v3` con `sec-metrics-v2.2`. El propietario la activó el
   2026-11-06. Empieza sin evidencia y no hereda la de la v3.
+- Desde el 2026-11-06 el modelo activo es `GABI-MF-v5` (#347), que puntúa el
+  crecimiento de ingresos como el motor de la prueba histórica, no con esta regla
+  (ver `modelo-v5.md`). v4 sigue declarada.
 - `sec_facts`, V1 y las versiones anteriores no cambian; la hipótesis sellada y los
   estudios prospectivos siguen con V1.
 

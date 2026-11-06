@@ -21,7 +21,7 @@ from pathlib import Path
 
 # Every table ReadOnlyMarket.ranking reads (SqlInputs, batches, sec, identities).
 INPUT_TABLES = ("prices", "fundamentals", "edgar_metrics", "sec_metrics_v2", "sec_revenue_growth",
-                "macro_series", "entities", "entity_aliases")
+                "macro_series", "entities", "entity_aliases", "engine_fundamentals")
 OPERATIONS = ("insert", "update", "delete")
 TABLE = "ranking_input_revision"
 

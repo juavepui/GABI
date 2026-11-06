@@ -301,12 +301,15 @@ test('la ficha muestra el checklist fundamental y edita y restablece sus umbrale
   await expect(page.getByText('Criterios cumplidos')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Evaluables' })).toBeVisible();
   await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
-  // #169: every value declares its source and period; Yahoo's figure is a reference, never mixed in.
+  // #169: every value declares its source and period; the Composite's figure is a reference, never mixed in.
+  // With GABI-MF-v5 (#347) it is the tested engine's 10-K value.
   const pe = checklist.getByRole('row', { name: /^PER(?! forward)/ });
   await expect(pe).toContainText('Precio + SEC 10-K');
-  await expect(pe).toContainText(/Sin dato SEC; Yahoo · 12 meses informa \d/);
-  await pe.getByRole('button', { name: /Yahoo · 12 meses informa/ }).hover();
-  await expect(page.getByRole('tooltip')).toContainText('Los dos valores no se mezclan');
+  await expect(pe).toContainText(
+    /Sin dato SEC; Composite · Informe anual SEC \(10-K\) · último ejercicio informa \d/,
+  );
+  await pe.getByRole('button', { name: /Composite · Informe anual SEC/ }).hover();
+  await expect(page.getByRole('tooltip')).toContainText('No se mezclan');
   await page.mouse.move(0, 0);
   await expect(checklist.getByRole('row', { name: /^Beta/ })).toContainText(
     'Calculado por GABI con los precios · todos los precios guardados',

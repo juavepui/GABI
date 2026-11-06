@@ -6,7 +6,7 @@ sealed snapshot of the studies. Changing the active model is a commit that chang
 
 from types import MappingProxyType
 
-from gabi.domain.market import input_checks, revenue_growth, sec_metrics_v2
+from gabi.domain.market import engine_fundamentals, input_checks, revenue_growth, sec_metrics_v2
 from gabi.domain.market.model_policy import FROZEN_LABEL, FROZEN_MODEL_ID, FROZEN_WEIGHTS
 from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.technicals import TechnicalParameters
@@ -38,9 +38,20 @@ GABI_MF_V4 = ModelVersion("GABI-MF-v4", "GABI multifactor v4 · métricas SEC V2
                           FROZEN_WEIGHTS, GABI_MF_V1.technical, benchmark_symbol="SPY", risk_free_rate=0.04,
                           metrics_version=revenue_growth.METRICS_VERSION, input_checks=input_checks.VERSION)
 
+# #347: the model as it was tested on past data. The eight company metrics of the Composite come from the
+# historical engine (screener_asof, operational mode of #237, fiscal alignment of #38), stored daily as
+# engine-fundamentals-v1; prices, momentum and risk were already the same. Same weights, technical parameters,
+# benchmark and risk-free rate; no input checks (the tested engine had none; their report stays as a warning).
+# On 2026-11-06 its Top-20 equals the engine's (20/20; v4 shared 8). Decided on 2026-11-06 by Claude, to whom the
+# owner delegated the decision; it starts without evidence of its own and inherits none from GABI-MF-v4. The
+# evidence it reproduces is #35 (operativo-38: 20.1 % a year against 15.0 % for SPY, 2016-2025, t = 1.98).
+GABI_MF_V5 = ModelVersion("GABI-MF-v5", "GABI multifactor v5 · el modelo probado (métricas SEC del motor histórico)",
+                          FROZEN_WEIGHTS, GABI_MF_V1.technical, benchmark_symbol="SPY", risk_free_rate=0.04,
+                          metrics_version=engine_fundamentals.METRICS_VERSION)
+
 VERSIONS = MappingProxyType({version.model_id: version
-                             for version in (GABI_MF_V1, GABI_MF_V2, GABI_MF_V3, GABI_MF_V4)})
-ACTIVE_MODEL_ID = GABI_MF_V4.model_id
+                             for version in (GABI_MF_V1, GABI_MF_V2, GABI_MF_V3, GABI_MF_V4, GABI_MF_V5)})
+ACTIVE_MODEL_ID = GABI_MF_V5.model_id
 
 
 def active_model(model_id: str = ACTIVE_MODEL_ID) -> ModelVersion:

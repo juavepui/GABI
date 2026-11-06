@@ -511,7 +511,9 @@ def test_api_get_has_no_side_effects_and_thresholds_are_explicit_commands(api):
     assert not (root / "checklist_thresholds.json").exists()
     # The checklist's secondary references are the company page's own values (#169).
     page = client.get("/api/v1/companies/T001").json()
-    assert page["metric_sources"]["pe"] == {"source": "yahoo", "period": "ttm", "approximation": None}
+    # GABI-MF-v5 (#347) scores the tested engine's 10-K values; the checklist says so in its alternative.
+    assert page["metric_sources"]["pe"] == {"source": "sec_10k", "period": "fiscal_year", "approximation": None}
+    assert criteria["pe"]["alternative"] is None or criteria["pe"]["alternative"]["difference"] == "engine"
     assert page["metric_sources"]["beta_calc"] == {"source": "prices", "period": "cached_history",
                                                    "approximation": None}
     # The version-1 ROIC is labelled as the approximation it is, without changing its value (#245).

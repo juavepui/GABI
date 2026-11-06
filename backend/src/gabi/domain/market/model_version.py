@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from math import isfinite
 from types import MappingProxyType
 
-from gabi.domain.market import revenue_growth, sec_metrics_v2
+from gabi.domain.market import engine_fundamentals, revenue_growth, sec_metrics_v2
 from gabi.domain.market.input_checks import VERSION as INPUT_CHECKS_VERSION
 from gabi.domain.market.model_policy import FROZEN_WEIGHTS, model_status, weights_match_frozen
 from gabi.domain.market.technicals import TechnicalParameters
@@ -15,7 +15,9 @@ BLOCKS = frozenset(FROZEN_WEIGHTS)
 # sec_metrics_v2) or V2.2 (#339: V2.1 plus the revenue growth of revenue-growth-v1).
 SEC_METRICS_V1 = "sec-metrics-v1"
 SEC_METRICS_V2_2 = revenue_growth.METRICS_VERSION
-SEC_METRICS_VERSIONS = frozenset({SEC_METRICS_V1, sec_metrics_v2.VERSION, SEC_METRICS_V2_2})
+# #347: the eight company metrics as the tested historical engine computes them (engine-fundamentals-v1).
+SEC_ENGINE_V1 = engine_fundamentals.METRICS_VERSION
+SEC_METRICS_VERSIONS = frozenset({SEC_METRICS_V1, sec_metrics_v2.VERSION, SEC_METRICS_V2_2, SEC_ENGINE_V1})
 
 
 @dataclass(frozen=True)

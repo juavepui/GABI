@@ -13,7 +13,7 @@ from gabi.infrastructure.legacy import blind_validation
 TODAY = date(2026, 9, 29)
 
 
-def seed_fixture(root, companies=12, sessions=320, *, wal=False):
+def seed_fixture(root, companies=12, sessions=320, *, wal=False, engine=True):
     root.mkdir(parents=True, exist_ok=True)
     symbols = [f"T{i:03}" for i in range(companies)] + ["BRK-A", "BRK-B", "SHORT", "EMPTY"]
     universe = pd.DataFrame({"symbol": symbols, "name": [f"Company {s}" for s in symbols],
@@ -56,4 +56,25 @@ def seed_fixture(root, companies=12, sessions=320, *, wal=False):
                            ("issuer", symbol, "2026-01-01", None, "fixture:reviewed", 1.))
     connection.commit()
     connection.close()
+    if engine:
+        seed_engine_fundamentals(root, symbols[:companies] + ["BRK-A", "BRK-B"])
     return universe
+
+
+def seed_engine_fundamentals(root, symbols, as_of=TODAY):
+    """#347: the tested engine's company metrics for GABI-MF-v5, consistent with the fixture's Yahoo values."""
+    from datetime import UTC, datetime
+
+    from gabi.domain.market import engine_fundamentals
+    from gabi.infrastructure.storage.engine_fundamentals import SqliteEngineFundamentals
+
+    all_symbols = [f"T{i:03}" for i in range(1000)] + ["BRK-A", "BRK-B"]
+    table = pd.DataFrame({
+        "pe": [10. + all_symbols.index(s) for s in symbols], "pb": [1 + all_symbols.index(s) / 10 for s in symbols],
+        "ev_ebitda": [7 + all_symbols.index(s) / 10 for s in symbols],
+        "roic": [.10 + all_symbols.index(s) / 1000 for s in symbols],
+        "operating_margin": [.15 + all_symbols.index(s) / 100 for s in symbols],
+        "revenue_cagr_3y": [.05 + all_symbols.index(s) / 100 for s in symbols], "fcf_cagr_3y": [.08] * len(symbols),
+        "debt_to_equity": [.30 + all_symbols.index(s) / 100 for s in symbols]}, index=symbols)
+    rows = engine_fundamentals.rows(table, as_of)
+    SqliteEngineFundamentals(root / "gabi.db").replace(rows, datetime(2026, 9, 29, 8, tzinfo=UTC))

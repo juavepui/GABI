@@ -85,7 +85,8 @@ def test_the_report_job_lists_marks_over_the_cached_universe_without_writing(tmp
                    (json.dumps(info | {"trailingPE": 40000, "operatingMargins": 3.0}),))
     stamp = (tmp_path / "gabi.db").stat().st_mtime_ns
     result = LegacyExecutor(Settings(tmp_path), today=lambda: TODAY)(JobCommand("input_checks"))
-    assert result["policy"] == "input-checks-v1" and result["model_id"] == "GABI-MF-v4" and result["applied"]
+    # GABI-MF-v5 (#347) scores as the tested engine did, without the checks: the report only warns.
+    assert result["policy"] == "input-checks-v1" and result["model_id"] == "GABI-MF-v5" and not result["applied"]
     marked = {(mark["symbol"], mark["field"]) for mark in result["marks"]}
     assert {("T001", "pe"), ("T001", "operating_margin")} <= marked
     assert result["by_field"]["pe"] >= 1 and result["companies"] == 16

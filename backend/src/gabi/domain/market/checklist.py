@@ -8,7 +8,7 @@ anual de ingresos o, si falta, de beneficio); un componente de otro ejercicio
 deja el criterio sin dato: nunca se mezclan años ni se rellena con cero.
 """
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
@@ -279,6 +279,9 @@ DIFFERENCES = {
                "patrimonio − caja e inversiones a corto).",
     "share_count": "Yahoo multiplica el precio por su número de acciones; el checklist usa las acciones de la SEC "
                    "(o la capitalización de Yahoo si no cuadran con el precio).",
+    "engine": "Los dos salen del último 10-K anual. El del Composite lo calcula el motor de la prueba con datos "
+              "del pasado (GABI-MF-v5), que alinea las partidas al mismo ejercicio y usa el precio del día del "
+              "cálculo; puede diferir del checklist por esas fechas o por el número de acciones. No se mezclan.",
     "method": "La beta del checklist la calcula GABI frente al SPY con rendimientos diarios de todo el histórico "
               "en caché. La de Yahoo usa 5 años de rendimientos mensuales con su propia metodología. La "
               "clasificación defensiva/neutral/agresiva usa la de GABI.",
@@ -597,6 +600,8 @@ class MarketInputs:
     yahoo_fetched_at: str | None = None
     # Values of the ranking row (REFERENCE_KEYS) shown as secondary references, never mixed in.
     references: dict[str, float | None] = field(default_factory=dict)
+    # Source and period of those values for the active model (#347); None is METRIC_SOURCES (Yahoo multiples).
+    reference_sources: Mapping[str, tuple[str, str]] | None = None
 
 
 # ----------------------------------------------------------------- evaluación
@@ -613,7 +618,9 @@ def _alternative(market: "MarketInputs", key: str) -> dict | None:
     value = market.references.get(metric)
     if value is None:
         return None
-    source, period = METRIC_SOURCES[metric]
+    source, period = (market.reference_sources or METRIC_SOURCES)[metric]
+    if difference == "period" and source == "sec_10k":  # #347: the Composite's value is the tested engine's 10-K.
+        difference = "engine"
     return {"metric": metric, "value": float(value), "source": source, "period": period,
             "difference": difference, "explanation": DIFFERENCES[difference]}
 

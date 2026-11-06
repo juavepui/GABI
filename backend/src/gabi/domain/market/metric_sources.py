@@ -5,6 +5,8 @@ from the latest SEC 10-K or from GABI's cached prices. The backend declares
 which one every value is; React only labels it. Nothing here changes a value.
 """
 
+from gabi.domain.market.engine_fundamentals import METRICS_VERSION as ENGINE_METRICS_VERSION
+
 # source: yahoo (Yahoo info record), sec_10k (latest annual SEC filing), prices (GABI on cached prices).
 # period: ttm (last twelve months), mrq (latest quarter), snapshot (value at capture),
 # 5y_monthly (Yahoo's beta), 3m (three-month average), fiscal_year (latest 10-K),
@@ -50,3 +52,19 @@ METRIC_SOURCES: dict[str, tuple[str, str]] = {
 METRIC_APPROXIMATIONS: dict[str, str] = {
     "roic": "net_income_over_equity_plus_long_term_debt",
 }
+
+# #347 (sec-engine-v1, GABI-MF-v5): the Composite's company metrics come from the tested historical engine:
+# the latest 10-K known that day (with the fiscal alignment of #38) and that day's price.
+ENGINE_SOURCES: dict[str, tuple[str, str]] = {
+    "pe": ("sec_10k", "fiscal_year"), "pb": ("sec_10k", "fiscal_year"), "ev_ebitda": ("sec_10k", "fiscal_year"),
+    "roic": ("sec_10k", "fiscal_year"), "operating_margin": ("sec_10k", "fiscal_year"),
+    "revenue_cagr_3y": ("sec_10k", "fiscal_years_3"), "fcf_cagr_3y": ("sec_10k", "fiscal_years_3"),
+    "debt_to_equity": ("sec_10k", "fiscal_year"),
+}
+
+
+def metric_sources(metrics_version: str) -> dict[str, tuple[str, str]]:
+    """The source and period of every ranking metric for a model's SEC metrics version."""
+    if metrics_version == ENGINE_METRICS_VERSION:
+        return {**METRIC_SOURCES, **ENGINE_SOURCES}
+    return dict(METRIC_SOURCES)

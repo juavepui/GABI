@@ -213,7 +213,8 @@ consulta tras un `data_update` tardó 19,4 s en `/api/v1/data/status`.
   `PRAGMA schema_version` + universo. Los triggers `ranking_rev_<tabla>_<op>` suben
   el contador en cada INSERT/UPDATE/DELETE de `prices`, `fundamentals`,
   `edgar_metrics`, `sec_metrics_v2`, `sec_revenue_growth`, `macro_series`,
-  `entities` y `entity_aliases`, sea cual sea el escritor. Escribir en el diario,
+  `entities`, `entity_aliases` y, desde #347, `engine_fundamentals`, sea cual sea
+  el escritor. Escribir en el diario,
   en las seguidas o en la cartera ya no obliga a recalcular. Solo la tarea diaria
   instala el contador (`ranking_revision.install`, idempotente), nunca una
   consulta. Si falta la tabla o algún trigger de una tabla de entrada presente, se

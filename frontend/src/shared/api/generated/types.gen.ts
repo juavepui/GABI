@@ -1857,7 +1857,7 @@ export type ChecklistAlternative = {
     /**
      * Difference
      */
-    difference: 'period' | 'formula' | 'share_count' | 'method';
+    difference: 'period' | 'formula' | 'share_count' | 'method' | 'engine';
     /**
      * Explanation
      */

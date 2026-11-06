@@ -15,7 +15,7 @@ class ChecklistAlternative(BaseModel):
     value: float
     source: Literal["yahoo", "sec_10k", "prices"]
     period: Literal["ttm", "mrq", "snapshot", "5y_monthly", "fiscal_year", "cached_history"]
-    difference: Literal["period", "formula", "share_count", "method"]
+    difference: Literal["period", "formula", "share_count", "method", "engine"]
     explanation: str
 
 

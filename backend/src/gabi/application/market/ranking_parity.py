@@ -2,7 +2,8 @@
 
 The app scores Value and part of Quality with Yahoo's last twelve months or last
 quarter; the historical engine (``screener_asof``, operational mode of #237)
-computes them from the annual SEC 10-K and that day's price. Both rankings use
+computes them from the annual SEC 10-K (fiscal alignment of #38) and that day's price. GABI-MF-v5
+(#347) scores with that engine's company metrics, so with it both rankings should agree. Both rankings use
 the same universe, weights and scoring; the report says how much they agree and
 which metric explains the largest moves. It does not decide anything: declaring
 a model version with SEC metrics is a separate change (ADR 0008).
@@ -14,9 +15,10 @@ from datetime import date
 import pandas as pd
 
 from gabi.domain.market import metrics_comparison as compare
-from gabi.domain.market.metric_sources import METRIC_SOURCES
+from gabi.domain.market.metric_sources import metric_sources
 
-VERSION = "ranking-parity-v1"
+# v2 (#347): the engine runs with the fiscal alignment of #38, as tested; live sources follow the version.
+VERSION = "ranking-parity-v2"
 TOP_N = 20
 # The historical engine: every fundamental from the latest 10-K known that day; prices from the cache.
 HISTORICAL_SOURCES: dict[str, tuple[str, str]] = {
@@ -41,7 +43,7 @@ def compare_rankings(*, universe: Callable[[], list[str]], live: Callable[[], pd
     progress(0.2, "Ranking con el cálculo histórico")
     past = historical(symbols, today)
     progress(0.95, "Comparando")
-    sources = {"live": {**METRIC_SOURCES, **LIVE_EXTRA}, "historical": HISTORICAL_SOURCES}
+    sources = {"live": {**metric_sources(metrics_version), **LIVE_EXTRA}, "historical": HISTORICAL_SOURCES}
     report = compare.live_vs_historical(app, past, weights=weights, score_metrics=score_metrics,
                                         sources=sources, top_n=TOP_N)
     return {"version": VERSION, "as_of": today.isoformat(), "model_id": model_id,

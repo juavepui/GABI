@@ -38,6 +38,10 @@ acciones declaran a la SEC las acciones de una sola clase y darían falsos aviso
   cadena. Las huellas de código del modelo activo incluyen `input_checks.py`.
 - Desde el 2026-11-06 el modelo activo es `GABI-MF-v4` (#339), que mantiene estos
   controles y solo cambia el crecimiento de ingresos (ver `revenue-growth.md`).
+- Desde el 2026-11-06 (#347) el modelo activo es `GABI-MF-v5`, el modelo tal como
+  se probó con datos del pasado. **No usa estos controles al puntuar**, porque el
+  modelo probado no los tenía; el informe sigue disponible como aviso (ver
+  `modelo-v5.md`).
 
 ## Dónde se ve
 

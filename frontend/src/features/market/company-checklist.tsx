@@ -155,7 +155,8 @@ const OWN_SOURCE: Record<ChecklistCriterion['source'], string> = {
 function Alternative({ item }: { item: ChecklistCriterion }) {
   const other = item.alternative;
   if (!other) return null;
-  const label = (other.difference === 'formula' ? 'Composite · ' : '') + sourceLabel(other);
+  const label =
+    (['formula', 'engine'].includes(other.difference) ? 'Composite · ' : '') + sourceLabel(other);
   const value = show(other.value, item.unit);
   return (
     <span className="mt-0.5 block text-xs text-muted-foreground">
