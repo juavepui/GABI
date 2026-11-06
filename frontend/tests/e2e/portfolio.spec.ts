@@ -92,7 +92,7 @@ test('la cartera objetivo se guarda para seguirla y sus eventos están en Evento
   await page.getByRole('main').getByRole('link', { name: 'Eventos' }).click();
   await expect(page.getByRole('heading', { name: 'Eventos', level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'Comparar ahora' }).click();
-  await expect(page.getByText('cambios detectados')).toBeVisible();
+  await expect(page.getByText(/desde que guardaste la cesta/)).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Próximas presentaciones de resultados' }),
   ).toBeVisible();
