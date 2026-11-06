@@ -28,7 +28,7 @@ const pages: { path: string; sections: string[] }[] = [
     path: '/administracion',
     sections: [
       'Datos',
-      'Actualizar datos',
+      'Actualizar solo una parte de las empresas',
       'Claves de acceso a las fuentes',
       'Modo de trabajo',
       'Tareas en marcha y terminadas',

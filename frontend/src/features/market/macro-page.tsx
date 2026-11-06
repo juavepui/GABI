@@ -170,7 +170,7 @@ export function MacroPage() {
             );
           })}
           <p className="text-sm text-muted-foreground">
-            Para actualizar las series, usa «Actualización completa» en{' '}
+            Para actualizar las series, usa «Actualizar todo» en{' '}
             <Link className="text-primary underline" to="/administracion">
               Administración
             </Link>
