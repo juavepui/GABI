@@ -137,7 +137,7 @@ test.describe('calidad de los datos', () => {
     ).toBeVisible({
       timeout: 15_000,
     });
-    await expect(section).toContainText('El modelo activo (GABI-MF-v3) no usa para puntuar');
+    await expect(section).toContainText('El modelo activo (GABI-MF-v4) no usa para puntuar');
   });
 
   test('identidades del universo', async ({ page }) => {

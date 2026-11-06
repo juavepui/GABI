@@ -34,8 +34,10 @@ acciones declaran a la SEC las acciones de una sola clase y darían falsos aviso
 - El propietario la activó el 2026-11-04. Empieza sin evidencia y no hereda la de la v2.
 - `GABI-MF-v1` (sellado) y `GABI-MF-v2` siguen puntuando cada valor tal como viene. La
   hipótesis sellada no admite controles.
-- El registro diario anota la decisión de v1 y la del modelo activo (v3) en la misma
+- El registro diario anota la decisión de v1 y la del modelo activo en la misma
   cadena. Las huellas de código del modelo activo incluyen `input_checks.py`.
+- Desde el 2026-11-06 el modelo activo es `GABI-MF-v4` (#339), que mantiene estos
+  controles y solo cambia el crecimiento de ingresos (ver `revenue-growth.md`).
 
 ## Dónde se ve
 
