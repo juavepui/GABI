@@ -90,3 +90,43 @@ def test_the_report_job_lists_marks_over_the_cached_universe_without_writing(tmp
     assert {("T001", "pe"), ("T001", "operating_margin")} <= marked
     assert result["by_field"]["pe"] >= 1 and result["companies"] == 16
     assert (tmp_path / "gabi.db").stat().st_mtime_ns == stamp
+
+
+def test_the_report_reads_full_histories_in_groups_within_the_row_budget(tmp_path):
+    """#297: 50 full histories in one read exceeded the price-row budget and the job stopped at once."""
+    from market_fixture import TODAY, seed_fixture
+
+    from gabi.application.administration.jobs import JobCommand
+    from gabi.application.errors import QueryError
+    from gabi.infrastructure.legacy.jobs import LegacyExecutor
+    from gabi.infrastructure.legacy.market import model_policy
+    from gabi.infrastructure.model_versions import active_model
+    from gabi.infrastructure.settings import Settings
+    from gabi.infrastructure.storage.market import ReadOnlyMarket
+
+    seed_fixture(tmp_path)  # 16 companies with 320 sessions each.
+    small = Settings(tmp_path, max_price_rows_per_batch=700)  # Two companies per read.
+    reference = LegacyExecutor(Settings(tmp_path), today=lambda: TODAY)(JobCommand("input_checks"))
+    assert LegacyExecutor(small, today=lambda: TODAY)(JobCommand("input_checks")) == reference
+
+    model = active_model()
+    market = ReadOnlyMarket(small, calculators(model.technical), model_policy(model), model.benchmark_symbol,
+                            model.risk_free_rate, metrics_version=model.metrics_version)
+    try:
+        market.connect()
+        market.discover()
+        symbols = tuple(f"T{i:03d}" for i in range(16))
+        with pytest.raises(QueryError):
+            market.closes(symbols, small.max_price_rows_per_batch)
+        grouped = market.bounded_closes(symbols)
+        whole = ReadOnlyMarket(Settings(tmp_path), calculators(model.technical), model_policy(model),
+                               model.benchmark_symbol, model.risk_free_rate, metrics_version=model.metrics_version)
+        whole.connect()
+        whole.discover()
+        expected = whole.closes(symbols, 160_000)
+        whole.close()
+    finally:
+        market.close()
+    assert list(grouped) == list(expected)
+    for symbol, frame in expected.items():
+        pd.testing.assert_frame_equal(grouped[symbol], frame, check_exact=True)
