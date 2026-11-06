@@ -1,7 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Landmark } from 'lucide-react';
 import { dateLabel, formatNumber } from '@/shared/lib/format';
+import { SummaryCard } from '@/shared/ui/summary-card';
 import { Sparkline } from '@/shared/ui/charts/sparkline';
-import { amount, cadence, trend, useMacro } from './macro-format';
+import { Direction } from '@/shared/ui/status';
+import { amount, cadence, useMacro } from './macro-format';
 
 const DIRECTION = { up: 'Subiendo', down: 'Bajando', flat: 'Estable' } as const;
 
@@ -11,15 +13,11 @@ export function MacroStrip() {
   const items = query.data?.items.filter((item) => item.home) ?? [];
   if (query.isError || (query.data && !items.length)) return null;
   return (
-    <section aria-labelledby="macro-strip" className="rounded-xl border bg-card p-4">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="macro-strip" className="text-sm font-semibold">
-          Cómo está la economía
-        </h2>
-        <Link className="text-xs text-primary underline" to="/macro">
-          Ver más datos de la economía
-        </Link>
-      </div>
+    <SummaryCard
+      title="Cómo está la economía"
+      icon={Landmark}
+      more={{ to: '/macro', label: 'Ver más datos de la economía' }}
+    >
       {query.isPending ? (
         <p className="text-xs text-muted-foreground" role="status">
           Leyendo la caché de FRED…
@@ -37,8 +35,9 @@ export function MacroStrip() {
                     className="ml-2 text-xs font-normal text-muted-foreground"
                     title="Cambio frente a hace 3 meses"
                   >
-                    <span aria-hidden="true">{trend(item.change_3m)} </span>
-                    {amount(item.change_3m, item.change_unit, true)} en 3 meses
+                    <Direction value={item.change_3m}>
+                      {amount(Math.abs(item.change_3m), item.change_unit)} en 3 meses
+                    </Direction>
                   </span>
                 )}
               </p>
@@ -68,6 +67,6 @@ export function MacroStrip() {
         Datos de la Reserva Federal (FRED) guardados en tu equipo. Son contexto: no cambian la
         puntuación de las empresas.
       </p>
-    </section>
+    </SummaryCard>
   );
 }

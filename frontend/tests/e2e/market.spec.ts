@@ -554,7 +554,7 @@ test('Seguir desde el Ranking, la ficha y Comparar, y la lista con nota (#182)',
   const rows = list.locator('tbody tr');
   await expect(rows).toHaveCount(3);
   await expect(rows.first()).toContainText('T001');
-  await expect(rows.first()).toContainText('0 puestos');
+  await expect(rows.first()).toContainText('mismo puesto');
   // The checklist arrives in its own query, without blocking the list.
   await expect(rows.first().getByText('Calculando…')).toHaveCount(0);
   await list.getByRole('button', { name: 'Editar la nota de T002' }).click();

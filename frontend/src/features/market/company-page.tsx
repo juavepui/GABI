@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCompanyResearch } from '@/shared/api/client';
-import type { CompanyRow } from '@/shared/api/generated/types.gen';
+import type { CompanyHeadline, CompanyRow } from '@/shared/api/generated/types.gen';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ExternalLink, CalendarDays, ShieldCheck } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
@@ -37,6 +37,8 @@ import { BlockEvidenceBadge, FACTOR_LAB } from '@/shared/ui/block-evidence';
 import { Hash } from '@/shared/ui/hash';
 
 import { Term } from '@/shared/ui/term';
+import type { Tone } from '@/shared/ui/tone';
+import { VerdictBanner } from '@/shared/ui/verdict-banner';
 import {
   drawdownDates,
   drawdownOf,
@@ -46,6 +48,17 @@ import {
 } from './risk-windows';
 
 const PriceChart = lazy(() => import('./price-chart'));
+
+/** The backend's own level for the score (company_overview.headline); React sets no threshold (#320). */
+const VERDICT: Record<
+  NonNullable<CompanyHeadline['level']> | 'none',
+  { tone: Tone; verdict: string }
+> = {
+  high: { tone: 'good', verdict: 'Puntuación alta' },
+  medium: { tone: 'neutral', verdict: 'Puntuación media' },
+  low: { tone: 'caution', verdict: 'Puntuación baja' },
+  none: { tone: 'neutral', verdict: 'Sin puntuación' },
+};
 const groups = [
   {
     name: 'Valoración',
@@ -149,8 +162,17 @@ export function CompanyPage() {
                   </span>
                   <FollowButton symbol={company.symbol} />
                 </div>
-                <section aria-label="En pocas palabras" className="mt-3">
-                  <p className="max-w-2xl text-base">{data.headline.text}</p>
+                <section aria-label="En pocas palabras" className="mt-3 max-w-2xl">
+                  <VerdictBanner
+                    {...VERDICT[data.headline.level ?? 'none']}
+                    explanation={data.headline.text}
+                    value={
+                      company.metrics.composite_score?.value == null
+                        ? undefined
+                        : metric(company.metrics.composite_score) + ' de 100'
+                    }
+                    valueLabel="Puntuación GABI"
+                  />
                   <EarningsMove symbol={company.symbol} next={company.next_earnings} />
                 </section>
                 <section

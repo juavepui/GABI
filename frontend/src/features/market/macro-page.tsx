@@ -6,7 +6,8 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { HowToRead } from '@/shared/ui/how-to-read';
 import { Term } from '@/shared/ui/term';
 import { Sparkline } from '@/shared/ui/charts/sparkline';
-import { amount, cadence, trend, useMacro } from './macro-format';
+import { Direction } from '@/shared/ui/status';
+import { amount, cadence, useMacro } from './macro-format';
 
 const TONE: Record<MacroLabel['tone'], string> = {
   good: 'border-success-border bg-success-soft text-success-ink',
@@ -57,9 +58,10 @@ function SeriesCard({ item }: { item: MacroPoint }) {
           : 'Dato del ' + dateLabel(item.latest_date)}
         {item.change_3m != null && (
           <>
-            {' · Cambio en 3 meses: '}
-            <span aria-hidden="true">{trend(item.change_3m)} </span>
-            {amount(item.change_3m, item.change_unit, true)}
+            {' · En 3 meses: '}
+            <Direction value={item.change_3m}>
+              {amount(Math.abs(item.change_3m), item.change_unit)}
+            </Direction>
           </>
         )}
       </p>
