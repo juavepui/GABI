@@ -102,9 +102,12 @@ def test_universe_data_and_refresh_match_capture(tmp_path, monkeypatch, market):
         refresh = captured_refresh_data(target, edgar) if label == "old" else data_fetch.refresh_data
         refreshed = refresh(["AAA", "EMPTY", "AAA"], sec_sync=edgar.ensure_edgar_data)
         if label == "new":
-            # The only intended difference: the SEC metrics V2 fill (#245); no stored SEC issuers here.
+            # The only intended differences: the SEC metrics V2 fill (#245) and the revenue growth fill
+            # (#339), both from local facts; no stored SEC issuers here.
             assert refreshed.pop("metrics_v2") == {"metrics_version": "sec-metrics-v2.1", "computed": 0,
                                                    "current": 0, "without_issuer": 2}
+            assert refreshed.pop("revenue_growth") == {"rule_version": "revenue-growth-v1", "computed": 0,
+                                                       "current": 0, "without_issuer": 2}
         outcomes = [refreshed,
                     target.ensure_universe_data(["AAA", "EMPTY"]),
                     target.ensure_universe_data(["AAA"], force=True, max_age_hours=1)]
