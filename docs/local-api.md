@@ -234,6 +234,12 @@ consulta tras un `data_update` tardó 19,4 s en `/api/v1/data/status`.
   histórico de puntuaciones y la evidencia trabajan sobre una vista sin `attrs`
   (la evidencia lee antes las fuentes). Mapa de calor: de 1,8-11 s a 0,05 s con
   el ranking en memoria. Evidencia del universo: de 27 s a 9 s bajo perfilador.
+  Además, `build_evidence` limpia con `safe()` una sola vez lo que comparten todas
+  las empresas (`sanitized_shared`): el catálogo, la traza común y los estudios de
+  cada factor (unos 7 KB por factor, antes repetidos 12 × 503 veces). `assess` solo
+  los reutiliza si recibe exactamente esos objetos. Si no, rechaza la llamada. El
+  resultado es idéntico, claves y orden incluidos. Sin perfilador: de 1,8 s a 0,6 s;
+  el resto es sobre todo `rank_stability`, que está congelado.
   Leer solo una ventana de precios no se hace: las métricas de riesgo usan todo
   el histórico y cambiarían los resultados.
 
