@@ -16,9 +16,11 @@ import { Input } from '@/shared/ui/input';
 import { Badge } from '@/shared/ui/badge';
 import { NativeSelect, NativeSelectOption } from '@/shared/ui/native-select';
 import { SnapshotPicker } from './snapshot-picker';
+import { eventText } from './event-text';
 import { useSnapshots } from './queries';
 import { dateLabel, dateText } from '@/shared/lib/format';
 import { PageHeader } from '@/shared/ui/page-header';
+import type { SignalEvent } from '@/shared/api/generated/types.gen';
 
 const labels: Record<string, string> = {
   top_n_entry: 'Entra entre las primeras',
@@ -34,6 +36,45 @@ const severities: Record<string, string> = {
   WATCH: 'A vigilar',
   INFO: 'Informativo',
 };
+const severityOrder: Record<string, number> = { MATERIAL: 0, WATCH: 1, INFO: 2 };
+
+/** One list for the comparison just made and for the saved history: each change in plain words,
+ *  with a link to the company's page, where its current position in the ranking is shown.
+ *  `basketSize` gives each event the Top-N of the basket it was compared with. */
+function EventList({
+  items,
+  basketSize,
+  showDate = true,
+}: {
+  items: SignalEvent[];
+  basketSize: (event: SignalEvent) => number | null;
+  showDate?: boolean;
+}) {
+  return (
+    <ul className="mt-4 divide-y">
+      {items.map((event, index) => (
+        <li key={event.id ?? event.symbol + event.event_type + index} className="py-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={event.severity === 'MATERIAL' ? 'destructive' : 'secondary'}>
+              {severities[event.severity] ?? event.severity}
+            </Badge>
+            <Link
+              className="font-medium text-primary"
+              to={'/empresas/' + encodeURIComponent(event.symbol)}
+            >
+              {event.symbol}
+            </Link>
+            <span>{labels[event.event_type] ?? event.event_type}</span>
+            {showDate && event.detected_at && (
+              <span className="text-xs text-muted-foreground">{dateLabel(event.detected_at)}</span>
+            )}
+          </div>
+          <p className="mt-1 text-muted-foreground">{eventText(event, basketSize(event))}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 type FilingPreview = {
   checked: number;
@@ -114,6 +155,14 @@ export function EventsPage() {
     });
   }
   const options = snapshots.data?.items ?? [];
+  const basketSize = (id: number | null | undefined) =>
+    options.find((item) => item.id === id)?.candidates ?? null;
+  const compared = options.find((item) => item.id === compare.variables?.snapshot_id);
+  const comparedItems = [...(compare.data?.items ?? [])].sort(
+    (a, b) =>
+      (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9) ||
+      a.symbol.localeCompare(b.symbol),
+  );
   return (
     <div className="space-y-6">
       <PageHeader
@@ -191,10 +240,34 @@ export function EventsPage() {
             </p>
           )}
           {compare.data && (
-            <p role="status" className="mt-3 text-sm">
-              {compare.data.items.length} cambios detectados.{' '}
-              <Badge variant="outline">{compare.data.status}</Badge>
-            </p>
+            <div className="mt-4">
+              <p role="status" className="text-sm">
+                {compare.data.items.length === 0
+                  ? 'Ningún cambio supera los avisos que has puesto'
+                  : `${compare.data.items.length} cambios`}{' '}
+                desde que guardaste la cesta
+                {compared ? ` «${compared.name}» (${dateText(compared.as_of_date)})` : ''}. Los más
+                importantes van primero.
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {compare.data.status === 'EXPERIMENTAL'
+                  ? 'Has cambiado los avisos por defecto, así que salen más o menos cambios de lo habitual. '
+                  : ''}
+                El puesto 1 es la empresa mejor puntuada. Pulsa una empresa para ver su puesto de
+                hoy, o mira{' '}
+                <Link className="text-primary underline" to="/descubrir">
+                  el ranking completo
+                </Link>
+                .
+              </p>
+              {comparedItems.length > 0 && (
+                <EventList
+                  items={comparedItems}
+                  basketSize={() => compared?.candidates ?? null}
+                  showDate={false}
+                />
+              )}
+            </div>
           )}
         </form>
       )}
@@ -311,6 +384,9 @@ export function EventsPage() {
       )}
       <section className="rounded-xl border bg-card p-5">
         <h2 className="text-lg font-semibold">Eventos recientes</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Todos los cambios de las comparaciones que has hecho, con la fecha en que se detectaron.
+        </p>
         <div className="mt-3 flex flex-wrap items-end gap-3 text-sm">
           <label className="grid gap-1">
             Importancia
@@ -346,30 +422,12 @@ export function EventsPage() {
             No ha habido cambios en este periodo.
           </p>
         )}
-        <ul className="mt-4 divide-y">
-          {signals.data?.items.map((event, index) => (
-            <li key={event.id ?? index} className="py-3 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={event.severity === 'MATERIAL' ? 'destructive' : 'secondary'}>
-                  {severities[event.severity] ?? event.severity}
-                </Badge>
-                <Link
-                  className="font-medium text-primary"
-                  to={'/empresas/' + encodeURIComponent(event.symbol)}
-                >
-                  {event.symbol}
-                </Link>
-                <span>{labels[event.event_type] ?? event.event_type}</span>
-                {event.detected_at && (
-                  <span className="text-xs text-muted-foreground">
-                    {dateLabel(event.detected_at)}
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-muted-foreground">{event.cause}</p>
-            </li>
-          ))}
-        </ul>
+        {signals.data && signals.data.items.length > 0 && (
+          <EventList
+            items={signals.data.items}
+            basketSize={(event) => basketSize(event.from_snapshot_id)}
+          />
+        )}
       </section>
     </div>
   );
