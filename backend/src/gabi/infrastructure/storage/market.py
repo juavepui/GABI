@@ -21,7 +21,8 @@ from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot
 from gabi.application.market.ranking import Calculators, MarketBatch, build_ranking
 from gabi.domain.market.identity import resolve_claims
-from gabi.domain.market.model_version import SEC_METRICS_V1, SEC_METRICS_VERSIONS
+from gabi.domain.market.model_version import SEC_METRICS_V1, SEC_METRICS_V2_2, SEC_METRICS_VERSIONS
+from gabi.domain.market.revenue_growth import stored_growth
 from gabi.domain.market.sec_metrics_v2 import stored_roic
 from gabi.infrastructure.settings import Settings
 
@@ -302,7 +303,8 @@ class ReadOnlyMarket:
                          "quarterly_cashflow": json.loads(cashflow)} for symbol, fetched, info, income, cashflow in rows}
 
     def sec(self, symbols: tuple[str, ...], sectors: dict[str, str | None] | None = None) -> dict:
-        """SEC metrics of the batch. With SEC metrics V2 only the ROIC comes from ``sec_metrics_v2``:
+        """SEC metrics of the batch. With SEC metrics V2 the ROIC comes from ``sec_metrics_v2`` (and with V2.2
+        the revenue growth from ``sec_revenue_growth``, #339):
         absent, outdated or financial-sector rows leave it missing, never the V1 value (#245)."""
         if not symbols or "edgar_metrics" not in self.tables:
             return {}
@@ -321,6 +323,16 @@ class ReadOnlyMarket:
                 symbols, len(symbols))}
         for symbol, metrics in result.items():
             metrics["roic"] = stored_roic(stored.get(symbol), sector=(sectors or {}).get(symbol))
+        if self.metrics_version == SEC_METRICS_V2_2:
+            # #339: the revenue growth of revenue-growth-v1; an absent or outdated row leaves it missing.
+            growth = {}
+            if "sec_revenue_growth" in self.tables:
+                growth_columns = ("rule_version", "revenue_cagr_3y", "state")
+                growth = {row[0]: dict(zip(growth_columns, row[1:], strict=True)) for row in self.rows(
+                    f"SELECT symbol,{','.join(growth_columns)} FROM sec_revenue_growth WHERE symbol IN ({placeholders})",
+                    symbols, len(symbols))}
+            for symbol, metrics in result.items():
+                metrics["revenue_cagr_3y"] = stored_growth(growth.get(symbol))
         return result
 
     def identities(self, symbols: tuple[str, ...], today: date) -> dict[str, dict]:

@@ -36,6 +36,8 @@ RANKING_FINGERPRINTS = {
     "GABI-MF-v1": "6b252e6e2ee598c4c0b07ae0054610628974f52cf70d0c98c1d32f1728a3aa90",
     "GABI-MF-v2": "058fe775e149f2fb7c9ea444ec4fd2eefdcc4938c52a6d218e4868010dad1482",
     "GABI-MF-v3": "058fe775e149f2fb7c9ea444ec4fd2eefdcc4938c52a6d218e4868010dad1482",
+    # #339: the fixture stores no revenue-growth-v1 rows, so v4 scores that metric as missing.
+    "GABI-MF-v4": "cc8afd85dd002f7ae0445804e6021833434b8b250242713b2d42a358d3166ebd",
 }
 
 

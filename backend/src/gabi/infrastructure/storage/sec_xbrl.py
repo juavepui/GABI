@@ -37,11 +37,20 @@ CREATE TABLE IF NOT EXISTS sec_metrics_v2 (
     total_debt REAL, total_debt_state TEXT NOT NULL, cash REAL, cash_state TEXT NOT NULL
 );
 """
+# Revenue growth revenue-growth-v1 (#339): one row per issuer from its stored facts; V1 is not touched.
+REVENUE_GROWTH_SCHEMA = """
+CREATE TABLE IF NOT EXISTS sec_revenue_growth (
+    symbol TEXT PRIMARY KEY, cik TEXT, computed_at TEXT NOT NULL, rule_version TEXT NOT NULL,
+    revenue_cagr_3y REAL, state TEXT NOT NULL, reason TEXT, tag TEXT, first_end TEXT, last_end TEXT
+);
+"""
 SCHEMA = FACTS_SCHEMA + METRICS_SCHEMA
 METRICS = ["revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url",
            "latest_10q_date", "latest_10q_url", "fetched_at"]
 METRICS_V2 = ["symbol", "cik", "computed_at", "metrics_version", "anchor", "roic", "roic_state", "roic_reason",
               "roic_convention", "roic_inputs", "total_debt", "total_debt_state", "cash", "cash_state"]
+REVENUE_GROWTH = ["symbol", "cik", "computed_at", "rule_version", "revenue_cagr_3y", "state", "reason", "tag",
+                  "first_end", "last_end"]
 FACT_COLUMNS = ["tag", "unit", "start_date", "end_date", "val", "form", "fp", "fy", "filed_date", "accn"]
 
 
@@ -180,6 +189,31 @@ class SqliteXbrl:
                        f"VALUES ({','.join('?' * len(METRICS_V2))})",
                        (symbol, cik, self.now().isoformat(), *(values[column] for column in METRICS_V2[3:])))
             db.commit()
+
+    def save_revenue_growth(self, symbol: str, cik: str | None, row: dict) -> None:
+        """One issuer's revenue growth revenue-growth-v1 (#339) in its own table."""
+        with self._write(REVENUE_GROWTH_SCHEMA) as db:
+            db.execute(f"INSERT OR REPLACE INTO sec_revenue_growth ({','.join(REVENUE_GROWTH)}) "
+                       f"VALUES ({','.join('?' * len(REVENUE_GROWTH))})",
+                       (symbol, cik, self.now().isoformat(), *(row.get(column) for column in REVENUE_GROWTH[3:])))
+            db.commit()
+
+    def revenue_growth_state(self, symbols: list[str]) -> dict[str, tuple[str | None, str | None]]:
+        """Stored CIK and revenue growth rule of each symbol with V1 metrics, in one query."""
+        if not symbols:
+            return {}
+        with self._read() as db:
+            if db is None:
+                return {}
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_schema WHERE type='table'")}
+            if "edgar_metrics" not in tables:
+                return {}
+            version = "g.rule_version" if "sec_revenue_growth" in tables else "NULL"
+            join = " LEFT JOIN sec_revenue_growth g USING(symbol)" if "sec_revenue_growth" in tables else ""
+            placeholders = ",".join("?" * len(symbols))
+            rows = db.execute(f"SELECT m.symbol, m.cik, {version} FROM edgar_metrics m{join} "
+                              f"WHERE m.symbol IN ({placeholders})", tuple(symbols)).fetchall()
+        return {symbol: (cik, stored) for symbol, cik, stored in rows}
 
     def metrics_v2_state(self, symbols: list[str]) -> dict[str, tuple[str | None, str | None]]:
         """Stored CIK and V2 version of each symbol with V1 metrics: what a V2 fill needs, in one query."""

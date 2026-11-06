@@ -45,7 +45,10 @@ def test_v3_is_active_v2_with_the_input_checks_and_v2_stays_declared():
     assert GABI_MF_V2.metrics_version == sec_metrics_v2.VERSION == "sec-metrics-v2.1"
     assert replace(GABI_MF_V2, model_id=GABI_MF_V1.model_id, label=GABI_MF_V1.label, sealed_hypothesis=True,
                    metrics_version=GABI_MF_V1.metrics_version) == GABI_MF_V1
-    assert set(VERSIONS) == {"GABI-MF-v1", "GABI-MF-v2", "GABI-MF-v3"}
+    # v4 (#339) is declared, not active: it changes only the SEC metrics version from v3.
+    assert set(VERSIONS) == {"GABI-MF-v1", "GABI-MF-v2", "GABI-MF-v3", "GABI-MF-v4"}
+    assert replace(VERSIONS["GABI-MF-v4"], model_id=active.model_id, label=active.label,
+                   metrics_version=active.metrics_version) == active
     assert model_version.status(active, dict(active.weights)) == "EXPERIMENTAL"
     with pytest.raises(ValueError):
         replace(GABI_MF_V1, input_checks=input_checks.VERSION)  # The sealed hypothesis stays unchecked.
