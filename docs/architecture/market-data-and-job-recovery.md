@@ -34,10 +34,11 @@ trabajos ciegos, de mantenimiento y Tiingo la traza conserva tipo y pila, pero
 omite el mensaje, que podría citar resultados pendientes de #43/#44. Si no se
 puede escribir, el trabajo termina igualmente como fallido con `diagnostic: false`.
 
-Nombres en la interfaz: `refresh` es «Actualización completa» (composición del
+Nombres en la interfaz: `refresh` es «Actualizar todo» (composición del
 S&P 500, precios, fundamentales y SEC del universo y los índices de referencia, y
-macro FRED; la lanza el Programador a diario) y `data_update` es «Actualizar
-datos» (subconjunto elegido de Yahoo y SEC, con descarga forzada opcional).
+macro FRED; la lanza el Programador a diario) y `data_update` es «Actualizar una
+parte de las empresas» (subconjunto elegido de Yahoo y SEC, con descarga forzada
+opcional), plegada en «Otras formas de descargar» de Administración (#289).
 
 `POST /api/v1/jobs/{id}/retry` solo acepta `idempotency_key` (8–50 caracteres).
 La aplicación relee el origen, admite `refresh`/`quality` fallidos o cancelados,
