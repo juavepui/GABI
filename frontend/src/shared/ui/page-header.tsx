@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SidePanelNote } from './how-to-read';
 import { BackLink } from './section-links';
 
 /** The header every page shares: back link, eyebrow, title, one line, a folded guide, actions and extras. */
@@ -15,7 +16,7 @@ export function PageHeader({
   eyebrow?: string;
   title: ReactNode;
   description?: ReactNode;
-  /** The full explanation, folded under «Cómo leer esta página» so one line stays visible. */
+  /** The full explanation, in the side panel behind «Cómo leer esta página», so one line stays visible. */
   guide?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;
@@ -41,12 +42,9 @@ export function PageHeader({
             </p>
           )}
           {guide && (
-            <details className="mt-2 max-w-3xl text-sm">
-              <summary className="cursor-pointer text-xs font-medium text-primary">
-                Cómo leer esta página
-              </summary>
-              <div className="mt-2 space-y-2 leading-relaxed text-muted-foreground">{guide}</div>
-            </details>
+            <SidePanelNote title="Cómo leer esta página" className="mt-2">
+              {guide}
+            </SidePanelNote>
           )}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}

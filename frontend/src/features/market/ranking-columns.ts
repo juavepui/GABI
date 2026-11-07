@@ -21,6 +21,8 @@ export type RankingColumn = {
   value: (row: CompanyRow) => string;
   position?: (row: CompanyRow) => number | null;
   scope?: string;
+  /** A 0–100 score: shown with its mini-bar (#320). */
+  bar?: boolean;
 };
 
 const plain = (key: string, label: string, compact = false): RankingColumn => ({
@@ -46,7 +48,7 @@ function earnings(row: CompanyRow): string {
 /** Every column the Ranking can show, in table order; values come from the ranking row as served. */
 export const RANKING_COLUMNS: RankingColumn[] = [
   plain('price', 'Precio · USD'),
-  { ...block('composite_score', 'Puntuación'), fixed: true, mobile: true },
+  { ...block('composite_score', 'Puntuación'), fixed: true, mobile: true, bar: true },
   block('confidence', 'Datos disponibles'),
   plain('market_cap', 'Capitalización', true),
   {

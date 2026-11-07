@@ -19,6 +19,7 @@ import { dateLabel, formatNumber } from '@/shared/lib/format';
 import { Button } from '@/shared/ui/button';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { SectionLinks } from '@/shared/ui/section-links';
+import { ScoreBar } from '@/shared/ui/score-bar';
 import { StatusTag } from '@/shared/ui/status';
 import { SummaryCard } from '@/shared/ui/summary-card';
 import { HomeNotices } from './home-notices';
@@ -226,12 +227,7 @@ function TargetCard({ home }: { home: HomeResponse }) {
               <span className="hidden w-40 shrink-0 truncate text-xs text-muted-foreground sm:inline">
                 {row.sector ?? 'Sin sector'}
               </span>
-              <span className="h-1.5 w-20 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                <span
-                  className="block h-full rounded-full bg-success"
-                  style={{ width: `${Math.min(Math.max(row.composite_score, 0), 100)}%` }}
-                />
-              </span>
+              <ScoreBar value={row.composite_score} className="w-20" />
               <span className="w-10 text-right text-xs tabular-nums">
                 {formatNumber(row.composite_score, { digits: 1 })}
               </span>

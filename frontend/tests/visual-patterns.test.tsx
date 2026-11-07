@@ -1,3 +1,4 @@
+import { act } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Activity } from 'lucide-react';
 import { Direction, StatusTag } from '../src/shared/ui/status';
@@ -85,4 +86,90 @@ describe('Patrones visuales (#320)', () => {
       expect(direction?.querySelector('[aria-hidden="true"]')?.textContent?.trim()).toBe(arrow);
     },
   );
+});
+
+describe('Patrones visuales, segunda parte (#320)', () => {
+  it('activeFilters: cada filtro en palabras y se quita solo él', async () => {
+    const { activeFilters } = await import('../src/features/market/active-filters');
+    const params = new URLSearchParams(
+      'search=app&sectors=Energy&sectors=Financials&exclude_sectors=Utilities&min_market_cap=1000000000' +
+        '&earnings=only&earnings_days=7&golden_cross_only=true&hide_no_data=false',
+    );
+    const filters = activeFilters(params);
+    expect(filters.map((filter) => filter.label)).toEqual([
+      'Busca «app»',
+      'Sector: Energy',
+      'Sector: Financials',
+      'Sin el sector Utilities',
+      expect.stringMatching(/^Capitalización desde /),
+      'Presentan resultados en los próximos 7 días',
+      'Con cruce dorado reciente',
+      'Incluye empresas sin datos',
+    ]);
+    expect(filters[1].remove).toEqual({ sectors: ['Financials'] });
+    expect(activeFilters(new URLSearchParams())).toEqual([]);
+  });
+
+  it('ActiveFilterTags: «×» quita ese filtro', async () => {
+    const { ActiveFilterTags } = await import('../src/features/market/active-filter-tags');
+    const removed: unknown[] = [];
+    screen = renderScreen(
+      <ActiveFilterTags
+        filters={[
+          {
+            key: 'golden',
+            label: 'Con cruce dorado reciente',
+            remove: { golden_cross_only: null },
+          },
+        ]}
+        remove={(updates) => removed.push(updates)}
+      />,
+    );
+    const button = screen.container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Quitar filtro: Con cruce dorado reciente"]',
+    );
+    act(() => button?.click());
+    expect(removed).toEqual([{ golden_cross_only: null }]);
+  });
+
+  it('ScoreBar: ancho de 0 a 100, decorativa y nada sin dato', async () => {
+    const { ScoreBar } = await import('../src/shared/ui/score-bar');
+    screen = renderScreen(
+      <>
+        <ScoreBar value={68.7} />
+        <ScoreBar value={140} />
+        <ScoreBar value={null} />
+      </>,
+    );
+    const bars = [...screen.container.querySelectorAll<HTMLElement>('[data-score-bar]')];
+    expect(bars.map((bar) => bar.dataset.scoreBar)).toEqual(['69', '100']);
+    expect(bars.every((bar) => bar.getAttribute('aria-hidden') === 'true')).toBe(true);
+  });
+
+  it('HowToRead: panel lateral que se abre, se cierra con Escape y solo uno a la vez', async () => {
+    const { HowToRead } = await import('../src/shared/ui/how-to-read');
+    screen = renderScreen(
+      <>
+        <HowToRead>Primera explicación.</HowToRead>
+        <HowToRead title="Otra">Segunda explicación.</HowToRead>
+      </>,
+    );
+    // Closed, the text is still in the page (search, screen readers) but not drawn.
+    expect(screen.text()).toContain('Primera explicación.');
+    const [first, second] = [
+      ...screen.container.querySelectorAll<HTMLButtonElement>('button[aria-expanded]'),
+    ];
+    const panels = [...screen.container.querySelectorAll('aside')];
+    expect(panels.every((panel) => panel.hidden)).toBe(true);
+    act(() => first.click());
+    expect(panels[0].hidden).toBe(false);
+    expect(first.getAttribute('aria-expanded')).toBe('true');
+    act(() => second.click());
+    expect(panels.map((panel) => panel.hidden)).toEqual([true, false]);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(panels[1].hidden).toBe(true);
+    expect(document.activeElement).toBe(second);
+  });
 });

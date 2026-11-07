@@ -18,6 +18,8 @@ import { LoadingState, ErrorState, EmptyState } from '@/shared/ui/resource-state
 import { dateLabel } from '@/shared/lib/format';
 import { useBlockEvidence, useRanking } from './queries';
 import { rankingParams, patchParams, sortOptions, type SortKey } from './params';
+import { activeFilters } from './active-filters';
+import { ActiveFilterTags } from './active-filter-tags';
 import { Evidence } from './evidence';
 import { RankingEvidence, RankingStabilityPanel } from './candidate-evidence';
 import { CoverageWarnings } from './coverage-warnings';
@@ -27,6 +29,7 @@ import { GitCompareArrows, Globe, Radar } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
+import { ScoreBar } from '@/shared/ui/score-bar';
 import { Term } from '@/shared/ui/term';
 import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
 import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
@@ -201,155 +204,171 @@ export function MarketPage() {
       {data && <Evidence model={data.model} data={data.data} />}
       <CoverageWarnings />
       <section aria-label="Filtros del ranking" className="mb-5 rounded-xl border bg-card p-4">
-        <form key={params.toString()} onSubmit={filter} className="space-y-3">
-          <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-[2fr_1.3fr_1fr_auto]">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium" htmlFor="search">
-                Buscar empresa o símbolo
-              </label>
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="pointer-events-none absolute left-3 top-3 text-muted-foreground"
-                  aria-hidden="true"
-                />
+        <form key={params.toString()} onSubmit={filter} className="space-y-4">
+          <fieldset className="space-y-3">
+            <legend className="mb-2 text-sm font-semibold">Empresa</legend>
+            <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-[2fr_1.3fr_1fr]">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium" htmlFor="search">
+                  Buscar empresa o símbolo
+                </label>
+                <div className="relative">
+                  <Search
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-3 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    id="search"
+                    name="search"
+                    maxLength={100}
+                    defaultValue={query.search}
+                    placeholder="Ej. Apple, AAPL…"
+                    className="h-10 pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <p id="sector-label" className="mb-1.5 text-xs font-medium">
+                  Sectores
+                </p>
+                <details className="relative">
+                  <summary
+                    aria-labelledby="sector-label sector-selection"
+                    className="flex h-10 cursor-pointer items-center justify-between rounded-md border px-3 text-sm"
+                  >
+                    <span id="sector-selection">
+                      {query.sectors?.length
+                        ? query.sectors.length + ' seleccionados'
+                        : 'Todos los sectores'}
+                    </span>
+                    <ChevronRight size={14} aria-hidden="true" />
+                  </summary>
+                  <fieldset className="absolute left-0 top-12 z-20 max-h-64 w-full min-w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
+                    <legend className="sr-only">Seleccionar sectores</legend>
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      Sin selección se incluyen todos.
+                    </p>
+                    {Array.from(new Set([...(data?.sectors ?? []), ...(query.sectors ?? [])])).map(
+                      (s) => (
+                        <label
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 text-xs hover:bg-muted"
+                          key={s}
+                        >
+                          <input
+                            type="checkbox"
+                            name="sectors"
+                            value={s}
+                            defaultChecked={query.sectors?.includes(s)}
+                            className="size-4 accent-primary"
+                          />
+                          {s}
+                        </label>
+                      ),
+                    )}
+                  </fieldset>
+                </details>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium" htmlFor="cap">
+                  Capitalización mínima · USD
+                </label>
                 <Input
-                  id="search"
-                  name="search"
-                  maxLength={100}
-                  defaultValue={query.search}
-                  placeholder="Ej. Apple, AAPL…"
-                  className="h-10 pl-9"
+                  id="cap"
+                  type="number"
+                  name="min_market_cap"
+                  min={0}
+                  max={1e15}
+                  step="any"
+                  defaultValue={query.min_market_cap || ''}
+                  placeholder="Sin mínimo"
+                  className="h-10"
                 />
               </div>
             </div>
-            <div>
-              <p id="sector-label" className="mb-1.5 text-xs font-medium">
-                Sectores
-              </p>
+            <div className="text-xs">
               <details className="relative">
-                <summary
-                  aria-labelledby="sector-label sector-selection"
-                  className="flex h-10 cursor-pointer items-center justify-between rounded-md border px-3 text-sm"
-                >
-                  <span id="sector-selection">
-                    {query.sectors?.length
-                      ? query.sectors.length + ' seleccionados'
-                      : 'Todos los sectores'}
-                  </span>
-                  <ChevronRight size={14} aria-hidden="true" />
+                <summary className="flex cursor-pointer items-center gap-1">
+                  Excluir sectores
+                  {query.exclude_sectors?.length ? ` (${query.exclude_sectors.length})` : ''}
+                  <ChevronRight size={12} aria-hidden="true" />
                 </summary>
-                <fieldset className="absolute left-0 top-12 z-20 max-h-64 w-full min-w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
-                  <legend className="sr-only">Seleccionar sectores</legend>
-                  <p className="mb-2 text-xs text-muted-foreground">
-                    Sin selección se incluyen todos.
-                  </p>
-                  {Array.from(new Set([...(data?.sectors ?? []), ...(query.sectors ?? [])])).map(
-                    (s) => (
-                      <label
-                        className="flex cursor-pointer items-center gap-2 rounded p-2 text-xs hover:bg-muted"
-                        key={s}
-                      >
-                        <input
-                          type="checkbox"
-                          name="sectors"
-                          value={s}
-                          defaultChecked={query.sectors?.includes(s)}
-                          className="size-4 accent-primary"
-                        />
-                        {s}
-                      </label>
-                    ),
-                  )}
+                <fieldset className="absolute left-0 top-6 z-20 max-h-64 w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
+                  <legend className="sr-only">Sectores excluidos</legend>
+                  {Array.from(
+                    new Set([...(data?.sectors ?? []), ...(query.exclude_sectors ?? [])]),
+                  ).map((s) => (
+                    <label
+                      className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
+                      key={s}
+                    >
+                      <input
+                        type="checkbox"
+                        name="exclude_sectors"
+                        value={s}
+                        defaultChecked={query.exclude_sectors?.includes(s)}
+                        className="size-4 accent-primary"
+                      />
+                      {s}
+                    </label>
+                  ))}
                 </fieldset>
               </details>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium" htmlFor="cap">
-                Capitalización mínima · USD
+          </fieldset>
+          <div className="grid gap-4 border-t pt-3 text-xs md:grid-cols-[2fr_1fr]">
+            <fieldset className="space-y-2">
+              <legend className="mb-2 text-sm font-semibold">Calendario y señales</legend>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                <label className="flex items-center gap-2">
+                  Presentación de resultados
+                  <NativeSelect name="earnings" defaultValue={query.earnings ?? ''} className="h-8">
+                    <option value="">Indiferente</option>
+                    <option value="only">Solo las que presentan</option>
+                    <option value="exclude">Quitar las que presentan</option>
+                  </NativeSelect>
+                  en los próximos
+                  <Input
+                    name="earnings_days"
+                    type="number"
+                    min={0}
+                    max={90}
+                    defaultValue={query.earnings_days}
+                    aria-label="Días hasta los resultados"
+                    className="h-8 w-16"
+                  />
+                  días
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    name="golden_cross_only"
+                    type="checkbox"
+                    defaultChecked={query.golden_cross_only}
+                    className="size-4 accent-primary"
+                  />
+                  Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de
+                  subida)
+                </label>
+              </div>
+            </fieldset>
+            <fieldset className="space-y-2">
+              <legend className="mb-2 text-sm font-semibold">Datos</legend>
+              <label className="flex items-center gap-2">
+                <input
+                  name="hide_no_data"
+                  type="checkbox"
+                  defaultChecked={query.hide_no_data}
+                  className="size-4 accent-primary"
+                />
+                Ocultar empresas sin datos
               </label>
-              <Input
-                id="cap"
-                type="number"
-                name="min_market_cap"
-                min={0}
-                max={1e15}
-                step="any"
-                defaultValue={query.min_market_cap || ''}
-                placeholder="Sin mínimo"
-                className="h-10"
-              />
-            </div>
+            </fieldset>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 border-t pt-3">
             <Button type="submit" className="h-10">
               <SlidersHorizontal aria-hidden="true" />
               Aplicar filtros
             </Button>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs">
-            <label className="flex items-center gap-2">
-              <input
-                name="hide_no_data"
-                type="checkbox"
-                defaultChecked={query.hide_no_data}
-                className="size-4 accent-primary"
-              />
-              Ocultar empresas sin datos
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                name="golden_cross_only"
-                type="checkbox"
-                defaultChecked={query.golden_cross_only}
-                className="size-4 accent-primary"
-              />
-              Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de subida)
-            </label>
-            <details className="relative">
-              <summary className="flex cursor-pointer items-center gap-1">
-                Excluir sectores
-                {query.exclude_sectors?.length ? ` (${query.exclude_sectors.length})` : ''}
-                <ChevronRight size={12} aria-hidden="true" />
-              </summary>
-              <fieldset className="absolute left-0 top-6 z-20 max-h-64 w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
-                <legend className="sr-only">Sectores excluidos</legend>
-                {Array.from(
-                  new Set([...(data?.sectors ?? []), ...(query.exclude_sectors ?? [])]),
-                ).map((s) => (
-                  <label
-                    className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
-                    key={s}
-                  >
-                    <input
-                      type="checkbox"
-                      name="exclude_sectors"
-                      value={s}
-                      defaultChecked={query.exclude_sectors?.includes(s)}
-                      className="size-4 accent-primary"
-                    />
-                    {s}
-                  </label>
-                ))}
-              </fieldset>
-            </details>
-            <label className="flex items-center gap-2">
-              Presentación de resultados
-              <NativeSelect name="earnings" defaultValue={query.earnings ?? ''} className="h-8">
-                <option value="">Indiferente</option>
-                <option value="only">Solo las que presentan</option>
-                <option value="exclude">Quitar las que presentan</option>
-              </NativeSelect>
-              en los próximos
-              <Input
-                name="earnings_days"
-                type="number"
-                min={0}
-                max={90}
-                defaultValue={query.earnings_days}
-                aria-label="Días hasta los resultados"
-                className="h-8 w-16"
-              />
-              días
-            </label>
             <Button
               type="button"
               variant="link"
@@ -360,6 +379,10 @@ export function MarketPage() {
             </Button>
           </div>
         </form>
+        <ActiveFilterTags
+          filters={activeFilters(params)}
+          remove={(updates) => setParams(patchParams(params, updates))}
+        />
       </section>
       {result.isPending ? (
         <div>
@@ -594,7 +617,17 @@ export function MarketPage() {
                               position={column.position?.(row)}
                               scope={column.scope ?? ''}
                             >
-                              {column.value(row)}
+                              {column.bar ? (
+                                <span className="inline-flex items-center justify-end gap-2">
+                                  <ScoreBar
+                                    value={row.metrics[column.key]?.value}
+                                    className="hidden sm:inline-block"
+                                  />
+                                  {column.value(row)}
+                                </span>
+                              ) : (
+                                column.value(row)
+                              )}
                             </RankCell>
                           ))}
                         </tr>

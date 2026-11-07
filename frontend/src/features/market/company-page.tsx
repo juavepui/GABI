@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCompanyResearch } from '@/shared/api/client';
 import type { CompanyHeadline, CompanyRow } from '@/shared/api/generated/types.gen';
@@ -39,6 +39,7 @@ import { Hash } from '@/shared/ui/hash';
 import { Term } from '@/shared/ui/term';
 import type { Tone } from '@/shared/ui/tone';
 import { VerdictBanner } from '@/shared/ui/verdict-banner';
+import { CompanySectionBar, type CompanySection } from './company-section-bar';
 import {
   drawdownDates,
   drawdownOf,
@@ -48,6 +49,18 @@ import {
 } from './risk-windows';
 
 const PriceChart = lazy(() => import('./price-chart'));
+
+/** The ficha's sections, in page order, for the bar that stays on top (#320). */
+const SECTIONS: CompanySection[] = [
+  { id: 'resumen', label: 'Resumen' },
+  { id: 'precio', label: 'Precio' },
+  { id: 'metricas', label: 'Métricas' },
+  { id: 'fuentes', label: 'Cálculo y fuentes' },
+  { id: 'comprobaciones', label: 'Comprobaciones' },
+  { id: 'ficha-inversion', label: 'Ficha de inversión' },
+  { id: 'tesis', label: 'Tus notas' },
+  { id: 'informes', label: 'Informes' },
+];
 
 /** The backend's own level for the score (company_overview.headline); React sets no threshold (#320). */
 const VERDICT: Record<
@@ -133,6 +146,12 @@ export function CompanyPage() {
   const company = data?.company;
   const windows = useRiskWindows(company ? [company.symbol] : []);
   const risk = windows.data?.items[0];
+  const header = useRef<HTMLDivElement>(null);
+  const verdict = VERDICT[data?.headline.level ?? 'none'];
+  const score =
+    company?.metrics.composite_score?.value == null
+      ? null
+      : metric(company.metrics.composite_score) + ' de 100';
   return (
     <>
       <div className="mb-3">
@@ -146,7 +165,11 @@ export function CompanyPage() {
         data &&
         company && (
           <>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div
+              id="resumen"
+              ref={header}
+              className="mb-4 flex scroll-mt-24 flex-wrap items-center justify-between gap-4"
+            >
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Ficha de empresa
@@ -164,13 +187,9 @@ export function CompanyPage() {
                 </div>
                 <section aria-label="En pocas palabras" className="mt-3 max-w-2xl">
                   <VerdictBanner
-                    {...VERDICT[data.headline.level ?? 'none']}
+                    {...verdict}
                     explanation={data.headline.text}
-                    value={
-                      company.metrics.composite_score?.value == null
-                        ? undefined
-                        : metric(company.metrics.composite_score) + ' de 100'
-                    }
+                    value={score ?? undefined}
                     valueLabel="Puntuación GABI"
                   />
                   <EarningsMove symbol={company.symbol} next={company.next_earnings} />
@@ -199,6 +218,15 @@ export function CompanyPage() {
                 </p>
               </div>
             </div>
+            <CompanySectionBar
+              symbol={company.symbol}
+              name={company.name ?? company.symbol}
+              score={score}
+              verdict={verdict.verdict}
+              tone={verdict.tone}
+              sections={SECTIONS}
+              header={header}
+            />
             <Evidence model={data.model} data={data.data} />
             <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
@@ -242,7 +270,7 @@ export function CompanyPage() {
             >
               <CompanyEvidenceDetail symbol={company.symbol} />
             </Folded>
-            <Card className="mb-6 gap-4 shadow-none">
+            <Card id="precio" className="mb-6 scroll-mt-24 gap-4 shadow-none">
               <CardHeader className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <CardTitle>Evolución del precio</CardTitle>
@@ -281,7 +309,7 @@ export function CompanyPage() {
                 </Suspense>
               </CardContent>
             </Card>
-            <div className="mb-6 grid gap-4 lg:grid-cols-3">
+            <div id="metricas" className="mb-6 grid scroll-mt-24 gap-4 lg:grid-cols-3">
               {groups.map((group) => (
                 <Card key={group.name} className="gap-4 shadow-none">
                   <CardHeader>
@@ -341,7 +369,7 @@ export function CompanyPage() {
                 </Card>
               ))}
             </div>
-            <div className="mb-6 grid gap-4 md:grid-cols-2">
+            <div id="fuentes" className="mb-6 grid scroll-mt-24 gap-4 md:grid-cols-2">
               <Card className="gap-4 shadow-none">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -484,16 +512,20 @@ export function CompanyPage() {
                 </CardContent>
               </Card>
             </div>
-            <CompanyChecklist symbol={company.symbol} />
-            <div id="ficha-inversion" className="scroll-mt-4">
+            <div id="comprobaciones" className="scroll-mt-24">
+              <CompanyChecklist symbol={company.symbol} />
+            </div>
+            <div id="ficha-inversion" className="scroll-mt-24">
               <InvestmentCardSection symbol={company.symbol} />
             </div>
-            <div id="tesis" className="scroll-mt-4">
+            <div id="tesis" className="scroll-mt-24">
               <CompanyTheses symbol={company.symbol} />
             </div>
-            <FilingChanges symbol={company.symbol} />
-            <AccountingFlags symbol={company.symbol} />
-            <CurrentReports symbol={company.symbol} />
+            <div id="informes" className="scroll-mt-24">
+              <FilingChanges symbol={company.symbol} />
+              <AccountingFlags symbol={company.symbol} />
+              <CurrentReports symbol={company.symbol} />
+            </div>
             <div className="mb-6 space-y-3">
               <CompanyResearch symbol={company.symbol} />
               <Insiders symbol={company.symbol} />

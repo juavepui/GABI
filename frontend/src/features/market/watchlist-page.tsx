@@ -12,6 +12,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { DataTable } from '@/shared/ui/data-table';
 import { Direction } from '@/shared/ui/status';
+import { ScoreBar } from '@/shared/ui/score-bar';
 import { PageHeader } from '@/shared/ui/page-header';
 import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
 import { dateText, formatNumber } from '@/shared/lib/format';
@@ -225,7 +226,10 @@ export function WatchlistPage() {
                       </span>
                     </th>
                     <td className="num p-3">
-                      {formatNumber(row.composite_score, { digits: 1, fixed: true })}
+                      <span className="inline-flex items-center gap-2">
+                        <ScoreBar value={row.composite_score} />
+                        {formatNumber(row.composite_score, { digits: 1, fixed: true })}
+                      </span>
                       <Change value={row.score_change} unit="puntos" />
                     </td>
                     <td className="num p-3">
