@@ -53,6 +53,7 @@ class PeriodicOperations(Protocol):
     def install_ranking_revision(self) -> dict: ...
     def save_ranking(self) -> dict: ...
     def record_engine_fundamentals(self) -> dict: ...
+    def backup(self) -> dict: ...
 
 
 class PeriodicTasks:
@@ -214,6 +215,7 @@ class PeriodicTasks:
             report["ranking_guardado"] = self.operations.save_ranking()
         except Exception as exc:  # noqa: BLE001 - recorded in the report, the run goes on.
             report["ranking_guardado"] = {"error": f"{type(exc).__name__}: {exc}"}
+        report["copia"] = self.backup(log=False)
         self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "run", **report})
         return report
 
@@ -225,6 +227,17 @@ class PeriodicTasks:
             report = {"error": f"{type(exc).__name__}: {exc}"}
         if log:
             self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "motor", **report})
+        return report
+
+    def backup(self, *, log: bool = True) -> dict:
+        """Copy of what cannot be downloaded again (stored days, ledger, your records); after everything else,
+        so it holds today's day. A failure is reported and changes nothing else."""
+        try:
+            report = self.operations.backup()
+        except Exception as exc:  # noqa: BLE001 - recorded in the report, the caller goes on.
+            report = {"error": f"{type(exc).__name__}: {exc}"}
+        if log:
+            self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "copia", **report})
         return report
 
     def resume_tiingo(self) -> dict:

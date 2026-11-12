@@ -77,6 +77,19 @@ refresco y, si falla porque las fuentes no respondieron (`sources_failed`), lo
 repite hasta 2 veces: al momento si ya había fallado antes de lanzar la tarea, y con 10
 minutos de pausa si falla mientras la tarea lo sigue. Otros fallos no se repiten. Sin la
 opción, el comando solo encola y termina.
+
+Al final del mantenimiento diario se hace una **copia de lo que no se puede volver a
+descargar**: los días de puntuación guardados, Mi cartera, empresas seguidas, diario,
+fotos del ranking y otros registros fechados (`registros.db`), `gabi_jobs.db` y los
+ajustes pequeños (`weights.json`, `app_mode.json`, `sp500_constituents.csv`, cabecera
+del registro). Los precios y las cuentas de la SEC no se copian; las claves de API
+tampoco. Cada día va a una carpeta `AAAA-MM-DD` dentro del destino escrito en
+`data/backup_dir.txt` (sin ese fichero, `data/backups`) y se guardan las 30 últimas.
+Las entradas del registro diario (ledger) no cambian nunca, así que cada una se guarda
+una sola vez, comprimida, en `registro-diario/`. Un fallo de la copia queda en el
+informe (`copia`) y no cambia nada más. Para hacerla a mano: `python -m gabi_cli
+periodic --copia`. El `LEEME.txt` del destino explica cómo recuperar una tabla.
+
 El
 worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban
 que coincide con su configuración inmutable antes de tocar datos.

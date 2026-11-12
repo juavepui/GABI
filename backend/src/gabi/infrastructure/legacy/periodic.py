@@ -130,6 +130,12 @@ class LegacyPeriodicOperations:
         finally:
             market.close()
 
+    def backup(self):
+        """Today's copy of the records a refresh cannot rebuild."""
+        from gabi.infrastructure.storage.backup import create_backup
+
+        return create_backup(self.data_dir.resolve())
+
     def record_engine_fundamentals(self):
         """The tested engine's company metrics of today for GABI-MF-v5 (#347); explicit write."""
         from datetime import date
