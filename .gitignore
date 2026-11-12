@@ -20,6 +20,8 @@ data/cbop/
 data/nsi/
 data/*.csv
 data/weights.json
+data/backup_dir.txt
+data/backups/
 data/fred_api_key.txt
 data/tiingo_api_key.txt
 data/nasdaq_data_link_api_key.txt
