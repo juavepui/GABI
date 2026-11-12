@@ -78,8 +78,8 @@ export function HomeNotices() {
         <p key={row.id} role="alert" className="rounded-lg border border-primary/40 p-3">
           Rebalanceo de la prueba ciega #{row.id} ({row.name}){' '}
           {row.overdue ? 'vencido' : `en ${row.days} ${row.days === 1 ? 'día' : 'días'}`}, el{' '}
-          {row.due}: toca reajustar esa cartera de prueba de GABI. Tras el cierre del mercado,
-          ejecuta <code>{COMMAND}</code> o apúntalo en{' '}
+          {dateText(row.due)}: toca reajustar esa cartera de prueba de GABI. Tras el cierre del
+          mercado, ejecuta <code>{COMMAND}</code> o apúntalo en{' '}
           <Link className="underline" to="/investigacion/validaciones">
             Investigación → Validaciones ciegas
           </Link>

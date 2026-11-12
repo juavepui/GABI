@@ -28,8 +28,14 @@ export function MacroStrip() {
             <li key={item.series_id} className="min-w-0">
               <p className="text-xs text-muted-foreground">{item.label}</p>
               <p className="text-lg font-semibold tabular-nums">
-                {item.latest_value == null ? '—' : formatNumber(item.latest_value, { digits: 2 })}{' '}
-                <span className="text-xs font-normal">{item.unit}</span>
+                {item.latest_value == null ? (
+                  <span className="text-sm font-normal text-muted-foreground">Sin dato</span>
+                ) : (
+                  <>
+                    {formatNumber(item.latest_value, { digits: 2 })}{' '}
+                    <span className="text-xs font-normal">{item.unit}</span>
+                  </>
+                )}
                 {item.change_3m != null && (
                   <span
                     className="ml-2 text-xs font-normal text-muted-foreground"
@@ -42,7 +48,7 @@ export function MacroStrip() {
                 )}
               </p>
               <p className="text-xs text-muted-foreground">
-                {item.latest_value == null ? 'Sin datos guardados' : dateLabel(item.latest_date)} ·{' '}
+                {item.latest_value == null ? 'Aún no descargado' : dateLabel(item.latest_date)} ·{' '}
                 {cadence(item)}
               </p>
               {item.trend.direction && (

@@ -422,7 +422,9 @@ export function PortfolioPage() {
                                       : decimal(row.score_coverage_fraction * 100, 0) + ' %'}
                                   </dd>
                                   <dt>Precio USD</dt>
-                                  <dd className="text-right">{decimal(row.price_usd, 2)}</dd>
+                                  <dd className="text-right">
+                                    {formatNumber(row.price_usd, { digits: 2, fixed: true })}
+                                  </dd>
                                 </dl>
                               </details>
                             </td>
@@ -440,7 +442,9 @@ export function PortfolioPage() {
                                 ? '—'
                                 : decimal(row.score_coverage_fraction * 100, 0) + ' %'}
                             </td>
-                            <td className="hidden sm:table-cell">{decimal(row.price_usd, 2)}</td>
+                            <td className="hidden sm:table-cell">
+                              {formatNumber(row.price_usd, { digits: 2, fixed: true })}
+                            </td>
                             <td>{decimal(row.weight_percent, 1)} %</td>
                             <td>{euro(row.amount_eur)}</td>
                           </tr>

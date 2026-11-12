@@ -63,9 +63,9 @@ export function RankValue({
 
 export function RankLegend({ children }: { children: ReactNode }) {
   return (
-    <p className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+    <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
       <span
-        className="inline-block h-3 w-24 shrink-0 rounded-full"
+        className="mr-2 inline-block h-3 w-24 rounded-full align-middle"
         style={{
           background:
             'linear-gradient(to right, hsl(0, var(--rank-saturation), var(--rank-legend-lightness)), hsl(60, var(--rank-saturation), var(--rank-legend-lightness)), hsl(120, var(--rank-saturation), var(--rank-legend-lightness)))',
