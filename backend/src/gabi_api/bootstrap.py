@@ -334,11 +334,12 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
             return None
         return saved[0], [str(symbol) for symbol in signal_store.snapshot(saved[0]["id"]).index]
 
+    score_history = SqliteScoreHistory(settings.data_dir)
     alerts = AlertSources(latest_snapshot, lambda since: signal_store.events(None, 200, since),
                           lambda: journal_store.list_entries(100, 0, only_open=True)[0],
                           lambda: list(dict.fromkeys(lot["symbol"] for lot in holdings_store.lots())),
                           repository.cached_events, app.state.watchlist.symbols, app.state.watchlist.store.items,
-                          app.state.market_health.cached, SqliteScoreHistory(settings.data_dir).previous_day)
+                          app.state.market_health.cached, score_history.previous_day, score_history.recorded_days)
     app.state.home = HomeQueries(repository, policy, jobs, lambda: configured_keys(settings.data_dir),
                                  lambda: (settings.data_dir / "sp500_constituents.csv").is_file(), today, session,
                                  alerts)

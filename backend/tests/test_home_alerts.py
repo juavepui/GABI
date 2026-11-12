@@ -11,9 +11,11 @@ from fastapi.testclient import TestClient
 from market_fixture import TODAY, seed_fixture
 from ranking_fixture import RankingFixture
 
+from gabi.domain.market.freshness import sessions_between
 from gabi.domain.portfolio import alerts as rules
 from gabi.infrastructure.settings import Settings
 from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.score_history import SqliteScoreHistory
 from gabi.infrastructure.storage.watchlist import SqliteWatchlist
 from gabi_api.bootstrap import create_app
 
@@ -68,6 +70,35 @@ def test_dividends_entries_exits_filings_jobs_and_theses():
     assert due == {"A": "2026-09-15", "C": "2026-08-31"}  # The long one, at its second anniversary.
     ordered = rules.ordered([dividend, change, filing, job])
     assert [alert["severity"] for alert in ordered] == ["high", "high", "medium", "info"]
+
+
+def test_sessions_the_daily_task_missed_after_its_first_stored_day():
+    # Tue 10 and Wed 11 Nov 2026 were sessions; Sat 7 and Sun 8 were not.
+    sessions = sessions_between(date(2026, 11, 5), date(2026, 11, 12))
+    assert sessions == [date(2026, 11, day) for day in (5, 6, 9, 10, 11)]
+    assert sessions_between(date(2026, 11, 12), date(2026, 11, 12)) == []
+    [alert] = rules.missing_score_days(["2026-11-05", "2026-11-06", "2026-11-09"], sessions)
+    assert (alert["kind"], alert["severity"], alert["date"]) == ("scores_missing", "medium", "2026-11-11")
+    assert alert["detail"] == {"days": ["2026-11-10", "2026-11-11"]}
+    # Before the first stored day nothing is missing, and without any stored day the task is not in use.
+    assert rules.missing_score_days(["2026-11-09", "2026-11-10", "2026-11-11"], sessions) == []
+    assert rules.missing_score_days([], sessions) == []
+
+
+def test_home_alerts_the_sessions_without_stored_scores(tmp_path):
+    seed_fixture(tmp_path, companies=30)
+    app = create_app(Settings(tmp_path), today=lambda: TODAY)
+    with TestClient(app) as client:
+        latest = date.fromisoformat(client.get("/api/v1/home", params={"compute": "true"}).json()
+                                    ["data"]["latest_price_date"])
+        sessions = sessions_between(latest - timedelta(days=rules.WINDOW_DAYS), latest)
+        store = SqliteScoreHistory(tmp_path)
+        store.record(sessions[0].isoformat(), "GABI-MF-v3", None, [("T000", 50.0, 1)], 30)
+        store.record(sessions[-1].isoformat(), "GABI-MF-v4", None, [("T000", 50.0, 1)], 30)
+        body = client.get("/api/v1/home", params={"compute": "true"}).json()
+    [alert] = [alert for alert in body["alerts"] if alert["kind"] == "scores_missing"]
+    assert alert["detail"]["days"] == [day.isoformat() for day in sessions[1:-1]]
+    assert alert["link"] == "/administracion"
 
 
 def test_home_shows_every_alert_from_stored_data_without_writing(tmp_path):

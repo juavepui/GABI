@@ -102,6 +102,21 @@ def failed_jobs(jobs: list[dict], *, today: date) -> list[dict]:
     return alerts
 
 
+def missing_score_days(recorded: list[str], sessions: list[date]) -> list[dict]:
+    """Market sessions the daily task did not store (#328), counted only after its first stored day.
+
+    `recorded`: stored days (ISO, any model) in the window; `sessions`: the window's sessions before the
+    latest prices. A day without a record cannot be filled in afterwards, so the alert only informs.
+    """
+    if not recorded:
+        return []
+    first, stored = recorded[0], set(recorded)
+    missing = [day.isoformat() for day in sessions if day.isoformat() > first and day.isoformat() not in stored]
+    if not missing:
+        return []
+    return [_alert("scores_missing", "medium", missing[-1], link="/administracion", days=missing)]
+
+
 def _add_months(day: date, months: int) -> date:
     month = day.month - 1 + months
     year, month = day.year + month // 12, month % 12 + 1

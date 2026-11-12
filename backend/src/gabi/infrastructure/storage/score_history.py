@@ -55,6 +55,15 @@ class SqliteScoreHistory:
         return [{"day": day, "model_id": model, "score": score, "rank": rank, "universe": universe}
                 for day, model, score, rank, universe in reversed(rows)]
 
+    def recorded_days(self, since: str) -> list[str]:
+        """Days from `since` on with a stored score of any model, oldest first."""
+        db = self._read()
+        if db is None:
+            return []
+        with closing(db):
+            rows = db.execute("SELECT DISTINCT day FROM score_history WHERE day>=? ORDER BY day", (since,)).fetchall()
+        return [day for (day,) in rows]
+
     def previous_day(self, model_id: str, before: str) -> tuple[str, dict[str, tuple[float, int]]] | None:
         """The latest recorded day of `model_id` strictly before `before`, with every company's score and rank."""
         db = self._read()

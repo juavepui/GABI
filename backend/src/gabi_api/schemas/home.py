@@ -29,7 +29,7 @@ class HomeAlert(BaseModel):
     """One thing that needs attention; `detail` carries the kind's own fields (dates, entries, error code)."""
 
     kind: Literal["earnings", "ex_dividend", "dividend_payment", "top_changes", "filings", "job_failed",
-                  "thesis_review"]
+                  "thesis_review", "scores_missing"]
     severity: Literal["high", "medium", "info"]
     date: str | None
     symbols: list[str]
