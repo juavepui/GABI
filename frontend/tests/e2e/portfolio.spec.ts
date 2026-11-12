@@ -4,7 +4,7 @@ test('cartera y diario conservan el plan y las tesis locales', async ({ page }) 
   await page.goto('/cartera');
   await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
   await expect(page).toHaveTitle('Cartera objetivo · GABI');
-  await expect(page.getByText('GABI-MF-v4 · sin pruebas aún')).toBeVisible();
+  await expect(page.getByText('GABI-MF-v5 · sin pruebas aún')).toBeVisible();
   await page
     .getByLabel('¿Y si ya tuviera…? Escribe acciones imaginarias (SÍMBOLO,euros; una por línea)')
     .fill('T000,100');

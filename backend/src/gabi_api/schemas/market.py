@@ -10,7 +10,7 @@ from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
 from gabi.domain.market.candidate_summary import summarize, warning
 from gabi.domain.market.company_overview import headline
-from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES
+from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES, metric_sources
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
 
@@ -39,6 +39,13 @@ class MetricSource(WireModel):
                     "cached_history"]
     # A version-1 approximation of the named metric (#245); None is the metric as defined.
     approximation: Literal["net_income_over_equity_plus_long_term_debt"] | None = None
+
+
+def metric_source_wire(metrics_version: str) -> dict[str, "MetricSource"]:
+    """Where every ranking metric comes from with the active model's SEC metrics version (#347)."""
+    return {key: MetricSource(source=source, period=period,  # type: ignore[arg-type]
+                              approximation=METRIC_APPROXIMATIONS.get(key))  # type: ignore[arg-type]
+            for key, (source, period) in metric_sources(metrics_version).items()}
 
 
 METRIC_SOURCE_WIRE = {key: MetricSource(source=source, period=period,  # type: ignore[arg-type]

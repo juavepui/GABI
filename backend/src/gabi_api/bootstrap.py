@@ -58,6 +58,7 @@ from gabi.application.research.published_factors import PublishedFactorQueries
 from gabi.application.research.saved_audits import SavedAuditQueries
 from gabi.domain.market.freshness import last_completed_session
 from gabi.domain.market.macro_series import macro_metadata, synchronized_series
+from gabi.domain.market.metric_sources import metric_sources
 from gabi.domain.market.model_version import ModelVersion
 from gabi.domain.market.sec_reads import companyfacts as sec_companyfacts
 from gabi.domain.market.selection import RankingFilter
@@ -129,6 +130,7 @@ from gabi_api.routes.risk import router as risk_router
 from gabi_api.routes.signals import router as signals_router
 from gabi_api.routes.simulations import router as simulations_router
 from gabi_api.routes.watchlist import router as watchlist_router
+from gabi_api.schemas.market import metric_source_wire
 from gabi_api.static import mount_frontend
 
 
@@ -239,7 +241,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
         SqliteCompanyResearch(settings.data_dir), FileChecklistThresholds(settings.data_dir), today,
         lambda: [(row.symbol, row.sector) for row in repository.universe(
             repository.small_file("sp500_constituents.csv")).itertuples(index=False)],
-        market.company_metrics, load_checklist_reference)
+        market.company_metrics, load_checklist_reference, metric_sources(model.metrics_version))
     app.state.watchlist = Watchlist(
         SqliteWatchlist(settings.data_dir), lambda: repository.ranking(dict(policy.weights), today()).table,
         policy.model_id, SqliteJournal(settings.data_dir).theses, app.state.company_checklist.summary)
@@ -302,6 +304,7 @@ def create_app(settings: Settings | None = None, *, today: Callable[[], date] = 
                                              lambda: model_queries.model().mode == "RESEARCH")
     app.state.estimate_queries = estimate_queries
     app.state.experiments = experiments
+    app.state.metric_source_wire = metric_source_wire(model.metrics_version)
     app.state.experiment_statistics = experiment_statistics
     research_mode = lambda: model_queries.model().mode == "RESEARCH"  # noqa: E731
     app.state.live_ledger = LiveLedgerQueries(SqliteLiveLedger(settings.data_dir), research_mode)

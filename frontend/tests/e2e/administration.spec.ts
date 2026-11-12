@@ -126,7 +126,7 @@ test.describe('calidad de los datos', () => {
     await expect(section).toContainText('PER:');
     await expect(
       section.getByRole('table', { name: 'De dónde sale cada métrica en cada cálculo' }),
-    ).toContainText('Yahoo, últimos 12 meses');
+    ).toContainText('SEC (10-K), último ejercicio anual'); // GABI-MF-v5 (#347): the app scores the engine's 10-K.
   });
 
   test('datos imposibles o sospechosos (#295)', async ({ page }) => {
@@ -139,7 +139,9 @@ test.describe('calidad de los datos', () => {
     ).toBeVisible({
       timeout: 15_000,
     });
-    await expect(section).toContainText('El modelo activo (GABI-MF-v4) no usa para puntuar');
+    await expect(section).toContainText(
+      'El modelo activo (GABI-MF-v5) puntúa los valores tal y como vienen',
+    );
   });
 
   test('identidades del universo', async ({ page }) => {

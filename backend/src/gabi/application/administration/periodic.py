@@ -52,6 +52,7 @@ class PeriodicOperations(Protocol):
     def record_scores(self) -> dict: ...
     def install_ranking_revision(self) -> dict: ...
     def save_ranking(self) -> dict: ...
+    def record_engine_fundamentals(self) -> dict: ...
 
 
 class PeriodicTasks:
@@ -192,6 +193,9 @@ class PeriodicTasks:
             report["despues"] = self.status()
         except Exception as exc:
             report["error"] = f"{type(exc).__name__}: {exc}"
+        # The tested engine's company metrics of today (#347), after the refresh and before the ledger captures
+        # the active model: GABI-MF-v5 scores with them. A failure leaves them missing, never Yahoo's.
+        report["fundamentales_motor"] = self.engine_fundamentals(log=False)
         maintenance = {k: v for k, v in report.get("refresco", {}).items() if k != "cambios"}
         event = self.operations.capture_ledger(report.get("error"), maintenance)
         report["ledger"] = {"seq": event["seq"], "record_hash": event["record_hash"], "status": event["payload"]["status"]}
@@ -211,6 +215,16 @@ class PeriodicTasks:
         except Exception as exc:  # noqa: BLE001 - recorded in the report, the run goes on.
             report["ranking_guardado"] = {"error": f"{type(exc).__name__}: {exc}"}
         self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "run", **report})
+        return report
+
+    def engine_fundamentals(self, *, log: bool = True) -> dict:
+        """Explicit write: the tested engine's eight company metrics for today (#347); errors are reported."""
+        try:
+            report = self.operations.record_engine_fundamentals()
+        except Exception as exc:  # noqa: BLE001 - recorded in the report, the caller goes on.
+            report = {"error": f"{type(exc).__name__}: {exc}"}
+        if log:
+            self.store.log({"at": self.now().astimezone(UTC).isoformat(), "accion": "motor", **report})
         return report
 
     def resume_tiingo(self) -> dict:

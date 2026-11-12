@@ -70,6 +70,8 @@ def build_ranking(inputs: MarketInputs, calculators: Calculators, weights: dict 
             for key in ("roic", "revenue_cagr_3y", "fcf_cagr_3y", "latest_10k_url", "latest_10k_date",
                         "latest_10q_url", "latest_10q_date"):
                 row[key] = sec.get(key)
+            # #347 (sec-engine-v1): the tested engine's company metrics replace the Yahoo ones, missing included.
+            row.update(sec.get("overrides", {}))
             earnings = [event for event in calculators.events(symbol, record.get("info", {}),
                         record.get("fetched_at", ""), today=today)
                         if event["event_type"] == "earnings" and event["days_until"] >= 0] if record else []

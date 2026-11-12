@@ -21,8 +21,9 @@ from gabi.application.administration.model import LocalModel, ModelPolicy
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot
 from gabi.application.market.ranking import Calculators, MarketBatch, build_ranking
+from gabi.domain.market import engine_fundamentals
 from gabi.domain.market.identity import resolve_claims
-from gabi.domain.market.model_version import SEC_METRICS_V1, SEC_METRICS_V2_2, SEC_METRICS_VERSIONS
+from gabi.domain.market.model_version import SEC_ENGINE_V1, SEC_METRICS_V1, SEC_METRICS_V2_2, SEC_METRICS_VERSIONS
 from gabi.domain.market.revenue_growth import stored_growth
 from gabi.domain.market.sec_metrics_v2 import stored_roic
 from gabi.infrastructure.settings import Settings
@@ -86,6 +87,8 @@ class ReadOnlyMarket:
         self.cache: OrderedDict[tuple, tuple[float, RankingSnapshot]] = OrderedDict()
         self.query_count = 0
         self.row_count = 0
+        # The date of the ranking being built: how old a stored engine row may be (#347).
+        self.ranking_day: date | None = None
 
     def close(self) -> None:
         with self.lock:
@@ -295,6 +298,7 @@ class ReadOnlyMarket:
                     self.connection.execute("BEGIN")
                 try:
                     self.discover()
+                    self.ranking_day = today
                     table = build_ranking(SqlInputs(self, universe), self.calculators, weights, today=today, total=len(universe))
                     identities = self.identities(tuple(universe["symbol"]), today)
                 finally:
@@ -400,6 +404,8 @@ class ReadOnlyMarket:
         """SEC metrics of the batch. With SEC metrics V2 the ROIC comes from ``sec_metrics_v2`` (and with V2.2
         the revenue growth from ``sec_revenue_growth``, #339):
         absent, outdated or financial-sector rows leave it missing, never the V1 value (#245)."""
+        if self.metrics_version == SEC_ENGINE_V1:
+            return self._engine_metrics(symbols)
         if not symbols or "edgar_metrics" not in self.tables:
             return {}
         columns = ("revenue_cagr_3y", "fcf_cagr_3y", "roic", "latest_10k_date", "latest_10k_url",
@@ -427,6 +433,34 @@ class ReadOnlyMarket:
                     symbols, len(symbols))}
             for symbol, metrics in result.items():
                 metrics["revenue_cagr_3y"] = stored_growth(growth.get(symbol))
+        return result
+
+    def _engine_metrics(self, symbols: tuple[str, ...]) -> dict:
+        """#347 (sec-engine-v1): the eight company metrics of the Composite as the tested engine stored them.
+
+        Every symbol gets all eight in ``overrides``, missing when its row is absent, outdated or of another
+        rule: build_ranking replaces the Yahoo values with them, never falls back. The 10-K/10-Q links and
+        dates still come from edgar_metrics (they are shown, not scored)."""
+        if not symbols:
+            return {}
+        placeholders = ",".join("?" * len(symbols))
+        links = ("latest_10k_date", "latest_10k_url", "latest_10q_date", "latest_10q_url", "fetched_at")
+        result: dict[str, dict] = {symbol: dict.fromkeys(links) for symbol in symbols}
+        if "edgar_metrics" in self.tables:
+            for row in self.rows(f"SELECT symbol,{','.join(links)} FROM edgar_metrics WHERE symbol IN ({placeholders})",
+                                 symbols, len(symbols)):
+                result[row[0]] = dict(zip(links, row[1:], strict=True))
+        stored: dict[str, dict] = {}
+        if "engine_fundamentals" in self.tables:
+            columns = ("as_of", "rule_version", *engine_fundamentals.METRICS)
+            stored = {row[0]: dict(zip(columns, row[1:], strict=True)) for row in self.rows(
+                f"SELECT symbol,{','.join(columns)} FROM engine_fundamentals WHERE symbol IN ({placeholders})",
+                symbols, len(symbols))}
+        day = self.ranking_day or date.today()
+        for symbol, metrics in result.items():
+            values = engine_fundamentals.stored(stored.get(symbol), day)
+            metrics.update(values)  # roic, revenue_cagr_3y and fcf_cagr_3y: read by build_ranking's SEC loop.
+            metrics["overrides"] = values
         return result
 
     def identities(self, symbols: tuple[str, ...], today: date) -> dict[str, dict]:

@@ -3622,7 +3622,8 @@
               "period",
               "formula",
               "share_count",
-              "method"
+              "method",
+              "engine"
             ],
             "title": "Difference",
             "type": "string"
