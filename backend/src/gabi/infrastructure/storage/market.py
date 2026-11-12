@@ -356,6 +356,26 @@ class ReadOnlyMarket:
         frame["date"] = pd.to_datetime(frame["date"])
         return {str(symbol): group.drop(columns="symbol").set_index("date") for symbol, group in frame.groupby("symbol")}
 
+    def bounded_closes(self, symbols: tuple[str, ...]) -> dict[str, pd.DataFrame]:
+        """``closes`` of any number of symbols, read in groups within the price-row budget (like ``SqlInputs._spans``).
+
+        Full histories, never truncated: a single company above the budget still raises ``resource_limit``."""
+        budget = self.settings.max_price_rows_per_batch
+        counts = self.price_counts(symbols)
+        result: dict[str, pd.DataFrame] = {}
+        group: list[str] = []
+        rows = 0
+        for symbol in symbols:
+            size = counts.get(symbol, 0)
+            if group and rows + size > budget:
+                result.update(self.closes(tuple(group), budget))
+                group, rows = [], 0
+            group.append(symbol)
+            rows += size
+        if group:
+            result.update(self.closes(tuple(group), budget))
+        return result
+
     def fundamentals(self, symbols: tuple[str, ...], db: sqlite3.Connection | None = None) -> dict:
         """``db``: a private connection (#342) instead of the ranking's shared one."""
         if db is not None:

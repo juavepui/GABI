@@ -375,7 +375,7 @@ class LegacyExecutor:
                     market.small_file("sp500_constituents.csv"))["symbol"]],
                 fundamentals=lambda symbols: market.fundamentals(tuple(symbols)),
                 compute=compute_fundamental_metrics,
-                closes=lambda symbols: market.closes(tuple(symbols), self.settings.max_price_rows_per_batch),
+                closes=lambda symbols: market.bounded_closes(tuple(symbols)),  # 50 full histories exceed one read.
                 splits=cache.split_dates, shares=shares, model_id=model.model_id,
                 applied=model.input_checks is not None,
                 progress=progress or (lambda share, phase: None))
