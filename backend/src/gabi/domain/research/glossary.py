@@ -22,8 +22,15 @@ TERMS: dict[str, tuple[str, str]] = {
     "input_checks": ("Controles de datos imposibles",
                      "Reglas fijas que revisan cada dato antes de usarlo: un PER de 40.000, un margen del 300 % o "
                      "un precio que sube un 80 % en un día sin split no son creíbles. El dato se guarda y se "
-                     "muestra con su motivo, pero el modelo en uso no lo usa para puntuar: cuenta como un dato "
-                     "que falta."),
+                     "muestra con su motivo. Algunos modelos lo dejan fuera de la puntuación, como un dato que "
+                     "falta. El modelo probado con datos del pasado lo usa tal cual, para no cambiar lo que se "
+                     "probó; por eso la app lo marca como «parece un error»."),
+    "suspect_value": ("Cifra que parece un error",
+                      "Una cifra fuera de lo creíble para ese tipo de dato: por ejemplo, un margen operativo "
+                      "del 3.000 % (la empresa no puede ganar 30 veces lo que vende) o un EV/EBITDA negativo. "
+                      "Suele venir de cómo la empresa presenta sus cuentas (bancos, aseguradoras e "
+                      "inmobiliarias usan partidas distintas). GABI la muestra tal cual y, si cuenta para la "
+                      "puntuación, la usa sin corregir, porque así se probó el modelo. Tómala con cautela."),
     "dsr": ("DSR (Deflated Sharpe Ratio)",
             "Como el PSR, pero descontando cuántas variantes se probaron antes de elegir esta. Si "
             "pruebas 100 configuraciones, alguna saldrá bien por casualidad; el DSR resta esa ventaja "

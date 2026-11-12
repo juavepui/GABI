@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Activity } from 'lucide-react';
 import { Direction, StatusTag } from '../src/shared/ui/status';
 import { SummaryCard } from '../src/shared/ui/summary-card';
+import { SuspectMark, SuspectNote } from '../src/shared/ui/suspect-mark';
 import { VerdictBanner } from '../src/shared/ui/verdict-banner';
 import type { Tone } from '../src/shared/ui/tone';
 import { renderScreen } from './render';
@@ -171,5 +172,41 @@ describe('Patrones visuales, segunda parte (#320)', () => {
     });
     expect(panels[1].hidden).toBe(true);
     expect(document.activeElement).toBe(second);
+  });
+});
+
+describe('Cifras que parecen un error (#353)', () => {
+  it('SuspectMark explica el rango en la unidad del dato y si cuenta para la puntuación', () => {
+    screen = renderScreen(
+      <>
+        <SuspectMark suspect={{ low: -10, high: 1, scored: true }} unit="fraction" label />
+        <SuspectMark suspect={{ low: 0, high: 5, scored: false }} unit="fraction" />
+        <SuspectMark suspect={undefined} unit="ratio" label />
+      </>,
+    );
+    const tips = [...screen.container.querySelectorAll('[role="tooltip"]')].map(
+      (tip) => tip.textContent,
+    );
+    expect(tips).toHaveLength(2);
+    expect(tips[0]).toContain('entre -1000,0 % y 100,0 %');
+    expect(tips[0]).toContain('GABI la usa tal cual');
+    expect(tips[1]).toContain('No cuenta para la puntuación');
+    expect(screen.text()).toContain('Parece un error');
+  });
+
+  it('SuspectNote solo aparece si alguna cifra marcada cuenta para la puntuación', () => {
+    screen = renderScreen(<SuspectNote suspects={{ roe: { low: -5, high: 5, scored: false } }} />);
+    expect(screen.text()).toBe('');
+    screen.unmount();
+    screen = renderScreen(
+      <SuspectNote
+        suspects={{
+          operating_margin: { low: -10, high: 1, scored: true },
+          ev_ebitda: { low: 0, high: 500, scored: true },
+        }}
+      />,
+    );
+    expect(screen.text()).toContain('2 cifras que cuentan para la puntuación parecen errores');
+    expect(screen.container.querySelector('a')?.getAttribute('href')).toBe('#metricas');
   });
 });

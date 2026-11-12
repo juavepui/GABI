@@ -30,6 +30,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { DataTable } from '@/shared/ui/data-table';
 import { RankCell, RankLegend } from '@/shared/ui/rank-cell';
 import { ScoreBar } from '@/shared/ui/score-bar';
+import { SuspectMark } from '@/shared/ui/suspect-mark';
 import { Term } from '@/shared/ui/term';
 import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
 import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
@@ -628,6 +629,15 @@ export function MarketPage() {
                               ) : (
                                 column.value(row)
                               )}
+                              {row.suspects[column.key] ? (
+                                <>
+                                  {' '}
+                                  <SuspectMark
+                                    suspect={row.suspects[column.key]}
+                                    unit={row.metrics[column.key].unit}
+                                  />
+                                </>
+                              ) : null}
                             </RankCell>
                           ))}
                         </tr>

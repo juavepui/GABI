@@ -36,6 +36,7 @@ import { BlockBars } from '@/shared/ui/score-summary';
 import { BlockEvidenceBadge, FACTOR_LAB } from '@/shared/ui/block-evidence';
 import { Hash } from '@/shared/ui/hash';
 
+import { SuspectMark, SuspectNote } from '@/shared/ui/suspect-mark';
 import { Term } from '@/shared/ui/term';
 import type { Tone } from '@/shared/ui/tone';
 import { VerdictBanner } from '@/shared/ui/verdict-banner';
@@ -262,6 +263,7 @@ export function CompanyPage() {
                 </Card>
               ))}
             </div>
+            <SuspectNote suspects={company.suspects} />
             <ScoreHistory symbol={company.symbol} />
             <AnnualResults symbol={company.symbol} />
             <Folded
@@ -332,6 +334,15 @@ export function CompanyPage() {
                           </dt>
                           <dd className="whitespace-nowrap text-right font-medium tabular-nums">
                             {metric(company.metrics[key], true)}
+                            {company.suspects[key] ? (
+                              <span className="block">
+                                <SuspectMark
+                                  suspect={company.suspects[key]}
+                                  unit={company.metrics[key].unit}
+                                  label
+                                />
+                              </span>
+                            ) : null}
                             {key === 'max_drawdown' && risk ? (
                               <span className="block text-xs font-normal text-muted-foreground">
                                 {drawdownDates(drawdownOf(risk, 'full'))}
