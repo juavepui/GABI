@@ -11,6 +11,7 @@ from gabi.application.administration.model import ModelPolicy
 from gabi.application.errors import QueryError
 from gabi.application.market.queries import RankingSnapshot, describe_data
 from gabi.domain.market import watchlist as watchlist_rules
+from gabi.domain.market.freshness import sessions_between
 from gabi.domain.market.identity import normalize_symbol
 from gabi.domain.portfolio import alerts as rules
 from gabi.domain.portfolio import daily_summary
@@ -43,6 +44,8 @@ class AlertSources:
     market: Callable[[], dict | None] = lambda: None  # The market traffic light, only if already computed (#308)
     # The last day the daily task stored before the given ISO day, for a model (#328): (day, symbol → score, rank).
     previous_scores: Callable[[str, str], tuple[str, dict] | None] = lambda model, before: None
+    # Days with a stored score from the given ISO day on, any model (#328).
+    recorded_days: Callable[[str], list[str]] = lambda since: []
 
 
 def _no_alerts() -> AlertSources:
@@ -93,6 +96,7 @@ class HomeQueries:
              "sector": None if row.get("sector") is None else str(row.get("sector")),
              "composite_score": float(row["composite_score"]), "weight_pct": float(row["weight_pct"])}
             for symbol, row in target.to_dict("index").items()]
+        alerts += self._missing_days(data.latest_price_date)
         result["alerts"] = rules.ordered(alerts + self._ranking_alerts(table, target, held, today))
         result["summary"] = self._summary(table, target, held, data.latest_price_date, today)
         return result
@@ -113,6 +117,14 @@ class HomeQueries:
             latest_price_date=None if latest_price_date is None else latest_price_date.isoformat(),
             target_size=FROZEN_POSITIONS, today=today, model_id=self.policy.model_id, market=self.sources.market(),
             previous=self._previous(table, mine, latest_price_date))
+
+    def _missing_days(self, latest_price_date: date | None) -> list[dict]:
+        """Sessions of the last week before the latest prices that the daily task did not store."""
+        if latest_price_date is None:
+            return []
+        since = latest_price_date - timedelta(days=rules.WINDOW_DAYS)
+        return rules.missing_score_days(self.sources.recorded_days(since.isoformat()),
+                                        sessions_between(since, latest_price_date))
 
     def _previous(self, table: pd.DataFrame, mine: list[str], latest_price_date: date | None) -> dict | None:
         """Your companies against the last day stored with the same model (#328), or None without one."""

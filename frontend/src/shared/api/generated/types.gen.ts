@@ -6236,7 +6236,7 @@ export type HomeAlert = {
     /**
      * Kind
      */
-    kind: 'earnings' | 'ex_dividend' | 'dividend_payment' | 'top_changes' | 'filings' | 'job_failed' | 'thesis_review';
+    kind: 'earnings' | 'ex_dividend' | 'dividend_payment' | 'top_changes' | 'filings' | 'job_failed' | 'thesis_review' | 'scores_missing';
     /**
      * Link
      */

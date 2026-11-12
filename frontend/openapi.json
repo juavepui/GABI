@@ -11978,7 +11978,8 @@
               "top_changes",
               "filings",
               "job_failed",
-              "thesis_review"
+              "thesis_review",
+              "scores_missing"
             ],
             "title": "Kind",
             "type": "string"

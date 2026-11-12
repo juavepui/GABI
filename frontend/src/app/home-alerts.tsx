@@ -83,6 +83,17 @@ function sentence(alert: HomeAlert): { text: string; action: string } {
         action: 'Ver Administración',
       };
     }
+    case 'scores_missing': {
+      const days = (detail.days as string[] | undefined) ?? [];
+      const many = days.length !== 1;
+      return {
+        text:
+          `La tarea diaria no guardó la puntuación de ${many ? `${days.length} días` : '1 día'} de bolsa ` +
+          `(${days.map(day).join(', ')}). Suele pasar si el ordenador estaba apagado o sin conexión a las 05:00. ` +
+          `${many ? 'Esos días no se pueden' : 'Ese día no se puede'} recuperar; el resto del historial no cambia.`,
+        action: 'Ver Administración',
+      };
+    }
     case 'thesis_review':
       return {
         text: `Te apuntaste revisar tus notas sobre ${alert.symbols[0]} el ${day(alert.date)}.`,

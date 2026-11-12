@@ -27,6 +27,14 @@ def last_completed_session(now: datetime) -> date:
     return session.date()
 
 
+def sessions_between(start: date, end: date) -> list[date]:
+    """NYSE sessions from `start` (included) to `end` (excluded)."""
+    if start >= end:
+        return []
+    found = xcals.get_calendar("XNYS").sessions_in_range(start.isoformat(), end.isoformat())
+    return [session.date() for session in found if session.date() < end]
+
+
 def market_date(now: datetime) -> str:
     """ISO date of the last closed NYSE session, as stored in ledgers and evidence."""
     return last_completed_session(now).isoformat()
