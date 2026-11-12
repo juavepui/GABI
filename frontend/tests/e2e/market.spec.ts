@@ -384,8 +384,24 @@ test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async (
   await expect(notices.getByText(/#44/)).toHaveCount(0);
   // The fixture ledger has a decision the day before: the daily follow-up is on time (#290).
   await expect(notices.getByText(/seguimiento diario/)).toHaveCount(0);
-  await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
-  await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
+  // Investor mode: no command and no link to the hidden Investigación section.
+  await expect(notices.getByText(/lo apunta sola cuando llega la fecha/)).toBeVisible();
+  await expect(notices.getByText(/gabi_cli/)).toHaveCount(0);
+  await expect(notices.getByRole('link', { name: /Validaciones ciegas/ })).toHaveCount(0);
+  // Research mode keeps the command and the shortcut.
+  await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+    data: { mode: 'RESEARCH' },
+  });
+  try {
+    await page.reload();
+    await expect(notices.getByText(/periodic --run/)).toBeVisible();
+    await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
+    await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
 });
 
 test('la portada avisa si el seguimiento diario no se ejecuta', async ({ page }) => {
