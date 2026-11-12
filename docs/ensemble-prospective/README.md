@@ -97,3 +97,68 @@ escribiendo fuera del repositorio. No se leyó ni calculó ningún retorno.
 
 Los cuatro Top-20 se llenaron y los 169 miembros tenían cierre de entrada. La
 duración fue de unos 4 minutos para el ranking y 2 para las `submissions` de la SEC.
+
+## Segundo ensayo (12-11-2026)
+
+Repetido con el código actual (`7e051c2`, después de GABI-MF-v5 y de las métricas
+del motor) y el mismo camino que `--record`: copia de `gabi.db` hecha con la API de
+copia de SQLite, `GABI_DATA_DIR` apuntando a la copia, señal 2026-09-21 y registro
+escrito fuera del repositorio. Solo se adelantó en memoria la primera señal. No se
+leyó ni calculó ningún retorno.
+
+| | Ensayo 28-10 | Ensayo 12-11 |
+| --- | ---: | ---: |
+| S&P 500 vigente / con ranking | — | 503 / 503 |
+| Elegibles (Composite y cobertura ≥ 70 %) | 348 | 347 |
+| Con división SIC (excluidos) | 348 (0) | 347 (0) |
+| U_t (los tres bloques) | 169 | 169 |
+
+Los cuatro Top-20 tienen 20 empresas y ninguna plaza en efectivo; los 169 miembros
+tienen cierre de entrada del 2026-09-21. `--verify` da 1 registro y la cadena
+íntegra; una segunda ejecución en la misma ventana responde «ya registrado» y no
+escribe. Duración: unos 9 minutos (ranking más `submissions` de la SEC). El JSON
+ocupa unos 250 KB.
+
+## Lista para el primer registro (lunes 21-12-2026)
+
+La ventana va del **21-12 al 29-12** (cinco sesiones de NYSE después de la señal;
+el 25-12 no hay sesión). Hacerlo el mismo 21-12 deja margen si algo falla.
+
+Antes (semana del 14-12):
+
+1. `git switch develop` y `git pull`; `git status` sin cambios en `backend/src`
+   (el comando se niega a registrar si los hay).
+2. `uv run --project backend python -m gabi_cli research ensemble-record --verify`
+   debe dar `"records": 0`.
+3. Comprobar que las tareas diarias de esa semana terminaron bien (Administración o
+   `data/gabi_jobs.db`).
+
+El día 21-12:
+
+1. Precios y SEC al día. El registro exige cierres del 18-12 o posteriores. Si la
+   tarea del sábado 19-12 terminó bien, ya están; si no, lanzar «Actualizar todo»
+   y esperar a que termine.
+2. Con el ordenador enchufado y con internet:
+
+   ```powershell
+   uv run --project backend python -m gabi_cli research ensemble-record --record
+   ```
+
+   Tarda unos 10 minutos y descarga de la SEC las presentaciones de unos 350
+   emisores. Debe responder `"recorded": "2026-12-21"` y `"evaluable": true`.
+3. `uv run --project backend python -m gabi_cli research ensemble-record --verify`
+   debe dar `"records": 1`.
+4. El mismo día, commit y push del fichero:
+
+   ```powershell
+   git add docs/ensemble-prospective/registro-2026-12-21.json
+   git commit -m "docs(ens): registro prospectivo del 2026-12-21 (#237)"
+   git push
+   ```
+
+   La marca de tiempo de GitHub es la prueba externa. No mirar retornos ni
+   comparar con el índice: el preregistro solo lo permite en las revisiones.
+
+Si falla: no editar el JSON ni repetir con otro código. Se puede volver a ejecutar
+`--record` hasta el 29-12 (si no llegó a escribir el fichero). Si la ventana se cierra
+sin registro, el trimestre quedará como `not_recorded` y nunca se rellena.
