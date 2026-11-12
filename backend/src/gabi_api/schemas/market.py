@@ -11,8 +11,8 @@ from gabi.application.market.queries import DataState, RankingResult
 from gabi.domain.market.candidate_summary import summarize, warning
 from gabi.domain.market.company_overview import headline
 from gabi.domain.market.input_checks import outside_range
-from gabi.domain.market.scoring import SCORE_METRICS
 from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES, metric_sources
+from gabi.domain.market.scoring import SCORE_METRICS
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
 
