@@ -2804,6 +2804,12 @@ export type CompanyRow = {
     sector: string | null;
     summary: CandidateSummary;
     /**
+     * Suspects
+     */
+    suspects: {
+        [key: string]: SuspectValue;
+    };
+    /**
      * Symbol
      */
     symbol: string;
@@ -11767,6 +11773,26 @@ export type SummarySentence = {
     values: {
         [key: string]: unknown;
     };
+};
+
+/**
+ * SuspectValue
+ *
+ * A shown figure outside its plausible range (#353): it is displayed, and scored if it counts, unchanged.
+ */
+export type SuspectValue = {
+    /**
+     * High
+     */
+    high: number;
+    /**
+     * Low
+     */
+    low: number;
+    /**
+     * Scored
+     */
+    scored: boolean;
 };
 
 /**

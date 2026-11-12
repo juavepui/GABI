@@ -12,6 +12,7 @@ import { Evidence } from './evidence';
 import { FollowButton } from './follow-button';
 import { RankCell, RankLegend, RankValue } from '@/shared/ui/rank-cell';
 import { PageHeader } from '@/shared/ui/page-header';
+import { SuspectMark } from '@/shared/ui/suspect-mark';
 import { Term } from '@/shared/ui/term';
 import { sourceLabel } from './provenance';
 import { ComparisonChecklist } from './comparison-checklist';
@@ -260,6 +261,10 @@ export function ComparisonPage() {
                                   >
                                     {show(key, item.metrics[key])}
                                   </RankValue>
+                                  <SuspectMark
+                                    suspect={item.suspects[key]}
+                                    unit={item.metrics[key]?.unit ?? 'ratio'}
+                                  />
                                 </dd>
                               </div>
                             ))}
@@ -314,7 +319,11 @@ export function ComparisonPage() {
                             position={comparison.data.positions[key]?.[item.symbol]}
                             scope="de los comparados"
                           >
-                            {show(key, item.metrics[key])}
+                            {show(key, item.metrics[key])}{' '}
+                            <SuspectMark
+                              suspect={item.suspects[key]}
+                              unit={item.metrics[key]?.unit ?? 'ratio'}
+                            />
                             {(key === 'max_drawdown' || key === 'volatility') && (
                               <span className="block text-xs text-muted-foreground">
                                 {key === 'max_drawdown'

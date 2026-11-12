@@ -65,6 +65,16 @@ def check_fields(metrics: dict) -> list[dict]:
     return marks
 
 
+def outside_range(field: str, value) -> tuple[float, float] | None:
+    """The plausible range of ``field`` when a finite ``value`` falls outside it (#353); else None.
+
+    For display only: it marks a shown figure, it never changes what a model scores with."""
+    bounds, number = RANGES.get(field), _number(value)
+    if bounds is None or number is None or bounds[0] <= number <= bounds[1]:
+        return None
+    return bounds
+
+
 def check_jumps(prices: pd.DataFrame | None, splits: list[str] | None = None) -> list[dict]:
     """Daily moves above ``JUMP`` within the last ``JUMP_WINDOW`` sessions with no split recorded near them.
 

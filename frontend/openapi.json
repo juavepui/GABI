@@ -5432,6 +5432,13 @@
           "summary": {
             "$ref": "#/components/schemas/CandidateSummary"
           },
+          "suspects": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SuspectValue"
+            },
+            "title": "Suspects",
+            "type": "object"
+          },
           "symbol": {
             "title": "Symbol",
             "type": "string"
@@ -5443,6 +5450,7 @@
           "sector",
           "rank",
           "metrics",
+          "suspects",
           "golden_cross_recent",
           "identity",
           "provenance",
@@ -22416,6 +22424,31 @@
           "values"
         ],
         "title": "SummarySentence",
+        "type": "object"
+      },
+      "SuspectValue": {
+        "additionalProperties": false,
+        "description": "A shown figure outside its plausible range (#353): it is displayed, and scored if it counts, unchanged.",
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "low",
+          "high",
+          "scored"
+        ],
+        "title": "SuspectValue",
         "type": "object"
       },
       "SymbolWeight": {

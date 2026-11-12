@@ -10,6 +10,8 @@ from gabi.application.administration.model import ModelState
 from gabi.application.market.queries import DataState, RankingResult
 from gabi.domain.market.candidate_summary import summarize, warning
 from gabi.domain.market.company_overview import headline
+from gabi.domain.market.input_checks import outside_range
+from gabi.domain.market.scoring import SCORE_METRICS
 from gabi.domain.market.metric_sources import METRIC_APPROXIMATIONS, METRIC_SOURCES, metric_sources
 from gabi.domain.market.units import BASE_METRICS, metric_unit
 
@@ -25,6 +27,13 @@ class Unit(StrEnum):
     USD = "USD"
     RATIO = "ratio"
     COUNT = "count"
+
+
+class SuspectValue(WireModel):
+    """A shown figure outside its plausible range (#353): it is displayed, and scored if it counts, unchanged."""
+    low: float
+    high: float
+    scored: bool  # It counts for the active model's score.
 
 
 class Metric(WireModel):
@@ -111,6 +120,8 @@ class CompanyRow(WireModel):
     sector: str | None
     rank: int  # Position in full universe, before filters and pagination.
     metrics: dict[str, Metric]
+    # Figures that look wrong (#353), by metric key; shown and scored unchanged.
+    suspects: dict[str, SuspectValue]
     golden_cross_recent: bool | None
     identity: Identity
     provenance: Provenance
@@ -260,6 +271,19 @@ def data_response(data: DataState) -> DataResponse:
     return DataResponse.model_validate(vars(data))
 
 
+SCORED = frozenset(metric for metrics in SCORE_METRICS.values() for metric in metrics)
+
+
+def suspects(metrics: dict[str, Metric]) -> dict[str, SuspectValue]:
+    """Only the shown figures outside their plausible range; usually none (#353)."""
+    found = {}
+    for key, metric in metrics.items():
+        bounds = outside_range(key, metric.value)
+        if bounds is not None:
+            found[key] = SuspectValue(low=bounds[0], high=bounds[1], scored=key in SCORED)
+    return found
+
+
 def company_row(symbol: str, row: pd.Series, result: RankingResult) -> CompanyRow:
     non_metrics = {"name", "sector", "golden_cross_recent", "latest_10k_url", "latest_10k_date",
                    "latest_10q_url", "latest_10q_date", "next_earnings_date", "next_earnings_days",
@@ -290,6 +314,7 @@ def company_row(symbol: str, row: pd.Series, result: RankingResult) -> CompanyRo
     golden = row.get("golden_cross_recent")
     return CompanyRow(symbol=symbol, name=text_or_none(row.get("name")), sector=text_or_none(row.get("sector")),
                       rank=int(result.snapshot.table.index.get_loc(symbol)) + 1, metrics=metrics,
+                      suspects=suspects(metrics),
                       golden_cross_recent=None if pd.isna(golden) else bool(golden),
                       identity=Identity.model_validate(result.snapshot.identities[symbol]), provenance=provenance,
                       filings=filings, next_earnings=earnings, summary=candidate_summary(row))

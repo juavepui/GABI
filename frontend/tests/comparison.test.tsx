@@ -31,6 +31,7 @@ function company(symbol: string, marketCap: number): CompanyRow {
     rank: 1,
     sector: null,
     filings: [],
+    suspects: {},
     golden_cross_recent: null,
     next_earnings: null,
     metrics: {

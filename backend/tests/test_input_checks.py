@@ -131,3 +131,22 @@ def test_the_report_reads_full_histories_in_groups_within_the_row_budget(tmp_pat
     assert list(grouped) == list(expected)
     for symbol, frame in expected.items():
         pd.testing.assert_frame_equal(grouped[symbol], frame, check_exact=True)
+
+
+def test_shown_figures_outside_their_range_are_marked_without_changing_them():
+    from gabi_api.schemas.market import Metric, Unit, suspects
+
+    assert checks.outside_range("operating_margin", 2.52) == (-10.0, 1.0)
+    assert checks.outside_range("ev_ebitda", -33.1) == (0.0, 500.0)
+    # Inside the range, missing, not finite or without a range: nothing to mark.
+    assert checks.outside_range("operating_margin", 1.0) is None
+    assert checks.outside_range("pe", None) is None and checks.outside_range("pe", float("nan")) is None
+    assert checks.outside_range("roic", 50.0) is None
+    metrics = {"operating_margin": Metric(value=2.52, unit=Unit.FRACTION),
+               "roe": Metric(value=9.0, unit=Unit.FRACTION),
+               "pe": Metric(value=18.0, unit=Unit.RATIO)}
+    found = suspects(metrics)
+    assert set(found) == {"operating_margin", "roe"}
+    assert found["operating_margin"].scored and not found["roe"].scored  # ROE does not count for the score.
+    assert (found["operating_margin"].low, found["operating_margin"].high) == (-10.0, 1.0)
+    assert metrics["operating_margin"].value == 2.52
