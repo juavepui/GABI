@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getNotices } from '@/shared/api/client';
 import type { PeriodicNotice } from '@/shared/api/generated/types.gen';
 import { dateText } from '@/shared/lib/format';
+import { useResearchMode } from '@/shared/api/use-model';
 
 const COMMAND = 'python -m gabi_cli periodic --run';
 const SCHEDULE_SCRIPT = 'scripts\\programar_tareas.ps1';
@@ -52,6 +53,8 @@ export function HomeNotices() {
     staleTime: 300_000,
   });
   const data = notices.data;
+  // Investigación and the command line are Research tools; Investor mode only needs to know it is handled.
+  const research = useResearchMode();
   return (
     <div className="mb-6 space-y-2 text-sm" aria-label="Avisos" role="region">
       <p className="rounded-lg border border-warning-border bg-warning-soft p-3">
@@ -78,12 +81,18 @@ export function HomeNotices() {
         <p key={row.id} role="alert" className="rounded-lg border border-primary/40 p-3">
           Rebalanceo de la prueba ciega #{row.id} ({row.name}){' '}
           {row.overdue ? 'vencido' : `en ${row.days} ${row.days === 1 ? 'día' : 'días'}`}, el{' '}
-          {dateText(row.due)}: toca reajustar esa cartera de prueba de GABI. Tras el cierre del
-          mercado, ejecuta <code>{COMMAND}</code> o apúntalo en{' '}
-          <Link className="underline" to="/investigacion/validaciones">
-            Investigación → Validaciones ciegas
-          </Link>
-          .
+          {dateText(row.due)}: toca reajustar esa cartera de prueba de GABI.{' '}
+          {research ? (
+            <>
+              Tras el cierre del mercado, ejecuta <code>{COMMAND}</code> o apúntalo en{' '}
+              <Link className="underline" to="/investigacion/validaciones">
+                Investigación → Validaciones ciegas
+              </Link>
+              .
+            </>
+          ) : (
+            'La tarea diaria de GABI lo apunta sola cuando llega la fecha; no tienes que hacer nada. Si deja de ejecutarse, aquí verás un aviso.'
+          )}
         </p>
       ))}
       {data && !data.blind_available && (
