@@ -82,6 +82,13 @@ function ComparePicks({ picked, clear }: { picked: string[]; clear: () => void }
 export function MarketPage() {
   const [params, setParams] = useSearchParams();
   const query = rankingParams(params);
+  // The less used filters stay folded unless one of them is narrowing the list.
+  const moreFilters = [
+    query.exclude_sectors?.length,
+    query.earnings,
+    query.golden_cross_only,
+    !query.hide_no_data,
+  ].filter(Boolean).length;
   const result = useRanking(query);
   const evidence = useBlockEvidence();
   const data = result.data;
@@ -176,31 +183,7 @@ export function MarketPage() {
               Recargar
             </Button>
           }
-        >
-          <SectionLinks
-            label="Otras páginas de Descubrir"
-            links={[
-              {
-                to: '/descubrir/comparar',
-                label: 'Comparar empresas',
-                description: 'De dos a cinco, lado a lado',
-                icon: GitCompareArrows,
-              },
-              {
-                to: '/macro',
-                label: 'Panel macro',
-                description: 'Tipos, inflación, curva y crédito',
-                icon: Globe,
-              },
-              {
-                to: '/eventos',
-                label: 'Eventos',
-                description: 'Cambios en el ranking, informes y resultados',
-                icon: Radar,
-              },
-            ]}
-          />
-        </PageHeader>
+        ></PageHeader>
       </div>
       {data && <Evidence model={data.model} data={data.data} />}
       <CoverageWarnings />
@@ -287,84 +270,100 @@ export function MarketPage() {
                 />
               </div>
             </div>
-            <div className="text-xs">
-              <details className="relative">
-                <summary className="flex cursor-pointer items-center gap-1">
-                  Excluir sectores
-                  {query.exclude_sectors?.length ? ` (${query.exclude_sectors.length})` : ''}
-                  <ChevronRight size={12} aria-hidden="true" />
-                </summary>
-                <fieldset className="absolute left-0 top-6 z-20 max-h-64 w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
-                  <legend className="sr-only">Sectores excluidos</legend>
-                  {Array.from(
-                    new Set([...(data?.sectors ?? []), ...(query.exclude_sectors ?? [])]),
-                  ).map((s) => (
-                    <label
-                      className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
-                      key={s}
-                    >
+          </fieldset>
+          <details className="text-xs" open={moreFilters > 0}>
+            <summary className="cursor-pointer text-sm font-medium">
+              Más filtros
+              {moreFilters > 0 ? ` (${moreFilters} en uso)` : ''}
+              <span className="font-normal text-muted-foreground">
+                {' '}
+                · excluir sectores, fechas de resultados, señales y empresas sin datos
+              </span>
+            </summary>
+            <div className="mt-3 space-y-3">
+              <div className="text-xs">
+                <details className="relative">
+                  <summary className="flex cursor-pointer items-center gap-1">
+                    Excluir sectores
+                    {query.exclude_sectors?.length ? ` (${query.exclude_sectors.length})` : ''}
+                    <ChevronRight size={12} aria-hidden="true" />
+                  </summary>
+                  <fieldset className="absolute left-0 top-6 z-20 max-h-64 w-56 space-y-1 overflow-y-auto rounded-lg border bg-card p-3 shadow-lg">
+                    <legend className="sr-only">Sectores excluidos</legend>
+                    {Array.from(
+                      new Set([...(data?.sectors ?? []), ...(query.exclude_sectors ?? [])]),
+                    ).map((s) => (
+                      <label
+                        className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
+                        key={s}
+                      >
+                        <input
+                          type="checkbox"
+                          name="exclude_sectors"
+                          value={s}
+                          defaultChecked={query.exclude_sectors?.includes(s)}
+                          className="size-4 accent-primary"
+                        />
+                        {s}
+                      </label>
+                    ))}
+                  </fieldset>
+                </details>
+              </div>
+              <div className="grid gap-4 text-xs md:grid-cols-[2fr_1fr]">
+                <fieldset className="space-y-2">
+                  <legend className="mb-2 text-sm font-semibold">Calendario y señales</legend>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                    <label className="flex items-center gap-2">
+                      Presentación de resultados
+                      <NativeSelect
+                        name="earnings"
+                        defaultValue={query.earnings ?? ''}
+                        className="h-8"
+                      >
+                        <option value="">Indiferente</option>
+                        <option value="only">Solo las que presentan</option>
+                        <option value="exclude">Quitar las que presentan</option>
+                      </NativeSelect>
+                      en los próximos
+                      <Input
+                        name="earnings_days"
+                        type="number"
+                        min={0}
+                        max={90}
+                        defaultValue={query.earnings_days}
+                        aria-label="Días hasta los resultados"
+                        className="h-8 w-16"
+                      />
+                      días
+                    </label>
+                    <label className="flex items-center gap-2">
                       <input
+                        name="golden_cross_only"
                         type="checkbox"
-                        name="exclude_sectors"
-                        value={s}
-                        defaultChecked={query.exclude_sectors?.includes(s)}
+                        defaultChecked={query.golden_cross_only}
                         className="size-4 accent-primary"
                       />
-                      {s}
+                      Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de
+                      subida)
                     </label>
-                  ))}
+                  </div>
                 </fieldset>
-              </details>
-            </div>
-          </fieldset>
-          <div className="grid gap-4 border-t pt-3 text-xs md:grid-cols-[2fr_1fr]">
-            <fieldset className="space-y-2">
-              <legend className="mb-2 text-sm font-semibold">Calendario y señales</legend>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-                <label className="flex items-center gap-2">
-                  Presentación de resultados
-                  <NativeSelect name="earnings" defaultValue={query.earnings ?? ''} className="h-8">
-                    <option value="">Indiferente</option>
-                    <option value="only">Solo las que presentan</option>
-                    <option value="exclude">Quitar las que presentan</option>
-                  </NativeSelect>
-                  en los próximos
-                  <Input
-                    name="earnings_days"
-                    type="number"
-                    min={0}
-                    max={90}
-                    defaultValue={query.earnings_days}
-                    aria-label="Días hasta los resultados"
-                    className="h-8 w-16"
-                  />
-                  días
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    name="golden_cross_only"
-                    type="checkbox"
-                    defaultChecked={query.golden_cross_only}
-                    className="size-4 accent-primary"
-                  />
-                  Solo con <Term k="golden_cross_recent">cruce dorado</Term> reciente (señal de
-                  subida)
-                </label>
+                <fieldset className="space-y-2">
+                  <legend className="mb-2 text-sm font-semibold">Datos</legend>
+                  <label className="flex items-center gap-2">
+                    <input
+                      name="hide_no_data"
+                      type="checkbox"
+                      defaultChecked={query.hide_no_data}
+                      className="size-4 accent-primary"
+                    />
+                    Ocultar empresas sin datos
+                  </label>
+                </fieldset>
               </div>
-            </fieldset>
-            <fieldset className="space-y-2">
-              <legend className="mb-2 text-sm font-semibold">Datos</legend>
-              <label className="flex items-center gap-2">
-                <input
-                  name="hide_no_data"
-                  type="checkbox"
-                  defaultChecked={query.hide_no_data}
-                  className="size-4 accent-primary"
-                />
-                Ocultar empresas sin datos
-              </label>
-            </fieldset>
-          </div>
+            </div>
+          </details>
           <div className="flex flex-wrap items-center gap-3 border-t pt-3">
             <Button type="submit" className="h-10">
               <SlidersHorizontal aria-hidden="true" />
@@ -720,6 +719,29 @@ export function MarketPage() {
         <>
           <RankingEvidence />
           <RankingStabilityPanel />
+          <SectionLinks
+            label="Otras páginas de Descubrir"
+            links={[
+              {
+                to: '/descubrir/comparar',
+                label: 'Comparar empresas',
+                description: 'De dos a cinco, lado a lado',
+                icon: GitCompareArrows,
+              },
+              {
+                to: '/macro',
+                label: 'Panel macro',
+                description: 'Tipos, inflación, curva y crédito',
+                icon: Globe,
+              },
+              {
+                to: '/eventos',
+                label: 'Eventos',
+                description: 'Cambios en el ranking, informes y resultados',
+                icon: Radar,
+              },
+            ]}
+          />
         </>
       )}
     </>
