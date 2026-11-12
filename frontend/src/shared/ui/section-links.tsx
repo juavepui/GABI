@@ -12,7 +12,14 @@ export type SectionLink = {
 /** The sub-sections of a page as buttons with an icon and one line of context, in the app's palette. */
 export function SectionLinks({ links, label }: { links: SectionLink[]; label: string }) {
   return (
-    <nav aria-label={label} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <nav
+      aria-label={label}
+      className={
+        'mt-5 grid gap-3 sm:grid-cols-2 ' +
+        // Five links would leave one alone on a second row.
+        (links.length === 5 ? 'lg:grid-cols-3 2xl:grid-cols-5' : 'xl:grid-cols-4')
+      }
+    >
       {links.map(({ to, label: title, description, icon: Icon }) => (
         <Link
           key={to}

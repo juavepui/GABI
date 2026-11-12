@@ -378,7 +378,7 @@ test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async (
   await expect(notices.getByText('No es asesoramiento financiero')).toBeVisible();
   await expect(
     notices.getByText(
-      /Rebalanceo de la prueba ciega #1 \(Fixture ciega\) en 2 días, el 2026-10-01/,
+      /Rebalanceo de la prueba ciega #1 \(Fixture ciega\) en 2 días, el 01 oct 2026/,
     ),
   ).toBeVisible();
   await expect(notices.getByText(/#44/)).toHaveCount(0);
