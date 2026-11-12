@@ -709,7 +709,8 @@ test('Ranking: columnas recordadas, filtros nuevos y CSV de la vista filtrada (#
   await expect(page).toHaveURL(/order_by=roe/);
   await expect(page).toHaveURL(/limit=25/);
   await expect(table.getByRole('columnheader', { name: 'ROE' })).toBeVisible();
-  await page.getByText('Excluir sectores').click();
+  await page.getByText(/^Más filtros/).click();
+  await page.getByText('Excluir sectores', { exact: true }).click();
   await page.getByRole('group', { name: 'Sectores excluidos' }).getByText('Financials').click();
   await page.getByRole('button', { name: 'Aplicar filtros' }).click();
   await expect(page).toHaveURL(/exclude_sectors=Financials/);
