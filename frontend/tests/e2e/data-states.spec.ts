@@ -16,7 +16,7 @@ test('cobertura parcial y filtros vacíos conservan el estado del universo y la 
   await expect(page.getByText('No hay empresas con estos filtros')).toBeVisible();
   const state = page.getByRole('region', { name: 'Estado de los datos' });
   await expect(state.getByText('Datos guardados en tu equipo')).toBeVisible();
-  await state.getByText(/Avisos sobre los datos/).click();
+  // Data needing attention: what is wrong in view, sources and counts behind «Ver detalle».
   await expect(
     state.getByText(
       'A algunas empresas les faltan datos, así que su puntuación es menos completa.',
@@ -25,6 +25,8 @@ test('cobertura parcial y filtros vacíos conservan el estado del universo y la 
   await expect(state).not.toContainText('incomplete_coverage');
   await page.reload();
   await expect(page).toHaveURL(/search=UNKNOWN/);
+  await expect(state.getByText('Con informes oficiales (SEC)')).toBeHidden();
+  await state.getByText(/^Ver detalle/).click();
   await expect(state.getByText('Con informes oficiales (SEC)')).toBeVisible();
   await expect(state).toContainText(String(original.data.universe_count));
   expect(posts).toBe(0);

@@ -63,6 +63,13 @@ describe('avisos de evidencia y datos (#187)', () => {
     );
     expect(shown('Estado de los datos')).toBe(true);
     expect(screen.text()).toContain('Datos antiguos: conviene actualizarlos');
+    // Compact: the warning in words in view; sources and counts folded behind «Ver detalle».
+    expect(screen.text()).toContain('Hay precios con más de una semana');
+    const detail = screen.container.querySelector<HTMLDetailsElement>(
+      'section[aria-label="Estado de los datos"] details',
+    )!;
+    expect(detail.open).toBe(false);
+    expect(detail.textContent).toContain('Con informes oficiales (SEC)');
     expect(screen.container.querySelector('summary')!.textContent).not.toContain('Datos al día');
     expect(shown('Estado de la evidencia')).toBe(false);
   });
