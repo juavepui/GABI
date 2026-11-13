@@ -1,0 +1,80 @@
+{
+  "regla": {
+    "float_min": 300000000.0,
+    "float_max": 20000000000.0,
+    "lookback_dias": 455,
+    "supervivencia_dias": 548,
+    "excluye": "emisores del S&P 500 en la fecha"
+  },
+  "fechas": {
+    "2012-06-30": {
+      "empresas": 1785,
+      "desaparecen_en_18m": 47,
+      "pct_desaparecen": 0.026330532212885154,
+      "float_mediano_musd": 1024.226
+    },
+    "2017-06-30": {
+      "empresas": 2102,
+      "desaparecen_en_18m": 71,
+      "pct_desaparecen": 0.03377735490009515,
+      "float_mediano_musd": 1322.3428675
+    },
+    "2022-06-30": {
+      "empresas": 2400,
+      "desaparecen_en_18m": 200,
+      "pct_desaparecen": 0.08333333333333333,
+      "float_mediano_musd": 1243.322562
+    }
+  },
+  "muestra": {
+    "2012-06-30_desaparecidas": {
+      "n": 30,
+      "ticker_sec_actual": 0.06666666666666667,
+      "tiingo_cubre_ventana": 0.06666666666666667,
+      "ticker_recuperado_10k": 0.6666666666666666,
+      "tiingo_cubre_con_ticker_recuperado": 0.16666666666666666,
+      "algun_precio_gratuito": 0.23333333333333334
+    },
+    "2012-06-30_supervivientes": {
+      "n": 30,
+      "ticker_sec_actual": 0.5,
+      "tiingo_cubre_ventana": 0.4666666666666667,
+      "ticker_recuperado_10k": 0.3,
+      "tiingo_cubre_con_ticker_recuperado": 0.26666666666666666,
+      "algun_precio_gratuito": 0.7333333333333333
+    },
+    "2017-06-30_desaparecidas": {
+      "n": 30,
+      "ticker_sec_actual": 0.03333333333333333,
+      "tiingo_cubre_ventana": 0.03333333333333333,
+      "ticker_recuperado_10k": 0.6666666666666666,
+      "tiingo_cubre_con_ticker_recuperado": 0.2,
+      "algun_precio_gratuito": 0.23333333333333334
+    },
+    "2017-06-30_supervivientes": {
+      "n": 30,
+      "ticker_sec_actual": 0.8,
+      "tiingo_cubre_ventana": 0.7666666666666667,
+      "ticker_recuperado_10k": 0.16666666666666666,
+      "tiingo_cubre_con_ticker_recuperado": 0.16666666666666666,
+      "algun_precio_gratuito": 0.9333333333333333
+    },
+    "2022-06-30_desaparecidas": {
+      "n": 30,
+      "ticker_sec_actual": 0.0,
+      "tiingo_cubre_ventana": 0.0,
+      "ticker_recuperado_10k": 0.7333333333333333,
+      "tiingo_cubre_con_ticker_recuperado": 0.36666666666666664,
+      "algun_precio_gratuito": 0.36666666666666664
+    },
+    "2022-06-30_supervivientes": {
+      "n": 30,
+      "ticker_sec_actual": 0.8,
+      "tiingo_cubre_ventana": 0.7,
+      "ticker_recuperado_10k": 0.2,
+      "tiingo_cubre_con_ticker_recuperado": 0.13333333333333333,
+      "algun_precio_gratuito": 0.8333333333333334
+    }
+  },
+  "frames_ultimo_ano": 2025
+}

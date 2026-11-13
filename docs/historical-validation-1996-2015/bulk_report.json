@@ -1,0 +1,198 @@
+{
+  "2009q1": {
+    "status": "complete",
+    "submissions": 0,
+    "facts": 0,
+    "excluded_segment_or_coreg": 0,
+    "invalid": 0
+  },
+  "2009q2": {
+    "status": "complete",
+    "submissions": 12,
+    "facts": 261,
+    "excluded_segment_or_coreg": 25,
+    "invalid": 0
+  },
+  "2009q3": {
+    "status": "complete",
+    "submissions": 349,
+    "facts": 9723,
+    "excluded_segment_or_coreg": 2914,
+    "invalid": 0
+  },
+  "2009q4": {
+    "status": "complete",
+    "submissions": 386,
+    "facts": 11045,
+    "excluded_segment_or_coreg": 4666,
+    "invalid": 0
+  },
+  "2010q1": {
+    "status": "complete",
+    "submissions": 391,
+    "facts": 12106,
+    "excluded_segment_or_coreg": 9398,
+    "invalid": 1
+  },
+  "2010q2": {
+    "status": "complete",
+    "submissions": 387,
+    "facts": 8924,
+    "excluded_segment_or_coreg": 4354,
+    "invalid": 0
+  },
+  "2010q3": {
+    "status": "complete",
+    "submissions": 549,
+    "facts": 15936,
+    "excluded_segment_or_coreg": 17785,
+    "invalid": 38
+  },
+  "2010q4": {
+    "status": "complete",
+    "submissions": 571,
+    "facts": 17087,
+    "excluded_segment_or_coreg": 19765,
+    "invalid": 28
+  },
+  "2011q1": {
+    "status": "complete",
+    "submissions": 569,
+    "facts": 21867,
+    "excluded_segment_or_coreg": 31923,
+    "invalid": 23
+  },
+  "2011q2": {
+    "status": "complete",
+    "submissions": 579,
+    "facts": 14482,
+    "excluded_segment_or_coreg": 18250,
+    "invalid": 12
+  },
+  "2011q3": {
+    "status": "complete",
+    "submissions": 593,
+    "facts": 18148,
+    "excluded_segment_or_coreg": 32057,
+    "invalid": 14
+  },
+  "2011q4": {
+    "status": "complete",
+    "submissions": 597,
+    "facts": 18535,
+    "excluded_segment_or_coreg": 35078,
+    "invalid": 13
+  },
+  "2012q1": {
+    "status": "complete",
+    "submissions": 597,
+    "facts": 25031,
+    "excluded_segment_or_coreg": 48779,
+    "invalid": 24
+  },
+  "2012q2": {
+    "status": "complete",
+    "submissions": 594,
+    "facts": 15085,
+    "excluded_segment_or_coreg": 26634,
+    "invalid": 19
+  },
+  "2012q3": {
+    "status": "complete",
+    "submissions": 593,
+    "facts": 18037,
+    "excluded_segment_or_coreg": 36256,
+    "invalid": 7
+  },
+  "2012q4": {
+    "status": "complete",
+    "submissions": 600,
+    "facts": 18691,
+    "excluded_segment_or_coreg": 39078,
+    "invalid": 10
+  },
+  "2013q1": {
+    "status": "complete",
+    "submissions": 588,
+    "facts": 25209,
+    "excluded_segment_or_coreg": 50492,
+    "invalid": 7
+  },
+  "2013q2": {
+    "status": "complete",
+    "submissions": 601,
+    "facts": 15484,
+    "excluded_segment_or_coreg": 28174,
+    "invalid": 8
+  },
+  "2013q3": {
+    "status": "complete",
+    "submissions": 592,
+    "facts": 18056,
+    "excluded_segment_or_coreg": 38829,
+    "invalid": 11
+  },
+  "2013q4": {
+    "status": "complete",
+    "submissions": 596,
+    "facts": 18505,
+    "excluded_segment_or_coreg": 41342,
+    "invalid": 15
+  },
+  "2014q1": {
+    "status": "complete",
+    "submissions": 572,
+    "facts": 24752,
+    "excluded_segment_or_coreg": 52750,
+    "invalid": 14
+  },
+  "2014q2": {
+    "status": "complete",
+    "submissions": 591,
+    "facts": 15446,
+    "excluded_segment_or_coreg": 31327,
+    "invalid": 3
+  },
+  "2014q3": {
+    "status": "complete",
+    "submissions": 580,
+    "facts": 17894,
+    "excluded_segment_or_coreg": 41204,
+    "invalid": 3
+  },
+  "2014q4": {
+    "status": "complete",
+    "submissions": 590,
+    "facts": 18618,
+    "excluded_segment_or_coreg": 43336,
+    "invalid": 1
+  },
+  "2015q1": {
+    "status": "complete",
+    "submissions": 578,
+    "facts": 24936,
+    "excluded_segment_or_coreg": 53459,
+    "invalid": 0
+  },
+  "2015q2": {
+    "status": "complete",
+    "submissions": 573,
+    "facts": 14717,
+    "excluded_segment_or_coreg": 31012,
+    "invalid": 0
+  },
+  "2015q3": {
+    "status": "complete",
+    "submissions": 569,
+    "facts": 17539,
+    "excluded_segment_or_coreg": 40846,
+    "invalid": 0
+  },
+  "2015q4": {
+    "status": "complete",
+    "submissions": 575,
+    "facts": 18227,
+    "excluded_segment_or_coreg": 43214,
+    "invalid": 0
+  }
+}

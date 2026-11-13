@@ -1,0 +1,980 @@
+{
+  "spec_sha256": "2dfbca638cb4cbeedcdb5bf0ad62f0e796548143c1aa6a174cb9e6c0e08a9c96",
+  "inputs_sha256": {
+    "docs\\historical-revalidation-2011-2025\\acreditado-38-continua\\v2-top20-nav.csv": "19cd47835be152a16483fe08df72446c778fc93863b1d4c9bd04f5687a0ee555",
+    "docs\\historical-revalidation-2011-2025\\acreditado-38-continua\\v2-top20-periods.csv": "855eb3b045a8c9d0f391a0ced98dc4139356d911345713a17419e3f8dde2308d",
+    "docs\\historical-revalidation-2011-2025\\acreditado-38-continua\\v1-top20-periods.csv": "6b3c982d51ef3f35ffc40f53658662a1db158b9d51eae58347397daff6c827bb",
+    "docs\\cross-section-test\\por-trimestre.csv": "862f74b38fbf44f72bbe5bc78f87d9574a80ef41eccf4c9eda1037d5f169be3b"
+  },
+  "git_commit": "8a75a76",
+  "python_version": "3.13.7",
+  "dependencies": {
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "yfinance": "1.7.0",
+    "pyportfolioopt": "1.6.0",
+    "backtesting": "0.6.6",
+    "exchange_calendars": "4.13.2",
+    "quantstats": "0.0.81"
+  },
+  "environment_fingerprint": "0a16dcd435d3",
+  "unavailable_datasets": {
+    "v1_quarterly_net": "Las ventanas V1 tienen huecos o solapamientos. No se unen periodos separados ni se imputan retornos."
+  },
+  "datasets": {
+    "v2_daily_net": {
+      "primary_block": 20,
+      "runs": {
+        "20": {
+          "schema_version": 1,
+          "method": "paired circular block bootstrap",
+          "n_obs": 3584,
+          "start": "2011-07-05 00:00:00",
+          "end": "2025-10-02 00:00:00",
+          "periods_per_year": 252,
+          "block_size": 20,
+          "n_boot": 4096,
+          "ci": 0.95,
+          "seed": 500050,
+          "input_sha256": "ade22043d4eab3bb99692d5889b79ae882e512185f67c415917c26808875d68e",
+          "limitations": [
+            "Remuestrear el pasado no genera evidencia OOS nueva ni corrige selección retrospectiva.",
+            "Las fracciones bootstrap no son p-valores ni probabilidades de éxito futuro.",
+            "Se conserva dependencia dentro de bloques; se rompe entre bloques. Se supone estacionariedad aproximada.",
+            "Intervalos percentiles puntuales, sin corrección por multiplicidad ni garantía de cobertura nominal.",
+            "Drawdown y ES son diagnósticos sensibles al orden, al horizonte y a colas no observadas.",
+            "Volatilidad y Sharpe usan la convención sqrt(frecuencia), sin corregir su anualización por autocorrelación."
+          ],
+          "python_version": "3.13.7",
+          "dependencies": {
+            "pandas": "3.0.6",
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "yfinance": "1.7.0",
+            "pyportfolioopt": "1.6.0",
+            "backtesting": "0.6.6",
+            "exchange_calendars": "4.13.2",
+            "quantstats": "0.0.81"
+          },
+          "environment_fingerprint": "0a16dcd435d3",
+          "code_sha256": {
+            "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+            "academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6"
+          },
+          "risk_free_rate": 0.0,
+          "drawdown_threshold": 0.2,
+          "strategy": "strategy",
+          "series": {
+            "strategy": {
+              "metrics": {
+                "cagr": {
+                  "observed": 0.18870093437459454,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.08392196730540266,
+                  "median": 0.18954670832427978,
+                  "upper": 0.30037540989526884,
+                  "bootstrap_mean": 0.19003045050095052
+                },
+                "volatility": {
+                  "observed": 0.1931686732800764,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.16750999719632478,
+                  "median": 0.1913494362769757,
+                  "upper": 0.2228456092072899,
+                  "bootstrap_mean": 0.19246780813793188
+                },
+                "sharpe": {
+                  "observed": 0.9921286959580882,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.4991573005839513,
+                  "median": 1.0024712461518797,
+                  "upper": 1.530714256000862,
+                  "bootstrap_mean": 1.0060626776914492
+                },
+                "max_drawdown": {
+                  "observed": -0.3281482021700643,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.5080011077450907,
+                  "median": -0.3128047109143956,
+                  "upper": -0.1871354952516358,
+                  "bootstrap_mean": -0.3225843284365717
+                },
+                "es5": {
+                  "observed": 0.028961241170058983,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.024576086396541127,
+                  "median": 0.028658268438387806,
+                  "upper": 0.03423325092167485,
+                  "bootstrap_mean": 0.028876454774317564
+                }
+              },
+              "drawdown_fraction": {
+                "fraction": 0.956298828125,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "tail_mass": 179.20000000000002,
+              "tail_horizon": "one original observation",
+              "tail_sparse": false
+            },
+            "spy": {
+              "metrics": {
+                "cagr": {
+                  "observed": 0.13988212545688275,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.0492558875425516,
+                  "median": 0.14057377246683356,
+                  "upper": 0.23241734030096178,
+                  "bootstrap_mean": 0.14115463189626665
+                },
+                "volatility": {
+                  "observed": 0.17366399446467817,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.1494792724424821,
+                  "median": 0.1722787259067262,
+                  "upper": 0.20129721471353396,
+                  "bootstrap_mean": 0.17304215029838665
+                },
+                "sharpe": {
+                  "observed": 0.8411477527793003,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.353608860069096,
+                  "median": 0.8501677678351698,
+                  "upper": 1.3685670854061704,
+                  "bootstrap_mean": 0.8572977942855108
+                },
+                "max_drawdown": {
+                  "observed": -0.3371726607877111,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.5303869837129601,
+                  "median": -0.3100280753689244,
+                  "upper": -0.17980268752480935,
+                  "bootstrap_mean": -0.32047453095293776
+                },
+                "es5": {
+                  "observed": 0.02660454736741633,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.022485833044097955,
+                  "median": 0.02631099432658924,
+                  "upper": 0.03174788064497563,
+                  "bootstrap_mean": 0.026538304893766476
+                }
+              },
+              "drawdown_fraction": {
+                "fraction": 0.93505859375,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "tail_mass": 179.20000000000002,
+              "tail_horizon": "one original observation",
+              "tail_sparse": false
+            }
+          },
+          "comparisons": {
+            "spy": {
+              "metrics": {
+                "excess_mean": {
+                  "observed": 0.0001808377192010925,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 1.0826574468441254e-05,
+                  "median": 0.00018004222544246629,
+                  "upper": 0.0003454313753759795,
+                  "bootstrap_mean": 0.0001800116588403932
+                },
+                "cagr_difference": {
+                  "observed": 0.04881880891771179,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.001021764987860077,
+                  "median": 0.04837844181826876,
+                  "upper": 0.09883250416785339,
+                  "bootstrap_mean": 0.04887581860468386
+                },
+                "sharpe_difference": {
+                  "observed": 0.15098094317878785,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.08323838546556753,
+                  "median": 0.14958593092288597,
+                  "upper": 0.36534126896554736,
+                  "bootstrap_mean": 0.14876488340593846
+                }
+              },
+              "positive_fractions": {
+                "excess_mean": {
+                  "fraction": 0.98095703125,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                },
+                "cagr_difference": {
+                  "fraction": 0.97265625,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                },
+                "sharpe_difference": {
+                  "fraction": 0.906982421875,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                }
+              },
+              "hac": {
+                "mean": 0.00018083771920109258,
+                "se": 8.653194723929429e-05,
+                "lower": 1.1238219099955602e-05,
+                "upper": 0.0003504372193022296,
+                "t_hac": 2.0898376261082667,
+                "hac_lags": 8,
+                "bootstrap_excludes_zero": true,
+                "hac_excludes_zero": true,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            }
+          }
+        },
+        "10": {
+          "schema_version": 1,
+          "method": "paired circular block bootstrap",
+          "n_obs": 3584,
+          "start": "2011-07-05 00:00:00",
+          "end": "2025-10-02 00:00:00",
+          "periods_per_year": 252,
+          "block_size": 10,
+          "n_boot": 4096,
+          "ci": 0.95,
+          "seed": 500050,
+          "input_sha256": "ade22043d4eab3bb99692d5889b79ae882e512185f67c415917c26808875d68e",
+          "limitations": [
+            "Remuestrear el pasado no genera evidencia OOS nueva ni corrige selección retrospectiva.",
+            "Las fracciones bootstrap no son p-valores ni probabilidades de éxito futuro.",
+            "Se conserva dependencia dentro de bloques; se rompe entre bloques. Se supone estacionariedad aproximada.",
+            "Intervalos percentiles puntuales, sin corrección por multiplicidad ni garantía de cobertura nominal.",
+            "Drawdown y ES son diagnósticos sensibles al orden, al horizonte y a colas no observadas.",
+            "Volatilidad y Sharpe usan la convención sqrt(frecuencia), sin corregir su anualización por autocorrelación."
+          ],
+          "python_version": "3.13.7",
+          "dependencies": {
+            "pandas": "3.0.6",
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "yfinance": "1.7.0",
+            "pyportfolioopt": "1.6.0",
+            "backtesting": "0.6.6",
+            "exchange_calendars": "4.13.2",
+            "quantstats": "0.0.81"
+          },
+          "environment_fingerprint": "0a16dcd435d3",
+          "code_sha256": {
+            "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+            "academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6"
+          },
+          "risk_free_rate": 0.0,
+          "drawdown_threshold": 0.2,
+          "strategy": "strategy",
+          "series": {
+            "strategy": {
+              "metrics": {
+                "cagr": {
+                  "observed": 0.18870093437459454,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.08554869207775766,
+                  "median": 0.19111440983741812,
+                  "upper": 0.3047056056828432,
+                  "bootstrap_mean": 0.19175672797287316
+                },
+                "volatility": {
+                  "observed": 0.1931686732800764,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.17249213533300145,
+                  "median": 0.1917672051227301,
+                  "upper": 0.2176820052160366,
+                  "bootstrap_mean": 0.1926160568166338
+                },
+                "sharpe": {
+                  "observed": 0.9921286959580882,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.5122713304542776,
+                  "median": 1.0082378970402806,
+                  "upper": 1.5301038160857328,
+                  "bootstrap_mean": 1.009796212345519
+                },
+                "max_drawdown": {
+                  "observed": -0.3281482021700643,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.5013705200375764,
+                  "median": -0.3068528636528155,
+                  "upper": -0.19452995608950258,
+                  "bootstrap_mean": -0.31827338235697694
+                },
+                "es5": {
+                  "observed": 0.028961241170058983,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.025289238038101656,
+                  "median": 0.02872489302139042,
+                  "upper": 0.033288690368381245,
+                  "bootstrap_mean": 0.028871258290804593
+                }
+              },
+              "drawdown_fraction": {
+                "fraction": 0.968994140625,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "tail_mass": 179.20000000000002,
+              "tail_horizon": "one original observation",
+              "tail_sparse": false
+            },
+            "spy": {
+              "metrics": {
+                "cagr": {
+                  "observed": 0.13988212545688275,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.05243166497935096,
+                  "median": 0.14233609551352658,
+                  "upper": 0.23520288105208564,
+                  "bootstrap_mean": 0.14248828174252118
+                },
+                "volatility": {
+                  "observed": 0.17366399446467817,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.1533754084620102,
+                  "median": 0.17243196574290992,
+                  "upper": 0.19666438011436857,
+                  "bootstrap_mean": 0.17316544485377344
+                },
+                "sharpe": {
+                  "observed": 0.8411477527793003,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.3666479925614273,
+                  "median": 0.8562540734206157,
+                  "upper": 1.3825927125720843,
+                  "bootstrap_mean": 0.8599552052010708
+                },
+                "max_drawdown": {
+                  "observed": -0.3371726607877111,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.49831486274064024,
+                  "median": -0.2958800180553451,
+                  "upper": -0.18289360633659654,
+                  "bootstrap_mean": -0.30816523801248286
+                },
+                "es5": {
+                  "observed": 0.02660454736741633,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.023020552409562783,
+                  "median": 0.026402982333026986,
+                  "upper": 0.030912565415917716,
+                  "bootstrap_mean": 0.026524432335539902
+                }
+              },
+              "drawdown_fraction": {
+                "fraction": 0.9482421875,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "tail_mass": 179.20000000000002,
+              "tail_horizon": "one original observation",
+              "tail_sparse": false
+            }
+          },
+          "comparisons": {
+            "spy": {
+              "metrics": {
+                "excess_mean": {
+                  "observed": 0.0001808377192010925,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 1.388196221323935e-05,
+                  "median": 0.00018093908642598992,
+                  "upper": 0.00034961144640346486,
+                  "bootstrap_mean": 0.00018096165870832182
+                },
+                "cagr_difference": {
+                  "observed": 0.04881880891771179,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -8.404834220743659e-05,
+                  "median": 0.04901876206826783,
+                  "upper": 0.10153104385335737,
+                  "bootstrap_mean": 0.04926844623035197
+                },
+                "sharpe_difference": {
+                  "observed": 0.15098094317878785,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.07698152295320411,
+                  "median": 0.15165722812211613,
+                  "upper": 0.3755137233556393,
+                  "bootstrap_mean": 0.14984100714444842
+                }
+              },
+              "positive_fractions": {
+                "excess_mean": {
+                  "fraction": 0.983154296875,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                },
+                "cagr_difference": {
+                  "fraction": 0.974365234375,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                },
+                "sharpe_difference": {
+                  "fraction": 0.90478515625,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                }
+              },
+              "hac": {
+                "mean": 0.00018083771920109258,
+                "se": 8.653194723929429e-05,
+                "lower": 1.1238219099955602e-05,
+                "upper": 0.0003504372193022296,
+                "t_hac": 2.0898376261082667,
+                "hac_lags": 8,
+                "bootstrap_excludes_zero": true,
+                "hac_excludes_zero": true,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            }
+          }
+        },
+        "40": {
+          "schema_version": 1,
+          "method": "paired circular block bootstrap",
+          "n_obs": 3584,
+          "start": "2011-07-05 00:00:00",
+          "end": "2025-10-02 00:00:00",
+          "periods_per_year": 252,
+          "block_size": 40,
+          "n_boot": 4096,
+          "ci": 0.95,
+          "seed": 500050,
+          "input_sha256": "ade22043d4eab3bb99692d5889b79ae882e512185f67c415917c26808875d68e",
+          "limitations": [
+            "Remuestrear el pasado no genera evidencia OOS nueva ni corrige selección retrospectiva.",
+            "Las fracciones bootstrap no son p-valores ni probabilidades de éxito futuro.",
+            "Se conserva dependencia dentro de bloques; se rompe entre bloques. Se supone estacionariedad aproximada.",
+            "Intervalos percentiles puntuales, sin corrección por multiplicidad ni garantía de cobertura nominal.",
+            "Drawdown y ES son diagnósticos sensibles al orden, al horizonte y a colas no observadas.",
+            "Volatilidad y Sharpe usan la convención sqrt(frecuencia), sin corregir su anualización por autocorrelación."
+          ],
+          "python_version": "3.13.7",
+          "dependencies": {
+            "pandas": "3.0.6",
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "yfinance": "1.7.0",
+            "pyportfolioopt": "1.6.0",
+            "backtesting": "0.6.6",
+            "exchange_calendars": "4.13.2",
+            "quantstats": "0.0.81"
+          },
+          "environment_fingerprint": "0a16dcd435d3",
+          "code_sha256": {
+            "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+            "academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6"
+          },
+          "risk_free_rate": 0.0,
+          "drawdown_threshold": 0.2,
+          "strategy": "strategy",
+          "series": {
+            "strategy": {
+              "metrics": {
+                "cagr": {
+                  "observed": 0.18870093437459454,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.09975825965342316,
+                  "median": 0.18979365761414507,
+                  "upper": 0.286516370587852,
+                  "bootstrap_mean": 0.1905365037188363
+                },
+                "volatility": {
+                  "observed": 0.1931686732800764,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.16459838720993025,
+                  "median": 0.19058435293336,
+                  "upper": 0.2294912057438109,
+                  "bootstrap_mean": 0.19233961178458908
+                },
+                "sharpe": {
+                  "observed": 0.9921286959580882,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.560734728448034,
+                  "median": 1.004216337853737,
+                  "upper": 1.4996459860843379,
+                  "bootstrap_mean": 1.0127514761335032
+                },
+                "max_drawdown": {
+                  "observed": -0.3281482021700643,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.4730036988418826,
+                  "median": -0.3281482021700643,
+                  "upper": -0.18566117273953492,
+                  "bootstrap_mean": -0.3144991726349279
+                },
+                "es5": {
+                  "observed": 0.028961241170058983,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.024166495678965443,
+                  "median": 0.028575224687748632,
+                  "upper": 0.0349886243375801,
+                  "bootstrap_mean": 0.02886200483387508
+                }
+              },
+              "drawdown_fraction": {
+                "fraction": 0.941650390625,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "tail_mass": 179.20000000000002,
+              "tail_horizon": "one original observation",
+              "tail_sparse": false
+            },
+            "spy": {
+              "metrics": {
+                "cagr": {
+                  "observed": 0.13988212545688275,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.05514244620853268,
+                  "median": 0.14166348967526077,
+                  "upper": 0.22477578998561012,
+                  "bootstrap_mean": 0.14147200831810808
+                },
+                "volatility": {
+                  "observed": 0.17366399446467817,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.14603494843883288,
+                  "median": 0.17167186165889903,
+                  "upper": 0.20735932085705122,
+                  "bootstrap_mean": 0.17293205500358294
+                },
+                "sharpe": {
+                  "observed": 0.8411477527793003,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.37830084828717564,
+                  "median": 0.8518735764493364,
+                  "upper": 1.3591170094163294,
+                  "bootstrap_mean": 0.863407827310586
+                },
+                "max_drawdown": {
+                  "observed": -0.3371726607877111,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.5040809700814992,
+                  "median": -0.3371726607877107,
+                  "upper": -0.17652711554057876,
+                  "bootstrap_mean": -0.3230930424555072
+                },
+                "es5": {
+                  "observed": 0.02660454736741633,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.021941038598971434,
+                  "median": 0.026242848436830585,
+                  "upper": 0.03243088355107568,
+                  "bootstrap_mean": 0.026514633698352812
+                }
+              },
+              "drawdown_fraction": {
+                "fraction": 0.921875,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "tail_mass": 179.20000000000002,
+              "tail_horizon": "one original observation",
+              "tail_sparse": false
+            }
+          },
+          "comparisons": {
+            "spy": {
+              "metrics": {
+                "excess_mean": {
+                  "observed": 0.0001808377192010925,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 2.0346432175946524e-05,
+                  "median": 0.00018084732054243812,
+                  "upper": 0.0003421112185540689,
+                  "bootstrap_mean": 0.00018097440842140797
+                },
+                "cagr_difference": {
+                  "observed": 0.04881880891771179,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": 0.0016777716400947873,
+                  "median": 0.04870887750746341,
+                  "upper": 0.09684907434765407,
+                  "bootstrap_mean": 0.049064495400728186
+                },
+                "sharpe_difference": {
+                  "observed": 0.15098094317878785,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0,
+                  "lower": -0.07455689812411859,
+                  "median": 0.15043062511356087,
+                  "upper": 0.36381192755632275,
+                  "bootstrap_mean": 0.14934364882291729
+                }
+              },
+              "positive_fractions": {
+                "excess_mean": {
+                  "fraction": 0.986083984375,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                },
+                "cagr_difference": {
+                  "fraction": 0.977783203125,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                },
+                "sharpe_difference": {
+                  "fraction": 0.9111328125,
+                  "valid_draws": 4096,
+                  "undefined_draws": 0
+                }
+              },
+              "hac": {
+                "mean": 0.00018083771920109258,
+                "se": 8.653194723929429e-05,
+                "lower": 1.1238219099955602e-05,
+                "upper": 0.0003504372193022296,
+                "t_hac": 2.0898376261082667,
+                "hac_lags": 8,
+                "bootstrap_excludes_zero": true,
+                "hac_excludes_zero": true,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cross_section_means": {
+      "primary_block": 4,
+      "runs": {
+        "4": {
+          "schema_version": 1,
+          "method": "paired circular block bootstrap",
+          "n_obs": 57,
+          "start": "2011-07-02 00:00:00",
+          "end": "2025-07-02 00:00:00",
+          "periods_per_year": 4,
+          "block_size": 4,
+          "n_boot": 4096,
+          "ci": 0.95,
+          "seed": 500050,
+          "input_sha256": "b76924b4dccef124cf160443c7f38e03fa881257d2fc89c497a19506d5d8ffb6",
+          "limitations": [
+            "Remuestrear el pasado no genera evidencia OOS nueva ni corrige selección retrospectiva.",
+            "Las fracciones bootstrap no son p-valores ni probabilidades de éxito futuro.",
+            "Se conserva dependencia dentro de bloques; se rompe entre bloques. Se supone estacionariedad aproximada.",
+            "Intervalos percentiles puntuales, sin corrección por multiplicidad ni garantía de cobertura nominal.",
+            "Drawdown y ES son diagnósticos sensibles al orden, al horizonte y a colas no observadas.",
+            "Volatilidad y Sharpe usan la convención sqrt(frecuencia), sin corregir su anualización por autocorrelación."
+          ],
+          "python_version": "3.13.7",
+          "dependencies": {
+            "pandas": "3.0.6",
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "yfinance": "1.7.0",
+            "pyportfolioopt": "1.6.0",
+            "backtesting": "0.6.6",
+            "exchange_calendars": "4.13.2",
+            "quantstats": "0.0.81"
+          },
+          "environment_fingerprint": "0a16dcd435d3",
+          "code_sha256": {
+            "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+            "academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6"
+          },
+          "means": {
+            "ic": {
+              "summary": {
+                "observed": 0.009488384755021787,
+                "valid_draws": 4096,
+                "undefined_draws": 0,
+                "lower": -0.018614701456245233,
+                "median": 0.009292639428744313,
+                "upper": 0.03770393038404692,
+                "bootstrap_mean": 0.009356719877392837
+              },
+              "positive_fraction": {
+                "fraction": 0.74560546875,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "hac": {
+                "mean": 0.009488384755021789,
+                "se": 0.014383421582439715,
+                "lower": -0.018702603521016166,
+                "upper": 0.03767937303105974,
+                "t_hac": 0.6596750780499872,
+                "hac_lags": 3,
+                "bootstrap_excludes_zero": false,
+                "hac_excludes_zero": false,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            },
+            "q5_menos_q1": {
+              "summary": {
+                "observed": 0.0014627270670970387,
+                "valid_draws": 4096,
+                "undefined_draws": 0,
+                "lower": -0.008502724914416226,
+                "median": 0.0013213090822538332,
+                "upper": 0.011470670014776429,
+                "bootstrap_mean": 0.0014075571265426755
+              },
+              "positive_fraction": {
+                "fraction": 0.600830078125,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "hac": {
+                "mean": 0.0014627270670970376,
+                "se": 0.0052069396463290795,
+                "lower": -0.008742687109381683,
+                "upper": 0.01166814124357576,
+                "t_hac": 0.2809187673470093,
+                "hac_lags": 3,
+                "bootstrap_excludes_zero": false,
+                "hac_excludes_zero": false,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            }
+          }
+        },
+        "2": {
+          "schema_version": 1,
+          "method": "paired circular block bootstrap",
+          "n_obs": 57,
+          "start": "2011-07-02 00:00:00",
+          "end": "2025-07-02 00:00:00",
+          "periods_per_year": 4,
+          "block_size": 2,
+          "n_boot": 4096,
+          "ci": 0.95,
+          "seed": 500050,
+          "input_sha256": "b76924b4dccef124cf160443c7f38e03fa881257d2fc89c497a19506d5d8ffb6",
+          "limitations": [
+            "Remuestrear el pasado no genera evidencia OOS nueva ni corrige selección retrospectiva.",
+            "Las fracciones bootstrap no son p-valores ni probabilidades de éxito futuro.",
+            "Se conserva dependencia dentro de bloques; se rompe entre bloques. Se supone estacionariedad aproximada.",
+            "Intervalos percentiles puntuales, sin corrección por multiplicidad ni garantía de cobertura nominal.",
+            "Drawdown y ES son diagnósticos sensibles al orden, al horizonte y a colas no observadas.",
+            "Volatilidad y Sharpe usan la convención sqrt(frecuencia), sin corregir su anualización por autocorrelación."
+          ],
+          "python_version": "3.13.7",
+          "dependencies": {
+            "pandas": "3.0.6",
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "yfinance": "1.7.0",
+            "pyportfolioopt": "1.6.0",
+            "backtesting": "0.6.6",
+            "exchange_calendars": "4.13.2",
+            "quantstats": "0.0.81"
+          },
+          "environment_fingerprint": "0a16dcd435d3",
+          "code_sha256": {
+            "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+            "academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6"
+          },
+          "means": {
+            "ic": {
+              "summary": {
+                "observed": 0.009488384755021787,
+                "valid_draws": 4096,
+                "undefined_draws": 0,
+                "lower": -0.019535609700935545,
+                "median": 0.009774852565532694,
+                "upper": 0.03808784450727419,
+                "bootstrap_mean": 0.009497163703625824
+              },
+              "positive_fraction": {
+                "fraction": 0.7421875,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "hac": {
+                "mean": 0.009488384755021789,
+                "se": 0.014383421582439715,
+                "lower": -0.018702603521016166,
+                "upper": 0.03767937303105974,
+                "t_hac": 0.6596750780499872,
+                "hac_lags": 3,
+                "bootstrap_excludes_zero": false,
+                "hac_excludes_zero": false,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            },
+            "q5_menos_q1": {
+              "summary": {
+                "observed": 0.0014627270670970387,
+                "valid_draws": 4096,
+                "undefined_draws": 0,
+                "lower": -0.009048326089199274,
+                "median": 0.0015153728757601095,
+                "upper": 0.011606204942259273,
+                "bootstrap_mean": 0.0014400848340901228
+              },
+              "positive_fraction": {
+                "fraction": 0.614990234375,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "hac": {
+                "mean": 0.0014627270670970376,
+                "se": 0.0052069396463290795,
+                "lower": -0.008742687109381683,
+                "upper": 0.01166814124357576,
+                "t_hac": 0.2809187673470093,
+                "hac_lags": 3,
+                "bootstrap_excludes_zero": false,
+                "hac_excludes_zero": false,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            }
+          }
+        },
+        "8": {
+          "schema_version": 1,
+          "method": "paired circular block bootstrap",
+          "n_obs": 57,
+          "start": "2011-07-02 00:00:00",
+          "end": "2025-07-02 00:00:00",
+          "periods_per_year": 4,
+          "block_size": 8,
+          "n_boot": 4096,
+          "ci": 0.95,
+          "seed": 500050,
+          "input_sha256": "b76924b4dccef124cf160443c7f38e03fa881257d2fc89c497a19506d5d8ffb6",
+          "limitations": [
+            "Remuestrear el pasado no genera evidencia OOS nueva ni corrige selección retrospectiva.",
+            "Las fracciones bootstrap no son p-valores ni probabilidades de éxito futuro.",
+            "Se conserva dependencia dentro de bloques; se rompe entre bloques. Se supone estacionariedad aproximada.",
+            "Intervalos percentiles puntuales, sin corrección por multiplicidad ni garantía de cobertura nominal.",
+            "Drawdown y ES son diagnósticos sensibles al orden, al horizonte y a colas no observadas.",
+            "Volatilidad y Sharpe usan la convención sqrt(frecuencia), sin corregir su anualización por autocorrelación."
+          ],
+          "python_version": "3.13.7",
+          "dependencies": {
+            "pandas": "3.0.6",
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "yfinance": "1.7.0",
+            "pyportfolioopt": "1.6.0",
+            "backtesting": "0.6.6",
+            "exchange_calendars": "4.13.2",
+            "quantstats": "0.0.81"
+          },
+          "environment_fingerprint": "0a16dcd435d3",
+          "code_sha256": {
+            "block_bootstrap.py": "455b2d1b04c4dec0400c8837927d799e9114f7f1c0a56d52281edf0ba4d29dc8",
+            "academic_factors.py": "2e2793dee8b3cec8ef9626dcd83bc3630d4a173eb413e68dbbfb1c9a022376b6"
+          },
+          "means": {
+            "ic": {
+              "summary": {
+                "observed": 0.009488384755021787,
+                "valid_draws": 4096,
+                "undefined_draws": 0,
+                "lower": -0.013029114997263117,
+                "median": 0.009433451699629454,
+                "upper": 0.033092926595536844,
+                "bootstrap_mean": 0.009600631202569833
+              },
+              "positive_fraction": {
+                "fraction": 0.7890625,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "hac": {
+                "mean": 0.009488384755021789,
+                "se": 0.014383421582439715,
+                "lower": -0.018702603521016166,
+                "upper": 0.03767937303105974,
+                "t_hac": 0.6596750780499872,
+                "hac_lags": 3,
+                "bootstrap_excludes_zero": false,
+                "hac_excludes_zero": false,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            },
+            "q5_menos_q1": {
+              "summary": {
+                "observed": 0.0014627270670970387,
+                "valid_draws": 4096,
+                "undefined_draws": 0,
+                "lower": -0.007033783043897361,
+                "median": 0.0013640465787168468,
+                "upper": 0.010169525408597335,
+                "bootstrap_mean": 0.0015006439033389924
+              },
+              "positive_fraction": {
+                "fraction": 0.634765625,
+                "valid_draws": 4096,
+                "undefined_draws": 0
+              },
+              "hac": {
+                "mean": 0.0014627270670970376,
+                "se": 0.0052069396463290795,
+                "lower": -0.008742687109381683,
+                "upper": 0.01166814124357576,
+                "t_hac": 0.2809187673470093,
+                "hac_lags": 3,
+                "bootstrap_excludes_zero": false,
+                "hac_excludes_zero": false,
+                "zero_conclusion_differs": false,
+                "method": "existing Newey-West/Bartlett, small-sample correction, normal interval"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "artifacts_sha256": {
+    "v2_daily_net-distributions.csv": "12a7140a6caf21619b095a2f4f8d294e40592be9635f93fe9db197e92be65e26",
+    "cross_section_means-distributions.csv": "4fcbd79956c92d94f28b988100a957afcca1a20fa5b5f4260792cad8cb69af1e"
+  }
+}

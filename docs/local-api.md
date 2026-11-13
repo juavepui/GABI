@@ -1,0 +1,317 @@
+# API local de GABI — F2–F4 / #64–#66
+
+La API FastAPI es el único acceso de la interfaz a los cálculos de GABI.
+Es una entrega de consulta para Mercado y estado local del modelo. El
+[cliente React](../frontend/README.md) consume este contrato; F4 añade la cola
+persistente para actualizaciones y trabajos largos.
+Los datos y las fórmulas publicados permanecen en su ubicación y versión.
+
+## Arranque
+
+Desde la raíz del repositorio:
+
+```powershell
+uv sync --project backend --locked --all-groups
+uv run --project backend python -m gabi_api.bootstrap
+```
+
+Escucha en `127.0.0.1:8000`. Este lanzador no acepta opciones ni variables para
+abrir una interfaz pública. Documentación interactiva: <http://127.0.0.1:8000/docs>;
+contrato generable: <http://127.0.0.1:8000/openapi.json>. CORS permite exclusivamente
+`http://localhost:5173` y `http://127.0.0.1:5173`, con GET/POST y sin credenciales.
+
+`GABI_DATA_DIR` permite indicar otra carpeta **absoluta** para la API, la cola y
+la auditoría de cobertura. Los motores legacy publicados mantienen `GABI/data`
+inmutable: el worker rechaza refrescos y backtests si se arranca con otra carpeta
+para no mezclar inputs. Un wheel instalado fuera
+del checkout requiere también `GABI_PROJECT_ROOT` absoluto, por la compatibilidad
+de rutas F1 de los motores publicados. La CI extrae el wheel y verifica sus imports
+y respuestas con una carpeta de datos temporal ausente, fuera del checkout.
+
+La interfaz React y el worker se arrancan juntos con `uv run --project backend python -m gabi_cli serve`.
+
+## Contrato v1
+
+La [recuperación operativa](architecture/market-data-and-job-recovery.md) añade
+`POST /api/v1/jobs/{id}/retry`: nuevo intento explícito y deduplicado, solo para
+refrescos y auditorías de cobertura fallidos/cancelados. El backend relee y valida
+el origen. No permite repetir genéricamente investigación ni mantenimiento ciego.
+La [medición de worker/API](architecture/worker-api-baseline.md) documenta el
+comportamiento concurrente de estos flujos con fuentes simuladas.
+
+| GET | Resultado |
+| --- | --- |
+| `/api/v1/health` | Salud del proceso; no consulta ni crea datos |
+| `/api/v1/model` | Modo local, pesos activos, modelo, evidencia y origen del seguimiento |
+| `/api/v1/data/status` | Cobertura/frescura del universo local; reutiliza la caché del ranking |
+| `/api/v1/ranking` | Ranking, métricas, filtros/paginación, sectores y procedencia |
+| `/api/v1/companies/{symbol}?bars=252` | La misma fila/score calculada sobre todo el universo, más cierres recientes |
+| `/api/v1/administration/settings` | Presencia de claves locales, nunca valores ni rutas |
+| `/api/v1/jobs`, `/api/v1/jobs/{id}` | Lista acotada y detalle de estado/eventos; no crean la base de jobs en GET |
+| `/api/v1/jobs/{id}/result` | Artefacto por identificador y SHA-256, solo tras éxito; se restringe el mantenimiento ciego |
+
+`POST /api/v1/jobs` acepta `kind` (`refresh`, `symbols`, `quality` o `backtest`),
+`idempotency_key` y únicamente sus parámetros permitidos: hasta diez símbolos
+normalizados o fechas ISO de un intervalo de hasta un año. Devuelve 202 y el job
+persistido. La misma clave devuelve el mismo job; parámetros distintos con esa
+clave dan 409. `POST /api/v1/jobs/{id}/cancel` cancela la espera inmediatamente o
+marca la ejecución para cancelarla en el próximo punto cooperativo. Un fallo o
+una cancelación no publican resultados incompletos. El worker serializa los
+trabajos, y un nuevo job del mismo tipo espera hasta que acabe el anterior.
+
+`POST /api/v1/administration/weights` guarda los cuatro pesos por defecto como
+fracciones finitas cuya suma es uno. El caso de uso comprueba el modo **Research**
+antes de escribir y la infraestructura reemplaza `weights.json` atómicamente.
+En Investor responde 403 sin tocar el archivo. El cliente invalida sus consultas
+de modelo y mercado tras un guardado correcto.
+
+Arranca `uv run --project backend python -m gabi_cli worker` en otra terminal.
+`python -m gabi_cli worker --once` procesa un job y sale; `python -m gabi_cli
+schedule daily|tiingo` encola las tareas programadas con claves estables. Tiingo
+solo se encola el día 2 de cada mes; `schedule tiingo --force` permite recuperarlo
+manualmente otro día. El Programador comprueba la fecha a diario a las 10:00.
+La tarea diaria usa `schedule daily --reintentar`: si el PC estaba apagado o
+suspendido a las 05:00, Windows la lanza al volver, a veces antes de que haya
+internet. Con esa opción espera hasta 15 minutos a que responda Yahoo, sigue el
+refresco y, si falla porque las fuentes no respondieron (`sources_failed`), lo
+repite hasta 2 veces: al momento si ya había fallado antes de lanzar la tarea, y con 10
+minutos de pausa si falla mientras la tarea lo sigue. Otros fallos no se repiten. Sin la
+opción, el comando solo encola y termina.
+
+Al final del mantenimiento diario se hace una **copia de lo que no se puede volver a
+descargar**: los días de puntuación guardados, Mi cartera, empresas seguidas, diario,
+fotos del ranking y otros registros fechados (`registros.db`), `gabi_jobs.db` y los
+ajustes pequeños (`weights.json`, `app_mode.json`, `sp500_constituents.csv`, cabecera
+del registro). Los precios y las cuentas de la SEC no se copian; las claves de API
+tampoco. Cada día va a una carpeta `AAAA-MM-DD` dentro del destino escrito en
+`data/backup_dir.txt` (sin ese fichero, `data/backups`) y se guardan las 30 últimas.
+Las entradas del registro diario (ledger) no cambian nunca, así que cada una se guarda
+una sola vez, comprimida, en `registro-diario/`. Un fallo de la copia queda en el
+informe (`copia`) y no cambia nada más. Para hacerla a mano: `python -m gabi_cli
+periodic --copia`. El `LEEME.txt` del destino explica cómo recuperar una tabla.
+
+El
+worker lee `GABI_DATA_DIR` al arrancar; las operaciones legacy comprueban
+que coincide con su configuración inmutable antes de tocar datos.
+Solo el scheduler puede encolar mantenimiento #43/#44 y Tiingo histórico. Las
+instalaciones existentes del Programador de Windows no se cambian hasta ejecutar
+de nuevo `scripts/programar_tareas.ps1`. La cola usa `data/gabi_jobs.db` (WAL)
+separada de `data/gabi.db`; no migra ni copia los datos de mercado.
+
+Filtros: `search` literal sin regex (hasta 100 caracteres), `sectors` repetible
+(hasta 11), `min_market_cap` en **USD**, `golden_cross_only`, `hide_no_data`
+(por defecto true), `offset` 0..1000 y `limit` 1..500. F3 añade `order_by`
+(`composite_score`, `market_cap`, `pe`, `price`, `confidence`, `name`) y
+`direction` (`asc`/`desc`). La ordenación es estable y coloca ausencias al final,
+antecede a la paginación y no recalcula scores. Por defecto conserva el orden
+publicado (`composite_score`, `desc`). Se calcula el ranking de
+todo el universo antes de filtrar/paginar para conservar los percentiles por
+sector y el orden publicado, incluidos empates. `rank` indica su posición en
+ese universo antes del filtro. La ficha conserva ese score: no vuelve a puntuar
+la empresa aislada. Los símbolos se normalizan a mayúsculas y punto→guion.
+Dos clases con el mismo CIK conservan sus filas y precios separados.
+
+```text
+/api/v1/ranking?search=brk&sectors=Financials&min_market_cap=1000000000&limit=20
+/api/v1/companies/BRK-B?bars=100
+```
+
+Cada métrica contiene `value` y `unit`. Los ausentes y valores no finitos se
+serializan como `null`; las respuestas nunca contienen NaN/Infinity. Unidades:
+`fraction` (0.09 = 9 %), `percent` (debt/equity de Yahoo ya multiplicado por 100),
+`points_0_100` (scores, confianza y percentiles), `USD`, `ratio`, `count`.
+Los cierres y medias son USD; `close` y `adj_close` se declaran por separado.
+Las fechas de cotización/eventos/filings son ISO y las fechas de descarga,
+timestamps. Se conservan identidad, candidatos, confianza y fuente de alias;
+no se infiere un CIK acreditado de un ticker sin alias operativo vigente.
+Los enlaces de filings expuestos son HTTPS de SEC. La procedencia declara
+`full_cached_history`, fuente/caché y `historical_point_in_time=false`: esta
+consulta actual no acredita precios o fundamentales históricos point-in-time.
+
+`ready` significa datos cacheados con frescura suficiente según esta política,
+no acreditación de su calidad financiera. `empty` significa que faltan universo
+o precios/fundamentales; una selección vacía por filtros conserva el estado de
+los datos subyacentes. `stale` mantiene resultados y avisos: precios/universo de
+más de 7 días, fundamentales de más de 7 o SEC de más de 14 días. Cobertura
+incompleta se informa por separado; el score/13 métricas/confianza mantiene las
+reglas originales. Errores de lectura dan HTTP 503 con `status="error"`; un cambio
+concurrente de inputs da 409 para repetir. Archivo corrupto y archivo ausente
+son casos distintos. Los errores 403/404/409/422/500/503 usan la envoltura
+`{"status":"error","error":{"code":"…","message":"…"}}`, sin rutas, claves,
+SQL ni inputs sensibles en la respuesta.
+
+Investor utiliza siempre los pesos congelados. Una URL `mode=RESEARCH` no puede
+cambiar el modo persistido localmente. Solo si este ya es Research se admiten
+los cuatro parámetros `value`, `quality`, `momentum`, `risk`: fracciones finitas,
+no negativas, con suma 1. No se guardan por consultar. Se etiqueta EXPERIMENTAL
+cualquier desviación; coincidencia es FROZEN o LIVE_FORWARD si existen metadatos
+de seguimiento. LIVE_FORWARD distingue validación ciega bloqueada con periodos
+registrados de la señal débil de Research Lab. Ninguna implica éxito: el contrato
+mantiene `independent_advantage_demonstrated=false` y no publica VALIDATED.
+Solo se leen id/estado/pesos y existencia de periodos; no se leen precios de
+entrada, picks, rankings sellados, retornos ni resultados de reservas ciegas.
+
+## Capas y consultas
+
+- `application/market/ranking.py`: caso de cálculo común, con entradas y motores
+  inyectados. `screener.build_screener_table` es la fachada de compatibilidad.
+- `domain/market`: filtros, resolución conservadora de alias y unidades.
+- `application/market/queries.py` y `application/administration/model.py`:
+  consulta de ranking/ficha y política del modelo con puertos explícitos.
+- `infrastructure/legacy/market.py`: funciones existentes sin copiar fórmulas.
+- `infrastructure/storage/market.py`: SQL de solo lectura, lotes y caché.
+- `gabi_api`: traducción HTTP/JSON; únicamente `bootstrap.py` compone adaptadores.
+
+Las consultas de mercado abren SQLite con URI `mode=ro` y `query_only=ON`. No
+inicializan esquemas, migran tablas, cambian el journal, descargan fuentes ni usan
+los getters legacy que ejecutan DDL. Un `POST /jobs` sí inicializa la base separada
+de la cola; el worker ejecuta después el comando solicitado. Una base/tabla
+ausente deja ausentes sus datos. SQLite conserva su
+coordinación normal de lectores/WAL; las consultas no modifican registros,
+configuración ni artefactos. Los 18 motores/config congelados y los
+artefactos publicados siguen verificables; no se abren holdouts para probar F2.
+
+## Límites y caché
+
+El universo está limitado a 1000 símbolos. Precios se leen por lotes de 16,
+columnas explícitas y como máximo 160 000 filas por lote; SPY hasta 10 000.
+Se conserva **todo** el histórico cacheado necesario para riesgo y RSI: superar
+el presupuesto produce `resource_limit`, nunca un recorte silencioso que cambie
+las métricas. La respuesta de precios de una ficha admite 1..1000 barras.
+CSV/JSON de configuración y cada estado fundamental tienen límite de 1 MB;
+no se recorren, copian ni hashean los aproximadamente 83 GB de `data/`.
+
+La caché del proceso conserva hasta cuatro rankings durante un máximo de doce horas.
+Su clave incluye fecha actual (eventos/frescura), pesos, modelo/versionado del
+caso de uso, benchmark/configuración, contenido del universo y revisión SQLite.
+Filtros/paginación se aplican después sobre la misma base. La revisión usa
+`PRAGMA data_version` sobre **una conexión de lectura persistente**, identidad
+del fichero y marcas DB/WAL; detecta escrituras legacy y correcciones históricas
+aunque no cambie la última fecha. Cerrar/reabrir la API vacía la caché. Una
+transacción de lectura mantiene consistente el cálculo por lotes; si cambian
+DB/universo durante la consulta, se rechaza ese resultado y se vuelve a intentar.
+Ficha y gráfico también comprueban que comparten revisión.
+
+`revision` es un identificador efímero para invalidar esta caché, **no** un hash de
+evidencia reproducible ni sustituto de los fingerprints publicados. El TTL no
+acredita integridad. Los commits de los comandos/jobs y escritores legacy se
+detectan por esa conexión persistente y DB/WAL; los resultados de jobs usan
+un SHA-256 propio antes de abrir el artefacto.
+Un candado local serializa el cálculo frío y evita duplicarlo en peticiones
+simultáneas; no se arrancan workers desde GET. Es un cálculo de pantalla, no un
+backtest, y su primer acceso aún puede tardar segundos con históricos grandes.
+
+El plazo es solo una cota: la validez la decide la clave, que cambia con la fecha,
+los pesos, el universo y la revisión SQLite. Antes era de cinco minutos y, sin
+cambios en los datos, dejar GABI unos minutos sin uso obligaba a recalcular el
+ranking entero (#73). `gabi_cli serve` y `python -m gabi_api.bootstrap` además
+calculan en segundo plano, al arrancar, el ranking congelado (portada y Cartera) y
+el del modelo activo (Mercado); es de solo lectura, no retrasa el arranque y, sin
+datos, no hace nada. Cada 60 s vuelven a comprobar la clave (#164): si un trabajo
+cambió los datos, recalculan antes de la siguiente visita; si no, es un acierto de
+caché. Medido el 2026-10-16 con la base local completa, solo lectura y sin red:
+25,7 s la pasada en frío y 0,14-0,15 s cada pasada sin cambios. Antes, la primera
+consulta tras un `data_update` tardó 19,4 s en `/api/v1/data/status`.
+
+### Esperas de «Consultando la caché local» (#342)
+
+- **Lecturas pequeñas sin candado.** El modo/pesos (`local_model`, que piden casi
+  todas las pantallas) y los eventos de una empresa abren su propia conexión corta
+  de solo lectura; ya no esperan al candado del ranking. Antes, la lista de
+  experimentos tardaba 25 s tras arrancar (0,01 s de consulta y el resto en
+  espera); ahora, 0,43 s con el ranking aún calculándose.
+- **Revisión de las entradas del ranking.** Con el contador instalado, la revisión
+  deja de depender de la fecha/tamaño de `gabi.db` y su WAL. Pasa a ser identidad
+  del fichero + `ranking_input_revision` (linaje aleatorio y contador) +
+  `PRAGMA schema_version` + universo. Los triggers `ranking_rev_<tabla>_<op>` suben
+  el contador en cada INSERT/UPDATE/DELETE de `prices`, `fundamentals`,
+  `edgar_metrics`, `sec_metrics_v2`, `sec_revenue_growth`, `macro_series`,
+  `entities`, `entity_aliases` y, desde #347, `engine_fundamentals`, sea cual sea
+  el escritor. Escribir en el diario,
+  en las seguidas o en la cartera ya no obliga a recalcular. Solo la tarea diaria
+  instala el contador (`ranking_revision.install`, idempotente), nunca una
+  consulta. Si falta la tabla o algún trigger de una tabla de entrada presente, se
+  usa la revisión anterior (`market-query-v1`). Coste medido: una inserción masiva
+  de precios tarda ~2,3 veces más (500 000 filas, de 9,5 s a 21,7 s); la
+  actualización diaria escribe pocos miles.
+- **Ranking guardado por la tarea diaria.** Al final de la tarea,
+  `ReadOnlyMarket.save_snapshot` guarda el ranking del modelo activo de hoy en
+  `data/ranking_snapshot.pkl` (escritura atómica, ~0,6 MB). La cabecera lleva el
+  SHA-256 de la clave completa y la versión de pandas. Al no encontrarlo en
+  memoria, el servidor lo carga solo si la clave coincide exactamente (4 ms frente
+  a 25-60 s de cálculo); con cualquier diferencia, fichero dañado o base sin
+  contador, calcula como antes. Sin contador no se guarda nada: la revisión
+  antigua depende de `data_version`, que es propio de cada conexión y no sirve
+  para comparar entre procesos.
+- **Sin copias por fila.** pandas copia en profundidad `table.attrs` (las fuentes
+  por empresa) en cada fila de `iterrows` y en cada corte. El mapa de calor, el
+  histórico de puntuaciones y la evidencia trabajan sobre una vista sin `attrs`
+  (la evidencia lee antes las fuentes). Mapa de calor: de 1,8-11 s a 0,05 s con
+  el ranking en memoria. Evidencia del universo: de 27 s a 9 s bajo perfilador.
+  Además, `build_evidence` limpia con `safe()` una sola vez lo que comparten todas
+  las empresas (`sanitized_shared`): el catálogo, la traza común y los estudios de
+  cada factor (unos 7 KB por factor, antes repetidos 12 × 503 veces). `assess` solo
+  los reutiliza si recibe exactamente esos objetos. Si no, rechaza la llamada. El
+  resultado es idéntico, claves y orden incluidos. Sin perfilador: de 1,8 s a 0,6 s;
+  el resto es sobre todo `rank_stability`, que está congelado.
+  Leer solo una ventana de precios no se hace: las métricas de riesgo usan todo
+  el histórico y cambiarían los resultados.
+
+Medición con la base local completa (2026-10-02, solo lectura y sin red):
+
+| Situación | Antes | Después |
+| --- | ---: | ---: |
+| Primera visita a Mercado tras arrancar | 65,3 s | 0,21 s tras el precalentamiento (45 s en segundo plano) |
+| Siguientes visitas | 0,24 s | 0,21 s |
+| Tras 6 minutos sin uso ni cambios de datos | 58,0 s | 0,12 s |
+
+El cálculo en frío (#85), medido el 2026-10-05 con la base local, 503 empresas:
+89 s bajo perfilador, 60-65 s sin él y con el disco frío, 27-33 s con el disco
+ya en la caché del sistema; 97 MiB de memoria Python pico, 137 consultas y
+4,27 millones de filas. El 76 % del tiempo era leer precios: los cálculos del
+ranking solo usan `close` y `adj_close`, pero se leían ocho columnas ordenadas
+por fecha, con un árbol temporal. `ReadOnlyMarket.closes` lee esas dos columnas
+en el orden de la clave primaria (símbolo, fecha). El ranking completo es
+idéntico (igualdad exacta de la tabla de 503 × 86) y tarda un 49 % menos:
+33,5 s → 17,0 s con el disco en caché. Se descartó precalcular tras cada
+actualización: la caché vive en el proceso de la API y el worker es otro
+proceso (desde #342, la tarea diaria guarda el ranking en disco con su clave
+y la API lo reutiliza). La tasa de meses positivos (`risk._monthly_win_rate`, unos 3 s) no se
+toca: el módulo lo usan motores antiguos y el ahorro no compensa el riesgo.
+
+## Verificación y medición
+
+La [línea base HTTP posterior a F7](architecture/http-api-baseline.md) mide el
+contrato completo con TestClient/ASGI, serialización incluida, y comprueba caché,
+ficha e invalidación por corrección histórica en WAL. Complementa las medidas
+F2 siguientes; las condiciones y tamaños de respuesta son distintos.
+
+Los tests usan bases sintéticas temporales: paridad contra una referencia de
+**16 empresas × 86 columnas**, obtenida del commit pre-F2
+`cd433a2e466df32d38aaaf3a5d1877857b0ce67e`; datos incompletos, alias ambiguos y dos
+clases del mismo emisor. Se prohíben red, escrituras de archivos, SQL mutable y
+lectura de columnas ciegas; se comprueban contratos, filtros, límites,
+Investor/Research, errores, CORS, invalidez de históricos corregidos y WAL.
+Las pruebas de arquitectura, tipos y hashes siguen en CI.
+
+Medición reproducible, solo con una base temporal sintética:
+
+```powershell
+uv run --project backend python scripts/measure_api.py --output docs/api-f2-measurement.json
+```
+
+Resultado en Windows/Python 3.13.7, semilla 64, **504 empresas, 1250 sesiones,
+628 755 filas de precios**; filas y todas las métricas iguales:
+
+| Camino | Tiempo | Pico de asignaciones Python | SELECT | Filas devueltas por adaptador nuevo |
+| --- | ---: | ---: | ---: | ---: |
+| Fachada Streamlit, I/O legacy | 20.1064 s | 307.450 MiB | 5 | — |
+| API sin ranking en caché | 21.0030 s | 12.678 MiB | 103 | 630 063 |
+| API con ranking en caché | 0.0476 s | 0.968 MiB | 3 | 18 |
+
+[Registro completo](api-f2-measurement.json), incluidos totales SQL. Es una medida
+del caso de uso con `tracemalloc`, que añade coste: no incluye serialización HTTP,
+memoria nativa ni RSS total; no controla la caché de disco del sistema operativo.
+La lectura por lotes aumenta las consultas y reduce las asignaciones retenidas;
+el cálculo frío conserva su coste financiero. No son límites de RAM ni garantías
+de latencia sobre la base real. No se consultó esta para obtener las cifras.

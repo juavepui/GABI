@@ -1,0 +1,951 @@
+import type {
+  HomeResponse,
+  TrialDetail,
+  AnalysisPromptResponse,
+  CompanyInsiders,
+  NoticesResponse,
+  MetricGlossary,
+  CompanyResponse,
+  RankingResponse,
+  RankingApiV1RankingGetData,
+  CreateJobRequest,
+  JobListResponse,
+  JobResponse,
+  LocalSettingsResponse,
+  ModelResponse,
+  WeightsRequest,
+  PlanRequest,
+  PlanResponse,
+  CardContent,
+  IdeaDetail,
+  IdeaEventCreate,
+  IdeaList,
+  CardMove,
+  InvestmentCard,
+  InvestmentCardList,
+  JournalCreate,
+  JournalEntry,
+  JournalList,
+  JournalReview,
+  JournalChanges,
+  ThesisCounts,
+  FormDefaults,
+  ComparisonChecklistResponse,
+  ComparisonPricesResponse,
+  ComparisonResponse,
+  RiskWindowsResponse,
+  MacroResponse,
+  MarketHealthResponse,
+  HeatmapResponse,
+  ScoreHistoryResponse,
+  AnnualResultsResponse,
+  SaveSnapshot,
+  Snapshot,
+  SnapshotList,
+  CompareSignals,
+  SignalEventList,
+  EarningsList,
+  FilingCheckSaved,
+  Holding,
+  HoldingCreate,
+  HoldingDeleted,
+  HoldingImportResult,
+  HoldingsPerformance,
+  HoldingsSummary,
+  HoldingsBenchmarkResult,
+  InvestorBenchmarkResult,
+  InvestorProfileInput,
+  InvestorProfileRevision,
+  InvestorProfileState,
+  PolicyProposal,
+  PortfolioPolicyInput,
+  PortfolioPolicyRevision,
+  PortfolioPolicyState,
+  RiskPanel,
+  WatchlistChecklists,
+  WatchlistEntry,
+  WatchlistDeleted,
+  WatchlistSummary,
+  WatchlistSymbols,
+  SimulationCreate,
+  SimulationPortfolio,
+  SimulationList,
+  SimulationTrade,
+  SimulationTradeCreate,
+  SimulationTrades,
+  SimulationResult,
+  UndoResult,
+  DecisionList,
+  DecisionJobSave,
+  DecisionRename,
+  SavedDecision,
+  DecisionFreshness,
+  DecisionProgress,
+  ResearchOverview,
+  SearchTrials,
+  HistoricalPreview,
+  BlindStatuses,
+  FactorPreview,
+  ModeRequest,
+  PublishedFactors,
+  ScoreBlocksEvidence,
+  EstimateCaptureStatus,
+  EstimateAnalysisPreview,
+  BacktestPreview,
+  BacktestDiagnosticsResponse,
+  BacktestFactorsPreview,
+  PreparationResult,
+  HistoricalTable,
+  HistoricalOutcomes,
+  ExperimentList,
+  ExperimentDetail,
+  DeflatedSharpe,
+  ExperimentTailRisk,
+  ExperimentPboPreview,
+  ExperimentBootstrapPreview,
+  ManualExperimentRequest,
+  DeletedExperiment,
+  SavedAuditsOverview,
+  SavedOverfittingAudit,
+  FactorBenchmark,
+  FactorStability,
+  SavedBlockBootstrap,
+  SavedRankStability,
+  LiveLedgerOverview,
+  LiveLedgerDecision,
+  LiveForwardReport,
+  SavedEvaluation,
+  BlindCreateRequest,
+  BlindStatus,
+  BlindRebalanceResult,
+  BlindPerformance,
+  BlindExport,
+  PortfolioLabPreview,
+  EvidenceTop,
+  CompanyEvidence,
+  RankingStability,
+  RankingCoverage,
+  SnapshotProgress,
+  SnapshotRenamed,
+  CompanyResearchResponse,
+  CompanyAccountingFlags,
+  CompanyCurrentReports,
+  CompanyFilingChanges,
+  CompanyChecklistResponse,
+  ChecklistSectorMultiples,
+  ChecklistThresholds,
+  ChecklistPresetRequest,
+  ChecklistThresholdsRequest,
+} from './generated/types.gen';
+
+export type RankingQuery = NonNullable<RankingApiV1RankingGetData['query']>;
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+async function get<T>(url: string, signal?: AbortSignal): Promise<T> {
+  return request<T>(url, { signal, headers: { Accept: 'application/json' } });
+}
+async function request<T>(url: string, options: RequestInit): Promise<T> {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null);
+    const detail = body && typeof body === 'object' && 'error' in body ? body.error : null;
+    const code =
+      detail && typeof detail === 'object' && 'code' in detail && typeof detail.code === 'string'
+        ? detail.code
+        : 'HTTP_ERROR';
+    // The API sanitizes its errors. Do not display unexpected proxy/HTML bodies.
+    const message =
+      detail &&
+      typeof detail === 'object' &&
+      'message' in detail &&
+      typeof detail.message === 'string'
+        ? detail.message
+        : 'No se ha podido consultar la API local.';
+    throw new ApiError(response.status, code, message);
+  }
+  return response.json() as Promise<T>;
+}
+export function getJobs(signal?: AbortSignal): Promise<JobListResponse> {
+  return get('/api/v1/jobs', signal);
+}
+export function getResearchOverview(signal?: AbortSignal): Promise<ResearchOverview> {
+  return get('/api/v1/research/overview', signal);
+}
+export function getResearchTrial(id: string, signal?: AbortSignal): Promise<TrialDetail> {
+  return get('/api/v1/research/trial?id=' + encodeURIComponent(id), signal);
+}
+export function getResearchTrials(
+  offset: number,
+  family: string,
+  signal?: AbortSignal,
+): Promise<SearchTrials> {
+  const params = new URLSearchParams({ offset: String(offset), limit: '25' });
+  if (family) params.set('family', family);
+  return get('/api/v1/research/trials?' + params.toString(), signal);
+}
+export function getHistoricalPreview(
+  id: string,
+  coverageThreshold: number,
+  signal?: AbortSignal,
+): Promise<HistoricalPreview> {
+  const query = new URLSearchParams({ coverage_threshold: String(coverageThreshold) });
+  return get('/api/v1/research/historical/' + encodeURIComponent(id) + '?' + query, signal);
+}
+export function getExperiments(
+  filters: { family: string; stage: string; offset: number; limit: number },
+  signal?: AbortSignal,
+): Promise<ExperimentList> {
+  const params = new URLSearchParams({
+    offset: String(filters.offset),
+    limit: String(filters.limit),
+  });
+  if (filters.family) params.set('family', filters.family);
+  if (filters.stage) params.set('stage', filters.stage);
+  return get('/api/v1/research/experiments?' + params.toString(), signal);
+}
+export function getExperiment(id: number, signal?: AbortSignal): Promise<ExperimentDetail> {
+  return get('/api/v1/research/experiments/' + String(id), signal);
+}
+export function getDeflatedSharpe(
+  experimentId: number,
+  family: string,
+  signal?: AbortSignal,
+): Promise<DeflatedSharpe> {
+  const params = new URLSearchParams({ experiment_id: String(experimentId) });
+  if (family) params.set('family', family);
+  return get('/api/v1/research/experiment-statistics/deflated-sharpe?' + params.toString(), signal);
+}
+export function getExperimentTailRisk(
+  id: number,
+  signal?: AbortSignal,
+): Promise<ExperimentTailRisk> {
+  return get('/api/v1/research/experiments/' + String(id) + '/tail-risk', signal);
+}
+export function getExperimentPbo(id: string, signal?: AbortSignal): Promise<ExperimentPboPreview> {
+  return get('/api/v1/research/experiment-pbo/' + encodeURIComponent(id), signal);
+}
+export function getExperimentBootstrap(
+  id: string,
+  signal?: AbortSignal,
+): Promise<ExperimentBootstrapPreview> {
+  return get('/api/v1/research/experiment-bootstrap/' + encodeURIComponent(id), signal);
+}
+export function createExperiment(body: ManualExperimentRequest): Promise<ExperimentDetail> {
+  return request('/api/v1/research/experiments', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function deleteExperiment(id: number): Promise<DeletedExperiment> {
+  return request('/api/v1/research/experiments/' + String(id) + '/delete', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+  });
+}
+export function getSavedAudits(signal?: AbortSignal): Promise<SavedAuditsOverview> {
+  return get('/api/v1/research/saved-audits', signal);
+}
+export function getSavedOverfitting(signal?: AbortSignal): Promise<SavedOverfittingAudit> {
+  return get('/api/v1/research/saved-audits/overfitting', signal);
+}
+export function getSavedFactorBenchmark(signal?: AbortSignal): Promise<FactorBenchmark> {
+  return get('/api/v1/research/saved-audits/factor-benchmark', signal);
+}
+export function getSavedFactorStability(signal?: AbortSignal): Promise<FactorStability> {
+  return get('/api/v1/research/saved-audits/factor-stability', signal);
+}
+export function getSavedBlockBootstrap(
+  dataset: string,
+  signal?: AbortSignal,
+): Promise<SavedBlockBootstrap> {
+  const query = dataset ? '?dataset=' + encodeURIComponent(dataset) : '';
+  return get('/api/v1/research/saved-audits/block-bootstrap' + query, signal);
+}
+export function getSavedRankStability(
+  date: string,
+  signal?: AbortSignal,
+): Promise<SavedRankStability> {
+  const query = date ? '?date=' + encodeURIComponent(date) : '';
+  return get('/api/v1/research/saved-audits/rank-stability' + query, signal);
+}
+export function savedAuditFile(audit: string, filename: string): string {
+  return '/api/v1/research/saved-audits/' + audit + '/files/' + filename;
+}
+export function getLiveLedger(signal?: AbortSignal): Promise<LiveLedgerOverview> {
+  return get('/api/v1/research/live-ledger', signal);
+}
+export function getLiveLedgerDecision(
+  seq: number,
+  signal?: AbortSignal,
+): Promise<LiveLedgerDecision> {
+  return get('/api/v1/research/live-ledger/decisions/' + String(seq), signal);
+}
+export function getLiveForwardReport(id: string, signal?: AbortSignal): Promise<LiveForwardReport> {
+  return get('/api/v1/research/live-forward/' + encodeURIComponent(id), signal);
+}
+export function saveLiveEvaluation(jobId: string): Promise<SavedEvaluation> {
+  return request('/api/v1/research/live-ledger/evaluations', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_id: jobId }),
+  });
+}
+export function createBlindValidation(body: BlindCreateRequest): Promise<BlindStatus> {
+  return request('/api/v1/research/blind-validations', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function breakBlindSeal(id: number, reason: string): Promise<BlindStatus> {
+  return request('/api/v1/research/blind-validations/' + String(id) + '/break-seal', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  });
+}
+export function getBlindRebalance(id: string, signal?: AbortSignal): Promise<BlindRebalanceResult> {
+  return get('/api/v1/research/blind-rebalances/' + encodeURIComponent(id), signal);
+}
+export function getBlindPerformance(id: string, signal?: AbortSignal): Promise<BlindPerformance> {
+  return get('/api/v1/research/blind-performance/' + encodeURIComponent(id), signal);
+}
+export function getBlindExport(id: string, signal?: AbortSignal): Promise<BlindExport> {
+  return get('/api/v1/research/blind-exports/' + encodeURIComponent(id), signal);
+}
+export function getEvidenceTop(frozen: boolean, signal?: AbortSignal): Promise<EvidenceTop> {
+  return get('/api/v1/evidence' + (frozen ? '?frozen=true' : ''), signal);
+}
+export function getCompanyEvidence(symbol: string, signal?: AbortSignal): Promise<CompanyEvidence> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/evidence', signal);
+}
+export function companyEvidenceDownload(symbol: string): string {
+  return '/api/v1/companies/' + encodeURIComponent(symbol) + '/evidence.json';
+}
+export function getRankingCoverage(
+  threshold: number,
+  signal?: AbortSignal,
+): Promise<RankingCoverage> {
+  return get('/api/v1/ranking/coverage?threshold=' + String(threshold), signal);
+}
+export function getSnapshotProgress(id: number, signal?: AbortSignal): Promise<SnapshotProgress> {
+  return get('/api/v1/market/snapshots/' + String(id) + '/progress', signal);
+}
+export function renameSnapshot(id: number, name: string): Promise<SnapshotRenamed> {
+  return request('/api/v1/market/snapshots/' + String(id) + '/rename', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+}
+export function getCompanyResearch(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyResearchResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/research', signal);
+}
+export function getCompanyFilingChanges(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyFilingChanges> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/filing-changes', signal);
+}
+export function getCompanyAccountingFlags(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyAccountingFlags> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/accounting-flags', signal);
+}
+export function getCompanyCurrentReports(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyCurrentReports> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/current-reports', signal);
+}
+export function getRankingStability(signal?: AbortSignal): Promise<RankingStability> {
+  return get('/api/v1/ranking/stability', signal);
+}
+export function getPortfolioLab(id: string, signal?: AbortSignal): Promise<PortfolioLabPreview> {
+  return get('/api/v1/research/portfolio-lab/' + encodeURIComponent(id), signal);
+}
+export function getBlindValidations(signal?: AbortSignal): Promise<BlindStatuses> {
+  return get('/api/v1/research/blind-validations', signal);
+}
+export function getFactorPreview(id: string, signal?: AbortSignal): Promise<FactorPreview> {
+  return get('/api/v1/research/factors/' + encodeURIComponent(id), signal);
+}
+/** Published Factor Zoo evidence of each score block (#185); readable in both modes. */
+export function getScoreBlocksEvidence(signal?: AbortSignal): Promise<ScoreBlocksEvidence> {
+  return get('/api/v1/score-blocks/evidence', signal);
+}
+export function getPublishedFactors(signal?: AbortSignal): Promise<PublishedFactors> {
+  return get('/api/v1/research/published-factors', signal);
+}
+export function getEstimateCaptures(signal?: AbortSignal): Promise<EstimateCaptureStatus> {
+  return get('/api/v1/research/estimate-captures', signal);
+}
+export function getEstimateAnalysisPreview(
+  id: string,
+  signal?: AbortSignal,
+): Promise<EstimateAnalysisPreview> {
+  return get('/api/v1/research/estimate-analysis/' + encodeURIComponent(id), signal);
+}
+export function getBacktestPreview(id: string, signal?: AbortSignal): Promise<BacktestPreview> {
+  return get('/api/v1/research/backtests/' + encodeURIComponent(id), signal);
+}
+export function getBacktestDiagnostics(
+  id: string,
+  taxCapital: number,
+  coverageThreshold: number,
+  signal?: AbortSignal,
+): Promise<BacktestDiagnosticsResponse> {
+  const query = new URLSearchParams({
+    tax_capital: String(taxCapital),
+    coverage_threshold: String(coverageThreshold),
+  });
+  return get(
+    '/api/v1/research/backtests/' + encodeURIComponent(id) + '/diagnostics?' + query,
+    signal,
+  );
+}
+export function getBacktestFactors(
+  id: string,
+  signal?: AbortSignal,
+): Promise<BacktestFactorsPreview> {
+  return get('/api/v1/research/backtest-factors/' + encodeURIComponent(id), signal);
+}
+export function getPreparation(id: string, signal?: AbortSignal): Promise<PreparationResult> {
+  return get('/api/v1/research/preparations/' + encodeURIComponent(id), signal);
+}
+export type HistoricalTableQuery = {
+  hideNoData: boolean;
+  sort: string | null;
+  descending: boolean;
+  offset: number;
+  limit: number;
+};
+export function getHistoricalTable(
+  id: string,
+  query: HistoricalTableQuery,
+  signal?: AbortSignal,
+): Promise<HistoricalTable> {
+  const params = new URLSearchParams({
+    hide_no_data: String(query.hideNoData),
+    descending: String(query.descending),
+    offset: String(query.offset),
+    limit: String(query.limit),
+  });
+  if (query.sort) params.set('sort', query.sort);
+  return get('/api/v1/research/historical/' + encodeURIComponent(id) + '/table?' + params, signal);
+}
+export function getHistoricalOutcomes(
+  id: string,
+  signal?: AbortSignal,
+): Promise<HistoricalOutcomes> {
+  return get('/api/v1/research/historical-outcomes/' + encodeURIComponent(id), signal);
+}
+export function getJob(id: string, signal?: AbortSignal): Promise<JobResponse> {
+  return get('/api/v1/jobs/' + encodeURIComponent(id), signal);
+}
+export function saveApiKey(source: string, key: string): Promise<LocalSettingsResponse> {
+  return request('/api/v1/administration/keys/' + encodeURIComponent(source), {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
+  });
+}
+export function getLocalSettings(signal?: AbortSignal): Promise<LocalSettingsResponse> {
+  return get('/api/v1/administration/settings', signal);
+}
+export function getMetricGlossary(signal?: AbortSignal): Promise<MetricGlossary> {
+  return get('/api/v1/learn/metrics', signal);
+}
+export function getHome(compute: boolean, signal?: AbortSignal): Promise<HomeResponse> {
+  return get('/api/v1/home' + (compute ? '?compute=true' : ''), signal);
+}
+export function getNotices(signal?: AbortSignal): Promise<NoticesResponse> {
+  return get('/api/v1/notices', signal);
+}
+export function getCompanyInsiders(symbol: string, signal?: AbortSignal): Promise<CompanyInsiders> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/insiders', signal);
+}
+export function getCompanyChecklist(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<CompanyChecklistResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/checklist', signal);
+}
+export function getCompanyChecklistSector(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<ChecklistSectorMultiples> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/checklist/sector', signal);
+}
+export function getChecklistThresholds(signal?: AbortSignal): Promise<ChecklistThresholds> {
+  return get('/api/v1/checklist/thresholds', signal);
+}
+export function saveChecklistThresholds(
+  body: ChecklistThresholdsRequest,
+): Promise<ChecklistThresholds> {
+  return request('/api/v1/checklist/thresholds', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function applyChecklistPreset(
+  key: ChecklistPresetRequest['key'],
+): Promise<ChecklistThresholds> {
+  return request('/api/v1/checklist/thresholds/preset', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
+  });
+}
+export function resetChecklistThresholds(): Promise<ChecklistThresholds> {
+  return request('/api/v1/checklist/thresholds/reset', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+  });
+}
+export function getAnalysisPrompt(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<AnalysisPromptResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/analysis-prompt', signal);
+}
+export function decisionsCsvUrl(target: { jobId: string } | { planId: number }): string {
+  return (
+    '/api/v1/portfolio/decisions/' +
+    ('jobId' in target ? 'jobs/' + encodeURIComponent(target.jobId) : String(target.planId)) +
+    '/decisions.csv'
+  );
+}
+export function getModel(signal?: AbortSignal): Promise<ModelResponse> {
+  return get('/api/v1/model', signal);
+}
+export function setMode(mode: ModeRequest['mode']): Promise<ModelResponse> {
+  return request('/api/v1/administration/mode', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  });
+}
+export function saveWeights(body: WeightsRequest): Promise<ModelResponse> {
+  return request('/api/v1/administration/weights', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function createJob(body: CreateJobRequest): Promise<JobResponse> {
+  return request('/api/v1/jobs', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function retryJob(id: string, idempotency_key: string): Promise<JobResponse> {
+  return request('/api/v1/jobs/' + encodeURIComponent(id) + '/retry', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idempotency_key }),
+  });
+}
+
+export function cancelJob(id: string): Promise<JobResponse> {
+  return request('/api/v1/jobs/' + encodeURIComponent(id) + '/cancel', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+}
+export function getJobResult(id: string, signal?: AbortSignal): Promise<unknown> {
+  return get('/api/v1/jobs/' + encodeURIComponent(id) + '/result', signal);
+}
+export function getRanking(query: RankingQuery, signal?: AbortSignal): Promise<RankingResponse> {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
+    else if (value != null) params.set(key, String(value));
+  });
+  return get('/api/v1/ranking?' + params.toString(), signal);
+}
+export function getCompany(
+  symbol: string,
+  bars: number,
+  signal?: AbortSignal,
+): Promise<CompanyResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '?bars=' + bars, signal);
+}
+
+export function getPortfolioPlan(body: PlanRequest, signal?: AbortSignal): Promise<PlanResponse> {
+  return request('/api/v1/portfolio/plan', {
+    method: 'POST',
+    signal,
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+/** Starting values of the decision, simulation, backtest and Portfolio Lab forms (#190). */
+export function getFormDefaults(signal?: AbortSignal): Promise<FormDefaults> {
+  return get('/api/v1/forms/defaults', signal);
+}
+export function getJournal(
+  offset = 0,
+  signal?: AbortSignal,
+  onlyOpen = false,
+): Promise<JournalList> {
+  const filter = onlyOpen ? '&only_open=true' : '';
+  return get('/api/v1/portfolio/journal?limit=50&offset=' + offset + filter, signal);
+}
+/** One company's theses, newest first (#186). */
+export function getCompanyJournal(symbol: string, signal?: AbortSignal): Promise<JournalList> {
+  return get('/api/v1/portfolio/journal?limit=20&symbol=' + encodeURIComponent(symbol), signal);
+}
+/** Open and total theses per company, to mark positions without one. */
+export function getThesisCounts(signal?: AbortSignal): Promise<ThesisCounts> {
+  return get('/api/v1/portfolio/journal/symbols', signal);
+}
+/** Price, score and checklist now against the thesis; read on demand, nothing is downloaded. */
+export function getJournalChanges(id: number, signal?: AbortSignal): Promise<JournalChanges> {
+  return get('/api/v1/portfolio/journal/' + id + '/changes', signal);
+}
+export function getCompanyCards(symbol: string, signal?: AbortSignal): Promise<InvestmentCardList> {
+  return get('/api/v1/portfolio/cards?limit=20&symbol=' + encodeURIComponent(symbol), signal);
+}
+function postCard(path: string, body: unknown): Promise<InvestmentCard> {
+  return request('/api/v1/portfolio/cards' + path, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function createCard(symbol: string, content: CardContent): Promise<InvestmentCard> {
+  return postCard('', { symbol, content });
+}
+export function saveCard(id: number, content: CardContent): Promise<InvestmentCard> {
+  return postCard('/' + id + '/save', { content });
+}
+export function moveCard(id: number, body: CardMove): Promise<InvestmentCard> {
+  return postCard('/' + id + '/state', body);
+}
+export function getIdeas(signal?: AbortSignal): Promise<IdeaList> {
+  return get('/api/v1/portfolio/ideas', signal);
+}
+export function getIdea(id: number, signal?: AbortSignal): Promise<IdeaDetail> {
+  return get('/api/v1/portfolio/ideas/' + id, signal);
+}
+function postIdea(path: string, body: unknown): Promise<IdeaDetail> {
+  return request('/api/v1/portfolio/ideas/' + path, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function addIdeaEvent(id: number, body: IdeaEventCreate): Promise<IdeaDetail> {
+  return postIdea(id + '/events', body);
+}
+export function addIdeaNote(id: number, text: string): Promise<IdeaDetail> {
+  return postIdea(id + '/notes', { text });
+}
+export function deleteIdeaNote(id: number, noteId: number): Promise<IdeaDetail> {
+  return postIdea(id + '/notes/' + noteId + '/delete', {});
+}
+export function createJournal(body: JournalCreate): Promise<JournalEntry> {
+  return request('/api/v1/portfolio/journal', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function reviewJournal(id: number, body: JournalReview): Promise<JournalEntry> {
+  return request('/api/v1/portfolio/journal/' + id + '/review', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export async function deleteJournal(id: number): Promise<void> {
+  const response = await fetch('/api/v1/portfolio/journal/' + id + '/delete', { method: 'POST' });
+  if (!response.ok)
+    throw new ApiError(response.status, 'journal_delete_failed', 'No se pudo eliminar la entrada.');
+}
+
+export function getComparison(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<ComparisonResponse> {
+  const params = new URLSearchParams();
+  symbols.forEach((symbol) => params.append('symbols', symbol));
+  return get('/api/v1/comparison?' + params.toString(), signal);
+}
+
+function comparedParams(symbols: string[]): URLSearchParams {
+  const params = new URLSearchParams();
+  symbols.forEach((symbol) => params.append('symbols', symbol));
+  return params;
+}
+
+export function getRiskWindows(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<RiskWindowsResponse> {
+  return get('/api/v1/risk-windows?' + comparedParams(symbols).toString(), signal);
+}
+
+export function getComparisonChecklist(
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<ComparisonChecklistResponse> {
+  return get('/api/v1/comparison/checklist?' + comparedParams(symbols).toString(), signal);
+}
+
+export function getComparisonPrices(
+  symbols: string[],
+  bars: number,
+  signal?: AbortSignal,
+): Promise<ComparisonPricesResponse> {
+  const params = comparedParams(symbols);
+  params.set('bars', String(bars));
+  return get('/api/v1/comparison/prices?' + params.toString(), signal);
+}
+
+export function getMacro(signal?: AbortSignal): Promise<MacroResponse> {
+  return get('/api/v1/market/macro', signal);
+}
+
+export function getCompanyScoreHistory(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<ScoreHistoryResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/score-history', signal);
+}
+
+export function getCompanyAnnualResults(
+  symbol: string,
+  signal?: AbortSignal,
+): Promise<AnnualResultsResponse> {
+  return get('/api/v1/companies/' + encodeURIComponent(symbol) + '/annual-results', signal);
+}
+
+export function getHeatmap(signal?: AbortSignal): Promise<HeatmapResponse> {
+  return get('/api/v1/market/heatmap', signal);
+}
+
+export function getMarketHealth(signal?: AbortSignal): Promise<MarketHealthResponse> {
+  return get('/api/v1/market/health', signal);
+}
+
+export function getSnapshots(signal?: AbortSignal): Promise<SnapshotList> {
+  return get('/api/v1/market/snapshots', signal);
+}
+export function saveSnapshot(body: SaveSnapshot): Promise<Snapshot> {
+  return request('/api/v1/market/snapshots', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getSignals(
+  filters: { severity?: string; sinceHours?: number } = {},
+  signal?: AbortSignal,
+): Promise<SignalEventList> {
+  const params = new URLSearchParams({ limit: '200' });
+  if (filters.severity) params.set('severity', filters.severity);
+  if (filters.sinceHours) params.set('since_hours', String(filters.sinceHours));
+  return get('/api/v1/market/signals?' + params.toString(), signal);
+}
+export function compareSignals(body: CompareSignals): Promise<SignalEventList> {
+  return request('/api/v1/market/signals/compare', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getSnapshotEarnings(id: number, signal?: AbortSignal): Promise<EarningsList> {
+  return get('/api/v1/market/snapshots/' + id + '/earnings', signal);
+}
+export function recordFilingCheck(jobId: string): Promise<FilingCheckSaved> {
+  return request('/api/v1/market/signals/filings/record', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_id: jobId }),
+  });
+}
+
+export function getSimulations(signal?: AbortSignal): Promise<SimulationList> {
+  return get('/api/v1/portfolio/simulations', signal);
+}
+export function createSimulation(body: SimulationCreate): Promise<SimulationPortfolio> {
+  return request('/api/v1/portfolio/simulations', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getSimulationTrades(id: number, signal?: AbortSignal): Promise<SimulationTrades> {
+  return get('/api/v1/portfolio/simulations/' + id + '/trades', signal);
+}
+export function createSimulationTrade(
+  id: number,
+  body: SimulationTradeCreate,
+): Promise<SimulationTrade> {
+  return request('/api/v1/portfolio/simulations/' + id + '/trades', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function undoSimulationTrade(id: number): Promise<UndoResult> {
+  return request('/api/v1/portfolio/simulations/' + id + '/undo', { method: 'POST' });
+}
+export function getSimulationResult(id: number, signal?: AbortSignal): Promise<SimulationResult> {
+  return get('/api/v1/portfolio/simulations/' + id + '/result', signal);
+}
+
+export function getHoldingsPerformance(signal?: AbortSignal): Promise<HoldingsPerformance> {
+  return get('/api/v1/portfolio/holdings/performance', signal);
+}
+export function getHoldings(signal?: AbortSignal): Promise<HoldingsSummary> {
+  return get('/api/v1/portfolio/holdings', signal);
+}
+export function createHolding(body: HoldingCreate): Promise<Holding> {
+  return request('/api/v1/portfolio/holdings', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function updateHolding(id: number, body: HoldingCreate): Promise<Holding> {
+  return request('/api/v1/portfolio/holdings/' + id, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function deleteHolding(id: number): Promise<HoldingDeleted> {
+  return request('/api/v1/portfolio/holdings/' + id + '/delete', { method: 'POST' });
+}
+export function importHoldings(csv: string): Promise<HoldingImportResult> {
+  return request('/api/v1/portfolio/holdings/import', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csv }),
+  });
+}
+
+/** Perfil de inversor y benchmark S&P 500 en EUR (#244): reads use the cache; saving adds a revision. */
+export function getInvestorProfile(signal?: AbortSignal): Promise<InvestorProfileState> {
+  return get('/api/v1/portfolio/investor/profile', signal);
+}
+export function saveInvestorProfile(body: InvestorProfileInput): Promise<InvestorProfileRevision> {
+  return request('/api/v1/portfolio/investor/profile', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getInvestorBenchmark(
+  start: string | null,
+  signal?: AbortSignal,
+): Promise<InvestorBenchmarkResult> {
+  const query = start ? '?start=' + encodeURIComponent(start) : '';
+  return get('/api/v1/portfolio/investor/benchmark' + query, signal);
+}
+export function getHoldingsBenchmark(signal?: AbortSignal): Promise<HoldingsBenchmarkResult> {
+  return get('/api/v1/portfolio/investor/holdings-benchmark', signal);
+}
+
+/** Riesgo por emisor y política de cartera (#248): reads use the cache; saving adds a policy revision. */
+export function getRiskPanel(signal?: AbortSignal): Promise<RiskPanel> {
+  return get('/api/v1/portfolio/risk', signal);
+}
+export function getPortfolioPolicy(signal?: AbortSignal): Promise<PortfolioPolicyState> {
+  return get('/api/v1/portfolio/risk/policy', signal);
+}
+export function savePortfolioPolicy(body: PortfolioPolicyInput): Promise<PortfolioPolicyRevision> {
+  return request('/api/v1/portfolio/risk/policy', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function getPolicyProposal(
+  contribution: number,
+  positions: number,
+  signal?: AbortSignal,
+): Promise<PolicyProposal> {
+  const params = new URLSearchParams({
+    contribution_eur: String(contribution),
+    n_positions: String(positions),
+  });
+  return get('/api/v1/portfolio/risk/proposal?' + params.toString(), signal);
+}
+
+/** Empresas seguidas (#182): the view reads the cache; following, the note and removing are explicit. */
+export function getWatchlist(signal?: AbortSignal): Promise<WatchlistSummary> {
+  return get('/api/v1/watchlist', signal);
+}
+export function getWatchlistSymbols(signal?: AbortSignal): Promise<WatchlistSymbols> {
+  return get('/api/v1/watchlist/symbols', signal);
+}
+export function getWatchlistChecklists(signal?: AbortSignal): Promise<WatchlistChecklists> {
+  return get('/api/v1/watchlist/checklist', signal);
+}
+export function followCompany(symbol: string, note?: string): Promise<WatchlistEntry> {
+  return request('/api/v1/watchlist', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol, note: note ?? null }),
+  });
+}
+export function updateWatchlistNote(symbol: string, note: string): Promise<WatchlistEntry> {
+  return request('/api/v1/watchlist/' + encodeURIComponent(symbol), {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note }),
+  });
+}
+export function unfollowCompany(symbol: string): Promise<WatchlistDeleted> {
+  return request('/api/v1/watchlist/' + encodeURIComponent(symbol) + '/delete', { method: 'POST' });
+}
+
+export function getDecisions(signal?: AbortSignal): Promise<DecisionList> {
+  return get('/api/v1/portfolio/decisions', signal);
+}
+export function getDecision(id: number, signal?: AbortSignal): Promise<SavedDecision> {
+  return get('/api/v1/portfolio/decisions/' + id, signal);
+}
+export function getDecisionProgress(id: number, signal?: AbortSignal): Promise<DecisionProgress> {
+  return get('/api/v1/portfolio/decisions/' + id + '/progress', signal);
+}
+export function getDecisionFreshness(id: number, signal?: AbortSignal): Promise<DecisionFreshness> {
+  return get('/api/v1/portfolio/decisions/' + id + '/freshness', signal);
+}
+export function saveDecision(body: DecisionJobSave): Promise<SavedDecision> {
+  return request('/api/v1/portfolio/decisions', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function renameDecision(id: number, body: DecisionRename): Promise<SavedDecision> {
+  return request('/api/v1/portfolio/decisions/' + id + '/rename', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+export function deleteDecision(id: number): Promise<{ deleted: boolean }> {
+  return request('/api/v1/portfolio/decisions/' + id + '/delete', { method: 'POST' });
+}

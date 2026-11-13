@@ -1,0 +1,319 @@
+{
+  "issue": 53,
+  "model": "GABI-ENS-VQE-v1",
+  "spec_sha256": "8609a0770a49d00c72bf5bb507d55551eba88b895543b305ca66715292555bca",
+  "stage": "RESEARCH_RETROSPECTIVE_ROBUSTNESS_WITHOUT_RETURNS + PROSPECTIVE_PLAN",
+  "demonstrated": false,
+  "returns_read": false,
+  "n_dates": 57,
+  "n_evaluable": 57,
+  "universe_size": {
+    "min": 117,
+    "median": 167.0,
+    "max": 198
+  },
+  "coverage_of_eligible": 0.5160355404571254,
+  "P1_turnover_mean": {
+    "ENS": 0.2214285714285714,
+    "value": 0.21964285714285717,
+    "quality": 0.11517857142857144,
+    "expectations": 0.2598214285714286
+  },
+  "P1_turnover_by_window": {
+    "2011-15": {
+      "ENS": 0.25588235294117645,
+      "value": 0.23529411764705882,
+      "quality": 0.13823529411764707,
+      "expectations": 0.30294117647058827
+    },
+    "2016-20": {
+      "ENS": 0.215,
+      "value": 0.19,
+      "quality": 0.125,
+      "expectations": 0.2325
+    },
+    "2021-25": {
+      "ENS": 0.19736842105263155,
+      "value": 0.23684210526315785,
+      "quality": 0.0842105263157895,
+      "expectations": 0.25
+    }
+  },
+  "P2_noise_persistence_mean": {
+    "0.02": {
+      "ENS": 0.9767236842105256,
+      "value": 0.9752719298245607,
+      "quality": 0.9479517543859646,
+      "expectations": 0.9663245614035082
+    },
+    "0.05": {
+      "ENS": 0.9415701754385961,
+      "value": 0.9429385964912277,
+      "quality": 0.8783377192982456,
+      "expectations": 0.9057894736842108
+    },
+    "0.1": {
+      "ENS": 0.8869605263157894,
+      "value": 0.8940745614035088,
+      "quality": 0.7779210526315787,
+      "expectations": 0.8092412280701752
+    }
+  },
+  "P1_intervals": {
+    "value": {
+      "observed": 0.0017857142857142833,
+      "low": -0.035714285714285705,
+      "high": 0.03928571428571427
+    },
+    "quality": {
+      "observed": 0.10624999999999998,
+      "low": 0.08035714285714286,
+      "high": 0.13035714285714287
+    },
+    "expectations": {
+      "observed": -0.03839285714285714,
+      "low": -0.07410714285714286,
+      "high": -0.005357142857142865
+    }
+  },
+  "P2_intervals": {
+    "value": {
+      "observed": -0.0013684210526315743,
+      "low": -0.013582273391812514,
+      "high": 0.010110946637426673
+    },
+    "quality": {
+      "observed": 0.0632324561403505,
+      "low": 0.05186970029239731,
+      "high": 0.07596427266081819
+    },
+    "expectations": {
+      "observed": 0.035780701754385365,
+      "low": 0.02063435672514578,
+      "high": 0.05064110014619807
+    }
+  },
+  "redundancy_spearman_mean": {
+    "value_quality": -0.1253882865823115,
+    "value_expectations": 0.32959833066740973,
+    "quality_expectations": -0.02779247967234223
+  },
+  "jaccard_mean": {
+    "ENS_value": 0.39862687420597764,
+    "ENS_quality": 0.1458715234596063,
+    "ENS_expectations": 0.33970640750987213,
+    "value_quality": 0.08656363504008932,
+    "value_expectations": 0.19005722919183513,
+    "quality_expectations": 0.06772539182511482
+  },
+  "dominance_mean": 0.5938596491228071,
+  "score_autocorrelation_mean": {
+    "ENS": 0.8977485488633895,
+    "value": 0.9365423233075741,
+    "quality": 0.9894720123405535,
+    "expectations": 0.8618248727860556
+  },
+  "duplicated_entity_dates": 42,
+  "autocorrelation_excluded_entities_total": 16,
+  "concentration_mean": {
+    "ENS": {
+      "divisions": 5.56140350877193,
+      "division_hhi": 0.21956140350877193,
+      "cash_slots": 0.0
+    },
+    "value": {
+      "divisions": 5.7894736842105265,
+      "division_hhi": 0.21745614035087718,
+      "cash_slots": 0.0
+    },
+    "quality": {
+      "divisions": 5.684210526315789,
+      "division_hhi": 0.2162280701754386,
+      "cash_slots": 0.0
+    },
+    "expectations": {
+      "divisions": 5.9298245614035086,
+      "division_hhi": 0.2085964912280702,
+      "cash_slots": 0.0
+    }
+  },
+  "ex_ante_risk_mean": {
+    "ENS": {
+      "volatility": 0.30242399012304605,
+      "max_drawdown": -0.39345564162933755,
+      "beta_calc": 1.0566304139065135,
+      "market_cap_median": 13906937813.90594
+    },
+    "value": {
+      "volatility": 0.30742953928442074,
+      "max_drawdown": -0.41613250902948395,
+      "beta_calc": 1.0720642715358186,
+      "market_cap_median": 11049481831.12308
+    },
+    "quality": {
+      "volatility": 0.2689725301378361,
+      "max_drawdown": -0.33062644973881555,
+      "beta_calc": 0.9638305752903016,
+      "market_cap_median": 37849287273.069626
+    },
+    "expectations": {
+      "volatility": 0.32809762130099096,
+      "max_drawdown": -0.39792916854356264,
+      "beta_calc": 1.1109015445040455,
+      "market_cap_median": 16887709041.968346
+    },
+    "universe": {
+      "volatility": 0.28641335480328367,
+      "max_drawdown": -0.36344324987875376,
+      "beta_calc": 1.0245585068399428,
+      "market_cap_median": 21878122893.749416
+    }
+  },
+  "decision": {
+    "label": "parcial",
+    "criteria": {
+      "no_redundancy": true,
+      "no_dominance": true,
+      "P1_vs_value": false,
+      "P2_vs_value": false,
+      "P1_vs_quality": false,
+      "P2_vs_quality": true,
+      "P1_vs_expectations": true,
+      "P2_vs_expectations": true
+    },
+    "prospective_v1_allowed": true
+  },
+  "inputs": {
+    "scores_csv_sha256": "d9eab0ef47ed166b687693e346b9a96cb9496d7236ce9b2b3b4149a6fdd64b78",
+    "factor_zoo_result_sha256": "84f76e03bbe676d80ae5b0c4ae3af031b6a50fd23f7536b842e1f03df409bee0",
+    "rankings_sha256": {
+      "2011-07-02": "08277bd53f925efec1542af439573db7e6cc82291df2ceb1895496c48716036e",
+      "2011-10-02": "e688bd05243a1896e2a881a638b340b0ba72da7625c6d1a10619bdc0a358ea32",
+      "2012-01-02": "03c51e578acbc4e5d19d7e21f73fa214b5557c68e8910c196bed517d719896b9",
+      "2012-04-02": "2bb048643374d139989283fa2ca3c5b385f44a2d34c32ac8044a26b281b9378a",
+      "2012-07-02": "eebf9979bf418dde2b3cbea8472ca08c5a2402363c0cda564e411553e3fbb48c",
+      "2012-10-02": "4f9fd6a12b56f43469476bea3e759802c25647427ab8cfe29e684fe43dab889b",
+      "2013-01-02": "c719d89212e3d1c194601c50c43cb3e3e11d73fa5bbaa762f10c163de7eba9d5",
+      "2013-04-02": "ffdb5088f634e6fba6229354805fc2c0c982b502031a4beb63152ee9d71dca30",
+      "2013-07-02": "9314e077ceebe84b0b0bca4992de7b1b5f247e1ab0025005e790948082806579",
+      "2013-10-02": "b4dbd5927e8c571b7e6e434905f63e73fcf8f97f830bd3423a9ac5b6084083bd",
+      "2014-01-02": "5d955b785ea15f84bc89428a19b75c5b7f9e81b9c706731979babd4ffd66589a",
+      "2014-04-02": "dbea5baa8cb8c21a98672e8d77588236e6be67d6575468335af7c709f23f5754",
+      "2014-07-02": "44939962ce1192b2593abb5aea9e61da04b48a5909c1f11e146b72d2616bc6bf",
+      "2014-10-02": "02a67e9fd39f6265bd34a4197fb08538831c642f5d727ce002fc22341eb2ec6d",
+      "2015-01-02": "eb05a24fcc4eb23da9fc46d795e870b41467eae081ff382b899226227ec6f986",
+      "2015-04-02": "e0c38541bb0714e5b45d945937ef51b3394997f7074153778ea3f02f1d688b44",
+      "2015-07-02": "151624991b382d7c75c82715b4d23fdc7df86e45aef3bceebede8c9d800d5d74",
+      "2015-10-02": "42722b8d08f4faf86f20985d5f3ba9225fcc252d1df62b367e7c8b250ce78922",
+      "2016-01-02": "7991a4d2802918f8202272634e30ca627e3d2dec493069cdee6c3cfb469caefb",
+      "2016-04-02": "906bb8777e22d69694b488ff36267c52c2bd4d5629ec86f974e870d085e7428b",
+      "2016-07-02": "f172d4943f6f19ffb0ccbd3623dacbfab80164cbbfb45b513974b14a4dd4276b",
+      "2016-10-02": "c3df5b46afe0a4a08735193acffc78ee83629b71edae3497ebff88ad4b74938f",
+      "2017-01-02": "62eea0884f796c96daf26bd7dfbd9401b215deb6584c82e721365e957ffbaeb4",
+      "2017-04-02": "151b6ec97760ffd279c21eabea50d3557d5331af25522c3962495e9cd63ce978",
+      "2017-07-02": "d6cd3cafd1d38f2871f67be02c162b43f38869992ab329f9e64ef830565c46de",
+      "2017-10-02": "7a2446ca025c08b519c9572503948b56f815738b0f16f711b2c8cefa33dfe594",
+      "2018-01-02": "330340eface03787e6bdf03ca683b303101d0031e9c87c3fd64bf03dfdb5c29b",
+      "2018-04-02": "6628e9399e1501b2a2ceddc457652affd39c0183d03072fd4d9b96cbf26fe69b",
+      "2018-07-02": "a8acc92a414387fc088d49e9c094fa79cfbc87161d653018f849098dd8d169d8",
+      "2018-10-02": "c27c62a5a5b6ab26ced52a50c979f0c7cc404317467769a175f74c9b5bc0c50a",
+      "2019-01-02": "e8c984a903b44bd58aba952deb0b17d87adceb13f916c31bf8c09a9f0eb1527f",
+      "2019-04-02": "fafd6e6c99d66890acefddaec82bd044ee284a33f439d456829f06f81420aa63",
+      "2019-07-02": "eb571e618728a0f1a726831a23761828d14389ba2bf9939fc4569dc8d9467ca4",
+      "2019-10-02": "2d9dd8b5225b1197928a6c87e29a3e08c28342673ffc3bf3b4e118cbf0b158ec",
+      "2020-01-02": "fbf1defc67804a5e6e55e4944488b2242d50193100aa6df98f275ca6288a41eb",
+      "2020-04-02": "bfcd4a17d6d536a763199e2c24452af29ef6d7973a8366b4f346f74dc04a3743",
+      "2020-07-02": "9b54847e7b27cbf9a873be317cb328867a7b0c586cafd80bea1553df8a934589",
+      "2020-10-02": "807930e297163e6feac55ad9c74d756befeabed1b93de9d6cda57c7a8ebb82cc",
+      "2021-01-02": "7e7fdef2ea28c61579797e1992817509aaca717f3dc194ea44d0391be36edc05",
+      "2021-04-02": "0c24b193f14ff7c615f3cd564b1d8bf423457a85eabf50397cce9ea492d73b3d",
+      "2021-07-02": "0280866ef079954b974ea39be58af586c9b7ad65adba9e60e8f72ca2ffa67fe8",
+      "2021-10-02": "482ea813e9f99fc484dabd9b93bf72ddaa6aab98433f0d6c13869365fa450997",
+      "2022-01-02": "c436437349c8f2471c446a5e4eeb05fe40fad84dc87fd146ec7377dc6e8f3b21",
+      "2022-04-02": "0ed8ff404d8875351b1b2fb5378d7592a69b3cdf8c65123bd97dc955ef017e19",
+      "2022-07-02": "7285ae4854e93b37e736867e0a0cba907a3182372b4d19bf592e2158ddf97144",
+      "2022-10-02": "a484b4118bc540416f352785eecce48524141934aa85eade7d96f8048e559b50",
+      "2023-01-02": "e50c525a8d5e90c9970b805c89608ce46d8e62c062650a852bf90539a49d03a4",
+      "2023-04-02": "10b85076e790c5e4176fa138b5c64dd20db741abb33729e581496dfa739f82f4",
+      "2023-07-02": "f114a5cca9c8cc0fac842861ad4be2b628782cd03aae09a175fc1f97ad0e35f0",
+      "2023-10-02": "4d9397499a016a957144c42553c54a4a6584bea3bb2aefbafb3db760c785ca79",
+      "2024-01-02": "5c5a9458be5438fd923daaa3e2557017fce3aa00b46d4cf265e261ee8335a995",
+      "2024-04-02": "344b56fa6607bea5e302fc9f13e0f7bf0a248ba7763c596b68320c1348c5a10a",
+      "2024-07-02": "bdc2643ed8920bb4404e5c8d27492fc5f9a72c20b602186de3705e63d0fa3a59",
+      "2024-10-02": "e28f415dd6a1b5dbe7e5dcc15336d140fb94f312d2ab678305b48d572a98ac0c",
+      "2025-01-02": "e38251955e3518da94910c08bdda80966abc7830fc29315ea31f86c6005acd63",
+      "2025-04-02": "c715556f316321cfa429e8d424eb43f72e158d1c200498c8b5d615628566201b",
+      "2025-07-02": "269419a5b4fcca67d64c6aa61a5e7634e9b60506f0b3bf6b5792a524f1eaa919"
+    },
+    "files_opened": [
+      "data/revalidation_2011_2025/acreditado-38/ranking-2011-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2011-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2012-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2012-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2012-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2012-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2013-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2013-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2013-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2013-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2014-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2014-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2014-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2014-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2015-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2015-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2015-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2015-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2016-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2016-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2016-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2016-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2017-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2017-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2017-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2017-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2018-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2018-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2018-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2018-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2019-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2019-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2019-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2019-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2020-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2020-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2020-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2020-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2021-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2021-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2021-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2021-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2022-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2022-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2022-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2022-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2023-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2023-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2023-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2023-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2024-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2024-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2024-07-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2024-10-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2025-01-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2025-04-02.csv",
+      "data/revalidation_2011_2025/acreditado-38/ranking-2025-07-02.csv",
+      "docs/ensemble-robustness/preregistro.json",
+      "docs/factor-zoo/resultado.json",
+      "docs/strategy-discovery/resultado.json",
+      "docs/strategy-discovery/scores.csv"
+    ]
+  },
+  "artifacts_sha256": {
+    "por_fecha.csv": "9d317b2f41a2a431c587d5de5282702398e21a0f3746fb6f42c8c5e363a63c49",
+    "rotacion.csv": "a6a889000722c16a1c978fdad0fb7313ea7294a8b466f5768d414770c03d8b29",
+    "ruido.csv": "8e23a8d7f94cc2fe01fc271ab4be7014fb638a86d07300989b499ccf1297431f",
+    "selecciones.csv": "a06bdb879b38506c8ec8cdfcd3a96cf53a698185680c16f5a4e1164a373684b6"
+  },
+  "sha256": "f595c1bfa251a69caba403fcc2153250e499985d67e10ff42577b75cb988ca05"
+}

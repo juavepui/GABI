@@ -1,0 +1,667 @@
+{
+  "source_commit": "486942af7a92bea5afa7ffec98983eeba701baad",
+  "source_sha256_lf": {
+    "edgar": "da6ff1d09ba72b4e3f41dee99dd903f62199e0fc2d01d056c9dcaa0810f26dc6",
+    "quality_persistence": "bc68bfb089d987642be4750a35b69d5b90d02bd89194b3ffa4194050bb7d463f"
+  },
+  "full": {
+    "quality": {
+      "roic_persistence_mean": 0.14285714285714285,
+      "roic_persistence_std": 0.0,
+      "roic_positive_years": 4,
+      "roic_years": 4,
+      "operating_margin_persistence_mean": 0.2,
+      "operating_margin_persistence_std": 2.2662332591841973e-17,
+      "operating_margin_positive_years": 4,
+      "operating_margin_years": 4,
+      "fcf_conversion_mean": 0.1,
+      "fcf_conversion_std": 1.962615573354719e-17,
+      "fcf_positive_years": 4,
+      "fcf_years": 4,
+      "revenue_per_share_cagr": 0.0,
+      "quality_persistence_score": 1.0
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.09999999999999999,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.09999999999999999,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": "2023-12-31",
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    }
+  },
+  "missing": {
+    "quality": {
+      "roic_persistence_mean": 0.14285714285714285,
+      "roic_persistence_std": 0.0,
+      "roic_positive_years": 4,
+      "roic_years": 4,
+      "operating_margin_persistence_mean": null,
+      "operating_margin_persistence_std": null,
+      "operating_margin_positive_years": 0,
+      "operating_margin_years": 0,
+      "fcf_conversion_mean": 0.1,
+      "fcf_conversion_std": 1.962615573354719e-17,
+      "fcf_positive_years": 4,
+      "fcf_years": 4,
+      "revenue_per_share_cagr": 0.0,
+      "quality_persistence_score": 1.0
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": null,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": null,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": null,
+        "profit_margin": 0.09999999999999999,
+        "net_debt_to_ebitda": null,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": "no_operating_income",
+        "net_income": null,
+        "equity": null,
+        "ebitda": "no_operating_income"
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": null,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": null,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": null,
+        "profit_margin": 0.09999999999999999,
+        "net_debt_to_ebitda": null,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": "2023-12-31",
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": "no_operating_income",
+        "net_income": null,
+        "equity": null,
+        "ebitda": "no_operating_income"
+      }
+    }
+  },
+  "stale": {
+    "quality": {
+      "roic_persistence_mean": 0.14285714285714285,
+      "roic_persistence_std": 0.0,
+      "roic_positive_years": 3,
+      "roic_years": 3,
+      "operating_margin_persistence_mean": 0.2,
+      "operating_margin_persistence_std": 2.2662332591841973e-17,
+      "operating_margin_positive_years": 4,
+      "operating_margin_years": 4,
+      "fcf_conversion_mean": 0.1,
+      "fcf_conversion_std": 1.962615573354719e-17,
+      "fcf_positive_years": 4,
+      "fcf_years": 4,
+      "revenue_per_share_cagr": 0.0,
+      "quality_persistence_score": 1.0
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 12.100000000000001,
+        "latest_equity": 60.50000000000001,
+        "latest_debt": 24.200000000000003,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.09090909090909088,
+        "net_debt_to_ebitda": 0.5492424242424241,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000009,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": null,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": null,
+        "latest_equity": null,
+        "latest_debt": null,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": null,
+        "net_debt_to_ebitda": null,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": null,
+        "fiscal_anchor": "2023-12-31",
+        "stale_components": [
+          "debt",
+          "equity",
+          "net_income"
+        ]
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": "stale_component",
+        "operating_margin": null,
+        "net_income": "stale_component",
+        "equity": "stale_component",
+        "ebitda": null
+      }
+    }
+  },
+  "revision": {
+    "quality": {
+      "roic_persistence_mean": 0.14285714285714285,
+      "roic_persistence_std": 0.0,
+      "roic_positive_years": 4,
+      "roic_years": 4,
+      "operating_margin_persistence_mean": 0.1943666666666667,
+      "operating_margin_persistence_std": 0.011266666666666644,
+      "operating_margin_positive_years": 4,
+      "operating_margin_years": 4,
+      "fcf_conversion_mean": 0.09718333333333334,
+      "fcf_conversion_std": 0.0056333333333333305,
+      "fcf_positive_years": 4,
+      "fcf_years": 4,
+      "revenue_per_share_cagr": 0.04067771215733229,
+      "quality_persistence_score": 1.0
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": 0.14471424255333187,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 150.0,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.35493333333333343,
+        "operating_margin": 0.17746666666666672,
+        "profit_margin": 0.08873333333333336,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.23966942148760317,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": 0.14471424255333187,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 150.0,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.35493333333333343,
+        "operating_margin": 0.17746666666666672,
+        "profit_margin": 0.08873333333333336,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.23966942148760317,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": "2023-12-31",
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    }
+  },
+  "conflict": {
+    "quality": {
+      "roic_persistence_mean": 0.14285714285714285,
+      "roic_persistence_std": 0.0,
+      "roic_positive_years": 4,
+      "roic_years": 4,
+      "operating_margin_persistence_mean": 0.20000000000000004,
+      "operating_margin_persistence_std": 4.8074067159589095e-17,
+      "operating_margin_positive_years": 3,
+      "operating_margin_years": 3,
+      "fcf_conversion_mean": 0.10000000000000002,
+      "fcf_conversion_std": 2.1942709178604383e-17,
+      "fcf_positive_years": 3,
+      "fcf_years": 3,
+      "revenue_per_share_cagr": 0.0,
+      "quality_persistence_score": 1.0
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 121.00000000000001,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2022-12-31",
+        "gross_margin": 0.44000000000000006,
+        "operating_margin": 0.22000000000000003,
+        "profit_margin": 0.11000000000000001,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.10000000000000009,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": "fewer_than_4_annual_revenue_values",
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 121.00000000000001,
+        "latest_net_income": 12.100000000000001,
+        "latest_equity": 60.50000000000001,
+        "latest_debt": 24.200000000000003,
+        "latest_cash": 6.050000000000001,
+        "latest_fcf": 12.100000000000003,
+        "latest_ebitda": 29.040000000000003,
+        "latest_period_end": "2022-12-31",
+        "gross_margin": 0.4,
+        "operating_margin": 0.2,
+        "profit_margin": 0.1,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.10000000000000009,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": "2022-12-31",
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": "fewer_than_4_annual_revenue_values",
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    }
+  },
+  "gap": {
+    "quality": {
+      "roic_persistence_mean": 0.14285714285714285,
+      "roic_persistence_std": 0.0,
+      "roic_positive_years": 4,
+      "roic_years": 4,
+      "operating_margin_persistence_mean": 0.19999999999999998,
+      "operating_margin_persistence_std": 2.7755575615628914e-17,
+      "operating_margin_positive_years": 3,
+      "operating_margin_years": 3,
+      "fcf_conversion_mean": 0.09999999999999999,
+      "fcf_conversion_std": 2.4037033579794548e-17,
+      "fcf_positive_years": 3,
+      "fcf_years": 3,
+      "revenue_per_share_cagr": 0.0,
+      "quality_persistence_score": 1.0
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.09999999999999999,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": "fewer_than_4_annual_revenue_values",
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.14285714285714285,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 13.310000000000004,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 26.620000000000008,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.09999999999999999,
+        "net_debt_to_ebitda": 0.625,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": 0.10000000000000031,
+        "fiscal_anchor": "2023-12-31",
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": "fewer_than_4_annual_revenue_values",
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    }
+  },
+  "empty": {
+    "quality": {
+      "roic_persistence_mean": null,
+      "roic_persistence_std": null,
+      "roic_positive_years": 0,
+      "roic_years": 0,
+      "operating_margin_persistence_mean": null,
+      "operating_margin_persistence_std": null,
+      "operating_margin_positive_years": 0,
+      "operating_margin_years": 0,
+      "fcf_conversion_mean": null,
+      "fcf_conversion_std": null,
+      "fcf_positive_years": 0,
+      "fcf_years": 0,
+      "revenue_per_share_cagr": null,
+      "quality_persistence_score": null
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "latest_revenue": null,
+        "latest_net_income": null,
+        "latest_equity": null,
+        "latest_debt": null,
+        "latest_cash": null,
+        "latest_fcf": null,
+        "latest_ebitda": null,
+        "latest_period_end": null,
+        "gross_margin": null,
+        "operating_margin": null,
+        "profit_margin": null,
+        "net_debt_to_ebitda": null,
+        "revenue_growth_yoy": null,
+        "earnings_growth_yoy": null,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": "no_annual_revenue",
+        "fcf_cagr_3y": "no_operating_cash_flow",
+        "roic": "no_net_income",
+        "operating_margin": "no_annual_revenue",
+        "net_income": "no_net_income",
+        "equity": "no_equity",
+        "ebitda": "no_operating_income"
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "latest_revenue": null,
+        "latest_net_income": null,
+        "latest_equity": null,
+        "latest_debt": null,
+        "latest_cash": null,
+        "latest_fcf": null,
+        "latest_ebitda": null,
+        "latest_period_end": null,
+        "gross_margin": null,
+        "operating_margin": null,
+        "profit_margin": null,
+        "net_debt_to_ebitda": null,
+        "revenue_growth_yoy": null,
+        "earnings_growth_yoy": null,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": "no_annual_revenue",
+        "fcf_cagr_3y": "no_operating_cash_flow",
+        "roic": "no_net_income",
+        "operating_margin": "no_annual_revenue",
+        "net_income": "no_net_income",
+        "equity": "no_equity",
+        "ebitda": "no_operating_income"
+      }
+    }
+  },
+  "zero": {
+    "quality": {
+      "roic_persistence_mean": 0.10714285714285714,
+      "roic_persistence_std": 0.07142857142857142,
+      "roic_positive_years": 3,
+      "roic_years": 4,
+      "operating_margin_persistence_mean": 0.2,
+      "operating_margin_persistence_std": 2.2662332591841973e-17,
+      "operating_margin_positive_years": 4,
+      "operating_margin_years": 4,
+      "fcf_conversion_mean": 0.1,
+      "fcf_conversion_std": 1.962615573354719e-17,
+      "fcf_positive_years": 4,
+      "fcf_years": 4,
+      "revenue_per_share_cagr": 0.0,
+      "quality_persistence_score": 0.9166666666666666
+    },
+    "False": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.0,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 0.0,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 0,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.0,
+        "net_debt_to_ebitda": -0.20833333333333334,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": -1.0,
+        "fiscal_anchor": null,
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    },
+    "True": {
+      "metrics": {
+        "revenue_cagr_3y": 0.10000000000000009,
+        "fcf_cagr_3y": 0.10000000000000009,
+        "roic": 0.0,
+        "latest_revenue": 133.10000000000005,
+        "latest_net_income": 0.0,
+        "latest_equity": 66.55000000000003,
+        "latest_debt": 0,
+        "latest_cash": 6.655000000000002,
+        "latest_fcf": 13.310000000000002,
+        "latest_ebitda": 31.94400000000001,
+        "latest_period_end": "2023-12-31",
+        "gross_margin": 0.39999999999999997,
+        "operating_margin": 0.19999999999999998,
+        "profit_margin": 0.0,
+        "net_debt_to_ebitda": -0.20833333333333334,
+        "revenue_growth_yoy": 0.10000000000000031,
+        "earnings_growth_yoy": -1.0,
+        "fiscal_anchor": "2023-12-31",
+        "stale_components": []
+      },
+      "reasons": {
+        "revenue_cagr_3y": null,
+        "fcf_cagr_3y": null,
+        "roic": null,
+        "operating_margin": null,
+        "net_income": null,
+        "equity": null,
+        "ebitda": null
+      }
+    }
+  }
+}

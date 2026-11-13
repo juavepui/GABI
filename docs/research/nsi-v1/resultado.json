@@ -1,0 +1,915 @@
+{
+  "version": "nsi-v1",
+  "returns_read": true,
+  "exploratory": true,
+  "independent_evidence": false,
+  "signals": [
+    "2011-07-01",
+    "2012-07-02",
+    "2013-07-01",
+    "2014-07-01",
+    "2015-07-01",
+    "2016-07-01",
+    "2017-07-03",
+    "2018-07-02",
+    "2019-07-01",
+    "2020-07-01",
+    "2021-07-01",
+    "2022-07-01",
+    "2023-07-03",
+    "2024-07-01",
+    "2025-07-01"
+  ],
+  "selections": [
+    {
+      "as_of": "2011-07-01",
+      "selected": [
+        "TRV",
+        "WLP",
+        "AZO",
+        "BIIB",
+        "AN",
+        "DTV",
+        "SWY",
+        "GPS",
+        "MHS",
+        "GME",
+        "LO",
+        "VRSN",
+        "NFLX",
+        "NOC",
+        "ZBH",
+        "HRB",
+        "AIZ",
+        "ABC",
+        "AET",
+        "LDOS"
+      ],
+      "ranked": 396,
+      "kept": 0,
+      "capped_by_division": 1
+    },
+    {
+      "as_of": "2012-07-02",
+      "selected": [
+        "GPS",
+        "DTV",
+        "TRV",
+        "AIZ",
+        "WLP",
+        "AZO",
+        "AET",
+        "SWY",
+        "LO",
+        "GME",
+        "AN",
+        "LDOS",
+        "VRSN",
+        "NOC",
+        "ZBH",
+        "BIIB",
+        "HRB",
+        "ABC",
+        "NDAQ",
+        "FIS"
+      ],
+      "ranked": 462,
+      "kept": 18,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2013-07-01",
+      "selected": [
+        "SWY",
+        "DTV",
+        "AN",
+        "AIZ",
+        "WLP",
+        "NOC",
+        "GME",
+        "AZO",
+        "GPS",
+        "AET",
+        "HRB",
+        "ABC",
+        "TRV",
+        "ZBH",
+        "LO",
+        "VRSN",
+        "NDAQ",
+        "FIS",
+        "BIIB",
+        "APTV"
+      ],
+      "ranked": 465,
+      "kept": 19,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2014-07-01",
+      "selected": [
+        "DTV",
+        "AIZ",
+        "ABC",
+        "VRSN",
+        "NOC",
+        "GME",
+        "WLP",
+        "AZO",
+        "GPS",
+        "LO",
+        "TRV",
+        "APTV",
+        "ZBH",
+        "SWY",
+        "AN",
+        "DNB",
+        "STX",
+        "AIG",
+        "AABA",
+        "GM"
+      ],
+      "ranked": 469,
+      "kept": 15,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2015-07-01",
+      "selected": [
+        "VRSN",
+        "NOC",
+        "STX",
+        "TRV",
+        "DTV",
+        "AZO",
+        "DNB",
+        "AABA",
+        "AIZ",
+        "GPS",
+        "GME",
+        "APTV",
+        "AN",
+        "AIG",
+        "ADT",
+        "CAM",
+        "CF",
+        "BBBY",
+        "VIAB",
+        "GLW"
+      ],
+      "ranked": 474,
+      "kept": 14,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2016-07-01",
+      "selected": [
+        "BBBY",
+        "VRSN",
+        "NOC",
+        "AIG",
+        "TRV",
+        "CF",
+        "VIAB",
+        "GLW",
+        "AIZ",
+        "GPS",
+        "AZO",
+        "APTV",
+        "AN",
+        "STX",
+        "MSI",
+        "CBS",
+        "PWR",
+        "TDC",
+        "NAVI",
+        "HRB"
+      ],
+      "ranked": 454,
+      "kept": 14,
+      "capped_by_division": 2
+    },
+    {
+      "as_of": "2017-07-03",
+      "selected": [
+        "PWR",
+        "GLW",
+        "AIG",
+        "NAVI",
+        "MSI",
+        "HRB",
+        "AIZ",
+        "BBBY",
+        "AN",
+        "CBS",
+        "STX",
+        "TRV",
+        "VRSN",
+        "NOC",
+        "AZO",
+        "APTV",
+        "GPS",
+        "AAL",
+        "UAL",
+        "HOG"
+      ],
+      "ranked": 464,
+      "kept": 17,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2018-07-02",
+      "selected": [
+        "AIG",
+        "GLW",
+        "AAL",
+        "AIZ",
+        "CBS",
+        "UAL",
+        "VRSN",
+        "AZO",
+        "HOG",
+        "TRV",
+        "MSI",
+        "NOC",
+        "APTV",
+        "HRB",
+        "GPS",
+        "YUM",
+        "PHM",
+        "CPRI",
+        "SYMC",
+        "DFS"
+      ],
+      "ranked": 469,
+      "kept": 15,
+      "capped_by_division": 1
+    },
+    {
+      "as_of": "2019-07-01",
+      "selected": [
+        "UAL",
+        "GLW",
+        "DFS",
+        "YUM",
+        "PHM",
+        "CBS",
+        "AZO",
+        "AAL",
+        "HOG",
+        "AIG",
+        "TRV",
+        "GPS",
+        "CPRI",
+        "HRB",
+        "SEE",
+        "SLG",
+        "ORCL",
+        "CTXS",
+        "AMGN",
+        "KR"
+      ],
+      "ranked": 470,
+      "kept": 14,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2020-07-01",
+      "selected": [
+        "ORCL",
+        "AMGN",
+        "AZO",
+        "DFS",
+        "UAL",
+        "SLG",
+        "YUM",
+        "GLW",
+        "AAL",
+        "HRB",
+        "CTXS",
+        "PHM",
+        "SEE",
+        "TRV",
+        "AIG",
+        "GPS",
+        "DVN",
+        "QCOM",
+        "NRG",
+        "EBAY"
+      ],
+      "ranked": 480,
+      "kept": 16,
+      "capped_by_division": 0
+    },
+    {
+      "as_of": "2021-07-01",
+      "selected": [
+        "EBAY",
+        "ORCL",
+        "NRG",
+        "QCOM",
+        "DVN",
+        "AZO",
+        "CTXS",
+        "DFS",
+        "AMGN",
+        "TRV",
+        "PHM",
+        "GLW",
+        "YUM",
+        "DVA",
+        "BIIB",
+        "JCI",
+        "SYF",
+        "MCK",
+        "WAT",
+        "AMP"
+      ],
+      "ranked": 480,
+      "kept": 13,
+      "capped_by_division": 1
+    },
+    {
+      "as_of": "2022-07-01",
+      "selected": [
+        "DVA",
+        "ORCL",
+        "EBAY",
+        "BIIB",
+        "AZO",
+        "AMP",
+        "MCK",
+        "JCI",
+        "SYF",
+        "PHM",
+        "AMGN",
+        "DFS",
+        "TRV",
+        "YUM",
+        "WAT",
+        "DD",
+        "HPQ",
+        "CHTR",
+        "L",
+        "LOW"
+      ],
+      "ranked": 482,
+      "kept": 15,
+      "capped_by_division": 1
+    },
+    {
+      "as_of": "2023-07-03",
+      "selected": [
+        "SYF",
+        "EBAY",
+        "HPQ",
+        "CHTR",
+        "DVA",
+        "LOW",
+        "AZO",
+        "PHM",
+        "DD",
+        "DFS",
+        "MCK",
+        "L",
+        "AMGN",
+        "AMP",
+        "TRV",
+        "YUM",
+        "JCI",
+        "WAT",
+        "BIIB",
+        "MGM"
+      ],
+      "ranked": 485,
+      "kept": 19,
+      "capped_by_division": 1
+    },
+    {
+      "as_of": "2024-07-01",
+      "selected": [
+        "MGM",
+        "SYF",
+        "DD",
+        "DFS",
+        "AZO",
+        "CHTR",
+        "LOW",
+        "PHM",
+        "L",
+        "MCK",
+        "AMP",
+        "EBAY",
+        "HPQ",
+        "TRV",
+        "DVA",
+        "YUM",
+        "JCI",
+        "WAT",
+        "BLDR",
+        "MPC"
+      ],
+      "ranked": 483,
+      "kept": 18,
+      "capped_by_division": 0
+    }
+  ],
+  "configurations": {
+    "primary": {
+      "top_n": 20,
+      "costs": "BASE",
+      "strategy": {
+        "metrics_eur": {
+          "start": "2011-07-01",
+          "end": "2025-07-01",
+          "initial": 10934.0,
+          "final": 317859.3623242182,
+          "cagr": 0.10030239472718283,
+          "max_drawdown": -0.3520321368267547,
+          "risk": {
+            "anualizado": 0.10055175846295628,
+            "vol_anualizada": 0.16679144516418848,
+            "sharpe": 0.3630387541959931,
+            "sortino": 0.5118626849969737,
+            "max_drawdown": -0.3520321368267547
+          },
+          "contributed": 128534.0
+        },
+        "turnover_yearly": 0.7962389187424153,
+        "costs_usd": 2724.6155023900774,
+        "dividends_usd": 21019.39755276594,
+        "trades": 1597,
+        "blocked_orders": 1500,
+        "stale_days": 0,
+        "average_cash_share": 0.42905029591060756,
+        "identity_error": 5.820766091346741e-11,
+        "min_cash": 10351.0687101152
+      },
+      "benchmark": {
+        "metrics_eur": {
+          "start": "2011-07-01",
+          "end": "2025-07-01",
+          "initial": 10934.0,
+          "final": 412841.03209578677,
+          "cagr": 0.14834538013135745,
+          "max_drawdown": -0.33075425515455703,
+          "risk": {
+            "anualizado": 0.14872201229561455,
+            "vol_anualizada": 0.19314661482295922,
+            "sharpe": 0.5628988755266076,
+            "sortino": 0.7919465699694844,
+            "max_drawdown": -0.33075425515455703
+          },
+          "contributed": 128534.0
+        },
+        "turnover_yearly": 0.07363530441345731,
+        "costs_usd": 360.6169338663759,
+        "dividends_usd": 34501.057307560135,
+        "trades": 222,
+        "blocked_orders": 0,
+        "stale_days": 0,
+        "average_cash_share": 0.0028187946208048857,
+        "identity_error": 1.4551915228366852e-11,
+        "min_cash": 30.18745319282948
+      },
+      "net_excess_cagr_eur": -0.04804298540417462,
+      "overall": {
+        "months": 169,
+        "mean_annual": -0.042113565567863546,
+        "lower_bound_annual": -0.09847235541851554,
+        "alpha": 0.016666666666666666,
+        "block": 12,
+        "replicas": 5000,
+        "seed": 252
+      },
+      "windows": [
+        {
+          "start": "2011-07-01",
+          "end": "2016-06-30",
+          "months": 60,
+          "mean_annual": -0.11125799613174435,
+          "lower_bound_annual": -0.19237384594899012,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        },
+        {
+          "start": "2016-07-01",
+          "end": "2021-06-30",
+          "months": 60,
+          "mean_annual": -0.0194214365187124,
+          "lower_bound_annual": -0.10383729578867634,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        },
+        {
+          "start": "2021-07-01",
+          "end": "2025-07-01",
+          "months": 48,
+          "mean_annual": 0.008986325543143714,
+          "lower_bound_annual": -0.05495422750611473,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        }
+      ],
+      "alpha_ff5_umd": {
+        "months": 169,
+        "alpha_annual": -0.007284205937170576,
+        "ci95_annual": [
+          -0.04307868525121598,
+          0.028510273376874826
+        ],
+        "t_stat": -0.3988616096799083,
+        "contains_zero": true,
+        "r2": 0.7184644727911058,
+        "loadings": {
+          "Mkt-RF": 0.6399015622356079,
+          "SMB": 0.3499344370568736,
+          "HML": 0.25254068806318797,
+          "RMW": 0.4943734019236467,
+          "CMA": -0.038426506867456786,
+          "Mom": 0.00901815637157627
+        }
+      },
+      "risk": {
+        "volatility_ratio": 0.8635483739493534,
+        "volatility_ok": true,
+        "drawdown_vs_index": -0.021277881672197685,
+        "drawdown_ok": true
+      },
+      "rebalances_capped_by_policy": 10,
+      "decision": {
+        "label": "abandon",
+        "reason": "net_excess_not_positive",
+        "applies": true
+      }
+    },
+    "stress": {
+      "top_n": 20,
+      "costs": "STRESS",
+      "strategy": {
+        "metrics_eur": {
+          "start": "2011-07-01",
+          "end": "2025-07-01",
+          "initial": 10934.0,
+          "final": 310684.87767234724,
+          "cagr": 0.09806542838190135,
+          "max_drawdown": -0.3521429936993745,
+          "risk": {
+            "anualizado": 0.09830898611319094,
+            "vol_anualizada": 0.16680578077879657,
+            "sharpe": 0.3495621425166031,
+            "sortino": 0.4925765460159542,
+            "max_drawdown": -0.3521429936993745
+          },
+          "contributed": 128534.0
+        },
+        "turnover_yearly": 0.7948938566976255,
+        "costs_usd": 7514.292708611814,
+        "dividends_usd": 20705.364420660084,
+        "trades": 1596,
+        "blocked_orders": 1500,
+        "stale_days": 0,
+        "average_cash_share": 0.4290093154822539,
+        "identity_error": 5.820766091346741e-11,
+        "min_cash": 10272.790316266337
+      },
+      "benchmark": {
+        "metrics_eur": {
+          "start": "2011-07-01",
+          "end": "2025-07-01",
+          "initial": 10934.0,
+          "final": 411314.081910344,
+          "cagr": 0.1475792562410505,
+          "max_drawdown": -0.330775974801633,
+          "risk": {
+            "anualizado": 0.1479538208725677,
+            "vol_anualizada": 0.19315374957727632,
+            "sharpe": 0.5589009848829152,
+            "sortino": 0.7862175518585014,
+            "max_drawdown": -0.330775974801633
+          },
+          "contributed": 128534.0
+        },
+        "turnover_yearly": 0.07385194469520397,
+        "costs_usd": 958.422148668109,
+        "dividends_usd": 34378.36053484848,
+        "trades": 222,
+        "blocked_orders": 0,
+        "stale_days": 0,
+        "average_cash_share": 0.002820403998136239,
+        "identity_error": 2.9103830456733704e-11,
+        "min_cash": 30.092687069232852
+      },
+      "net_excess_cagr_eur": -0.04951382785914915,
+      "overall": {
+        "months": 169,
+        "mean_annual": -0.04352068959007942,
+        "lower_bound_annual": -0.09907688741416712,
+        "alpha": 0.016666666666666666,
+        "block": 12,
+        "replicas": 5000,
+        "seed": 252
+      },
+      "windows": [
+        {
+          "start": "2011-07-01",
+          "end": "2016-06-30",
+          "months": 60,
+          "mean_annual": -0.10974467074275703,
+          "lower_bound_annual": -0.19127921261973058,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        },
+        {
+          "start": "2016-07-01",
+          "end": "2021-06-30",
+          "months": 60,
+          "mean_annual": -0.02260908922280265,
+          "lower_bound_annual": -0.10732412367055766,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        },
+        {
+          "start": "2021-07-01",
+          "end": "2025-07-01",
+          "months": 48,
+          "mean_annual": 0.006126537404209209,
+          "lower_bound_annual": -0.057732719098002996,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        }
+      ],
+      "alpha_ff5_umd": {
+        "months": 169,
+        "alpha_annual": -0.009080687095822713,
+        "ci95_annual": [
+          -0.04482386443283825,
+          0.026662490241192827
+        ],
+        "t_stat": -0.4979452872920954,
+        "contains_zero": true,
+        "r2": 0.7185532317182122,
+        "loadings": {
+          "Mkt-RF": 0.6385226407633172,
+          "SMB": 0.3492048581895566,
+          "HML": 0.2527335868841295,
+          "RMW": 0.4907783379098744,
+          "CMA": -0.0370705470486868,
+          "Mom": 0.008966550285317315
+        }
+      },
+      "risk": {
+        "volatility_ratio": 0.8635906946867808,
+        "volatility_ok": true,
+        "drawdown_vs_index": -0.021367018897741508,
+        "drawdown_ok": true
+      },
+      "rebalances_capped_by_policy": 10,
+      "decision": {
+        "label": "abandon",
+        "reason": "net_excess_not_positive",
+        "applies": false
+      }
+    },
+    "top30": {
+      "top_n": 30,
+      "costs": "BASE",
+      "strategy": {
+        "metrics_eur": {
+          "start": "2011-07-01",
+          "end": "2025-07-01",
+          "initial": 10934.0,
+          "final": 321852.8769493157,
+          "cagr": 0.10185259744415665,
+          "max_drawdown": -0.3709410988847387,
+          "risk": {
+            "anualizado": 0.10210599104470641,
+            "vol_anualizada": 0.1681103325869047,
+            "sharpe": 0.3694358942071612,
+            "sortino": 0.520808121800635,
+            "max_drawdown": -0.3709410988847387
+          },
+          "contributed": 128534.0
+        },
+        "turnover_yearly": 0.8240687475667926,
+        "costs_usd": 3394.2010651903693,
+        "dividends_usd": 22390.959746874076,
+        "trades": 2213,
+        "blocked_orders": 2256,
+        "stale_days": 0,
+        "average_cash_share": 0.42531653824170546,
+        "identity_error": 5.820766091346741e-11,
+        "min_cash": 7593.424661769729
+      },
+      "benchmark": {
+        "metrics_eur": {
+          "start": "2011-07-01",
+          "end": "2025-07-01",
+          "initial": 10934.0,
+          "final": 412841.03209578677,
+          "cagr": 0.14834538013135745,
+          "max_drawdown": -0.33075425515455703,
+          "risk": {
+            "anualizado": 0.14872201229561455,
+            "vol_anualizada": 0.19314661482295922,
+            "sharpe": 0.5628988755266076,
+            "sortino": 0.7919465699694844,
+            "max_drawdown": -0.33075425515455703
+          },
+          "contributed": 128534.0
+        },
+        "turnover_yearly": 0.07363530441345731,
+        "costs_usd": 360.6169338663759,
+        "dividends_usd": 34501.057307560135,
+        "trades": 222,
+        "blocked_orders": 0,
+        "stale_days": 0,
+        "average_cash_share": 0.0028187946208048857,
+        "identity_error": 1.4551915228366852e-11,
+        "min_cash": 30.18745319282948
+      },
+      "net_excess_cagr_eur": -0.04649278268720081,
+      "overall": {
+        "months": 169,
+        "mean_annual": -0.04033281524721119,
+        "lower_bound_annual": -0.09478980017360703,
+        "alpha": 0.016666666666666666,
+        "block": 12,
+        "replicas": 5000,
+        "seed": 252
+      },
+      "windows": [
+        {
+          "start": "2011-07-01",
+          "end": "2016-06-30",
+          "months": 60,
+          "mean_annual": -0.11125799613174435,
+          "lower_bound_annual": -0.19237384594899012,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        },
+        {
+          "start": "2016-07-01",
+          "end": "2021-06-30",
+          "months": 60,
+          "mean_annual": -0.0024654261247648137,
+          "lower_bound_annual": -0.07311353579603132,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        },
+        {
+          "start": "2021-07-01",
+          "end": "2025-07-01",
+          "months": 48,
+          "mean_annual": -0.004546056024201939,
+          "lower_bound_annual": -0.06257688956624877,
+          "alpha": 0.016666666666666666,
+          "block": 12,
+          "replicas": 5000,
+          "seed": 252
+        }
+      ],
+      "alpha_ff5_umd": {
+        "months": 169,
+        "alpha_annual": -0.00865503272218813,
+        "ci95_annual": [
+          -0.046909395387603414,
+          0.029599329943227157
+        ],
+        "t_stat": -0.44344913765418176,
+        "contains_zero": true,
+        "r2": 0.7223046041577457,
+        "loadings": {
+          "Mkt-RF": 0.6841510988498472,
+          "SMB": 0.2679854461362515,
+          "HML": 0.3056208341982233,
+          "RMW": 0.3955651510987671,
+          "CMA": -0.06484840065701736,
+          "Mom": -0.01316978945767576
+        }
+      },
+      "risk": {
+        "volatility_ratio": 0.870376800240568,
+        "volatility_ok": true,
+        "drawdown_vs_index": -0.040186843730181665,
+        "drawdown_ok": true
+      },
+      "rebalances_capped_by_policy": 9,
+      "decision": {
+        "label": "abandon",
+        "reason": "net_excess_not_positive",
+        "applies": false
+      }
+    }
+  },
+  "equal_weight_universe": {
+    "metrics_eur": {
+      "start": "2011-07-01",
+      "end": "2025-07-01",
+      "initial": 10934.0,
+      "final": 201425.29286724032,
+      "cagr": 0.05661845693268219,
+      "max_drawdown": -0.3406340417099126,
+      "risk": {
+        "anualizado": 0.056756423121488764,
+        "vol_anualizada": 0.15757377876606127,
+        "sharpe": 0.10634017444213131,
+        "sortino": 0.14763807717483984,
+        "max_drawdown": -0.3406340417099126
+      },
+      "contributed": 128534.0
+    },
+    "turnover_yearly": 0.5838345546508739,
+    "costs_usd": 46154.8766939979,
+    "dividends_usd": 19586.3814957827,
+    "trades": 45501,
+    "blocked_orders": 32973,
+    "stale_days": 244,
+    "average_cash_share": 0.43034192411792965,
+    "identity_error": 2.9103830456733704e-11,
+    "min_cash": 5881.486392505347,
+    "missing_series": 203,
+    "note": "comparador; no decide"
+  },
+  "data": {
+    "missing": [
+      "AABA",
+      "ABC",
+      "ADT",
+      "AET",
+      "BBBY",
+      "CAM",
+      "CBS",
+      "CTXS",
+      "DFS",
+      "DNB",
+      "DTV",
+      "FIS",
+      "GM",
+      "GPS",
+      "LDOS",
+      "LO",
+      "MHS",
+      "NDAQ",
+      "NFLX",
+      "SEE",
+      "SWY",
+      "SYMC",
+      "VIAB",
+      "WLP",
+      "ZBH"
+    ],
+    "exits": [],
+    "anomalies": 0,
+    "strict": true,
+    "bases": {
+      "as_traded": 9,
+      "today_splits": 55
+    }
+  },
+  "decision": {
+    "label": "abandon",
+    "reason": "net_excess_not_positive",
+    "applies": true
+  },
+  "amendments": [
+    {
+      "id": 1,
+      "date": "2026-11-01",
+      "ref": "docs/research/nsi-v1/enmienda-1.json",
+      "rule": "cada aportación se invierte en la apertura siguiente en la selección vigente"
+    }
+  ],
+  "assumptions": {
+    "fx_deposit_cost": 0.006,
+    "dividend_withholding": 0.15,
+    "initial_conversion_cost_outside_metrics": true,
+    "alpha_rule": "intervalo del 95 % del alfa anual contiene el cero",
+    "sic": "SIC actual de submissions, no fechado",
+    "sectors_for_policy": "sector point-in-time de entity_master (GICS)"
+  },
+  "downloads": {
+    "issuers": 767,
+    "ok": 767,
+    "absent": 0,
+    "first_fetch": "2026-11-01T17:32:59+00:00",
+    "last_fetch": "2026-11-01T17:42:46+00:00",
+    "manifest_sha256": "018d3dd72d80af57d6bc03f78350e928e3b74c5cb5cba5f1f51beeb411f0c99d"
+  }
+}

@@ -1,0 +1,363 @@
+{
+  "spec_sha256": "423016a5919ba9bd2e0065f1687fb8ce0cb3167658d9274af116ab10eb9c234b",
+  "code_sha256": "2c1216b53b7f45d4d57ef5e5cf8252771891fd816523ad917396079f5fc6fda3",
+  "inputs_sha256": {
+    "data\\revalidation_2011_2025\\acreditado-38\\manifest.json": "75ec3ac9e2a33f9a35a733ff4f5361b36dd0f56bfee497c1504567068da95a3a",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2011-07-02.csv": "08277bd53f925efec1542af439573db7e6cc82291df2ceb1895496c48716036e",
+    "data\\cross_section_test\\forward-2011-07-02.csv": "f91af3ea51022c7ab87d510940c4c7ead728884ce9c5f8fd626ed375a1ffd47d",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2011-10-02.csv": "e688bd05243a1896e2a881a638b340b0ba72da7625c6d1a10619bdc0a358ea32",
+    "data\\cross_section_test\\forward-2011-10-02.csv": "4a33991fad7fdf82db1971be4e8aa700922ee170287e26727c842f356d1b8287",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2012-01-02.csv": "03c51e578acbc4e5d19d7e21f73fa214b5557c68e8910c196bed517d719896b9",
+    "data\\cross_section_test\\forward-2012-01-02.csv": "de6a68cb3f3bf43b034dcc89866eb21d908e210b5e42a229633bb99bb767a59d",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2012-04-02.csv": "2bb048643374d139989283fa2ca3c5b385f44a2d34c32ac8044a26b281b9378a",
+    "data\\cross_section_test\\forward-2012-04-02.csv": "32260452cb8fc01f90272347b45156a5355a1f282bb554bd87feced898f9cf06",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2012-07-02.csv": "eebf9979bf418dde2b3cbea8472ca08c5a2402363c0cda564e411553e3fbb48c",
+    "data\\cross_section_test\\forward-2012-07-02.csv": "f7b7f109f327cc955415d96fe0d589b19a9846f4a432c6c2422ea80731b8b722",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2012-10-02.csv": "4f9fd6a12b56f43469476bea3e759802c25647427ab8cfe29e684fe43dab889b",
+    "data\\cross_section_test\\forward-2012-10-02.csv": "b9fa9ea00c9dcc580c4078ec06e698efc27a22933cec27d53ba9bceb0c98deb6",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2013-01-02.csv": "c719d89212e3d1c194601c50c43cb3e3e11d73fa5bbaa762f10c163de7eba9d5",
+    "data\\cross_section_test\\forward-2013-01-02.csv": "a5b0f51dee1fb6848354a243d623196ab43830ef8cb3861c5f72115f73344114",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2013-04-02.csv": "ffdb5088f634e6fba6229354805fc2c0c982b502031a4beb63152ee9d71dca30",
+    "data\\cross_section_test\\forward-2013-04-02.csv": "fa84eaa82b319b2ba302bd39e16c1846520d3d9823678891978676e73fbf598e",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2013-07-02.csv": "9314e077ceebe84b0b0bca4992de7b1b5f247e1ab0025005e790948082806579",
+    "data\\cross_section_test\\forward-2013-07-02.csv": "d13b347d2cf5c7ec3a14f50a8f0b57fad8eda39e715d8a00519b2b1819b20503",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2013-10-02.csv": "b4dbd5927e8c571b7e6e434905f63e73fcf8f97f830bd3423a9ac5b6084083bd",
+    "data\\cross_section_test\\forward-2013-10-02.csv": "66346ed94bd256f438e59d8af5f50c6b2d686fb162bf8cc251e823887868d0b5",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2014-01-02.csv": "5d955b785ea15f84bc89428a19b75c5b7f9e81b9c706731979babd4ffd66589a",
+    "data\\cross_section_test\\forward-2014-01-02.csv": "2cfa57b7ae355a2e256a1bac457b32d5011c83ab75c82ce0f2add1a47a491191",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2014-04-02.csv": "dbea5baa8cb8c21a98672e8d77588236e6be67d6575468335af7c709f23f5754",
+    "data\\cross_section_test\\forward-2014-04-02.csv": "4dffc235a66f2d130491fbbe02e8f55503bb8c5723373be5fb705412ad738d24",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2014-07-02.csv": "44939962ce1192b2593abb5aea9e61da04b48a5909c1f11e146b72d2616bc6bf",
+    "data\\cross_section_test\\forward-2014-07-02.csv": "e048222545f022c3fae4c59db43929b80ac376118ecb69331052eb69486c6d0c",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2014-10-02.csv": "02a67e9fd39f6265bd34a4197fb08538831c642f5d727ce002fc22341eb2ec6d",
+    "data\\cross_section_test\\forward-2014-10-02.csv": "fc788b5cf85d3ae1a4432e29719d7095b100320eb4c4649b394e6e67af3e3520",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2015-01-02.csv": "eb05a24fcc4eb23da9fc46d795e870b41467eae081ff382b899226227ec6f986",
+    "data\\cross_section_test\\forward-2015-01-02.csv": "55a00ab8c80f4a17b64ffa8a3de4ca8c64af015802c5ee348bc9f1a82436576f",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2015-04-02.csv": "e0c38541bb0714e5b45d945937ef51b3394997f7074153778ea3f02f1d688b44",
+    "data\\cross_section_test\\forward-2015-04-02.csv": "7ba93a37b49e0853305bd654395c2438a3d2fb377f0690f2965e678e93097eaa",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2015-07-02.csv": "151624991b382d7c75c82715b4d23fdc7df86e45aef3bceebede8c9d800d5d74",
+    "data\\cross_section_test\\forward-2015-07-02.csv": "7d176864e63e69f9c01971ed1395c878a890af76daad2b706bd1e4ef7fcb7320",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2015-10-02.csv": "42722b8d08f4faf86f20985d5f3ba9225fcc252d1df62b367e7c8b250ce78922",
+    "data\\cross_section_test\\forward-2015-10-02.csv": "7cca0827861bbd0cf4572e6de227ecbd0994cf1364cdf2603dfa8f07215a842b",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2016-01-02.csv": "7991a4d2802918f8202272634e30ca627e3d2dec493069cdee6c3cfb469caefb",
+    "data\\cross_section_test\\forward-2016-01-02.csv": "41ce04c82438c160877fac785a2e4a98c14d11db51057acb59d5dd0375ec5134",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2016-04-02.csv": "906bb8777e22d69694b488ff36267c52c2bd4d5629ec86f974e870d085e7428b",
+    "data\\cross_section_test\\forward-2016-04-02.csv": "bf2ec43924b3100eee934d43f4d0e636b79bc5d5c69f9e9bce06c3a1cd07e555",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2016-07-02.csv": "f172d4943f6f19ffb0ccbd3623dacbfab80164cbbfb45b513974b14a4dd4276b",
+    "data\\cross_section_test\\forward-2016-07-02.csv": "90a92633473e99dc617a9f03c3a7eecca0e0dc89a3af0ac0896c522a26b43825",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2016-10-02.csv": "c3df5b46afe0a4a08735193acffc78ee83629b71edae3497ebff88ad4b74938f",
+    "data\\cross_section_test\\forward-2016-10-02.csv": "24a15173c5fd0521fa489394d3e2ad2f5193a907e7bef0dc954eabfbdd193e50",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2017-01-02.csv": "62eea0884f796c96daf26bd7dfbd9401b215deb6584c82e721365e957ffbaeb4",
+    "data\\cross_section_test\\forward-2017-01-02.csv": "930d88a81b9d42bc131d55fe5225145cba6fb61be1044295b31922995954437d",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2017-04-02.csv": "151b6ec97760ffd279c21eabea50d3557d5331af25522c3962495e9cd63ce978",
+    "data\\cross_section_test\\forward-2017-04-02.csv": "1ea650ad5865a49185ab1c11354a4743751a3f392f93b855f38d826b4181e4ed",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2017-07-02.csv": "d6cd3cafd1d38f2871f67be02c162b43f38869992ab329f9e64ef830565c46de",
+    "data\\cross_section_test\\forward-2017-07-02.csv": "f4dc84e46133b2ecee603eed66d50e7e938a01e96c5adac1f0b2f23b112cab5f",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2017-10-02.csv": "7a2446ca025c08b519c9572503948b56f815738b0f16f711b2c8cefa33dfe594",
+    "data\\cross_section_test\\forward-2017-10-02.csv": "d9b6c5a9a41b0c48e66817922ee9487280410c109eceeeb5631478efe90693f2",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2018-01-02.csv": "330340eface03787e6bdf03ca683b303101d0031e9c87c3fd64bf03dfdb5c29b",
+    "data\\cross_section_test\\forward-2018-01-02.csv": "cc98a7e37c8d0e9a7dd407cf1f6ad16419be5546302f82580bafa7defa583917",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2018-04-02.csv": "6628e9399e1501b2a2ceddc457652affd39c0183d03072fd4d9b96cbf26fe69b",
+    "data\\cross_section_test\\forward-2018-04-02.csv": "104c174d36dd40832b0ae59b103b8edfb2d8823175a6e8c1273ac11c6b19983d",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2018-07-02.csv": "a8acc92a414387fc088d49e9c094fa79cfbc87161d653018f849098dd8d169d8",
+    "data\\cross_section_test\\forward-2018-07-02.csv": "5a95f25064cf5d46a6c776cf8b4fabdcc38126dc2596a669a11284424a7e8120",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2018-10-02.csv": "c27c62a5a5b6ab26ced52a50c979f0c7cc404317467769a175f74c9b5bc0c50a",
+    "data\\cross_section_test\\forward-2018-10-02.csv": "db6a242cddec2acf8f4ee8b2a0435ede0d413e328e483ebbdab68e65ceb1af97",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2019-01-02.csv": "e8c984a903b44bd58aba952deb0b17d87adceb13f916c31bf8c09a9f0eb1527f",
+    "data\\cross_section_test\\forward-2019-01-02.csv": "318c8bb0d3cb247445c7f87e99c9a6c269d032cebf40233c1dde643098c5747a",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2019-04-02.csv": "fafd6e6c99d66890acefddaec82bd044ee284a33f439d456829f06f81420aa63",
+    "data\\cross_section_test\\forward-2019-04-02.csv": "68f24a5e2869fdacaa872f2fdf821b4e99bac3fd36e32689af3c19664920b0f5",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2019-07-02.csv": "eb571e618728a0f1a726831a23761828d14389ba2bf9939fc4569dc8d9467ca4",
+    "data\\cross_section_test\\forward-2019-07-02.csv": "4f738a3b49bf2b341120b9155b9dcf76f7cfec1153c64347c2aebb1149144fc8",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2019-10-02.csv": "2d9dd8b5225b1197928a6c87e29a3e08c28342673ffc3bf3b4e118cbf0b158ec",
+    "data\\cross_section_test\\forward-2019-10-02.csv": "d2ee7d61e24dc7202936e8e67d9ea00045a7c76c5da65108f9b0d0c84f3dc972",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2020-01-02.csv": "fbf1defc67804a5e6e55e4944488b2242d50193100aa6df98f275ca6288a41eb",
+    "data\\cross_section_test\\forward-2020-01-02.csv": "de2b4cce219e66f8bcf2fd45e6291ec04bfadfb0105fa9ea132334bf8b9b126a",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2020-04-02.csv": "bfcd4a17d6d536a763199e2c24452af29ef6d7973a8366b4f346f74dc04a3743",
+    "data\\cross_section_test\\forward-2020-04-02.csv": "986a28aef4de46bdd411f0c16ccfa3e39f7e87a20ca6d125c5d5e2bedd0fdbd3",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2020-07-02.csv": "9b54847e7b27cbf9a873be317cb328867a7b0c586cafd80bea1553df8a934589",
+    "data\\cross_section_test\\forward-2020-07-02.csv": "f2a9baf1c55881e05d93dcdcb3027c7c47dfca9c9808ee2d5c28ed55c1d424fd",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2020-10-02.csv": "807930e297163e6feac55ad9c74d756befeabed1b93de9d6cda57c7a8ebb82cc",
+    "data\\cross_section_test\\forward-2020-10-02.csv": "f6ffb2087f3771211b323da73c7bee8765067fc3bb786628b7f0eba7703da8ec",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2021-01-02.csv": "7e7fdef2ea28c61579797e1992817509aaca717f3dc194ea44d0391be36edc05",
+    "data\\cross_section_test\\forward-2021-01-02.csv": "8b83699ea8dae63aefc7552c67c2d9203849bf07cfd4efe9a76a3377345db41c",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2021-04-02.csv": "0c24b193f14ff7c615f3cd564b1d8bf423457a85eabf50397cce9ea492d73b3d",
+    "data\\cross_section_test\\forward-2021-04-02.csv": "b63f6bb03b3aa604f77f59e381d09308c2d57b7488f866a33d2a56b24ff32731",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2021-07-02.csv": "0280866ef079954b974ea39be58af586c9b7ad65adba9e60e8f72ca2ffa67fe8",
+    "data\\cross_section_test\\forward-2021-07-02.csv": "042bd2f625090bee9ffc2c2dd308f891c0ad285b4505fa3cf9b707a2632a2c36",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2021-10-02.csv": "482ea813e9f99fc484dabd9b93bf72ddaa6aab98433f0d6c13869365fa450997",
+    "data\\cross_section_test\\forward-2021-10-02.csv": "32044af49d699562955a34aa373d8b84a470f40faabd77ec3256b282d92e1b55",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2022-01-02.csv": "c436437349c8f2471c446a5e4eeb05fe40fad84dc87fd146ec7377dc6e8f3b21",
+    "data\\cross_section_test\\forward-2022-01-02.csv": "4d4156aa76d06ddd3c15f1bf33174b662d3159097384efbdd79d69f04762c8b8",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2022-04-02.csv": "0ed8ff404d8875351b1b2fb5378d7592a69b3cdf8c65123bd97dc955ef017e19",
+    "data\\cross_section_test\\forward-2022-04-02.csv": "df8f56fccb6318df07c4648238cac99ad5eec761cc216449b07edaecbe625a65",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2022-07-02.csv": "7285ae4854e93b37e736867e0a0cba907a3182372b4d19bf592e2158ddf97144",
+    "data\\cross_section_test\\forward-2022-07-02.csv": "ce2a224eb24f07aa7611b9c55020d34ed9ea4c97f70cf62aac597dfdd555cdd9",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2022-10-02.csv": "a484b4118bc540416f352785eecce48524141934aa85eade7d96f8048e559b50",
+    "data\\cross_section_test\\forward-2022-10-02.csv": "64b0ec8bb357f1fe1aa404bebf468ae60e088989e212c6744bdf97cc248b5762",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2023-01-02.csv": "e50c525a8d5e90c9970b805c89608ce46d8e62c062650a852bf90539a49d03a4",
+    "data\\cross_section_test\\forward-2023-01-02.csv": "22344f636d394f6de33107a2ec74e057d3c67d897053d6356fd0d5d7af064584",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2023-04-02.csv": "10b85076e790c5e4176fa138b5c64dd20db741abb33729e581496dfa739f82f4",
+    "data\\cross_section_test\\forward-2023-04-02.csv": "aff84328adf489e39e63e89e2fd5c64de0c43788b35cd1daa0aa42f1392471da",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2023-07-02.csv": "f114a5cca9c8cc0fac842861ad4be2b628782cd03aae09a175fc1f97ad0e35f0",
+    "data\\cross_section_test\\forward-2023-07-02.csv": "7d560edd19b9e5888ca30429c52acd223687bab78fb28aeb34452ebe83b9dac3",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2023-10-02.csv": "4d9397499a016a957144c42553c54a4a6584bea3bb2aefbafb3db760c785ca79",
+    "data\\cross_section_test\\forward-2023-10-02.csv": "2e8b3a748922d8dd374f195df324ef0e552bc6a0ba39aba2ecda1f15f1ec6058",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2024-01-02.csv": "5c5a9458be5438fd923daaa3e2557017fce3aa00b46d4cf265e261ee8335a995",
+    "data\\cross_section_test\\forward-2024-01-02.csv": "0e0c32d7eaabe759e829424470565ab6545d4a04d27e1b25eb4be125616afc95",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2024-04-02.csv": "344b56fa6607bea5e302fc9f13e0f7bf0a248ba7763c596b68320c1348c5a10a",
+    "data\\cross_section_test\\forward-2024-04-02.csv": "6c6e85bddd158029798e1099ca30bd36c16413053342a86cf63fa691333d8970",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2024-07-02.csv": "bdc2643ed8920bb4404e5c8d27492fc5f9a72c20b602186de3705e63d0fa3a59",
+    "data\\cross_section_test\\forward-2024-07-02.csv": "dc82ebb45b9544e2e51ced70d8c8fc267cac2ac26e6826c1b8cb965b41ba0eeb",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2024-10-02.csv": "e28f415dd6a1b5dbe7e5dcc15336d140fb94f312d2ab678305b48d572a98ac0c",
+    "data\\cross_section_test\\forward-2024-10-02.csv": "fa4a96f11936b7a45c1f360799feed73ed646e1f5d5d4772325422b3cc9bc3be",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2025-01-02.csv": "e38251955e3518da94910c08bdda80966abc7830fc29315ea31f86c6005acd63",
+    "data\\cross_section_test\\forward-2025-01-02.csv": "4e4528eb2afb86fbb4b13bf58ed9c57a2edd41e733c753f40e0214d77935dda8",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2025-04-02.csv": "c715556f316321cfa429e8d424eb43f72e158d1c200498c8b5d615628566201b",
+    "data\\cross_section_test\\forward-2025-04-02.csv": "c3f0f0a8bc002c374c99c299d72c4ba8d964bb6c06b7b4b57253d53cae9e6efc",
+    "data\\revalidation_2011_2025\\acreditado-38\\ranking-2025-07-02.csv": "269419a5b4fcca67d64c6aa61a5e7634e9b60506f0b3bf6b5792a524f1eaa919",
+    "data\\cross_section_test\\forward-2025-07-02.csv": "3a873b3e5a3a2a1fcea937628d24577caa140b779d4288126242136dec185681",
+    "docs\\historical-revalidation-2011-2025\\acreditado-38-continua\\benchmarks-by-period.csv": "bf0d32daf102da88780e569461513bf73bd21f2e2095f833f608354e13a65653"
+  },
+  "trimestres": 57,
+  "primary": {
+    "tail_step": {
+      "n": 57,
+      "media": 0.017291257809757536,
+      "se_hac": 0.005100310313449344,
+      "t_hac": 3.390236426234906,
+      "p": 0.0006429152723788735,
+      "ic95": [
+        0.007074108511096059,
+        0.027508407108419015
+      ],
+      "hac_lags": 3,
+      "p_holm": 0.001285830544757747
+    },
+    "tail_convexity": {
+      "n": 57,
+      "media": 0.018448367982292494,
+      "se_hac": 0.008320229033612986,
+      "t_hac": 2.2172908831911626,
+      "p": 0.015339536539193762,
+      "ic95": [
+        0.0017809463920186834,
+        0.03511578957256631
+      ],
+      "hac_lags": 3,
+      "p_holm": 0.015339536539193762
+    }
+  },
+  "band_excess": {
+    "top_1": {
+      "n": 57,
+      "media": 0.010089932580902282,
+      "se_hac": 0.008992776956985735,
+      "t_hac": 1.1220040960833861,
+      "p": 0.26664863120838844,
+      "ic95": [
+        -0.0079247643948484,
+        0.028104629556652966
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    },
+    "p1_5": {
+      "n": 57,
+      "media": 0.016804485059763036,
+      "se_hac": 0.0035885905222541826,
+      "t_hac": 4.682753564540783,
+      "p": 1.843520703643444e-05,
+      "ic95": [
+        0.009615674402311907,
+        0.023993295717214164
+      ],
+      "hac_lags": 3,
+      "p_holm": 0.00014748165629147552
+    },
+    "p5_10": {
+      "n": 57,
+      "media": -0.00015068165981161808,
+      "se_hac": 0.005109570083422687,
+      "t_hac": -0.0294900857315736,
+      "p": 0.9765785749078266,
+      "ic95": [
+        -0.010386380506730863,
+        0.010085017187107626
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    },
+    "p10_20": {
+      "n": 57,
+      "media": -0.0025656582758229805,
+      "se_hac": 0.003450155710801057,
+      "t_hac": -0.743635502534257,
+      "p": 0.4602057720309011,
+      "ic95": [
+        -0.009477150682065179,
+        0.004345834130419219
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    },
+    "p20_40": {
+      "n": 57,
+      "media": -0.000916337644412683,
+      "se_hac": 0.002160157009425377,
+      "t_hac": -0.42419955605747284,
+      "p": 0.6730454746596363,
+      "ic95": [
+        -0.0052436521247982435,
+        0.0034109768359728778
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    },
+    "p40_60": {
+      "n": 57,
+      "media": -0.0030842871463261884,
+      "se_hac": 0.00223717786463257,
+      "t_hac": -1.3786508417973935,
+      "p": 0.17348506127129432,
+      "ic95": [
+        -0.007565892940063285,
+        0.0013973186474109081
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    },
+    "p60_80": {
+      "n": 57,
+      "media": 0.0004023228341814389,
+      "se_hac": 0.0021911177075305413,
+      "t_hac": 0.18361534517233621,
+      "p": 0.8549784562233356,
+      "ic95": [
+        -0.0039870133773323435,
+        0.004791659045695222
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    },
+    "p80_100": {
+      "n": 57,
+      "media": 0.0010671907963640326,
+      "se_hac": 0.0030525546535430524,
+      "t_hac": 0.3496057949774499,
+      "p": 0.7279459168573981,
+      "ic95": [
+        -0.005047810982121968,
+        0.0071821925748500335
+      ],
+      "hac_lags": 3,
+      "p_holm": 1.0
+    }
+  },
+  "bands": {
+    "top_1": {
+      "media": 0.04479731004801407,
+      "vs_universo": 0.010089932580902282,
+      "vs_spy": 0.007650033103290356,
+      "n_min": 3,
+      "cobertura_min": 1.0
+    },
+    "p1_5": {
+      "media": 0.05151186252687482,
+      "vs_universo": 0.016804485059763036,
+      "vs_spy": 0.01436458558215111,
+      "n_min": 10,
+      "cobertura_min": 1.0
+    },
+    "p5_10": {
+      "media": 0.03455669580730016,
+      "vs_universo": -0.00015068165981161808,
+      "vs_spy": -0.0025905811374235454,
+      "n_min": 13,
+      "cobertura_min": 1.0
+    },
+    "p10_20": {
+      "media": 0.0321417191912888,
+      "vs_universo": -0.0025656582758229805,
+      "vs_spy": -0.005005557753434909,
+      "n_min": 26,
+      "cobertura_min": 1.0
+    },
+    "p20_40": {
+      "media": 0.0337910398226991,
+      "vs_universo": -0.000916337644412683,
+      "vs_spy": -0.0033562371220246115,
+      "n_min": 51,
+      "cobertura_min": 1.0
+    },
+    "p40_60": {
+      "media": 0.0316230903207856,
+      "vs_universo": -0.0030842871463261884,
+      "vs_spy": -0.005524186623938117,
+      "n_min": 52,
+      "cobertura_min": 1.0
+    },
+    "p60_80": {
+      "media": 0.03510970030129322,
+      "vs_universo": 0.0004023228341814389,
+      "vs_spy": -0.002037576643430489,
+      "n_min": 51,
+      "cobertura_min": 0.9848484848484849
+    },
+    "p80_100": {
+      "media": 0.03577456826347582,
+      "vs_universo": 0.0010671907963640326,
+      "vs_spy": -0.0013727086812478945,
+      "n_min": 52,
+      "cobertura_min": 0.984375
+    }
+  },
+  "windows": {
+    "2011_2015": {
+      "tail_step": 0.0201459794254777,
+      "tail_convexity": 0.023549393259885115,
+      "universo": 0.031293229208708404,
+      "spy": 0.030593065839664178,
+      "top_1": 0.035574986930348745,
+      "p1_5": 0.05053557845379047,
+      "p5_10": 0.02467074958557003,
+      "p10_20": 0.029008259783989156,
+      "p20_40": 0.027982051969674317,
+      "p40_60": 0.029773694834861072,
+      "p60_80": 0.03389022267190531,
+      "p80_100": 0.032253962921517505
+    },
+    "2016_2020": {
+      "tail_step": 0.025466036483839112,
+      "tail_convexity": 0.035136641215512285,
+      "universo": 0.039983911935119014,
+      "spy": 0.03942217299610373,
+      "top_1": 0.06320757418405089,
+      "p1_5": 0.05510679966210961,
+      "p5_10": 0.031826453044955655,
+      "p10_20": 0.03057172343631162,
+      "p20_40": 0.03492364952636403,
+      "p40_60": 0.03952974673822898,
+      "p60_80": 0.04223398247917499,
+      "p80_100": 0.045917003788552055
+    },
+    "2021_2025": {
+      "tail_step": 0.005981754516884138,
+      "tail_convexity": -0.003950785684079261,
+      "universo": 0.03238758690348633,
+      "spy": 0.040961902148064305,
+      "top_1": 0.03415502233207931,
+      "p1_5": 0.04865261887481284,
+      "p5_10": 0.046796268819828214,
+      "p10_20": 0.036762886792917095,
+      "p20_40": 0.038102070732233186,
+      "p40_60": 0.025052352973300007,
+      "p60_80": 0.02876575049978518,
+      "p80_100": 0.028433630666303455
+    }
+  },
+  "universo_media": 0.034707377467111784,
+  "spy_media": 0.03714727694472371,
+  "top20_vs_universo": 0.013584804717772554,
+  "decision": "patron_historico_compatible_sin_confirmacion_independiente"
+}

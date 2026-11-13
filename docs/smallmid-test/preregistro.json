@@ -1,0 +1,80 @@
+{
+  "sha256": "99d36edfcc0637b217be97706ba2c03edc6645a389b2d0b907e909d5cfd974c1",
+  "spec": {
+    "issue": 44,
+    "stage": "RESEARCH",
+    "hypothesis": "El Composite de GABI, sin cambios, predice la rentabilidad relativa del trimestre siguiente entre las empresas cotizadas de EE. UU. fuera del S&P 500 (IC medio > 0).",
+    "why_out_of_sample": "GABI se diseñó con el S&P 500; estas empresas no se usaron para diseñarlo.",
+    "universe": {
+      "source": "frames XBRL de SEC (dei:EntityPublicFloat), sin índices de pago",
+      "rule": "public float fechado en los 455 días anteriores, entre 300000000 y 20000000000 USD; excluidos los emisores del S&P 500 en la fecha (identidad acreditada #27/#34)",
+      "dates": "rebalanceos trimestrales día 2 de 2011-07-02 a 2025-07-02"
+    },
+    "model": {
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      },
+      "metrics": {
+        "value": [
+          "pe",
+          "pb",
+          "ev_ebitda"
+        ],
+        "quality": [
+          "roic",
+          "operating_margin",
+          "revenue_cagr_3y",
+          "fcf_cagr_3y"
+        ],
+        "momentum": [
+          "momentum_12m",
+          "rel_strength_6m",
+          "price_vs_sma200"
+        ],
+        "risk": [
+          "debt_to_equity",
+          "volatility",
+          "max_drawdown"
+        ]
+      },
+      "eligibility": "composite no vacío y cobertura >= 70 % de las 13 métricas (como GABI)",
+      "sector": "sector amplio derivado del SIC de SEC (GABI usa fotos de Yahoo que no existen para estas empresas); solo afecta al grupo de percentiles",
+      "fundamentals": "Company Facts de SEC por CIK, point-in-time por fecha de presentación, con la corrección de ejercicios del #38"
+    },
+    "prices": {
+      "sources": [
+        "Yahoo (tickers vigentes; serie archivada aparte, sin tocar la caché operativa)",
+        "Tiingo (tickers deslistados)",
+        "Nasdaq Data Link WIKI (hasta 2018-03)"
+      ],
+      "identity": "ticker por CIK: ticker SEC vigente o declarado en un 10-K/portada XBRL del emisor en el intervalo; serie aceptada solo si pasa la comprobación de nivel de precio SEC (public float / acciones × cierre, #28)",
+      "forward_return": "de la sesión siguiente a la señal a la primera sesión tras +3 meses; si la serie termina antes, último precio (sin evento terminal acreditado: no estricto)"
+    },
+    "primary": {
+      "test": "IC de Spearman trimestral entre composite_score y retorno siguiente; media de los trimestres; t Newey-West unilateral",
+      "alpha": 0.05
+    },
+    "bounds": {
+      "adverse": "elegibles sin retorno siguiente: los de puntuación por encima de la mediana reciben el percentil 10 del retorno observado del trimestre y los de debajo el percentil 90",
+      "favourable": "el caso simétrico",
+      "complete_case": "solo empresas con retorno"
+    },
+    "decision": {
+      "robusta": "IC medio > 0 con p < 0,05 también con la cota adversa",
+      "condicionada_a_los_datos": "p < 0,05 con los casos completos pero no con la cota adversa",
+      "no_concluyente": "IC medio > 0 con p >= 0,05 en los casos completos",
+      "sin_capacidad_predictiva": "IC medio <= 0 en los casos completos"
+    },
+    "reporting": [
+      "cobertura por trimestre: universo, con precio, elegibles y sin retorno siguiente",
+      "empresas excluidas por falta de precio, separadas entre las que desaparecen y las que no",
+      "quintiles y Top-20 frente al universo (descriptivos)",
+      "IC por ventana 2011-15, 2016-20, 2021-25"
+    ],
+    "model_changes": "ninguno; las pruebas ciegas no se tocan"
+  },
+  "experiment_id": 46
+}

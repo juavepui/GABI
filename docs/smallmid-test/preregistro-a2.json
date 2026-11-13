@@ -1,0 +1,35 @@
+{
+  "sha256": "39c274a0be955536f7fc5f132b7e3cb5cf5585aa6fcdcba18a712a5ad5f40428",
+  "amends_sha256": [
+    "99d36edfcc0637b217be97706ba2c03edc6645a389b2d0b907e909d5cfd974c1",
+    "2608251cefe5d82cd822c14c726a97a9af5cd8d84b2b50c4a12712de925f5e3e"
+  ],
+  "addendum": {
+    "issue": 44,
+    "amends": "preregistro #44 y ampliación A1",
+    "stage": "RESEARCH",
+    "motivation": "Tiingo gratuito tarda meses y FMP gratuito no sirve deslistadas; un conjunto público de Kaggle (US historical stock prices with earnings data, tsaustin, NASDAQ/NYSE/AMEX 1998-2021-06) cubre muchas empresas desaparecidas entre 2018 y 2021. Se añade antes de calcular ningún ranking.",
+    "source": {
+      "id": "kaggle:tsaustin-us-prices-2021-06:smallmid",
+      "url": "https://www.kaggle.com/datasets/tsaustin/us-historical-stock-prices-with-earnings-data",
+      "file": "stocks_latest/stock_prices_latest.csv",
+      "fields": "close negociado (as traded), close_adjusted (splits y dividendos), split_coefficient"
+    },
+    "cleaning": [
+      "filas con algún precio <= 0 o OHLC incoherente: rechazadas por el importador (igual que el resto)",
+      "picos de un día que se deshacen: |r_t| > 50 % y |r_t+1| > 33 % de signo contrario; se elimina el día t"
+    ],
+    "validation": {
+      "level_check": "cada serie solo se acepta con la comprobación de nivel de precio SEC (#28), la misma regla de 400 días que las demás fuentes",
+      "dataset_agreement": "entre las empresas (CIK) con serie de Kaggle y de otra fuente que pasan ambas la comprobación SEC, al menos el 90% deben coincidir (cierre con diferencia mediana < 1 % y menos del 2 % de días con retornos distintos en más de 1 punto); si no, Kaggle no se usa en absoluto"
+    },
+    "priority": "Yahoo, Tiingo, WIKI y por último Kaggle",
+    "cutoff": "solo rebalanceos hasta 2021-01-02: el trimestre siguiente debe terminar antes de 2021-06-01, donde se corta el conjunto",
+    "analysis": "sin cambios: las funciones del análisis de A1 conservan su huella 69efba582a6ca0f9b09fde77a7d710225a577bfd814512030238ea94f9af4538",
+    "tiingo_queue": "se retiran de la cola de Tiingo los símbolos cuyas empresas quedan cubiertas en todas sus fechas del universo; la cola original se conserva",
+    "data_state_rule": "se preregistra solo si no existe ningún ranking del #44"
+  },
+  "code_sha256": "b850b1db7005ed78544a0c5b93d1839ce0b908722e2689a9ea94eb7fb755f5cc",
+  "experiment_id": 48,
+  "rankings_at_registration": 0
+}

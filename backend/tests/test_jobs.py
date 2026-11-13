@@ -1,0 +1,353 @@
+import hashlib
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, date, datetime, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
+
+from gabi.application.administration.jobs import JobCommand, SourceFailures, refresh_failures
+from gabi.infrastructure.jobs.worker import Worker, process_lock
+from gabi.infrastructure.legacy.jobs import LegacyExecutor
+from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.jobs import SqliteJobs
+from gabi_api.bootstrap import create_app
+from gabi_cli import bootstrap as cli
+
+
+def client(tmp_path):
+    return TestClient(create_app(Settings(tmp_path)))
+
+
+def create_job(api, kind="quality", key="request-one", **options):
+    return api.post("/api/v1/jobs", json={"kind": kind, "idempotency_key": key, **options})
+
+
+def test_reads_do_not_initialize_jobs_and_api_never_exposes_keys_or_paths(tmp_path):
+    (tmp_path / "fred_api_key.txt").write_text("private-key")
+    with client(tmp_path) as api:
+        assert api.get("/api/v1/jobs").json() == {"jobs": []}
+        result = api.get("/api/v1/administration/settings")
+        assert result.json()["keys"]["fred"] is True
+        assert "private-key" not in result.text
+        assert str(tmp_path) not in result.text
+        assert not (tmp_path / "gabi_jobs.db").exists()
+
+
+def test_research_weights_save_is_explicit_atomic_and_investor_is_locked(tmp_path):
+    weights = {"value": 0.25, "quality": 0.25, "momentum": 0.25, "risk": 0.25}
+    with client(tmp_path) as api:
+        assert api.post("/api/v1/administration/weights", json=weights).status_code == 403
+        assert not (tmp_path / "weights.json").exists()
+    (tmp_path / "app_mode.json").write_text('{"mode":"RESEARCH"}')
+    with client(tmp_path) as api:
+        invalid = weights | {"risk": 0.50}
+        assert api.post("/api/v1/administration/weights", json=invalid).status_code == 422
+        assert not (tmp_path / "weights.json").exists()
+        response = api.post("/api/v1/administration/weights", json=weights)
+        assert response.status_code == 200
+        assert response.json()["status"] == "EXPERIMENTAL"
+        assert api.get("/api/v1/model").json()["weights"] == weights
+        assert json.loads((tmp_path / "weights.json").read_text()) == weights
+        assert not list(tmp_path.glob("weights.*.tmp"))
+
+
+def test_idempotency_conflict_cancel_and_result_publication(tmp_path):
+    with client(tmp_path) as api:
+        created = create_job(api).json()
+        job_id = created["id"]
+        assert created["status"] == "queued"
+        assert set(created["parameters"]) == {"symbols", "start", "end"}
+        assert create_job(api).json()["id"] == job_id
+        assert create_job(api, kind="refresh").status_code == 409
+        assert create_job(api, key="request-two").status_code == 409
+        assert api.get(f"/api/v1/jobs/{job_id}/result").status_code == 404
+        assert api.post(f"/api/v1/jobs/{job_id}/cancel").json()["status"] == "cancelled"
+        assert create_job(api, key="request-three").status_code == 202
+        store = SqliteJobs(tmp_path)
+        assert Worker(store, lambda _: {"coverage": 3}, tmp_path).run_once()
+        completed = api.get("/api/v1/jobs").json()["jobs"][0]
+        assert completed["status"] == "succeeded"
+        assert api.get(f"/api/v1/jobs/{completed['id']}/result").json() == {"coverage": 3}
+        artifact = (tmp_path / "jobs" / "results" / f"{completed['id']}.json").read_bytes()
+        assert hashlib.sha256(artifact).hexdigest() == completed["result_sha256"]
+        (tmp_path / "jobs" / "results" / f"{completed['id']}.json").write_text("{}")
+        assert api.get(f"/api/v1/jobs/{completed['id']}/result").status_code == 503
+
+
+def test_two_workers_one_claim_and_stale_process_becomes_failed(tmp_path):
+    store = SqliteJobs(tmp_path)
+    store.enqueue(JobCommand("quality"), "first-key", "ui")
+    token = "process-one"
+    first = store.claim(token)
+    assert first and first["status"] == "running"
+    assert store.claim("process-two") is None
+    with store.connection(write=True) as db:
+        db.execute("UPDATE jobs SET lease_until=? WHERE id=?",
+                   ((datetime.now(UTC) - timedelta(seconds=1)).isoformat(), first["id"]))
+    assert store.claim("process-two") is None
+    assert store.get(first["id"])["error_code"] == "worker_interrupted"
+    assert not store.finish(first["id"], token, "succeeded", ref=first["id"], digest="bad")
+    assert store.get(first["id"])["result_ref"] is None
+
+
+def test_os_lock_excludes_a_second_worker_process(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("quality"), "lock-test", "ui")
+    with process_lock(tmp_path) as acquired:
+        assert acquired
+        assert not Worker(store, lambda _: {"ok": True}, tmp_path).run_once()
+        assert store.get(job["id"])["status"] == "queued"
+    assert Worker(store, lambda _: {"ok": True}, tmp_path).run_once()
+
+
+def test_running_cancellation_and_failed_execution_never_publish(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("symbols", ("SPY",)), "symbols-one", "ui")
+
+    def cancelled(_):
+        store.cancel(job["id"])
+        return {"should_not_publish": True}
+
+    assert Worker(store, cancelled, tmp_path).run_once()
+    assert store.get(job["id"])["status"] == "cancelled"
+    assert not (tmp_path / "jobs" / "results" / f"{job['id']}.json").exists()
+    second = store.enqueue(JobCommand("quality"), "quality-two", "ui")
+
+    def fails(_):
+        raise RuntimeError("secret value and local path")
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(second["id"])
+    assert failed["status"] == "failed"
+    assert failed["error_code"] == "internal_error"
+    assert "secret" not in json.dumps(failed)
+    assert failed["failures"] == [] and failed["failures_total"] == 0
+    assert failed["diagnostic"] is True
+    trace = (tmp_path / "jobs" / "logs" / f"{second['id']}.log").read_text(encoding="utf-8")
+    assert "RuntimeError: secret value and local path" in trace and "in fails" in trace
+
+
+def test_unexpected_failure_trace_omits_message_for_blind_and_maintenance(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("maintenance"), "maintenance-trace", "scheduler")
+
+    def fails(_):
+        # Built at run time so only the message (not the source line) could leak it; letters
+        # outside hex so a timestamp or job id in the log never matches by chance.
+        computed = "zq" + "xw"
+        raise ValueError(f"pending blind result {computed}")
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(job["id"])
+    assert failed["error_code"] == "internal_error" and failed["diagnostic"] is True
+    trace = (tmp_path / "jobs" / "logs" / f"{job['id']}.log").read_text(encoding="utf-8")
+    assert "builtins.ValueError (mensaje omitido)" in trace and "in fails" in trace
+    assert "zqxw" not in trace
+
+
+def test_unwritable_trace_still_finishes_failed_without_diagnostic(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("quality"), "quality-unwritable", "ui")
+    (tmp_path / "jobs").mkdir(exist_ok=True)
+    (tmp_path / "jobs" / "logs").write_text("not a directory")
+
+    def fails(_):
+        raise RuntimeError("boom")
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(job["id"])
+    assert failed["status"] == "failed" and failed["diagnostic"] is False
+
+
+def test_source_failures_publish_pairs_without_reasons(tmp_path):
+    store = SqliteJobs(tmp_path)
+    job = store.enqueue(JobCommand("refresh"), "refresh-sources", "ui")
+    result = {"failed": {"VYLR": {"edgar": "secret reason C:\\local"}, "AAA": {"precio": "x", "fundamentales": "y"}},
+              "failed_events": [{"source": "sec", "entity": "cik:0002128626", "dataset": "facts:VYLR",
+                                 "reason": "secret reason"},
+                                {"source": "universe", "entity": "SP500", "dataset": "members", "reason": "x"}]}
+
+    def fails(_):
+        raise SourceFailures(refresh_failures(result))
+
+    Worker(store, fails, tmp_path).run_once()
+    failed = store.get(job["id"])
+    assert failed["status"] == "failed" and failed["error_code"] == "sources_failed"
+    assert failed["failures"] == [{"source": "sec", "symbol": "VYLR"}, {"source": "universe", "symbol": "SP500"},
+                                  {"source": "yahoo", "symbol": "AAA"}]
+    assert failed["failures_total"] == 3 and "secret" not in json.dumps(failed)
+
+
+def test_source_failures_are_bounded():
+    failures = SourceFailures([("sec", f"S{i:03}") for i in range(30)])
+    assert failures.total == 30 and len(failures.failures) == 20
+
+
+def test_parallel_idempotent_requests_create_one_row(tmp_path):
+    store = SqliteJobs(tmp_path)
+
+    def submit(_):
+        return store.enqueue(JobCommand("quality"), "same-request", "ui")["id"]
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        assert len(set(pool.map(submit, range(8)))) == 1
+    assert len(store.list()) == 1
+
+
+def test_retry_failed_and_cancelled_operational_jobs_is_new_and_idempotent(tmp_path):
+    store = SqliteJobs(tmp_path)
+    with client(tmp_path) as api:
+        original = create_job(api).json()
+
+        def fails(_):
+            raise RuntimeError("not exposed")
+
+        Worker(store, fails, tmp_path).run_once()
+        retry_url = f"/api/v1/jobs/{original['id']}/retry"
+        payload = {"idempotency_key": "new-attempt-key"}
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            responses = list(pool.map(lambda _: api.post(retry_url, json=payload), range(4)))
+        assert all(response.status_code == 202 for response in responses)
+        retried = responses[0].json()
+        assert len({response.json()["id"] for response in responses}) == 1
+        assert retried["id"] != original["id"]
+        assert retried["parameters"] == original["parameters"]
+        assert retried["origin"] == "ui" and retried["result_ref"] is None
+        assert api.get(f"/api/v1/jobs/{original['id']}").json()["status"] == "failed"
+        assert api.get(f"/api/v1/jobs/{original['id']}/result").status_code == 404
+        assert api.post(retry_url, json={"idempotency_key": "different-key"}).status_code == 409
+        cancelled = api.post(f"/api/v1/jobs/{retried['id']}/cancel").json()
+        assert cancelled["status"] == "cancelled"
+        response = api.post(f"/api/v1/jobs/{retried['id']}/retry", json=payload)
+        assert response.status_code == 202
+        assert response.json()["id"] != retried["id"]  # Same client key, different source namespace.
+        assert Worker(store, lambda _: {"ok": True}, tmp_path).run_once()
+        assert api.post(f"/api/v1/jobs/{response.json()['id']}/retry", json=payload).status_code == 409
+
+
+def test_retry_revalidates_parameters_and_excludes_other_kinds(tmp_path):
+    store = SqliteJobs(tmp_path)
+    with client(tmp_path) as api:
+        job = create_job(api, kind="refresh").json()
+        url = f"/api/v1/jobs/{job['id']}/retry"
+        payload = {"idempotency_key": "retry-valid-key"}
+        assert api.post(url, json=payload).status_code == 409
+        api.post(f"/api/v1/jobs/{job['id']}/cancel")
+        assert api.post(url, json=payload | {"kind": "quality"}).status_code == 422
+        with store.connection(write=True) as db:
+            db.execute("UPDATE jobs SET parameters=? WHERE id=?",
+                       (json.dumps({"symbols": [], "start": "2020-01-01", "end": None}), job["id"]))
+        assert api.post(url, json=payload).status_code == 422
+        for kind in ("maintenance", "tiingo", "symbols", "backtest_register"):
+            with store.connection(write=True) as db:
+                db.execute("UPDATE jobs SET kind=? WHERE id=?", (kind, job["id"]))
+            assert api.post(url, json=payload).status_code == 403
+
+
+def test_retry_after_worker_interruption_and_browser_reload(tmp_path):
+    store = SqliteJobs(tmp_path)
+    source = store.enqueue(JobCommand("refresh"), "interrupted-refresh", "ui")
+    store.claim("previous-process")
+    with store.connection(write=True) as db:
+        db.execute("UPDATE jobs SET lease_until=? WHERE id=?", ("2000-01-01T00:00:00+00:00", source["id"]))
+    assert store.claim("replacement-process") is None
+    with client(tmp_path) as api:
+        recovered = api.get(f"/api/v1/jobs/{source['id']}").json()
+        assert recovered["error_code"] == "worker_interrupted" and recovered["result_ref"] is None
+        response = api.post(f"/api/v1/jobs/{source['id']}/retry", json={"idempotency_key": "restart-request"})
+        assert response.status_code == 202
+        new_id = response.json()["id"]
+    with client(tmp_path) as reloaded:
+        assert reloaded.get(f"/api/v1/jobs/{new_id}").json()["status"] == "queued"
+        assert Worker(store, lambda _: {"restored": True}, tmp_path).run_once()
+        assert reloaded.get(f"/api/v1/jobs/{new_id}/result").json() == {"restored": True}
+
+
+def test_job_validation_blocks_arbitrary_paths_and_scheduler_only_ops(tmp_path):
+    with client(tmp_path) as api:
+        assert create_job(api, kind="symbols", symbols=["../../secret"]).status_code == 422
+        assert create_job(api, kind="symbols", symbols=[]).status_code == 422
+        assert create_job(api, kind="backtest", start="2019-01-01", end="2026-01-01").status_code == 422
+        assert api.post("/api/v1/jobs", json={"kind": "maintenance", "idempotency_key": "maintenance-1"}).status_code == 422
+
+
+def test_backtest_reservations_guard_submission_and_old_result_reads(tmp_path):
+    with client(tmp_path) as api:
+        for start, end in (("2009-01-01", "2009-06-01"), ("2026-01-01", "2026-06-01")):
+            response = create_job(api, kind="backtest", key=f"blocked-{start}", start=start, end=end)
+            assert response.status_code == 403
+            assert response.json()["error"]["code"] == "reserved_period"
+    store = SqliteJobs(tmp_path)
+    old = store.enqueue(JobCommand("backtest", start="2019-01-01", end="2019-06-01"), "old-backtest", "ui")
+    with sqlite3.connect(store.path) as db:
+        db.execute("UPDATE jobs SET parameters=? WHERE id=?",
+                   (json.dumps({"symbols": [], "start": "2009-01-01", "end": "2009-06-01"}), old["id"]))
+    with client(tmp_path) as api:
+        response = api.get(f"/api/v1/jobs/{old['id']}/result")
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "reserved_period"
+
+
+def test_separate_worker_process_and_scheduler_share_persistent_queue(tmp_path):
+    (tmp_path / "sp500_constituents.csv").write_text("symbol\nSPY\nRSP\n")
+    with sqlite3.connect(tmp_path / "gabi.db") as db:
+        db.execute("CREATE TABLE prices(symbol TEXT)")
+        db.execute("CREATE TABLE fundamentals(symbol TEXT)")
+        db.execute("INSERT INTO prices VALUES('SPY')")
+    settings = os.environ | {"GABI_DATA_DIR": str(tmp_path)}
+    with client(tmp_path) as api:
+        job_id = create_job(api).json()["id"]
+    subprocess.run([sys.executable, "-m", "gabi_cli", "worker", "--once"], env=settings, check=True)
+    with client(tmp_path) as api:
+        assert api.get(f"/api/v1/jobs/{job_id}").json()["status"] == "succeeded"
+        report = api.get(f"/api/v1/jobs/{job_id}/result").json()
+        assert report["sources"]["prices"] == {"covered": 1, "total": 2}
+        assert report["sources"]["fundamentals"] == {"covered": 0, "total": 2}
+    for _ in range(2):
+        subprocess.run([sys.executable, "-m", "gabi_cli", "schedule", "daily"], env=settings, check=True)
+    assert sorted(job["kind"] for job in SqliteJobs(tmp_path).list()) == ["maintenance", "quality", "refresh"]
+
+
+@pytest.mark.parametrize(("day", "force", "expected"), [(3, False, 0), (2, False, 1), (3, True, 1)])
+def test_tiingo_scheduler_uses_calendar_day_two(tmp_path, monkeypatch, day, force, expected):
+    class ScheduleDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 10, day)
+
+    monkeypatch.setenv("GABI_DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(cli, "date", ScheduleDate)
+    monkeypatch.setattr(sys, "argv", ["gabi_cli", "schedule", "tiingo"] + (["--force"] if force else []))
+    cli.main()
+    assert len(SqliteJobs(tmp_path).list()) == expected
+    if expected:
+        assert SqliteJobs(tmp_path).list()[0]["kind"] == "tiingo"
+
+
+def test_legacy_writer_refuses_an_alternate_data_directory(tmp_path):
+    with pytest.raises(RuntimeError, match="mismo directorio"):
+        LegacyExecutor(Settings(tmp_path))(JobCommand("refresh"))
+    assert not (tmp_path / "gabi.db").exists()
+
+
+def test_progress_reporting_executor_moves_the_job_and_can_be_cancelled(tmp_path):
+    store = SqliteJobs(tmp_path)
+    seen = []
+
+    def executor(command, progress):
+        progress(0.5, "Mitad")
+        seen.append(store.get(store.list()[0]["id"])["progress"])
+        store.cancel(store.list()[0]["id"])
+        progress(0.75, "Tres cuartos")
+        raise AssertionError("Cancellation must stop the executor at the next report.")
+
+    executor.reports_progress = True
+    store.enqueue(JobCommand("quality"), "progress-job-1", "ui")
+    assert Worker(store, executor, tmp_path).run_once()
+    job = store.get(store.list()[0]["id"])
+    assert seen == [5 + round(85 * 0.5)] and job["status"] == "cancelled"

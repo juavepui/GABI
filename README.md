@@ -9,6 +9,17 @@ alcista en un horizonte de 6-12 meses, y sobre todo **entender por qué**.
 > (Yahoo Finance, SEC EDGAR, FRED) y pueden tener errores, retraso o estar
 > incompletos. Verifica siempre por tu cuenta antes de invertir.
 
+## Arquitectura y desarrollo
+
+GABI evoluciona como [monolito modular local](docs/architecture.md): dominio,
+casos de uso y adaptadores Python; frontend React por capacidades. Las reglas
+para modificar código están en [AGENTS.md](AGENTS.md), con controles de
+arquitectura en CI para ambas partes y [migración del código existente](docs/architecture/legacy-migration.md).
+La [API local FastAPI](docs/local-api.md) ya ofrece Screener, ficha y estado de datos/modelo.
+El [frontend React local](frontend/README.md) es la única interfaz: Mercado,
+Cartera, Investigación y Administración. Streamlit se retiró en F6 (#68), una
+vez verificada la equivalencia de cada flujo.
+
 ## Calidad y trazabilidad de datos
 
 La identidad persistente por CIK, los alias con vigencia, la migración aditiva
@@ -21,15 +32,14 @@ Activar identidad estricta (`strict_identity=True`) exige datos atribuidos a
 una entidad acreditada y deja ausentes los que no la tengan; solo tiene
 sentido tras migrar y atribuir `data/gabi.db`.
 
-La página **🩺 Calidad de los datos** consulta solo la caché local. Muestra
+La página **Administración → Calidad de los datos** consulta solo la caché local. Muestra
 cobertura y frescura de Yahoo, SEC EDGAR, FRED y Entity Master, porcentaje
 completo por bloque del score, CIK resuelto, últimos filings y errores recientes.
 El detalle permite elegir la fecha de referencia del sector y distingue
 point-in-time, aproximado y ausente. El estado global sigue degradado mientras
 existan las limitaciones estructurales indicadas, aunque las descargas sean recientes.
 
-Screener y Ranking histórico permiten ajustar el umbral de cobertura en la
-barra lateral. Los backtests V1/V2 conservan el diagnóstico por fecha y lo
+Screener y Ranking histórico (React) permiten ajustar el umbral de cobertura. Los backtests V1/V2 conservan el diagnóstico por fecha y lo
 guardan con el experimento del Research Lab.
 
 El `data_fingerprint` v2 usa SHA-256 sobre contenido ordenado de precios,
@@ -51,12 +61,12 @@ su caché y configuración. No se equiparan las huellas antiguas con las v2.
   curva de tipos, crédito, dólar, liquidez, ciclo). Gratis, pero requiere una
   API key propia (alta inmediata, sin tarjeta, en
   [fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html))
-  — pégala en ⚙️ Configuración.
+  — pégala en Administración.
 
 ## Instalación
 
 Requiere [uv](https://docs.astral.sh/uv/) (gestor de paquetes/entornos). Las
-versiones exactas de cada dependencia quedan fijadas en `uv.lock`, así que dos
+versiones exactas de cada dependencia quedan fijadas en `backend/uv.lock`, así que dos
 instalaciones en fechas distintas usan siempre las mismas versiones de
 pandas, numpy, yfinance, etc.
 
@@ -70,41 +80,51 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 Y luego, en el proyecto:
 
 ```bash
-uv sync
+uv sync --project backend --locked --all-groups
 ```
 
-Esto crea `.venv/` e instala dependencias + dependencias de desarrollo
-(pytest, ruff, mypy). Para actualizar versiones deliberadamente: `uv lock --upgrade`.
+Esto crea `backend/.venv/` e instala dependencias + dependencias de desarrollo
+(pytest, ruff, mypy). Para actualizar versiones deliberadamente: `uv lock --project backend --upgrade`.
 
 ## Uso
 
-```bash
-uv run streamlit run app/streamlit_app.py
+GABI se abre en el navegador con un solo proceso local: la API, la interfaz
+React y el worker de tareas. La [instalación y el arranque](frontend/README.md#arranque-local)
+detallan la primera vez; después basta con:
+
+```powershell
+uv run --project backend python -m gabi_cli serve
 ```
 
-0. Si vienes sin experiencia previa, empieza por **🎓 Aprender** (términos, estrategias, psicología).
-1. En **⚙️ Configuración**, pulsa "Actualizar datos" (empieza con el
-   subconjunto de 50 empresas para probar rápido; la primera descarga de
-   fundamentales + SEC EDGAR de las 500 empresas puede tardar varios minutos
-   porque ninguna de las dos APIs permite pedir todo en batch, y la SEC es
-   especialmente estricta con el ritmo de peticiones).
-2. En **📊 Screener**, busca empresas, ajusta pesos (Value / Quality /
-   Momentum) y filtros (sector, capitalización, golden cross) y revisa el ranking.
-3. En **🔍 Ficha de empresa**, mira el gráfico de precio, el desglose métrica
-   a métrica de por qué una empresa puntúa como puntúa, y abre su último
-   10-K/10-Q directamente desde SEC EDGAR.
-4. En **⚖️ Comparar empresas**, elige entre 2 y 5 empresas para verlas lado a
-   lado (tabla + gráfico de barras por bloque).
-5. En **🕰️ Ranking histórico** (experimental), reconstruye lo que el
-   screener habría mostrado en una fecha pasada — sin mirar al futuro.
-6. En **🌐 Panel Macro**, consulta el contexto macroeconómico (requiere API
-   key de FRED, ver arriba).
-7. En **📓 Diario de inversión**, escribe tu tesis antes de invertir y
-   revísala pasados unos meses.
-8. En **🧭 Decisiones de cartera**, introduce tus posiciones actuales como
+Abre **http://127.0.0.1:8000**. Si ese puerto está ocupado, `serve` lo indica y
+no arranca; usa otro con `--port 8010`. Todo escucha solo en este equipo y Ctrl+C lo
+detiene. Al actualizar GABI (`git pull`), repite `uv sync --project backend --locked --all-groups`,
+`npm --prefix frontend ci` y `npm --prefix frontend run build` antes de arrancar.
+
+0. Si vienes sin experiencia previa, empieza por **Cartera → Aprender** (términos,
+   estrategias, psicología y cómo piensa GABI).
+1. En **Administración**, pulsa «Actualizar datos» (empieza con el subconjunto
+   de 50 empresas para probar rápido; la primera descarga de fundamentales y
+   SEC EDGAR de las 500 empresas puede tardar varios minutos porque ninguna de
+   las dos APIs permite pedir todo en batch, y la SEC es especialmente estricta
+   con el ritmo de peticiones). Las claves de FRED, Tiingo, Nasdaq Data Link y
+   FMP se guardan en la misma página.
+2. En **Mercado**, busca empresas, filtra por sector, capitalización o cruce
+   dorado y revisa el ranking con su evidencia, estabilidad y cobertura.
+3. En la **ficha de empresa**, mira el gráfico de precio, el desglose métrica a
+   métrica, los catalizadores, los insiders y los cambios entre filings, y abre
+   su último 10-K/10-Q directamente desde SEC EDGAR.
+4. En **Mercado → Comparar**, elige entre 2 y 5 empresas para verlas lado a lado.
+5. En **Investigación → Ranking histórico** (modo Research), reconstruye lo que
+   el ranking habría mostrado en una fecha pasada, sin mirar al futuro.
+6. En **Mercado → Macro**, consulta el contexto macroeconómico (requiere API key
+   de FRED, ver arriba).
+7. En **Cartera → Diario**, escribe tu tesis antes de invertir y revísala
+   pasados unos meses.
+8. En **Cartera → Decisiones**, introduce tus posiciones actuales como
    `TICKER,porcentaje` y genera un plan de compra, mantenimiento o venta.
-9. En **🧪 Carteras simuladas**, crea varias carteras, añade compras/ventas
-   fechadas, compara cada resultado con SPY y prueba una estrategia de medias.
+9. En **Cartera → Simuladas**, crea varias carteras, añade compras y ventas
+   fechadas y compara cada resultado con SPY.
 
 Las operaciones simuladas usan `exchange_calendars` para seleccionar la primera
 sesión del mercado elegido desde la fecha indicada. Si falta esa cotización en el caché, la
@@ -234,7 +254,7 @@ por lo que su drawdown no representa las caídas intraperiodo.
 
 ## Comparar empresas
 
-⚖️ Comparar empresas deja elegir entre 2 y 5 empresas del universo analizado
+Mercado → Comparar deja elegir entre 2 y 5 empresas del universo analizado
 y verlas lado a lado: un gráfico de barras agrupadas con los 4 scores + el
 Composite, y una tabla transpuesta (una fila por métrica, una columna por
 empresa) con el mismo color-coding que el Screener — el percentil de color
@@ -249,46 +269,52 @@ mismo texto que sus tooltips — una sola fuente de verdad), **estrategias de
 inversión** (value, growth, dividendos, momentum, indexación pasiva...,
 relacionadas con los bloques Value/Quality/Momentum de GABI) y **psicología
 de la inversión** (FOMO, sesgo de confirmación, aversión a la pérdida...).
-Conecta explícitamente con el 📓 Diario de inversión como la herramienta
+Conecta explícitamente con el Cartera → Diario como la herramienta
 práctica contra varios de esos sesgos.
 
 ## Navegación
 
-El menú lateral usa `st.navigation`/`st.Page` (API moderna de Streamlit) en
-vez del descubrimiento automático por nombre de archivo, para poder darle a
-cada página un icono explícito, separado del texto. Todo se define en un solo
-sitio: `app/streamlit_app.py`. `st.set_page_config()` y la inyección de CSS
-(`gabi.ui_helpers.inject_custom_css()`, que también centra el indicador de
-"ejecutando" de Streamlit en la pantalla) se llaman ahí una única vez — las
-páginas individuales en `app/pages/` ya no lo hacen (llamarlo dos veces en la
-misma ejecución rompe `set_page_config()`).
+La navegación vive en `frontend/src/app/app.tsx`: Mercado, Cartera,
+Investigación y Administración. Las herramientas de investigación solo
+aparecen en modo Research; el modo se cambia en Administración y lo decide el
+backend, no la interfaz.
 
 ## Estructura
 
 ```
-src/gabi/       lógica pura (fetch, edgar, macro, storage, métricas, scoring) — testeada con pytest
-app/            frontend Streamlit (multipágina, navegación centralizada en streamlit_app.py)
-tests/          pytest, sin red, con datos sintéticos/mockeados
-data/           caché SQLite + CSVs + claves locales (todo gitignored)
+backend/src/gabi/  lógica Python (datos, métricas, scoring y motores de investigación)
+backend/tests/     tests unitarios y de compatibilidad de artefactos
+backend/uv.lock    dependencias Python bloqueadas
+frontend/          cliente React local (Mercado, Cartera, Investigación, Administración)
+data/              misma caché SQLite + CSVs + claves locales
 ```
 
 ## Ejecutar los tests
 
 ```bash
-uv run pytest
-uv run ruff check .     # linting
-uv run mypy src/gabi    # type checking
+uv run --project backend pytest
+uv run --project backend ruff check .     # linting
+uv run --project backend python -m gabi_cli research frozen --check-frozen
+uv run --project backend python -m gabi_cli research frozen --typecheck  # mypy global + baseline exacto
 ```
 
-Los tres se ejecutan también en CI (GitHub Actions) en cada push/PR a
-`main`/`develop`, contra las versiones exactas fijadas en `uv.lock`.
+Estos checks se ejecutan también en CI (GitHub Actions) en cada push/PR a
+`main`/`develop`, contra las versiones exactas fijadas en `backend/uv.lock`.
+
+CI conserva las huellas de los motores publicados de #47/#48/#49. Solo esos
+tres archivos tienen excepción de orden de imports (`I001`). El check de tipos
+ejecuta Mypy sobre todo `backend/src/gabi` y compara los 25 diagnósticos históricos con
+`.github/mypy-baseline.json`, incluyendo archivo, posición, código y mensaje.
+Un diagnóstico nuevo, uno modificado/ausente o un cambio en esos motores hace
+fallar CI. No se desactivan categorías de errores de Mypy para estos módulos;
+su deuda se mantiene visible sin modificar resultados de investigación sellados.
 
 ## Limitaciones conocidas
 
 - Ninguna de las tres fuentes es oficial-comercial ni tiene SLA: pueden
   fallar, tener rate limits no documentados o cambiar de esquema. El fetch
-  tolera fallos individuales sin romper el resto del universo, y ⚙️
-  Configuración explica el motivo de cada fallo agrupado (rate limit, ticker
+  tolera fallos individuales sin romper el resto del universo, y
+  Administración explica el motivo de cada fallo agrupado (rate limit, ticker
   sin datos, timeout...).
 - El crecimiento de ingresos "interanual TTM" calculado desde los estados
   financieros trimestrales de yfinance depende de que exponga al menos 8
@@ -296,7 +322,7 @@ Los tres se ejecutan también en CI (GitHub Actions) en cada push/PR a
   CAGR a 3 años de SEC EDGAR (histórico anual real desde los 10-K) es más
   fiable — pero puede faltar en empresas con menos de 4 años de 10-K
   presentados electrónicamente (IPOs recientes) o si aún no se ha
-  descargado desde ⚙️ Configuración.
+  descargado desde Administración.
 - El ROIC es una aproximación (NetIncomeLoss / (patrimonio neto + deuda a
   largo plazo), sin ajuste fiscal) y puede faltar si la empresa no usa las
   etiquetas XBRL habituales (frecuente en empresas casi sin deuda a largo plazo).
@@ -326,7 +352,7 @@ backtest institucional con identidad empresarial e historial completo verificado
 
 ### Primer resultado real (2019, 50 empresas, rebalanceo trimestral)
 
-Ejecutado desde 🕰️ Ranking histórico con los parámetros por defecto del
+Ejecutado desde Investigación → Ranking histórico con los parámetros por defecto del
 formulario (umbrales de cobertura relajados a 60% — con solo 13 métricas
 puntuables, el 70% por defecto excluía demasiadas empresas con datos
 parciales):
@@ -451,7 +477,7 @@ Con la caída del COVID como punto débil identificado, se probaron dos ideas
 simples sobre el mismo rango 2016-2025: ampliar de 10 a 20/30 posiciones, y
 reducir a la mitad la exposición cuando el SPY entra en el rebalanceo por
 debajo de su SMA200 (señal de tendencia bajista, la misma que ya se usa a
-nivel de empresa individual en 🔍 Ficha de empresa).
+nivel de empresa individual en la ficha de empresa).
 
 | Variante | Acumulado | Anualizado | Sharpe | Sortino | Máx. drawdown |
 |---|---|---|---|---|---|
@@ -569,28 +595,28 @@ auditó el código línea a línea para cada uno, a petición explícita de una
 revisión externa muy concreta sobre survivorship bias, look-ahead bias y
 costes de fricción:
 
-**Sesgo de supervivencia** — resuelto en el diseño. `universe.get_sp500_constituents_asof(fecha)`
-(`src/gabi/universe.py:91-135`) reconstruye la composición real del índice en
+**Sesgo de supervivencia** — mitigado mediante composición histórica comunitaria. `universe.get_sp500_constituents_asof(fecha)`
+reconstruye la composición registrada por la fuente en
 cada fecha (`history[history["date"] <= fecha].iloc[-1]`), no usa el universo
 de hoy — prueba de ello: al preparar los datos aparecieron decenas de
 empresas ya desaparecidas (ABMD, CELG, ANTM, ATVI, BBBY...) precisamente
-porque el sistema pidió los componentes reales de esos años. Cuando la fecha
-cae fuera del histórico gratuito, la función marca `is_exact=False` y tanto
-`multifactor_backtest.run()` como los scripts de este backtest **descartan
-ese periodo en vez de usar el universo actual en silencio** (por eso
-2025-10 en adelante no aparece en ningún resultado). El matiz que sí queda:
+porque el sistema pidió los componentes registrados de esos años. Cuando la fecha
+cae fuera del histórico gratuito, la función lanza un error en vez de usar el
+universo actual. La [comparación de dos fuentes](docs/historical-membership-2010-2026.md)
+detecta discrepancias sustanciales en 2010–2015 que siguen pendientes de verificación.
+El matiz que sí queda:
 69 de 301 empresas históricas reales no resuelven en el mapeo de tickers de
 la SEC (recicladas/deslistadas hace tiempo) y por tanto no pueden puntuarse
 esos periodos, aunque sí cuentan en el universo — un sesgo más sutil hacia
 "lo que todavía es resoluble", no hacia "lo que sobrevivió en el índice".
 
 **Look-ahead bias** — comprobado línea a línea. `get_value_as_of()`
-(`src/gabi/edgar.py:349-361`) filtra `df["filed_date"] <= as_of_date`, donde
-`filed_date` es el campo `filed` que devuelve la propia SEC (`src/gabi/edgar.py:308`):
+(`backend/src/gabi/edgar.py:349-361`) filtra `df["filed_date"] <= as_of_date`, donde
+`filed_date` es el campo `filed` que devuelve la propia SEC (`backend/src/gabi/edgar.py:308`):
 la fecha real en que el 10-K/10-Q se hizo público, no la fecha de cierre del
 ejercicio. Si el FY2020 se publicó en febrero de 2021, un `as_of_date` de
 enero de 2020 no lo ve. Los precios se truncan igual
-(`_price_history_as_of`, `src/gabi/screener_asof.py:81`: `df[df.index <= as_of_date]`),
+(`_price_history_as_of`, `backend/src/gabi/screener_asof.py:81`: `df[df.index <= as_of_date]`),
 así que momentum, RSI, SMA, Sharpe y beta reconstruidos para una fecha
 pasada tampoco ven precios futuros.
 
@@ -654,11 +680,11 @@ es puramente accidental, pero afecta a **todos** los resultados numéricos de
 esta sección calculados con `max_symbols` fijado (200, 100 o 50, incluido el
 primer resultado de 2019).
 
-**Corregido** en `src/gabi/multifactor_backtest.py`: se sustituyó el
+**Corregido** en `backend/src/gabi/multifactor_backtest.py`: se sustituyó el
 recorte `[:max_symbols]` por un muestreo aleatorio con semilla fija
 (`random.Random(42).sample(...)`, función `_sample_symbols`) — reproducible
 entre llamadas, pero sin sesgo hacia ninguna parte del alfabeto. Afecta
-también al selector "Universo: 50/100/500" de 🕰️ Ranking histórico, no solo
+también al selector "Universo: 50/100/500" de Investigación → Ranking histórico, no solo
 a los scripts de este documento. **Ya rehecho — ver "Resultado corregido"
 más arriba.**
 
@@ -687,7 +713,7 @@ días sin presentar nada ante la SEC (una empresa viva presenta un 10-Q como
 mínimo cada trimestre) pero el precio de salida cae después de ese hueco, se
 trata como no verificable y se descarta ese periodo (`ValueError`, con
 mensaje explícito) en vez de usar en silencio lo que devuelva yfinance. Dos
-tests nuevos en `tests/test_multifactor_backtest.py` cubren ambos casos
+tests nuevos en `backend/tests/test_multifactor_backtest.py` cubren ambos casos
 (empresa con filing reciente: se acepta; empresa con hueco largo: se
 rechaza).
 
@@ -743,8 +769,8 @@ reservado. Ver **[`HIPOTESIS_CONGELADA.md`](HIPOTESIS_CONGELADA.md)**: la config
 concreta que se cree buena, congelada por escrito antes de tener ningún dato nuevo con
 el que validarla — es la única forma honesta de comprobar si de verdad funciona, en vez
 de seguir ajustando sobre el mismo pasado. También incluye un contraste externo con las
-series académicas de factores de Kenneth French (`src/gabi/academic_factors.py`,
-disponible en 🕰️ Ranking histórico): el 91.5% de la varianza del retorno de la estrategia ya lo explican
+series académicas de factores de Kenneth French (`backend/src/gabi/academic_factors.py`,
+disponible en Investigación → Ranking histórico): el 91.5% de la varianza del retorno de la estrategia ya lo explican
 seis factores de mercado conocidos, y el alfa restante, aunque positivo, no llega al
 umbral de significancia estadística habitual.
 
@@ -960,7 +986,7 @@ in-sample, no alfas locales ni retornos compuestos.
 [Informe, metodología y datos](docs/factor-stability/README.md). Research Lab
 muestra gráficos interactivos e intervalos HAC; Ranking histórico permite
 repetir el diagnóstico del backtest trimestral actual. Se reproduce sin red
-con `uv run python -m gabi.factor_stability`. Sigue pendiente la estabilidad
+con `uv run --project backend python -m gabi.factor_stability`. Sigue pendiente la estabilidad
 por régimen de las permutaciones y perturbaciones de pesos originales, cuyos
 inputs completos no se conservaron. El turnover agregado no demuestra decay.
 
@@ -1005,7 +1031,7 @@ Sharpe y muestra comparable. El experimento antiguo se conserva como registro.
 Las 24 series quedan registradas en Research Lab como RESEARCH; la app
 muestra el informe verificado y permite descargar los artefactos.
 Para repetir solo el cálculo estadístico:
-`uv run python -m gabi.overfitting_audit --analyze-only`.
+`uv run --project backend python -m gabi.overfitting_audit --analyze-only`.
 
 ### Costes reales del bróker (eToro): calibración y por qué el backtest NO incluye la conversión de divisa
 
@@ -1015,7 +1041,7 @@ contra dos fuentes reales: el extracto oficial de cuenta (`Posiciones cerradas`,
 movimientos bancarios, para poder separar depósitos hechos con tarjeta de los hechos con
 transferencia. Cada cifra de abajo se verificó transacción a transacción contra esas
 fuentes (no se tomó de memoria ni de un análisis externo sin comprobar) — módulo
-`src/gabi/broker_costs.py`, tests en `tests/test_broker_costs.py`.
+`backend/src/gabi/domain/portfolio/broker_costs.py`, tests en `backend/tests/test_broker_costs.py`.
 
 **Costes de operar (abrir/cerrar una posición), verificados sobre 61 cargos reales:**
 
@@ -1053,14 +1079,14 @@ sigue siendo mover dinero entre empresas, no traerlo de fuera).
 El coste de depositar sí importa, pero en otro sitio: en el coste real de vida de la
 cartera del usuario (10.000€ ya invertidos en septiembre de 2026, +~700€/mes de media,
 depositados históricamente con tarjeta), no en la mecánica del backtest de selección de
-empresas. Por eso vive en Carteras Simuladas (🧪, que sí modela capital entrando a la
+empresas. Por eso vive en Cartera → Simuladas (que sí modela capital entrando a la
 cuenta) y en este documento, no como parámetro de `multifactor_backtest.run()`.
 
 **El coste de operar SÍ es sensible al tamaño de posición** (a diferencia de un `cost_bps`
 plano): 1 USD es un 0.18% sobre una posición de 550 USD pero solo un 0.01% sobre una de
 10.000 USD, porque eToro cobra un importe fijo, no un porcentaje.
 `broker_costs.effective_trade_cost_bps(position_size_usd)` hace esa conversión para un
-tamaño de posición concreto — la página 🕰️ Ranking histórico tiene una calculadora que,
+tamaño de posición concreto — la página Investigación → Ranking histórico tiene una calculadora que,
 dado el capital total y el nº de posiciones del usuario, muestra el coste por lado
 equivalente para copiarlo en "Coste por lado (pb)". Con la situación real del usuario a
 día de hoy (~10.000€ entre 20 posiciones ≈ 500€/posición), el coste real de operar
@@ -1077,12 +1103,12 @@ mantuviera o no — y también sobre el SPY (que debería comprarse una vez y ma
 rotarse cada trimestre). El usuario, revisando este documento, señaló ambos fallos con
 precisión y pidió un motor nuevo, más riguroso, como primer paso de una "V2" — manteniendo
 V1/`HIPOTESIS_CONGELADA.md` intactos y reproducibles tal cual (quedan como versión
-archivada). Ese motor nuevo es **`src/gabi/portfolio_backtest.py`** +
-**`src/gabi/portfolio_metrics.py`** (tests en `tests/test_portfolio_backtest.py` y
-`tests/test_portfolio_metrics.py`).
+archivada). Ese motor nuevo es **`backend/src/gabi/portfolio_backtest.py`** +
+**`backend/src/gabi/portfolio_metrics.py`** (tests en `backend/tests/test_portfolio_backtest.py` y
+`backend/tests/test_portfolio_metrics.py`).
 
 **Qué hace distinto**, reutilizando la misma convención de coste ya validada en
-`sim_portfolios.py` (Carteras Simuladas — comisión fija en dólares + spread proporcional,
+`domain/portfolio/simulation.py` (Carteras Simuladas, antes `sim_portfolios.py` — comisión fija en dólares + spread proporcional,
 calibrada en `broker_costs.py`) en vez de inventar un modelo nuevo:
 
 - **Contabilidad real por acciones + caja**, no un % agregado. En cada rebalanceo se
@@ -1096,7 +1122,7 @@ calibrada en `broker_costs.py`) en vez de inventar un modelo nuevo:
 - **SPY como comprar-y-mantener de verdad** (`buy_and_hold_curve`): coste real de entrada
   una sola vez, nunca más — corrige directamente el fallo señalado.
 - **Curva NAV diaria genuina** (`_daily_segment`): walk-forward día a día valorando
-  `caja + Σ(acciones × adj_close)`, igual que `sim_portfolios.portfolio_history()` — no
+  `caja + Σ(acciones × adj_close)`, igual que `simulation.history()` de Carteras Simuladas — no
   una curva agregada reescalada a posteriori. Además, a diferencia de V1, un periodo
   saltado por falta de cobertura ya no deja un hueco en la curva: la cartera sigue
   flotando con lo que ya tenía en vez de desaparecer del análisis.
@@ -1145,7 +1171,7 @@ CIK/Entity Master en vez del sector actual; separar score y confidence en el sco
 el missingness de métricas; separar explícitamente el modelo de selección del modelo de
 cartera (Policy/optimizador de `decision_engine.py` usa reglas y pesos distintos a los de
 la hipótesis congelada, y el optimizador min-vol recorta límites después de optimizar en
-vez de dentro del problema). Tampoco se ha integrado V2 en la UI de Streamlit todavía.
+vez de dentro del problema). V2 está disponible en Investigación → Ranking histórico.
 
 
 ### Paso 2: validación sobre el universo histórico completo (500 empresas, sin muestreo)
@@ -1207,8 +1233,8 @@ el fallback ya existente en `scoring.py`), pero las que siguen cotizando hoy sí
 esta contaminación.
 
 **No existe una fuente gratuita de sector histórico** — lo único honesto es empezar a
-guardarlo desde ahora. Nuevo módulo **`src/gabi/entity_master.py`** (tests en
-`tests/test_entity_master.py`, más un test dedicado en `test_screener_asof.py` que confirma
+guardarlo desde ahora. Nuevo módulo **`backend/src/gabi/entity_master.py`** (tests en
+`backend/tests/test_entity_master.py`, más un test dedicado en `test_screener_asof.py` que confirma
 que `universe.get_sp500_constituents()` ya NO se llama en absoluto desde el ranking
 histórico):
 
@@ -1267,13 +1293,13 @@ Ejemplo real (S&P 500, 2024-01-02): AAPL confidence=100 (13/13 métricas), MSFT=
 XOM=31.7 (mucho dato ausente, coherente con que su `composite_score` también sale inválido
 por baja cobertura). Cableado en ambos sitios donde se construye un ranking —
 `screener.build_screener_table` (en vivo) y `screener_asof.build_ranking_as_of`
-(point-in-time, usado por V1 y V2) — y visible en la UI (📊 Screener, tabla completa; 🔎
+(point-in-time, usado por V1 y V2) — y visible en la UI (Mercado, tabla completa; 🔎
 Ficha de Empresa, junto al resto de scores) para que un inversor junior vea de un vistazo si
 un score alto merece confianza o se apoya en poco dato.
 
 ### Paso 5: señal vs cartera son dos estrategias distintas, y el optimizador ya no recorta después de resolver
 
-El usuario señaló dos problemas reales en `decision_engine.py` (🧭 Decisiones de cartera):
+El usuario señaló dos problemas reales en `decision_engine.py` (Cartera → Decisiones):
 
 **1. Se presentaba como si fuera una consecuencia de la hipótesis congelada, y no lo es.**
 `HIPOTESIS_CONGELADA.md` valida: 20 posiciones equiponderadas, pesos 30/35/25/10, rebalanceo
@@ -1281,7 +1307,7 @@ trimestral, sin filtro de tendencia. `Policy` por defecto usa: máximo 10 posici
 duro de precio sobre SMA200 (ni siquiera configurable — hardcodeado en `_reasons()`), y
 reparto por **mínima volatilidad** (PyPortfolioOpt), no equiponderado. Es una estrategia
 legítima, pero nunca se ha contrastado con un backtest — y la UI no lo decía en ningún
-sitio. **Arreglado con un aviso explícito** en 🧭 Decisiones de cartera: dice exactamente
+sitio. **Arreglado con un aviso explícito** en Cartera → Decisiones: dice exactamente
 qué distingue a esta estrategia de la validada, para no dar a entender que hereda la
 validación del backtest.
 
@@ -1314,8 +1340,8 @@ después:
 Verificado con tests dedicados (límites respetados exactamente con el solver real, caída
 elegante en el caso infactible, y que la penalización por turnover de verdad acerca los pesos
 a la cartera actual frente a no penalizar) — 215 tests en total, ninguno de los 10 tests
-previos de `decision_engine.py` cambia de comportamiento. Disponible desde la UI (🧭
-Decisiones de cartera → "Reglas y límites" → casilla "Portfolio Engine V2").
+previos de `decision_engine.py` cambia de comportamiento. Disponible desde la UI (Cartera →
+Decisiones → «Reglas y límites» → casilla «Portfolio Engine V2»).
 
 ## 🔬 Research Lab: registro de experimentos + rigor estadístico
 
@@ -1323,9 +1349,9 @@ Propuesta del usuario, motivada por algo que esta misma sesión ya hacía a mano
 configuraciones sobre el mismo rango 2016-2025 (top-10/20/30, filtro SMA200, banda de turnover,
 3 frecuencias de rebalanceo, universo 200 vs 500, V1 vs V2), documentando cada vez si el resultado
 era ruido o señal. El Research Lab formaliza esa disciplina: un registro de experimentos
-(`src/gabi/research_lab.py`, tabla `experiments`, página 🔬 Research Lab) con metodología, commit
+(`backend/src/gabi/research_lab.py`, tabla `experiments`, Investigación → Research Lab en la interfaz React) con metodología, commit
 de código exacto y resultado, etiquetado por fase (**RESEARCH** / **IN_SAMPLE** / **OUT_OF_SAMPLE**
-/ **LIVE_FORWARD**), y un módulo de rigor estadístico (`src/gabi/stats_rigor.py`) que implementa
+/ **LIVE_FORWARD**), y un módulo de rigor estadístico (`backend/src/gabi/stats_rigor.py`) que implementa
 Probabilistic Sharpe Ratio → Deflated Sharpe Ratio → PBO/CSCV → intervalos de confianza bootstrap
 (Bailey & López de Prado; umbral t>3 de Harvey, Liu & Zhu ya citado en `HIPOTESIS_CONGELADA.md`).
 
@@ -1336,7 +1362,7 @@ registro con ellos permite un **DSR real** (solo necesita el Sharpe de cada inte
 probaron), pero el **PSR exacto, PBO y bootstrap necesitan la serie de retornos real**, que no
 existe para esos experimentos históricos — se usa una aproximación normal (skew=0, kurtosis=3,
 equivalente a `sharpe_standard_error`) para ellos, marcada explícitamente como aproximación.
-Cualquier experimento registrado desde 🕰️ Ranking histórico a partir de ahora SÍ guarda la serie de
+Cualquier experimento registrado desde Investigación → Ranking histórico a partir de ahora SÍ guarda la serie de
 retornos real (V1: retorno por periodo; V2: retorno diario de la curva NAV), así que PSR
 exacto/PBO/bootstrap están disponibles de verdad para lo que se registre de aquí en adelante.
 
@@ -1358,13 +1384,23 @@ así con más intentos o menos historia: el propio cálculo de `expected_max_sha
 crece con N, así que esta cifra debe repetirse si en el futuro se añaden más configuraciones a la
 familia.
 
-**Cómo se usa**: desde 🕰️ Ranking histórico, tras ejecutar un backtest (V1 o V2), un botón "📋
+**Cómo se usa**: desde Investigación → Ranking histórico, tras ejecutar un backtest (V1 o V2), un botón "📋
 Registrar este experimento en el Research Lab" pre-rellena la metodología y el resultado — la fase
 (RESEARCH/IN_SAMPLE/OUT_OF_SAMPLE/LIVE_FORWARD) es una decisión del usuario sobre su propia
-intención con ese run, no algo que el código pueda inferir. Desde 🔬 Research Lab: tabla de
+intención con ese run, no algo que el código pueda inferir. Desde Research Lab (interfaz React): tabla de
 experimentos filtrable por familia/fase, formulario de registro manual, y las tres secciones de
 cálculo (PSR/DSR, PBO/CSCV, bootstrap) — estas dos últimas solo ofrecen experimentos con serie de
 retornos guardada.
+
+**Incertidumbre por bloques (#50):** Research Lab muestra intervalos y
+distribuciones de CAGR, volatilidad, Sharpe, drawdown, ES y exceso frente a
+benchmarks emparejados. Incluye sensibilidad de longitudes fijadas antes del
+análisis, comparación de medias con HAC y exportación reproducible. El
+[diagnóstico guardado](docs/block-bootstrap/README.md) conserva la
+incertidumbre: el intervalo principal de la diferencia de CAGR frente al
+SPY incluye cero, al igual que el IC. Los huecos de V1 se declaran no
+estimables, sin imputar retornos ni unir periodos separados. El remuestreo
+no añade evidencia fuera de muestra.
 
 ## 📐 Factor Lab: ¿el score predice de forma gradual y consistente?
 
@@ -1376,7 +1412,7 @@ FUTURO real a 1/3/6/12 meses de cada quintil — si el score funciona, se espera
 razonablemente monotónica (no necesariamente perfecta ni todos los periodos), no solo que una cesta
 concreta ganara al índice.
 
-**`src/gabi/factor_lab.py`** (página 📐 Factor Lab) reutiliza tal cual la reconstrucción point-in-time
+**`backend/src/gabi/factor_lab.py`** (Factor Lab en Investigación, interfaz React) reutiliza tal cual la reconstrucción point-in-time
 ya existente (`universe.get_sp500_constituents_asof` + `screener_asof.build_ranking_as_of`, mismo
 contrato `mode="validation"`/`"fast_dev"` de `portfolio_backtest.py`) y el mismo patrón de sesión de
 entrada de `multifactor_backtest._period_returns` — el retorno futuro que mide **nunca lleva coste**
@@ -1396,7 +1432,7 @@ factor, horizonte) calcula:
   sector, comprobado con datos reales (una prueba pequeña pasó de 0 filas sector-neutral calculables a
   las 15 esperadas tras el arreglo).
 
-Verificado con casos de referencia sintéticos, no solo "no rompe" (`tests/test_factor_lab.py`): un score
+Verificado con casos de referencia sintéticos, no solo "no rompe" (`backend/tests/test_factor_lab.py`): un score
 que ordena perfectamente el retorno futuro da IC≈1 y spread claramente positivo; un score sin relación
 da IC≈0; turnover exactamente 0% con quintiles idénticos y 100% cuando cambian por completo; y el caso
 clave del sector-neutral — un score correlacionado solo con el sector (sin ninguna relación específica
@@ -1416,7 +1452,7 @@ resultado a medias y "ajustar un poco" la estrategia**, la tentación exacta que
 ("llevamos seis meses perdiendo, quizá Momentum debería pasar de 25 a 35%..." — en cuanto se hace eso,
 la prueba prospectiva ha muerto, sin que nadie necesite hacer trampa conscientemente).
 
-**`src/gabi/blind_validation.py`** (página 🔒 Blind Forward Validation) convierte esa promesa en algo
+**`backend/src/gabi/blind_validation.py`** (Investigación → Validaciones ciegas en la interfaz React) convierte esa promesa en algo
 real: cada rebalanceo se registra de forma **inmutable** (`UNIQUE(validation_id, rebalance_date)` —
 reintentar el mismo periodo lanza, no sobrescribe) con picks, precios de entrada reales, commit de
 código (`git rev-parse --short HEAD`, reutilizado de `research_lab.py`), y un **hash encadenado con el
@@ -1432,7 +1468,7 @@ mire su base de datos a mano. `break_seal_early(reason)` no finge ser irrompible
 sello antes de tiempo si el usuario decide hacerlo conscientemente, pero deja constancia PERMANENTE de
 que se rompió y por qué, igual que se documentó la propia ruptura de `HIPOTESIS_CONGELADA.md` esta
 sesión. Una vez desbloqueada (por fecha o por ruptura consciente), `export_to_research_lab()` registra
-el resultado real como experimento `LIVE_FORWARD` en 🔬 Research Lab — conecta directamente con el
+el resultado real como experimento `LIVE_FORWARD` en Investigación → Research Lab — conecta directamente con el
 registro ya existente en vez de duplicarlo.
 
 Verificado con datos reales, no solo con mocks: creada una validación de prueba, registrado un
@@ -1440,11 +1476,47 @@ rebalanceo real (10 símbolos reales del ranking de hoy, precios reales), confir
 bloqueado no expone ninguna clave de rendimiento y que la integridad verifica correctamente — y limpiado
 después de la prueba.
 
+### Mantenimiento periódico: que las pruebas ciegas no dependan de acordarse (#46)
+
+Las pruebas ciegas (id 1, GABI; id 3, hipótesis de valor) solo valen si cada rebalanceo se registra
+**el día que toca y con los precios de ese día**. Registrarlo tarde o con precios viejos haría que el
+trimestre empezara con información ya conocida. Hay una sola orden para todo:
+
+| Orden | Qué hace | ¿Modifica algo? |
+| --- | --- | --- |
+| `python -m gabi_cli periodic --status` | Cuándo toca el próximo rebalanceo de cada prueba, si su cadena de hashes está intacta, si los precios están al día y cómo va la descarga de Tiingo del #44 | No |
+| `python -m gabi_cli periodic --run` | Actualiza el universo y sus datos (incluidos SPY y RSP), registra los rebalanceos vencidos y anota la decisión del día en el registro en vivo (del modelo sellado y del activo) | Sí |
+| `python -m gabi_cli periodic --tiingo` | Reanuda la descarga de precios de empresas desaparecidas del #44 (tarda horas; se para sola si se agota el cupo mensual) | Sí |
+
+`--run` **se niega a registrar** si todavía no ha llegado la fecha, si SPY o RSP no tienen el último
+cierre, si más de un 5 % del universo no lo tiene o si la cadena de hashes está rota, y explica por qué.
+Investigación → Validaciones ciegas (interfaz React) aplica la misma regla en el backend, y la portada muestra un aviso
+cuando falta una semana o menos para un rebalanceo. Lo hecho queda en `data/periodic_tasks/log.jsonl`.
+
+**Cuándo ejecutarlo**: el día del rebalanceo (el primero es el **21 de diciembre de 2026**), después
+de las 22:00 hora española, que es cuando cierra la bolsa de Nueva York. Para no tener que acordarse,
+`scripts/programar_tareas.ps1` lo programa en el Programador de tareas de Windows (de martes a sábado a
+las 05:00, con el cierre de Nueva York de la víspera, y Tiingo una vez al mes). Es opcional y no se instala solo: hay que ejecutarlo a propósito
+desde PowerShell. El ordenador tiene que estar encendido a esa hora; si no, la tarea se ejecuta al
+encenderlo.
+
+**Comprobar que funciona (#290).** La portada avisa si el seguimiento diario no se ha ejecutado nunca o
+si lleva más de 3 días laborables sin un registro correcto. Para comprobarlo a mano en PowerShell:
+
+```powershell
+Get-ScheduledTask -TaskName "GABI*" | Select-Object TaskName, State   # deben salir las tres tareas
+backend\.venv\Scripts\python.exe -m gabi.live_ledger --verify         # "seq" crece con cada ejecución
+```
+
+Cada ejecución anota dos decisiones en la misma cadena: la del modelo sellado `GABI-MF-v1` (la que
+protege los estudios) y la del modelo que muestra la aplicación (hoy `GABI-MF-v2`), cada una con su
+versión. Un día sin anotar no se puede rellenar después.
+
 ## 🧮 Portfolio Lab: comparar esquemas de ponderación + stress tests
 
 Cuarta propuesta del usuario, la más grande de las cuatro. Hasta ahora todo el backtesting asumía
 implícitamente que repartir el capital a partes iguales entre las candidatas del ranking ("Equal Weight")
-era "la" forma de construir la cartera. **`src/gabi/portfolio_lab.py`** (página 🧮 Portfolio Lab) compara,
+era "la" forma de construir la cartera. **Portfolio Lab** (`domain/research/portfolio_lab.py` y `application/research/portfolio_lab_engine.py`; Investigación → Portfolio Lab en la interfaz React) compara,
 sin declarar ganador de antemano, seis esquemas sobre las MISMAS candidatas de cada rebalanceo: **Equal
 Weight, Inverse Volatility, Minimum Variance, Score-weighted, Score + risk constrained y Risk Parity** —
 con rentabilidad, volatilidad, drawdown, turnover, coste, concentración (HHI), contribution-to-risk y
@@ -1510,11 +1582,11 @@ diversificada".
 
 ## Insiders (SEC Form 4)
 
-`src/gabi/insider.py` descarga y guarda las operaciones de directivos,
+`backend/src/gabi/insider.py` descarga y guarda las operaciones de directivos,
 consejeros y accionistas >10% desde los Form 4 de SEC EDGAR (Section 16) —
 gratis, sin API key. Es la señal de "qué sabe la dirección que el mercado no
 sabe todavía" que faltaba (ninguna otra fuente integrada la da). Se muestra
-en 🔍 Ficha de empresa: compras/ventas en mercado abierto de los últimos 6
+en la ficha de empresa: compras/ventas en mercado abierto de los últimos 6
 meses, cuántos insiders distintos compraron, valor neto comprado-vendido, y
 si las compras son de un plan 10b5-1 preprogramado (mucho menos informativas
 que una compra discrecional decidida ahora). Verificado con los Form 4 reales
@@ -1543,24 +1615,74 @@ reconstruye el ranking completo tal y como se habría visto ese día:
 
 - **Universo histórico** (`universe.get_sp500_constituents_asof`): usa
   [`hanshof/sp500_constituents`](https://github.com/hanshof/sp500_constituents)
-  (comunidad, MIT, composición diaria desde 1996 hasta 2025-08-23) para
+  (comunidad, MIT, composición desde 1996 hasta 2025-08-23, ampliada mediante
+  eventos revisados hasta 2026-09-23) para
   incluir empresas ya deslistadas/excluidas del índice y evitar el sesgo de
   supervivencia — verificado con datos reales de junio de 2019, que
   correctamente incluye tickers como ABMD, ANTM o ATVI que ya no están en el
-  S&P 500 actual. Para fechas posteriores a la cobertura de esa fuente, cae
-  de vuelta al universo actual (marcado con `is_exact=False`, con el riesgo
-  de sesgo de supervivencia que eso reintroduce).
+  S&P 500 actual. Fuera de la cobertura local se rechaza la consulta. La
+  [auditoría de membresía](docs/historical-membership-2010-2026.md) documenta
+  las discrepancias con una segunda fuente gratuita. La
+  [auditoría de identidad 2010–2015](docs/historical-identity-2010-2015.md)
+  corrige el ticker retrospectivo `ANTM` a `WLP` antes del cambio de 2014,
+  con fuentes SEC/MIAX y mide dos niveles de identidad histórica: ticker/CIK
+  repetido directamente en SEC (~33–34%) y candidatos únicos corroborados por
+  informes del mismo emisor. Con las nominaciones revisadas del #28
+  (sucesores y etiquetas retroactivas, verificadas contra SEC) el total
+  acreditado es 97,4–98,8% y el ambiguo 0,3–0,45%. Los ambiguos y no
+  resueltos quedan explícitamente excluidos. La atribución de precios se
+  audita por separado a continuación.
 - **Fundamentales y múltiplos clásicos** (ROIC, margen bruto/operativo/neto,
   deuda neta/EBITDA, crecimiento de ingresos/FCF, PER, P/VC, P/Ventas,
   EV/EBITDA): 100% desde `edgar_facts` + precio y nº de acciones de esa
   fecha — nunca yfinance, que no guarda histórico.
+- La [auditoría de precios 2010–2015](docs/historical-prices-2010-2015.md)
+  atribuye cada serie a un CIK solo con evidencia SEC gratuita: vida bursátil
+  (primer informe, sucesiones, bajas), nivel de precio contra *public float* y
+  conciliación de splits/dividendos. Usa cuatro fuentes: caché Yahoo (Tier A)
+  y, como Tier B con los mismos controles, FINSABER, Nasdaq Data Link WIKI
+  (congelada en 2018, conserva empresas absorbidas como EMC, CA, DOW o STI) y
+  Tiingo (plan gratuito). Las claves de WIKI y Tiingo se guardan en
+  Administración. La cobertura utilizable por rebalanceo trimestral es
+  77,6–90,7 % (media 86,7 %) y SPY está completo. Los eventos terminales se
+  registran explícitamente (15 efectivos confirmados; el resto desconocido y
+  excluido en lectura estricta). El #28 se cerró aceptando el déficit: las
+  empresas que salen del índice al año siguiente siguen infrarrepresentadas
+  (57 % frente a 88 %), así que 2010–2015 solo puede usarse con las
+  correcciones de sesgo exigidas en #32/#33.
+- **Ranking histórico y Backtest V2 desde 2010** ([#32](docs/historical-integration-2010-2015.md)):
+  en 2010–2015 el motor existente usa la composición de referencia, la
+  identidad SEC acreditada y solo series de precios con procedencia (con su
+  periodo de tenencia verificado); nunca la caché por ticker. Las posiciones
+  que dejan de cotizar se liquidan por evento terminal (efectivo o sucesión
+  1:1 acreditada) o se marcan como no estrictas. El V2 en modo validación
+  recorre 2011-06 → 2015-12; los rebalanceos de 2010 se saltan por falta de
+  fundamentales de tres años. 2016 en adelante no cambia.
+- **Validación 2010–2015 sin reoptimizar** ([#33](docs/historical-validation-2010-2015/README.md)):
+  mismo arnés y configuración que la auditoría 2016+. De 24 rebalanceos se
+  ejecutan 18 y 15 son concluyentes (2010 no es evaluable por falta de
+  fundamentales de tres años). En el tramo invertido (2011-07 → 2016-01) el V2
+  Top-20 obtiene 18,1 % anual frente a 11,75 % del SPY, sin significación
+  estadística (Sharpe 0,80 ± 0,54). No contradice la hipótesis, pero no
+  permite afirmar que GABI supere al S&P 500 fuera de la muestra de diseño.
+- **Capa acreditada 2016–2025** ([#34](docs/historical-integration-2016-2025.md)):
+  misma infraestructura, parametrizada por periodo (`historical_period`).
+  - Composición: fja05680 completa, porque hanshof omitía hasta 32 miembros
+    reetiquetados.
+  - Identidad SEC acreditada: 99,6–100 % de las observaciones.
+  - Precio acreditado: 87,4–95,4 % por rebalanceo, con 590 intervalos Tier A y
+    128 Tier B.
+  - Eventos terminales explícitos.
+  - Se activa con `historical_pit.accredited_periods("2010-2015", "2016-2025")`.
+    Sin activarla, 2016+ sigue en el camino operativo. 2010–2015 se reproduce
+    byte a byte.
 - **Momentum y riesgo**: reutiliza `technicals.py`/`risk.py` sin cambios,
   simplemente truncando el histórico de precios a `fecha`.
 
 Verificado con datos reales de Apple y Microsoft a junio de 2019: ROIC,
 márgenes, deuda/patrimonio y crecimiento salen correctos y coherentes con
 cifras públicas conocidas de esos ejercicios. También hay página en la app —
-**🕰️ Ranking histórico** — con selector de fecha, un botón para descargar lo
+**Investigación → Ranking histórico** — con selector de fecha, un botón para descargar lo
 que falte para esa fecha concreta (SEC EDGAR + histórico de precios
 profundo) y la misma tabla con semáforo de colores que el resto de la app.
 Marcada como experimental a propósito.
@@ -1581,7 +1703,7 @@ coherentes con cifras públicas de esa fecha.
 
 **Limitaciones conocidas de esta reconstrucción:**
 - El histórico de **precios** normal solo cubre ~2 años hacia atrás. Para
-  fechas más antiguas, 🕰️ Ranking histórico ofrece un botón para pedir el
+  fechas más antiguas, Investigación → Ranking histórico ofrece un botón para pedir el
   histórico completo (`period="max"`) — pero solo para los símbolos que aún
   no lleguen tan atrás, no para todo el universo en cada refresco normal
   (sería mucho más lento/pesado para un caso de uso ocasional).
@@ -1596,7 +1718,7 @@ coherentes con cifras públicas de esa fecha.
   atribuir los datos de una empresa equivocada. Mitigación: se guarda una
   caché local persistente de resoluciones (`edgar.cik_resolutions`, símbolo
   ya resuelto una vez sigue siéndolo aunque desaparezca del mapeo en vivo) y
-  cada fila de 🕰️ Ranking histórico muestra el **nombre registrado en la
+  cada fila de Investigación → Ranking histórico muestra el **nombre registrado en la
   SEC**, no solo el ticker — para que un reciclaje se note a simple vista.
   No hay forma gratuita de verificarlo automáticamente.
 
@@ -1604,10 +1726,29 @@ Si en algún momento se paga acceso a un proveedor point-in-time (tipo
 Sharadar), sustituiría/complementaría esto — pero de momento todo lo
 anterior es gratis.
 
+## Validación de datos anteriores a 2016
+
+Se han importado los 28 paquetes SEC de 2009–2015 y recuperado contextos
+originales para contrastar 454.341 registros. Un extractor con especificaciones
+revisadas cubre un piloto de Microsoft 1996, Lehman 2007 y Apple 2008. El informe
+de 80 trimestres distingue métricas calculables de identidad y sector históricos
+acreditados; todavía no certifica un backtest completo desde 1996.
+
+Los resultados, fuentes, límites y comandos están en
+[la validación histórica 1996–2015](docs/historical-validation-1996-2015/README.md).
+El [inventario anual 2008–2026](docs/historical-data-audit.md) distingue la
+cobertura numérica de la identidad y procedencia acreditadas antes de ampliar
+las descargas históricas.
+La [auditoría SEC 2010–2015](docs/historical-sec-2010-2015.md) mide hechos
+point-in-time por concepto y CIK, corrige la continuidad anual entre etiquetas
+XBRL y documenta las pruebas SEC adicionales de identidad del #29.
+La cobertura también se muestra en **Calidad de los datos → Archivo histórico
+anterior a 2016**.
+
 ## Capa de IA: generador de prompt (no llamada a API)
 
-En 🔍 Ficha de empresa hay una sección "🤖 Prompt para analizar con IA"
-(`src/gabi/ai_prompt.py`) que construye un prompt listo para pegar en el
+En la ficha de empresa hay una sección "🤖 Prompt para analizar con IA"
+(`backend/src/gabi/application/market/prompt_text.py`) que construye un prompt listo para pegar en el
 asistente que prefieras (Claude, ChatGPT...). Regla de diseño explícita:
 **la IA nunca calcula métricas financieras** — los números del prompt salen
 siempre de `scoring.py`/`metrics.py`/`edgar.py` (código determinista sobre
@@ -1626,3 +1767,10 @@ adicional y deja a criterio del usuario qué asistente usar.
   costes reales de ejecución e histórico completo. Solo después, modelos
   de Machine Learning interpretables (regresión, Random Forest, XGBoost) con
   walk-forward validation — nunca mezclando aleatoriamente pasado y futuro.
+
+Actualizaciones locales incrementales: [políticas de revisión, checkpoints y medición reproducible](docs/incremental-updates/README.md). La tarea periódica conserva `--run` y admite `--full-refresh` para una auditoría deliberada; las ejecuciones normales evitan descargar/reinsertar históricos completos.
+
+Separación local de backend y frontend: [inventario de los 17 flujos, stack y fases #62–#68](docs/frontend-backend-migration.md).
+FastAPI y React cubren todos los flujos; Streamlit se retiró en F6 (#68).
+El [registro reconciliado de búsquedas](docs/search-ledger/README.md) conserva los resultados fallidos y los huecos del historial.
+No hay todavía una estrategia demostrada que cumpla el objetivo de superar claramente al S&P 500 (#60).

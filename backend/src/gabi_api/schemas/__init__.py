@@ -1,0 +1,1 @@
+"""OpenAPI wire contracts."""

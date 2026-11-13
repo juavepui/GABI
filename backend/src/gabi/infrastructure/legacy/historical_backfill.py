@@ -1,0 +1,162 @@
+"""Free 1996-2015 source archive and conservative additions to operational data.
+
+Run with ``python -m gabi_cli research historical-backfill``. Inputs are pinned CSV/JSON,
+never remote code or pickle. The existing post-2015 membership and audit stay intact.
+An explicit write: it downloads, backs SQLite up and imports into the configured database.
+"""
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pandas as pd
+
+from gabi import config, edgar, historical_archive
+from gabi.domain.market.freshness import market_date as last_completed_session
+from gabi.domain.research.historical_backfill import overlaps_membership
+from gabi.domain.research.history_refresh import period_symbols
+from gabi.historical_membership import historical_backfill_manifest
+from gabi.infrastructure.legacy.history_refresh import database_coverage
+from gabi.infrastructure.providers import yahoo
+from gabi.infrastructure.providers.pinned_files import download_pinned, matches
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.historical_backfill import SqliteHistoricalBackfill
+
+MANIFEST = historical_backfill_manifest()
+
+
+def fetch_missing_history(symbol: str, history: pd.DataFrame, end: str) -> int:
+    frame = yahoo.history(symbol, period="max", end=end, auto_adjust=False)
+    if frame.empty or "Adj Close" not in frame:
+        raise ValueError("No adjusted history")
+    frame = frame.dropna(subset=["Close", "Adj Close"])
+    market_dates = pd.to_datetime(frame.index.strftime("%Y-%m-%d"))
+    frame = frame[market_dates < pd.Timestamp(end)]
+    market_dates = pd.to_datetime(frame.index.strftime("%Y-%m-%d"))
+    if not overlaps_membership(market_dates, history, symbol, "2016-01-01"):
+        raise ValueError("Provider history does not overlap historical membership")
+    # The compatibility path is captured per operation, never mutated.
+    writes = SqliteCacheWrites(config.DB_PATH, lambda: datetime.now(UTC))
+    writes.prices(symbol, frame)
+    if "Stock Splits" in frame:
+        writes.splits(symbol, {d.strftime("%Y-%m-%d"): float(v)
+                                      for d, v in frame["Stock Splits"].items() if pd.notna(v) and v > 0})
+    return len(frame)
+
+
+def run(data_dir: Path) -> dict:
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    directory = data_dir / "history_refresh" / "1996_2015"
+    directory.mkdir(parents=True, exist_ok=True)
+    files = {key: download_pinned(item, directory) for key, item in manifest["sources"].items()}
+    now = datetime.now(UTC)
+    run_dir = directory / now.strftime("%Y%m%dT%H%M%S")
+    run_dir.mkdir()
+    store = SqliteHistoricalBackfill(config.DB_PATH)
+    store.backup(run_dir / "gabi_before.db")
+    start, end = manifest["start"], manifest["end_exclusive"]
+    history = pd.read_csv(files["membership"], dtype=str)
+    issuers = pd.read_csv(files["issuers"], dtype=str).fillna("")
+    targets = set(period_symbols(history, start, "2015-12-31"))
+    report: dict = {"started_at": now.isoformat(), "cost_eur": 0, "manifest": manifest,
+                    "before": database_coverage(), "target_symbols": sorted(targets)}
+
+    def save():
+        (run_dir / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    save()
+    print(f"Backup: {run_dir}", flush=True)
+    for kind, source_id in [("membership", "membership_source_id"), ("issuers", "issuer_source_id"), ("prices", "price_source_id")]:
+        historical_archive.register_source(manifest[source_id], {
+            **manifest["sources"][kind], "start": start, "end_exclusive": end,
+            "quality": "community_reference" if kind != "prices" else "research_archive_unverified_identity",
+        })
+    report["membership_snapshots"] = historical_archive.import_membership(manifest["membership_source_id"], history, start, end)
+    report["issuer_candidates"] = historical_archive.import_issuer_candidates(manifest["issuer_source_id"], issuers)
+    report["archived_prices"] = {"accepted": 0, "rejected": 0}
+    for n, chunk in enumerate(pd.read_csv(files["prices"], chunksize=200000), 1):
+        counts = historical_archive.import_price_chunk(manifest["price_source_id"], chunk, targets, start, end)
+        for key, count in counts.items():
+            report["archived_prices"][key] += count
+        if n % 5 == 0:
+            print(f"Price archive: {report['archived_prices']}", flush=True)
+    save()
+
+    live_frame = edgar.get_cik_map()
+    live = dict(zip(live_frame["symbol"], live_frame["cik"], strict=True))
+    stored, old_facts, old_prices = store.operational(end)
+    safe, blocked = historical_archive.unique_historical_ciks(issuers, targets, live, stored)
+    report["historical_cik_candidates"] = safe
+    report["blocked_operational_imports"] = blocked
+    report["before_old_coverage"] = {"symbols_with_prices": len(targets & old_prices), "symbols_with_facts": len(targets & old_facts)}
+    report["yahoo"] = {"updated": {}, "failed": {}}
+    yahoo.use_timezone_cache(data_dir / "history_refresh" / "yfinance_cache")
+    completed_end = (pd.Timestamp(last_completed_session(now)) + pd.Timedelta(days=1)).date().isoformat()
+    for symbol in sorted(set(safe) & set(live) - old_prices):
+        try:
+            report["yahoo"]["updated"][symbol] = fetch_missing_history(symbol, history, completed_end)
+        except Exception as exc:
+            report["yahoo"]["failed"][symbol] = str(exc)[:150]
+        print(f"Yahoo: {symbol}", flush=True)
+        save()
+
+    report["sec"] = {"updated": {}, "failed": {}, "no_pre2016_facts": []}
+    needed = sorted(set(safe) - old_facts)
+    raw_dir = directory / "companyfacts"
+    raw_dir.mkdir(exist_ok=True)
+    for n, symbol in enumerate(needed, 1):
+        cik = safe[symbol]
+        try:
+            raw_path = raw_dir / f"CIK{cik}.json"
+            if raw_path.exists():
+                facts = json.loads(raw_path.read_text(encoding="utf-8"))
+            else:
+                facts = edgar.fetch_company_facts(cik)
+                raw_path.write_text(json.dumps(facts), encoding="utf-8")
+            if str(facts["cik"]).zfill(10) != cik:
+                raise ValueError("SEC response CIK mismatch")
+            rows = edgar._extract_raw_facts(facts, edgar.TRACKED_TAGS, unit="USD")
+            rows += edgar._extract_raw_facts(facts, edgar.SHARES_TAGS, unit="shares")
+            rows = [r for r in rows if r.get("filed_date") and start <= r["filed_date"] < end]
+            if rows:
+                historical_archive.import_sec_facts(manifest["issuer_source_id"], symbol, cik, rows)
+                report["sec"]["updated"][symbol] = {"cik": cik, "name": facts.get("entityName"), "rows": len(rows)}
+            else:
+                report["sec"]["no_pre2016_facts"].append(symbol)
+        except Exception as exc:
+            report["sec"]["failed"][symbol] = type(exc).__name__
+        if n % 20 == 0 or n == len(needed):
+            print(f"SEC: {n}/{len(needed)}; imported {len(report['sec']['updated'])}", flush=True)
+        save()
+    report["after"] = database_coverage()
+    after = store.summary(manifest["price_source_id"], manifest["issuer_source_id"], end)
+    report["archive_coverage"] = after["archive_coverage"]
+    report["after_old_coverage"] = {"symbols_with_prices": len(targets & after["old_prices"]),
+                                    "symbols_with_facts": len(targets & after["old_facts"])}
+    report["archived_sec_facts"] = after["archived_sec_facts"]
+    report["sqlite_integrity"] = after["sqlite_integrity"]
+    report["completed_at"] = datetime.now(UTC).isoformat()
+    save()
+    print(f"Report: {run_dir / 'report.json'}", flush=True)
+    return report
+
+
+def import_price_archive(data_dir: Path, start: str, end: str) -> dict:
+    """Import the pinned FINSABER file for ``[start, end)`` and every symbol (#34).
+
+    #26 imported it only up to 2016 and for 2010-2015 members. The rows stay
+    in the research archive (never the operational cache) and are attributed
+    to an issuer only by the price audit. Reruns are idempotent.
+    """
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    item = manifest["sources"]["prices"]
+    path = data_dir / "history_refresh" / "1996_2015" / item["filename"]
+    if not matches(path, item["sha256"]):
+        raise ValueError(f"Source hash mismatch: {item['filename']}")
+    counts = {"accepted": 0, "rejected": 0}
+    for chunk in pd.read_csv(path, chunksize=200000, dtype={"symbol": str, "date": str}):
+        symbols = set(chunk["symbol"].dropna().str.replace(".", "-", regex=False))
+        result = historical_archive.import_price_chunk(manifest["price_source_id"], chunk, symbols, start, end)
+        for key, value in result.items():
+            counts[key] += value
+    return {"source_id": manifest["price_source_id"], "window": [start, end], **counts}
+

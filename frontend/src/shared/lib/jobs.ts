@@ -1,0 +1,52 @@
+/** Spanish names of the local job kinds and states, shared by Administración and the header indicator. */
+export const JOB_NAMES: Record<string, string> = {
+  refresh: 'Actualizar todo',
+  symbols: 'Descargar símbolos indicados',
+  quality: 'Auditar cobertura local',
+  backtest: 'Backtest exploratorio',
+  maintenance: 'Mantenimiento prospectivo',
+  tiingo: 'Descarga histórica Tiingo',
+  sim_result: 'Resultado de cartera simulada',
+  sim_compare: 'Comparar carteras simuladas',
+  sim_prices: 'Precios de cartera simulada',
+  holdings_prices: 'Precios de mi cartera',
+  benchmark_prices: 'Precios del benchmark S&P 500 en EUR',
+  idea_alerts: 'Alertas del historial de ideas',
+  metrics_comparison: 'Comparar métricas V1 y SEC V2',
+  ranking_parity: 'Comparar el ranking de la app con el cálculo histórico',
+  input_checks: 'Buscar datos imposibles o sospechosos',
+  decision_plan: 'Generar decisiones de cartera',
+  filing_check: 'Comprobar filings SEC',
+  historical_ranking: 'Ranking histórico',
+  factor_analysis: 'Factor Lab',
+  estimate_analysis: 'Análisis de estimaciones',
+  backtest_v1: 'Backtest V1',
+  backtest_v2: 'Backtest V2',
+  backtest_v3_comparison: 'Comparación de motores V2 y V3',
+  backtest_register: 'Registrar backtest en Research Lab',
+  backtest_factors: 'Contraste Fama-French',
+  prepare_history: 'Preparar datos históricos',
+  historical_outcomes: 'Resultado posterior del ranking',
+  experiment_pbo: 'PBO de experimentos',
+  experiment_bootstrap: 'Bootstrap por bloques',
+  live_forward_report: 'Informe del registro prospectivo',
+  blind_rebalance: 'Rebalanceo de validación ciega',
+  blind_performance: 'Rendimiento de validación ciega',
+  blind_export: 'Exportar validación ciega',
+  portfolio_lab: 'Portfolio Lab',
+  company_sync: 'Sincronizar datos de una empresa',
+  data_update: 'Actualizar una parte de las empresas',
+  data_health: 'Comprobar calidad de los datos',
+};
+
+export const JOB_STATES: Record<string, string> = {
+  queued: 'En espera',
+  running: 'En curso',
+  succeeded: 'Completado',
+  failed: 'Fallido',
+  cancelled: 'Cancelado',
+};
+
+export const ACTIVE_JOB_STATES = ['queued', 'running'];
+
+export const jobName = (kind: string) => JOB_NAMES[kind] ?? kind;

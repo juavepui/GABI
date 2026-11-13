@@ -1,0 +1,108 @@
+{
+  "source": "486942af7a92bea5afa7ffec98983eeba701baad:backend/src/gabi/events_calendar.py",
+  "source_sha256_lf": "e6969bc1b31c6958aa5fbf546b94555aad181b983c050810c4096589085ef96c",
+  "events": {
+    "confirmed": [
+      {
+        "symbol": "AAA",
+        "event_type": "earnings",
+        "event_date": "2024-07-30",
+        "range_end": "2024-08-01",
+        "is_estimate": false,
+        "source": "Yahoo Finance (info)",
+        "fetched_at": "captured",
+        "days_until": 0
+      },
+      {
+        "symbol": "AAA",
+        "event_type": "ex_dividend",
+        "event_date": "2024-07-29",
+        "range_end": null,
+        "is_estimate": false,
+        "source": "Yahoo Finance (info)",
+        "fetched_at": "captured",
+        "days_until": -1
+      },
+      {
+        "symbol": "AAA",
+        "event_type": "dividend_payment",
+        "event_date": "2024-08-02",
+        "range_end": null,
+        "is_estimate": false,
+        "source": "Yahoo Finance (info)",
+        "fetched_at": "captured",
+        "days_until": 3
+      }
+    ],
+    "estimated": [
+      {
+        "symbol": "AAA",
+        "event_type": "earnings",
+        "event_date": "2024-07-30",
+        "range_end": "2024-08-01",
+        "is_estimate": true,
+        "source": "Yahoo Finance (info)",
+        "fetched_at": "captured",
+        "days_until": 0
+      },
+      {
+        "symbol": "AAA",
+        "event_type": "ex_dividend",
+        "event_date": "2024-07-29",
+        "range_end": null,
+        "is_estimate": false,
+        "source": "Yahoo Finance (info)",
+        "fetched_at": "captured",
+        "days_until": -1
+      },
+      {
+        "symbol": "AAA",
+        "event_type": "dividend_payment",
+        "event_date": "2024-08-02",
+        "range_end": null,
+        "is_estimate": false,
+        "source": "Yahoo Finance (info)",
+        "fetched_at": "captured",
+        "days_until": 3
+      }
+    ],
+    "invalid": [],
+    "empty": []
+  },
+  "reported": [
+    {
+      "symbol": "AAA",
+      "earnings_date": "2024-04-30",
+      "eps_estimate": 1.0,
+      "eps_reported": 1.1,
+      "surprise_pct": 10.0
+    },
+    {
+      "symbol": "AAA",
+      "earnings_date": "2024-07-30",
+      "eps_estimate": null,
+      "eps_reported": 0.0,
+      "surprise_pct": null
+    }
+  ],
+  "reactions": {
+    "normal": [
+      null,
+      10.000000000000009,
+      8.333333333333325,
+      null
+    ],
+    "zero": [
+      null,
+      -100.0,
+      8.333333333333325,
+      null
+    ],
+    "missing": [
+      null,
+      null,
+      8.333333333333325,
+      null
+    ]
+  }
+}

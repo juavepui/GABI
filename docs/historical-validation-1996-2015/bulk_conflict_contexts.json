@@ -1,0 +1,29 @@
+{
+  "url": "https://www.sec.gov/Archives/edgar/data/1070412/000107041212000008/cnx-20111231.xml",
+  "consolidated_cash_contexts": [
+    {
+      "value": "375736000",
+      "context": "<xbrli:context xmlns:xbrli=\"http://www.xbrl.org/2003/instance\" xmlns:cnx=\"http://www.consolenergy.com/20111231\" xmlns:country=\"http://xbrl.sec.gov/country/2011-01-31\" xmlns:dei=\"http://xbrl.sec.gov/dei/2011-01-31\" xmlns:iso4217=\"http://www.xbrl.org/2003/iso4217\" xmlns:link=\"http://www.xbrl.org/2003/linkbase\" xmlns:us-gaap=\"http://fasb.org/us-gaap/2011-01-31\" xmlns:xbrldi=\"http://xbrl.org/2006/xbrldi\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"I2011Q4\">\n    <xbrli:entity>\n      <xbrli:identifier scheme=\"http://www.sec.gov/CIK\">0001070412</xbrli:identifier>\n    </xbrli:entity>\n    <xbrli:period>\n      <xbrli:instant>2011-12-31</xbrli:instant>\n    </xbrli:period>\n  </xbrli:context>\n  "
+    },
+    {
+      "value": "32794000",
+      "context": "<xbrli:context xmlns:xbrli=\"http://www.xbrl.org/2003/instance\" xmlns:cnx=\"http://www.consolenergy.com/20111231\" xmlns:country=\"http://xbrl.sec.gov/country/2011-01-31\" xmlns:dei=\"http://xbrl.sec.gov/dei/2011-01-31\" xmlns:iso4217=\"http://www.xbrl.org/2003/iso4217\" xmlns:link=\"http://www.xbrl.org/2003/linkbase\" xmlns:us-gaap=\"http://fasb.org/us-gaap/2011-01-31\" xmlns:xbrldi=\"http://xbrl.org/2006/xbrldi\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"I2010Q4\">\n    <xbrli:entity>\n      <xbrli:identifier scheme=\"http://www.sec.gov/CIK\">0001070412</xbrli:identifier>\n    </xbrli:entity>\n    <xbrli:period>\n      <xbrli:instant>2010-12-31</xbrli:instant>\n    </xbrli:period>\n  </xbrli:context>\n  "
+    },
+    {
+      "value": "65607000",
+      "context": "<xbrli:context xmlns:xbrli=\"http://www.xbrl.org/2003/instance\" xmlns:cnx=\"http://www.consolenergy.com/20111231\" xmlns:country=\"http://xbrl.sec.gov/country/2011-01-31\" xmlns:dei=\"http://xbrl.sec.gov/dei/2011-01-31\" xmlns:iso4217=\"http://www.xbrl.org/2003/iso4217\" xmlns:link=\"http://www.xbrl.org/2003/linkbase\" xmlns:us-gaap=\"http://fasb.org/us-gaap/2011-01-31\" xmlns:xbrldi=\"http://xbrl.org/2006/xbrldi\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"I2009Q1SD\">\n    <xbrli:entity>\n      <xbrli:identifier scheme=\"http://www.sec.gov/CIK\">0001070412</xbrli:identifier>\n    </xbrli:entity>\n    <xbrli:period>\n      <xbrli:instant>2009-01-02</xbrli:instant>\n    </xbrli:period>\n  </xbrli:context>\n  "
+    },
+    {
+      "value": "32794000",
+      "context": "<xbrli:context xmlns:xbrli=\"http://www.xbrl.org/2003/instance\" xmlns:cnx=\"http://www.consolenergy.com/20111231\" xmlns:country=\"http://xbrl.sec.gov/country/2011-01-31\" xmlns:dei=\"http://xbrl.sec.gov/dei/2011-01-31\" xmlns:iso4217=\"http://www.xbrl.org/2003/iso4217\" xmlns:link=\"http://www.xbrl.org/2003/linkbase\" xmlns:us-gaap=\"http://fasb.org/us-gaap/2011-01-31\" xmlns:xbrldi=\"http://xbrl.org/2006/xbrldi\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"I2011Q1SD\">\n    <xbrli:entity>\n      <xbrli:identifier scheme=\"http://www.sec.gov/CIK\">0001070412</xbrli:identifier>\n    </xbrli:entity>\n    <xbrli:period>\n      <xbrli:instant>2011-01-02</xbrli:instant>\n    </xbrli:period>\n  </xbrli:context>\n  "
+    },
+    {
+      "value": "138512000",
+      "context": "<xbrli:context xmlns:xbrli=\"http://www.xbrl.org/2003/instance\" xmlns:cnx=\"http://www.consolenergy.com/20111231\" xmlns:country=\"http://xbrl.sec.gov/country/2011-01-31\" xmlns:dei=\"http://xbrl.sec.gov/dei/2011-01-31\" xmlns:iso4217=\"http://www.xbrl.org/2003/iso4217\" xmlns:link=\"http://www.xbrl.org/2003/linkbase\" xmlns:us-gaap=\"http://fasb.org/us-gaap/2011-01-31\" xmlns:xbrldi=\"http://xbrl.org/2006/xbrldi\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"I2008Q4\">\n    <xbrli:entity>\n      <xbrli:identifier scheme=\"http://www.sec.gov/CIK\">0001070412</xbrli:identifier>\n    </xbrli:entity>\n    <xbrli:period>\n      <xbrli:instant>2008-12-31</xbrli:instant>\n    </xbrli:period>\n  </xbrli:context>\n  "
+    },
+    {
+      "value": "65607000",
+      "context": "<xbrli:context xmlns:xbrli=\"http://www.xbrl.org/2003/instance\" xmlns:cnx=\"http://www.consolenergy.com/20111231\" xmlns:country=\"http://xbrl.sec.gov/country/2011-01-31\" xmlns:dei=\"http://xbrl.sec.gov/dei/2011-01-31\" xmlns:iso4217=\"http://www.xbrl.org/2003/iso4217\" xmlns:link=\"http://www.xbrl.org/2003/linkbase\" xmlns:us-gaap=\"http://fasb.org/us-gaap/2011-01-31\" xmlns:xbrldi=\"http://xbrl.org/2006/xbrldi\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"I2009Q4\">\n    <xbrli:entity>\n      <xbrli:identifier scheme=\"http://www.sec.gov/CIK\">0001070412</xbrli:identifier>\n    </xbrli:entity>\n    <xbrli:period>\n      <xbrli:instant>2009-12-31</xbrli:instant>\n    </xbrli:period>\n  </xbrli:context>\n  "
+    }
+  ]
+}

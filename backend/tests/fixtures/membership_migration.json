@@ -1,0 +1,378 @@
+{
+  "source_sha256": "47790cd950e8dd40741cc7a1859d910d00f2b5b8b2e165d42e91983dcac368e8",
+  "today": "2024-03-31",
+  "cases": [
+    {
+      "name": "normal",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "expected": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        },
+        {
+          "date": "2024-02-01",
+          "tickers": "C,D"
+        },
+        {
+          "date": "2024-03-31",
+          "tickers": "C,D"
+        }
+      ]
+    },
+    {
+      "name": "existing",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        },
+        {
+          "date": "2024-02-20",
+          "tickers": "D,C"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "expected": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        },
+        {
+          "date": "2024-02-01",
+          "tickers": "C,D"
+        },
+        {
+          "date": "2024-02-20",
+          "tickers": "D,C"
+        },
+        {
+          "date": "2024-03-31",
+          "tickers": "C,D"
+        }
+      ]
+    },
+    {
+      "name": "conflict",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        },
+        {
+          "date": "2024-02-20",
+          "tickers": "B,C"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "Existing membership conflicts with reviewed events at 2024-02-20"
+    },
+    {
+      "name": "duplicate",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        },
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "Duplicate membership dates"
+    },
+    {
+      "name": "endpoint",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "A",
+          "D"
+        ]
+      },
+      "error": "Reconstructed index does not match observed endpoint"
+    },
+    {
+      "name": "future",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-04-01",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "Invalid membership verification interval"
+    },
+    {
+      "name": "missing_anchor",
+      "history": [
+        {
+          "date": "2023-12-31",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "Reviewed membership anchor is missing"
+    },
+    {
+      "name": "bad_hash",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "invalid",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "Reviewed membership anchor has changed"
+    },
+    {
+      "name": "missing_source",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "A",
+            "added": "C",
+            "source_url": "http://example.test"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "Missing event source"
+    },
+    {
+      "name": "absent_member",
+      "history": [
+        {
+          "date": "2024-01-01",
+          "tickers": "A,B"
+        }
+      ],
+      "ledger": {
+        "anchor_date": "2024-01-01",
+        "verified_through": "2024-03-31",
+        "anchor_sha256": "b17c8419f544abd0648345006bbe975b43acf9fc878712a1116312f3e1e24b2e",
+        "events": [
+          {
+            "effective_date": "2024-02-01",
+            "removed": "MISSING",
+            "added": "C",
+            "source_url": "https://source.example/change"
+          },
+          {
+            "effective_date": "2024-02-01",
+            "removed": "B",
+            "added": "D",
+            "source_url": "https://source.example/change"
+          }
+        ],
+        "endpoint_symbols": [
+          "C",
+          "D"
+        ]
+      },
+      "error": "2024-02-01: cannot remove absent member MISSING"
+    }
+  ]
+}

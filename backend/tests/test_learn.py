@@ -1,0 +1,60 @@
+"""Aprender in React: metric definitions come from the backend, the single source of their meaning."""
+
+from fastapi.testclient import TestClient
+
+from gabi import config, scoring
+from gabi.domain.market.metric_info import METRIC_INFO
+from gabi.infrastructure.settings import Settings
+from gabi_api.bootstrap import create_app
+
+
+def test_glossary_lists_every_block_metric_and_marks_the_13_that_score():
+    with TestClient(create_app(Settings(config.DATA_DIR))) as client:
+        response = client.get("/api/v1/learn/metrics")
+    assert response.status_code == 200
+    body = response.json()
+    blocks = {block["block"]: block["metrics"] for block in body["blocks"]}
+    assert [block["label"] for block in body["blocks"]] == ["Valoración", "Calidad", "Momentum (tendencia)", "Riesgo"]
+    assert [metric["key"] for metric in blocks["value"]] == scoring.VALUE_METRICS_LOWER_BETTER
+    scored = {metric["key"] for metrics in blocks.values() for metric in metrics if metric["scored"]}
+    assert scored == {key for keys in scoring.SCORE_METRICS.values() for key in keys} and len(scored) == 13
+    assert blocks["value"][0] == {"key": "pe", "label": "PER", "help": METRIC_INFO["pe"]["help"], "scored": True}
+    assert body["terms"]["max_drawdown"] == METRIC_INFO["max_drawdown"]["help"]
+
+
+def test_glossary_serves_research_terms_and_reuses_the_metric_help():
+    with TestClient(create_app(Settings(config.DATA_DIR))) as client:
+        glossary = {entry["key"]: entry for entry in client.get("/api/v1/learn/metrics").json()["glossary"]}
+    assert {"psr", "dsr", "pbo", "rank_ic", "hhi", "cik", "point_in_time"} <= set(glossary)
+    assert glossary["sharpe_ratio"]["definition"] == METRIC_INFO["sharpe_ratio"]["help"]  # One source of meaning.
+    assert all(entry["definition"] for entry in glossary.values())
+
+
+def test_each_coverage_concept_has_one_distinct_name_and_definition():
+    """Métricas disponibles, cobertura ponderada and block coverage are three concepts with three names (#174)."""
+    with TestClient(create_app(Settings(config.DATA_DIR))) as client:
+        glossary = {entry["key"]: entry for entry in client.get("/api/v1/learn/metrics").json()["glossary"]}
+    names = {key: glossary[key]["term"] for key in ("score_coverage", "confidence", "block_coverage")}
+    assert names == {"score_coverage": "Métricas con dato", "confidence": "Datos disponibles",
+                     "block_coverage": "Cobertura por apartado"}
+    assert glossary["score_coverage"]["definition"] == METRIC_INFO["score_coverage"]["help"]
+    assert all(name.lower() != "cobertura" for name in names.values())
+
+
+# Every metric Ranking, the company page and Comparar label with an ⓘ (#197).
+SHOWN_METRICS = {
+    "price", "composite_score", "confidence", "market_cap", "pe", "value_score", "quality_score", "momentum_score",
+    "risk_score", "roe", "debt_to_equity", "dividend_yield", "momentum_12m", "volatility", "next_earnings_days",
+    "pb", "ev_ebitda", "free_cashflow", "roic", "operating_margin", "momentum_6m", "max_drawdown", "beta_calc",
+    "alpha", "win_rate_monthly", "beta", "avg_volume", "score_coverage", "revenue_growth_yoy",
+}
+
+
+def test_every_visible_metric_has_its_help_in_the_one_glossary():
+    with TestClient(create_app(Settings(config.DATA_DIR))) as client:
+        glossary = {entry["key"]: entry for entry in client.get("/api/v1/learn/metrics").json()["glossary"]}
+    assert SHOWN_METRICS <= set(glossary)
+    for key in SHOWN_METRICS:
+        assert glossary[key]["definition"] == METRIC_INFO[key]["help"], key  # the ⓘ and the Ayuda read one text
+    assert "name" not in glossary and "sector" not in glossary
+    assert len({entry["key"] for entry in glossary.values()}) == len(glossary)

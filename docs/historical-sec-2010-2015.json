@@ -1,0 +1,208 @@
+{
+  "database": "gabi.db",
+  "source": "SEC XBRL exact facts by CIK, filed_date cutoff",
+  "bulk_num_rows": 454341,
+  "bulk_accessions": 14289,
+  "exact_facts_filed_2010_2015": 560698,
+  "filing_identity_observations": 907,
+  "first_filed_by_concept": {
+    "revenue": "1996-09-27",
+    "operating_income": "1996-09-27",
+    "net_income": "1996-09-27",
+    "equity": "1996-09-27",
+    "cash": "2008-01-29",
+    "long_term_debt": "2009-04-29",
+    "operating_cash_flow": "1996-09-27",
+    "capex": "1996-09-27",
+    "shares": "2009-04-15",
+    "depreciation": "1996-09-27"
+  },
+  "years": [
+    {
+      "year": 2010,
+      "members": 497,
+      "identity_accredited": 451,
+      "concepts_available": {
+        "revenue": 358,
+        "operating_income": 310,
+        "net_income": 397,
+        "equity": 433,
+        "cash": 414,
+        "long_term_debt": 273,
+        "operating_cash_flow": 435,
+        "capex": 322,
+        "shares": 427,
+        "depreciation": 326
+      },
+      "concepts_fresh_460d": {
+        "revenue": 358,
+        "operating_income": 309,
+        "net_income": 392,
+        "equity": 433,
+        "cash": 414,
+        "long_term_debt": 270,
+        "operating_cash_flow": 435,
+        "capex": 320,
+        "shares": 427,
+        "depreciation": 322
+      },
+      "roic_inputs": 246,
+      "fcf_inputs": 322
+    },
+    {
+      "year": 2011,
+      "members": 497,
+      "identity_accredited": 455,
+      "concepts_available": {
+        "revenue": 375,
+        "operating_income": 349,
+        "net_income": 420,
+        "equity": 448,
+        "cash": 425,
+        "long_term_debt": 344,
+        "operating_cash_flow": 446,
+        "capex": 335,
+        "shares": 436,
+        "depreciation": 354
+      },
+      "concepts_fresh_460d": {
+        "revenue": 373,
+        "operating_income": 346,
+        "net_income": 411,
+        "equity": 448,
+        "cash": 424,
+        "long_term_debt": 336,
+        "operating_cash_flow": 446,
+        "capex": 330,
+        "shares": 423,
+        "depreciation": 350
+      },
+      "roic_inputs": 322,
+      "fcf_inputs": 335
+    },
+    {
+      "year": 2012,
+      "members": 497,
+      "identity_accredited": 461,
+      "concepts_available": {
+        "revenue": 383,
+        "operating_income": 360,
+        "net_income": 429,
+        "equity": 455,
+        "cash": 433,
+        "long_term_debt": 368,
+        "operating_cash_flow": 454,
+        "capex": 342,
+        "shares": 444,
+        "depreciation": 377
+      },
+      "concepts_fresh_460d": {
+        "revenue": 377,
+        "operating_income": 352,
+        "net_income": 405,
+        "equity": 452,
+        "cash": 429,
+        "long_term_debt": 348,
+        "operating_cash_flow": 452,
+        "capex": 329,
+        "shares": 429,
+        "depreciation": 371
+      },
+      "roic_inputs": 348,
+      "fcf_inputs": 342
+    },
+    {
+      "year": 2013,
+      "members": 497,
+      "identity_accredited": 463,
+      "concepts_available": {
+        "revenue": 396,
+        "operating_income": 362,
+        "net_income": 435,
+        "equity": 459,
+        "cash": 438,
+        "long_term_debt": 378,
+        "operating_cash_flow": 458,
+        "capex": 349,
+        "shares": 447,
+        "depreciation": 382
+      },
+      "concepts_fresh_460d": {
+        "revenue": 389,
+        "operating_income": 352,
+        "net_income": 395,
+        "equity": 456,
+        "cash": 433,
+        "long_term_debt": 341,
+        "operating_cash_flow": 456,
+        "capex": 334,
+        "shares": 432,
+        "depreciation": 371
+      },
+      "roic_inputs": 361,
+      "fcf_inputs": 349
+    },
+    {
+      "year": 2014,
+      "members": 499,
+      "identity_accredited": 465,
+      "concepts_available": {
+        "revenue": 401,
+        "operating_income": 371,
+        "net_income": 444,
+        "equity": 463,
+        "cash": 442,
+        "long_term_debt": 395,
+        "operating_cash_flow": 462,
+        "capex": 360,
+        "shares": 452,
+        "depreciation": 395
+      },
+      "concepts_fresh_460d": {
+        "revenue": 392,
+        "operating_income": 359,
+        "net_income": 405,
+        "equity": 461,
+        "cash": 436,
+        "long_term_debt": 350,
+        "operating_cash_flow": 461,
+        "capex": 345,
+        "shares": 435,
+        "depreciation": 384
+      },
+      "roic_inputs": 380,
+      "fcf_inputs": 360
+    },
+    {
+      "year": 2015,
+      "members": 502,
+      "identity_accredited": 457,
+      "concepts_available": {
+        "revenue": 398,
+        "operating_income": 369,
+        "net_income": 440,
+        "equity": 457,
+        "cash": 436,
+        "long_term_debt": 398,
+        "operating_cash_flow": 456,
+        "capex": 359,
+        "shares": 446,
+        "depreciation": 393
+      },
+      "concepts_fresh_460d": {
+        "revenue": 390,
+        "operating_income": 355,
+        "net_income": 400,
+        "equity": 455,
+        "cash": 430,
+        "long_term_debt": 349,
+        "operating_cash_flow": 456,
+        "capex": 339,
+        "shares": 429,
+        "depreciation": 382
+      },
+      "roic_inputs": 385,
+      "fcf_inputs": 359
+    }
+  ]
+}

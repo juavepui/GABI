@@ -1,0 +1,705 @@
+{
+  "measured_at_utc": "2026-09-28T12:58:43.833330+00:00",
+  "method": "os.walk(data); sum(Path.stat().st_size); logical file lengths, not allocated disk clusters; no file contents read",
+  "root": "C:\\Users\\jvela\\source\\GABI\\data",
+  "total_bytes": 89288783198,
+  "GB_decimal": 89.288783198,
+  "GiB_binary": 83.15665945224464,
+  "files": 24740,
+  "by_depth": {
+    "1": [
+      [
+        "history_refresh",
+        {
+          "bytes": 54481302844,
+          "files": 23468
+        }
+      ],
+      [
+        "(root files)",
+        {
+          "bytes": 15866035506,
+          "files": 18
+        }
+      ],
+      [
+        "revalidation_2011_2025",
+        {
+          "bytes": 13663631456,
+          "files": 188
+        }
+      ],
+      [
+        "historical_validation_2010_2015",
+        {
+          "bytes": 2811367226,
+          "files": 26
+        }
+      ],
+      [
+        "full_universe_audit",
+        {
+          "bytes": 873619421,
+          "files": 41
+        }
+      ],
+      [
+        "overfitting_audit",
+        {
+          "bytes": 844423342,
+          "files": 40
+        }
+      ],
+      [
+        "kaggle",
+        {
+          "bytes": 694458541,
+          "files": 4
+        }
+      ],
+      [
+        "smallmid_test",
+        {
+          "bytes": 50083493,
+          "files": 823
+        }
+      ],
+      [
+        "r3_e6",
+        {
+          "bytes": 2605403,
+          "files": 64
+        }
+      ],
+      [
+        "factor_history",
+        {
+          "bytes": 777560,
+          "files": 9
+        }
+      ],
+      [
+        "cross_section_test",
+        {
+          "bytes": 476977,
+          "files": 58
+        }
+      ],
+      [
+        "periodic_tasks",
+        {
+          "bytes": 1429,
+          "files": 1
+        }
+      ]
+    ],
+    "2": [
+      [
+        "history_refresh/validation_1996_2015",
+        {
+          "bytes": 50737197310,
+          "files": 22476
+        }
+      ],
+      [
+        "(root files)",
+        {
+          "bytes": 15866035506,
+          "files": 18
+        }
+      ],
+      [
+        "revalidation_2011_2025/acreditado-38",
+        {
+          "bytes": 3511509652,
+          "files": 65
+        }
+      ],
+      [
+        "revalidation_2011_2025/acreditado",
+        {
+          "bytes": 3497651881,
+          "files": 41
+        }
+      ],
+      [
+        "revalidation_2011_2025/operativo",
+        {
+          "bytes": 3327686156,
+          "files": 41
+        }
+      ],
+      [
+        "revalidation_2011_2025/operativo-38",
+        {
+          "bytes": 3326783767,
+          "files": 41
+        }
+      ],
+      [
+        "historical_validation_2010_2015/(files)",
+        {
+          "bytes": 2811367226,
+          "files": 26
+        }
+      ],
+      [
+        "history_refresh/1996_2015",
+        {
+          "bytes": 2480666794,
+          "files": 233
+        }
+      ],
+      [
+        "full_universe_audit/(files)",
+        {
+          "bytes": 873619421,
+          "files": 41
+        }
+      ],
+      [
+        "history_refresh/20260923T133937",
+        {
+          "bytes": 862016813,
+          "files": 7
+        }
+      ],
+      [
+        "overfitting_audit/(files)",
+        {
+          "bytes": 844423342,
+          "files": 40
+        }
+      ],
+      [
+        "kaggle/(files)",
+        {
+          "bytes": 694458541,
+          "files": 4
+        }
+      ],
+      [
+        "history_refresh/tiingo",
+        {
+          "bytes": 311018181,
+          "files": 496
+        }
+      ],
+      [
+        "history_refresh/former_issuers",
+        {
+          "bytes": 48398642,
+          "files": 25
+        }
+      ],
+      [
+        "smallmid_test/wiki",
+        {
+          "bytes": 39018383,
+          "files": 814
+        }
+      ],
+      [
+        "history_refresh/nasdaq_wiki",
+        {
+          "bytes": 32924753,
+          "files": 213
+        }
+      ],
+      [
+        "smallmid_test/(files)",
+        {
+          "bytes": 11065110,
+          "files": 9
+        }
+      ],
+      [
+        "history_refresh/(files)",
+        {
+          "bytes": 8475325,
+          "files": 8
+        }
+      ],
+      [
+        "r3_e6/(files)",
+        {
+          "bytes": 2605403,
+          "files": 64
+        }
+      ],
+      [
+        "factor_history/(files)",
+        {
+          "bytes": 777560,
+          "files": 9
+        }
+      ],
+      [
+        "history_refresh/sources",
+        {
+          "bytes": 510818,
+          "files": 8
+        }
+      ],
+      [
+        "cross_section_test/(files)",
+        {
+          "bytes": 476977,
+          "files": 58
+        }
+      ],
+      [
+        "history_refresh/yfinance_cache",
+        {
+          "bytes": 94208,
+          "files": 2
+        }
+      ],
+      [
+        "periodic_tasks/(files)",
+        {
+          "bytes": 1429,
+          "files": 1
+        }
+      ]
+    ],
+    "3": [
+      [
+        "history_refresh/validation_1996_2015/instances",
+        {
+          "bytes": 20232596993,
+          "files": 5299
+        }
+      ],
+      [
+        "(root files)",
+        {
+          "bytes": 15866035506,
+          "files": 18
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/companyfacts",
+        {
+          "bytes": 11328977106,
+          "files": 5411
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/annual_reports",
+        {
+          "bytes": 9826713359,
+          "files": 2976
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/(files)",
+        {
+          "bytes": 7929968956,
+          "files": 83
+        }
+      ],
+      [
+        "revalidation_2011_2025/acreditado-38/(files)",
+        {
+          "bytes": 3511509652,
+          "files": 65
+        }
+      ],
+      [
+        "revalidation_2011_2025/acreditado/(files)",
+        {
+          "bytes": 3497651881,
+          "files": 41
+        }
+      ],
+      [
+        "revalidation_2011_2025/operativo/(files)",
+        {
+          "bytes": 3327686156,
+          "files": 41
+        }
+      ],
+      [
+        "revalidation_2011_2025/operativo-38/(files)",
+        {
+          "bytes": 3326783767,
+          "files": 41
+        }
+      ],
+      [
+        "historical_validation_2010_2015/(files)",
+        {
+          "bytes": 2811367226,
+          "files": 26
+        }
+      ],
+      [
+        "history_refresh/1996_2015/20260923T192457",
+        {
+          "bytes": 1626640565,
+          "files": 2
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/identity_submissions",
+        {
+          "bytes": 1145529144,
+          "files": 8098
+        }
+      ],
+      [
+        "full_universe_audit/(files)",
+        {
+          "bytes": 873619421,
+          "files": 41
+        }
+      ],
+      [
+        "history_refresh/20260923T133937/(files)",
+        {
+          "bytes": 862016813,
+          "files": 7
+        }
+      ],
+      [
+        "overfitting_audit/(files)",
+        {
+          "bytes": 844423342,
+          "files": 40
+        }
+      ],
+      [
+        "kaggle/(files)",
+        {
+          "bytes": 694458541,
+          "files": 4
+        }
+      ],
+      [
+        "history_refresh/1996_2015/companyfacts",
+        {
+          "bytes": 577229765,
+          "files": 214
+        }
+      ],
+      [
+        "history_refresh/1996_2015/(files)",
+        {
+          "bytes": 276796464,
+          "files": 17
+        }
+      ],
+      [
+        "history_refresh/tiingo/smallmid",
+        {
+          "bytes": 221777757,
+          "files": 332
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/frames",
+        {
+          "bytes": 103976863,
+          "files": 375
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/tenk_pilot",
+        {
+          "bytes": 72341754,
+          "files": 65
+        }
+      ],
+      [
+        "history_refresh/tiingo/(files)",
+        {
+          "bytes": 69202484,
+          "files": 132
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/indices",
+        {
+          "bytes": 64018675,
+          "files": 4
+        }
+      ],
+      [
+        "history_refresh/former_issuers/(files)",
+        {
+          "bytes": 48398642,
+          "files": 25
+        }
+      ],
+      [
+        "smallmid_test/wiki/(files)",
+        {
+          "bytes": 39018383,
+          "files": 814
+        }
+      ],
+      [
+        "history_refresh/nasdaq_wiki/(files)",
+        {
+          "bytes": 32924753,
+          "files": 213
+        }
+      ],
+      [
+        "history_refresh/tiingo/2016_2025",
+        {
+          "bytes": 20037940,
+          "files": 32
+        }
+      ],
+      [
+        "smallmid_test/(files)",
+        {
+          "bytes": 11065110,
+          "files": 9
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/conflicts",
+        {
+          "bytes": 9347525,
+          "files": 1
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/legacy",
+        {
+          "bytes": 8655818,
+          "files": 3
+        }
+      ],
+      [
+        "history_refresh/(files)",
+        {
+          "bytes": 8475325,
+          "files": 8
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/coverage",
+        {
+          "bytes": 7972320,
+          "files": 5
+        }
+      ],
+      [
+        "history_refresh/validation_1996_2015/terminal_8k",
+        {
+          "bytes": 7098797,
+          "files": 156
+        }
+      ],
+      [
+        "r3_e6/(files)",
+        {
+          "bytes": 2605403,
+          "files": 64
+        }
+      ],
+      [
+        "factor_history/(files)",
+        {
+          "bytes": 777560,
+          "files": 9
+        }
+      ],
+      [
+        "history_refresh/sources/(files)",
+        {
+          "bytes": 510818,
+          "files": 8
+        }
+      ],
+      [
+        "cross_section_test/(files)",
+        {
+          "bytes": 476977,
+          "files": 58
+        }
+      ],
+      [
+        "history_refresh/yfinance_cache/(files)",
+        {
+          "bytes": 94208,
+          "files": 2
+        }
+      ],
+      [
+        "periodic_tasks/(files)",
+        {
+          "bytes": 1429,
+          "files": 1
+        }
+      ]
+    ]
+  },
+  "largest_files": [
+    {
+      "bytes": 12333223936,
+      "path": "gabi.db"
+    },
+    {
+      "bytes": 3468865536,
+      "path": "revalidation_2011_2025/acreditado/snapshot.db"
+    },
+    {
+      "bytes": 3468865536,
+      "path": "revalidation_2011_2025/acreditado-38/snapshot.db"
+    },
+    {
+      "bytes": 3302469632,
+      "path": "revalidation_2011_2025/operativo/snapshot.db"
+    },
+    {
+      "bytes": 3302469632,
+      "path": "revalidation_2011_2025/operativo-38/snapshot.db"
+    },
+    {
+      "bytes": 2796281856,
+      "path": "historical_validation_2010_2015/snapshot.db"
+    },
+    {
+      "bytes": 2671222784,
+      "path": "gabi.db.before-identity.bak"
+    },
+    {
+      "bytes": 2431000576,
+      "path": "history_refresh/validation_1996_2015/before_validation.db"
+    },
+    {
+      "bytes": 1626566656,
+      "path": "history_refresh/1996_2015/20260923T192457/gabi_before.db"
+    },
+    {
+      "bytes": 854708224,
+      "path": "full_universe_audit/snapshot.db"
+    },
+    {
+      "bytes": 854142976,
+      "path": "history_refresh/20260923T133937/gabi_before.db"
+    },
+    {
+      "bytes": 854138880,
+      "path": "rotation_experiment_work.db"
+    },
+    {
+      "bytes": 837607424,
+      "path": "overfitting_audit/snapshot.db"
+    },
+    {
+      "bytes": 485974042,
+      "path": "kaggle/archive (3).zip"
+    },
+    {
+      "bytes": 265180873,
+      "path": "history_refresh/1996_2015/finsaber_prices.csv"
+    },
+    {
+      "bytes": 202061071,
+      "path": "kaggle/tsaustin_subset.parquet"
+    },
+    {
+      "bytes": 127842298,
+      "path": "history_refresh/validation_1996_2015/2025q3.zip"
+    },
+    {
+      "bytes": 127765057,
+      "path": "history_refresh/validation_1996_2015/2025q1.zip"
+    },
+    {
+      "bytes": 127719893,
+      "path": "history_refresh/validation_1996_2015/instances/0000004904-16-000056.xml"
+    },
+    {
+      "bytes": 124336804,
+      "path": "history_refresh/validation_1996_2015/2024q1.zip"
+    },
+    {
+      "bytes": 122932548,
+      "path": "history_refresh/validation_1996_2015/2024q4.zip"
+    },
+    {
+      "bytes": 120272357,
+      "path": "history_refresh/validation_1996_2015/2023q4.zip"
+    },
+    {
+      "bytes": 119119954,
+      "path": "history_refresh/validation_1996_2015/2024q2.zip"
+    },
+    {
+      "bytes": 118280418,
+      "path": "history_refresh/validation_1996_2015/2024q3.zip"
+    },
+    {
+      "bytes": 117776944,
+      "path": "history_refresh/validation_1996_2015/2023q3.zip"
+    },
+    {
+      "bytes": 116914392,
+      "path": "history_refresh/validation_1996_2015/2023q2.zip"
+    },
+    {
+      "bytes": 113974946,
+      "path": "history_refresh/validation_1996_2015/2023q1.zip"
+    },
+    {
+      "bytes": 111091525,
+      "path": "history_refresh/validation_1996_2015/2022q4.zip"
+    },
+    {
+      "bytes": 103669919,
+      "path": "history_refresh/validation_1996_2015/2022q1.zip"
+    },
+    {
+      "bytes": 102843522,
+      "path": "history_refresh/validation_1996_2015/2014q1.zip"
+    },
+    {
+      "bytes": 102642081,
+      "path": "history_refresh/validation_1996_2015/2021q4.zip"
+    },
+    {
+      "bytes": 99173442,
+      "path": "history_refresh/validation_1996_2015/2013q1.zip"
+    },
+    {
+      "bytes": 98944359,
+      "path": "history_refresh/validation_1996_2015/2015q1.zip"
+    },
+    {
+      "bytes": 98753299,
+      "path": "history_refresh/validation_1996_2015/2019q4.zip"
+    },
+    {
+      "bytes": 98355005,
+      "path": "history_refresh/validation_1996_2015/2013q3.zip"
+    },
+    {
+      "bytes": 97900752,
+      "path": "history_refresh/validation_1996_2015/2021q1.zip"
+    },
+    {
+      "bytes": 97589396,
+      "path": "history_refresh/validation_1996_2015/2022q3.zip"
+    },
+    {
+      "bytes": 97252395,
+      "path": "history_refresh/validation_1996_2015/2021q3.zip"
+    },
+    {
+      "bytes": 97089251,
+      "path": "history_refresh/validation_1996_2015/2022q2.zip"
+    },
+    {
+      "bytes": 96917655,
+      "path": "history_refresh/validation_1996_2015/2013q2.zip"
+    }
+  ],
+  "errors": []
+}

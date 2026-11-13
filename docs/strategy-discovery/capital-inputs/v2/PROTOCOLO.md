@@ -1,0 +1,9 @@
+# Auditoría de inputs de capital, revisión 2
+
+Fecha: 2026-09-29. Se aplica íntegramente el [protocolo inicial](../PROTOCOLO.md), cuyos periodos, etiquetas, límites de edad y reglas de cobertura permanecen intactos. El motor inicial, commit `e6d2d1d`, abortó al descubrir fuentes SEC históricas distintas de Company Facts. No produjo datos de cobertura ni resultados de inversión.
+
+Único cambio: **las fuentes no admitidas se conservan en cuarentena en vez de abortar toda la ingesta**. Se registran payload, emisor, accession, etiqueta, periodo, valor, URL, hash y motivo. Solo se admiten facts procedentes de la URL Company Facts exacta del CIK. Un accession con cualquier fact relevante de procedencia no admitida queda bloqueado completo, también si contiene facts admitidos; sus datos no se usan y no se rescata el filing anterior. No se asume que una instancia SEC sea falsa: está fuera del alcance y necesitaría una acreditación propia antes de incorporarla.
+
+Se publica el número de observaciones y filings bloqueados y su impacto por fecha. La posible selección no aleatoria, especialmente de emisores desaparecidos recuperados de instancias históricas, limita cualquier investigación posterior con el subconjunto. Superar el mínimo de muestra no demuestra ausencia de ese sesgo. La próxima hipótesis tendrá que declarar el subconjunto o acreditar las fuentes excluidas antes de medir rendimiento.
+
+Se conserva el protocolo y motor v1, cuya huella se verifica como dependencia. Se fijan revisión, motor y protocolos antes de repetir la auditoría. Se añade `source_quarantine.csv` a los cuatro artefactos originales; no se calcula ninguna variable bursátil, score de inversión, IC ni rentabilidad. La publicación no se sobrescribe. Comandos: `python -m gabi.capital_input_audit_v2 --verify` y `--reproduce DIRECTORIO`.

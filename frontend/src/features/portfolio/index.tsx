@@ -1,0 +1,516 @@
+import { useState, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useSearchParams } from 'react-router-dom';
+import type { PlanRequest } from '@/shared/api/generated/types.gen';
+import {
+  getEvidenceTop,
+  getPortfolioPlan,
+  getScoreBlocksEvidence,
+  saveSnapshot,
+} from '@/shared/api/client';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Badge } from '@/shared/ui/badge';
+import { LoadingState, ErrorState } from '@/shared/ui/resource-state';
+import { EvidenceTable } from '@/shared/ui/evidence-table';
+import { Folded } from '@/shared/ui/folded';
+import { SectionLinks } from '@/shared/ui/section-links';
+import { FlaskRound, NotebookPen, Radar, Wallet } from 'lucide-react';
+import { formatMoney, formatNumber } from '@/shared/lib/format';
+import { PageHeader } from '@/shared/ui/page-header';
+import { Textarea } from '@/shared/ui/textarea';
+import { Term } from '@/shared/ui/term';
+import { BlockBars, SummaryText } from '@/shared/ui/score-summary';
+
+import { UnevenEvidenceNote } from '@/shared/ui/block-evidence';
+import { SectorBreakdown } from './sector-breakdown';
+import { ThesisMark } from './thesis-mark';
+import { ExperimentalPlan } from './decisions-page';
+export { JournalPage } from './journal-page';
+export { IdeasPage } from './ideas-page';
+export { LearnPage } from './learn-page';
+export { SimulationsPage } from './simulations-page';
+export { HoldingsPage } from './holdings-page';
+export { InvestorPage } from './investor-page';
+export { RiskPage } from './risk-page';
+
+const euro = (value: number) => formatMoney(value, { currency: 'EUR', digits: 2 });
+const decimal = (value: number | null | undefined, digits = 1) => formatNumber(value, { digits });
+const initial: PlanRequest = {
+  n_positions: 20,
+  capital_eur: 1000,
+  holdings_text: '',
+  new_capital_eur: 1000,
+  sector_limit_percent: 25,
+  industry_limit_percent: 15,
+  use_saved_holdings: true,
+};
+
+function PlanEvidenceContent() {
+  const evidence = useQuery({
+    queryKey: ['portfolio', 'evidence'],
+    queryFn: ({ signal }) => getEvidenceTop(true, signal),
+  });
+  return (
+    <>
+      <p className="text-xs text-muted-foreground">
+        Confianza de evidencia BAJA/MEDIA/ALTA según reglas publicadas; no es probabilidad de
+        subida. El detalle de cada candidata está en su ficha.
+      </p>
+      {evidence.isPending && <LoadingState />}
+      {evidence.isError && (
+        <ErrorState error={evidence.error} retry={() => void evidence.refetch()} />
+      )}
+      {evidence.data && <EvidenceTable rows={evidence.data.rows} />}
+    </>
+  );
+}
+
+function PlanEvidence() {
+  return (
+    <Folded title="¿Cuánto fiarse de estas empresas? · pruebas que las respaldan">
+      <PlanEvidenceContent />
+    </Folded>
+  );
+}
+
+/** «Guardar esta cartera para seguirla» (#193): the backend saves exactly today's target, the same
+ *  eligible Top-N, and Seguimiento compares it with SPY from today on. */
+function TrackTarget({ positions }: { positions: number }) {
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: () =>
+      saveSnapshot({
+        name: 'Cartera objetivo · Top-' + positions,
+        top_n: positions,
+        target: true,
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['market', 'snapshots'] }),
+  });
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        pending={save.isPending}
+        disabled={save.isSuccess}
+        onClick={() => save.mutate()}
+      >
+        Guardar esta cartera para seguirla
+      </Button>
+      {save.isSuccess && (
+        <p role="status">
+          Guardada. Verás cómo le va frente al S&amp;P 500 en{' '}
+          <Link className="text-primary underline" to="/cartera/seguimiento">
+            Carteras guardadas
+          </Link>
+          .
+        </p>
+      )}
+      {save.isError && (
+        <p role="alert" className="text-destructive">
+          {save.error.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The two answers to «what do I buy and how much?», chosen in the URL so either can be shared. */
+const PLANS = [
+  { id: 'regla', label: 'Regla fija de GABI' },
+  { id: 'experimental', label: 'Plan de prueba con límites' },
+] as const;
+
+export function PortfolioPage() {
+  const [params, setParams] = useSearchParams();
+  const experimental = params.get('plan') === 'experimental';
+  const [submitted, setSubmitted] = useState(initial);
+  const blockEvidence = useQuery({
+    queryKey: ['market', 'score-blocks-evidence'],
+    queryFn: ({ signal }) => getScoreBlocksEvidence(signal),
+    staleTime: Infinity,
+  });
+  const plan = useQuery({
+    queryKey: ['portfolio', 'plan', submitted],
+    queryFn: ({ signal }) => getPortfolioPlan(submitted, signal),
+    enabled: !experimental,
+  });
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const next: PlanRequest = {
+      n_positions: Number(form.get('n_positions')),
+      capital_eur: Number(form.get('capital_eur')),
+      holdings_text: String(form.get('holdings_text') ?? ''),
+      new_capital_eur: Number(form.get('new_capital_eur')),
+      sector_limit_percent: Number(form.get('sector_limit_percent')),
+      industry_limit_percent: Number(form.get('industry_limit_percent')),
+      use_saved_holdings: true,
+    };
+    // The same request keeps the query key, so it would silently reuse the cached plan:
+    // recalculating makes the click visible and picks up holdings saved since then.
+    if (JSON.stringify(next) === JSON.stringify(submitted)) void plan.refetch();
+    else setSubmitted(next);
+  }
+  const data = plan.data;
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Cartera"
+        title="Mi cartera objetivo"
+        description={
+          <>
+            Las empresas que GABI propone hoy y cuánto dinero poner en cada una. Es una propuesta:
+            GABI nunca compra ni vende por ti.
+          </>
+        }
+        guide={
+          <>
+            <p>
+              <strong>Cómo se elige.</strong> GABI toma las empresas con más puntuación (20 por
+              defecto) que tengan al menos el 70 % de sus datos, y pone la misma cantidad de dinero
+              en cada una. Es una regla fija: no se retoca para que el pasado parezca mejor.
+            </p>
+            <p>
+              <strong>Cómo usarla.</strong> Escribe cuánto dinero tienes y cuánto vas a aportar. La
+              tabla te dice cuánto correspondería a cada empresa y, abajo, dónde poner el dinero
+              nuevo para acercarte a ese reparto sin vender nada.
+            </p>
+            <p>
+              <strong>Ten en cuenta.</strong> Todavía no está demostrado que esta cartera gane al
+              S&amp;P 500. Repartir entre 20 empresas reduce el riesgo de que una sola te hunda,
+              pero no lo elimina.
+            </p>
+          </>
+        }
+      >
+        <SectionLinks
+          label="Otras páginas de Cartera"
+          links={[
+            {
+              to: '/cartera/mi-cartera',
+              label: 'Mi cartera',
+              description: 'Lo que has comprado de verdad y cómo va frente al S&P 500',
+              icon: Wallet,
+            },
+            {
+              to: '/cartera/diario',
+              label: 'Diario de inversión',
+              description: 'Apunta por qué compras antes de hacerlo y revísalo después',
+              icon: NotebookPen,
+            },
+            {
+              to: '/cartera/ideas',
+              label: 'Historial de ideas',
+              description: 'Tus ideas de inversión y cómo salieron frente al S&P 500',
+              icon: NotebookPen,
+            },
+            {
+              to: '/cartera/seguimiento',
+              label: 'Carteras guardadas',
+              description: 'Cómo han ido las carteras que guardaste frente al S&P 500',
+              icon: Radar,
+            },
+            {
+              to: '/cartera/simuladas',
+              label: 'Carteras simuladas',
+              description: 'Practica comprando y vendiendo sin dinero real',
+              icon: FlaskRound,
+            },
+          ]}
+        />
+      </PageHeader>
+      <div role="radiogroup" aria-label="Tipo de plan" className="flex flex-wrap gap-2">
+        {PLANS.map(({ id, label }) => {
+          const selected = (id === 'experimental') === experimental;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              className={
+                'rounded-full border px-4 py-1.5 text-sm ' +
+                (selected ? 'border-primary bg-primary text-primary-foreground' : 'bg-card')
+              }
+              onClick={() => setParams(id === 'experimental' ? { plan: id } : {})}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      {experimental ? (
+        <ExperimentalPlan />
+      ) : (
+        <>
+          <form onSubmit={submit} className="rounded-xl border bg-card p-5">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="text-sm font-medium">
+                Número de empresas
+                <Input
+                  className="mt-1.5"
+                  name="n_positions"
+                  type="number"
+                  min={5}
+                  max={30}
+                  defaultValue={20}
+                  required
+                />
+              </label>
+              <label className="text-sm font-medium">
+                Dinero total de ejemplo (€)
+                <Input
+                  className="mt-1.5"
+                  name="capital_eur"
+                  type="number"
+                  min={0}
+                  max={1e9}
+                  step="0.01"
+                  defaultValue={1000}
+                  required
+                />
+                <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                  Solo sirve para ver en la tabla cuánto iría a cada empresa.
+                </span>
+              </label>
+              <label className="text-sm font-medium">
+                Dinero que vas a aportar ahora (€)
+                <Input
+                  className="mt-1.5"
+                  name="new_capital_eur"
+                  type="number"
+                  min={0}
+                  max={1e9}
+                  step="0.01"
+                  defaultValue={1000}
+                  required
+                />
+                <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                  Se reparte abajo, en «Dónde poner el dinero nuevo».
+                </span>
+              </label>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <label className="text-sm font-medium">
+                Avisarme si un sector pasa del (%)
+                <Input
+                  className="mt-1.5"
+                  name="sector_limit_percent"
+                  type="number"
+                  min={1}
+                  max={100}
+                  step="1"
+                  defaultValue={25}
+                  required
+                />
+              </label>
+              <label className="text-sm font-medium">
+                Avisarme si una industria pasa del (%)
+                <Input
+                  className="mt-1.5"
+                  name="industry_limit_percent"
+                  type="number"
+                  min={1}
+                  max={100}
+                  step="1"
+                  defaultValue={15}
+                  required
+                />
+              </label>
+            </div>
+            <label className="mt-4 block text-sm font-medium" htmlFor="holdings">
+              ¿Y si ya tuviera…? Escribe acciones imaginarias (SÍMBOLO,euros; una por línea)
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Si lo dejas vacío, se usan tus compras reales guardadas en{' '}
+              <Link className="text-primary underline" to="/cartera/mi-cartera">
+                Mi cartera
+              </Link>
+              .
+            </p>
+            <Textarea
+              id="holdings"
+              name="holdings_text"
+              maxLength={5000}
+              rows={3}
+              placeholder={'AAPL,300\nMSFT,200'}
+              className="mt-1.5 w-full"
+            />
+            <Button className="mt-4" type="submit" pending={plan.isFetching}>
+              Calcular
+            </Button>
+          </form>
+          {plan.isPending && <LoadingState />}
+          {plan.isError && <ErrorState error={plan.error} retry={() => void plan.refetch()} />}
+          <PlanEvidence />
+          {data && (
+            <>
+              <section aria-label="Cartera objetivo" className="rounded-xl border bg-card p-5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-xl font-semibold">
+                    Cartera propuesta · {data.target.length} empresas
+                  </h2>
+                  <Badge variant={data.status === 'FROZEN' ? 'secondary' : 'outline'}>
+                    {data.status === 'FROZEN'
+                      ? 'Regla fija'
+                      : data.model_id.startsWith('GABI-MF-')
+                        ? `${data.model_id} · sin pruebas aún`
+                        : 'Versión de prueba'}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{data.evidence_note}</p>
+                {blockEvidence.data && (
+                  <UnevenEvidenceNote evidence={blockEvidence.data} className="mt-1" />
+                )}
+                {data.target.length > 0 && <TrackTarget positions={data.n_positions} />}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Empresas con puntuación: {data.data.scored_count} de {data.data.universe_count}.
+                  Los precios están en dólares y los importes en euros; como no hay un tipo de
+                  cambio fijado, no se calcula cuántas acciones comprar.
+                </p>
+                {data.target.length === 0 ? (
+                  <p className="mt-5 text-sm">
+                    Ninguna empresa tiene hoy datos suficientes para entrar.
+                  </p>
+                ) : (
+                  <div className="mt-5 overflow-x-auto">
+                    <table className="w-full text-left text-xs sm:min-w-[680px] sm:text-sm">
+                      <thead className="border-b text-xs text-muted-foreground">
+                        <tr>
+                          <th className="pb-3">Empresa</th>
+                          <th className="hidden pb-3 sm:table-cell">Sector</th>
+                          <th className="hidden pb-3 sm:table-cell">Puntuación</th>
+                          <th className="hidden pb-3 sm:table-cell">
+                            <Term k="score_coverage">Métricas con dato</Term>
+                          </th>
+                          <th className="hidden pb-3 sm:table-cell">Precio USD</th>
+                          <th className="pb-3">% del total</th>
+                          <th className="pb-3">Dinero</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.target.map((row) => (
+                          <tr key={row.symbol} className="border-b last:border-0">
+                            <td className="py-3">
+                              <Link
+                                className="font-medium text-primary underline-offset-2 hover:underline"
+                                to={'/empresas/' + encodeURIComponent(row.symbol)}
+                              >
+                                {row.symbol}
+                              </Link>
+                              <span className="ml-2 text-muted-foreground">{row.name}</span>
+                              <SummaryText summary={row.summary} className="mt-1" />
+                              <BlockBars summary={row.summary} compact />
+
+                              <ThesisMark symbol={row.symbol} />
+                              <details className="mt-1 sm:hidden">
+                                <summary className="cursor-pointer text-primary">
+                                  Más datos de {row.symbol}
+                                </summary>
+                                <dl className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
+                                  <dt>Sector</dt>
+                                  <dd className="text-right">{row.sector ?? '—'}</dd>
+                                  <dt>Puntuación</dt>
+                                  <dd className="text-right">{decimal(row.score_points)}</dd>
+                                  <dt>Métricas con dato</dt>
+                                  <dd className="text-right">
+                                    {row.score_coverage_fraction == null
+                                      ? '—'
+                                      : decimal(row.score_coverage_fraction * 100, 0) + ' %'}
+                                  </dd>
+                                  <dt>Precio USD</dt>
+                                  <dd className="text-right">
+                                    {formatNumber(row.price_usd, { digits: 2, fixed: true })}
+                                  </dd>
+                                </dl>
+                              </details>
+                            </td>
+                            <td className="hidden sm:table-cell">
+                              {row.sector ?? '—'}
+                              {row.industry && (
+                                <span className="block text-xs text-muted-foreground">
+                                  {row.industry}
+                                </span>
+                              )}
+                            </td>
+                            <td className="hidden sm:table-cell">{decimal(row.score_points)}</td>
+                            <td className="hidden sm:table-cell">
+                              {row.score_coverage_fraction == null
+                                ? '—'
+                                : decimal(row.score_coverage_fraction * 100, 0) + ' %'}
+                            </td>
+                            <td className="hidden sm:table-cell">
+                              {formatNumber(row.price_usd, { digits: 2, fixed: true })}
+                            </td>
+                            <td>{decimal(row.weight_percent, 1)} %</td>
+                            <td>{euro(row.amount_eur)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+              {data.target.length > 0 && <SectorBreakdown data={data} />}
+              <section className="rounded-xl border bg-card p-5">
+                <h2 className="text-xl font-semibold">Dónde poner el dinero nuevo</h2>
+                <p className="mt-2 text-sm">
+                  {data.holdings_source === 'saved' &&
+                    'Tiene en cuenta lo que ya tienes en Mi cartera.'}
+                  {data.holdings_source === 'text' &&
+                    'Tiene en cuenta las acciones imaginarias que escribiste, no Mi cartera.'}
+                  {data.holdings_source === 'none' && (
+                    <>
+                      Todavía no tienes compras guardadas, así que se reparte como si empezaras de
+                      cero.{' '}
+                      <Link className="text-primary underline" to="/cartera/mi-cartera">
+                        Registra tus compras en Mi cartera
+                      </Link>
+                      .
+                    </>
+                  )}
+                  {data.holdings_unvalued.length > 0 &&
+                    ' No se han podido valorar con datos verificados (revisa precios, cambio de moneda y desdoblamientos en Mi cartera): ' +
+                      data.holdings_unvalued.join(', ') +
+                      '.'}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Reparte el dinero nuevo para acercarte al reparto propuesto sin vender nada. No
+                  tiene en cuenta impuestos ni comisiones.
+                </p>
+                {data.allocations.length ? (
+                  <ul className="mt-4 divide-y">
+                    {data.allocations.map((item) => (
+                      <li key={item.symbol} className="flex justify-between gap-4 py-3 text-sm">
+                        <Link
+                          to={'/empresas/' + encodeURIComponent(item.symbol)}
+                          className="font-medium text-primary"
+                        >
+                          {item.symbol} · {item.name}
+                        </Link>
+                        <span className="tabular-nums">{euro(item.amount_eur)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-4 text-sm">Con estos datos no hay nada que repartir.</p>
+                )}
+                {data.remaining_eur > 0.01 && (
+                  <p className="mt-3 text-sm">Capital sin asignar: {euro(data.remaining_eur)}.</p>
+                )}
+                {data.outside_target.length > 0 && (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Fuera del Top actual: {data.outside_target.join(', ')}. Esto no indica vender.
+                  </p>
+                )}
+              </section>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

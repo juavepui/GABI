@@ -96,7 +96,7 @@ de reconciliación contable, límites de ventanas e inclusión de costes inicial
 
 El experimento de rotación usa los rankings congelados y exige reproducir el
 NAV publicado del control Top-20 antes de comparar las dos variantes:
-`python -m gabi.rotation_experiment`. Protocolo, retornos y resultados se guardan
+`python -m gabi_cli research rotation-experiment`. Protocolo, retornos y resultados se guardan
 en [rotation-experiment](rotation-experiment/README.md).
 
 ```python

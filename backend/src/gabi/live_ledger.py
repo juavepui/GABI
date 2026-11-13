@@ -1,0 +1,314 @@
+"""Frozen prospective decisions, chained SQLite events and an external head anchor."""
+
+import argparse
+import hashlib
+import json
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from datetime import UTC, datetime
+
+import numpy as np
+import pandas as pd
+
+from gabi.application.market import cached_data
+from gabi.application.market.sec_reads import fetched_at as sec_fetched_at
+from gabi.domain.market import model_policy
+from gabi.domain.market.freshness import market_date as last_completed_session
+from gabi.domain.research.live_ledger import UNREADABLE, canonical, fingerprint, replay_decision, safe, verify_chain
+from gabi.infrastructure import operational_settings
+from gabi.infrastructure.providers import research_environment
+from gabi.infrastructure.storage import live_ledger_files
+from gabi.infrastructure.storage import live_ledger_writes as ledger_sql
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+
+from . import config, identity, research_lab
+
+STAGES = ("RETROSPECTIVE", "OOS", "LIVE_FORWARD")
+SCHEMA = ledger_sql.SCHEMA
+
+
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+_safe = safe  # Public names kept for existing callers.
+
+
+def anchor_path():
+    return config.DATA_DIR / "live_ledger" / "head.json"
+
+
+def _locked():
+    return live_ledger_files.writer_lock(anchor_path().parent)
+
+
+def _write_anchor(seq: int, digest: str) -> None:
+    live_ledger_files.write_anchor(anchor_path(), canonical({"seq": seq, "hash": digest}) + "\n")
+
+
+def _connection():
+    # The compatibility path is captured per operation, never mutated.
+    return ledger_sql.connection(config.DB_PATH)
+
+
+def _verify(conn, *, require_anchor=True) -> dict:
+    rows = ledger_sql.chain(conn)
+    anchor = None
+    if require_anchor:
+        try:
+            anchor = json.loads(anchor_path().read_text(encoding="utf-8")) if anchor_path().exists() else {"seq": 0, "hash": ""}
+        except (OSError, ValueError):
+            anchor = UNREADABLE
+    return verify_chain(rows, anchor, require_anchor=require_anchor)
+
+
+def verify_integrity() -> dict:
+    with _locked(), _connection() as conn:
+        return _verify(conn)
+
+
+def _append(payload: dict, *, recover=False) -> dict:
+    with _locked(), _connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        integrity = _verify(conn, require_anchor=not recover)
+        if not integrity["ok"]:
+            raise ValueError(f"Ledger no íntegro: {integrity['reason']}")
+        if recover:
+            old = payload["previous_anchor"]
+            current = json.loads(anchor_path().read_text(encoding="utf-8")) if anchor_path().exists() else {"seq": 0, "hash": ""}
+            stored = ledger_sql.record_hash(conn, old["seq"])
+            if current != old or old["seq"] > integrity["seq"] or (old["seq"] and stored != old["hash"]):
+                raise ValueError("El prefijo del ancla cambió durante la recuperación.")
+        seq, previous = integrity["seq"] + 1, integrity["hash"]
+        payload = _safe(payload)
+        digest = fingerprint({"seq": seq, "prev_hash": previous, "payload": payload})
+        ledger_sql.insert(conn, seq, previous, digest, canonical(payload))
+        conn.commit()
+        _write_anchor(seq, digest)
+    return {"seq": seq, "record_hash": digest, "payload": payload}
+
+
+def events() -> list[dict]:
+    with _locked(), _connection() as conn:
+        check = _verify(conn)
+        if not check["ok"]:
+            raise ValueError(f"Ledger no íntegro: {check['reason']}")
+        return [{"seq": r[0], "record_hash": r[1], "payload": json.loads(r[2])}
+                for r in ledger_sql.entries(conn)]
+
+
+def append_decision(payload: dict, *, stage="LIVE_FORWARD", created_at: str | None = None) -> dict:
+    if stage not in STAGES:
+        raise ValueError("Fase inválida.")
+    now = _now()
+    timestamp = datetime.fromisoformat(created_at) if created_at else now
+    if timestamp.tzinfo is None:
+        raise ValueError("Timestamp con zona horaria requerido.")
+    if stage == "LIVE_FORWARD" and abs((timestamp - now).total_seconds()) > 5:
+        raise ValueError("LIVE_FORWARD debe capturarse ahora; no admite fechas históricas.")
+    if stage == "LIVE_FORWARD" and payload["market_date"] != last_completed_session(timestamp):
+        raise ValueError("La fecha de mercado no coincide con la última sesión cerrada.")
+    return _append({**payload, "kind": "DECISION", "stage": stage, "created_at": timestamp.isoformat()})
+
+
+def append_correction(seq: int, reason: str, changes: dict) -> dict:
+    if not reason.strip():
+        raise ValueError("La corrección requiere un motivo.")
+    original = next((e for e in events() if e["seq"] == seq), None)
+    if original is None:
+        raise ValueError("No existe el evento original.")
+    return _append({"kind": "CORRECTION", "created_at": _now().isoformat(), "original_seq": seq,
+                    "original_hash": original["record_hash"], "reason": reason, "changes": changes})
+
+
+def recover_anchor(reason: str) -> dict:
+    """Explicit recovery only if the old anchor is a valid prefix, never for deletion."""
+    if not reason.strip():
+        raise ValueError("La recuperación requiere un motivo.")
+    with _locked(), _connection() as conn:
+        check = _verify(conn, require_anchor=False)
+        if not check["ok"]:
+            raise ValueError("Cadena rota; no se puede recuperar el ancla.")
+        old = json.loads(anchor_path().read_text(encoding="utf-8")) if anchor_path().exists() else {"seq": 0, "hash": ""}
+        stored = ledger_sql.record_hash(conn, old["seq"])
+        if old["seq"] > check["seq"] or (old["seq"] and stored != old["hash"]):
+            raise ValueError("Ancla no es prefijo de la cadena; no se puede ocultar una eliminación.")
+    return _append({"kind": "ANCHOR_RECOVERY", "created_at": _now().isoformat(), "previous_anchor": old,
+                    "reason": reason}, recover=True)
+
+
+def provenance(symbols: list[str]) -> dict:
+    """Dates actually used in the current derived screener, without hashing 83 GiB."""
+    cache = SqliteCacheReads(config.DB_PATH)
+    fundamentals = cached_data.fundamentals_fetched_at(cache, symbols)
+    sec = sec_fetched_at(SqliteSecReads(config.DB_PATH), symbols)
+    prices = cached_data.latest_adjusted(cache, symbols)
+    result = {}
+    for symbol in symbols:
+        price = prices.get(symbol)
+        result[symbol] = {"price_date": price[0] if price else None, "close": price[1] if price else None,
+                          "adj_close": price[2] if price else None,
+                          "fundamentals_fetched_at": fundamentals.get(symbol), "sec_fetched_at": sec.get(symbol)}
+    return _safe(result)
+
+
+@dataclass(frozen=True)
+class ModelCapture:
+    """Another declared model version recorded in the same chain (#290, ADR 0008).
+
+    ``ranking`` returns (universe, scored table) from the cache, never downloading. Without a
+    ModelCapture the decision is the sealed GABI-MF-v1 one, byte for byte as before."""
+    model_id: str
+    weights: Mapping[str, float]
+    metrics_version: str
+    code: tuple[str, ...]
+    ranking: Callable[[], tuple[pd.DataFrame, pd.DataFrame]]
+
+
+def model_metadata(*, weights: dict | None = None, universe_id="SP500_CURRENT",
+                   model: ModelCapture | None = None) -> dict:
+    names: tuple[str, ...] = ("scoring.py", "domain/market/scoring.py", "metrics.py", "domain/market/fundamentals.py", "technicals.py", "domain/market/technicals.py",
+             "risk.py", "domain/market/risk.py", "domain/market/model_policy.py", "screener.py", "domain/market/events.py", "domain/market/insiders.py", "edgar.py", "domain/market/sec_facts.py",
+             "live_ledger.py", "domain/research/live_performance.py", "evidence_confidence.py", "domain/market/evidence.py",
+             "application/market/evidence_assessment.py", "evidence_catalog.py", "domain/research/evidence_catalog.py",
+             "application/research/evidence_catalog.py",
+             "infrastructure/storage/evidence_catalog.py", "infrastructure/storage/published_factors.py",
+             "workspace.py", "__init__.py", "infrastructure/operational_settings.py")
+    if model is not None:
+        names = (*names, *model.code)
+        weights = dict(model.weights)
+    hashes = {n: hashlib.sha256((config.BASE_DIR / "src" / "gabi" / n).read_text(encoding="utf-8").encode()).hexdigest() for n in names}
+    specification = {"weights": weights if weights is not None else dict(model_policy.FROZEN_WEIGHTS),
+                     "universe_id": universe_id, "top_n": 20, "coverage": .70,
+                     "ranking": "descending composite, ascending ticker", "report_cost_per_side": .001}
+    if model is not None:
+        specification["metrics_version"] = model.metrics_version
+    dirty = research_environment.working_tree_modified(config.BASE_DIR, "backend/src/gabi")
+    return {"model_id": model.model_id if model is not None else model_policy.FROZEN_MODEL_ID,
+            "configuration": specification,
+            "config_version": fingerprint(specification), "model_version": fingerprint({"spec": specification, "code": hashes}),
+            "git_commit": research_lab._current_git_commit(), "working_tree_modified": dirty,
+            "code_sha256": hashes, "dependencies": research_lab._dependency_versions(),
+            "environment_fingerprint": research_lab._env_fingerprint()}
+
+
+def capture_current(*, run_error: str | None = None, maintenance: dict | None = None,
+                    model: ModelCapture | None = None) -> dict:
+    """Read cached inputs and append the actual current decision, including failures.
+
+    ``model``: record another declared version instead of the sealed GABI-MF-v1 (#290)."""
+    from . import evidence_confidence, screener
+
+    weights = dict(model.weights) if model is not None else dict(model_policy.FROZEN_WEIGHTS)
+    now = _now()
+    market = last_completed_session(now)
+    payload = {"market_date": market, **model_metadata(model=model), "status": "ERROR", "reason": run_error,
+               "universe": [], "eligible": [], "ranking": [], "top_n": [], "excluded": {}, "sources": {},
+               "inputs": [], "maintenance": maintenance or {}, "quality": {"fresh": False}}
+    try:
+        if model is not None:
+            universe, table = model.ranking()
+        else:
+            universe = screener.get_universe()
+            table = screener.build_screener_table(universe, weights=weights)
+        symbols = universe.symbol.tolist()
+        if table.empty:
+            table = table.reindex(columns=["composite_score", "score_coverage"])
+        if table.index.has_duplicates:
+            raise ValueError("Universo con tickers duplicados.")
+        sources = _safe(table.attrs.get("sources") or provenance([*symbols, operational_settings.benchmark_symbol()]))
+        for symbol in symbols:
+            sources.setdefault(symbol, {})["entity_id"] = identity.resolve(symbol, market)["entity_id"]
+        excluded = {}
+        for symbol, row in table.iterrows():
+            reasons = []
+            if not pd.notna(row.get("composite_score")) or not np.isfinite(row.get("composite_score", np.nan)):
+                reasons.append("score no disponible")
+            if not pd.notna(row.get("score_coverage")) or row.get("score_coverage", 0) < .70:
+                reasons.append("cobertura inferior al 70 %")
+            if reasons:
+                excluded[symbol] = reasons
+        eligible = table.drop(index=list(excluded))
+        eligible = eligible.assign(_symbol=eligible.index).sort_values(["composite_score", "_symbol"], ascending=[False, True]).drop(columns="_symbol")
+        picks = eligible.head(20).index.tolist()
+        stale = [s for s in [*picks, operational_settings.benchmark_symbol()]
+                 if sources.get(s, {}).get("price_date") != market
+                 or any(not isinstance(sources.get(s, {}).get(k), (int, float)) or sources[s][k] <= 0
+                        for k in ("close", "adj_close"))]
+        future = [s for s, source in sources.items() if source.get("price_date") and source["price_date"] > market]
+        stale_inputs = []
+        for symbol in picks:
+            for field, hours in (("fundamentals_fetched_at", operational_settings.current().cache_max_age_hours),
+                                 ("sec_fetched_at", operational_settings.current().edgar_cache_max_age_hours)):
+                value = sources.get(symbol, {}).get(field)
+                try:
+                    age = (now - datetime.fromisoformat(value)).total_seconds() / 3600 if value else None
+                except (TypeError, ValueError):
+                    age = None
+                if age is None or age < 0 or age > hours:
+                    stale_inputs.append(f"{symbol}:{field}")
+        maintenance = maintenance or {}
+        source_failures = maintenance.get("failed", {})
+        failed_events = maintenance.get("failed_events", [])
+        failed_inputs = [f"{s}:{field}" for s, failures in source_failures.items() for field in failures
+                         if s in picks or (s == operational_settings.benchmark_symbol() and field == "precio")]
+        failed_inputs.extend("universo" for e in failed_events if e.get("source") == "universe")
+        failed_count = max(maintenance.get("fallos", 0), maintenance.get("sync", {}).get("statuses", {}).get("failed", 0))
+        if failed_count and not source_failures and not failed_events:
+            failed_inputs.append("fallos sin atribución de fuente")
+        maintenance_failures = len(failed_inputs)
+        status = "ERROR" if run_error else "NO_SIGNAL" if not picks else "DEGRADED" if stale or future or stale_inputs or maintenance_failures else "SIGNAL"
+        inputs = table.rename_axis("symbol").reset_index().to_dict("records")
+        payload.update({"status": status, "reason": run_error or ("fallos parciales del mantenimiento" if maintenance_failures else "datos caducados/futuros/desconocidos" if stale or future or stale_inputs else None),
+                        "universe": universe.to_dict("records"), "eligible": eligible.index.tolist(),
+                        "ranking": eligible.rename_axis("symbol").reset_index().to_dict("records"),
+                        "proposed_top_n": picks, "top_n": picks if status == "SIGNAL" else [], "excluded": excluded,
+                        "sources": sources, "inputs": inputs,
+                        "inputs_metadata": {"risk_free_rate": table.attrs.get("risk_free_rate")},
+                        "quality": {"fresh": not stale and not future and not stale_inputs and not maintenance_failures,
+                                    "maintenance_failures": maintenance_failures, "stale_symbols": stale,
+                                    "failed_inputs": failed_inputs,
+                                    "future_symbols": future, "stale_inputs": stale_inputs}})
+    except Exception as exc:
+        payload["reason"] = f"{run_error or ''} {type(exc).__name__}: {exc}".strip()
+    timestamp = _now()
+    actual_market = last_completed_session(timestamp)
+    if actual_market != payload["market_date"]:
+        payload.update(status="DEGRADED", reason="cambió la sesión cerrada durante el cálculo", top_n=[], market_date=actual_market)
+        payload["quality"]["fresh"] = False
+    payload["data_fingerprint"] = "signal-inputs-v1:" + fingerprint({"inputs": payload["inputs"], "metadata": payload.get("inputs_metadata"), "sources": payload["sources"],
+                                                                 "universe": payload["universe"]})
+    payload["evidence"] = {}
+    if payload["inputs"]:
+        try:
+            context = {k: payload[k] for k in ("model_id", "model_version", "config_version", "git_commit", "data_fingerprint")}
+            table.attrs["sources"] = payload["sources"]
+            evidence = evidence_confidence.build(table, weights, now=timestamp, market_date=actual_market, context=context)
+            payload["evidence"] = {s: evidence[s] for s in payload.get("proposed_top_n", [])}
+        except Exception as exc:
+            payload["evidence_error"] = f"{type(exc).__name__}: {exc}"
+    timestamp = _now()
+    if last_completed_session(timestamp) != actual_market:
+        payload.update(status="DEGRADED", reason="cambió la sesión durante el diagnóstico de evidencia", top_n=[],
+                       market_date=last_completed_session(timestamp))
+        payload["quality"]["fresh"] = False
+    return append_decision(payload, created_at=timestamp.isoformat())
+
+
+def save_evaluation(report: dict) -> dict:
+    return _append({"kind": "EVALUATION", "created_at": _now().isoformat(), "report": report,
+                    "report_sha256": fingerprint(report)})
+
+
+def reproduce_decision(seq: int) -> dict:
+    """Replay ranking from frozen blocks, without current source data or scoring code."""
+    event = next((e for e in events() if e["seq"] == seq and e["payload"]["kind"] == "DECISION"), None)
+    return replay_decision(event)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--verify", action="store_true")
+    parser.add_argument("--recover-anchor", metavar="REASON")
+    args = parser.parse_args()
+    print(canonical(recover_anchor(args.recover_anchor) if args.recover_anchor else verify_integrity()))

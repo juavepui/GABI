@@ -1,0 +1,174 @@
+"""The home page: data state, today's frozen target, last data update and first steps; never computes by default."""
+
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from datetime import date, timedelta
+from typing import Protocol
+
+import pandas as pd
+
+from gabi.application.administration.model import ModelPolicy
+from gabi.application.errors import QueryError
+from gabi.application.market.queries import RankingSnapshot, describe_data
+from gabi.domain.market import watchlist as watchlist_rules
+from gabi.domain.market.freshness import sessions_between
+from gabi.domain.market.identity import normalize_symbol
+from gabi.domain.portfolio import alerts as rules
+from gabi.domain.portfolio import daily_summary
+from gabi.domain.portfolio.selection import target_portfolio
+
+FROZEN_POSITIONS = 20
+UPDATE_KINDS = {"data_update", "refresh", "symbols"}
+
+
+class HomeMarket(Protocol):
+    def cached_ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot | None: ...
+    def ranking(self, weights: dict[str, float], today: date) -> RankingSnapshot: ...
+
+
+class HomeJobs(Protocol):
+    def list(self) -> list[dict]: ...
+
+
+@dataclass(frozen=True)
+class AlertSources:
+    """Cheap reads of data already stored; none recomputes the ranking or compares filings (#183)."""
+
+    latest_snapshot: Callable[[], tuple[dict, list[str]] | None]  # (meta, symbols by rank)
+    signal_events: Callable[[str], list[dict]]  # detected since the ISO date
+    open_theses: Callable[[], list[dict]]
+    held: Callable[[], list[str]]  # Mi cartera
+    events: Callable[[list[str], date], list[dict] | None]  # cached corporate events; None while busy
+    watched: Callable[[], list[str]] = list  # Empresas seguidas (#182)
+    watched_items: Callable[[], list[dict]] = list  # Their saved rows, with score and rank when added (#307)
+    market: Callable[[], dict | None] = lambda: None  # The market traffic light, only if already computed (#308)
+    # The last day the daily task stored before the given ISO day, for a model (#328): (day, symbol → score, rank).
+    previous_scores: Callable[[str, str], tuple[str, dict] | None] = lambda model, before: None
+    # Days with a stored score from the given ISO day on, any model (#328).
+    recorded_days: Callable[[str], list[str]] = lambda since: []
+
+
+def _no_alerts() -> AlertSources:
+    return AlertSources(lambda: None, lambda since: [], list, list, lambda symbols, today: [])
+
+
+class HomeQueries:
+    def __init__(self, market: HomeMarket, policy: ModelPolicy, jobs: HomeJobs,
+                 configured_keys: Callable[[], dict[str, bool]], universe_present: Callable[[], bool],
+                 today: Callable[[], date], last_session: Callable[[], date] | None = None,
+                 alerts: AlertSources | None = None):
+        self.market, self.policy, self.jobs, self.last_session = market, policy, jobs, last_session
+        self.sources = alerts or _no_alerts()
+        self.configured_keys, self.universe_present, self.today = configured_keys, universe_present, today
+
+    def summary(self, compute: bool = False) -> dict:
+        """`compute=False` answers at once from the cache; `compute=True` builds the frozen ranking if needed."""
+        today = self.today()
+        weights = dict(self.policy.weights)
+        snapshot = self.market.ranking(weights, today) if compute else self.market.cached_ranking(weights, today)
+        jobs = self.jobs.list()
+        last_update = next((job for job in jobs if job["kind"] in UPDATE_KINDS
+                            and job["status"] == "succeeded"), None)
+        keys = self.configured_keys()
+        result: dict = {
+            "as_of": today.isoformat(), "model_id": self.policy.model_id, "ranking_ready": snapshot is not None,
+            "data": None, "target": [], "target_positions": FROZEN_POSITIONS, "alerts": [], "summary": None,
+            "last_update": None if last_update is None else {
+                "kind": last_update["kind"], "finished_at": last_update["finished_at"]},
+            "steps": {"fred_key": bool(keys.get("fred")), "universe": self.universe_present(),
+                      "data_loaded": None, "updated": last_update is not None},
+        }
+        held = self.sources.held()
+        alerts = rules.failed_jobs(jobs, today=today) + rules.overdue_theses(self.sources.open_theses(), today=today)
+        alerts += rules.filing_changes(
+            self.sources.signal_events((today - timedelta(days=rules.FILING_DAYS)).isoformat()), held, today=today)
+        if snapshot is None:
+            result["alerts"] = rules.ordered(alerts)
+            return result
+        data = describe_data(snapshot, today, self.last_session() if self.last_session else None)
+        result["data"] = asdict(data)
+        result["steps"]["data_loaded"] = data.scored_count > 0
+        # The same data without the ranking's large attrs, which pandas deep-copies on every operation (#183).
+        table = pd.DataFrame(snapshot.table)
+        target = target_portfolio(table, FROZEN_POSITIONS)
+        result["target"] = [
+            {"symbol": str(symbol), "name": None if row.get("name") is None else str(row.get("name")),
+             "sector": None if row.get("sector") is None else str(row.get("sector")),
+             "composite_score": float(row["composite_score"]), "weight_pct": float(row["weight_pct"])}
+            for symbol, row in target.to_dict("index").items()]
+        alerts += self._missing_days(data.latest_price_date)
+        result["alerts"] = rules.ordered(alerts + self._ranking_alerts(table, target, held, today))
+        result["summary"] = self._summary(table, target, held, data.latest_price_date, today)
+        return result
+
+    def _summary(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str], latest_price_date: date | None,
+                 today: date) -> dict:
+        """«Tu resumen de hoy» (#307), from the same cached table: nothing is recomputed or downloaded."""
+        watched = watchlist_rules.rows(self.sources.watched_items(), table, self.policy.model_id, {})
+        columns = [column for column in ("next_earnings_date", "next_earnings_is_estimate", "composite_score")
+                   if column in table]
+        mine = list(dict.fromkeys([*(row["symbol"] for row in watched), *held]))
+        rows = table.loc[table.index.isin(mine), columns].to_dict("index")
+        return daily_summary.build(
+            watched=watched, held=held, target=[str(symbol) for symbol in target.index],
+            scored={str(symbol) for symbol, row in rows.items() if pd.notna(row.get("composite_score"))},
+            earnings={str(symbol): (None if pd.isna(row.get("next_earnings_date")) else row.get("next_earnings_date"),
+                                    bool(row.get("next_earnings_is_estimate"))) for symbol, row in rows.items()},
+            latest_price_date=None if latest_price_date is None else latest_price_date.isoformat(),
+            target_size=FROZEN_POSITIONS, today=today, model_id=self.policy.model_id, market=self.sources.market(),
+            previous=self._previous(table, mine, latest_price_date))
+
+    def _missing_days(self, latest_price_date: date | None) -> list[dict]:
+        """Sessions of the last week before the latest prices that the daily task did not store."""
+        if latest_price_date is None:
+            return []
+        since = latest_price_date - timedelta(days=rules.WINDOW_DAYS)
+        return rules.missing_score_days(self.sources.recorded_days(since.isoformat()),
+                                        sessions_between(since, latest_price_date))
+
+    def _previous(self, table: pd.DataFrame, mine: list[str], latest_price_date: date | None) -> dict | None:
+        """Your companies against the last day stored with the same model (#328), or None without one."""
+        if latest_price_date is None or not mine:
+            return None
+        found = self.sources.previous_scores(self.policy.model_id, latest_price_date.isoformat())
+        if found is None:
+            return None
+        day, scores = found
+        rows = []
+        for symbol in mine:
+            score, rank = watchlist_rules.standing(table, symbol)
+            before = scores.get(symbol)
+            if score is None or rank is None or before is None:
+                continue
+            rows.append({"symbol": symbol, "composite_score": score, "rank": rank, "same_model": True,
+                         "score_at_add": before[0], "rank_at_add": before[1], "added_at": day,
+                         "score_change": score - before[0], "rank_change": before[1] - rank})
+        return {"day": day, "rows": rows} if rows else None
+
+    def _ranking_alerts(self, table: pd.DataFrame, target: pd.DataFrame, held: list[str],
+                        today: date) -> list[dict]:
+        """Alerts that need the cached ranking: results, dividends and changes of the Top-20."""
+        candidates = [str(symbol) for symbol in target.index]
+        # A followed company already among the candidates or in Mi cartera is announced there once.
+        watched = [symbol for symbol in self.sources.watched() if symbol not in {*candidates, *held}]
+        columns = [column for column in ("next_earnings_date", "next_earnings_is_estimate") if column in table]
+        rows = table.loc[table.index.isin([*candidates, *held, *watched]), columns].to_dict("index")
+        earnings = {str(symbol): (row.get("next_earnings_date"), bool(row.get("next_earnings_is_estimate")))
+                    for symbol, row in rows.items()}
+        alerts = rules.upcoming_earnings(earnings, candidates, scope="target", today=today, link="/eventos")
+        alerts += rules.upcoming_earnings(earnings, held, scope="holdings", today=today, link="/cartera/mi-cartera")
+        alerts += rules.upcoming_earnings(earnings, watched, scope="watchlist", today=today,
+                                          link="/descubrir/seguidas")
+        followed = list(dict.fromkeys([*candidates, *held, *watched]))
+        try:
+            events = self.sources.events(followed, today)
+        except QueryError:  # An oversized cached record must not break the home page.
+            events = []
+        alerts += rules.upcoming_dividends(events or [], followed, today=today)
+        saved = self.sources.latest_snapshot()
+        if saved is not None:
+            meta, symbols = saved
+            # Older snapshots kept BRK.B/BF.B; the ranking uses the dash spelling (#172).
+            saved_top = [normalize_symbol(symbol) for symbol in symbols[:rules.TOP_N]]
+            alerts += rules.top_changes(candidates, saved_top, meta["as_of_date"], meta["name"])
+        return alerts

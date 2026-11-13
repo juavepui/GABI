@@ -1,0 +1,186 @@
+"""Queue scheduled tasks and run the separate local worker.
+
+Usage: python -m gabi_cli serve [--port N] | worker | schedule daily [--reintentar] | schedule tiingo | periodic <options> |
+research <command> | market checklist-coverage [--output FILE]
+"""
+
+import argparse
+import os
+import socket
+import subprocess
+import sys
+import time
+from collections.abc import Callable
+from datetime import UTC, date, datetime, timedelta
+from functools import partial
+from pathlib import Path
+
+import pandas as pd
+
+from gabi.application.administration.jobs import JobCommand, Jobs
+from gabi.application.administration.scheduled_daily import Unattended, schedule_daily
+from gabi.application.errors import QueryError
+from gabi.application.market.checklist import CompanyChecklist
+from gabi.application.portfolio.holdings_prices import refresh as refresh_holdings_market
+from gabi.application.research.academic_factors import prepare_factor_snapshot
+from gabi.infrastructure.jobs.worker import Worker
+from gabi.infrastructure.legacy.insiders import insider_operation, sec_user_agent
+from gabi.infrastructure.legacy.jobs import LegacyExecutor
+from gabi.infrastructure.providers.academic_factors import FrenchFactorSource
+from gabi.infrastructure.providers.yahoo import history as yahoo_history
+from gabi.infrastructure.providers.yahoo import reachable as yahoo_reachable
+from gabi.infrastructure.settings import Settings
+from gabi.infrastructure.storage.academic_factors import FileFactorCache
+from gabi.infrastructure.storage.cache_reads import SqliteCacheReads
+from gabi.infrastructure.storage.checklist_thresholds import FileChecklistThresholds
+from gabi.infrastructure.storage.company_research import SqliteCompanyResearch
+from gabi.infrastructure.storage.holdings import SqliteHoldings
+from gabi.infrastructure.storage.holdings_market import SqliteHoldingsMarket
+from gabi.infrastructure.storage.jobs import SqliteJobs
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+from gabi_api.bootstrap import create_app, start_warm_thread
+from gabi_cli.sources.bootstrap import (
+    build_cik_resolver,
+    build_fred_operation,
+    build_tiingo_operations,
+    build_xbrl_operation,
+)
+
+
+def port_in_use(port: int) -> bool:
+    """True if something already answers on 127.0.0.1:port or the port cannot be bound there."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(0.5)
+        if probe.connect_ex(("127.0.0.1", port)) == 0:
+            return True
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        try:
+            probe.bind(("127.0.0.1", port))
+        except OSError:
+            return True
+    return False
+
+
+def build_executor(settings: Settings, *, now: Callable[[], datetime] | None = None) -> LegacyExecutor:
+    clock = now or (lambda: datetime.now(UTC))
+    user_agent = sec_user_agent()
+    ciks = build_cik_resolver(settings, user_agent, now=clock)
+    insiders = insider_operation(settings.data_dir, now=clock, mapping_loader=ciks.mapping, cik_resolver=ciks.resolve)
+    factors = partial(prepare_factor_snapshot, FileFactorCache(settings.data_dir), FrenchFactorSource())
+    tiingo_fetch, tiingo_import = build_tiingo_operations(settings, now=clock)
+    holdings_market = SqliteHoldingsMarket(settings.data_dir)
+    def holdings_fetch(symbols: list[str]) -> dict:
+        lots = SqliteHoldings(settings.data_dir).lots()
+        start = (min(date.fromisoformat(row['purchase_date']) for row in lots) - timedelta(days=7)).isoformat()
+        return refresh_holdings_market(symbols,
+                                       source=lambda symbol: yahoo_history(symbol, start=start, auto_adjust=False,
+                                                                           actions=True, raise_errors=True),
+                                       save=holdings_market.save, now=clock)
+    return LegacyExecutor(settings, insider_sync=insiders, factor_loader=factors,
+                          tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
+                          macro_sync=build_fred_operation(settings, now=clock),
+                          sec_sync=build_xbrl_operation(settings, user_agent, now=clock),
+                          holdings_fetch=holdings_fetch)
+
+
+def build_checklist(settings: Settings) -> CompanyChecklist:
+    """The company page's Checklist over the stored facts; read-only, without the ranking references."""
+    database = settings.data_dir / "gabi.db"
+    return CompanyChecklist(SqliteSecReads(database), SqliteCacheReads(database), SqliteCompanyResearch(settings.data_dir),
+                            FileChecklistThresholds(settings.data_dir), date.today)
+
+
+def checklist_universe(settings: Settings) -> list[tuple[str, str]]:
+    """(symbol, sector) of the current universe, as the ranking reads it."""
+    frame = pd.read_csv(settings.data_dir / "sp500_constituents.csv", usecols=["symbol", "sector"])
+    symbols = frame["symbol"].astype(str).str.strip().str.upper().str.replace(".", "-", regex=False)
+    return list(zip(symbols, frame["sector"].fillna("").astype(str), strict=True))
+
+
+def main() -> None:
+    if sys.argv[1:2] == ["periodic"]:
+        from gabi.infrastructure.legacy.periodic import build_periodic_tasks
+        from gabi_cli.commands.periodic import main as periodic
+
+        settings = Settings.from_environment()
+        tiingo_fetch, tiingo_import = build_tiingo_operations(settings)
+        periodic(build_periodic_tasks(settings.data_dir, tiingo_fetch=tiingo_fetch, tiingo_import=tiingo_import,
+                                      macro_sync=build_fred_operation(settings),
+                                      sec_sync=build_xbrl_operation(settings, sec_user_agent())), sys.argv[2:])
+        return
+    if sys.argv[1:2] == ["market"]:
+        from gabi_cli.commands.market import main as market
+
+        settings = Settings.from_environment()
+        market(build_checklist(settings), lambda: checklist_universe(settings), sys.argv[2:])
+        return
+    if sys.argv[1:2] == ["research"]:
+        from gabi_cli.research.bootstrap import main as research
+
+        research(sys.argv[2:])
+        return
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=["serve", "worker", "schedule"])
+    parser.add_argument("kind", nargs="?", choices=["daily", "tiingo"])
+    parser.add_argument("--once", action="store_true", help="Procesa un trabajo y termina")
+    parser.add_argument("--force", action="store_true", help="Permite encolar Tiingo fuera del día 2")
+    parser.add_argument("--reintentar", action="store_true",
+                        help="Con schedule daily: espera a tener internet y repite el refresco si fallan las fuentes")
+    parser.add_argument("--port", type=int, default=8000, help="Puerto local de serve (solo 127.0.0.1; 8000 por defecto)")
+    args = parser.parse_args()
+    settings = Settings.from_environment()
+    if args.action == "serve":
+        import uvicorn
+
+        configured_dist = os.environ.get("GABI_FRONTEND_DIST")
+        dist = Path(configured_dist) if configured_dist else settings.data_dir.parent / "frontend" / "dist"
+        if not (dist / "index.html").is_file():
+            parser.error("Falta el build React; ejecuta npm --prefix frontend run build.")
+        if not 1 <= args.port <= 65535:
+            parser.error("--port debe estar entre 1 y 65535")
+        # Checked before starting the worker: otherwise a busy port leaves a worker without a server.
+        if port_in_use(args.port):
+            parser.error(f"El puerto {args.port} ya está en uso en 127.0.0.1 (¿otro serve o un servicio de WSL?). "
+                         f"Detén ese proceso o usa --port, por ejemplo --port {args.port + 10}.")
+        worker_process = subprocess.Popen([sys.executable, "-m", "gabi_cli", "worker"])
+        app = create_app(settings, frontend_dist=dist)
+        # The first ranking takes about a minute with a full cache: compute it while the server starts,
+        # and again in the background after a job changes the data.
+        start_warm_thread(app)
+        try:
+            print(f"GABI en http://127.0.0.1:{args.port}", flush=True)
+            uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)
+        finally:
+            worker_process.terminate()
+            try:
+                worker_process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                worker_process.kill()
+                worker_process.wait()
+        return
+    store = SqliteJobs(settings.data_dir)
+    if args.action == "schedule":
+        if args.kind is None:
+            parser.error("schedule necesita daily o tiingo")
+        today = date.today()
+        if args.kind == "tiingo" and today.day != 2 and not args.force:
+            return
+        jobs = Jobs(store)
+        if args.kind == "daily":
+            unattended = Unattended(network_ready=yahoo_reachable, sleep=time.sleep, monotonic=time.monotonic,
+                                    report=lambda message: print(message, flush=True)) if args.reintentar else None
+            schedule_daily(jobs, today, unattended)
+            return
+        try:
+            jobs.submit(JobCommand("tiingo"), f"schedule:tiingo:{today:%Y-%m}", origin="scheduler")
+        except QueryError as exc:
+            if exc.code != "job_conflict":
+                raise
+        return
+    worker = Worker(store, build_executor(settings), settings.data_dir)
+    if args.once:
+        worker.run_once()
+        return
+    while True:
+        if not worker.run_once():
+            time.sleep(2)

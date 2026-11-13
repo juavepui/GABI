@@ -1,0 +1,191 @@
+import { useState, type FormEvent } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { cancelJob, createJob, getHistoricalPreview, getJob, getModel } from '@/shared/api/client';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { ErrorState, LoadingState } from '@/shared/ui/resource-state';
+import { BacktestPanel } from './backtest-panel';
+import { CoverageThreshold } from '@/shared/ui/coverage';
+import { HistoricalCoverageNotes } from './coverage-notes';
+import { HistoricalOutcomes } from './historical-outcomes';
+import { HistoricalTable } from './historical-table';
+import { PrepareData } from './prepare-data';
+import { PageHeader } from '@/shared/ui/page-header';
+import { NativeSelect } from '@/shared/ui/native-select';
+import { dateText } from '@/shared/lib/format';
+import { JOB_STATES } from '@/shared/lib/jobs';
+
+export function HistoricalPage() {
+  const model = useQuery({ queryKey: ['model'], queryFn: ({ signal }) => getModel(signal) });
+  const [asOf, setAsOf] = useState('2019-01-02');
+  const [prepareLimit, setPrepareLimit] = useState<15 | 50 | null>(15);
+  const [threshold, setThreshold] = useState(0.7);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const start = useMutation({
+    mutationFn: () =>
+      createJob({
+        kind: 'historical_ranking',
+        start: asOf,
+        idempotency_key: 'historical:' + crypto.randomUUID(),
+      }),
+    onSuccess: (job) => setJobId(job.id),
+  });
+  const job = useQuery({
+    queryKey: ['job', jobId],
+    queryFn: ({ signal }) => getJob(jobId!, signal),
+    enabled: jobId != null,
+    refetchInterval: (query) =>
+      ['queued', 'running'].includes(query.state.data?.status ?? '') ? 2000 : false,
+  });
+  const preview = useQuery({
+    queryKey: ['research', 'historical', jobId, threshold],
+    queryFn: ({ signal }) => getHistoricalPreview(jobId!, threshold, signal),
+    placeholderData: (previous) => previous,
+    enabled: job.data?.status === 'succeeded',
+  });
+  const cancel = useMutation({ mutationFn: () => cancelJob(jobId!) });
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setJobId(null);
+    start.mutate();
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        back={{ to: '/investigacion', label: 'Investigación' }}
+        title="Ranking histórico"
+        description={
+          <>
+            Mira cómo habría sido el ranking de GABI en una fecha pasada, con lo que se sabía
+            entonces, y simula cómo habría ido seguirlo (backtest).
+          </>
+        }
+        guide={
+          <>
+            <p>
+              Reconstruye el S&amp;P 500 de una fecha pasada usando solo la información de aquel
+              día: las empresas que estaban en el índice, los informes ya publicados y los precios
+              hasta entonces. Así se evita «mirar el futuro» sin darse cuenta.
+            </p>
+            <p>
+              Un buen resultado aquí es un indicio, no una prueba: es fácil que una estrategia
+              parezca buena en el pasado. Los datos posteriores al 2 de julio de 2025 y los
+              anteriores a 2010 están reservados para pruebas futuras y no se pueden consultar.
+            </p>
+          </>
+        }
+      />
+      <form
+        onSubmit={submit}
+        className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-5"
+      >
+        <label className="text-xs font-medium">
+          Fecha de referencia
+          <Input
+            className="mt-1.5"
+            type="date"
+            value={asOf}
+            min="2010-01-01"
+            max="2025-07-02"
+            onChange={(event) => setAsOf(event.target.value)}
+            required
+          />
+        </label>
+        <Button
+          pending={start.isPending || ['queued', 'running'].includes(job.data?.status ?? '')}
+          type="submit"
+        >
+          Calcular ranking
+        </Button>
+      </form>
+      <section
+        className="space-y-3 rounded-xl border bg-card p-5"
+        aria-label="Preparar datos de la fecha"
+      >
+        <label className="text-xs font-medium">
+          Empresas a preparar para {dateText(asOf)}
+          <NativeSelect
+            className="mt-1.5"
+            value={prepareLimit ?? 'all'}
+            onChange={(event) =>
+              setPrepareLimit(
+                event.target.value === 'all' ? null : (Number(event.target.value) as 15 | 50),
+              )
+            }
+          >
+            <option value={15}>Prueba rápida (15 empresas)</option>
+            <option value={50}>Medio (50 empresas)</option>
+            <option value="all">Completo</option>
+          </NativeSelect>
+        </label>
+        <PrepareData
+          label="Preparar datos que falten para esta fecha"
+          start={asOf}
+          end={null}
+          preparation={{ scope: 'date', universe_limit: prepareLimit }}
+        />
+      </section>
+      {start.isError && <ErrorState error={start.error} retry={() => start.mutate()} />}
+      {job.isError && <ErrorState error={job.error} retry={() => void job.refetch()} />}
+      {job.data && (
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="font-semibold">Trabajo #{job.data.id.slice(0, 8)}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {job.data.phase} · {job.data.progress} % ·{' '}
+            {JOB_STATES[job.data.status] ?? job.data.status}
+          </p>
+          {['queued', 'running'].includes(job.data.status) && (
+            <Button
+              className="mt-3"
+              variant="outline"
+              pending={cancel.isPending}
+              onClick={() => cancel.mutate()}
+            >
+              Solicitar cancelación
+            </Button>
+          )}
+          {job.data.status === 'failed' && (
+            <p className="mt-3 text-sm text-destructive">
+              El cálculo no terminó. Revisa cobertura y datos locales.
+            </p>
+          )}
+        </section>
+      )}
+      {preview.isPending && job.data?.status === 'succeeded' && <LoadingState />}
+      {preview.isError && <ErrorState error={preview.error} retry={() => void preview.refetch()} />}
+      {preview.data && (
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="text-xl font-semibold">Ranking a {dateText(preview.data.as_of)}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {preview.data.total} empresas en el orden original del motor. El JSON completo se
+            conserva con hash {preview.data.result_sha256.slice(0, 12)}…
+          </p>
+          <div className="mt-4 space-y-3">
+            <CoverageThreshold value={threshold} onChange={setThreshold} />
+            <HistoricalCoverageNotes coverage={preview.data.coverage} total={preview.data.total} />
+          </div>
+          <a
+            className="mt-3 inline-block text-sm text-primary underline"
+            href={'/api/v1/jobs/' + preview.data.job_id + '/result'}
+            download={'gabi-ranking-' + preview.data.as_of + '.json'}
+          >
+            Descargar resultado completo
+          </a>
+          <div className="mt-5">
+            <HistoricalTable key={preview.data.job_id} jobId={preview.data.job_id} />
+          </div>
+          <div className="mt-5">
+            <HistoricalOutcomes
+              key={preview.data.job_id}
+              rankingJobId={preview.data.job_id}
+              researchAllowed={model.data?.mode === 'RESEARCH'}
+            />
+          </div>
+        </section>
+      )}
+      <BacktestPanel researchAllowed={model.data?.mode === 'RESEARCH'} />
+    </div>
+  );
+}

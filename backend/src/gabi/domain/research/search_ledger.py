@@ -1,0 +1,239 @@
+"""Reconcile published search metadata without opening databases or blind reserves.
+
+This catalog preserves the historical 34-entry convention; it does not certify
+an exhaustive search count or recalculate any published result or correction.
+Configurations registered after the 2026-09-29 reconciliation are kept apart.
+"""
+
+import hashlib
+import json
+from collections.abc import Callable
+
+PUBLISHED = "docs/search-ledger/ledger.json"
+DIAGNOSTICS = (
+    "factor-history", "tail-effect-test", "factor-zoo", "placebo-engine",
+    "cross-section-test", "block-bootstrap", "rank-stability", "evidence-confidence",
+    "factor-zoo-sector",
+)
+
+
+def fingerprint(value: object) -> str:
+    data = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def build(load: Callable[[str], str]) -> dict:
+    """Read only explicitly named, already published repository artifacts.
+
+    ``load`` returns the UTF-8 text of a repository-relative path; it is called once per source.
+    """
+    sources: dict[str, str] = {}
+    documents: dict[str, dict] = {}
+
+    def pin(name: str) -> str:
+        content = load(name)
+        sources[name] = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        return content
+
+    def read(name: str) -> dict:
+        if name not in documents:
+            documents[name] = json.loads(pin(name))
+        return documents[name]
+
+    def entry(key: str, family: str, settings: dict, specification: str, result: str | None,
+              dates: dict, state: str, decision: str, *, failures: list | None = None) -> dict:
+        return {
+            "id": key, "family": family, "configuration": settings,
+            "configuration_sha256": fingerprint(settings), "specification_ref": specification,
+            "result_ref": result, "observed_sample": dates if state == "observed" else None,
+            "planned_sample": dates if state != "observed" else None,
+            "state": state, "decision": decision, "failures": failures,
+            "demonstrated_superiority": False,
+        }
+
+    v1_path = "docs/overfitting-audit/audit.json"
+    v1 = read(v1_path)
+    v1_dates = {"start": v1["inputs"]["start"], "end": v1["inputs"]["end"],
+                "periods": 36, "universe": "historical S&P 500, sample 200/date, seed 42"}
+    legacy = [entry(
+        "v1/" + trial["trial_id"], "v1_reconstructed", {"trial": trial,
+        "common_configuration": {key: v1["inputs"][key] for key in
+                                 ("start", "end", "max_symbols", "seed", "weights")},
+        "engine": "V1 reconstruction; individual coverage 70%, universe coverage 50%",
+        "common_inputs_ref": v1_path + "#/inputs"}, v1_path + f"#/catalog/{i}",
+        "docs/overfitting-audit/returns.csv#" + trial["trial_id"], v1_dates, "observed",
+        "historically_selected" if trial["trial_id"] == "top20_q" else "retained_for_audit",
+    ) for i, trial in enumerate(v1["catalog"])]
+    pin("docs/overfitting-audit/returns.csv")
+    pin("HIPOTESIS_CONGELADA.md")
+
+    rotation_path = "docs/rotation-experiment/protocol.json"
+    rotation = read(rotation_path)
+    rotation_result = read("docs/rotation-experiment/audit.json")
+    rotation_dates = {"start": rotation["start"], "end": rotation["end"],
+                      "universe": "historical S&P 500, full eligible universe"}
+    additional: list[dict] = []
+    for name, points in rotation["variants"].items():
+        result_index = next(i for i, row in enumerate(rotation_result["metrics"])
+                            if row["variant"] == name and row["window"] == "full_history")
+        record = entry("rotation/" + name, "rotation_v2",
+                       {"rotation_hurdle_points": points, "common_protocol": rotation},
+                       rotation_path + "#/variants/" + name,
+                       f"docs/rotation-experiment/audit.json#/metrics/{result_index}",
+                       rotation_dates, "observed", "reference" if points == 0 else "not_promoted")
+        (additional if points == 0 else legacy).append(record)
+
+    r3_path = "docs/r3-e6-experiment/preregistro.json"
+    r3 = read(r3_path)["spec"]
+    analysis = read("docs/r3-e6-experiment/analysis.json")
+    r3_dates = {"start": r3["sample"]["invested_from"], "end": r3["sample"]["end"],
+                "periods": 57, "universe": "acreditado-38, same eligible issuers as control"}
+    for name, settings in {"control_composite": r3["control"], **r3["variants"]}.items():
+        result_path = f"docs/r3-e6-experiment/{name}/result.json"
+        read(result_path)
+        for top_n in r3["engine"]["top_n"]:
+            record = entry(f"r3/{name}/top{top_n}", "r3_v2",
+                           {"variant": settings, "top_n": top_n, "common_spec": r3},
+                           r3_path + "#/spec/" + ("control" if name == "control_composite" else "variants/" + name),
+                           result_path + f"#/top{top_n}", r3_dates, "observed",
+                           "reference" if name == "control_composite" else
+                           analysis["decisiones"][name]["decision"] if top_n == 20 else "secondary_not_promoted")
+            (legacy if top_n == 20 else additional).append(record)
+
+    value_path = "docs/value-hypothesis/preregistro.json"
+    value = read(value_path)["spec"]
+    legacy.append(entry("value/prospective", "value_forward", value, value_path + "#/spec", None,
+                        {"start": value["portfolio"]["start"], "looks": value["tests"]["looks"],
+                         "universe": value["universe"]}, "pending_prospective", "await_preregistered_looks"))
+
+    discovery_path = "docs/strategy-discovery/preregistro.json"
+    discovery = read(discovery_path)["spec"]
+    results = read("docs/strategy-discovery/resultado.json")
+    dates = {"start": "2011-07-02", "end": "2025-07-02", "periods": results["n_dates"],
+             "universe": "acreditado-38, dated SIC and declared model eligibility",
+             "continuous": False}
+    for name, blocks in discovery["models"].items():
+        legacy.append(entry("discovery/" + name, "discovery_three_models",
+                            {"blocks": blocks, "common_spec": discovery},
+                            discovery_path + "#/spec/models/" + name,
+                            "docs/strategy-discovery/resultado.json#/models/" + name,
+                            dates, "observed", "failed_daily_gate", failures=results["models"][name]["failures"]))
+
+    rcf_path = "docs/strategy-discovery/repurchase-cash-v1/preregistro.json"
+    rcf = read(rcf_path)["spec"]
+    rcf_result = read("docs/strategy-discovery/repurchase-cash-v1/resultado.json")
+    legacy.append(entry("repurchase/RCF", "repurchase_cash_v1", rcf, rcf_path + "#/spec",
+                        "docs/strategy-discovery/repurchase-cash-v1/resultado.json#/summary",
+                        dates, "observed", "failed_daily_gate", failures=rcf_result["summary"]["failures"]))
+
+    # Registered after the 2026-09-29 reconciliation; the inherited 34 stay untouched (#53).
+    ensemble_path = "docs/ensemble-robustness/preregistro.json"
+    ensemble = read(ensemble_path)["spec"]
+    robustness = read("docs/ensemble-robustness/resultado.json")
+    if robustness["returns_read"] is not False:
+        raise ValueError("ENS-VQE-v1 retrospective robustness must not read returns.")
+    plan = ensemble["prospective_plan"]
+    later = [entry("ensemble/ENS-VQE-v1", "ensemble_vqe_v1", ensemble, ensemble_path + "#/spec", None,
+                   {"first_record": plan["first_record"], "looks": plan["looks"],
+                    "universe": ensemble["universe"]["rule"]}, "pending_prospective", "await_preregistered_looks")
+             | {"retrospective_robustness": {"result_ref": "docs/ensemble-robustness/resultado.json#/decision",
+                                             "returns_read": False, "decision": robustness["decision"]["label"]}}]
+
+    # Revision 3 (#252): NSI-v1, preregistered after its data gate and before any return; its budget is 3.
+    nsi_path = "docs/research/nsi-v1/preregistro.json"
+    nsi = read(nsi_path)
+    if nsi["returns_read"] is not False:
+        raise ValueError("NSI-v1 must be registered before any return is read.")
+    nsi_spec = nsi["spec"]
+    nsi_plan = {"windows": nsi_spec["evaluation"]["windows"], "universe": nsi_spec["universe"]["rule"],
+                "exploratory": "historia observada 2011–2025, nunca evidencia independiente"}
+    # Revision 4: the exploratory evaluation was observed and the owner accepted its abandonment.
+    nsi_result_path = "docs/research/nsi-v1/resultado.json"
+    nsi_result = read(nsi_result_path)
+    read("docs/research/nsi-v1/enmienda-1.json")
+    for name, label in nsi_spec["configurations"].items():
+        observed = nsi_result["configurations"][name]
+        later.append(entry("issuance/NSI-v1/" + name, "net_issuance_v1", {"configuration": label, "spec": nsi_spec},
+                           nsi_path + "#/spec/configurations/" + name,
+                           nsi_result_path + "#/configurations/" + name + "/decision",
+                           {**nsi_plan, "start": nsi_result["signals"][0], "end": nsi_result["signals"][-1],
+                            "periods": len(nsi_result["selections"]), "continuous": True},
+                           "observed", "abandoned" if observed["decision"]["applies"] else "sensitivity_not_decisive",
+                           failures=[observed["decision"]["reason"],
+                                     "execution_defect_2011_2015_no_open_prices_full_cash"]))
+
+    diagnostics = []
+    for family in DIAGNOSTICS:
+        protocol = f"docs/{family}/preregistro.json"
+        result = f"docs/{family}/resultado.json" if family != "evidence-confidence" else f"docs/{family}/sources.json"
+        read(protocol)
+        read(result)
+        diagnostics.append({"family": family, "specification_ref": protocol, "result_ref": result,
+                            "classification": "published_diagnostic_not_added_to_legacy_34"})
+    for family in ("full-universe-audit", "factor-stability", "factor-benchmark"):
+        path = f"docs/{family}/audit.json"
+        read(path)
+        diagnostics.append({"family": family, "result_ref": path,
+                            "classification": "reconstruction_or_diagnostic_not_added_to_legacy_34"})
+    for version in ("", "/v2"):
+        path = f"docs/strategy-discovery/capital-inputs{version}/preregistro.json"
+        read(path)
+        diagnostics.append({"family": "capital_inputs" + version, "specification_ref": path,
+                            "classification": "input_audit_zero_strategy_configurations"})
+    for family, path in (("cbop_v1_data_gate", "docs/research/cbop-v1/cobertura.json"),
+                         ("nsi_v1_data_gate", "docs/research/nsi-v1/cobertura.json")):
+        gate = read(path)
+        if gate["returns_read"] is not False:
+            raise ValueError(f"{family} must not read returns.")
+        diagnostics.append({"family": family, "result_ref": path + "#/decision", "decision": gate["decision"],
+                            "classification": "data_gate_zero_strategy_configurations"})
+    pin("docs/strategy-discovery/capital-inputs/v2/resultado.json")
+    pin("docs/placebo-engine/weight_perturbations.csv")
+    pin("docs/placebo-engine/null_distributions.csv")
+
+    records = legacy + additional + later
+    if len(legacy) != 34 or len({item["id"] for item in records}) != len(records):
+        raise ValueError("The historical convention changed; review the reconciliation before publishing.")
+    return {
+        "version": 4, "as_of": "2026-09-29", "scope": "explicit_published_repository_artifacts_only",
+        "revisions": [{"version": 2, "date": "2026-10-28", "issue": 53, "added": [later[0]["id"]]},
+                      {"version": 3, "date": "2026-11-01", "issue": 252, "added": [row["id"] for row in later[1:]],
+                       "data_gates": ["cbop_v1_data_gate: close_unfeasible", "nsi_v1_data_gate: continue_to_exploratory"]},
+                      {"version": 4, "date": "2026-11-01", "issue": 252,
+                       "observed": [row["id"] for row in later[1:]],
+                       "decision": "NSI-v1 abandoned by its preregistered rule; accepted by the owner"}],
+        "exhaustive_search_history": False, "global_error_control_established": False,
+        "hash_convention": "UTF-8 text, canonical LF; does not replace original binary/canonical result hashes",
+        "counts": {"legacy_guard_entries": len(legacy),
+                   "legacy_observed_entries": sum(row["state"] == "observed" for row in legacy),
+                   "legacy_pending_entries": sum(row["state"] != "observed" for row in legacy),
+                   "additional_observed_records": len(additional), "diagnostic_groups": len(diagnostics),
+                   "registered_after_reconciliation": len(later),
+                   "known_minimum_candidate_configurations": len(legacy) + len(later)},
+        "legacy_entries": legacy, "additional_observed_records": additional,
+        "registered_after_reconciliation": later, "diagnostics": diagnostics,
+        "unresolved_groups": v1["excluded"],
+        "limitations": [
+            "34 is the inherited bookkeeping convention, not an exhaustive count of observed searches.",
+            "VALUE is specified but its prospective outcomes have not been observed.",
+            "ENS-VQE-v1 is specified; its retrospective robustness read no returns and its prospective outcomes "
+            "have not been observed. It counts as a new configuration outside the inherited 34.",
+            "NSI-v1 (three configurations) was preregistered after a data gate that read no returns; its exploratory "
+            "evaluation over 2011-2025 reused observed history, was abandoned by its rule and had an execution defect "
+            "in 2011-2015 (no open prices: full cash); it can never count as independent evidence.",
+            "CBOP-v1 closed at its data gate (coverage), before any return; it adds no configuration.",
+            "Reconstructed V1 rules do not recover all originally observed versions or sessions.",
+            "Rotation control and three R3 Top-10 runs are retained separately; not declared independent trials.",
+            "13 Factor Zoo tests, 256 weight perturbations and 8192 null paths also exposed retrospective information.",
+            "Diagnostics and replications must not be summed as independent strategy trials.",
+            "Private/manual/optimization sessions are not exhaustively recoverable from published artifacts.",
+            "No operational DB, blind outcome, raw price snapshot or reserved smallmid dataset was opened.",
+            "No old result, guard alpha, model or decision is recalculated or silently changed.",
+        ],
+        "sources_sha256_lf": dict(sorted(sources.items())),
+    }
+
+
+def verify(published: dict, load: Callable[[str], str]) -> None:
+    if published != build(load):
+        raise ValueError("Search ledger or its published sources changed; publish an explicit new revision.")

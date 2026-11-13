@@ -1,0 +1,204 @@
+{
+  "commit": "5467954c3715da3a3e20bac6e1db275e3762be47",
+  "python": "3.13.7",
+  "platform": "Windows-11-10.0.22621-SP0",
+  "fixture": {
+    "seed": 64,
+    "companies": 500,
+    "sessions": 320,
+    "price_rows": 159685,
+    "provider_delay_seconds_per_batch": 0.005
+  },
+  "scope": "separate worker process; real queue, market use case/cache writes, quality audit, HTTP via ASGI",
+  "limits": "one sample per scenario; no TCP/browser or real network; refresh excludes macro/SEC/universe discovery; worker seconds include synchronization; RSS sampled every 5 ms, Python peak separate",
+  "checks": {
+    "serial_concurrent_exact_parity": true,
+    "atomic_artifact_sha256": true,
+    "quality_reads_only": true,
+    "no_external_network": true
+  },
+  "cases": {
+    "refresh": {
+      "serial": {
+        "metrics": {
+          "select_queries": 8,
+          "sql_statements": 9550,
+          "price_rows_written": 501,
+          "fundamentals_written": 500,
+          "provider_seconds": 0.14910539984703064,
+          "storage_seconds": 6.05946720065549,
+          "execute_seconds": 6.208883699961007,
+          "worker_seconds_including_coordination": 6.2411604998633265
+        },
+        "memory": {
+          "rss_before_mib": 171.26171875,
+          "rss_peak_sampled_mib": 177.14453125,
+          "python_peak_mib": 3.0050783157348633
+        },
+        "concurrent_reads": [],
+        "artifact_bytes": 132,
+        "companies": 500
+      },
+      "concurrent": {
+        "metrics": {
+          "select_queries": 8,
+          "sql_statements": 9550,
+          "price_rows_written": 501,
+          "fundamentals_written": 500,
+          "provider_seconds": 0.14793410059064627,
+          "storage_seconds": 6.958296100143343,
+          "execute_seconds": 7.106560199987143,
+          "worker_seconds_including_coordination": 7.146767899859697
+        },
+        "memory": {
+          "rss_before_mib": 171.75390625,
+          "rss_peak_sampled_mib": 178.05078125,
+          "python_peak_mib": 3.3340816497802734
+        },
+        "concurrent_reads": [
+          {
+            "path": "/api/v1/jobs",
+            "seconds": 0.004055699799209833,
+            "status": 200,
+            "adapter_rows": 0,
+            "adapter_queries": 0,
+            "response_bytes": 440
+          },
+          {
+            "path": "/api/v1/ranking?limit=10",
+            "seconds": 0.08324910001829267,
+            "status": 200,
+            "adapter_rows": 17,
+            "adapter_queries": 4,
+            "response_bytes": 51201
+          },
+          {
+            "path": "/api/v1/jobs",
+            "seconds": 0.0046362001448869705,
+            "status": 200,
+            "adapter_rows": 0,
+            "adapter_queries": 0,
+            "response_bytes": 440
+          },
+          {
+            "path": "/api/v1/ranking?limit=10",
+            "seconds": 6.066901900339872,
+            "status": 409,
+            "adapter_rows": 161482,
+            "adapter_queries": 139,
+            "response_bytes": 124
+          },
+          {
+            "path": "/api/v1/jobs",
+            "seconds": 0.004657899960875511,
+            "status": 200,
+            "adapter_rows": 0,
+            "adapter_queries": 0,
+            "response_bytes": 440
+          },
+          {
+            "path": "/api/v1/ranking?limit=10",
+            "seconds": 5.300569399725646,
+            "status": 409,
+            "adapter_rows": 161484,
+            "adapter_queries": 139,
+            "response_bytes": 124
+          }
+        ],
+        "artifact_bytes": 132,
+        "companies": 500
+      }
+    },
+    "quality": {
+      "serial": {
+        "metrics": {
+          "select_queries": 18,
+          "sql_statements": 48,
+          "price_rows_written": 0,
+          "fundamentals_written": 0,
+          "provider_seconds": 0.0,
+          "storage_seconds": 0.0,
+          "execute_seconds": 0.02970820013433695,
+          "worker_seconds_including_coordination": 0.0731351999565959
+        },
+        "memory": {
+          "rss_before_mib": 171.25390625,
+          "rss_peak_sampled_mib": 174.265625,
+          "python_peak_mib": 0.3256244659423828
+        },
+        "concurrent_reads": [],
+        "artifact_bytes": 169,
+        "companies": 500
+      },
+      "concurrent": {
+        "metrics": {
+          "select_queries": 18,
+          "sql_statements": 48,
+          "price_rows_written": 0,
+          "fundamentals_written": 0,
+          "provider_seconds": 0.0,
+          "storage_seconds": 0.0,
+          "execute_seconds": 0.022632400039583445,
+          "worker_seconds_including_coordination": 0.06308540003374219
+        },
+        "memory": {
+          "rss_before_mib": 171.53515625,
+          "rss_peak_sampled_mib": 174.67578125,
+          "python_peak_mib": 0.3255767822265625
+        },
+        "concurrent_reads": [
+          {
+            "path": "/api/v1/jobs",
+            "seconds": 0.003415399696677923,
+            "status": 200,
+            "adapter_rows": 0,
+            "adapter_queries": 0,
+            "response_bytes": 440
+          },
+          {
+            "path": "/api/v1/ranking?limit=10",
+            "seconds": 0.07602520007640123,
+            "status": 200,
+            "adapter_rows": 17,
+            "adapter_queries": 4,
+            "response_bytes": 51201
+          },
+          {
+            "path": "/api/v1/jobs",
+            "seconds": 0.0040698000229895115,
+            "status": 200,
+            "adapter_rows": 0,
+            "adapter_queries": 0,
+            "response_bytes": 559
+          },
+          {
+            "path": "/api/v1/ranking?limit=10",
+            "seconds": 0.07709860010072589,
+            "status": 200,
+            "adapter_rows": 17,
+            "adapter_queries": 4,
+            "response_bytes": 51201
+          },
+          {
+            "path": "/api/v1/jobs",
+            "seconds": 0.003971700090914965,
+            "status": 200,
+            "adapter_rows": 0,
+            "adapter_queries": 0,
+            "response_bytes": 559
+          },
+          {
+            "path": "/api/v1/ranking?limit=10",
+            "seconds": 0.0795227000489831,
+            "status": 200,
+            "adapter_rows": 17,
+            "adapter_queries": 4,
+            "response_bytes": 51201
+          }
+        ],
+        "artifact_bytes": 169,
+        "companies": 500
+      }
+    }
+  }
+}

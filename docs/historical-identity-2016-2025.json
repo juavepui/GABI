@@ -1,0 +1,517 @@
+{
+  "membership_source_id": "fja05680:a2430f2af0c79ddf0748e91de11bdeb1616ab5a7:full",
+  "candidate_source_id": "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b",
+  "window": [
+    "2016-03-31",
+    "2025-12-31"
+  ],
+  "unit": "quarter-end member observation",
+  "candidate_warning": "lawcal CIK/name are reconstructed candidates, not verified ticker aliases; row creation date does not date the manually backfilled CIK",
+  "by_year": {
+    "2016": {
+      "quarter_dates": [
+        "2016-03-31",
+        "2016-06-30",
+        "2016-09-30",
+        "2016-12-31"
+      ],
+      "member_observations": 2022,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 1981,
+      "candidate_row_created_by_date": 1942,
+      "candidate_name": 1981,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1700,
+      "confirmed_historical_ticker": 63,
+      "corroborated_candidate": 255,
+      "accredited_total": 2018,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 97.972,
+        "candidate_row_created_by_date": 96.044,
+        "candidate_name": 97.972,
+        "confirmed_by_multiple_evidence": 84.075,
+        "confirmed_historical_ticker": 3.116,
+        "corroborated_candidate": 12.611,
+        "accredited_total": 99.802,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2017": {
+      "quarter_dates": [
+        "2017-03-31",
+        "2017-06-30",
+        "2017-09-30",
+        "2017-12-31"
+      ],
+      "member_observations": 2023,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 1996,
+      "candidate_row_created_by_date": 1967,
+      "candidate_name": 1996,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1739,
+      "confirmed_historical_ticker": 61,
+      "corroborated_candidate": 221,
+      "accredited_total": 2021,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 98.665,
+        "candidate_row_created_by_date": 97.232,
+        "candidate_name": 98.665,
+        "confirmed_by_multiple_evidence": 85.961,
+        "confirmed_historical_ticker": 3.015,
+        "corroborated_candidate": 10.924,
+        "accredited_total": 99.901,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2018": {
+      "quarter_dates": [
+        "2018-03-31",
+        "2018-06-30",
+        "2018-09-30",
+        "2018-12-31"
+      ],
+      "member_observations": 2022,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2001,
+      "candidate_row_created_by_date": 1995,
+      "candidate_name": 2001,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1770,
+      "confirmed_historical_ticker": 51,
+      "corroborated_candidate": 201,
+      "accredited_total": 2022,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 98.961,
+        "candidate_row_created_by_date": 98.665,
+        "candidate_name": 98.961,
+        "confirmed_by_multiple_evidence": 87.537,
+        "confirmed_historical_ticker": 2.522,
+        "corroborated_candidate": 9.941,
+        "accredited_total": 100.0,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2019": {
+      "quarter_dates": [
+        "2019-03-31",
+        "2019-06-30",
+        "2019-09-30",
+        "2019-12-31"
+      ],
+      "member_observations": 2020,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2014,
+      "candidate_row_created_by_date": 2013,
+      "candidate_name": 2014,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1820,
+      "confirmed_historical_ticker": 48,
+      "corroborated_candidate": 148,
+      "accredited_total": 2016,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 99.703,
+        "candidate_row_created_by_date": 99.653,
+        "candidate_name": 99.703,
+        "confirmed_by_multiple_evidence": 90.099,
+        "confirmed_historical_ticker": 2.376,
+        "corroborated_candidate": 7.327,
+        "accredited_total": 99.802,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2020": {
+      "quarter_dates": [
+        "2020-03-31",
+        "2020-06-30",
+        "2020-09-30",
+        "2020-12-31"
+      ],
+      "member_observations": 2020,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2020,
+      "candidate_row_created_by_date": 2014,
+      "candidate_name": 2020,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1877,
+      "confirmed_historical_ticker": 45,
+      "corroborated_candidate": 94,
+      "accredited_total": 2016,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 100.0,
+        "candidate_row_created_by_date": 99.703,
+        "candidate_name": 100.0,
+        "confirmed_by_multiple_evidence": 92.921,
+        "confirmed_historical_ticker": 2.228,
+        "corroborated_candidate": 4.653,
+        "accredited_total": 99.802,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2021": {
+      "quarter_dates": [
+        "2021-03-31",
+        "2021-06-30",
+        "2021-09-30",
+        "2021-12-31"
+      ],
+      "member_observations": 2020,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2020,
+      "candidate_row_created_by_date": 2020,
+      "candidate_name": 2020,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1905,
+      "confirmed_historical_ticker": 44,
+      "corroborated_candidate": 66,
+      "accredited_total": 2015,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 100.0,
+        "candidate_row_created_by_date": 100.0,
+        "candidate_name": 100.0,
+        "confirmed_by_multiple_evidence": 94.307,
+        "confirmed_historical_ticker": 2.178,
+        "corroborated_candidate": 3.267,
+        "accredited_total": 99.752,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2022": {
+      "quarter_dates": [
+        "2022-03-31",
+        "2022-06-30",
+        "2022-09-30",
+        "2022-12-31"
+      ],
+      "member_observations": 2014,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2014,
+      "candidate_row_created_by_date": 2014,
+      "candidate_name": 2014,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1904,
+      "confirmed_historical_ticker": 37,
+      "corroborated_candidate": 65,
+      "accredited_total": 2006,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 100.0,
+        "candidate_row_created_by_date": 100.0,
+        "candidate_name": 100.0,
+        "confirmed_by_multiple_evidence": 94.538,
+        "confirmed_historical_ticker": 1.837,
+        "corroborated_candidate": 3.227,
+        "accredited_total": 99.603,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2023": {
+      "quarter_dates": [
+        "2023-03-31",
+        "2023-06-30",
+        "2023-09-30",
+        "2023-12-31"
+      ],
+      "member_observations": 2012,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2012,
+      "candidate_row_created_by_date": 2012,
+      "candidate_name": 2012,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1911,
+      "confirmed_historical_ticker": 32,
+      "corroborated_candidate": 68,
+      "accredited_total": 2011,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 100.0,
+        "candidate_row_created_by_date": 100.0,
+        "candidate_name": 100.0,
+        "confirmed_by_multiple_evidence": 94.98,
+        "confirmed_historical_ticker": 1.59,
+        "corroborated_candidate": 3.38,
+        "accredited_total": 99.95,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2024": {
+      "quarter_dates": [
+        "2024-03-31",
+        "2024-06-30",
+        "2024-09-30",
+        "2024-12-31"
+      ],
+      "member_observations": 2013,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2013,
+      "candidate_row_created_by_date": 2013,
+      "candidate_name": 2013,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1900,
+      "confirmed_historical_ticker": 32,
+      "corroborated_candidate": 81,
+      "accredited_total": 2013,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 100.0,
+        "candidate_row_created_by_date": 100.0,
+        "candidate_name": 100.0,
+        "confirmed_by_multiple_evidence": 94.386,
+        "confirmed_historical_ticker": 1.59,
+        "corroborated_candidate": 4.024,
+        "accredited_total": 100.0,
+        "ambiguous_identity": 0.0
+      }
+    },
+    "2025": {
+      "quarter_dates": [
+        "2025-03-31",
+        "2025-06-30",
+        "2025-09-30",
+        "2025-12-31"
+      ],
+      "member_observations": 2012,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 2012,
+      "candidate_row_created_by_date": 2010,
+      "candidate_name": 2012,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 1902,
+      "confirmed_historical_ticker": 33,
+      "corroborated_candidate": 76,
+      "accredited_total": 2011,
+      "ambiguous_identity": 0,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 100.0,
+        "candidate_row_created_by_date": 99.901,
+        "candidate_name": 100.0,
+        "confirmed_by_multiple_evidence": 94.533,
+        "confirmed_historical_ticker": 1.64,
+        "corroborated_candidate": 3.777,
+        "accredited_total": 99.95,
+        "ambiguous_identity": 0.0
+      }
+    }
+  },
+  "ambiguous_examples": [],
+  "sec_instance_evidence": {
+    "filings_with_local_instance": 2253,
+    "ticker_proofs": 1710,
+    "distinct_ticker_cik_pairs": 687,
+    "member_on_filing_date": 1664,
+    "historical_names": 1710,
+    "candidate_crosscheck": {
+      "agrees": 1637,
+      "conflicts": 30,
+      "ambiguous": 0,
+      "missing": 43
+    },
+    "conflict_examples": [
+      {
+        "symbol": "XOM",
+        "cik": "0000034088",
+        "filed_date": "2016-02-24"
+      },
+      {
+        "symbol": "XOM",
+        "cik": "0000034088",
+        "filed_date": "2016-08-03"
+      },
+      {
+        "symbol": "XOM",
+        "cik": "0000034088",
+        "filed_date": "2017-02-22"
+      },
+      {
+        "symbol": "DIS",
+        "cik": "0001001039",
+        "filed_date": "2016-02-09"
+      },
+      {
+        "symbol": "DIS",
+        "cik": "0001001039",
+        "filed_date": "2016-08-09"
+      },
+      {
+        "symbol": "DIS",
+        "cik": "0001001039",
+        "filed_date": "2017-02-07"
+      },
+      {
+        "symbol": "CI",
+        "cik": "0000701221",
+        "filed_date": "2016-02-25"
+      },
+      {
+        "symbol": "CI",
+        "cik": "0000701221",
+        "filed_date": "2017-02-23"
+      },
+      {
+        "symbol": "CI",
+        "cik": "0000701221",
+        "filed_date": "2016-07-29"
+      },
+      {
+        "symbol": "FTI",
+        "cik": "0001135152",
+        "filed_date": "2016-02-24"
+      },
+      {
+        "symbol": "FTI",
+        "cik": "0001135152",
+        "filed_date": "2016-07-28"
+      },
+      {
+        "symbol": "FTI",
+        "cik": "0001135152",
+        "filed_date": "2016-10-27"
+      },
+      {
+        "symbol": "BG",
+        "cik": "0001144519",
+        "filed_date": "2023-08-09"
+      },
+      {
+        "symbol": "BG",
+        "cik": "0001144519",
+        "filed_date": "2023-10-26"
+      },
+      {
+        "symbol": "LLL",
+        "cik": "0001056239",
+        "filed_date": "2016-02-26"
+      },
+      {
+        "symbol": "APA",
+        "cik": "0000006769",
+        "filed_date": "2016-02-26"
+      },
+      {
+        "symbol": "LLL",
+        "cik": "0001056239",
+        "filed_date": "2016-07-28"
+      },
+      {
+        "symbol": "LLL",
+        "cik": "0001056239",
+        "filed_date": "2016-10-27"
+      },
+      {
+        "symbol": "BLK",
+        "cik": "0001364742",
+        "filed_date": "2016-02-26"
+      },
+      {
+        "symbol": "BLK",
+        "cik": "0001364742",
+        "filed_date": "2016-08-08"
+      }
+    ],
+    "rejections": {
+      "Missing or ambiguous SEC trading symbol": 540,
+      "xmlSAX2Characters": 3
+    },
+    "imported_observations": 1710,
+    "stored_observations": 2751,
+    "active_alias_rows": 2
+  },
+  "evidence_intervals": {
+    "source_id": "sec-identity-evidence:2016-2025:v1",
+    "count": 759,
+    "statuses": {
+      "confirmed_by_multiple_evidence": 631,
+      "confirmed_historical_ticker": 21,
+      "corroborated_candidate": 99,
+      "ambiguous": 0,
+      "unresolved": 8
+    },
+    "note": "Retrospective corroboration, not a reviewed operational alias"
+  }
+}

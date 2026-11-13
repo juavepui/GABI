@@ -1,0 +1,2 @@
+# Keep exported distributions byte-stable for SHA-256 checks on Windows and Linux.
+*.csv text eol=lf

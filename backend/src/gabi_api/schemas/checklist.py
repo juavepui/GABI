@@ -1,0 +1,271 @@
+"""Descriptive fundamental Checklist (#167): verdicts against explicit thresholds, never a score or a signal."""
+
+from typing import Any, Literal
+
+from pydantic import BaseModel
+
+Verdict = Literal["pass", "fail", "missing", "not_applicable", "info"]
+AlarmStatus = Literal["active", "clear", "missing", "not_applicable", "manual", "info"]
+Unit = Literal["fraction", "ratio", "USD", "count"]
+
+
+class ChecklistAlternative(BaseModel):
+    """The same concept as shown elsewhere on the company page, with its own source and period (#169)."""
+    metric: str
+    value: float
+    source: Literal["yahoo", "sec_10k", "prices"]
+    period: Literal["ttm", "mrq", "snapshot", "5y_monthly", "fiscal_year", "cached_history"]
+    difference: Literal["period", "formula", "share_count", "method", "engine"]
+    explanation: str
+
+
+class ChecklistRate(BaseModel):
+    rate: float | None  # fraction meeting the threshold; None when the sector has too few values
+    evaluated: int
+
+
+class ChecklistPassRate(BaseModel):
+    """How many S&P 500 issuers, and of the company's sector, meet this threshold (#171); never a verdict."""
+    universe: ChecklistRate
+    sector: ChecklistRate | None
+
+
+class ChecklistReference(BaseModel):
+    as_of: str
+    issuers: int
+    sector: str | None  # the universe (GICS) sector the sector rate refers to
+
+
+class ChecklistCriterion(BaseModel):
+    key: str
+    block: str
+    label: str
+    formula: str
+    unit: Unit
+    comparison: str
+    value: float | None
+    threshold: float | None
+    default_threshold: float | None
+    edited: bool
+    verdict: Verdict
+    reason: str | None
+    source: Literal["sec_10k", "price+sec", "yahoo", "price+yahoo", "prices"]
+    period: Literal["fiscal_year", "snapshot", "cached_history"]
+    alternative: ChecklistAlternative | None
+    reference: str
+    explanation: str
+    caveat: Literal["share_classes"] | None
+    detail: dict[str, Any]
+    pass_rate: ChecklistPassRate | None = None
+
+
+class ChecklistAlarm(BaseModel):
+    key: str
+    label: str
+    check: str
+    explanation: str
+    status: AlarmStatus
+    reason: str | None
+    caveat: Literal["share_classes"] | None
+    detail: dict[str, Any]
+
+
+class ChecklistDcf(BaseModel):
+    dcf_discount_rate: float
+    dcf_terminal_growth: float
+    dcf_years: float
+    dcf_max_implied_growth: float
+    edited: list[str]
+    fcf: float | None
+    shares: float | None
+    price: float | None
+    implied_growth: float | None
+    historical_cfo_cagr: float | None
+    value_per_share_at_history: float | None
+    verdict: Literal["reasonable", "demanding", "discard", "missing", "not_applicable"]
+    reason: str | None
+
+
+class ChecklistSummary(BaseModel):
+    passed: int
+    failed: int
+    evaluated: int
+    missing: int
+    with_value: int
+    applicable: int
+    score: float | None
+    alarms_active: int
+    alarms_evaluated: int
+
+
+class ChecklistSources(BaseModel):
+    sec_last_filed: str | None
+    price_date: str | None
+    shares_date: str | None
+    shares_source: Literal["sec_outstanding", "sec_diluted_average", "yahoo_market_cap",
+                           "yahoo_no_sec_shares"] | None
+    yahoo_fetched_at: str | None
+
+
+class ChecklistQualitative(BaseModel):
+    key: str
+    label: str
+    hint: str
+
+
+class ChecklistMedian(BaseModel):
+    median: float | None
+    count: int
+    reason: str | None
+
+
+class ChecklistMultiplesYear(BaseModel):
+    fiscal_year_end: str
+    price: float | None
+    shares_date: str | None
+    market_cap: float | None
+    pe: float | None
+    ev_ebitda: float | None
+    ev_ebit: float | None
+    ev_fcf: float | None
+
+
+class ChecklistMultiplesHistory(BaseModel):
+    years: int
+    by_year: list[ChecklistMultiplesYear]
+    median: dict[str, ChecklistMedian]
+
+
+ReadingStatus = Literal["ok", "few_years", "missing", "negative", "not_applicable"]
+ReadingSide = Literal["cheaper", "pricier", "inline"]
+
+
+class MultipleOwnReading(BaseModel):
+    """One multiple today against its own last years (#326): range, median and the plain sentence."""
+
+    key: str
+    label: str
+    status: ReadingStatus
+    current: float | None
+    min: float | None  # lowest positive value of its years
+    max: float | None
+    median: float | None  # None unless there are enough years
+    years: int  # years with a positive value
+    cheaper_years: int | None  # years when it was cheaper than today
+    pricier_years: int | None  # years when it was more expensive than today
+    side: ReadingSide | None
+    text: str
+
+
+class MultipleSectorReading(BaseModel):
+    key: str
+    label: str
+    status: Literal["ok", "missing"]
+    current: float | None
+    median: float | None
+    peers: int
+    side: ReadingSide | None
+    text: str
+
+
+class ChecklistSectorMultiples(BaseModel):
+    symbol: str
+    as_of: str
+    sector: str | None
+    peers: int
+    reason: str | None
+    cached: bool
+    medians: dict[str, ChecklistMedian]
+    reading: list[MultipleSectorReading]
+
+
+class CompanyChecklistResponse(BaseModel):
+    symbol: str
+    as_of: str
+    sector: str | None
+    fiscal_year_end: str | None
+    financial_sector: bool
+    thresholds_version: int
+    thresholds_warning: str | None
+    sources: ChecklistSources
+    summary: ChecklistSummary
+    criteria: list[ChecklistCriterion]
+    alarms: list[ChecklistAlarm]
+    dcf: ChecklistDcf
+    qualitative: list[ChecklistQualitative]
+    multiples_history: ChecklistMultiplesHistory
+    multiples_reading: list[MultipleOwnReading]
+    pass_rate_reference: ChecklistReference | None
+
+
+class ChecklistThreshold(BaseModel):
+    key: str
+    label: str
+    block: str
+    unit: Unit
+    comparison: str
+    default: float | None
+    minimum: float
+    maximum: float
+    reference: str
+    explanation: str
+
+
+class ChecklistPreset(BaseModel):
+    key: Literal["excel", "large_cap"]
+    label: str
+    description: str
+    version: int
+    values: dict[str, float]
+
+
+class ChecklistThresholds(BaseModel):
+    version: int
+    values: dict[str, float]
+    edited: list[str]
+    warning: str | None
+    catalog: list[ChecklistThreshold]
+    presets: list[ChecklistPreset]
+    preset: Literal["excel", "large_cap"] | None  # the preset the current thresholds match, if any
+
+
+class ChecklistPresetRequest(BaseModel):
+    key: Literal["excel", "large_cap"]
+
+
+class ChecklistThresholdsRequest(BaseModel):
+    values: dict[str, float]
+
+
+class ComparedCriterion(BaseModel):
+    key: str
+    label: str
+    unit: Unit
+    value: float | None
+    threshold: float | None
+    comparison: str
+    verdict: Verdict
+    reason: str | None
+    source: Literal["sec_10k", "price+sec", "yahoo", "price+yahoo", "prices"]
+    period: Literal["fiscal_year", "snapshot", "cached_history"]
+
+
+class ComparedChecklist(BaseModel):
+    """One compared company's checklist digest (#194): the same values as its page's checklist."""
+    symbol: str
+    fiscal_year_end: str | None
+    financial_sector: bool
+    summary: ChecklistSummary
+    criteria: list[ComparedCriterion]
+    active_alarms: list[str]
+    history_medians: dict[str, ChecklistMedian]
+    history_years: int
+    sector: str | None
+    sector_peers: int
+    sector_reason: str | None
+    sector_medians: dict[str, ChecklistMedian]
+
+
+class ComparisonChecklistResponse(BaseModel):
+    items: list[ComparedChecklist]
+    revision: str

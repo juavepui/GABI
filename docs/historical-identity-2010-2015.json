@@ -1,0 +1,251 @@
+{
+  "membership_source_id": "fja05680:a2430f2af0c79ddf0748e91de11bdeb1616ab5a7",
+  "candidate_source_id": "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b",
+  "window": [
+    "2010-03-31",
+    "2015-12-31"
+  ],
+  "unit": "quarter-end member observation",
+  "candidate_warning": "lawcal CIK/name are reconstructed candidates, not verified ticker aliases; row creation date does not date the manually backfilled CIK",
+  "by_year": {
+    "2010": {
+      "quarter_dates": [
+        "2010-03-31",
+        "2010-06-30",
+        "2010-09-30",
+        "2010-12-31"
+      ],
+      "member_observations": 1992,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1883,
+      "candidate_row_created_by_date": 1803,
+      "candidate_name": 1883,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 728,
+      "confirmed_historical_ticker": 84,
+      "corroborated_candidate": 1129,
+      "accredited_total": 1941,
+      "ambiguous_identity": 6,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 94.528,
+        "candidate_row_created_by_date": 90.512,
+        "candidate_name": 94.528,
+        "confirmed_by_multiple_evidence": 36.546,
+        "confirmed_historical_ticker": 4.217,
+        "corroborated_candidate": 56.677,
+        "accredited_total": 97.44,
+        "ambiguous_identity": 0.301
+      }
+    },
+    "2011": {
+      "quarter_dates": [
+        "2011-03-31",
+        "2011-06-30",
+        "2011-09-30",
+        "2011-12-31"
+      ],
+      "member_observations": 1988,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1889,
+      "candidate_row_created_by_date": 1824,
+      "candidate_name": 1889,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 730,
+      "confirmed_historical_ticker": 83,
+      "corroborated_candidate": 1130,
+      "accredited_total": 1943,
+      "ambiguous_identity": 8,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 95.02,
+        "candidate_row_created_by_date": 91.751,
+        "candidate_name": 95.02,
+        "confirmed_by_multiple_evidence": 36.72,
+        "confirmed_historical_ticker": 4.175,
+        "corroborated_candidate": 56.841,
+        "accredited_total": 97.736,
+        "ambiguous_identity": 0.402
+      }
+    },
+    "2012": {
+      "quarter_dates": [
+        "2012-03-31",
+        "2012-06-30",
+        "2012-09-30",
+        "2012-12-31"
+      ],
+      "member_observations": 1988,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1911,
+      "candidate_row_created_by_date": 1853,
+      "candidate_name": 1911,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 748,
+      "confirmed_historical_ticker": 79,
+      "corroborated_candidate": 1130,
+      "accredited_total": 1957,
+      "ambiguous_identity": 8,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 96.127,
+        "candidate_row_created_by_date": 93.209,
+        "candidate_name": 96.127,
+        "confirmed_by_multiple_evidence": 37.626,
+        "confirmed_historical_ticker": 3.974,
+        "corroborated_candidate": 56.841,
+        "accredited_total": 98.441,
+        "ambiguous_identity": 0.402
+      }
+    },
+    "2013": {
+      "quarter_dates": [
+        "2013-03-31",
+        "2013-06-30",
+        "2013-09-30",
+        "2013-12-31"
+      ],
+      "member_observations": 1988,
+      "resolved_cik": 4,
+      "resolved_entity_id": 4,
+      "date_valid_alias": 4,
+      "historical_name_sec": 4,
+      "candidate_unique_cik": 1931,
+      "candidate_row_created_by_date": 1869,
+      "candidate_name": 1931,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 748,
+      "confirmed_historical_ticker": 75,
+      "corroborated_candidate": 1141,
+      "accredited_total": 1964,
+      "ambiguous_identity": 8,
+      "percent": {
+        "resolved_cik": 0.201,
+        "resolved_entity_id": 0.201,
+        "date_valid_alias": 0.201,
+        "historical_name_sec": 0.201,
+        "candidate_unique_cik": 97.133,
+        "candidate_row_created_by_date": 94.014,
+        "candidate_name": 97.133,
+        "confirmed_by_multiple_evidence": 37.626,
+        "confirmed_historical_ticker": 3.773,
+        "corroborated_candidate": 57.394,
+        "accredited_total": 98.793,
+        "ambiguous_identity": 0.402
+      }
+    },
+    "2014": {
+      "quarter_dates": [
+        "2014-03-31",
+        "2014-06-30",
+        "2014-09-30",
+        "2014-12-31"
+      ],
+      "member_observations": 1993,
+      "resolved_cik": 3,
+      "resolved_entity_id": 3,
+      "date_valid_alias": 3,
+      "historical_name_sec": 3,
+      "candidate_unique_cik": 1947,
+      "candidate_row_created_by_date": 1891,
+      "candidate_name": 1947,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 4,
+      "confirmed_by_multiple_evidence": 735,
+      "confirmed_historical_ticker": 74,
+      "corroborated_candidate": 1160,
+      "accredited_total": 1969,
+      "ambiguous_identity": 8,
+      "percent": {
+        "resolved_cik": 0.151,
+        "resolved_entity_id": 0.151,
+        "date_valid_alias": 0.151,
+        "historical_name_sec": 0.151,
+        "candidate_unique_cik": 97.692,
+        "candidate_row_created_by_date": 94.882,
+        "candidate_name": 97.692,
+        "confirmed_by_multiple_evidence": 36.879,
+        "confirmed_historical_ticker": 3.713,
+        "corroborated_candidate": 58.204,
+        "accredited_total": 98.796,
+        "ambiguous_identity": 0.401
+      }
+    },
+    "2015": {
+      "quarter_dates": [
+        "2015-03-31",
+        "2015-06-30",
+        "2015-09-30",
+        "2015-12-31"
+      ],
+      "member_observations": 2004,
+      "resolved_cik": 0,
+      "resolved_entity_id": 0,
+      "date_valid_alias": 0,
+      "historical_name_sec": 0,
+      "candidate_unique_cik": 1963,
+      "candidate_row_created_by_date": 1920,
+      "candidate_name": 1963,
+      "ambiguous_alias": 0,
+      "ambiguous_candidate_cik": 0,
+      "confirmed_by_multiple_evidence": 739,
+      "confirmed_historical_ticker": 66,
+      "corroborated_candidate": 1164,
+      "accredited_total": 1969,
+      "ambiguous_identity": 9,
+      "percent": {
+        "resolved_cik": 0.0,
+        "resolved_entity_id": 0.0,
+        "date_valid_alias": 0.0,
+        "historical_name_sec": 0.0,
+        "candidate_unique_cik": 97.954,
+        "candidate_row_created_by_date": 95.808,
+        "candidate_name": 97.954,
+        "confirmed_by_multiple_evidence": 36.876,
+        "confirmed_historical_ticker": 3.293,
+        "corroborated_candidate": 58.084,
+        "accredited_total": 98.253,
+        "ambiguous_identity": 0.449
+      }
+    }
+  },
+  "ambiguous_examples": [
+    "AGN",
+    "CB",
+    "CMCSK"
+  ],
+  "evidence_intervals": {
+    "source_id": "sec-identity-evidence:2010-2015:v1",
+    "count": 620,
+    "statuses": {
+      "confirmed_by_multiple_evidence": 222,
+      "confirmed_historical_ticker": 24,
+      "corroborated_candidate": 351,
+      "ambiguous": 5,
+      "unresolved": 18
+    },
+    "note": "Retrospective corroboration, not a reviewed operational alias"
+  }
+}

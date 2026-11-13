@@ -1,0 +1,26 @@
+[
+  {
+    "adsh": "0001070412-12-000008",
+    "tag": "CashAndCashEquivalentsAtCarryingValue",
+    "version": "us-gaap/2011",
+    "ddate": "20081231",
+    "qtrs": "0",
+    "uom": "USD",
+    "segments": "",
+    "coreg": "",
+    "value": "65607000.0000",
+    "footnote": ""
+  },
+  {
+    "adsh": "0001070412-12-000008",
+    "tag": "CashAndCashEquivalentsAtCarryingValue",
+    "version": "us-gaap/2011",
+    "ddate": "20081231",
+    "qtrs": "0",
+    "uom": "USD",
+    "segments": "",
+    "coreg": "",
+    "value": "138512000.0000",
+    "footnote": ""
+  }
+]

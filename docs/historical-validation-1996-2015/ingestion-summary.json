@@ -1,0 +1,45 @@
+{
+  "exported_at": "2026-09-24T07:55:21.322282+00:00",
+  "sqlite_quick_check": "ok",
+  "bulk_submissions": 14372,
+  "bulk_ciks": 638,
+  "entity_edgar_observations_before": 1346008,
+  "entity_edgar_observations_after": 1415983,
+  "net_new_entity_edgar_observations": 69975,
+  "legacy_edgar_facts_unchanged": 1377954,
+  "historical_facts_by_source": {
+    "lawcal:2e59b86998a119d68e377f9f98aa7a816cfc7d5b": 151444,
+    "legacy-reviewed:0000891020-96-001130": 22,
+    "legacy-reviewed:0001104659-08-005476": 20,
+    "legacy-reviewed:0001193125-08-224958": 29,
+    "sec-companyfacts-gap-recovery": 50546,
+    "sec-original-xbrl": 31955
+  },
+  "downloads": {
+    "bulk_report.json": {
+      "entries": 28,
+      "failed": 0,
+      "rows": 454341
+    },
+    "instances_report.json": {
+      "entries": 998,
+      "failed": 0,
+      "rows": 31955
+    },
+    "companyfacts_gaps_report.json": {
+      "entries": 60,
+      "failed": 0,
+      "rows": 50546
+    },
+    "legacy_pilot_report.json": {
+      "entries": 3,
+      "failed": 0,
+      "rows": 71
+    }
+  },
+  "all_13_company_quarters_before": 1708,
+  "all_13_company_quarters_after": 1853,
+  "eligible_company_quarters_before": 8057,
+  "eligible_company_quarters_after": 8827,
+  "notes": "Source counts overlap. Coverage is exploratory; no verified historical aliases or GICS snapshots. No return backtest."
+}

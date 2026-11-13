@@ -1,0 +1,878 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { writeFile } from 'node:fs/promises';
+import type { RankingResponse, CompanyResponse } from '../../src/shared/api/generated/types.gen';
+import { metric } from '../../src/shared/lib/format';
+
+test('real API: filters, full-universe sorting, pagination, company and reload preserve the URL', async ({
+  page,
+  request,
+}, testInfo) => {
+  const api = await request.get(
+    'http://127.0.0.1:8001/api/v1/ranking?order_by=market_cap&direction=asc&limit=10',
+  );
+  const expected: RankingResponse = await api.json();
+  expect(api.ok()).toBeTruthy();
+  await page.goto('/descubrir?order_by=market_cap&direction=asc&limit=10');
+  await expect(
+    page.getByRole('heading', { name: 'Ranking de empresas', exact: true }),
+  ).toBeVisible();
+  const rows = page.locator('tbody tr');
+  await expect(rows).toHaveCount(expected.items.length);
+  for (const [i, item] of expected.items.entries()) {
+    await expect(rows.nth(i)).toContainText(item.symbol);
+    await expect(rows.nth(i)).toContainText(metric(item.metrics.price));
+    await expect(rows.nth(i)).toContainText(metric(item.metrics.composite_score));
+  }
+  await page.getByRole('button', { name: 'Página siguiente' }).click();
+  await expect(page).toHaveURL(/offset=10/);
+  const second: RankingResponse = await (
+    await request.get(
+      'http://127.0.0.1:8001/api/v1/ranking?order_by=market_cap&direction=asc&limit=10&offset=10',
+    )
+  ).json();
+  await expect(rows).toHaveCount(second.items.length);
+  await expect(rows.first()).toContainText(second.items[0].symbol);
+  await page.getByRole('textbox', { name: 'Buscar empresa o símbolo' }).fill('BRK');
+  await page.getByText('Todos los sectores', { exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Financials', exact: true }).check();
+  await page.getByRole('button', { name: 'Aplicar filtros' }).click();
+  await expect(page).toHaveURL(/search=BRK/);
+  expect(new URL(page.url()).searchParams.has('offset')).toBeFalsy();
+  await expect(rows).toHaveCount(2);
+  await page.reload();
+  await expect(page.getByRole('textbox', { name: 'Buscar empresa o símbolo' })).toHaveValue('BRK');
+  await expect(rows).toHaveCount(2);
+  const rankingUrl = page.url();
+  await page.getByRole('link', { name: /BRK-A.*Company/ }).click();
+  await expect(page.getByRole('heading', { name: 'Company BRK-A', exact: true })).toBeVisible();
+  const company: CompanyResponse = await (
+    await request.get('http://127.0.0.1:8001/api/v1/companies/BRK-A?bars=252')
+  ).json();
+  // The header price; a session of the chart's data table may show the same amount.
+  await expect(
+    page.getByText(metric(company.company.metrics.price), { exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.getByText(/Aún sin pruebas de que gane al mercado/)).toBeVisible();
+  await expect(page.getByRole('img', { name: /Histórico de cierre ajustado/ })).toBeVisible();
+  await expect(page.getByRole('main')).toBeFocused();
+  await page.getByRole('button', { name: '3 meses', exact: true }).click();
+  await expect(page).toHaveURL(/bars=63/);
+  await expect(
+    page.getByText('Ver datos del gráfico (63 sesiones)', { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: '3 meses', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(
+    page.getByText('Ver datos del gráfico (63 sesiones)', { exact: true }),
+  ).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('company-desktop.png'), fullPage: true });
+  await page.getByRole('main').getByRole('link', { name: 'Ranking', exact: true }).click();
+  await expect(page).toHaveURL(rankingUrl);
+  await expect(rows).toHaveCount(2);
+  await page.getByRole('button', { name: 'Restablecer' }).click();
+  await expect(rows).toHaveCount(15);
+  await page.screenshot({ path: testInfo.outputPath('market-desktop.png'), fullPage: true });
+});
+
+test('empty filters, missing values, stale data and empty cache have distinct states', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/descubrir?search=UNKNOWN');
+  await expect(page.getByText('No hay empresas con estos filtros')).toBeVisible();
+  await page.goto('/descubrir?search=EMPTY&hide_no_data=false');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody tr > td').getByText('—')).toHaveCount(4);
+  const payload: RankingResponse = await (
+    await request.get('http://127.0.0.1:8001/api/v1/ranking')
+  ).json();
+  await page.route('**/api/v1/ranking?*', (route) =>
+    route.fulfill({
+      json: {
+        ...payload,
+        data: {
+          ...payload.data,
+          status: 'stale',
+          needs_attention: true,
+          warnings: ['Precios de prueba obsoletos'],
+        },
+      },
+    }),
+  );
+  await page.goto('/descubrir');
+  await expect(page.getByText(/Datos antiguos/)).toBeVisible();
+  await expect(page.getByText(/Aún sin pruebas de que gane al mercado/)).toBeVisible();
+  await page.unroute('**/api/v1/ranking?*');
+  await page.route('**/api/v1/ranking?*', (route) =>
+    route.fulfill({
+      json: { ...payload, items: [], total: 0, data: { ...payload.data, status: 'empty' } },
+    }),
+  );
+  await page.reload();
+  await expect(page.getByText('La caché local no contiene empresas')).toBeVisible();
+});
+
+test('loading, sanitized errors and retry; a newer request wins over a delayed one', async ({
+  page,
+}) => {
+  let fail = true;
+  await page.route('**/api/v1/ranking?*', async (route) => {
+    if (fail)
+      await route.fulfill({
+        status: 503,
+        json: {
+          status: 'error',
+          error: { code: 'DATA_UNAVAILABLE', message: 'Datos locales no disponibles' },
+        },
+      });
+    else await route.continue();
+  });
+  await page.goto('/descubrir');
+  await expect(page.getByRole('alert')).toContainText('Datos locales no disponibles');
+  fail = false;
+  await page.getByRole('button', { name: 'Reintentar' }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(15);
+  await page.unroute('**/api/v1/ranking?*');
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/v1/ranking?*', async (route) => {
+    if (new URL(route.request().url()).searchParams.get('search') === 'T000') {
+      await held;
+      await route.continue().catch(() => {});
+    } else await route.continue();
+  });
+  await page.getByRole('textbox', { name: 'Buscar empresa o símbolo' }).fill('T000');
+  await page.getByRole('button', { name: 'Aplicar filtros' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Consultando la caché local' }),
+  ).toBeVisible();
+  await page.getByRole('textbox', { name: 'Buscar empresa o símbolo' }).fill('BRK');
+  await page.getByRole('button', { name: 'Aplicar filtros' }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(2);
+  release();
+  await expect(page.locator('tbody')).not.toContainText('T000');
+});
+
+test('keyboard, semantic accessibility and bounded warm navigation', async ({ page }, testInfo) => {
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/v1/')) requests.push(request.url());
+  });
+  const start = Date.now();
+  await page.goto('/descubrir');
+  await expect(page.locator('tbody tr')).toHaveCount(15);
+  const coldMs = Date.now() - start;
+  const session = await page.context().newCDPSession(page);
+  const coldHeap = await session.send('Runtime.getHeapUsage');
+  const initialCount = requests.length;
+  expect(requests.filter((url) => url.includes('/ranking?')).length).toBe(1);
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Saltar al contenido' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('main')).toBeFocused();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole('link', { name: /T000.*Company/ }).click();
+  await expect(page.getByRole('heading', { name: 'Company T000', exact: true })).toBeVisible();
+  await expect(page.getByText(/Ver datos del gráfico/)).toBeVisible();
+  const trail = page.getByRole('navigation', { name: 'Ruta' });
+  await expect(trail).toHaveText(/GABI\s*\/\s*Descubrir\s*\/\s*T000/);
+  await expect(trail.getByText('T000')).toHaveAttribute('aria-current', 'page');
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  const warmStart = Date.now();
+  await page.getByRole('main').getByRole('link', { name: 'Ranking', exact: true }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(15);
+  const warmMs = Date.now() - warmStart;
+  const warmHeap = await session.send('Runtime.getHeapUsage');
+  expect(requests.filter((url) => url.includes('/ranking?')).length).toBe(1);
+  const measurement = JSON.stringify(
+    {
+      fixture: '16 companies, 320 sessions, temporary SQLite',
+      coldMs,
+      warmMs,
+      coldJsHeapBytes: coldHeap.usedSize,
+      warmJsHeapBytes: warmHeap.usedSize,
+      initialRequests: initialCount,
+      totalRequests: requests.length,
+      rankingRequests: 1,
+      companyWindow: 252,
+    },
+    null,
+    2,
+  );
+  const measurementPath = testInfo.outputPath('bounded-navigation.json');
+  await writeFile(measurementPath, measurement);
+  await testInfo.attach('bounded-navigation.json', {
+    path: measurementPath,
+    contentType: 'application/json',
+  });
+});
+
+test('evidencia del ranking, estabilidad y evidencia de una empresa se calculan al abrirlas', async ({
+  page,
+  request,
+}) => {
+  const top = await (await request.get('http://127.0.0.1:8001/api/v1/evidence')).json();
+  await page.goto('/descubrir');
+  await expect(
+    page.getByRole('heading', { name: 'Ranking de empresas', exact: true }),
+  ).toBeVisible();
+  const coverage = page.getByRole('region', { name: 'Datos que faltan por apartado' });
+  await coverage.getByText('Cambiar el mínimo exigido').click();
+  await coverage
+    .getByLabel('Mínimo de empresas con todos los datos de cada apartado (%)')
+    .fill('100');
+  await expect(coverage.getByRole('status')).toContainText(
+    'Ojo: en algún apartado de la puntuación faltan muchos datos',
+  );
+  await expect(coverage.getByRole('status')).toContainText('mínimo pedido: 100 %');
+  await page.getByText('¿Cuánto fiarse de las 20 primeras? · pruebas que las respaldan').click();
+  const table = page.getByRole('table', { name: 'Evidencia del ranking' });
+  await expect(table.getByRole('row')).toHaveCount(top.rows.length + 1);
+  const first = top.rows[0].symbol;
+  await table.getByRole('button', { name: first }).click();
+  const detail = page.getByRole('region', { name: `Evidencia de ${first}` });
+  await expect(detail).toContainText('Confianza en las pruebas');
+  await expect(detail.getByRole('table', { name: 'Factores del score' })).toBeVisible();
+  await page.getByText('¿Es estable el ranking? · qué pasa si cambian un poco los pesos').click();
+  await expect(
+    page.getByRole('region', { name: 'Estabilidad del ranking' }).getByText(/variantes sobre/),
+  ).toBeVisible();
+  await page.goto('/empresas/' + first);
+  await page.getByText('¿Cuánto fiarse de su puntuación?').click();
+  await expect(
+    page.getByRole('link', { name: 'Descargar evidencia de la candidata' }),
+  ).toBeVisible();
+});
+
+test('la ficha muestra catalizadores, métricas informativas, filings y sincroniza bajo demanda', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  await expect(page).toHaveTitle('T001 · Ficha · GABI');
+  await expect(page.getByText('Otros datos (no cuentan para la puntuación)')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Próximos catalizadores' })).toBeVisible();
+  await page.getByText('Qué cambió respecto al filing anterior').click();
+  const changes = page.locator('details', { hasText: 'Qué cambió respecto al filing anterior' });
+  await expect(changes.getByText(/^10-K/).first()).toBeVisible();
+  await page.getByText('Historial de sorpresas de resultados').click();
+  await page.getByRole('button', { name: 'Sincronizar historial de resultados' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toBeVisible();
+  await page.getByText('Estimaciones de consenso').click();
+  await expect(page.getByText('Sin estimaciones sincronizadas todavía.')).toBeVisible();
+  await page.getByText('Actividad de insiders (SEC Form 4, informativo)').click();
+  await expect(page.getByText(/Sin operaciones de insiders en los últimos 6 meses/)).toBeVisible();
+  await page.getByRole('button', { name: 'Actualizar insiders de esta empresa' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' }).last()).toBeVisible();
+  // Only one company job at a time: wait until the insiders one has finished too.
+  await expect(page.getByRole('status').filter({ hasText: 'Sincronizado.' })).toHaveCount(2);
+  // #292: 8-Ks by SEC Item, downloaded only by the explicit button.
+  await page.getByText('Hechos relevantes comunicados a la SEC (8-K)').click();
+  await expect(page.getByText(/Todavía no hay 8-K guardados/)).toBeVisible();
+  await page.getByRole('button', { name: 'Descargar los 8-K de esta empresa' }).click();
+  const reports = page.getByRole('table', { name: 'Hechos relevantes (8-K)' });
+  await expect(
+    reports.getByRole('row', { name: /Cambio de auditor \(4\.01\)/ }).first(),
+  ).toContainText('Revisar');
+  await expect(reports.getByRole('link', { name: '0001375365-24-000036' })).toHaveAttribute(
+    'href',
+    /sec\.gov\/Archives\/edgar\/data\/1\/000137536524000036\/smci-20241024\.htm$/,
+  );
+  // #293: accounting signs; with the index just downloaded the 10-K/A check is evaluable.
+  await page.getByText('Señales contables de alerta (10-K y 8-K)').click();
+  const signs = page.getByRole('table', { name: 'Señales contables' });
+  await expect(signs.getByRole('row', { name: /Cuentas anuales corregidas/ })).toContainText(
+    'Sin señal',
+  );
+  await expect(signs).toContainText('No se puede comprobar');
+  await page.getByText('Prompt para analizar con IA').click();
+  await expect(page.getByLabel('Prompt para analizar con IA')).toHaveValue(
+    /No recalcules estos números/,
+  );
+});
+
+test('la ficha muestra el checklist fundamental y edita y restablece sus umbrales', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const checklist = page.getByRole('table', { name: 'Criterios del checklist' });
+  await expect(page.getByText('Lista de comprobación de la empresa')).toBeVisible();
+  await expect(page.getByText('Criterios cumplidos')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Evaluables' })).toBeVisible();
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
+  // #169: every value declares its source and period; the Composite's figure is a reference, never mixed in.
+  // With GABI-MF-v5 (#347) it is the tested engine's 10-K value.
+  const pe = checklist.getByRole('row', { name: /^PER(?! forward)/ });
+  await expect(pe).toContainText('Precio + SEC 10-K');
+  await expect(pe).toContainText(
+    /Sin dato SEC; Composite · Informe anual SEC \(10-K\) · último ejercicio informa \d/,
+  );
+  await pe.getByRole('button', { name: /Composite · Informe anual SEC/ }).hover();
+  await expect(page.getByRole('tooltip')).toContainText('No se mezclan');
+  await page.mouse.move(0, 0);
+  await expect(checklist.getByRole('row', { name: /^Beta/ })).toContainText(
+    'Calculado por GABI con los precios · todos los precios guardados',
+  );
+  const card = (title: string) =>
+    page
+      .locator('[data-slot="card"]')
+      .filter({ has: page.locator('[data-slot="card-title"]').getByText(title, { exact: true }) });
+  await expect(card('Valoración')).toContainText('Yahoo · 12 meses');
+  await expect(card('Calidad')).toContainText('Informe anual SEC (10-K) · último ejercicio');
+  // Each metric explains itself on hover and on keyboard focus; Escape closes it.
+  const peLabel = checklist
+    .getByRole('row', { name: /^PER(?! forward)/ })
+    .getByRole('button', { name: 'PER', exact: true });
+  await peLabel.hover();
+  await expect(page.getByRole('tooltip')).toContainText('Cuántos años de beneficio');
+  await expect(page.getByRole('tooltip')).toContainText('Fórmula: Capitalización / beneficio neto');
+  await page.mouse.move(0, 0);
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+  await peLabel.focus();
+  await expect(page.getByRole('tooltip')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+  await page.getByText('Señales de alarma').click();
+  await expect(page.getByRole('list', { name: 'Señales de alarma' })).toContainText(
+    'Revisión manual',
+  );
+  await page.getByText('Múltiplos frente a su historia y su sector').click();
+  // #326: each multiple read in words first; without data, it says so instead of drawing a dot.
+  const reading = page.getByRole('list', { name: 'Múltiplos en su rango' });
+  await expect(reading.getByRole('listitem').first()).toContainText(/PER/);
+  await expect(page.getByText(/¿Está cara o barata para ella y para su sector\?/)).toBeVisible();
+  await page
+    .getByRole('figure')
+    .filter({ hasText: '¿Está cara o barata para ella y para su sector?' })
+    .getByText('Ver como tabla')
+    .click();
+  const multiples = page.getByRole('table', { name: 'Múltiplos frente a su historia y su sector' });
+  // The e2e fixture has no SEC facts: medians are explained, never shown as zero.
+  await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
+    'Pocas empresas parecidas con dato',
+  );
+  await expect(multiples.getByRole('row', { name: /^PER/ })).toContainText(
+    'No hay suficientes años de datos',
+  );
+  await expect(page.getByText('Sector: Information Technology')).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByText('Editar umbrales').click();
+  await page.getByLabel('Umbral: PER', { exact: true }).fill('25');
+  await page.getByRole('button', { name: 'Guardar umbrales' }).click();
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 25x');
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText(
+    'umbral editado',
+  );
+  await page.getByLabel('Umbral: PER', { exact: true }).fill('-1');
+  await page.getByRole('button', { name: 'Guardar umbrales' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'PER' })).toBeVisible();
+  await page.getByRole('button', { name: 'Restablecer valores del Excel' }).click();
+  await expect(checklist.getByRole('row', { name: /^PER(?! forward)/ })).toContainText('≤ 18x');
+  await expect(page.getByLabel('Umbral: PER', { exact: true })).toHaveValue('18');
+});
+
+test('la portada muestra el aviso legal y el rebalanceo ciego próximo', async ({ page }) => {
+  await page.goto('/');
+  const notices = page.getByRole('region', { name: 'Avisos' });
+  await expect(notices.getByText('No es asesoramiento financiero')).toBeVisible();
+  await expect(
+    notices.getByText(
+      /Rebalanceo de la prueba ciega #1 \(Fixture ciega\) en 2 días, el 01 oct 2026/,
+    ),
+  ).toBeVisible();
+  await expect(notices.getByText(/#44/)).toHaveCount(0);
+  // The fixture ledger has a decision the day before: the daily follow-up is on time (#290).
+  await expect(notices.getByText(/seguimiento diario/)).toHaveCount(0);
+  // Investor mode: no command and no link to the hidden Investigación section.
+  await expect(notices.getByText(/lo apunta sola cuando llega la fecha/)).toBeVisible();
+  await expect(notices.getByText(/gabi_cli/)).toHaveCount(0);
+  await expect(notices.getByRole('link', { name: /Validaciones ciegas/ })).toHaveCount(0);
+  // Research mode keeps the command and the shortcut.
+  await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+    data: { mode: 'RESEARCH' },
+  });
+  try {
+    await page.reload();
+    await expect(notices.getByText(/periodic --run/)).toBeVisible();
+    await notices.getByRole('link', { name: 'Investigación → Validaciones ciegas' }).click();
+    await expect(page.getByRole('region', { name: 'Avisos' })).toHaveCount(0);
+  } finally {
+    await page.request.post('http://127.0.0.1:8001/api/v1/administration/mode', {
+      data: { mode: 'INVESTOR' },
+    });
+  }
+});
+
+test('la portada avisa si el seguimiento diario no se ejecuta', async ({ page }) => {
+  let periodic: Record<string, string | number | null> = {
+    status: 'late',
+    last_run_at: '2026-09-22T21:30:00+00:00',
+    last_status: 'SIGNAL',
+    last_working_at: '2026-09-22T21:30:00+00:00',
+    business_days: 5,
+    max_business_days: 3,
+    model_id: 'GABI-MF-v2',
+  };
+  await page.route('**/api/v1/notices', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), periodic } });
+  });
+  await page.goto('/');
+  const notices = page.getByRole('region', { name: 'Avisos' });
+  await expect(
+    notices.getByText('El seguimiento diario de GABI lleva 5 días laborables sin ejecutarse'),
+  ).toBeVisible();
+  await expect(notices.getByText(/último registro correcto: 22 sept/)).toBeVisible();
+
+  periodic = { ...periodic, status: 'never', last_working_at: null, business_days: null };
+  await page.reload();
+  await expect(
+    notices.getByText('El seguimiento diario de GABI no se ha ejecutado nunca en este equipo.'),
+  ).toBeVisible();
+  await expect(notices.getByText('scripts\\programar_tareas.ps1')).toBeVisible();
+});
+
+test('el tema sigue al sistema por defecto y se puede fijar en Claro u Oscuro (#321)', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  const html = page.locator('html');
+  // Automático (default): the system is dark, so is GABI, from the first paint.
+  await expect(html).toHaveClass(/dark/);
+  await expect(html).toHaveCSS('color-scheme', 'dark');
+  await expect(html).toHaveCSS('background-color', 'rgb(19, 24, 21)');
+  const theme = page.getByRole('radiogroup', { name: 'Tema de la pantalla' });
+  await expect(theme.getByRole('radio', { name: /Automático/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  // Claro wins over the system and is remembered after reloading.
+  await theme.getByRole('radio', { name: 'Claro' }).click();
+  await expect(html).not.toHaveClass(/dark/);
+  await page.reload();
+  await expect(html).not.toHaveClass(/dark/);
+  await expect(html).toHaveCSS('background-color', 'rgb(247, 248, 245)');
+  // The warning box keeps its light colours in the light theme.
+  const notice = page.getByRole('region', { name: 'Avisos' }).getByText(/No es asesoramiento/);
+  await expect(notice).toBeVisible();
+  // Oscuro with a light system.
+  await page.emulateMedia({ colorScheme: 'light' });
+  await theme.getByRole('radio', { name: 'Oscuro' }).click();
+  await expect(html).toHaveClass(/dark/);
+  await page.reload();
+  await expect(html).toHaveClass(/dark/);
+});
+
+test('la portada resume datos, cartera objetivo y primeros pasos sin descargar nada', async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.method() + ' ' + request.url()));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Tu GABI hoy' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Hoy', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  const data = page.getByRole('region', { name: 'Estado de los datos' });
+  await expect(data.getByText('Empresas puntuadas')).toBeVisible({ timeout: 30_000 });
+  const target = page.getByRole('region', { name: 'Cartera objetivo de hoy' });
+  await expect(target.getByRole('listitem').first()).toBeVisible();
+  const summary = page.getByRole('region', { name: 'Tu resumen de hoy' });
+  await expect(summary.getByRole('heading', { name: 'Tu resumen de hoy' })).toBeVisible();
+  const health = page.getByRole('region', { name: 'Cómo está el mercado' });
+  await expect(health.getByRole('heading', { name: /Cómo está el mercado/ })).toBeVisible();
+  const alerts = page.getByRole('region', { name: 'Qué requiere tu atención' });
+  await expect(alerts.getByRole('heading', { name: 'Qué requiere tu atención' })).toBeVisible();
+  // The home page itself only reads: no POST (no job, no download).
+  expect(requests.filter((line) => line.startsWith('POST'))).toEqual([]);
+  await target.getByRole('link', { name: 'Ver la cartera propuesta' }).click();
+  await expect(page.getByRole('heading', { name: 'Mi cartera objetivo' })).toBeVisible();
+});
+
+test('la tabla de Mercado colorea por percentil, fija la cabecera y alinea números', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=100');
+  const scroll = page.getByRole('region', { name: 'Tabla desplazable' });
+  const firstRow = scroll.locator('tbody tr').first();
+  await expect(firstRow).toBeVisible({ timeout: 30_000 });
+  // The score cell is coloured (red to green) and right-aligned; prices are not coloured.
+  const scoreCell = firstRow.locator('td').nth(2);
+  await expect(scoreCell).toHaveCSS('text-align', 'right');
+  expect(await scoreCell.evaluate((cell) => getComputedStyle(cell).backgroundColor)).toMatch(
+    /^rgb\(/,
+  );
+  await expect(page.getByText(/comparándolo con empresas de su mismo sector/)).toBeVisible();
+  // Scrolling the table keeps its header row in view.
+  await scroll.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+  const header = scroll.locator('thead th').first();
+  const [headerBox, regionBox] = await Promise.all([header.boundingBox(), scroll.boundingBox()]);
+  expect(Math.abs((headerBox?.y ?? 0) - (regionBox?.y ?? 0))).toBeLessThan(4);
+});
+
+test('la ruta muestra el apartado y el menú resalta solo el apartado activo', async ({ page }) => {
+  await page.goto('/macro');
+  await expect(page.getByRole('navigation', { name: 'Ruta' })).toHaveText(
+    /GABI\s*\/\s*Hoy\s*\/\s*Economía \(macro\)/,
+  );
+  const menu = page.getByRole('navigation', { name: 'Navegación principal' });
+  const section = menu.getByRole('link', { name: 'Hoy', exact: true });
+  const sub = menu.getByRole('link', { name: 'Economía (macro)' });
+  const background = (element: Element) => getComputedStyle(element).backgroundColor;
+  expect(await section.evaluate(background)).toBe('rgba(0, 0, 0, 0)');
+  expect(await sub.evaluate(background)).not.toBe('rgba(0, 0, 0, 0)');
+});
+
+test('en 1366×768 la ficha muestra precio y score sin desplazarse (#187)', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Criterio de escritorio');
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto('/empresas/T000');
+  // #310: what it is and how it scores, in the first lines.
+  const brief = page.getByRole('region', { name: 'En pocas palabras' });
+  await expect(brief.getByText(/es una empresa del sector|sector no disponible/)).toBeInViewport();
+  await expect(brief.getByText(/Sin datos de cómo reaccionó el precio/)).toBeVisible();
+  // #328: the e2e cache has no stored days yet, and the page says so instead of drawing a line.
+  await expect(page.getByRole('region', { name: 'Evolución de la puntuación' })).toContainText(
+    'Todavía no hay días guardados',
+  );
+  // The e2e fixture has no SEC reports: the yearly figures say why instead of showing empty bars.
+  await expect(page.getByRole('region', { name: 'Ingresos y beneficio por año' })).toContainText(
+    'todavía no se han descargado sus informes de la SEC',
+  );
+  // The score is read in the first sentence («66,0 de 100, puesto 1 de 16»); its card follows below.
+  await expect(brief.getByText(/Su puntuación GABI es \w+: [\d,]+ de 100/)).toBeInViewport();
+  await expect(page.getByText(/Precio al cierre del/)).toBeInViewport();
+});
+
+test('Seguir desde el Ranking, la ficha y Comparar, y la lista con nota (#182)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?search=T001');
+  await page.getByRole('button', { name: 'Seguir T001' }).click();
+  await expect(page.getByRole('button', { name: 'Seguir T001' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.goto('/empresas/T002');
+  await page.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Siguiendo' })).toBeVisible();
+  await page.goto('/descubrir/comparar?symbols=T001&symbols=T003');
+  const table = page.locator('table');
+  await expect(table.getByRole('button', { name: 'Siguiendo' })).toHaveCount(1); // T001
+  await table.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await expect(table.getByRole('button', { name: 'Siguiendo' })).toHaveCount(2);
+
+  await page.goto('/descubrir/seguidas');
+  await expect(page).toHaveTitle('Empresas seguidas · GABI');
+  const list = page.getByRole('region', { name: 'Empresas seguidas' });
+  const rows = list.locator('tbody tr');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.first()).toContainText('T001');
+  await expect(rows.first()).toContainText('mismo puesto');
+  // The checklist arrives in its own query, without blocking the list.
+  await expect(rows.first().getByText('Calculando…')).toHaveCount(0);
+  await list.getByRole('button', { name: 'Editar la nota de T002' }).click();
+  await list.getByLabel('Nota de T002').fill('Vigilar márgenes');
+  await list.getByRole('button', { name: 'Guardar' }).click();
+  await page.reload(); // Followed companies and notes live in the local database.
+  await expect(rows.nth(1)).toContainText('Vigilar márgenes');
+  for (const symbol of ['T001', 'T002', 'T003'])
+    await list.getByRole('button', { name: 'Dejar de seguir ' + symbol }).click();
+  await expect(page.getByText('Aún no sigues ninguna empresa.')).toBeVisible();
+});
+
+test('«Por qué está aquí»: frase y bloques en Ranking, ficha y Cartera objetivo (#184)', async ({
+  page,
+  request,
+}) => {
+  const ranking: RankingResponse = await (
+    await request.get('http://127.0.0.1:8001/api/v1/ranking?limit=5')
+  ).json();
+  const first = ranking.items[0];
+  await page.goto('/descubrir?limit=5');
+  const row = page.locator('tbody tr').first();
+  await expect(row).toContainText(first.summary.text);
+  await expect(row).toContainText('Apartados de la puntuación: Valoración');
+  await page.goto('/empresas/' + first.symbol);
+  const why = page.getByRole('region', { name: 'Por qué está aquí' });
+  await expect(why).toContainText(first.summary.text);
+  await expect(why.getByRole('definition')).toHaveCount(4);
+  await page.goto('/cartera');
+  await expect(page.getByRole('row', { name: new RegExp(first.symbol) }).first()).toContainText(
+    first.summary.text,
+  );
+});
+
+test('evidencia publicada de cada bloque en la ficha, el Ranking y la Cartera objetivo (#185)', async ({
+  page,
+  request,
+}) => {
+  const evidence = await (
+    await request.get('http://127.0.0.1:8001/api/v1/score-blocks/evidence')
+  ).json();
+  const momentum = evidence.blocks.find((row: { block: string }) => row.block === 'momentum');
+  await page.goto('/empresas/T000');
+  const provenance = page
+    .getByRole('definition')
+    .filter({ hasText: momentum.classification_label });
+  await expect(provenance.first()).toBeVisible();
+  await expect(page.getByText('· cuenta un 25 %')).toBeVisible();
+  await expect(page.getByText(evidence.catalog_sha256.slice(0, 8) + '…')).toBeVisible();
+  await page.goto('/descubrir');
+  const note = page.getByText('Cuánto se ha comprobado cada apartado con datos del pasado');
+  await expect(note).toContainText('ninguna métrica ha pasado la prueba estadística más exigente');
+  await expect(note.getByRole('link', { name: 'Ver el detalle' })).toHaveAttribute(
+    'href',
+    '/investigacion/factores',
+  );
+  await page.goto('/cartera');
+  await expect(
+    page.getByText('Cuánto se ha comprobado cada apartado con datos del pasado'),
+  ).toBeVisible();
+});
+
+test('tesis desde la ficha con precio y score anotados, qué ha cambiado y posiciones sin tesis (#186)', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const theses = page.getByRole('region', { name: 'Tus notas sobre T001' });
+  await expect(theses).toContainText('Aún no has escrito ninguna');
+  await theses.getByRole('button', { name: 'Escribir una tesis' }).click();
+  await theses.getByLabel('Por qué merece su precio').fill('Barata y rentable');
+  await theses.getByLabel('Qué la invalidaría').fill('Que caiga el margen');
+  await theses.getByRole('button', { name: 'Guardar tesis' }).click();
+  await expect(theses.getByRole('listitem')).toHaveCount(1);
+  await expect(theses.getByRole('listitem')).toContainText('Abierta');
+  await expect(theses.getByRole('listitem')).toContainText('score');
+  await expect(theses.getByRole('listitem')).toContainText('La invalidaría: Que caiga el margen');
+
+  await page.goto('/cartera');
+  await expect(page.getByRole('link', { name: /Sin tesis · escribir una/ }).first()).toBeVisible();
+  const own = page.getByRole('row', { name: /T001/ });
+  if (await own.count()) await expect(own.getByText(/Sin tesis/)).toHaveCount(0);
+
+  await page.goto('/cartera/diario');
+  const entry = page.getByRole('article').filter({ hasText: 'Barata y rentable' });
+  await expect(entry).toContainText('Qué la invalidaría');
+  await entry.getByRole('button', { name: 'Ver qué ha cambiado desde la tesis' }).click();
+  await expect(entry.getByLabel('Qué ha cambiado en T001')).toContainText('(0,0 %)');
+  await entry.getByText('Eliminar entrada').click();
+  await entry.getByRole('button', { name: 'Confirmar eliminación' }).click();
+  await expect(page.getByText('Barata y rentable')).toHaveCount(0);
+});
+
+test('Comparar desde el Ranking: secciones, checklist de cada ficha y precio en base 100 (#194)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=25');
+  await page.getByRole('checkbox', { name: 'Comparar T001' }).check();
+  const picks = page.getByRole('region', { name: 'Empresas para comparar' });
+  await expect(picks).toContainText('Marca al menos otra empresa');
+  await page.getByRole('checkbox', { name: 'Comparar T002' }).check();
+  await picks.getByRole('link', { name: 'Comparar 2' }).click();
+  await expect(page).toHaveURL(/\/descubrir\/comparar\?symbols=T001&symbols=T002$/);
+  for (const section of [
+    'Puntuación y apartados',
+    'Valoración',
+    'Calidad y salud',
+    'Riesgo',
+    'Próximas fechas clave',
+  ])
+    await expect(page.getByRole('columnheader', { name: section })).toBeVisible();
+  const checklist = page.getByRole('region', { name: 'Checklist comparado' });
+  await expect(checklist.getByRole('row', { name: /^Lista de comprobación/ })).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(checklist.getByRole('row', { name: /^FCF yield/ })).toBeVisible();
+  const prices = page.getByRole('list', { name: /^Valor el / });
+  await expect(prices).toContainText('SPY:');
+  await page.getByRole('button', { name: '6 meses' }).click();
+  await expect(page.getByRole('button', { name: '6 meses' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(prices).toContainText('T001:');
+});
+
+test('Ranking: columnas recordadas, filtros nuevos y CSV de la vista filtrada (#196)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=25&order_by=market_cap&direction=asc');
+  const table = page.getByRole('region', { name: 'Tabla desplazable' });
+  await expect(table.locator('tbody tr').first()).toBeVisible({ timeout: 30_000 });
+  await page.getByText(/^Columnas \(/).click();
+  await page.getByRole('checkbox', { name: 'ROE' }).check();
+  await page.getByRole('checkbox', { name: 'Próximos resultados' }).check();
+  await expect(table.getByRole('columnheader', { name: 'ROE' })).toBeVisible();
+  // Sorting by a new column is done by the backend on the whole universe.
+  await table.getByRole('button', { name: 'ROE', exact: true }).click();
+  await expect(page).toHaveURL(/order_by=roe/);
+  const download = page.waitForEvent('download');
+  await page.getByRole('link', { name: /Exportar CSV/ }).click();
+  const file = await download;
+  const text = await (await file.createReadStream()).toArray();
+  const csv = Buffer.concat(text).toString('utf-8');
+  expect(csv).toContain('# GABI · Ranking consultado el ');
+  expect(csv).toContain('roe [fracción (0.05 = 5 %)]');
+  expect(csv).toContain('next_earnings_days [días]');
+  // A bare /descubrir reopens the remembered columns, order and rows.
+  await page.goto('/descubrir');
+  await expect(page).toHaveURL(/order_by=roe/);
+  await expect(page).toHaveURL(/limit=25/);
+  await expect(table.getByRole('columnheader', { name: 'ROE' })).toBeVisible();
+  await page.getByText(/^Más filtros/).click();
+  await page.getByText('Excluir sectores', { exact: true }).click();
+  await page.getByRole('group', { name: 'Sectores excluidos' }).getByText('Financials').click();
+  await page.getByRole('button', { name: 'Aplicar filtros' }).click();
+  await expect(page).toHaveURL(/exclude_sectors=Financials/);
+  await expect(table.locator('tbody')).not.toContainText('BRK-A');
+});
+
+test('el checklist muestra cuántas empresas cumplen cada umbral y aplica un preset (#171)', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const checklist = page.getByRole('table', { name: 'Criterios del checklist' });
+  const insiders = checklist.getByRole('row', { name: /^% en manos de directivos/ });
+  await expect(insiders).toContainText('≥ 10 %');
+  await expect(insiders).toContainText(
+    /Lo cumple el \d+ % del S&P 500 · \d+ % de Information Technology/,
+  );
+  const before = await insiders.getByText(/Lo cumple el/).innerText();
+  await page.getByText('Editar umbrales').click();
+  const presets = page.getByRole('group', { name: 'Presets' });
+  await expect(presets.getByRole('button', { name: 'Excel original' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await presets.getByRole('button', { name: 'Gran empresa S&P 500' }).click();
+  await expect(presets.getByRole('button', { name: 'Gran empresa S&P 500' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(insiders).toContainText('≥ 1 %');
+  // A lower threshold is met by more of the index: the rate follows the threshold in use.
+  await expect(insiders.getByText(/Lo cumple el/)).not.toHaveText(before);
+  await expect(page.getByLabel('Umbral: Cobertura de intereses')).toHaveValue('8');
+  await presets.getByRole('button', { name: 'Excel original' }).click();
+  await expect(insiders).toContainText('≥ 10 %');
+});
+
+test('drawdown y volatilidad declaran su ventana y las fechas de pico y valle (#175)', async ({
+  page,
+}) => {
+  await page.goto('/empresas/T001');
+  const risk = page
+    .locator('[data-slot="card"]')
+    .filter({ has: page.locator('[data-slot="card-title"]').getByText('Tendencia y riesgo') });
+  await expect(risk).toContainText(
+    /todos los precios guardados desde \w+\.? \d{4} \(\d+ sesiones\)/,
+  );
+  await expect(risk).toContainText(/pico \w+\.? \d{4} → valle \w+\.? \d{4}/);
+  await expect(risk).toContainText('Mayor caída · últimos 5 años');
+  await expect(risk).toContainText('Mayor caída · últimos 3 años');
+  await page.goto('/descubrir/comparar?symbols=T001&symbols=T002');
+  const table = page.locator('table').first();
+  await expect(table.getByRole('row', { name: /^Mayor caída \(todos los datos\)/ })).toContainText(
+    /pico .* → valle/,
+  );
+  await expect(table.getByRole('row', { name: /^Mayor caída · últimos 5 años/ })).toContainText(
+    '%',
+  );
+  await expect(table.getByRole('row', { name: /^Cuánto se mueve \(volatilidad\)/ })).toContainText(
+    /desde .* sesiones/,
+  );
+});
+
+test('toda métrica de Ranking, ficha y Comparar explica qué es y la Ayuda la busca (#197)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?limit=10');
+  const table = page.getByRole('region', { name: 'Tabla desplazable' });
+  for (const label of ['Puntuación', 'Datos disponibles', 'Capitalización', 'PER'])
+    await expect(table.getByRole('button', { name: 'Qué es ' + label, exact: true })).toBeVisible();
+  const hint = table.getByRole('button', { name: 'Qué es PER', exact: true });
+  await hint.scrollIntoViewIfNeeded();
+  await hint.click();
+  await expect(page.locator('[data-term-tip]')).toContainText('PER');
+  await page.keyboard.press('Escape');
+  await page.goto('/empresas/T001');
+  for (const label of [
+    'ROIC',
+    'Cuánto se mueve el precio (volatilidad)',
+    'Mayor caída · últimos 5 años',
+    'Beta: cuánto se mueve con el mercado',
+  ])
+    await expect(page.getByRole('button', { name: 'Qué es ' + label, exact: true })).toBeVisible();
+  await page.goto('/descubrir/comparar?symbols=T001&symbols=T002');
+  const compared = page.locator('table').first();
+  // 21 metrics in four sections, the 5- and 3-year drawdowns and the next earnings.
+  await expect(compared.getByRole('button', { name: /^Qué es / })).toHaveCount(24);
+  await page.goto('/ayuda?tab=glosario');
+  const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' });
+  await search.fill('volatil');
+  await expect(page.locator('dt', { hasText: 'Volatilidad anualizada (%)' })).toBeVisible();
+  await expect(page.locator('dt', { hasText: 'PER' })).toHaveCount(0);
+  await search.fill('zzzz');
+  await expect(page.getByText('Ningún término contiene «zzzz».')).toBeVisible();
+});
+
+test('el mapa del mercado agrupa por sector, explica los colores y tiene lista (#311)', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/descubrir/mapa');
+  await expect(page.getByRole('heading', { name: 'Mapa del mercado' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Leyenda de colores' })).toContainText(
+    'sin puntuación',
+  );
+  if (testInfo.project.name === 'desktop') {
+    await expect(page.getByRole('img', { name: /Mapa de las empresas por sector/ })).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('mapa.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Lista por sectores' }).click();
+  }
+  const sector = page.locator('details').first();
+  await sector.locator('summary').click();
+  await sector.getByRole('link').first().click();
+  await expect(page).toHaveURL(/\/empresas\//);
+});
+
+test('filtros activos con «×», barra fija de la ficha y «Cómo leer» en panel lateral (#320)', async ({
+  page,
+}) => {
+  await page.goto('/descubrir?golden_cross_only=true&hide_no_data=false');
+  const active = page.getByRole('group', { name: 'Filtros activos' });
+  await expect(active).toContainText('Con cruce dorado reciente');
+  await expect(active).toContainText('Incluye empresas sin datos');
+  await active.getByRole('button', { name: 'Quitar filtro: Con cruce dorado reciente' }).click();
+  await expect(page).not.toHaveURL(/golden_cross_only/);
+  await expect(page).toHaveURL(/hide_no_data=false/);
+  await expect(active).not.toContainText('Con cruce dorado reciente');
+
+  await page.goto('/empresas/T001');
+  const bar = page.getByRole('navigation', { name: 'Secciones de la ficha de T001' });
+  await expect(bar.getByRole('link', { name: 'Comprobaciones' })).toBeVisible();
+  await bar.getByRole('link', { name: 'Comprobaciones' }).click();
+  await expect(page).toHaveURL(/#comprobaciones$/);
+  // The bar stays on top and, once the header is gone, says the company and its verdict.
+  await expect(bar).toBeInViewport();
+  await expect(bar).toContainText(/Puntuación (alta|media|baja)/);
+
+  await page.goto('/');
+  const button = page.getByRole('button', { name: 'Cómo leer esta página' });
+  await button.click();
+  const panel = page.getByRole('complementary', { name: 'Cómo leer esta página' });
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('Qué es GABI');
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(button).toBeFocused();
+});

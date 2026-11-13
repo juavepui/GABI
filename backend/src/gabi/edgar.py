@@ -1,0 +1,455 @@
+"""Datos financieros oficiales de SEC EDGAR (XBRL): gratis, sin API key,
+directamente de los 10-K/10-Q presentados por cada empresa.
+
+Se usa para complementar yfinance en tres cosas que con datos gratuitos de
+Yahoo son poco fiables o directamente no existen:
+  - Crecimiento de ingresos y de flujo de caja libre a 3 años (CAGR), con
+    histórico anual real en vez de los ~4-8 trimestres que da yfinance.
+  - ROIC aproximado (yfinance no lo expone).
+  - Enlaces directos al último 10-K/10-Q, para poder abrir las cuentas reales
+    de la empresa (justo lo que recomienda cualquier guía de aprendizaje).
+"""
+import concurrent.futures as cf
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
+from datetime import UTC, datetime
+
+import pandas as pd
+
+import gabi.domain.market.sec_facts as _sec_facts
+from gabi.application.administration.sync_events import SyncAttempt
+from gabi.application.market.sec_cik import current_map
+from gabi.application.market.sec_cik import resolve as resolve_cik
+from gabi.application.market.sec_reads import (
+    cached_metrics,
+    concept_value,
+    fetched_at,
+    issuer_facts,
+    metrics_as_of,
+    stored_facts,
+    symbols_with_facts,
+)
+from gabi.application.market.sec_selection import batch as run_batch
+from gabi.application.market.sec_selection import refresh as refresh_selection
+from gabi.application.market.sec_xbrl import fetch_complete, synchronize
+from gabi.domain.market import sync_events as sync_rules
+from gabi.domain.market.source_errors import classify
+from gabi.infrastructure import operational_settings
+from gabi.infrastructure.providers import source_retry
+from gabi.infrastructure.providers.sec_cik import SecTickerMap
+from gabi.infrastructure.providers.sec_xbrl import SecXbrl
+from gabi.infrastructure.storage.cache_writes import SqliteCacheWrites
+from gabi.infrastructure.storage.current_reports import SqliteCurrentReports
+from gabi.infrastructure.storage.sec_cik import FileCikMap, SqliteCikResolutions
+from gabi.infrastructure.storage.sec_reads import SqliteSecReads
+from gabi.infrastructure.storage.sec_xbrl import SqliteXbrl
+from gabi.infrastructure.storage.sync_events import OperationSyncEvents, measured_attempt
+
+from . import config
+
+TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
+COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
+SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
+CIK_CACHE = config.DATA_DIR / "sec_cik_map.csv"
+
+# Distintas empresas/años usan distintas etiquetas XBRL para el mismo
+# concepto (cambios de taxonomía); se prueban en orden hasta encontrar una
+# con datos.
+REVENUE_TAGS = _sec_facts.REVENUE_TAGS
+NET_INCOME_TAGS = _sec_facts.NET_INCOME_TAGS
+OCF_TAGS = _sec_facts.OCF_TAGS
+CAPEX_TAGS = _sec_facts.CAPEX_TAGS
+EQUITY_TAGS = _sec_facts.EQUITY_TAGS
+LT_DEBT_TAGS = _sec_facts.LT_DEBT_TAGS
+GROSS_PROFIT_TAGS = _sec_facts.GROSS_PROFIT_TAGS
+OPERATING_INCOME_TAGS = _sec_facts.OPERATING_INCOME_TAGS
+DEPRECIATION_TAGS = _sec_facts.DEPRECIATION_TAGS
+CASH_TAGS = _sec_facts.CASH_TAGS
+CAPITAL_ALLOCATION_TAGS = _sec_facts.CAPITAL_ALLOCATION_TAGS
+# 'shares', no 'USD': se extraen y guardan por separado.
+# "CommonStockSharesOutstanding" vive en la taxonomía us-gaap; muchas
+# empresas (comprobado con Abbott, entre otras) no la usan y solo etiquetan
+# el nº de acciones en la portada del informe bajo la taxonomía "dei"
+# (EntityCommonStockSharesOutstanding) — _extract_raw_facts mira en ambas.
+SHARES_TAGS = _sec_facts.SHARES_TAGS
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS edgar_metrics (
+    symbol TEXT PRIMARY KEY,
+    cik TEXT,
+    fetched_at TEXT NOT NULL,
+    revenue_cagr_3y REAL,
+    fcf_cagr_3y REAL,
+    roic REAL,
+    latest_10k_date TEXT,
+    latest_10k_url TEXT,
+    latest_10q_date TEXT,
+    latest_10q_url TEXT
+);
+"""
+
+# Histórico crudo y fechado, sin filtrar ni interpretar (fase "solo datos
+# limpios y auditables"): cada fila es un hecho XBRL tal y como se presentó
+# ante la SEC, con su propia fecha de presentación (filed_date). Es la base
+# necesaria para poder reconstruir más adelante "qué se sabía en una fecha
+# concreta" sin sesgo de mirar al futuro (look-ahead bias) — cosa que
+# edgar_metrics, al guardar solo el último valor calculado, no permite.
+# Se guardan TODAS las observaciones de cada partida (incluidas las que
+# aparecen repetidas o revisadas en filings posteriores), no solo la última;
+# decidir cuál usar para una fecha dada es trabajo de la capa de consulta
+# (fase 2), no de la ingesta.
+FACTS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS edgar_facts (
+    symbol TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    val REAL NOT NULL,
+    form TEXT,
+    fp TEXT,
+    fy INTEGER,
+    filed_date TEXT,
+    accn TEXT NOT NULL,
+    PRIMARY KEY (symbol, tag, unit, start_date, end_date, accn)
+);
+CREATE INDEX IF NOT EXISTS idx_edgar_facts_symbol_tag ON edgar_facts (symbol, tag);
+"""
+
+# Todas las etiquetas en USD que se usan para calcular métricas (ver más
+# abajo): es lo que se persiste en bruto en edgar_facts con unit='USD'.
+TRACKED_TAGS = _sec_facts.TRACKED_TAGS
+
+
+def _headers():
+    return {"User-Agent": config.SEC_USER_AGENT}
+
+
+def _cik_cache() -> FileCikMap:
+    return FileCikMap(CIK_CACHE)
+
+
+def get_cik_map(force_refresh: bool = False) -> pd.DataFrame:
+    """Current SEC map, with the published weekly-cache and failure fallback."""
+    # The compatibility path is captured per operation, never mutated.
+    events = OperationSyncEvents(config.DB_PATH)
+    return current_map(_cik_cache(), SecTickerMap(config.SEC_USER_AGENT).fetch,
+                       lambda: measured_attempt(events, "sec", "all", "ticker-map"),
+                       source_retry.retry, lambda: events.get("sec", "all", "ticker-map"),
+                       sync_rules.fingerprint, lambda: datetime.now(UTC).timestamp(),
+                       force_refresh=force_refresh)
+
+
+# Caché persistente (symbol -> cik, title) de resoluciones que YA han
+# funcionado alguna vez. get_cik_map() es el mapeo EN VIVO de la SEC — solo
+# tiene tickers actualmente en uso, así que una empresa deslistada hace
+# tiempo desaparece de ahí aunque su historial de filings siga existiendo en
+# EDGAR. Esta caché evita depender de que el ticker siga vivo para poder
+# seguir usando algo que ya se resolvió una vez.
+#
+# OJO — esto NO arregla el reciclaje de tickers: cuando una empresa
+# desaparece, la bolsa puede reasignar su ticker a otra empresa totalmente
+# distinta más adelante (comprobado con datos reales: "APC" era Anadarko
+# Petroleum en 2019 y hoy en la SEC apunta a "ARKO Petroleum Corp", una
+# empresa distinta; "BBT" era BB&T y hoy es "Beacon Financial Corp"). Por
+# eso get_cik_for_symbol() siempre devuelve también el 'title' resuelto —
+# para que se pueda mostrar en la UI y detectar a simple vista un posible
+# reciclaje, en vez de fiarse ciegamente del ticker.
+RESOLUTIONS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS cik_resolutions (
+    symbol TEXT PRIMARY KEY,
+    cik TEXT NOT NULL,
+    title TEXT,
+    resolved_at TEXT NOT NULL
+);
+"""
+
+
+def _resolutions() -> SqliteCikResolutions:
+    # The compatibility path is captured per operation, never mutated.
+    return SqliteCikResolutions(config.DB_PATH, _now)
+
+
+def _remember_cik_resolution(symbol: str, cik: str, title: str):
+    _resolutions().remember(symbol, cik, title)
+
+
+def _get_cached_cik_resolution(symbol: str):
+    return _resolutions().cached(symbol)
+
+
+def get_resolved_title(symbol: str):
+    """Nombre de empresa tal y como lo tiene registrado la SEC para el CIK
+    que se resolvió para `symbol` (vivo o de la caché). Pensado para que la
+    UI lo muestre junto al ticker — así, si un ticker fue reciclado a otra
+    empresa distinta desde entonces, se nota a simple vista."""
+    _cik, title = _get_cached_cik_resolution(symbol)
+    return title
+
+
+def get_cik_for_symbol(symbol: str, cik_map: pd.DataFrame = None):
+    """(cik, title) para un símbolo: primero prueba el mapeo EN VIVO actual
+    de la SEC; si no aparece ahí (típico en empresas ya deslistadas), cae a
+    la caché local de resoluciones anteriores. (None, None) si no se puede
+    resolver de ninguna forma — deliberadamente NO se intenta adivinar por
+    otra vía, porque atribuir por error los datos de una empresa distinta
+    que hoy recicla ese ticker sería peor que no tener datos."""
+    if cik_map is None:
+        cik_map = get_cik_map()
+    return resolve_cik(symbol, cik_map, _resolutions())
+
+
+def fetch_company_facts(cik: str) -> dict:
+    return SecXbrl(config.SEC_USER_AGENT).companyfacts(cik)
+
+
+def fetch_submissions(cik: str) -> dict:
+    return SecXbrl(config.SEC_USER_AGENT).submissions(cik)
+
+
+_extract_annual_values = _sec_facts._extract_annual_values
+
+
+_extract_instant_values = _sec_facts._extract_instant_values
+
+
+_extract_raw_facts = _sec_facts._extract_raw_facts
+
+
+def _xbrl() -> SqliteXbrl:
+    return SqliteXbrl(config.DB_PATH, _now)
+
+
+def upsert_edgar_facts(symbol: str, rows: list, *, cik: str | None = None):
+    if not rows:
+        return
+    from . import identity
+    entity_id = identity.ensure_entity(cik) if cik else None
+    _xbrl().store_facts(symbol, rows, entity=entity_id, cik=cik)
+
+
+def get_edgar_facts(symbol: str, tags: list = None, *, entity_id: str | None = None) -> pd.DataFrame:
+    """Histórico crudo y fechado para una empresa. Sin filtrar: incluye
+    trimestres, anuales y restataciones. Base para reconstruir 'qué se sabía
+    en una fecha concreta' (fase 2), no algo para usar directamente en scoring."""
+    return _fact_reader().facts(symbol, tags=tags, entity_id=entity_id)
+
+
+def _fact_reader() -> SqliteSecReads:
+    # The compatibility setting is captured per operation, never mutated.
+    return SqliteSecReads(config.DB_PATH)
+
+
+def get_issuer_facts_as_of(cik: str, as_of_date: str, tags: list | None = None) -> pd.DataFrame:
+    return issuer_facts(_fact_reader(), cik, as_of_date, tags)
+
+
+def get_issuer_entities(symbols: list, as_of: str) -> dict:
+    """{symbol: entidad del CIK guardado} cuando la entidad conoce todo lo que el símbolo tenía en as_of."""
+    return _fact_reader().issuer_entities(symbols, as_of)
+
+
+def get_last_filed_dates(symbols: list, as_of: str = None) -> dict:
+    """{symbol: fecha del filing SEC más reciente que tenemos} para cada
+    símbolo (de cualquier tipo: 10-K, 10-Q...). Una empresa viva presenta un
+    10-Q como mínimo cada trimestre; si este dato es muy antiguo, casi seguro
+    dejó de ser un 'reporting company' (quiebra, exclusión, fusión) — se usa
+    como señal para detectar reciclaje de ticker en los precios (ver
+    multifactor_backtest._period_returns): si yfinance sigue devolviendo
+    cotización reciente bajo ese símbolo mucho después de su último filing,
+    lo más probable es que la bolsa haya reasignado el ticker a otra empresa
+    distinta, no que la original siga cotizando. En lote (no una consulta por
+    símbolo) porque el backtest la llama con el universo completo en cada
+    rebalanceo.
+
+    `as_of`: si se pasa, solo cuenta filings con `filed_date <= as_of` —
+    imprescindible para que el guard sea point-in-time correcto. Sin esto,
+    un ticker reciclado puede colar un filing FUTURO (de la empresa nueva
+    que se quedó el símbolo) como si fuera reciente, y el guard nunca
+    saltaría — justo el fallo que se pretende detectar. También protege de
+    que esos `edgar_facts` de la empresa nueva contaminen el resultado con
+    fechas fuera del periodo que se está evaluando."""
+    return _fact_reader().last_filed(symbols, as_of)
+
+
+def get_value_as_of(symbol: str, tags: list, as_of_date: str, unit: str = "USD", *, entity_id: str | None = None):
+    return concept_value(_fact_reader(), symbol, tags, as_of_date, unit, entity_id=entity_id)
+
+
+def get_shares_outstanding_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None):
+    """Nº de acciones en circulación conocido en as_of_date (para poder
+    calcular capitalización de mercado y múltiplos de una fecha pasada sin
+    usar el nº de acciones de HOY, que sería inconsistente con esa fecha)."""
+    return get_value_as_of(symbol, SHARES_TAGS, as_of_date, unit="shares", entity_id=entity_id)
+
+
+def _facts_dict_from_stored(symbol: str, as_of_date: str = None, *, entity_id: str | None = None) -> dict:
+    return stored_facts(_fact_reader(), symbol, as_of_date, entity_id=entity_id)
+
+
+def compute_edgar_metrics_as_of(symbol: str, as_of_date: str, *, entity_id: str | None = None) -> dict:
+    return metrics_as_of(_fact_reader(), symbol, as_of_date, entity_id=entity_id, compute=compute_edgar_metrics)
+
+
+_cagr_from_series = _sec_facts._cagr_from_series
+
+
+_annual_date = _sec_facts._annual_date
+
+
+_yoy_growth = _sec_facts._yoy_growth
+
+
+# #38: fiscal-year alignment of ratio components. Off by default so frozen
+# audits reproduce; the #35 protocol enables it as a data correction.
+ALIGNMENT_TOLERANCE_DAYS = _sec_facts.ALIGNMENT_TOLERANCE_DAYS
+_fiscal_alignment = False
+
+
+@contextmanager
+def fiscal_alignment(enabled: bool = True) -> Iterator[None]:
+    """Require every ratio component to belong to the anchor fiscal year (#38).
+
+    The anchor is the latest annual revenue year-end (net income if the issuer
+    reports no revenue). A component reported for another year-end (more than
+    ``ALIGNMENT_TOLERANCE_DAYS`` apart) is *stale*: it is missing with reason
+    ``stale_component`` and never replaced by an older year or by zero.
+    """
+    global _fiscal_alignment
+    previous = _fiscal_alignment
+    _fiscal_alignment = enabled
+    try:
+        yield
+    finally:
+        _fiscal_alignment = previous
+
+
+def fiscal_alignment_enabled() -> bool:
+    return _fiscal_alignment
+
+
+_anchor = _sec_facts._anchor
+
+
+def _at_anchor(series: dict, anchor: str):
+    return _sec_facts._at_anchor(series, anchor, tolerance_days=ALIGNMENT_TOLERANCE_DAYS)
+
+
+def compute_edgar_metrics(facts: dict) -> dict:
+    return _sec_facts.compute_edgar_metrics(facts, fiscal_alignment=_fiscal_alignment,
+                             tolerance_days=ALIGNMENT_TOLERANCE_DAYS)
+
+
+def fundamental_missing_reasons(facts: dict) -> dict[str, str | None]:
+    return _sec_facts.fundamental_missing_reasons(facts, fiscal_alignment=_fiscal_alignment,
+                             tolerance_days=ALIGNMENT_TOLERANCE_DAYS)
+
+
+extract_latest_filings = _sec_facts.extract_latest_filings
+
+
+def _fetch_one(symbol: str, cik: str) -> tuple:
+    return fetch_complete(cik, companyfacts=fetch_company_facts, submissions=fetch_submissions,
+                          compute=compute_edgar_metrics)
+
+
+def upsert_edgar_metrics(symbol: str, cik: str, metrics: dict):
+    _xbrl().store_metrics(symbol, cik, metrics)
+
+
+def get_edgar_metrics(symbols: list) -> dict:
+    return cached_metrics(_fact_reader(), symbols)
+
+
+def get_symbols_with_facts(symbols: list) -> set:
+    """Símbolos con al menos una fila en edgar_facts. Sirve para distinguir
+    'fetched_at reciente' de 'de verdad tiene el histórico fechado' — algunas
+    empresas se descargaron antes de que existiera esta tabla (o solo se
+    guardó edgar_metrics por algún fallo puntual al persistir), y sin este
+    chequeo quedarían marcadas como "frescas" para siempre sin tener nunca
+    los datos que hacen falta para reconstruir una fecha pasada."""
+    return symbols_with_facts(_fact_reader(), symbols)
+
+
+def get_edgar_fetched_at(symbols: list) -> dict:
+    return fetched_at(_fact_reader(), symbols)
+
+
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def synchronize_issuer(symbol: str, cik: str, *, full_refresh: bool = False) -> dict:
+    """Incremental issuer companyfacts sync with the same stores as the worker; path captured per operation."""
+    events = OperationSyncEvents(config.DB_PATH)
+
+    def attempt(source: str, entity: str, dataset: str) -> SyncAttempt:
+        return SyncAttempt(source, entity, dataset, events, now=_now, wall_time=time.perf_counter,
+                           cpu_time=time.thread_time)
+
+    return synchronize(symbol, cik, store=SqliteXbrl(config.DB_PATH, _now), submissions=fetch_submissions,
+                       companyfacts=fetch_company_facts, checkpoint=events.get, attempt_factory=attempt,
+                       retry=source_retry.retry, fingerprint=sync_rules.fingerprint, now=_now,
+                       full_refresh=full_refresh, fiscal_alignment=fiscal_alignment_enabled(),
+                       current_reports=SqliteCurrentReports(config.DB_PATH, _now).save_submissions)
+
+
+def fetch_edgar_batch(symbols: list, cik_by_symbol: dict, max_workers: int = 4, progress_cb=None,
+                      *, full_refresh: bool = False, incremental: bool = True, synchronize_one=None) -> dict:
+    def operation(symbol, cik):
+        if incremental:
+            return (synchronize_one or synchronize_issuer)(symbol, cik, full_refresh=full_refresh)
+        metrics, rows = _fetch_one(symbol, cik)
+        upsert_edgar_metrics(symbol, cik, metrics)
+        upsert_edgar_facts(symbol, rows, cik=cik)
+
+    def runner(tasks, execute):
+        if not tasks:
+            return
+        with cf.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(execute, symbol, cik): symbol for symbol, cik in tasks}
+            for future in cf.as_completed(futures):
+                error = None
+                try:
+                    future.result()
+                except Exception as exc:
+                    error = exc
+                yield futures[future], error
+    return run_batch(symbols, cik_by_symbol, operation=operation, runner=runner,
+                     classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
+                     progress_cb=progress_cb)
+
+
+class _SelectionStore:
+    def current(self, symbols):
+        failures = {}
+        for entity, dataset in OperationSyncEvents(config.DB_PATH).failed_datasets("sec"):
+            if dataset.startswith("facts:") and dataset.removeprefix("facts:") in symbols:
+                failures.setdefault(dataset.removeprefix("facts:"), set()).add(entity)
+        return get_edgar_fetched_at(symbols), get_symbols_with_facts(symbols), failures
+
+    def historical(self, symbols, as_of):
+        from . import identity
+        return {symbol: identity.resolve(symbol, as_of) for symbol in symbols}
+
+    def covered_entities(self, entities):
+        from . import identity
+        return {entity for entity in entities if not identity.observations(entity, "edgar_facts").empty}
+
+    def errors(self, failed):
+        SqliteCacheWrites(config.DB_PATH, _now).update_errors("sec_edgar", failed)
+
+
+def ensure_edgar_data(symbols: list, force: bool = False, max_age_hours: int = None, progress_cb=None,
+                      *, as_of: str | None = None, full_refresh: bool = False, synchronize_one=None) -> dict:
+    def download(symbols, ciks, **options):
+        if synchronize_one is not None:
+            options["synchronize_one"] = synchronize_one
+        return fetch_edgar_batch(symbols, ciks, **options)
+    return refresh_selection(symbols, store=_SelectionStore(), mapping=get_cik_map,
+                             resolutions=_resolutions(), download_batch=download,
+                             classify_error=lambda exc: classify(str(exc), "SEC EDGAR")[1],
+                             now=_now, default_max_age_hours=operational_settings.current().edgar_cache_max_age_hours,
+                             force=force, max_age_hours=max_age_hours, progress_cb=progress_cb,
+                             as_of=as_of, full_refresh=full_refresh)

@@ -1,8 +1,10 @@
 # Revisiones de estimaciones de consenso
 
-`gabi.estimates` captura EPS/ingresos de consenso, su dispersión y el
+GABI captura EPS/ingresos de consenso, su dispersión y el
 recuento de revisiones al alza/baja, como una familia de datos de
-investigación separada del Composite Score.
+investigación separada del Composite Score. Las reglas puras están en
+`gabi.domain.research.estimates`; la captura (red y escritura explícitas) en
+`gabi.infrastructure.legacy.estimates` y se lanza con el trabajo `company_sync`.
 
 ## Fuente y licencia
 
@@ -18,7 +20,7 @@ Yahoo **no** expone un archivo point-in-time de estimaciones pasadas.
 `eps_trend`/`eps_revisions` son una foto tomada *ahora*: sus columnas
 relativas ("7daysAgo", "30daysAgo"...) describen cómo cambió la
 estimación hasta hoy, no lo que un observador habría visto en una fecha
-pasada arbitraria. No existe ninguna función en `gabi.estimates` que
+pasada arbitraria. No existe ninguna función de GABI que
 acepte una fecha pasada y devuelva "el consenso de entonces" — hacerlo
 sería inventar datos.
 
@@ -35,6 +37,13 @@ momento de cada captura) contra el retorno futuro real — pero solo sobre
 `captured_at` que de verdad se ejecutaron, nunca reconstruidos. Con pocas
 capturas devuelve `status="insufficient_data"`: es el estado correcto
 mientras el archivo propio de GABI sea joven, no un fallo.
+
+En la interfaz React, este cálculo se lanza con un job explícito en modo
+Research. El job solo considera capturas reales entre 2010-01-01 y el corte
+observado 2025-07-02, y solo lee precios hasta ese corte. Si las capturas
+disponibles son posteriores, devuelve datos insuficientes; no reconstruye ni
+abre retrospectivamente un consenso que Yahoo nunca publicó. La vista de
+Streamlit ya no calcula el IC al abrirse.
 
 Esta issue queda **aparcada en la práctica** hasta que se acumulen
 suficientes capturas separadas en el tiempo (por defecto: al menos 6

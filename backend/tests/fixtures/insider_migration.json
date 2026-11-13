@@ -1,0 +1,321 @@
+{
+  "source_sha256": "e0014dd6ab5a26d3709be800c5be7a81053384fa3190d0b6453d08f596d03c2f",
+  "as_of": "2024-08-31",
+  "xml": [
+    {
+      "text": "<?xml version=\"1.0\"?>\n<ownershipDocument>\n    <issuer>\n        <issuerCik>0000320193</issuerCik>\n        <issuerName>Acme Inc.</issuerName>\n        <issuerTradingSymbol>ACME</issuerTradingSymbol>\n    </issuer>\n    <reportingOwner>\n        <reportingOwnerId>\n            <rptOwnerCik>0001111111</rptOwnerCik>\n            <rptOwnerName>Doe Jane</rptOwnerName>\n        </reportingOwnerId>\n        <reportingOwnerRelationship>\n            <isDirector>false</isDirector>\n            <isOfficer>true</isOfficer>\n            <isTenPercentOwner>false</isTenPercentOwner>\n            <officerTitle>Chief Executive Officer</officerTitle>\n        </reportingOwnerRelationship>\n    </reportingOwner>\n    <nonDerivativeTable>\n        <nonDerivativeTransaction>\n            <transactionDate><value>2025-03-10</value></transactionDate>\n            <transactionCoding>\n                <transactionCode>P</transactionCode>\n            </transactionCoding>\n            <transactionAmounts>\n                <transactionShares><value>5000</value></transactionShares>\n                <transactionPricePerShare><value>42.50</value></transactionPricePerShare>\n                <transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode>\n            </transactionAmounts>\n            <postTransactionAmounts>\n                <sharesOwnedFollowingTransaction><value>120000</value></sharesOwnedFollowingTransaction>\n            </postTransactionAmounts>\n        </nonDerivativeTransaction>\n    </nonDerivativeTable>\n</ownershipDocument>",
+      "expected": {
+        "symbol": "ACME",
+        "owner_name": "Doe Jane",
+        "owner_title": "Chief Executive Officer",
+        "is_officer": true,
+        "is_director": false,
+        "is_ten_pct_owner": false,
+        "is_10b5_1_plan": false,
+        "transactions": [
+          {
+            "line_no": 0,
+            "transaction_date": "2025-03-10",
+            "transaction_code": "P",
+            "acquired_disposed": "A",
+            "shares": 5000.0,
+            "price_per_share": 42.5,
+            "shares_owned_after": 120000.0
+          }
+        ]
+      }
+    },
+    {
+      "text": "<?xml version=\"1.0\"?>\n<ownershipDocument>\n    <issuer>\n        <issuerCik>0000320193</issuerCik>\n        <issuerName>Acme Inc.</issuerName>\n        <issuerTradingSymbol>ACME</issuerTradingSymbol>\n    </issuer>\n    <reportingOwner>\n        <reportingOwnerId>\n            <rptOwnerCik>0002222222</rptOwnerCik>\n            <rptOwnerName>Smith John</rptOwnerName>\n        </reportingOwnerId>\n        <reportingOwnerRelationship>\n            <isDirector>true</isDirector>\n            <isOfficer>false</isOfficer>\n            <isTenPercentOwner>false</isTenPercentOwner>\n        </reportingOwnerRelationship>\n    </reportingOwner>\n    <nonDerivativeTable>\n        <nonDerivativeTransaction>\n            <transactionDate><value>2025-03-12</value></transactionDate>\n            <transactionCoding><transactionCode>S</transactionCode></transactionCoding>\n            <transactionAmounts>\n                <transactionShares><value>1000</value></transactionShares>\n                <transactionPricePerShare><value>45.00</value></transactionPricePerShare>\n                <transactionAcquiredDisposedCode><value>D</value></transactionAcquiredDisposedCode>\n            </transactionAmounts>\n            <postTransactionAmounts>\n                <sharesOwnedFollowingTransaction><value>9000</value></sharesOwnedFollowingTransaction>\n            </postTransactionAmounts>\n        </nonDerivativeTransaction>\n    </nonDerivativeTable>\n    <footnotes>\n        <footnote id=\"F1\">Sale made pursuant to a Rule 10b5-1 trading plan adopted on 2024-11-01.</footnote>\n    </footnotes>\n</ownershipDocument>",
+      "expected": {
+        "symbol": "ACME",
+        "owner_name": "Smith John",
+        "owner_title": null,
+        "is_officer": false,
+        "is_director": true,
+        "is_ten_pct_owner": false,
+        "is_10b5_1_plan": true,
+        "transactions": [
+          {
+            "line_no": 0,
+            "transaction_date": "2025-03-12",
+            "transaction_code": "S",
+            "acquired_disposed": "D",
+            "shares": 1000.0,
+            "price_per_share": 45.0,
+            "shares_owned_after": 9000.0
+          }
+        ]
+      }
+    },
+    {
+      "text": "<ownershipDocument><nonDerivativeTransaction><transactionDate><value>2024-01-01</value></transactionDate></nonDerivativeTransaction></ownershipDocument>",
+      "expected": {
+        "symbol": null,
+        "owner_name": null,
+        "owner_title": null,
+        "is_officer": false,
+        "is_director": false,
+        "is_ten_pct_owner": false,
+        "is_10b5_1_plan": false,
+        "transactions": []
+      }
+    }
+  ],
+  "summaries": [
+    {
+      "rows": [
+        {
+          "transaction_date": "2024-02-29",
+          "transaction_code": "P",
+          "owner_name": "Ann",
+          "shares": 100.0,
+          "price_per_share": 10.0,
+          "is_10b5_1_plan": true
+        },
+        {
+          "transaction_date": "2024-02-28",
+          "transaction_code": "P",
+          "owner_name": "Old",
+          "shares": 100.0,
+          "price_per_share": 10.0,
+          "is_10b5_1_plan": false
+        },
+        {
+          "transaction_date": "2024-08-01",
+          "transaction_code": "P",
+          "owner_name": "Ann",
+          "shares": null,
+          "price_per_share": 12.0,
+          "is_10b5_1_plan": true
+        },
+        {
+          "transaction_date": "2024-08-02",
+          "transaction_code": "S",
+          "owner_name": "Bob",
+          "shares": 10.0,
+          "price_per_share": 15.0,
+          "is_10b5_1_plan": false
+        },
+        {
+          "transaction_date": "2024-08-03",
+          "transaction_code": "M",
+          "owner_name": "Ann",
+          "shares": 10.0,
+          "price_per_share": 20.0,
+          "is_10b5_1_plan": false
+        },
+        {
+          "transaction_date": "2024-09-01",
+          "transaction_code": "P",
+          "owner_name": null,
+          "shares": 20.0,
+          "price_per_share": null,
+          "is_10b5_1_plan": false
+        }
+      ],
+      "months": 6,
+      "expected": {
+        "n_buys": 3,
+        "n_sells": 1,
+        "distinct_buyers": 1,
+        "distinct_sellers": 1,
+        "net_value": 850.0,
+        "has_10b5_1_only_buys": false,
+        "recent": [
+          {
+            "transaction_date": "2024-02-29",
+            "transaction_code": "P",
+            "owner_name": "Ann",
+            "shares": 100.0,
+            "price_per_share": 10.0,
+            "is_10b5_1_plan": true
+          },
+          {
+            "transaction_date": "2024-08-01",
+            "transaction_code": "P",
+            "owner_name": "Ann",
+            "shares": null,
+            "price_per_share": 12.0,
+            "is_10b5_1_plan": true
+          },
+          {
+            "transaction_date": "2024-08-02",
+            "transaction_code": "S",
+            "owner_name": "Bob",
+            "shares": 10.0,
+            "price_per_share": 15.0,
+            "is_10b5_1_plan": false
+          },
+          {
+            "transaction_date": "2024-08-03",
+            "transaction_code": "M",
+            "owner_name": "Ann",
+            "shares": 10.0,
+            "price_per_share": 20.0,
+            "is_10b5_1_plan": false
+          },
+          {
+            "transaction_date": "2024-09-01",
+            "transaction_code": "P",
+            "owner_name": null,
+            "shares": 20.0,
+            "price_per_share": null,
+            "is_10b5_1_plan": false
+          }
+        ]
+      }
+    },
+    {
+      "rows": [
+        {
+          "transaction_date": "2024-02-29",
+          "transaction_code": "P",
+          "owner_name": "Ann",
+          "shares": 100.0,
+          "price_per_share": 10.0,
+          "is_10b5_1_plan": true
+        },
+        {
+          "transaction_date": "2024-08-01",
+          "transaction_code": "P",
+          "owner_name": "Ann",
+          "shares": null,
+          "price_per_share": 12.0,
+          "is_10b5_1_plan": true
+        }
+      ],
+      "months": 6,
+      "expected": {
+        "n_buys": 2,
+        "n_sells": 0,
+        "distinct_buyers": 1,
+        "distinct_sellers": 0,
+        "net_value": 1000.0,
+        "has_10b5_1_only_buys": true,
+        "recent": [
+          {
+            "transaction_date": "2024-02-29",
+            "transaction_code": "P",
+            "owner_name": "Ann",
+            "shares": 100.0,
+            "price_per_share": 10.0,
+            "is_10b5_1_plan": true
+          },
+          {
+            "transaction_date": "2024-08-01",
+            "transaction_code": "P",
+            "owner_name": "Ann",
+            "shares": null,
+            "price_per_share": 12.0,
+            "is_10b5_1_plan": true
+          }
+        ]
+      }
+    },
+    {
+      "rows": [
+        {
+          "transaction_date": "2024-08-03",
+          "transaction_code": "M",
+          "owner_name": "Ann",
+          "shares": 10.0,
+          "price_per_share": 20.0,
+          "is_10b5_1_plan": false
+        }
+      ],
+      "months": 6,
+      "expected": {
+        "n_buys": 0,
+        "n_sells": 0,
+        "distinct_buyers": 0,
+        "distinct_sellers": 0,
+        "net_value": null,
+        "has_10b5_1_only_buys": false,
+        "recent": [
+          {
+            "transaction_date": "2024-08-03",
+            "transaction_code": "M",
+            "owner_name": "Ann",
+            "shares": 10.0,
+            "price_per_share": 20.0,
+            "is_10b5_1_plan": false
+          }
+        ]
+      }
+    },
+    {
+      "rows": [
+        {
+          "transaction_date": "2024-02-28",
+          "transaction_code": "P",
+          "owner_name": "Old",
+          "shares": 100.0,
+          "price_per_share": 10.0,
+          "is_10b5_1_plan": false
+        }
+      ],
+      "months": 6,
+      "expected": {
+        "n_buys": 0,
+        "n_sells": 0,
+        "distinct_buyers": 0,
+        "distinct_sellers": 0,
+        "net_value": null,
+        "has_10b5_1_only_buys": false,
+        "recent": []
+      }
+    },
+    {
+      "rows": [],
+      "months": 6,
+      "expected": {
+        "n_buys": 0,
+        "n_sells": 0,
+        "distinct_buyers": 0,
+        "distinct_sellers": 0,
+        "net_value": null,
+        "has_10b5_1_only_buys": false,
+        "recent": []
+      }
+    },
+    {
+      "rows": [
+        {
+          "transaction_date": "2024-02-29",
+          "transaction_code": "P",
+          "owner_name": "Ann",
+          "shares": 100.0,
+          "price_per_share": 10.0,
+          "is_10b5_1_plan": true
+        },
+        {
+          "transaction_date": "2024-02-28",
+          "transaction_code": "P",
+          "owner_name": "Old",
+          "shares": 100.0,
+          "price_per_share": 10.0,
+          "is_10b5_1_plan": false
+        },
+        {
+          "transaction_date": "2024-08-01",
+          "transaction_code": "P",
+          "owner_name": "Ann",
+          "shares": null,
+          "price_per_share": 12.0,
+          "is_10b5_1_plan": true
+        }
+      ],
+      "months": 0,
+      "expected": {
+        "n_buys": 0,
+        "n_sells": 0,
+        "distinct_buyers": 0,
+        "distinct_sellers": 0,
+        "net_value": null,
+        "has_10b5_1_only_buys": false,
+        "recent": []
+      }
+    }
+  ]
+}

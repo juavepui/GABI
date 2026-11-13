@@ -1,0 +1,15 @@
+{
+  "issue": 52,
+  "rule_version": "evidence-v1",
+  "purpose": "Qualitative confidence in the evidence supporting a candidate, distinct from attractiveness and data coverage. No future-return probability.",
+  "thresholds": {"score_coverage": 0.80, "top20_persistence": 0.90, "validated_factor_weight": 0.50, "corrected_alpha": 0.05},
+  "BAJA": "Any missing required component, experimental/unmatched model, stale/unknown price or input timestamps, insufficient coverage, fragile/unknown ranking, no corrected model-level predictive confirmation, less than half of effective factor weight supported after multiplicity, inconclusive/adverse paired bootstrap or placebo evidence.",
+  "MEDIA": "All of those gates pass with traceable retrospective evidence. This is preliminary evidence and never independent validation.",
+  "ALTA": "All MEDIA gates plus at least two preregistered independent confirmations for the exact model specification from different dataset IDs, with corrected p < .05, positive effect and intact, non-early-unsealed provenance. An accumulating LIVE_FORWARD ledger or a high historical return alone is not confirmation.",
+  "required_components": ["model predictive test", "factor zoo", "placebos", "paired block uncertainty", "rank stability", "candidate data quality"],
+  "missing_studies": "Expose #44 pending independent observations and missing historical sectors of #48. Do not run unfinished/blind studies, impute evidence, infer missing labels from price performance, or combine p-values.",
+  "factor_support": "A factor has retrospective support only with positive mean IC and Holm p < .05. Raw p and descriptive classification do not upgrade support. Candidate support details show percentiles >= 50, effective available-block weights and validated contribution points; no change to composite scoring.",
+  "model_matching": "Saved studies apply only to the frozen 30/35/25/10 hypothesis and its declared universe/scoring version. Other weights/universes stay experimental/unmatched; a ledger phase describes collection, not validation.",
+  "production": "Retrospective catalogue loaded read-only from checked-in result artifacts and their fingerprints. No independent confirmations supplied automatically in v1: ALTA stays unavailable until a reviewed independent validator exists. Tests of categories use explicitly supplied synthetic evidence only.",
+  "calibration": "Thresholds are conservative communication rules chosen before implementation; not fitted to CAGR, Sharpe or future outcomes. Not a calibrated statistical probability."
+}

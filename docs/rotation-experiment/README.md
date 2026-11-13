@@ -111,7 +111,8 @@ la comprobación del control; los valores y fechas guardados coincidían.
 - `*-nav.csv`, `*-periods.csv`, [trades.csv](trades.csv): curvas, rebalanceos,
   costes y recuentos de sustituciones.
 
-Reproducción: `python -m gabi.rotation_experiment --output <directorio_nuevo>`
+Reproducción: `python -m gabi_cli research rotation-experiment --output <directorio_nuevo>`
+(hasta ADR 0002, `python -m gabi.rotation_experiment`, mismo código; último commit 1283bf5)
 con la caché original disponible y sin una base de trabajo previa, o
 `--resume` para continuar el mismo protocolo. No se descargan datos nuevos.
 Las pruebas de los artefactos públicos no requieren la base privada:

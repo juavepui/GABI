@@ -1,0 +1,435 @@
+{
+  "backend/src/gabi/__init__.py": [
+    "gabi.config",
+    "gabi.workspace.configure"
+  ],
+  "backend/src/gabi/academic_factors.py": [
+    "gabi.config",
+    "pandas"
+  ],
+  "backend/src/gabi/block_bootstrap.py": [
+    "exchange_calendars",
+    "gabi.academic_factors",
+    "gabi.config",
+    "gabi.research_lab",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy.stats"
+  ],
+  "backend/src/gabi/capital_input_audit.py": [
+    "gabi.config",
+    "gabi.factor_sector_stability",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "sqlite3"
+  ],
+  "backend/src/gabi/capital_input_audit_v2.py": [
+    "gabi.capital_input_audit",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "sqlite3"
+  ],
+  "backend/src/gabi/config.py": [
+    "os",
+    "pathlib"
+  ],
+  "backend/src/gabi/cross_section_test.py": [
+    "exchange_calendars",
+    "gabi.academic_factors",
+    "gabi.config",
+    "gabi.edgar",
+    "gabi.factor_stability",
+    "gabi.historical_pit",
+    "gabi.historical_revalidation",
+    "gabi.historical_validation",
+    "gabi.research_lab",
+    "gabi.scoring",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/edgar.py": [
+    "concurrent.futures",
+    "gabi.config",
+    "gabi.identity",
+    "pandas"
+  ],
+  "backend/src/gabi/entity_master.py": [
+    "gabi.edgar",
+    "gabi.identity",
+    "pandas"
+  ],
+  "backend/src/gabi/evidence_catalog.py": [
+    "gabi.config",
+    "gabi.factor_sector_stability"
+  ],
+  "backend/src/gabi/evidence_confidence.py": [
+    "gabi.evidence_catalog",
+    "gabi.live_ledger",
+    "gabi.rank_stability",
+    "gabi.scoring"
+  ],
+  "backend/src/gabi/factor_benchmark.py": [
+    "gabi.academic_factors",
+    "gabi.factor_stability",
+    "numpy",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/factor_history.py": [
+    "gabi.academic_factors",
+    "gabi.config",
+    "gabi.factor_stability",
+    "gabi.research_lab",
+    "gabi.scoring",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/factor_sector_stability.py": [
+    "gabi.config",
+    "gabi.evidence_catalog",
+    "io",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy",
+    "sqlite3"
+  ],
+  "backend/src/gabi/factor_stability.py": [
+    "gabi.academic_factors",
+    "numpy",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/factor_zoo.py": [
+    "gabi.config",
+    "gabi.cross_section_test",
+    "gabi.historical_revalidation",
+    "gabi.scoring",
+    "gabi.tail_effect_test._holm",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/full_universe_audit.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.factor_stability",
+    "gabi.identity",
+    "gabi.multifactor_backtest",
+    "gabi.overfitting_audit",
+    "gabi.portfolio_backtest",
+    "gabi.portfolio_metrics",
+    "gabi.scoring",
+    "gabi.screener_asof",
+    "gabi.universe",
+    "pandas",
+    "pathlib",
+    "sqlite3"
+  ],
+  "backend/src/gabi/historical_archive.py": [
+    "gabi.identity",
+    "pandas"
+  ],
+  "backend/src/gabi/historical_issuer_evidence.py": [
+    "gabi.config",
+    "pathlib"
+  ],
+  "backend/src/gabi/historical_membership.py": [
+    "gabi.config",
+    "gabi.historical_archive",
+    "gabi.universe",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/historical_period.py": [],
+  "backend/src/gabi/historical_pit.py": [
+    "gabi.historical_membership",
+    "gabi.identity",
+    "pandas"
+  ],
+  "backend/src/gabi/historical_price_audit.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.historical_issuer_evidence",
+    "gabi.historical_membership",
+    "gabi.historical_price_policy.YAHOO_SOURCE",
+    "gabi.historical_tiingo.SOURCE_ID",
+    "gabi.historical_tiingo.source_id",
+    "gabi.historical_wiki.SOURCE_ID",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/historical_price_policy.py": [
+    "gabi.identity",
+    "pandas"
+  ],
+  "backend/src/gabi/historical_revalidation.py": [
+    "gabi.config",
+    "gabi.edgar",
+    "gabi.factor_stability",
+    "gabi.full_universe_audit",
+    "gabi.historical_archive",
+    "gabi.historical_pit",
+    "gabi.historical_validation",
+    "gabi.multifactor_backtest",
+    "gabi.overfitting_audit",
+    "gabi.scoring",
+    "numpy",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/historical_ticker_corrections.py": [],
+  "backend/src/gabi/historical_tiingo.py": [
+    "gabi.config",
+    "gabi.historical_archive",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/historical_validation.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.factor_stability",
+    "gabi.full_universe_audit",
+    "gabi.historical_pit",
+    "gabi.identity",
+    "gabi.scoring",
+    "numpy",
+    "pandas",
+    "pathlib"
+  ],
+  "backend/src/gabi/historical_wiki.py": [
+    "gabi.config",
+    "gabi.historical_archive",
+    "pathlib"
+  ],
+  "backend/src/gabi/identity.py": [
+    "gabi.config",
+    "pandas"
+  ],
+  "backend/src/gabi/live_ledger.py": [
+    "gabi.config",
+    "gabi.evidence_confidence",
+    "gabi.identity",
+    "gabi.research_lab",
+    "gabi.screener",
+    "numpy",
+    "pandas"
+  ],
+  "backend/src/gabi/membership_extension.py": [
+    "pandas"
+  ],
+  "backend/src/gabi/metrics.py": [],
+  "backend/src/gabi/multifactor_backtest.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.historical_pit",
+    "gabi.identity",
+    "gabi.screener_asof",
+    "gabi.universe",
+    "pandas"
+  ],
+  "backend/src/gabi/overfitting_audit.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.identity",
+    "gabi.multifactor_backtest",
+    "gabi.research_lab",
+    "gabi.scoring",
+    "gabi.screener_asof",
+    "gabi.stats_rigor",
+    "gabi.universe",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "sqlite3"
+  ],
+  "backend/src/gabi/placebo_engine.py": [
+    "gabi.config",
+    "gabi.cross_section_test",
+    "gabi.historical_revalidation",
+    "gabi.scoring",
+    "gabi.stats_rigor",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/portfolio_backtest.py": [
+    "gabi.multifactor_backtest",
+    "pandas"
+  ],
+  "backend/src/gabi/portfolio_metrics.py": [
+    "gabi.config",
+    "pandas"
+  ],
+  "backend/src/gabi/r3_experiment.py": [
+    "gabi.academic_factors",
+    "gabi.config",
+    "gabi.edgar",
+    "gabi.factor_stability",
+    "gabi.historical_pit",
+    "gabi.historical_revalidation",
+    "gabi.portfolio_backtest",
+    "gabi.research_lab",
+    "gabi.risk",
+    "gabi.scoring",
+    "gabi.screener_asof",
+    "gabi.stats_rigor",
+    "gabi.variant_validation",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/rank_stability.py": [
+    "gabi.config",
+    "gabi.research_lab",
+    "gabi.scoring",
+    "numpy",
+    "pandas",
+    "scipy.stats"
+  ],
+  "backend/src/gabi/repurchase_cash_strategy.py": [
+    "gabi.capital_input_audit_v2",
+    "gabi.strategy_discovery",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/research_lab.py": [
+    "gabi.config",
+    "pandas"
+  ],
+  "backend/src/gabi/risk.py": [
+    "gabi.config",
+    "pandas"
+  ],
+  "backend/src/gabi/rotation_experiment.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.factor_stability._json_safe",
+    "gabi.factor_stability.content_hash",
+    "gabi.identity",
+    "gabi.overfitting_audit.sha256",
+    "gabi.portfolio_backtest",
+    "gabi.rotation_policy",
+    "gabi.screener_asof",
+    "gabi.variant_validation",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "shutil"
+  ],
+  "backend/src/gabi/rotation_policy.py": [],
+  "backend/src/gabi/scoring.py": [],
+  "backend/src/gabi/screener.py": [
+    "gabi.config",
+    "gabi.entity_master",
+    "gabi.risk",
+    "gabi.scoring",
+    "gabi.technicals",
+    "gabi.universe",
+    "pandas"
+  ],
+  "backend/src/gabi/screener_asof.py": [
+    "gabi.edgar",
+    "gabi.entity_master",
+    "gabi.identity",
+    "gabi.risk",
+    "gabi.scoring",
+    "gabi.technicals",
+    "gabi.universe",
+    "pandas"
+  ],
+  "backend/src/gabi/smallmid_feasibility.py": [
+    "gabi.config",
+    "gabi.factor_stability",
+    "gabi.historical_issuer_evidence",
+    "gabi.historical_membership",
+    "gabi.historical_tiingo",
+    "gabi.identity",
+    "pandas"
+  ],
+  "backend/src/gabi/smallmid_test.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.cross_section_test._nw",
+    "gabi.edgar",
+    "gabi.entity_master",
+    "gabi.factor_stability",
+    "gabi.historical_archive",
+    "gabi.historical_issuer_evidence",
+    "gabi.historical_pit",
+    "gabi.historical_price_audit._split_ratios",
+    "gabi.historical_tiingo",
+    "gabi.historical_wiki",
+    "gabi.identity",
+    "gabi.research_lab",
+    "gabi.scoring",
+    "gabi.screener_asof",
+    "gabi.smallmid_feasibility",
+    "gabi.storage",
+    "pandas",
+    "pathlib",
+    "requests",
+    "scipy",
+    "yfinance"
+  ],
+  "backend/src/gabi/stats_rigor.py": [],
+  "backend/src/gabi/storage.py": [
+    "gabi.config",
+    "pandas",
+    "sqlite3"
+  ],
+  "backend/src/gabi/strategy_discovery.py": [
+    "exchange_calendars",
+    "gabi.config",
+    "gabi.factor_sector_stability",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy",
+    "sqlite3"
+  ],
+  "backend/src/gabi/tail_effect_test.py": [
+    "gabi.academic_factors",
+    "gabi.config",
+    "gabi.cross_section_test",
+    "gabi.historical_revalidation",
+    "numpy",
+    "pandas",
+    "pathlib",
+    "scipy"
+  ],
+  "backend/src/gabi/technicals.py": [
+    "gabi.config",
+    "pandas"
+  ],
+  "backend/src/gabi/universe.py": [
+    "gabi.config",
+    "gabi.historical_pit",
+    "pandas"
+  ],
+  "backend/src/gabi/value_hypothesis.py": [
+    "gabi.scoring"
+  ],
+  "backend/src/gabi/variant_validation.py": [
+    "gabi.portfolio_backtest"
+  ],
+  "backend/src/gabi/workspace.py": [
+    "importlib.abc",
+    "importlib.machinery",
+    "os",
+    "pathlib",
+    "sys"
+  ]
+}

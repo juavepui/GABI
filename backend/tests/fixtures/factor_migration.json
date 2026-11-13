@@ -1,0 +1,1026 @@
+{
+  "source_commit": "486942af7a92bea5afa7ffec98983eeba701baad",
+  "source_sha256_lf": "c9db5e429e065a42a211406957ffb48f2a4499a61ae42fc783ebf10e51cc0186",
+  "normal": {
+    "summary": {
+      "columns": [
+        "factor",
+        "horizonte",
+        "sector_neutral",
+        "ic_mean",
+        "ic_std",
+        "icir",
+        "pct_ic_positive",
+        "q_spread",
+        "n_periods"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          false,
+          0.409022556390977,
+          0.759209386116082,
+          0.538748023761179,
+          0.5,
+          0.003073478916268,
+          2
+        ],
+        [
+          "composite_score",
+          1,
+          true,
+          0.129323308270677,
+          0.514646138487653,
+          0.251285880917533,
+          0.5,
+          0.000819412440685,
+          2
+        ]
+      ]
+    },
+    "ic_series": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "ic_raw",
+        "ic_neutral",
+        "n"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          0.945864661654135,
+          0.493233082706767,
+          20
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          -0.12781954887218,
+          -0.234586466165413,
+          20
+        ]
+      ]
+    },
+    "quantile_returns": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "quantil",
+        "retorno_medio",
+        "retorno_medio_neutral"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          1,
+          0.004614001524,
+          -0.001533227227457
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          2,
+          0.007172826356847,
+          0.001025597605391
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          3,
+          0.008274686874734,
+          -0.000126608352306
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          4,
+          0.009811405046961,
+          -0.000843956655662
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          5,
+          0.012133556332656,
+          0.001478194630033
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          1,
+          0.006322632592015,
+          0.00069003613781
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          2,
+          0.008122895732408,
+          -0.000366013913907
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          3,
+          0.009324717676393,
+          -0.000116296367292
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          4,
+          0.008963744628013,
+          0.000474834981698
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          5,
+          0.004950035615895,
+          -0.000682560838309
+        ]
+      ]
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          1.0
+        ],
+        [
+          "composite_score",
+          2,
+          1.0
+        ],
+        [
+          "composite_score",
+          3,
+          1.0
+        ],
+        [
+          "composite_score",
+          4,
+          1.0
+        ],
+        [
+          "composite_score",
+          5,
+          1.0
+        ]
+      ]
+    },
+    "skipped": [],
+    "mode": "validation"
+  },
+  "ties": {
+    "summary": {
+      "columns": [
+        "factor",
+        "horizonte",
+        "sector_neutral",
+        "ic_mean",
+        "ic_std",
+        "icir",
+        "pct_ic_positive",
+        "q_spread",
+        "n_periods"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          false,
+          0.86710996952412,
+          0.0,
+          null,
+          1.0,
+          null,
+          2
+        ],
+        [
+          "composite_score",
+          1,
+          true,
+          0.06936879756193,
+          0.024525573579399,
+          2.82842712474619,
+          1.0,
+          null,
+          2
+        ]
+      ]
+    },
+    "ic_series": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "ic_raw",
+        "ic_neutral",
+        "n"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          0.86710996952412,
+          0.086710996952412,
+          20
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          0.86710996952412,
+          0.052026598171447,
+          20
+        ]
+      ]
+    },
+    "quantile_returns": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "quantil",
+        "retorno_medio",
+        "retorno_medio_neutral"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          1,
+          0.00840129522704,
+          4.33680868994202e-19
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          1,
+          0.007536805248945,
+          0.0
+        ]
+      ]
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [
+        0
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          0.0
+        ]
+      ]
+    },
+    "skipped": [],
+    "mode": "validation"
+  },
+  "absent_sector": {
+    "summary": {
+      "columns": [
+        "factor",
+        "horizonte",
+        "sector_neutral",
+        "ic_mean",
+        "ic_std",
+        "icir",
+        "pct_ic_positive",
+        "q_spread",
+        "n_periods"
+      ],
+      "index": [
+        0
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          false,
+          0.409022556390977,
+          0.759209386116082,
+          0.538748023761179,
+          0.5,
+          0.003073478916268,
+          2
+        ]
+      ]
+    },
+    "ic_series": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "ic_raw",
+        "ic_neutral",
+        "n"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          0.945864661654135,
+          null,
+          20
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          -0.12781954887218,
+          null,
+          20
+        ]
+      ]
+    },
+    "quantile_returns": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "quantil",
+        "retorno_medio",
+        "retorno_medio_neutral"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          1,
+          0.004614001524,
+          null
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          2,
+          0.007172826356847,
+          null
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          3,
+          0.008274686874734,
+          null
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          4,
+          0.009811405046961,
+          null
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          5,
+          0.012133556332656,
+          null
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          1,
+          0.006322632592015,
+          null
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          2,
+          0.008122895732408,
+          null
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          3,
+          0.009324717676393,
+          null
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          4,
+          0.008963744628013,
+          null
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          5,
+          0.004950035615895,
+          null
+        ]
+      ]
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          1.0
+        ],
+        [
+          "composite_score",
+          2,
+          1.0
+        ],
+        [
+          "composite_score",
+          3,
+          1.0
+        ],
+        [
+          "composite_score",
+          4,
+          1.0
+        ],
+        [
+          "composite_score",
+          5,
+          1.0
+        ]
+      ]
+    },
+    "skipped": [],
+    "mode": "validation"
+  },
+  "partial_sector": {
+    "summary": {
+      "columns": [
+        "factor",
+        "horizonte",
+        "sector_neutral",
+        "ic_mean",
+        "ic_std",
+        "icir",
+        "pct_ic_positive",
+        "q_spread",
+        "n_periods"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          false,
+          0.409022556390977,
+          0.759209386116082,
+          0.538748023761179,
+          0.5,
+          0.003073478916268,
+          2
+        ],
+        [
+          "composite_score",
+          1,
+          true,
+          0.146491228070175,
+          0.432947836200184,
+          0.338357686126514,
+          0.5,
+          0.000921495423526,
+          2
+        ]
+      ]
+    },
+    "ic_series": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "ic_raw",
+        "ic_neutral",
+        "n"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          0.945864661654135,
+          0.452631578947368,
+          20
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          -0.12781954887218,
+          -0.159649122807018,
+          20
+        ]
+      ]
+    },
+    "quantile_returns": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "quantil",
+        "retorno_medio",
+        "retorno_medio_neutral"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "data": [
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          1,
+          0.004614001524,
+          -0.001737393193139
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          2,
+          0.007172826356847,
+          0.000872142716989
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          3,
+          0.008274686874734,
+          -0.000203335796506
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          4,
+          0.009811405046961,
+          -0.000843956655662
+        ],
+        [
+          "2024-01-02",
+          "composite_score",
+          1,
+          5,
+          0.012133556332656,
+          0.001478194630033
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          1,
+          0.006322632592015,
+          0.000479855370022
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          2,
+          0.008122895732408,
+          -0.000418559105854
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          3,
+          0.009324717676393,
+          -0.000116296367292
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          4,
+          0.008963744628013,
+          0.001263655612296
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          5,
+          0.004950035615895,
+          -0.000892741606098
+        ]
+      ]
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          1.0
+        ],
+        [
+          "composite_score",
+          2,
+          1.0
+        ],
+        [
+          "composite_score",
+          3,
+          1.0
+        ],
+        [
+          "composite_score",
+          4,
+          1.0
+        ],
+        [
+          "composite_score",
+          5,
+          1.0
+        ]
+      ]
+    },
+    "skipped": [],
+    "mode": "validation"
+  },
+  "missing_exit": {
+    "summary": {
+      "columns": [
+        "factor",
+        "horizonte",
+        "sector_neutral",
+        "ic_mean",
+        "ic_std",
+        "icir",
+        "pct_ic_positive",
+        "q_spread",
+        "n_periods"
+      ],
+      "index": [
+        0,
+        1
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          false,
+          -0.12781954887218,
+          null,
+          null,
+          0.0,
+          -0.00137259697612,
+          1
+        ],
+        [
+          "composite_score",
+          1,
+          true,
+          -0.234586466165413,
+          null,
+          null,
+          0.0,
+          -0.00137259697612,
+          1
+        ]
+      ]
+    },
+    "ic_series": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "ic_raw",
+        "ic_neutral",
+        "n"
+      ],
+      "index": [
+        0
+      ],
+      "data": [
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          -0.12781954887218,
+          -0.234586466165413,
+          20
+        ]
+      ]
+    },
+    "quantile_returns": {
+      "columns": [
+        "fecha",
+        "factor",
+        "horizonte",
+        "quantil",
+        "retorno_medio",
+        "retorno_medio_neutral"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "data": [
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          1,
+          0.006322632592015,
+          0.00069003613781
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          2,
+          0.008122895732408,
+          -0.000366013913907
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          3,
+          0.009324717676393,
+          -0.000116296367292
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          4,
+          0.008963744628013,
+          0.000474834981698
+        ],
+        [
+          "2024-02-02",
+          "composite_score",
+          1,
+          5,
+          0.004950035615895,
+          -0.000682560838309
+        ]
+      ]
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "data": [
+        [
+          "composite_score",
+          1,
+          1.0
+        ],
+        [
+          "composite_score",
+          2,
+          1.0
+        ],
+        [
+          "composite_score",
+          3,
+          1.0
+        ],
+        [
+          "composite_score",
+          4,
+          1.0
+        ],
+        [
+          "composite_score",
+          5,
+          1.0
+        ]
+      ]
+    },
+    "skipped": [],
+    "mode": "validation"
+  },
+  "insufficient": {
+    "summary": {
+      "columns": [],
+      "index": [],
+      "data": []
+    },
+    "ic_series": {
+      "columns": [],
+      "index": [],
+      "data": []
+    },
+    "quantile_returns": {
+      "columns": [],
+      "index": [],
+      "data": []
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [],
+      "data": []
+    },
+    "skipped": [
+      {
+        "fecha": "2024-01-02",
+        "motivo": "cobertura insuficiente del universo (5/20)"
+      },
+      {
+        "fecha": "2024-02-02",
+        "motivo": "cobertura insuficiente del universo (5/20)"
+      }
+    ],
+    "mode": "validation"
+  },
+  "inexact": {
+    "summary": {
+      "columns": [],
+      "index": [],
+      "data": []
+    },
+    "ic_series": {
+      "columns": [],
+      "index": [],
+      "data": []
+    },
+    "quantile_returns": {
+      "columns": [],
+      "index": [],
+      "data": []
+    },
+    "turnover": {
+      "columns": [
+        "factor",
+        "quantil",
+        "turnover"
+      ],
+      "index": [],
+      "data": []
+    },
+    "skipped": [
+      {
+        "fecha": "2024-01-02",
+        "motivo": "synthetic inexact membership"
+      },
+      {
+        "fecha": "2024-02-02",
+        "motivo": "synthetic inexact membership"
+      }
+    ],
+    "mode": "validation"
+  }
+}

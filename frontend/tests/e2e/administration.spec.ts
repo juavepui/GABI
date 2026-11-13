@@ -1,0 +1,253 @@
+import { expect, test } from '@playwright/test';
+
+test('un job local sigue después de recargar y publica un resultado verificable', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/administracion');
+  await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
+  // Investor uses the frozen weights: no editor to show (#189).
+  await expect(page.getByLabel('Valor (%)')).toHaveCount(0);
+  const mobile = testInfo.project.name === 'mobile';
+  const name = mobile ? 'Descargar símbolos indicados' : 'Auditar cobertura local';
+  await page.getByText('Otras formas de descargar').click();
+  if (mobile) {
+    await page.getByLabel('Descargar solo algunas empresas o fondos').fill('SPY');
+    await page.getByRole('button', { name: 'Descargar', exact: true }).click();
+  } else {
+    await page.getByRole('button', { name: 'Comprobar qué datos faltan' }).click();
+  }
+  await expect(page.getByRole('listitem', { name })).toBeVisible();
+  await page.reload();
+  const job = page.getByRole('listitem', { name });
+  await expect(job.locator('span').getByText('Completado')).toBeVisible({ timeout: 15_000 });
+  await job.getByRole('button', { name: 'Ver actividad' }).click();
+  await expect(job.getByText('Trabajo encolado')).toBeVisible();
+  await job.getByRole('button', { name: 'Ver resultado' }).click();
+  await expect(page.getByText('Resultado verificado')).toBeVisible();
+  if (mobile) await expect(page.getByText('"fixture": true')).toBeVisible();
+  else
+    await expect(
+      page.getByRole('list', { name: 'Cobertura por fuente' }).getByText('2/2'),
+    ).toBeVisible();
+});
+
+test('actualizar datos resume los fallos, reintenta los fallidos y guarda claves', async ({
+  page,
+}) => {
+  await page.goto('/administracion');
+  await page.getByText('Otras formas de descargar').click();
+  const update = page.getByRole('region', { name: 'Actualizar solo una parte' });
+  await update.getByRole('combobox', { name: '¿Cuántas empresas?' }).selectOption('150');
+  await update.getByRole('button', { name: 'Actualizar estas empresas' }).click();
+  const result = update.getByRole('region', { name: 'Resultado de la actualización' });
+  await expect(result.getByText(/Actualización de 3 empresas/)).toBeVisible({ timeout: 15_000 });
+  await expect(result.getByText(/empresas con fallos: 1/)).toBeVisible();
+  await result.getByText('límite de peticiones — 1 empresas').click();
+  await expect(result.getByText('T001', { exact: true })).toBeVisible();
+  await result.getByRole('button', { name: 'Reintentar solo los fallidos' }).click();
+  await expect(result.getByText(/Reintento de 1 empresas/)).toBeVisible({ timeout: 15_000 });
+  await expect(result.getByText('Ninguna empresa ha fallado en esta actualización.')).toBeVisible();
+
+  const fred = page.getByRole('form', { name: 'Clave FRED (datos de la economía)' });
+  await fred.getByLabel('Nueva clave FRED (datos de la economía)').fill('clave-e2e');
+  await fred.getByRole('button', { name: 'Guardar' }).click();
+  await expect(fred.getByText('Clave guardada.')).toBeVisible();
+  await expect(fred.getByText('Configurada')).toBeVisible();
+  await expect(page.getByText('clave-e2e')).toHaveCount(0);
+});
+
+// Four independent walks instead of one: chained 15 s waits overran the 30 s
+// test limit on a loaded local machine (#208).
+test.describe('calidad de los datos', () => {
+  test('universo: cobertura por fuente, fallos recientes y recuperación al recargar', async ({
+    page,
+  }) => {
+    await page.goto('/administracion');
+    await page
+      .getByRole('main')
+      .getByRole('link', { name: /Calidad de los datos/ })
+      .click();
+    await expect(
+      page.getByRole('heading', { name: 'Calidad de los datos', level: 1 }),
+    ).toBeVisible();
+
+    const universe = page.getByRole('region', { name: 'Resumen de todas las empresas' });
+    await universe.getByRole('button', { name: 'Comprobar los datos' }).click();
+    const sources = universe.getByRole('table', { name: 'Cobertura y frescura por fuente' });
+    await expect(sources.getByText('Precios (Yahoo)')).toBeVisible({ timeout: 15_000 });
+    await expect(sources.getByText('100 % (2/2)').first()).toBeVisible();
+    await expect(universe.getByText('Sector point-in-time aproximado.')).toBeVisible();
+    await universe.getByText('1 fallos de actualización en los últimos 7 días').click();
+    await expect(universe.getByRole('table', { name: 'Fallos recientes' })).toContainText(
+      'sin precio',
+    );
+
+    await page.reload();
+    await expect(
+      page.getByRole('table', { name: 'Cobertura y frescura por fuente' }).getByText('SEC EDGAR'),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('procedencia de una empresa', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });
+    await company.getByRole('combobox', { name: 'Empresa' }).fill('T000');
+    await company
+      .getByLabel('Fecha (opcional): ver el sector que tenía entonces')
+      .fill('2026-09-28');
+    await company.getByRole('button', { name: 'Ver de dónde salen sus datos' }).click();
+    const provenance = company.getByRole('table', { name: 'Procedencia por fuente' });
+    await expect(provenance.getByText('250 sesiones, última: 28 sept 2026')).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(provenance.getByText('Aproximado')).toBeVisible();
+  });
+
+  test('métricas SEC V2 frente a V1 como trabajo explícito', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const section = page.getByRole('region', { name: 'Métricas SEC V2 frente a V1' });
+    await section.getByRole('button', { name: 'Comparar métricas' }).click();
+    await expect(section.getByRole('table', { name: 'Estado del ROIC V2' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(section).toContainText('Ranking operativo con el ROIC V2');
+  });
+
+  test('ranking de la app frente al cálculo histórico (#291)', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const section = page.getByRole('region', {
+      name: 'Ranking de la app frente al cálculo histórico',
+    });
+    await section.getByRole('button', { name: 'Comparar los dos rankings' }).click();
+    await expect(
+      section.getByRole('table', { name: 'Empresas que más cambian de puesto' }),
+    ).toBeVisible({ timeout: 15_000 });
+    // The fixture's historical engine triples one PE: that company's move is explained by it.
+    await expect(section).toContainText('PER:');
+    await expect(
+      section.getByRole('table', { name: 'De dónde sale cada métrica en cada cálculo' }),
+    ).toContainText('SEC (10-K), último ejercicio anual'); // GABI-MF-v5 (#347): the app scores the engine's 10-K.
+  });
+
+  test('datos imposibles o sospechosos (#295)', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const section = page.getByRole('region', { name: 'Datos imposibles o sospechosos' });
+    await section.getByRole('button', { name: 'Buscar datos imposibles' }).click();
+    // The test cache holds no impossible value: the section says so and which model applies the checks.
+    await expect(
+      section.getByText(/No hay ningún dato imposible ni sospechoso en las 16 empresas/),
+    ).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(section).toContainText(
+      'El modelo activo (GABI-MF-v5) puntúa los valores tal y como vienen',
+    );
+  });
+
+  test('identidades del universo', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const company = page.getByRole('region', { name: 'De dónde salen los datos de una empresa' });
+    await company
+      .getByLabel('Fecha (opcional): ver el sector que tenía entonces')
+      .fill('2026-09-28');
+    await company.getByText('Diagnóstico de identidad del universo').click();
+    await company.getByRole('button', { name: /Comprobar identidades/ }).click();
+    await expect(company.getByText(/1 símbolos sin CIK acreditado/)).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
+  test('archivo histórico desde 2010', async ({ page }) => {
+    await page.goto('/administracion/calidad');
+    const archive = page.getByRole('region', { name: 'Archivo histórico 2010-2015' });
+    await archive.getByRole('button', { name: 'Consultar cobertura del archivo' }).click();
+    await expect(archive.getByRole('table', { name: 'Fuentes del archivo' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(archive.getByLabel('Fecha de composición archivada')).toHaveAttribute(
+      'min',
+      '2010-01-01',
+    );
+    await archive.getByRole('button', { name: 'Ver miembros del índice' }).click();
+    await expect(
+      archive.getByText(/2 valores en la composición registrada el 2010-01-04/),
+    ).toBeVisible({
+      timeout: 15_000,
+    });
+    await archive.getByRole('button', { name: 'Ver precios del archivo' }).click();
+    await archive.getByText('1 sesiones de ATVI').click();
+    await expect(archive.getByRole('table', { name: 'Precios archivados' })).toContainText('9.5');
+    await archive.getByText('Cobertura trimestral 2010-2015').click();
+    const quarterly = archive.getByRole('table', { name: 'Cobertura trimestral' });
+    await expect(quarterly).toContainText('2010-03-31');
+    await expect(quarterly).not.toContainText('2009-12-31');
+  });
+});
+
+test('el indicador de la cabecera sigue un trabajo y avisa al terminar en otra pantalla', async ({
+  page,
+}) => {
+  let launchedId: string | undefined;
+  let allowCompletion = false;
+  // Keep the real job visible as running until the header has observed it and
+  // navigation has finished. The synthetic worker can finish before either.
+  await page.route('**/api/v1/jobs', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    if (route.request().method() === 'POST') launchedId = body.id;
+    if (route.request().method() === 'GET' && launchedId && !allowCompletion) {
+      for (const job of body.jobs) {
+        if (job.id === launchedId) job.status = 'running';
+      }
+    }
+    await route.fulfill({ response, json: body });
+  });
+  await page.goto('/administracion');
+  await page.getByText('Otras formas de descargar').click();
+  const update = page.getByRole('region', { name: 'Actualizar solo una parte' });
+  await update.getByRole('button', { name: 'Actualizar estas empresas' }).click();
+  await expect(page.getByRole('button', { name: /^Trabajos: \d+ en curso$/ })).toBeVisible();
+  // Leave the page that launched it: the header keeps track of the job.
+  await page.getByRole('link', { name: 'Descubrir', exact: true }).first().click();
+  await expect(page).toHaveURL(/\/descubrir$/);
+  allowCompletion = true;
+  const toast = page.getByRole('status', { name: 'Avisos de trabajos' });
+  await expect(
+    toast.getByText('Actualizar una parte de las empresas', { exact: true }),
+  ).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(toast.getByText(/Completado/)).toBeVisible();
+  await page.getByRole('button', { name: /^Trabajos:/ }).click();
+  const panel = page.getByRole('region', { name: 'Trabajos locales' });
+  await expect(panel.getByText('Recientes')).toBeVisible();
+  await expect(
+    panel.getByText('Actualizar una parte de las empresas', { exact: true }).first(),
+  ).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+  await toast.getByRole('button', { name: 'Cerrar aviso' }).first().click();
+  await expect(
+    toast.getByText('Actualizar una parte de las empresas', { exact: true }),
+  ).toHaveCount(0);
+});
+
+test('botones, campos y desplegables comparten tamaño de letra y altura', async ({ page }) => {
+  await page.goto('/administracion');
+  await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
+  const sizes = await page.evaluate(() => {
+    const read = (selector: string) =>
+      [...document.querySelectorAll<HTMLElement>(`main ${selector}`)].map((element) => ({
+        font: getComputedStyle(element).fontSize,
+        height: Math.round(element.getBoundingClientRect().height),
+      }));
+    return {
+      buttons: read('[data-slot="button"][data-size="default"]'),
+      selects: read('[data-slot="native-select"]'),
+    };
+  });
+  expect(sizes.buttons.length).toBeGreaterThan(3);
+  expect(new Set(sizes.buttons.map((size) => size.font))).toEqual(new Set(['14px']));
+  expect(new Set(sizes.buttons.map((size) => size.height))).toEqual(new Set([36]));
+  expect(new Set(sizes.selects.map((size) => size.font))).toEqual(new Set(['14px']));
+});

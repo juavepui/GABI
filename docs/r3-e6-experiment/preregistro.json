@@ -1,0 +1,141 @@
+{
+  "sha256": "d68a50ad5a0093b12829392a86798aed676e56bae397aa157cc57f3e99aae0d1",
+  "spec": {
+    "issue": 36,
+    "linked_issue": 37,
+    "stage": "RESEARCH",
+    "hypothesis": "Puntuar la persistencia de la calidad y el precio frente a expectativas (E6a), o medir el riesgo en una ventana común de 3 años (E6b), mejora la cartera V2 Top-20 frente al Composite vigente sin empeorar su riesgo de cola.",
+    "control": {
+      "name": "control_composite",
+      "weights": {
+        "value": 0.3,
+        "quality": 0.35,
+        "momentum": 0.25,
+        "risk": 0.1
+      },
+      "score_metrics": {
+        "value": [
+          "pe",
+          "pb",
+          "ev_ebitda"
+        ],
+        "quality": [
+          "roic",
+          "operating_margin",
+          "revenue_cagr_3y",
+          "fcf_cagr_3y"
+        ],
+        "momentum": [
+          "momentum_12m",
+          "rel_strength_6m",
+          "price_vs_sma200"
+        ],
+        "risk": [
+          "debt_to_equity",
+          "volatility",
+          "max_drawdown"
+        ]
+      }
+    },
+    "variants": {
+      "e6a_calidad_persistente": {
+        "weights": {
+          "value": 0.3,
+          "quality": 0.35,
+          "momentum": 0.25,
+          "risk": 0.1
+        },
+        "added_to_quality": {
+          "quality_persistence_score": "higher_is_better",
+          "roic_persistence_std": "lower_is_better"
+        },
+        "added_to_value": {
+          "expectations_gap": "higher_is_better"
+        },
+        "validity": "métricas de persistencia solo con roic_years >= 3",
+        "note": "Cada bloque promedia sus percentiles sectoriales con igual peso, como el control."
+      },
+      "e6b_riesgo_756": {
+        "weights": {
+          "value": 0.3,
+          "quality": 0.35,
+          "momentum": 0.25,
+          "risk": 0.1
+        },
+        "risk_window_sessions": 756,
+        "recomputed": [
+          "volatility",
+          "max_drawdown"
+        ],
+        "note": "Misma serie acreditada y misma función risk.compute_risk_metrics sobre los últimos 757 cierres."
+      }
+    },
+    "sample": {
+      "rankings": "data/revalidation_2011_2025/acreditado-38",
+      "start": "2010-01-02",
+      "end": "2025-10-02",
+      "months": 3,
+      "invested_from": "2011-07-02",
+      "windows": {
+        "completa_2011_2025": [
+          "2011-07-02",
+          "2025-10-02"
+        ],
+        "2011_2015": [
+          "2011-07-02",
+          "2016-01-02"
+        ],
+        "2016_2020": [
+          "2016-01-02",
+          "2021-01-02"
+        ],
+        "2021_2025": [
+          "2021-01-02",
+          "2025-10-02"
+        ]
+      }
+    },
+    "eligibility": "el conjunto elegible (composite y score_coverage >= 0,70) es el del control en todas las variantes",
+    "engine": {
+      "motor": "V2",
+      "mode": "validation",
+      "top_n": [
+        20,
+        10
+      ],
+      "initial_capital": 100000.0,
+      "commission_usd": 1.0,
+      "spread_bps": 10.0,
+      "max_symbols": null
+    },
+    "metrics": [
+      "CAGR neto",
+      "ES 95/99 diario",
+      "drawdown máximo",
+      "rotación",
+      "costes",
+      "beta SPY",
+      "FF5+Mom con HAC (#11) sobre retornos trimestrales",
+      "PBO (CSCV, 8 bloques, 56 trimestres)",
+      "DSR con todas las configuraciones documentadas"
+    ],
+    "decision_rule": {
+      "primary": "V2 Top-20, serie 2011-07 → 2025-10",
+      "adoptar": "(a) CAGR neto >= control + 1,0 pp; (b) mejor CAGR que el control en al menos 2 de 3 ventanas (2011-2015, 2016-2020, 2021-2025); (c) ES 95 % no peor en más de un 10 % relativo y drawdown máximo no peor en más de 3 pp; (d) diferencia trimestral frente al control con p HAC unilateral < 0,05 tras Holm sobre las 2 variantes y DSR > 0,95",
+      "pendiente": "cumple (a), (b) y (c) pero no (d): hipótesis pendiente de validación prospectiva",
+      "descartar": "no cumple (a), (b) o (c)",
+      "default_model": "El modelo por defecto no cambia salvo 'adoptar'."
+    },
+    "multiple_testing": {
+      "holm_over": 2,
+      "dsr_trials": 29,
+      "prior_trials": "24 configuraciones del #12 + 2 umbrales de rotación del #23"
+    },
+    "blind_validation": "no se lee ni se modifica"
+  },
+  "experiment_ids": {
+    "control_composite": 35,
+    "e6a_calidad_persistente": 36,
+    "e6b_riesgo_756": 37
+  }
+}

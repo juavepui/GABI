@@ -1,0 +1,21 @@
+{
+  "issue": 48,
+  "extension": "dated-sic-divisions-v1",
+  "stage": "RESEARCH_RETROSPECTIVE_DESCRIPTIVE",
+  "source": "Local archived SEC Financial Statement Data Sets, SUB primary registrant. SIC assigned as of filing date; validate cached rows against archived sub.txt and registered ZIP hashes.",
+  "source_documentation": "https://www.sec.gov/files/financial-statement-data-sets.pdf",
+  "taxonomy_documentation": "https://www.osha.gov/data/sic-manual",
+  "identity": "Use frozen ranking entity_id cik:NNNNNNNNNN only; no current ticker mapping or co-registrant inheritance.",
+  "availability": "Both filed_date and accepted calendar date strictly before signal date; latest filing by filed_date then acceptance, maximum age 400 calendar days. Conflicting latest SIC labels, invalid latest SIC, unknown dates and missing identity stay unknown; no fallback to earlier valid labels.",
+  "forms": ["10-K", "10-Q", "10-K/A", "10-Q/A"],
+  "max_age_days": 400,
+  "divisions": {"A": [100, 999], "B": [1000, 1499], "C": [1500, 1799], "D": [2000, 3999], "E": [4000, 4999], "F": [5000, 5199], "G": [5200, 5999], "H": [6000, 6799], "I": [7000, 8999], "J": [9100, 9799]},
+  "signals": ["pe", "pb", "ev_ebitda", "roic", "operating_margin", "revenue_cagr_3y", "fcf_cagr_3y", "momentum_12m", "rel_strength_6m", "price_vs_sma200", "debt_to_equity", "volatility", "max_drawdown"],
+  "inputs": "Frozen 57 ranking/forward CSV pairs of #40/#48; retain original eligibility and oriented percentiles. Verify original result input hashes before reading returns.",
+  "minimum_pairs": 30,
+  "minimum_summary_periods": 30,
+  "statistics": "Descriptive within-division quarterly Spearman IC; equal-date mean, ICIR, positive fraction, periods and pairs; fixed 2011-15/2016-20/2021-25 windows. Publish every group/date status, including no pairs or insufficient pairs and constant series; no p-values or new factor classifications.",
+  "coverage": "All original eligible candidate-dates, including missing returns. Publish identity, selected dated filing, valid division, exclusion reason, per-factor finite pairs and coverage stratified by outcome availability.",
+  "preservation": "Separate supplement; original scores/rankings/returns, global IC/Holm, classifications, model weights and blind studies remain frozen. SIC is not GICS and this does not reconstruct sector-neutral scores or repair original regressions/placebos.",
+  "evidence": "Descriptive retrospective metadata only; no automatic confidence upgrade, OOS claim or ensemble component selection. Historical outcomes already observed in original Factor Zoo."
+}

@@ -1,0 +1,39 @@
+"""Shared evidence assessment for a full ranking and explicit reviewed inputs."""
+from collections.abc import Callable
+from datetime import datetime
+
+import pandas as pd
+
+from gabi.domain.market.evidence import DEFAULT_RULES, EvidenceRules, assess, freshness, sanitized_shared
+from gabi.domain.research.live_ledger import fingerprint
+
+
+def build_evidence(frame: pd.DataFrame, weights: dict, *, universe_id="SP500_CURRENT", stage="LIVE_FORWARD",
+          now: datetime, market_date: str, catalogue: dict, matching: bool, metadata: dict,
+          analyze_stability: Callable[[pd.DataFrame, dict], tuple], model_id: str, benchmark: str,
+          rules: EvidenceRules = DEFAULT_RULES, context: dict | None = None) -> dict[str, dict]:
+    """Assess the complete unfiltered ranking, with actual loaded input metadata."""
+    source = frame.attrs.get("sources", {})
+    # pandas deep-copies ``attrs`` (the per-company sources) into every row and every slice: 17 of 27 s on the
+    # 500-company ranking (#342). Nothing below reads attrs except ``source``, taken above.
+    frame = frame.copy(deep=False)
+    frame.attrs = {}
+    trace = {"model_id": model_id, "universe_id": universe_id, "weights": weights,
+             "sources": catalogue.get("sources", {}), "sources_fingerprint": catalogue.get("sources_fingerprint"),
+             "data_fingerprint": "signal-inputs-v1:" + fingerprint({"inputs": frame.rename_axis("symbol").reset_index().to_dict("records"),
+                                                                               "sources": source}), **(context or {})}
+    if not context:
+        trace.update(metadata)
+    trace["model_id"] = model_id if matching else "EXPERIMENTAL"
+    try:
+        _, _, companies = analyze_stability(frame, weights)
+        stability = companies.to_dict("index")
+    except (ValueError, TypeError, KeyError):
+        stability = {}
+    # The catalogue and the common trace are sanitized once, not once per company (#342).
+    shared = sanitized_shared(catalogue, trace) if "symbol" not in trace else None
+    return {str(symbol): assess(row, weights, catalogue=catalogue,
+                               quality=freshness(source.get(symbol, {}), source.get(benchmark, {}), market_date=market_date, now=now, rules=rules),
+                               stability=stability.get(str(symbol), {}), trace={**trace, "symbol": str(symbol)}, model_matches=matching, stage=stage, rules=rules,
+                               shared=shared)
+            for symbol, row in frame.iterrows()}

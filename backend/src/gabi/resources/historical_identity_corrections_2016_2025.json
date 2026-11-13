@@ -1,0 +1,849 @@
+{
+ "description": "Reviewed nominations for 2016-2025 index labels (#34), same rules as the 2010-2015 ledger: a nomination only selects which CIK to test. historical_identity_audit accepts it only when original SEC XBRL covers of that CIK report one of `sec_tickers` on at least two dates inside the evidence window (or the corroborated tier's conditions hold) and no other CIK reports the label there; historical_price_audit separately requires SEC listing-life and price-level checks. Found by comparing each fja05680 label with the lawcal candidate CIK and that CIK's first SEC periodic report (successor_cik_leak), or by labels without a lawcal candidate on the date (retrospective_label, missing_candidate).",
+ "entries": [
+  {
+   "label": "XOM",
+   "cik": "0000034088",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "XOM"
+   ],
+   "reason": "successor_cik_leak",
+   "note": "lawcal maps XOM to CIK 2115436, which has no 10-K/10-Q through 2025"
+  },
+  {
+   "label": "DIS",
+   "cik": "0001001039",
+   "valid_from": "2016-01-01",
+   "valid_to": "2019-03-20",
+   "sec_tickers": [
+    "DIS"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "TWDC Holdco (CIK 1744489) became The Walt Disney Company when the Fox acquisition closed on 2019-03-20"
+  },
+  {
+   "label": "BLK",
+   "cik": "0001364742",
+   "valid_from": "2016-01-01",
+   "valid_to": "2024-10-01",
+   "sec_tickers": [
+    "BLK"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "New BlackRock holding company (CIK 2012383) from the GIP closing on 2024-10-01"
+  },
+  {
+   "label": "CI",
+   "cik": "0000701221",
+   "valid_from": "2016-01-01",
+   "valid_to": "2018-12-20",
+   "sec_tickers": [
+    "CI"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "Cigna holding company (CIK 1739940) from the Express Scripts closing on 2018-12-20"
+  },
+  {
+   "label": "APA",
+   "cik": "0000006769",
+   "valid_from": "2016-01-01",
+   "valid_to": "2021-03-01",
+   "sec_tickers": [
+    "APA"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "Apache Corp; APA Corporation holding company (CIK 1841666) from 2021-03-01"
+  },
+  {
+   "label": "AVGO",
+   "cik": "0001441634",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-02-01",
+   "sec_tickers": [
+    "AVGO"
+   ],
+   "evidence_window_days": 120,
+   "reason": "successor_cik_leak",
+   "note": "Avago Technologies Ltd until the Broadcom Ltd succession on 2016-02-01"
+  },
+  {
+   "label": "AVGO",
+   "cik": "0001649338",
+   "valid_from": "2016-02-01",
+   "valid_to": "2018-04-05",
+   "sec_tickers": [
+    "AVGO"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "Broadcom Ltd until the Broadcom Inc redomiciliation (CIK 1730168) on 2018-04-04"
+  },
+  {
+   "label": "FTI",
+   "cik": "0001135152",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-01-17",
+   "sec_tickers": [
+    "FTI"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "FMC Technologies before the TechnipFMC plc combination (CIK 1681459)"
+  },
+  {
+   "label": "WRK",
+   "cik": "0001636023",
+   "valid_from": "2016-01-01",
+   "valid_to": "2018-11-02",
+   "sec_tickers": [
+    "WRK"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "WestRock Co (2015) before the KapStone holding company (CIK 1732845)"
+  },
+  {
+   "label": "XRX",
+   "cik": "0000108772",
+   "valid_from": "2016-01-01",
+   "valid_to": "2019-08-01",
+   "sec_tickers": [
+    "XRX"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "Xerox Corp before Xerox Holdings Corp (CIK 1770450)"
+  },
+  {
+   "label": "LLL",
+   "cik": "0001056239",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-01-01",
+   "sec_tickers": [
+    "LLL"
+   ],
+   "evidence_window_days": 60,
+   "reason": "successor_cik_leak",
+   "note": "L-3 Communications Holdings before its merger into L3 Technologies (CIK 1039101) on 2016-12-31"
+  },
+  {
+   "label": "BG",
+   "cik": "0001144519",
+   "valid_from": "2023-03-01",
+   "valid_to": "2023-11-01",
+   "sec_tickers": [
+    "BG"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "Bunge Ltd before the Bunge Global SA redomiciliation (CIK 1996862)"
+  },
+  {
+   "label": "AABA",
+   "cik": "0001011006",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-06-19",
+   "sec_tickers": [
+    "YHOO",
+    "AABA"
+   ],
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Yahoo! Inc traded as YHOO until it became Altaba on 2017-06-19"
+  },
+  {
+   "label": "BHGE",
+   "cik": "0000808362",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-07-05",
+   "sec_tickers": [
+    "BHI"
+   ],
+   "price_symbols": {
+    "yahoo": "BKR"
+   },
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Baker Hughes Inc traded as BHI until the GE Oil & Gas combination"
+  },
+  {
+   "label": "CCEP",
+   "cik": "0001491675",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-05-31",
+   "sec_tickers": [
+    "CCE"
+   ],
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Coca-Cola Enterprises traded as CCE until the Coca-Cola European Partners combination"
+  },
+  {
+   "label": "KDP",
+   "cik": "0001418135",
+   "valid_from": "2016-01-01",
+   "valid_to": "2018-07-10",
+   "sec_tickers": [
+    "DPS"
+   ],
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Dr Pepper Snapple Group traded as DPS; same CIK as Keurig Dr Pepper"
+  },
+  {
+   "label": "WYND",
+   "cik": "0001361658",
+   "valid_from": "2016-01-01",
+   "valid_to": "2018-06-01",
+   "sec_tickers": [
+    "WYN"
+   ],
+   "price_symbols": {
+    "yahoo": "TNL"
+   },
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Wyndham Worldwide traded as WYN; the same CIK later traded as WYND and TNL"
+  },
+  {
+   "label": "KORS",
+   "cik": "0001530721",
+   "valid_from": "2018-01-01",
+   "valid_to": "2019-01-02",
+   "sec_tickers": [
+    "KORS"
+   ],
+   "price_symbols": {
+    "yahoo": "CPRI"
+   },
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "Michael Kors Holdings; lawcal ends the KORS row in 2018 and backdates CPRI"
+  },
+  {
+   "label": "IR",
+   "cik": "0001466258",
+   "valid_from": "2016-01-01",
+   "valid_to": "2020-03-02",
+   "sec_tickers": [
+    "IR"
+   ],
+   "price_symbols": {
+    "yahoo": "TT",
+    "finsaber": "TT"
+   },
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "Ingersoll-Rand plc until its rename to Trane Technologies; IR then passed to Gardner Denver (CIK 1699150)"
+  },
+  {
+   "label": "FOXA",
+   "cik": "0001308161",
+   "valid_from": "2016-01-01",
+   "valid_to": "2019-03-19",
+   "sec_tickers": [
+    "FOXA",
+    "FOX"
+   ],
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "Twenty-First Century Fox class A; lawcal only has the 2019 Fox Corp (CIK 1754301)"
+  },
+  {
+   "label": "FOX",
+   "cik": "0001308161",
+   "valid_from": "2016-01-01",
+   "valid_to": "2019-03-19",
+   "sec_tickers": [
+    "FOXA",
+    "FOX"
+   ],
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "Twenty-First Century Fox class B; lawcal only has the 2019 Fox Corp (CIK 1754301)"
+  },
+  {
+   "label": "D",
+   "cik": "0000715957",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-11-30",
+   "sec_tickers": [
+    "D"
+   ],
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "Dominion Resources; lawcal row starts at the 2016 rename"
+  },
+  {
+   "label": "SRE",
+   "cik": "0001032208",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-03-17",
+   "sec_tickers": [
+    "SRE"
+   ],
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "Sempra Energy; lawcal row starts in 2017"
+  },
+  {
+   "label": "TROW",
+   "cik": "0001113169",
+   "valid_from": "2016-01-01",
+   "valid_to": "2019-07-29",
+   "sec_tickers": [
+    "TROW"
+   ],
+   "evidence_window_days": 30,
+   "reason": "missing_candidate",
+   "note": "T. Rowe Price Group; lawcal row starts in 2019"
+  },
+  {
+   "label": "DO",
+   "cik": "0000949039",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-01-01",
+   "sec_tickers": [
+    "DO"
+   ],
+   "evidence_window_days": 30,
+   "reason": "candidate_interval_too_short",
+   "note": "Diamond Offshore; lawcal ends the row on the index exit date"
+  },
+  {
+   "label": "NWSA",
+   "cik": "0001564708",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "NWSA",
+    "NWS"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "News Corp; DEI reports one of its two listed classes"
+  },
+  {
+   "label": "NWS",
+   "cik": "0001564708",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "NWSA",
+    "NWS"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "News Corp; DEI reports one of its two listed classes"
+  },
+  {
+   "label": "BRK-B",
+   "cik": "0001067983",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "BRKA",
+    "BRKB",
+    "BRK.B",
+    "BRK-B",
+    "BRK.A",
+    "BRK-A"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Berkshire Hathaway; DEI reports the class A symbol"
+  },
+  {
+   "label": "NLSN",
+   "cik": "0001492633",
+   "valid_from": "2016-01-01",
+   "valid_to": "2022-10-12",
+   "sec_tickers": [
+    "NLSN",
+    "NLSNNV"
+   ],
+   "reason": "retrospective_label",
+   "note": "Nielsen Holdings; DEI may report a legal-form suffix"
+  },
+  {
+   "label": "UAA",
+   "cik": "0001336917",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-04-08",
+   "sec_tickers": [
+    "UA",
+    "UAA"
+   ],
+   "evidence_window_days": 90,
+   "reason": "retrospective_label",
+   "note": "Under Armour class A traded as UA until the class C distribution"
+  },
+  {
+   "label": "ARNC",
+   "cik": "0000004281",
+   "valid_from": "2016-01-01",
+   "valid_to": "2020-04-01",
+   "sec_tickers": [
+    "AA",
+    "ARNC"
+   ],
+   "reason": "retrospective_label",
+   "note": "Alcoa Inc traded as AA until the 2016-11-01 separation; the same CIK then traded as ARNC"
+  },
+  {
+   "label": "CBRE",
+   "cik": "0001138118",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "CBG",
+    "CBRE"
+   ],
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "CBRE Group traded as CBG until March 2018; reports cite both symbols"
+  },
+  {
+   "label": "TPR",
+   "cik": "0001116132",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-10-31",
+   "sec_tickers": [
+    "COH",
+    "TPR"
+   ],
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Coach Inc traded as COH until the Tapestry rename"
+  },
+  {
+   "label": "IQV",
+   "cik": "0001478242",
+   "valid_from": "2017-08-29",
+   "valid_to": "2017-11-15",
+   "sec_tickers": [
+    "Q",
+    "IQV"
+   ],
+   "evidence_window_days": 60,
+   "reason": "retrospective_label",
+   "note": "Quintiles IMS traded as Q until the IQVIA rename"
+  },
+  {
+   "label": "UAA",
+   "cik": "0001336917",
+   "valid_from": "2016-04-08",
+   "valid_to": "2022-06-21",
+   "sec_tickers": [
+    "UA",
+    "UAA"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Under Armour class A; covers report both classes"
+  },
+  {
+   "label": "UA",
+   "cik": "0001336917",
+   "valid_from": "2016-04-08",
+   "valid_to": "2022-06-21",
+   "sec_tickers": [
+    "UA",
+    "UAA"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Under Armour class C; covers report both classes"
+  },
+  {
+   "label": "GOOG",
+   "cik": "0001652044",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "GOOG",
+    "GOOGL"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Alphabet class C; covers report both classes"
+  },
+  {
+   "label": "FOXA",
+   "cik": "0001754301",
+   "valid_from": "2019-03-19",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "FOXA",
+    "FOX"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Fox Corp class A; covers report both classes"
+  },
+  {
+   "label": "FOX",
+   "cik": "0001754301",
+   "valid_from": "2019-03-19",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "FOXA",
+    "FOX"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Fox Corp class B; covers report both classes"
+  },
+  {
+   "label": "EVHC",
+   "cik": "0001678531",
+   "valid_from": "2016-12-02",
+   "valid_to": "2018-10-11",
+   "sec_tickers": [
+    "EVHC"
+   ],
+   "evidence_window_days": 90,
+   "reason": "successor_cik_leak",
+   "note": "Envision Healthcare Corp (formerly New Amethyst Corp); lawcal gives AmSurg (CIK 895930), delisted 2016-12-01"
+  },
+  {
+   "label": "ENDP",
+   "cik": "0001593034",
+   "valid_from": "2016-01-01",
+   "valid_to": "2017-03-02",
+   "sec_tickers": [
+    "ENDP"
+   ],
+   "evidence_window_days": 30,
+   "reason": "successor_cik_leak",
+   "note": "Endo International plc; lawcal gives Endo Health Solutions (CIK 1100962), delisted 2014"
+  },
+  {
+   "label": "ADT",
+   "cik": "0001546640",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-05-02",
+   "sec_tickers": [
+    "ADT"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "BRCM",
+   "cik": "0001054374",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-02-01",
+   "sec_tickers": [
+    "BRCM"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "CAM",
+   "cik": "0000941548",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-04-04",
+   "sec_tickers": [
+    "CAM"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "CNX",
+   "cik": "0001070412",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-03-04",
+   "sec_tickers": [
+    "CNX"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "ESV",
+   "cik": "0000314808",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-03-30",
+   "sec_tickers": [
+    "ESV"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "FOSL",
+   "cik": "0000883569",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-01-05",
+   "sec_tickers": [
+    "FOSL"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "GMCR",
+   "cik": "0000909954",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-03-03",
+   "sec_tickers": [
+    "GMCR"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "GME",
+   "cik": "0001326380",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-04-25",
+   "sec_tickers": [
+    "GME"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "PCL",
+   "cik": "0000849213",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-02-22",
+   "sec_tickers": [
+    "PCL"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "PCP",
+   "cik": "0000079958",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-02-01",
+   "sec_tickers": [
+    "PCP"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "POM",
+   "cik": "0001135971",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-03-24",
+   "sec_tickers": [
+    "POM"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "THC",
+   "cik": "0000070318",
+   "valid_from": "2016-01-01",
+   "valid_to": "2016-04-18",
+   "sec_tickers": [
+    "THC"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index exit early in 2016; its 2015 SEC reports are the evidence"
+  },
+  {
+   "label": "AMTM",
+   "cik": "0002011286",
+   "valid_from": "2024-09-30",
+   "valid_to": "2024-12-23",
+   "sec_tickers": [
+    "AMTM"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "APP",
+   "cik": "0001751008",
+   "valid_from": "2025-09-22",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "APP"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "ARES",
+   "cik": "0001176948",
+   "valid_from": "2025-12-11",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "ARES"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "CRH",
+   "cik": "0000849395",
+   "valid_from": "2025-12-22",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "CRH"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "CVNA",
+   "cik": "0001690820",
+   "valid_from": "2025-12-22",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "CVNA"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "EME",
+   "cik": "0000105634",
+   "valid_from": "2025-09-22",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "EME"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "FIX",
+   "cik": "0001035983",
+   "valid_from": "2025-12-22",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "FIX"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "HOOD",
+   "cik": "0001783879",
+   "valid_from": "2025-09-22",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "HOOD"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "IBKR",
+   "cik": "0001381197",
+   "valid_from": "2025-08-28",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "IBKR"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "SNDK",
+   "cik": "0002023554",
+   "valid_from": "2025-11-28",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "SNDK"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "Q",
+   "cik": "0002058873",
+   "valid_from": "2025-11-03",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "Q"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "PSKY",
+   "cik": "0002041610",
+   "valid_from": "2025-08-08",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "PSKY"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Index entry late in the period; SEC reports before entry are the evidence"
+  },
+  {
+   "label": "FISV",
+   "cik": "0000798354",
+   "valid_from": "2025-11-11",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "FISV",
+    "FI"
+   ],
+   "evidence_window_days": 200,
+   "reason": "candidate_interval_too_short",
+   "note": "Fiserv returned to the FISV symbol in November 2025 (FI before)"
+  },
+  {
+   "label": "GOOGL",
+   "cik": "0001652044",
+   "valid_from": "2016-01-01",
+   "valid_to": "2026-01-01",
+   "sec_tickers": [
+    "GOOG",
+    "GOOGL"
+   ],
+   "reason": "multi_class_issuer",
+   "note": "Alphabet class A; covers report both classes"
+  },
+  {
+   "label": "CPRI",
+   "cik": "0001530721",
+   "valid_from": "2016-01-01",
+   "valid_to": "2019-01-02",
+   "sec_tickers": [
+    "KORS",
+    "CPRI"
+   ],
+   "price_symbols": {
+    "yahoo": "CPRI"
+   },
+   "evidence_window_days": 30,
+   "reason": "retrospective_label",
+   "note": "Michael Kors Holdings traded as KORS until the Capri rename on 2019-01-02"
+  }
+ ]
+}

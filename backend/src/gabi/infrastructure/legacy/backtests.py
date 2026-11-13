@@ -1,0 +1,175 @@
+"""Run the unchanged V1/V2 backtest engines with the metrics Streamlit showed."""
+
+import sqlite3
+from collections.abc import Callable
+from contextlib import closing
+from pathlib import Path
+
+from gabi.application.research.academic_factors import FactorSnapshot
+
+
+def run_backtest_v1(start: str, end: str, options: dict) -> dict:
+    from gabi import multifactor_backtest
+
+    return multifactor_backtest.run(
+        start, end, options["months"], options["top_n"], options["cost_bps"],
+        max_symbols=options["universe_size"],
+        rotation_hurdle_points=options["rotation_hurdle_points"], issuer_history=True,
+    )
+
+
+def run_backtest_v2(start: str, end: str, options: dict) -> dict:
+    import gabi.domain.portfolio.metrics as portfolio_metrics
+    from gabi import multifactor_backtest, portfolio_backtest
+
+    result = portfolio_backtest.run(
+        start, end, months=options["months"], top_n=options["top_n"],
+        max_symbols=options["max_symbols"], mode=options["mode"],
+        initial_capital=options["initial_capital"], commission_usd=options["commission_usd"],
+        spread_bps=options["spread_bps"], rotation_hurdle_points=options["rotation_hurdle_points"],
+        issuer_history=True,
+    )
+    nav, nav_spy = result["nav_curve"], result["nav_curve_spy"]
+    daily = multifactor_backtest.daily_risk_metrics(nav)
+    returns, returns_spy = nav.pct_change().dropna(), nav_spy.pct_change().dropna()
+    result["metrics"] = {
+        "estrategia": daily,
+        "spy": multifactor_backtest.daily_risk_metrics(nav_spy),
+        "calmar": portfolio_metrics.calmar_ratio(daily["anualizado"], daily["max_drawdown"]),
+        "recovery_days": portfolio_metrics.recovery_time(nav),
+        "beta": portfolio_metrics.beta_vs_benchmark(returns, returns_spy),
+        "information_ratio": portfolio_metrics.information_ratio(returns, returns_spy),
+        "capture": portfolio_metrics.capture_ratios(returns, returns_spy),
+    }
+    return result
+
+
+def run_backtest_v3_comparison(start: str, end: str, options: dict) -> dict:
+    """V2 with its usual inputs, then V3 over the same signals and price cache (#249), and the
+    economic validation of the #248 policy over those same inputs."""
+    from gabi import config, entity_master, multifactor_backtest
+    from gabi.application.research import backtest_v3_comparison, policy_validation
+    from gabi.infrastructure.storage.ticker_prices import SqliteTickerPrices
+
+    v2 = run_backtest_v2(start, end, options)
+    market = multifactor_backtest.market(issuer_history=True)
+    splits = SqliteTickerPrices(config.DB_PATH).splits_many
+    prepared = backtest_v3_comparison.prepare(market, v2, top_n=options["top_n"], splits=splits)
+    result = backtest_v3_comparison.compare(market, v2, top_n=options["top_n"], splits=splits, prepared=prepared)
+    result["v2"]["options"] = {"start": start, "end": end, **options}
+    result["v2"]["periods"] = v2["periods"].to_dict(orient="records")
+    result["policy_248"] = policy_validation.validate(
+        market, prepared, sectors=lambda symbols, as_of: {
+            symbol: row["sector"] for symbol, row in entity_master.get_sector_asof(symbols, as_of).items()})
+    return result
+
+
+def _already_registered(data_dir: Path, source_job_id: str) -> int | None:
+    path = data_dir / "gabi.db"
+    if not path.is_file():
+        return None
+    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=30)) as db:
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='experiments'").fetchone() is None:
+            return None
+        row = db.execute("SELECT id FROM experiments WHERE json_valid(result_json) "
+                         "AND json_extract(result_json,'$.backtest_job_id')=?", (source_job_id,)).fetchone()
+    return row[0] if row else None
+
+
+def register_backtest(data_dir: Path, registration: dict) -> dict:
+    """Log a verified backtest artifact once, with the same fields and data fingerprint as Streamlit."""
+    from gabi import research_lab
+    from gabi.application.research.backtests import experiment_from_backtest
+    from gabi.infrastructure.legacy import data_quality
+    from gabi.infrastructure.storage.jobs import SqliteJobs
+
+    source = registration["source_job_id"]
+    jobs = SqliteJobs(data_dir)
+    job = jobs.get(source)
+    if job["kind"] not in {"backtest_v1", "backtest_v2"}:
+        raise ValueError("El trabajo de origen no es un backtest V1/V2.")
+    artifact = jobs.result(source)  # Verifies the stored SHA-256 before reading it.
+    existing = _already_registered(data_dir, source)
+    if existing is not None:
+        raise ValueError(f"Este backtest ya está registrado como experimento #{existing}.")
+    record = experiment_from_backtest(artifact, registration, job["result_sha256"])
+    fingerprint = data_quality.compute_data_fingerprint()
+    experiment_id = research_lab.log_experiment(
+        record.pop("model_id"), record.pop("stage"), record.pop("hypothesis_registered"),
+        data_fingerprint=fingerprint, **record)
+    return {"kind": "backtest_register", "experiment_id": experiment_id, "source_job_id": source,
+            "source_result_sha256": job["result_sha256"], "data_fingerprint": fingerprint,
+            "data_fingerprint_scope": "registration", "stage": registration["stage"],
+            "family": registration["family"], "hypothesis_registered": registration["hypothesis_registered"]}
+
+
+class LegacyBacktestMath:
+    """Pure legacy formulas shared with the Streamlit page; no storage access."""
+
+    @staticmethod
+    def tail_risk(returns, horizon: str) -> dict:
+        import gabi.domain.portfolio.metrics as portfolio_metrics
+
+        return portfolio_metrics.tail_risk_metrics(returns, horizon=horizon)
+
+    @staticmethod
+    def returns_from_nav(nav):
+        import gabi.domain.portfolio.metrics as portfolio_metrics
+
+        return portfolio_metrics.returns_from_nav(nav)
+
+    @staticmethod
+    def ranking_warnings(quality: dict, threshold: float) -> list[str]:
+        from gabi.domain.market import data_quality
+
+        return data_quality.ranking_quality_warnings(quality, threshold)
+
+
+def run_factor_contrast(periods, hac_lags: int | None, *, factor_loader: Callable[[], FactorSnapshot] | None = None) -> dict:
+    """The Fama-French block of the old V1 page: cached factors, HAC regression, stability, benchmark."""
+    import hashlib
+
+    from gabi import factor_benchmark, factor_stability
+    from gabi.domain.research import academic_factors as calculations
+    from gabi.infrastructure.storage.academic_factors import calculation_sources
+
+    if factor_loader is None:
+        from gabi import academic_factors, config
+
+        factors = academic_factors.fetch_ff_factors()
+        cache = config.DATA_DIR / "ff_factors.csv"
+        source = {"file": "ff_factors.csv", "sha256": hashlib.sha256(cache.read_bytes()).hexdigest(),
+                  "first_month": factors.index.min().date().isoformat(),
+                  "last_month": factors.index.max().date().isoformat(),
+                  "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"}
+    else:
+        snapshot = factor_loader()
+        factors, source = snapshot.factors, snapshot.source
+        if factors.empty:
+            raise ValueError("Factor cache has no monthly data")
+    result: dict = {"factors_source": source, "calculation_sources": calculation_sources()}
+    try:
+        result["regression"] = calculations.regress_returns_on_factors(periods, factors, hac_lags=hac_lags)
+    except (ValueError, RuntimeError) as exc:
+        result["regression"] = str(exc)
+    try:
+        result["stability"] = factor_stability.analyze(factor_stability.aligned_quarters(periods, factors))
+    except (ValueError, KeyError) as exc:
+        result["stability"] = f"Diagnóstico temporal no disponible: {exc}"
+    try:
+        result["benchmark"] = factor_benchmark.analyze(factor_benchmark.aligned_inputs(periods, factors))
+    except (ValueError, KeyError) as exc:
+        result["benchmark"] = f"Benchmark trimestral no disponible: {exc}"
+    return result
+
+
+def contrast_backtest(data_dir: Path, request: dict, *, factor_loader: Callable[[], FactorSnapshot] | None = None) -> dict:
+    from functools import partial
+
+    from gabi.application.research.backtest_factors import build_factor_contrast
+    from gabi.infrastructure.storage.jobs import SqliteJobs
+
+    jobs = SqliteJobs(data_dir)
+    source = jobs.get(request["source_job_id"])
+    artifact = jobs.result(request["source_job_id"])  # Verifies the stored SHA-256.
+    return build_factor_contrast(artifact, request, source["result_sha256"], partial(run_factor_contrast, factor_loader=factor_loader))

@@ -1,0 +1,144 @@
+"""Research context of one company that the old Ficha showed next to its score; none of it is scored."""
+
+import re
+from collections.abc import Callable
+from datetime import date
+from typing import Protocol
+
+import pandas as pd
+
+from gabi.application.errors import QueryError
+from gabi.application.research.historical import _json_value
+from gabi.domain.market import current_reports, tenk_flags
+from gabi.domain.market.company_overview import typical_move
+
+SYMBOL = re.compile(r"[A-Z0-9^][A-Z0-9^-]{0,19}\Z")
+DATASETS = ("surprises", "estimates", "insiders", "current_reports")
+INSIDER_MONTHS = 6
+MAX_INSIDER_SHOWN = 200
+MAX_REPORTS_SHOWN = 40
+INSIDER_KEYS = ("transaction_date", "owner_name", "owner_title", "transaction_code", "shares",
+                "price_per_share", "is_10b5_1_plan", "filed_date")
+SURPRISE_KEYS = ("earnings_date", "eps_estimate", "eps_reported", "surprise_pct", "price_reaction_pct")
+ESTIMATE_KEYS = ("captured_at", "eps_avg", "eps_low", "eps_high", "eps_analysts", "eps_dispersion_pct",
+                 "revised_up_30d", "revised_down_30d", "source")
+
+
+class ResearchStore(Protocol):
+    def surprises(self, symbol: str) -> pd.DataFrame: ...
+    def estimate_history(self, symbol: str, period: str) -> pd.DataFrame: ...
+    def insider_transactions(self, symbol: str) -> pd.DataFrame: ...
+    def insider_fetched_at(self, symbol: str) -> str | None: ...
+
+
+class CompanyMath(Protocol):
+    def revision(self, history: pd.DataFrame, lookback_days: int, as_of: date) -> dict | None: ...
+    def insiders(self, symbol: str, transactions: pd.DataFrame, months: int, as_of: date) -> dict: ...
+    def transaction_labels(self) -> dict[str, str]: ...
+
+
+def normalize_symbol(symbol: str) -> str:
+    normalized = (symbol or "").strip().upper().replace(".", "-")
+    if not SYMBOL.fullmatch(normalized):
+        raise QueryError("invalid_symbol", "Indica un símbolo válido.", 422)
+    return normalized
+
+
+def normalize_company_sync(options: dict | None) -> dict:
+    options = options or {}
+    if set(options) != {"symbol", "dataset"} or options.get("dataset") not in DATASETS:
+        raise QueryError("invalid_job", "Indica una empresa y qué sincronizar (sorpresas, estimaciones, insiders o 8-K).", 422)
+    return {"symbol": normalize_symbol(str(options["symbol"])), "dataset": options["dataset"]}
+
+
+def _row(values: dict, keys: tuple[str, ...]) -> dict:
+    return {key: _json_value(values.get(key)) for key in keys}
+
+
+class CompanyResearch:
+    def __init__(self, store: ResearchStore, events: Callable[[str, date], list[dict]],
+                 filings: Callable[[str], list[dict]], math: CompanyMath, today: Callable[[], date],
+                 *, reports: Callable[..., dict] | None = None, facts: Callable[[str, str], dict] | None = None):
+        self.store, self.events, self.filings, self.math, self.today = store, events, filings, math, today
+        self.reports, self.facts = reports, facts
+
+    def overview(self, symbol: str) -> dict:
+        """Upcoming dated events, the surprise history and the latest consensus capture (current quarter)."""
+        symbol = normalize_symbol(symbol)
+        today = self.today()
+        upcoming = sorted((event for event in self.events(symbol, today) if event["days_until"] >= 0),
+                          key=lambda event: event["event_date"])
+        history = self.store.estimate_history(symbol, "0q")
+        latest = history.iloc[-1].to_dict() if not history.empty else None
+        revision = self.math.revision(history, 90, today) if not history.empty else None
+        return {
+            "symbol": symbol,
+            "events": [{key: _json_value(event[key]) for key in ("event_type", "event_date", "range_end",
+                                                                 "is_estimate", "days_until", "source")}
+                       for event in upcoming],
+            "surprises": (surprises := [_row(row, SURPRISE_KEYS)
+                                        for row in self.store.surprises(symbol).to_dict("records")]),
+            # Stored newest first; the typical move reads them in date order (#310).
+            "typical_move": typical_move([row["price_reaction_pct"] for row in reversed(surprises)]),
+            "estimate": None if latest is None else _row(latest, ESTIMATE_KEYS),
+            "revision_90d": None if revision is None else {key: _json_value(value) for key, value in revision.items()},
+        }
+
+    def insiders(self, symbol: str) -> dict:
+        """The old Ficha «Actividad de insiders (SEC Form 4)»: six-month open-market summary and recent lines."""
+        symbol = normalize_symbol(symbol)
+        summary = self.math.insiders(symbol, self.store.insider_transactions(symbol), INSIDER_MONTHS, self.today())
+        recent = summary["recent"]
+        labels = self.math.transaction_labels()
+        rows = [_row(row, INSIDER_KEYS) | {"transaction_label": labels.get(row["transaction_code"],
+                                                                            row["transaction_code"])}
+                for row in recent.head(MAX_INSIDER_SHOWN).to_dict("records")]
+        return {"symbol": symbol, "months": INSIDER_MONTHS, "fetched_at": self.store.insider_fetched_at(symbol),
+                "n_buys": summary["n_buys"], "n_sells": summary["n_sells"],
+                "distinct_buyers": summary["distinct_buyers"], "distinct_sellers": summary["distinct_sellers"],
+                "net_value": _json_value(summary["net_value"]),
+                "has_10b5_1_only_buys": summary["has_10b5_1_only_buys"],
+                "recent": rows, "recent_total": int(len(recent))}
+
+    def filing_changes(self, symbol: str) -> dict:
+        """Latest 10-K and 10-Q against the previous comparable filing, from cached SEC facts."""
+        symbol = normalize_symbol(symbol)
+        results = []
+        for result in self.filings(symbol):
+            results.append({
+                "form": result["form"], "reason": result["reason"],
+                "current": None if result["current"] is None else {
+                    key: _json_value(result["current"].get(key)) for key in ("filed_date", "period_end", "url")},
+                "previous": None if result["previous"] is None else {
+                    key: _json_value(result["previous"].get(key)) for key in ("filed_date", "period_end", "url")},
+                "rows": [{key: _json_value(value) for key, value in row.items()} for row in result["rows"]],
+            })
+        return {"symbol": symbol, "results": results}
+
+    def current_reports(self, symbol: str, limit: int = MAX_REPORTS_SHOWN) -> dict:
+        """Downloaded 8-Ks, newest first, with their Items classified by ``8k-items-v1`` (#292).
+
+        Reads the local store only; downloading is the company job's or the SEC sync's.
+        """
+        symbol = normalize_symbol(symbol)
+        stored = self.reports(symbol) if self.reports else {"cik": None, "captured_at": None, "rows": []}
+        rows = stored["rows"]
+        reports = [current_reports.describe(row, stored["cik"]) for row in rows[:limit]] if stored["cik"] else []
+        return {"symbol": symbol, "version": current_reports.VERSION, "cik": stored["cik"],
+                "captured_at": stored["captured_at"], "total": len(rows), "reports": reports,
+                "review_items": [current_reports.classify(code) for code in current_reports.REVIEW_ITEMS]}
+
+    def accounting_flags(self, symbol: str) -> dict:
+        """Accounting warning signs of ``tenk-flags-v1`` (#293) at today's date, from the local SEC data only.
+
+        ``facts(symbol, as_of)`` returns the company facts filed by ``as_of``; the index rows are
+        filtered by filing date in the rules. Nothing is downloaded.
+        """
+        symbol = normalize_symbol(symbol)
+        as_of = self.today()
+        index = (self.reports(symbol, forms=current_reports.FORMS + tenk_flags.FILING_FORMS)
+                 if self.reports else None)
+        facts = self.facts(symbol, as_of.isoformat()) if self.facts else {"facts": {"us-gaap": {}}}
+        result = tenk_flags.evaluate(facts, index if index and index.get("cik") else None, as_of)
+        return {"symbol": symbol, **result,
+                "note": "Una señal pide revisar la empresa; no dice que haya que vender ni que haya un fraude."}

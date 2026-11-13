@@ -25,8 +25,8 @@ contradictorias se conservan: no gana silenciosamente el registro más reciente.
 Los límites abiertos requieren mantenimiento; registrar una nueva compañía con
 el mismo ticker provoca ambigüedad hasta acreditar el fin de la anterior.
 
-La semilla revisada contiene FB→META y ANTM→ELV, con fechas y enlaces de evidencia
-en `entity_migration.KNOWN_ALIASES`. No es un catálogo exhaustivo de cambios.
+La semilla revisada contiene WLP→ANTM, FB→META y ANTM→ELV, con fechas y enlaces de evidencia
+en `gabi.infrastructure.legacy.entity_migration.KNOWN_ALIASES`. No es un catálogo exhaustivo de cambios.
 
 ```python
 from gabi import identity
@@ -52,11 +52,10 @@ sus alias; las revisiones se siguen filtrando por `filed_date`. Los fundamentale
 Yahoo mantienen la fecha de descarga y no se usan como fundamentales históricos.
 
 El ranking histórico es **no estricto por defecto** (`strict_identity=False`,
-igual que `entity_master.get_sector_asof`): `data/gabi.db` no tiene alias
-migrados todavía (ver más abajo), así que exigir identidad acreditada por
-defecto dejaba CUALQUIER backtest sin ningún periodo con datos suficientes —
-comprobado contra la base real, no solo contra `data/identity-audit.db`. Por
-eso los símbolos sin alias registrado (todos, hoy) siguen leyendo de la caché
+igual que `entity_master.get_sector_asof`): `data/gabi.db` solo tiene activados
+los intervalos revisados de `WLP` de 2009–2014, sin precios atribuidos. Exigir
+identidad acreditada por defecto dejaría los backtests sin cobertura suficiente.
+Por eso los símbolos sin alias registrado siguen leyendo de la caché
 legacy por ticker, exactamente como antes de esta migración; `identity_status`
 en la tabla resultante marca cada fila como `resolved`/`ambiguous`/`unresolved`
 para que quede visible, no oculto. El sector se busca entre snapshots de esa
@@ -90,13 +89,13 @@ excepción a acciones.
 Con la aplicación cerrada, ejecutar desde el proyecto:
 
 ```powershell
-uv run python -m gabi.entity_migration --migrate
+uv run python -m gabi_cli research entity-migration --migrate
 ```
 
 Antes de migrar una base existente, el CLI crea una copia SQLite consistente
 `data/gabi.db.before-identity.bak` si todavía no existe. La migración es aditiva
 e idempotente. Importa los snapshots con CIK como evidencia **solo del día
-observado**, copia su sector y registra los cuatro alias revisados. No toca las
+observado**, copia su sector y registra los seis intervalos revisados. No toca las
 filas financieras originales. Esa copia es previa a la primera migración; para
 un punto de restauración más reciente hay que hacer otra copia con otro nombre.
 
@@ -105,7 +104,7 @@ Los datos legacy no tienen CIK por fila: atribuir todo el histórico al último
 redescargar por CIK o atribuir explícitamente después de verificar la procedencia:
 
 ```powershell
-uv run python -m gabi.entity_migration --attribute-symbol META --entity-id cik:0001326801 --dataset prices --source "archivo/proveedor y evidencia revisada"
+uv run python -m gabi_cli research entity-migration --attribute-symbol META --entity-id cik:0001326801 --dataset prices --source "archivo/proveedor y evidencia revisada"
 ```
 
 `--start` inclusivo y `--end` exclusivo permiten limitar el intervalo de datos.
@@ -115,8 +114,9 @@ fundamentales, la descarga. Se admiten `prices`, `splits`, `fundamentals` y
 introducida en `--source`; no debe usarse para atribuir automáticamente todos los
 tickers. Las lecturas por fecha requieren también alias acreditados.
 
-Esta entrega ejecutó el informe sobre `data/identity-audit.db`, una base separada
-con la semilla revisada. **No migró ni atribuyó los datos de `data/gabi.db`.**
+La entrega original ejecutó el informe sobre `data/identity-audit.db`, una base
+separada con la semilla revisada. El #27 activó selectivamente `WLP` en
+`data/gabi.db`; no migró los demás alias ni atribuyó precios/fundamentales.
 Al activar las lecturas estrictas, la cobertura útil baja hasta acreditar alias
 y atribuir/redescargar datos. La UI lo muestra como ausencia, no como calidad verde.
 
@@ -132,16 +132,18 @@ nombre histórico conocido, normalizando mayúsculas y puntuación. Guarda una
 candidata auditable, nunca un alias confirmado. Se puede importar un JSON local:
 
 ```powershell
-uv run python -m gabi.entity_migration --submissions-json submissions.json --candidate-symbol OLD --historical-name "Nombre histórico" --source "URL del JSON SEC"
+uv run python -m gabi_cli research entity-migration --submissions-json submissions.json --candidate-symbol OLD --historical-name "Nombre histórico" --source "URL del JSON SEC"
 ```
 
 La portada de un filing con CIK y ticker permite `import_filing_identity` para
-ese día. Extenderlo a un intervalo requiere evidencia adicional de cotización o
-cambio de ticker; las fechas de `formerNames` no se usan como sustituto. No se
-infiere el CIK del prefijo de un accession, que puede corresponder al presentador.
-El CSV de composición histórica local trae tickers, sin nombres: por eso este
-fallback no puede resolver automáticamente todos sus símbolos. No se descargó
-el bulk ni se hizo una campaña masiva de resolución en esta iteración.
+ese día. La [segunda fase del #27](historical-identity-2010-2015.md) combina
+varias portadas originales con pertenencia y candidatas fechadas en una tabla
+de investigación separada, `historical_identity_intervals`. Otro nivel combina
+el candidato único con varios informes SEC del mismo CIK y nombre del emisor;
+**no equivale a prueba directa del ticker**. `formerNames` ayuda a comprobar la
+continuidad del CIK, no las fechas de negociación. No se infiere el CIK del
+prefijo de un accession, que puede corresponder al presentador. Los intervalos
+no se convierten automáticamente en `entity_aliases` ni atribuyen datos legacy.
 
 Fuentes revisadas para las semillas: [inicio de FB](https://www.sec.gov/Archives/edgar/data/1326801/000132680114000007/fb-12312013x10k.htm),
 [cambio a META](https://www.sec.gov/Archives/edgar/data/1326801/000132680123000052/meta-12312022x10kars.htm),
@@ -170,11 +172,23 @@ Desde 2016 hay 2.498/622.161 (0,402%). El resto carece de prueba temporal en est
 base de auditoría. Tener CIK tampoco asegura disponer de precios ni XBRL atribuidos.
 La calidad del propio histórico de composición continúa siendo una limitación.
 
+La [auditoría específica de 2010–2015](historical-identity-2010-2015.md)
+cuantifica ambos niveles sobre los miembros trimestrales, archiva 896 pruebas
+directas de ticker/CIK y reconstruye intervalos aparte. La cobertura de
+investigación queda en 90–93% según el año, pero solo ~31–33% tiene ticker
+repetido directamente en SEC. Ninguno de los niveles nuevos activa aliases
+continuos en la base operativa.
+
 Para repetir sobre una base de auditoría nueva:
 
 ```powershell
-uv run python -m gabi.entity_migration --db data/identity-audit.db --migrate --report docs/identity-coverage.json
+$env:GABI_DATA_DIR = "<ruta absoluta de la copia de auditoría>"   # contiene gabi.db
+uv run python -m gabi_cli research entity-migration --migrate --report docs/identity-coverage.json --history data/sp500_historical_membership.csv --cik-map data/sec_cik_map.csv
 ```
+
+Hasta ADR 0002 el comando era `python -m gabi.entity_migration` (último commit 1283bf5) y
+aceptaba `--db`, que redirigía la configuración global a otro fichero. El comando nuevo
+usa siempre `gabi.db` de `GABI_DATA_DIR`; la lógica y la salida son las mismas.
 
 Calidad de los datos permite diagnosticar por fecha entidades sin CIK,
 resoluciones ambiguas y candidatas por nombre. Los tests usan SQLite temporal y

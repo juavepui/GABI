@@ -1,0 +1,524 @@
+{
+  "source": "486942af7a92bea5afa7ffec98983eeba701baad:backend/src/gabi/evaluation.py",
+  "source_sha256_lf": "61327a3aa25b203ff65d97c0a33fa5fa83c3401520cf4edfe607c990cf0f7a63",
+  "cases": [
+    {
+      "name": "complete",
+      "symbols": [
+        "AAA",
+        "BBB"
+      ],
+      "prices": {
+        "AAA": [
+          100,
+          150
+        ],
+        "BBB": [
+          100,
+          100
+        ],
+        "SPY": [
+          100,
+          120
+        ]
+      },
+      "watermark": "2024-07-02",
+      "today": "2025-01-01",
+      "progress": {
+        "as_of_date": "2024-01-02",
+        "today": "2025-01-01",
+        "data_as_of": "2024-07-02",
+        "stale": false,
+        "detail": {
+          "columns": [
+            "symbol",
+            "price_start",
+            "price_now",
+            "return"
+          ],
+          "index": [
+            0,
+            1
+          ],
+          "data": [
+            [
+              "AAA",
+              100,
+              150,
+              0.498
+            ],
+            [
+              "BBB",
+              100,
+              100,
+              -0.002
+            ]
+          ]
+        },
+        "available": 2,
+        "requested": 2,
+        "portfolio_return": 0.248,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.050000000000000044,
+        "missing": []
+      },
+      "evaluated": {
+        "status": "complete",
+        "end_date": "2024-07-02",
+        "available": 2,
+        "requested": 2,
+        "portfolio_return": 0.248,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.050000000000000044,
+        "missing": []
+      },
+      "curve": {
+        "columns": [
+          "Cartera",
+          "SPY"
+        ],
+        "index": [
+          "2024-01-02T00:00:00.000",
+          "2024-07-02T00:00:00.000"
+        ],
+        "data": [
+          [
+            100.0,
+            100.0
+          ],
+          [
+            125.0,
+            120.0
+          ]
+        ]
+      }
+    },
+    {
+      "name": "missing",
+      "symbols": [
+        "AAA",
+        "BBB"
+      ],
+      "prices": {
+        "AAA": [
+          100,
+          150
+        ],
+        "SPY": [
+          100,
+          120
+        ]
+      },
+      "watermark": "2024-07-02",
+      "today": "2025-01-01",
+      "progress": {
+        "as_of_date": "2024-01-02",
+        "today": "2025-01-01",
+        "data_as_of": "2024-07-02",
+        "stale": false,
+        "detail": {
+          "columns": [
+            "symbol",
+            "price_start",
+            "price_now",
+            "return"
+          ],
+          "index": [
+            0,
+            1
+          ],
+          "data": [
+            [
+              "AAA",
+              100.0,
+              150.0,
+              0.498
+            ],
+            [
+              "BBB",
+              null,
+              null,
+              null
+            ]
+          ]
+        },
+        "available": 1,
+        "requested": 2,
+        "portfolio_return": 0.498,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.30000000000000004,
+        "missing": [
+          "BBB"
+        ]
+      },
+      "evaluated": {
+        "status": "incomplete",
+        "end_date": "2024-07-02",
+        "available": 1,
+        "requested": 2,
+        "portfolio_return": 0.498,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.30000000000000004,
+        "missing": [
+          "BBB"
+        ]
+      },
+      "curve": {
+        "columns": [
+          "Cartera",
+          "SPY"
+        ],
+        "index": [
+          "2024-01-02T00:00:00.000",
+          "2024-07-02T00:00:00.000"
+        ],
+        "data": [
+          [
+            100.0,
+            100.0
+          ],
+          [
+            150.0,
+            120.0
+          ]
+        ]
+      }
+    },
+    {
+      "name": "zero",
+      "symbols": [
+        "AAA",
+        "BBB"
+      ],
+      "prices": {
+        "AAA": [
+          0,
+          150
+        ],
+        "BBB": [
+          100,
+          0
+        ],
+        "SPY": [
+          0,
+          120
+        ]
+      },
+      "watermark": null,
+      "today": "2025-01-01",
+      "progress": {
+        "as_of_date": "2024-01-02",
+        "today": "2025-01-01",
+        "data_as_of": null,
+        "stale": true,
+        "detail": {
+          "columns": [
+            "symbol",
+            "price_start",
+            "price_now",
+            "return"
+          ],
+          "index": [
+            0,
+            1
+          ],
+          "data": [
+            [
+              "AAA",
+              0,
+              150,
+              null
+            ],
+            [
+              "BBB",
+              100,
+              0,
+              null
+            ]
+          ]
+        },
+        "available": 0,
+        "requested": 2,
+        "portfolio_return": null,
+        "benchmark_return": null,
+        "excess_return": null,
+        "missing": [
+          "AAA",
+          "BBB"
+        ]
+      },
+      "evaluated": {
+        "status": "incomplete",
+        "end_date": "2024-07-02",
+        "available": 0,
+        "requested": 2,
+        "portfolio_return": null,
+        "benchmark_return": null,
+        "excess_return": null,
+        "missing": [
+          "AAA",
+          "BBB"
+        ]
+      },
+      "curve": {
+        "columns": [
+          "Cartera",
+          "SPY"
+        ],
+        "index": [
+          "2024-01-02T00:00:00.000",
+          "2024-07-02T00:00:00.000"
+        ],
+        "data": [
+          [
+            100.0,
+            null
+          ],
+          [
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "name": "duplicates",
+      "symbols": [
+        "AAA",
+        "AAA"
+      ],
+      "prices": {
+        "AAA": [
+          100,
+          150
+        ],
+        "SPY": [
+          100,
+          120
+        ]
+      },
+      "watermark": "2024-07-02",
+      "today": "2025-01-01",
+      "progress": {
+        "as_of_date": "2024-01-02",
+        "today": "2025-01-01",
+        "data_as_of": "2024-07-02",
+        "stale": false,
+        "detail": {
+          "columns": [
+            "symbol",
+            "price_start",
+            "price_now",
+            "return"
+          ],
+          "index": [
+            0,
+            1
+          ],
+          "data": [
+            [
+              "AAA",
+              100,
+              150,
+              0.498
+            ],
+            [
+              "AAA",
+              100,
+              150,
+              0.498
+            ]
+          ]
+        },
+        "available": 2,
+        "requested": 2,
+        "portfolio_return": 0.498,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.30000000000000004,
+        "missing": []
+      },
+      "evaluated": {
+        "status": "complete",
+        "end_date": "2024-07-02",
+        "available": 1,
+        "requested": 1,
+        "portfolio_return": 0.498,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.30000000000000004,
+        "missing": []
+      },
+      "curve": {
+        "columns": [
+          "Cartera",
+          "SPY"
+        ],
+        "index": [
+          "2024-01-02T00:00:00.000",
+          "2024-07-02T00:00:00.000"
+        ],
+        "data": [
+          [
+            100.0,
+            100.0
+          ],
+          [
+            150.0,
+            120.0
+          ]
+        ]
+      }
+    },
+    {
+      "name": "stale",
+      "symbols": [
+        "AAA"
+      ],
+      "prices": {
+        "AAA": [
+          100,
+          100
+        ],
+        "SPY": [
+          100,
+          100
+        ]
+      },
+      "watermark": "2024-01-02",
+      "today": "2025-01-01",
+      "progress": {
+        "as_of_date": "2024-01-02",
+        "today": "2025-01-01",
+        "data_as_of": "2024-01-02",
+        "stale": true,
+        "detail": {
+          "columns": [
+            "symbol",
+            "price_start",
+            "price_now",
+            "return"
+          ],
+          "index": [
+            0
+          ],
+          "data": [
+            [
+              "AAA",
+              100,
+              100,
+              -0.002
+            ]
+          ]
+        },
+        "available": 1,
+        "requested": 1,
+        "portfolio_return": -0.002,
+        "benchmark_return": -0.002,
+        "excess_return": 0.0,
+        "missing": []
+      },
+      "evaluated": {
+        "status": "complete",
+        "end_date": "2024-07-02",
+        "available": 1,
+        "requested": 1,
+        "portfolio_return": -0.002,
+        "benchmark_return": -0.002,
+        "excess_return": 0.0,
+        "missing": []
+      },
+      "curve": {
+        "columns": [
+          "Cartera",
+          "SPY"
+        ],
+        "index": [
+          "2024-01-02T00:00:00.000",
+          "2024-07-02T00:00:00.000"
+        ],
+        "data": [
+          [
+            100.0,
+            100.0
+          ],
+          [
+            100.0,
+            100.0
+          ]
+        ]
+      }
+    },
+    {
+      "name": "pending",
+      "symbols": [
+        "AAA"
+      ],
+      "prices": {
+        "AAA": [
+          100,
+          150
+        ],
+        "SPY": [
+          100,
+          120
+        ]
+      },
+      "watermark": "2024-02-02",
+      "today": "2024-02-02",
+      "progress": {
+        "as_of_date": "2024-01-02",
+        "today": "2024-02-02",
+        "data_as_of": "2024-02-02",
+        "stale": false,
+        "detail": {
+          "columns": [
+            "symbol",
+            "price_start",
+            "price_now",
+            "return"
+          ],
+          "index": [
+            0
+          ],
+          "data": [
+            [
+              "AAA",
+              100,
+              150,
+              0.498
+            ]
+          ]
+        },
+        "available": 1,
+        "requested": 1,
+        "portfolio_return": 0.498,
+        "benchmark_return": 0.19799999999999995,
+        "excess_return": 0.30000000000000004,
+        "missing": []
+      },
+      "evaluated": {
+        "status": "pending",
+        "end_date": "2024-07-02"
+      },
+      "curve": {
+        "columns": [
+          "Cartera",
+          "SPY"
+        ],
+        "index": [
+          "2024-01-02T00:00:00.000",
+          "2024-07-02T00:00:00.000"
+        ],
+        "data": [
+          [
+            100.0,
+            100.0
+          ],
+          [
+            150.0,
+            120.0
+          ]
+        ]
+      }
+    }
+  ]
+}

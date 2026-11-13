@@ -1,0 +1,79 @@
+{
+  "sha256": "423016a5919ba9bd2e0065f1687fb8ce0cb3167658d9274af116ab10eb9c234b",
+  "spec": {
+    "issue": 47,
+    "stage": "RESEARCH_RETROSPECTIVE",
+    "prior_observation": "Top-20 vs universo +1,36 pp/trimestre ya observado en #40; ningún resultado de esta muestra es confirmatorio independiente",
+    "hypothesis": "La ventaja se concentra en el 5 % superior y presenta una curvatura positiva frente a los percentiles siguientes",
+    "data": {
+      "rankings": "data/revalidation_2011_2025/acreditado-38/ranking-{fecha}.csv",
+      "forward": "data/cross_section_test/forward-{fecha}.csv",
+      "dates": "57 rebalanceos invertidos, 2011-07-02 a 2025-07-02, según el manifest de #40",
+      "eligible": "composite_score finito y score_coverage >= 0,70; ranking antes de descartar retornos ausentes",
+      "return": "retorno bruto equiponderado del trimestre siguiente de #40; sin costes",
+      "benchmark": "SPY del benchmarks-by-period.csv de la variante acreditado-38-continua; RSP no está en el dataset congelado",
+      "missing_returns": "las bandas se fijan antes de excluir retornos ausentes; se informa cobertura; abortar si una banda no tiene retorno en cualquier trimestre"
+    },
+    "bands": [
+      {
+        "name": "top_1",
+        "from": 0.0,
+        "to": 0.01
+      },
+      {
+        "name": "p1_5",
+        "from": 0.01,
+        "to": 0.05
+      },
+      {
+        "name": "p5_10",
+        "from": 0.05,
+        "to": 0.1
+      },
+      {
+        "name": "p10_20",
+        "from": 0.1,
+        "to": 0.2
+      },
+      {
+        "name": "p20_40",
+        "from": 0.2,
+        "to": 0.4
+      },
+      {
+        "name": "p40_60",
+        "from": 0.4,
+        "to": 0.6
+      },
+      {
+        "name": "p60_80",
+        "from": 0.6,
+        "to": 0.8
+      },
+      {
+        "name": "p80_100",
+        "from": 0.8,
+        "to": 1.0
+      }
+    ],
+    "assignment": "orden descendente por composite_score; empates por símbolo ascendente; percentil=(posición-0,5)/N; intervalos [from,to), último incluye 1",
+    "primary": {
+      "contrasts": [
+        "top_5 - p5_20",
+        "(top_5 - p5_20) - (p5_20 - p20_100)"
+      ],
+      "aggregation": "media equiponderada por trimestre de cada grupo de bandas, no media de medias de bandas",
+      "test": "media trimestral > 0, t unilateral con SE Newey-West Bartlett, 3 retardos fijos, df=n-1",
+      "multiplicity": "Holm sobre los 2 contrastes, alpha 0,05",
+      "success": "ambos contrastes positivos y p ajustada Holm < 0,05; se denomina patrón histórico compatible con cola, nunca confirmación independiente"
+    },
+    "secondary": {
+      "band_excess": "8 excesos de banda frente al universo elegible, pruebas bilaterales HAC(3) con Holm entre las 8",
+      "benchmarks": "medias de cada banda frente a universo y SPY, descriptivas; SPY no participa en la decisión",
+      "windows": "2011-15, 2016-20, 2021-25: medias por banda y contrastes, solo descriptivas",
+      "top_20": "Top-20 menos universo, descriptivo y ya observado; no participa en la decisión"
+    },
+    "interpretation": "si falla algún contraste: señal de cola no distinguible de ruido/selección con esta muestra; si ambos pasan: patrón retrospectivo compatible, todavía compatible con selección previa",
+    "model_changes": "ninguno; no modificar pesos ni Investor sin evidencia independiente"
+  }
+}

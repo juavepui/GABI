@@ -1,0 +1,47 @@
+{
+  "scope": "availability only; no ranks, returns, or terminal-event attribution",
+  "inputs_sha256": {
+    "sample": "a08ec9499460c7d7a73e8c128e8c01b7950eaa171095bf2749a9b797db0453f9",
+    "level_checks": "ddb163fef075fa0ec8b8d3c80d425cd8ef88b5e6be98d128f69dd2dcd10bab53",
+    "kaggle_agreement": "2f8675338c37d9aca915f9c597692176cdea8dee2db47886c78ca34cd87a7b11"
+  },
+  "kaggle_agreement_accepted": true,
+  "groups": {
+    "2012-06-30_stopped_reporting": {
+      "n": 30,
+      "tiingo_listing_candidate": 7,
+      "level_passed_at_date": 2,
+      "continuous_series_92_days": 2
+    },
+    "2012-06-30_reporting": {
+      "n": 30,
+      "tiingo_listing_candidate": 22,
+      "level_passed_at_date": 22,
+      "continuous_series_92_days": 22
+    },
+    "2017-06-30_stopped_reporting": {
+      "n": 30,
+      "tiingo_listing_candidate": 7,
+      "level_passed_at_date": 5,
+      "continuous_series_92_days": 3
+    },
+    "2017-06-30_reporting": {
+      "n": 30,
+      "tiingo_listing_candidate": 28,
+      "level_passed_at_date": 26,
+      "continuous_series_92_days": 26
+    },
+    "2022-06-30_stopped_reporting": {
+      "n": 30,
+      "tiingo_listing_candidate": 11,
+      "level_passed_at_date": 1,
+      "continuous_series_92_days": 1
+    },
+    "2022-06-30_reporting": {
+      "n": 30,
+      "tiingo_listing_candidate": 25,
+      "level_passed_at_date": 20,
+      "continuous_series_92_days": 20
+    }
+  }
+}

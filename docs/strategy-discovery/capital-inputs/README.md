@@ -1,0 +1,5 @@
+# Reconstrucción de inputs de capital (#60)
+
+La versión inicial se fijó en `e6d2d1d` antes de medir cobertura. Su cargador rechazó la mezcla de fuentes del snapshot y detuvo la ejecución **antes de reconstruir las filas o publicar resultados**. Entre los facts hay observaciones recuperadas de instancias SEC históricas, además de Company Facts. Esas fuentes pueden ser válidas en sus propias capas, pero no cumplen el alcance de este ensayo; no se flexibilizó su acreditación.
+
+Se conserva el motor y el preregistro v1 intactos. La [versión 2](v2/PROTOCOLO.md) mantiene todas las reglas económicas/temporales y pone las fuentes fuera de alcance en cuarentena explícita. Si algún fact relevante de un accession tiene fuente no admitida, bloquea ese filing completo para evitar resolver mezclas o contradicciones arbitrariamente. No se permite fallback a otro filing. Esta revisión resuelve la ingesta de un snapshot mixto; no selecciona periodos, métricas o umbrales por rendimiento. No se ha calculado rendimiento ni añadido una estrategia.

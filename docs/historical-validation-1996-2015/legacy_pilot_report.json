@@ -1,0 +1,23 @@
+{
+  "MSFT": {
+    "rows": 22,
+    "checks": 5,
+    "filed_date": "1996-09-27",
+    "url": "https://www.sec.gov/Archives/edgar/data/789019/0000891020-96-001130.txt",
+    "status": "passed"
+  },
+  "LEH": {
+    "rows": 20,
+    "checks": 6,
+    "filed_date": "2008-01-29",
+    "url": "https://www.sec.gov/Archives/edgar/data/806085/0001104659-08-005476.txt",
+    "status": "passed"
+  },
+  "AAPL": {
+    "rows": 29,
+    "checks": 7,
+    "filed_date": "2008-11-05",
+    "url": "https://www.sec.gov/Archives/edgar/data/320193/000119312508224958/d10k.htm",
+    "status": "passed"
+  }
+}

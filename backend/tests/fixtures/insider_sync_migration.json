@@ -1,0 +1,91 @@
+{
+  "source_sha256": "7a92e4b4ebc698b8d2793d8c82cb027a4078ed3c734636fd8ff849ee25d37e7a",
+  "now": "2024-01-10T12:00:00+00:00",
+  "rows": [
+    {
+      "symbol": "AAA",
+      "cik": "0000000001",
+      "accn": "a",
+      "filed_date": "2025-03-11",
+      "owner_name": "Doe Jane",
+      "owner_title": "Chief Executive Officer",
+      "is_officer": true,
+      "is_director": false,
+      "is_ten_pct_owner": false,
+      "is_10b5_1_plan": false,
+      "line_no": 0,
+      "transaction_date": "2025-03-10",
+      "transaction_code": "P",
+      "acquired_disposed": "A",
+      "shares": 5000.0,
+      "price_per_share": 42.5,
+      "shares_owned_after": 120000.0
+    }
+  ],
+  "symbols": [
+    "AAA",
+    "BAD",
+    "MISSING",
+    "FRESH",
+    "FUTURE",
+    "AAA"
+  ],
+  "result": {
+    "refreshed": 1,
+    "failed": {
+      "MISSING": "Símbolo no encontrado en el mapeo ticker→CIK de la SEC",
+      "BAD": "fallo sintético"
+    }
+  },
+  "calls": [
+    [
+      "AAA",
+      "0000000001"
+    ],
+    [
+      "BAD",
+      "0000000002"
+    ]
+  ],
+  "errors": [
+    {
+      "MISSING": "Símbolo no encontrado en el mapeo ticker→CIK de la SEC",
+      "BAD": "fallo sintético"
+    }
+  ],
+  "records": [
+    {
+      "symbol": "AAA",
+      "cik": "0000000001",
+      "accn": "a",
+      "line_no": 0,
+      "owner_name": "Doe Jane",
+      "owner_title": "Chief Executive Officer",
+      "is_officer": 1,
+      "is_director": 0,
+      "is_ten_pct_owner": 0,
+      "is_10b5_1_plan": 0,
+      "transaction_date": "2025-03-10",
+      "transaction_code": "P",
+      "acquired_disposed": "A",
+      "shares": 5000.0,
+      "price_per_share": 42.5,
+      "shares_owned_after": 120000.0,
+      "filed_date": "2025-03-11"
+    }
+  ],
+  "meta": [
+    [
+      "AAA",
+      "2024-01-10T12:00:00+00:00"
+    ],
+    [
+      "FRESH",
+      "2024-01-09T12:00:00+00:00"
+    ],
+    [
+      "FUTURE",
+      "2024-01-11T12:00:00+00:00"
+    ]
+  ]
+}

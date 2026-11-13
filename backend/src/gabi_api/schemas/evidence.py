@@ -1,0 +1,300 @@
+"""Evidence and ranking fragility of the current ranking; categories, never probabilities."""
+
+from typing import Any, Literal
+
+from pydantic import BaseModel
+
+Level = Literal["BAJA", "MEDIA", "ALTA"]
+
+
+class EvidenceRow(BaseModel):
+    symbol: str
+    score: float | None
+    weighted_data_coverage: float | None
+    confidence_level: Level
+    top20_persistence: float | None
+    validated_score_fraction: float | None
+
+
+class EvidenceTop(BaseModel):
+    revision: str
+    mode: Literal["INVESTOR", "RESEARCH"]
+    weights: dict[str, float]
+    available: bool
+    rows: list[EvidenceRow]
+
+
+class SicStability(BaseModel):
+    group: str
+    name: str | None = None
+    ic_mean: float | None = None
+    n_periods: int | None = None
+    status: str | None = None
+
+
+class EvidenceFactor(BaseModel):
+    metric: str
+    family: str
+    percentile: float
+    supports_candidate: bool
+    effective_weight: float
+    contribution_points: float
+    statistically_supported: bool
+    mean_ic: float | None
+    p_holm: float | None
+    sic_division_stability: list[SicStability]
+
+
+class CompanyEvidence(BaseModel):
+    symbol: str
+    revision: str
+    mode: Literal["INVESTOR", "RESEARCH"]
+    confidence_level: Level
+    score: float | None
+    score_coverage: float | None
+    weighted_data_coverage: float | None
+    reasons_for: list[str]
+    reasons_against: list[str]
+    factors: list[EvidenceFactor]
+    validated_score_fraction: float | None
+    top20_persistence: float | None
+    collection_stage: str
+    evidence_stage: str
+    rules_version: str
+    interpretation: str
+    research_details: dict[str, Any] | None
+
+
+class StabilitySummary(BaseModel):
+    eligible: int
+    excluded: int
+    perturbations: int
+    omitted_infeasible: int
+    stability_score: float | None
+    sectors_complete: bool
+    interpretation: str
+
+
+class RankingStability(BaseModel):
+    revision: str
+    mode: Literal["INVESTOR", "RESEARCH"]
+    weights: dict[str, float]
+    available: bool
+    message: str | None
+    summary: StabilitySummary | None
+    companies: list[dict[str, str | float | int | None]]
+    metrics: list[dict[str, str | float | int | None]]
+    perturbations: list[dict[str, str | float | int | None]]
+
+
+class BlockCoverage(BaseModel):
+    block: str
+    complete: float
+    any: float
+    none: float
+    n_metrics: int
+
+
+class RankingCoverage(BaseModel):
+    revision: str
+    threshold: float
+    universe: int
+    blocks: list[BlockCoverage]
+    warnings: list[str]
+
+
+class CompanyEvent(BaseModel):
+    event_type: Literal["earnings", "ex_dividend", "dividend_payment"]
+    event_date: str
+    range_end: str | None
+    is_estimate: bool
+    days_until: int
+    source: str
+
+
+class EarningsSurprise(BaseModel):
+    earnings_date: str
+    eps_estimate: float | None
+    eps_reported: float | None
+    surprise_pct: float | None
+    price_reaction_pct: float | None
+
+
+class ConsensusEstimate(BaseModel):
+    captured_at: str
+    eps_avg: float | None
+    eps_low: float | None
+    eps_high: float | None
+    eps_analysts: int | None
+    eps_dispersion_pct: float | None
+    revised_up_30d: int | None
+    revised_down_30d: int | None
+    source: str
+
+
+class TypicalMove(BaseModel):
+    """How much the price usually moves on results day (#310): mean absolute reaction, in %."""
+
+    count: int  # reports with a price reaction used (at most 8)
+    mean_abs_pct: float | None
+    max_abs_pct: float | None
+    enough: bool  # False with fewer than 4: orientative only
+    text: str
+
+
+class CompanyResearchResponse(BaseModel):
+    symbol: str
+    events: list[CompanyEvent]
+    surprises: list[EarningsSurprise]
+    typical_move: TypicalMove
+    estimate: ConsensusEstimate | None
+    revision_90d: dict[str, Any] | None
+
+
+class FilingRef(BaseModel):
+    filed_date: str | None
+    period_end: str | None
+    url: str | None
+
+
+class FilingChange(BaseModel):
+    metric: str
+    previous_value: float | None
+    current_value: float | None
+    abs_change: float | None
+    pct_change: float | None
+    severity: str
+    direction: str
+
+
+class FilingComparison(BaseModel):
+    form: str
+    reason: str | None
+    current: FilingRef | None
+    previous: FilingRef | None
+    rows: list[FilingChange]
+
+
+class CompanyFilingChanges(BaseModel):
+    symbol: str
+    results: list[FilingComparison]
+
+
+class CurrentReportItem(BaseModel):
+    code: str
+    category: str
+    label: str
+    review: bool
+
+
+class CurrentReport(BaseModel):
+    accession: str
+    form: str
+    amendment: bool
+    filed_date: str | None
+    report_date: str | None
+    url: str
+    items: list[CurrentReportItem]
+    review: bool
+
+
+class CompanyCurrentReports(BaseModel):
+    symbol: str
+    version: str
+    cik: str | None
+    captured_at: str | None
+    total: int
+    reports: list[CurrentReport]
+    review_items: list[CurrentReportItem]
+
+
+class AccountingFlagSource(BaseModel):
+    form: str
+    accession: str | None
+    filed_date: str | None
+    period_end: str | None
+
+
+class AccountingFlag(BaseModel):
+    key: Literal["amended_10k", "late_10k", "auditor_change", "restatement", "receivables", "accruals", "dilution"]
+    label: str
+    status: Literal["alerta", "sin_alerta", "no_evaluable"]
+    rule: str
+    threshold: float | None
+    values: dict[str, Any]
+    source: AccountingFlagSource | None
+    reason: str | None
+
+
+class CompanyAccountingFlags(BaseModel):
+    symbol: str
+    version: str
+    as_of: str
+    flags: list[AccountingFlag]
+    counts: dict[str, int]
+    note: str
+
+
+class InsiderTransaction(BaseModel):
+    transaction_date: str | None
+    owner_name: str | None
+    owner_title: str | None
+    transaction_code: str | None
+    transaction_label: str | None
+    shares: float | None
+    price_per_share: float | None
+    is_10b5_1_plan: int | None
+    filed_date: str | None
+
+
+class CompanyInsiders(BaseModel):
+    """Open-market Form 4 activity of the last months; informative, never scored."""
+
+    symbol: str
+    months: int
+    fetched_at: str | None
+    n_buys: int
+    n_sells: int
+    distinct_buyers: int
+    distinct_sellers: int
+    net_value: float | None
+    has_10b5_1_only_buys: bool
+    recent: list[InsiderTransaction]
+    recent_total: int
+
+
+Classification = Literal["sin_evidencia", "indicio", "requiere_OOS", "robusta_retrospectivamente"]
+
+
+class BlockMetricEvidence(BaseModel):
+    metric: str
+    published: bool
+    ic_mean: float | None
+    p_holm: float | None
+    classification: Classification | None
+    classification_label: str | None
+
+
+class ScoreBlockEvidence(BaseModel):
+    block: Literal["value", "quality", "momentum", "risk"]
+    frozen_weight: float  # Fraction of the frozen composite.
+    classification: Classification | None  # The strongest any metric reached; read with the counts.
+    classification_label: str | None
+    metrics_at_classification: int
+    metrics_with_evidence: int
+    metrics_published: int
+    ic_mean: float | None  # Plain mean of its metrics' mean ICs: descriptive, not a new test.
+    holm_significant: int
+    metrics: list[BlockMetricEvidence]
+
+
+class ScoreBlocksEvidence(BaseModel):
+    """«¿Qué bloques tienen respaldo?» (#185): the published Factor Zoo grouped by score block."""
+
+    status: Literal["RETROSPECTIVE_DESCRIPTIVE"]
+    independent_advantage_demonstrated: Literal[False]
+    catalog: Literal["factor-zoo"]
+    catalog_sha256: str
+    n_dates: int
+    holm_significant_count: int
+    blocks: list[ScoreBlockEvidence]

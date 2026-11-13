@@ -1,0 +1,139 @@
+import { Link } from 'react-router-dom';
+import type { HomeAlert } from '@/shared/api/generated/types.gen';
+import { jobName } from '@/shared/lib/jobs';
+
+const SEVERITY: Record<HomeAlert['severity'], { label: string; tone: string }> = {
+  high: {
+    label: 'Importante',
+    tone: 'border-danger-border bg-danger-soft',
+  },
+  medium: {
+    label: 'Revisar',
+    tone: 'border-warning-border bg-warning-soft',
+  },
+  info: { label: 'Aviso', tone: 'border-border bg-muted/40' },
+};
+
+const day = (value: string | null | undefined) =>
+  value
+    ? new Date(value + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+    : '';
+
+function list(symbols: string[], limit = 5) {
+  const shown = symbols.slice(0, limit).join(', ');
+  return symbols.length > limit ? `${shown} y ${symbols.length - limit} más` : shown;
+}
+
+/** The sentence of each alert kind; the backend decides which alerts exist and their order. */
+function sentence(alert: HomeAlert): { text: string; action: string } {
+  const detail = (alert.detail ?? {}) as Record<string, unknown>;
+  const count = alert.symbols.length;
+  switch (alert.kind) {
+    case 'earnings': {
+      const holdings = detail.scope === 'holdings';
+      const watched = detail.scope === 'watchlist';
+      const who = holdings
+        ? count === 1
+          ? 'Una empresa de Mi cartera presenta'
+          : `${count} empresas de Mi cartera presentan`
+        : watched
+          ? count === 1
+            ? 'Una empresa que sigues presenta'
+            : `${count} empresas que sigues presentan`
+          : count === 1
+            ? 'Una empresa de la cartera propuesta presenta'
+            : `${count} empresas de la cartera propuesta presentan`;
+      return {
+        text: `${who} resultados esta semana: ${list(alert.symbols)} (desde el ${day(alert.date)}).`,
+        action: holdings ? 'Ver Mi cartera' : watched ? 'Ver empresas seguidas' : 'Ver eventos',
+      };
+    }
+    case 'ex_dividend':
+    case 'dividend_payment':
+      return {
+        text: `${alert.kind === 'ex_dividend' ? 'Último día para cobrar el próximo dividendo (fecha ex-dividendo)' : 'Pago de dividendo'} el ${day(alert.date)}: ${list(alert.symbols)}.`,
+        action: 'Ver la ficha de ' + alert.symbols[0],
+      };
+    case 'top_changes': {
+      const entered = (detail.entered as string[] | undefined) ?? [];
+      const exited = (detail.exited as string[] | undefined) ?? [];
+      const parts = [
+        entered.length > 0 &&
+          `${list(entered)} ${entered.length === 1 ? 'ha entrado' : 'han entrado'} entre las 20 primeras`,
+        exited.length > 0 && `${list(exited)} ${exited.length === 1 ? 'ha salido' : 'han salido'}`,
+      ].filter(Boolean);
+      return {
+        text: `${parts.join('; ')} respecto a «${String(detail.snapshot ?? 'la última foto')}» (${day(alert.date)}).`,
+        action: 'Ver eventos',
+      };
+    }
+    case 'filings':
+      return {
+        text: `Cambios importantes en los últimos informes oficiales (SEC) de ${list(alert.symbols)}.`,
+        action: 'Ver eventos',
+      };
+    case 'job_failed': {
+      const failures = Number(detail.failures ?? 0);
+      return {
+        text:
+          `«${jobName(String(detail.job_kind))}» falló el ${day(alert.date)}` +
+          (detail.failure ? `: ${String(detail.failure).toLowerCase()}` : '') +
+          (failures > 0 ? `; ${failures} descargas no se pudieron hacer` : '') +
+          '.',
+        action: 'Ver Administración',
+      };
+    }
+    case 'scores_missing': {
+      const days = (detail.days as string[] | undefined) ?? [];
+      const many = days.length !== 1;
+      return {
+        text:
+          `La tarea diaria no guardó la puntuación de ${many ? `${days.length} días` : '1 día'} de bolsa ` +
+          `(${days.map(day).join(', ')}). Suele pasar si el ordenador estaba apagado o sin conexión a las 05:00. ` +
+          `${many ? 'Esos días no se pueden' : 'Ese día no se puede'} recuperar; el resto del historial no cambia.`,
+        action: 'Ver Administración',
+      };
+    }
+    case 'thesis_review':
+      return {
+        text: `Te apuntaste revisar tus notas sobre ${alert.symbols[0]} el ${day(alert.date)}.`,
+        action: 'Abrir el diario',
+      };
+  }
+}
+
+/** «Qué requiere tu atención»: alerts already ordered by severity and date. */
+export function HomeAlerts({ alerts }: { alerts: HomeAlert[] }) {
+  return (
+    <section aria-label="Qué requiere tu atención" className="rounded-xl border bg-card p-5">
+      <h2 className="text-lg font-semibold">Qué requiere tu atención</h2>
+      {alerts.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Nada pendiente: esta semana no hay resultados ni dividendos de tus empresas, no ha
+          cambiado ninguna de las 20 primeras y no tienes notas por revisar.
+        </p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {alerts.map((alert, index) => {
+            const { text, action } = sentence(alert);
+            const severity = SEVERITY[alert.severity];
+            return (
+              <li
+                key={alert.kind + index}
+                className={'rounded-lg border p-3 text-sm ' + severity.tone}
+              >
+                <span className="mr-2 text-xs font-semibold uppercase tracking-wide">
+                  {severity.label}
+                </span>
+                {text}{' '}
+                <Link className="font-medium text-primary underline" to={alert.link}>
+                  {action}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
