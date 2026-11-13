@@ -14,7 +14,9 @@ test('real API: filters, full-universe sorting, pagination, company and reload p
   const expected: RankingResponse = await api.json();
   expect(api.ok()).toBeTruthy();
   await page.goto('/descubrir?order_by=market_cap&direction=asc&limit=10');
-  await expect(page.getByRole('heading', { name: 'Ranking de empresas' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Ranking de empresas', exact: true }),
+  ).toBeVisible();
   const rows = page.locator('tbody tr');
   await expect(rows).toHaveCount(expected.items.length);
   for (const [i, item] of expected.items.entries()) {
@@ -217,7 +219,9 @@ test('evidencia del ranking, estabilidad y evidencia de una empresa se calculan 
 }) => {
   const top = await (await request.get('http://127.0.0.1:8001/api/v1/evidence')).json();
   await page.goto('/descubrir');
-  await expect(page.getByRole('heading', { name: 'Ranking de empresas' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Ranking de empresas', exact: true }),
+  ).toBeVisible();
   const coverage = page.getByRole('region', { name: 'Datos que faltan por apartado' });
   await coverage.getByText('Cambiar el mínimo exigido').click();
   await coverage
