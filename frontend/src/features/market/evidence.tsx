@@ -48,7 +48,7 @@ export function Evidence({ model, data }: { model: ModelResponse; data: DataResp
   return (
     <div className="mb-6 space-y-3">
       {evidenceOpen && <EvidenceNotice model={model} />}
-      {dataOpen && <DataStatus data={data} />}
+      {dataOpen && <DataStatus data={data} compact />}
       {chip.length > 0 && (
         <details className="group">
           <summary className="inline-flex cursor-pointer items-center gap-2 rounded-full border bg-secondary/60 px-3 py-1 text-xs font-medium">

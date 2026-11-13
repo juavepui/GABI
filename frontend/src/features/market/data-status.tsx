@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { TriangleAlert } from 'lucide-react';
 import type { DataResponse } from '@/shared/api/generated/types.gen';
 import { dateLabel } from '@/shared/lib/format';
 
@@ -12,20 +13,29 @@ const warnings: Record<string, string> = {
   universe_stale: 'La lista de empresas del S&P 500 puede haber cambiado: conviene actualizarla.',
 };
 
-/** Presents backend classifications and counts; never infers financial freshness in JS. */
-export function DataStatus({ data }: { data: DataResponse }) {
+const TITLE: Record<DataResponse['status'], string> = {
+  ready: 'Datos guardados en tu equipo',
+  stale: 'Datos antiguos: conviene actualizarlos',
+  empty: 'Todavía no hay datos suficientes',
+};
+
+/** Each warning in words, plus a missing last close; the backend decides both. */
+function problems(data: DataResponse): string[] {
+  return [
+    ...data.warnings.map((code) => warnings[code] ?? code),
+    ...(data.prices_current === false
+      ? [
+          `A algunas empresas les falta el precio del último día de bolsa (${dateLabel(data.last_session)}).`,
+        ]
+      : []),
+  ];
+}
+
+/** Where the data comes from and how many companies have each kind. */
+function Details({ data }: { data: DataResponse }) {
   return (
-    <section aria-label="Estado de los datos" className="rounded-xl border bg-card p-4 text-sm">
-      <p className="font-semibold" role="status">
-        {
-          {
-            ready: 'Datos guardados en tu equipo',
-            stale: 'Datos antiguos: conviene actualizarlos',
-            empty: 'Todavía no hay datos suficientes',
-          }[data.status]
-        }
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
+    <>
+      <p className="text-xs text-muted-foreground">
         Precios hasta el {dateLabel(data.latest_price_date)}, descargados de Yahoo Finance y de la
         SEC (el organismo que publica las cuentas oficiales de las empresas de EE. UU.). Que haya
         datos no significa que sean perfectos: revisa las cifras importantes antes de decidir.
@@ -45,6 +55,67 @@ export function DataStatus({ data }: { data: DataResponse }) {
           </div>
         ))}
       </dl>
+    </>
+  );
+}
+
+const UPDATE_NOTE = 'Abrir o recargar esta página no descarga nada; solo lo hace ese botón.';
+
+/**
+ * Presents backend classifications and counts; never infers financial freshness in JS.
+ * `compact` (data needing attention, in view above the list): what is wrong and what to do on a
+ * few lines, with sources and counts folded behind «Ver detalle».
+ */
+export function DataStatus({ data, compact = false }: { data: DataResponse; compact?: boolean }) {
+  const issues = problems(data);
+  if (compact)
+    return (
+      <section
+        aria-label="Estado de los datos"
+        className="rounded-xl border border-warning-border bg-warning-soft p-4 text-sm text-warning-ink"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="flex min-w-0 items-start gap-2">
+            <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p role="status">
+              <span className="font-semibold">{TITLE[data.status]}</span>
+              {data.latest_price_date && (
+                <> · precios hasta el {dateLabel(data.latest_price_date)}</>
+              )}
+            </p>
+          </div>
+          <Link
+            className="shrink-0 text-xs font-medium underline"
+            to="/administracion"
+            title={UPDATE_NOTE}
+          >
+            Actualizar los datos
+          </Link>
+        </div>
+        {issues.length > 0 && (
+          <ul className="mt-1.5 list-disc space-y-0.5 pl-11 text-xs">
+            {issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        )}
+        <details className="mt-2 pl-6 text-xs">
+          <summary className="cursor-pointer">Ver detalle: fuentes y empresas con datos</summary>
+          <div className="mt-2 rounded-lg bg-card p-3 text-foreground">
+            <Details data={data} />
+            <p className="mt-3 text-xs text-muted-foreground">{UPDATE_NOTE}</p>
+          </div>
+        </details>
+      </section>
+    );
+  return (
+    <section aria-label="Estado de los datos" className="rounded-xl border bg-card p-4 text-sm">
+      <p className="font-semibold" role="status">
+        {TITLE[data.status]}
+      </p>
+      <div className="mt-1">
+        <Details data={data} />
+      </div>
       {data.warnings.length > 0 && (
         <details className="mt-3 text-xs" open={data.status !== 'ready'}>
           <summary className="cursor-pointer">
@@ -69,9 +140,7 @@ export function DataStatus({ data }: { data: DataResponse }) {
       >
         Actualizar los datos
       </Link>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Abrir o recargar esta página no descarga nada; solo lo hace ese botón.
-      </p>
+      <p className="mt-1 text-xs text-muted-foreground">{UPDATE_NOTE}</p>
     </section>
   );
 }
